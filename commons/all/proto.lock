@@ -1,48 +1,5 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:global.commons.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "KeyValueWithPrevious",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "wrappedKey",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "wrappedValue",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "wrappedPrev",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "org/infinispan/protostream/message-wrapping.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.global.commons"
-      }
-    }
-  }, {
-    "protopath" : "generated:/:user.commons.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "NullValue",
-        "type_id" : 128,
-        "fields" : [ ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.commons"
-      }
-    }
-  }, {
     "protopath" : "generated:/:persistence.commons.proto",
     "def" : {
       "enums" : [ ],
@@ -67,6 +24,114 @@
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.commons"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:global.commons.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "AdminFlag",
+        "type_id" : 1028,
+        "enum_fields" : [ {
+          "name" : "VOLATILE"
+        }, {
+          "name" : "UPDATE",
+          "integer" : 1
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "EmptyIntSet",
+        "type_id" : 131,
+        "fields" : [ ]
+      }, {
+        "name" : "XidImpl",
+        "type_id" : 129,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "formatId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "rawId",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ConcurrentSmallIntSet",
+        "type_id" : 130,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "entries",
+          "type" : "int32",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "KeyValueWithPrevious",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedKey",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedValue",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedPrev",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SingletonIntSet",
+        "type_id" : 133,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SmallIntSet",
+        "type_id" : 134,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bitSet",
+          "type" : "org.infinispan.protostream.commons.BitSet",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RangeSet",
+        "type_id" : 132,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "size",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "org/infinispan/protostream/message-wrapping.proto"
+      }, {
+        "path" : "common-java-types.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.commons"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:user.commons.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "NullValue",
+        "type_id" : 128,
+        "fields" : [ ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.commons"
       }
     }
   } ]

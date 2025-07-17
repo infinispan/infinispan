@@ -1,11 +1,145 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:persistence.query.proto",
+    "protopath" : "generated:/:global.query.proto",
     "def" : {
-      "enums" : [ ],
+      "enums" : [ {
+        "name" : "CQCommandType",
+        "type_id" : 4209,
+        "enum_fields" : [ {
+          "name" : "CREATE_EAGER_ITERATOR"
+        }, {
+          "name" : "GET_RESULT_SIZE",
+          "integer" : 1
+        }, {
+          "name" : "DELETE",
+          "integer" : 2
+        } ]
+      }, {
+        "name" : "SortField.Type",
+        "type_id" : 4609,
+        "enum_fields" : [ {
+          "name" : "SCORE"
+        }, {
+          "name" : "DOC",
+          "integer" : 1
+        }, {
+          "name" : "STRING",
+          "integer" : 2
+        }, {
+          "name" : "INT",
+          "integer" : 3
+        }, {
+          "name" : "FLOAT",
+          "integer" : 4
+        }, {
+          "name" : "LONG",
+          "integer" : 5
+        }, {
+          "name" : "DOUBLE",
+          "integer" : 6
+        }, {
+          "name" : "CUSTOM",
+          "integer" : 7
+        }, {
+          "name" : "STRING_VAL",
+          "integer" : 8
+        }, {
+          "name" : "REWRITEABLE",
+          "integer" : 9
+        } ]
+      }, {
+        "name" : "TotalHits.Relation",
+        "enum_fields" : [ {
+          "name" : "EQUAL_TO"
+        }, {
+          "name" : "GREATER_THAN_OR_EQUAL_TO",
+          "integer" : 1
+        } ]
+      } ],
       "messages" : [ {
-        "name" : "KnownClassKey",
-        "type_id" : 4200,
+        "name" : "ScoreDoc",
+        "type_id" : 4612,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "doc",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "score",
+          "type" : "float",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "shardIndex",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FieldDoc",
+        "type_id" : 4606,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "doc",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "score",
+          "type" : "float",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "fields",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "shardIndex",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "QueryResponse",
+        "type_id" : 4222,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "nodeTopDocs",
+          "type" : "NodeTopDocs",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "resultSize",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ClusteredQueryOperation",
+        "type_id" : 4208,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "commandType",
+          "type" : "CQCommandType",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "queryDefinition",
+          "type" : "QueryDefinition",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "queryId",
+          "type" : "org.infinispan.protostream.commons.UUID",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "docIndex",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IndexWorker",
+        "type_id" : 4219,
         "fields" : [ {
           "id" : 1,
           "name" : "cacheName",
@@ -13,13 +147,234 @@
           "optional" : true
         }, {
           "id" : 2,
-          "name" : "className",
+          "name" : "indexedTypes",
+          "type" : "org.infinispan.global.core.Class",
+          "is_repeated" : true
+        }, {
+          "id" : 3,
+          "name" : "skipIndex",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "keys",
+          "type" : "org.infinispan.global.core.MarshallableSet",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SortField",
+        "type_id" : 4608,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "field",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "type",
+          "type" : "SortField.Type",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "reverseSort",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TopDocs",
+        "type_id" : 4610,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "totalHits",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "scoreDocs",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "BytesRef",
+        "type_id" : 4614,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bytes",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "Sort",
+        "type_id" : 4607,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "sortFields",
+          "type" : "SortField",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "PojoRawTypeIdentifier",
+        "type_id" : 4210,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "class",
+          "type" : "org.infinispan.global.core.Class",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "typeName",
           "type" : "string",
           "optional" : true
         } ]
+      }, {
+        "name" : "NodeTopDocs",
+        "type_id" : 4220,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "address",
+          "type" : "org.infinispan.persistence.core.Address",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topDocs",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "totalHitCount",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "countIsExact",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "keys",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "projections",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TotalHits",
+        "type_id" : 4613,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "relation",
+          "type" : "TotalHits.Relation",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "QueryDefinition",
+        "type_id" : 4221,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "queryString",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "statementType",
+          "type" : "org.infinispan.global.objectfilter.StatementType",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "maxResults",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "firstResult",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "hitCountAccuracy",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "timeout",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "scoreRequired",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "queryEngineProvider",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "wrappedNamedParameters",
+          "type" : "org.infinispan.global.core.MarshallableMap",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SegmentsClusteredQueryCommand",
+        "type_id" : 4223,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "clusteredQueryOperation",
+          "type" : "ClusteredQueryOperation",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segments",
+          "type" : "org.infinispan.protostream.commons.BitSet",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TopFieldDocs",
+        "type_id" : 4611,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "totalHits",
+          "type" : "TotalHits",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "scoreDocs",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "sortFields",
+          "type" : "SortField",
+          "is_repeated" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "org/infinispan/protostream/message-wrapping.proto"
+      }, {
+        "path" : "common-java-types.proto"
+      }, {
+        "path" : "global.objectfilter.proto"
+      }, {
+        "path" : "global.core.proto"
+      }, {
+        "path" : "persistence.core.proto"
       } ],
       "package" : {
-        "name" : "org.infinispan.persistence.query"
+        "name" : "org.infinispan.global.query"
       }
     }
   } ]

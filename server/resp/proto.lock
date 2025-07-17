@@ -4,23 +4,6 @@
     "def" : {
       "enums" : [ ],
       "messages" : [ {
-        "name" : "GlobMatchFilterConverter",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "glob",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "returnValue",
-          "type" : "bool",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "false"
-          } ]
-        } ]
-      }, {
         "name" : "CompactSet",
         "type_id" : 6103,
         "fields" : [ {
@@ -37,18 +20,6 @@
           "id" : 3,
           "name" : "minimum",
           "type" : "uint32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        } ]
-      }, {
-        "name" : "RespTypeFilterConverter",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "ordinal",
-          "type" : "int32",
           "optional" : true,
           "options" : [ {
             "name" : "default",
@@ -81,6 +52,400 @@
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.resp"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:global.resp.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "RespTypes",
+        "type_id" : 6131,
+        "enum_fields" : [ {
+          "name" : "unknown"
+        }, {
+          "name" : "none",
+          "integer" : 1
+        }, {
+          "name" : "hash",
+          "integer" : 2
+        }, {
+          "name" : "list",
+          "integer" : 3
+        }, {
+          "name" : "set",
+          "integer" : 4
+        }, {
+          "name" : "_stream",
+          "integer" : 5
+        }, {
+          "name" : "string",
+          "integer" : 6
+        }, {
+          "name" : "zset",
+          "integer" : 7
+        }, {
+          "name" : "json",
+          "integer" : 8
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "GlobMatchFilterConverter",
+        "type_id" : 6108,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "glob",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "returnValue",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonArrindexFunction",
+        "type_id" : 6113,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "jsonPath",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "start",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "stop",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "isLegacy",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "EventListenerConverter",
+        "type_id" : 6106,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "dc",
+          "type" : "org.infinispan.global.core.DataConversion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonLenStrFunction",
+        "type_id" : 6122,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonToggleFunction",
+        "type_id" : 6129,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonMergeFunction",
+        "type_id" : 6123,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonGetFunction",
+        "type_id" : 6119,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "space",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "newline",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "indent",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "paths",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "JsonTypeFunction",
+        "type_id" : 6130,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonSetFunction",
+        "type_id" : 6127,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "nx",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "xx",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonBucket",
+        "type_id" : 6104,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonClearFunction",
+        "type_id" : 6117,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonArrpopFunction",
+        "type_id" : 6115,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "index",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonStringAppendFunction",
+        "type_id" : 6128,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ComposedFilterConverter",
+        "type_id" : 6105,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "filterConverters",
+          "type" : "org.infinispan.global.core.MarshallableList",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "EventListenerKeysFilter",
+        "type_id" : 6107,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "keys",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "JsonLenArrayFunction",
+        "type_id" : 6120,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonLenObjFunction",
+        "type_id" : 6121,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonDebugMemoryFunction",
+        "type_id" : 6132,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonArrinsertFunction",
+        "type_id" : 6114,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "index",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "values",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "JsonObjkeysFunction",
+        "type_id" : 6126,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TxEventConverterEmpty",
+        "type_id" : 6110,
+        "fields" : [ ]
+      }, {
+        "name" : "JsonArrayAppendFunction",
+        "type_id" : 6112,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "values",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "JsonNumIncrOpFunction",
+        "type_id" : 6124,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RespTypeFilterConverter",
+        "type_id" : 6109,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "type",
+          "type" : "RespTypes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonRespFunction",
+        "type_id" : 6111,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonArrtrimFunction",
+        "type_id" : 6116,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "start",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "stop",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonNumMultOpFunction",
+        "type_id" : 6125,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonDelFunction",
+        "type_id" : 6118,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "global.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.resp"
       }
     }
   } ]

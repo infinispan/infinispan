@@ -1,8 +1,6400 @@
 {
   "definitions" : [ {
+    "protopath" : "generated:/:global.core.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "Type",
+        "type_id" : 1055,
+        "enum_fields" : [ {
+          "name" : "CACHE_ENTRY_ACTIVATED"
+        }, {
+          "name" : "CACHE_ENTRY_PASSIVATED",
+          "integer" : 1
+        }, {
+          "name" : "CACHE_ENTRY_VISITED",
+          "integer" : 2
+        }, {
+          "name" : "CACHE_ENTRY_LOADED",
+          "integer" : 3
+        }, {
+          "name" : "CACHE_ENTRY_EVICTED",
+          "integer" : 4
+        }, {
+          "name" : "CACHE_ENTRY_CREATED",
+          "integer" : 5
+        }, {
+          "name" : "CACHE_ENTRY_REMOVED",
+          "integer" : 6
+        }, {
+          "name" : "CACHE_ENTRY_MODIFIED",
+          "integer" : 7
+        }, {
+          "name" : "TRANSACTION_COMPLETED",
+          "integer" : 8
+        }, {
+          "name" : "TRANSACTION_REGISTERED",
+          "integer" : 9
+        }, {
+          "name" : "CACHE_ENTRY_INVALIDATED",
+          "integer" : 10
+        }, {
+          "name" : "CACHE_ENTRY_EXPIRED",
+          "integer" : 11
+        }, {
+          "name" : "DATA_REHASHED",
+          "integer" : 12
+        }, {
+          "name" : "TOPOLOGY_CHANGED",
+          "integer" : 13
+        }, {
+          "name" : "PARTITION_STATUS_CHANGED",
+          "integer" : 14
+        }, {
+          "name" : "PERSISTENCE_AVAILABILITY_CHANGED",
+          "integer" : 15
+        } ]
+      }, {
+        "name" : "ValueMatcher",
+        "type_id" : 47,
+        "enum_fields" : [ {
+          "name" : "MATCH_ALWAYS"
+        }, {
+          "name" : "MATCH_EXPECTED",
+          "integer" : 1
+        }, {
+          "name" : "MATCH_EXPECTED_OR_NEW",
+          "integer" : 2
+        }, {
+          "name" : "MATCH_EXPECTED_OR_NULL",
+          "integer" : 3
+        }, {
+          "name" : "MATCH_NON_NULL",
+          "integer" : 4
+        }, {
+          "name" : "MATCH_NEVER",
+          "integer" : 5
+        } ]
+      }, {
+        "name" : "RebalancingStatus",
+        "type_id" : 1157,
+        "enum_fields" : [ {
+          "name" : "SUSPENDED"
+        }, {
+          "name" : "PENDING",
+          "integer" : 1
+        }, {
+          "name" : "IN_PROGRESS",
+          "integer" : 2
+        }, {
+          "name" : "COMPLETE",
+          "integer" : 3
+        } ]
+      }, {
+        "name" : "StateTransferStatus",
+        "type_id" : 1275,
+        "enum_fields" : [ {
+          "name" : "IDLE"
+        }, {
+          "name" : "SENDING",
+          "integer" : 1
+        }, {
+          "name" : "SEND_OK",
+          "integer" : 2
+        }, {
+          "name" : "SEND_FAILED",
+          "integer" : 3
+        }, {
+          "name" : "SEND_CANCELED",
+          "integer" : 4
+        } ]
+      }, {
+        "name" : "XSiteStateTransferMode",
+        "type_id" : 1271,
+        "enum_fields" : [ {
+          "name" : "MANUAL"
+        }, {
+          "name" : "AUTO",
+          "integer" : 1
+        } ]
+      }, {
+        "name" : "BringSiteOnlineResponse",
+        "type_id" : 1277,
+        "enum_fields" : [ {
+          "name" : "BSOR_NO_SUCH_SITE"
+        }, {
+          "name" : "BSOR_ALREADY_ONLINE",
+          "integer" : 1
+        }, {
+          "name" : "BSOR_BROUGHT_ONLINE",
+          "integer" : 2
+        } ]
+      }, {
+        "name" : "XSiteEventType",
+        "type_id" : 1260,
+        "enum_fields" : [ {
+          "name" : "SITE_CONNECTED"
+        }, {
+          "name" : "STATE_REQUEST",
+          "integer" : 1
+        }, {
+          "name" : "INITIAL_STATE_REQUEST",
+          "integer" : 2
+        } ]
+      }, {
+        "name" : "Flag",
+        "type_id" : 15,
+        "enum_fields" : [ {
+          "name" : "ZERO_LOCK_ACQUISITION_TIMEOUT"
+        }, {
+          "name" : "CACHE_MODE_LOCAL",
+          "integer" : 1
+        }, {
+          "name" : "SKIP_LOCKING",
+          "integer" : 2
+        }, {
+          "name" : "FORCE_WRITE_LOCK",
+          "integer" : 3
+        }, {
+          "name" : "FORCE_ASYNCHRONOUS",
+          "integer" : 4
+        }, {
+          "name" : "FORCE_SYNCHRONOUS",
+          "integer" : 5
+        }, {
+          "name" : "SKIP_CACHE_STORE",
+          "integer" : 6
+        }, {
+          "name" : "SKIP_CACHE_LOAD",
+          "integer" : 7
+        }, {
+          "name" : "FAIL_SILENTLY",
+          "integer" : 8
+        }, {
+          "name" : "SKIP_REMOTE_LOOKUP",
+          "integer" : 9
+        }, {
+          "name" : "SKIP_INDEXING",
+          "integer" : 10
+        }, {
+          "name" : "PUT_FOR_EXTERNAL_READ",
+          "integer" : 11
+        }, {
+          "name" : "PUT_FOR_STATE_TRANSFER",
+          "integer" : 12
+        }, {
+          "name" : "PUT_FOR_X_SITE_STATE_TRANSFER",
+          "integer" : 13
+        }, {
+          "name" : "SKIP_SHARED_CACHE_STORE",
+          "integer" : 14
+        }, {
+          "name" : "SKIP_OWNERSHIP_CHECK",
+          "integer" : 15
+        }, {
+          "name" : "IGNORE_RETURN_VALUES",
+          "integer" : 16
+        }, {
+          "name" : "SKIP_XSITE_BACKUP",
+          "integer" : 17
+        }, {
+          "name" : "SKIP_LISTENER_NOTIFICATION",
+          "integer" : 18
+        }, {
+          "name" : "SKIP_STATISTICS",
+          "integer" : 19
+        }, {
+          "name" : "SKIP_INDEX_CLEANUP",
+          "integer" : 20
+        }, {
+          "name" : "COMMAND_RETRY",
+          "integer" : 21
+        }, {
+          "name" : "ROLLING_UPGRADE",
+          "integer" : 22
+        }, {
+          "name" : "REMOTE_ITERATION",
+          "integer" : 23
+        }, {
+          "name" : "SKIP_SIZE_OPTIMIZATION",
+          "integer" : 24
+        }, {
+          "name" : "IGNORE_TRANSACTION",
+          "integer" : 25
+        }, {
+          "name" : "IRAC_UPDATE",
+          "integer" : 26
+        }, {
+          "name" : "IRAC_STATE",
+          "integer" : 27
+        }, {
+          "name" : "ALREADY_HAS_LOCK",
+          "integer" : 28
+        }, {
+          "name" : "BACKUP_WRITE",
+          "integer" : 29
+        }, {
+          "name" : "STATE_TRANSFER_PROGRESS",
+          "integer" : 30
+        } ]
+      }, {
+        "name" : "AvailabilityMode",
+        "type_id" : 1022,
+        "enum_fields" : [ {
+          "name" : "AVAILABLE"
+        }, {
+          "name" : "DEGRADED_MODE",
+          "integer" : 1
+        }, {
+          "name" : "STOPPED",
+          "integer" : 2
+        } ]
+      }, {
+        "name" : "SiteState",
+        "type_id" : 1262,
+        "enum_fields" : [ {
+          "name" : "NOT_FOUND"
+        }, {
+          "name" : "ONLINE",
+          "integer" : 1
+        }, {
+          "name" : "OFFLINE",
+          "integer" : 2
+        } ]
+      }, {
+        "name" : "DeliveryGuarantee",
+        "type_id" : 1069,
+        "enum_fields" : [ {
+          "name" : "AT_MOST_ONCE"
+        }, {
+          "name" : "AT_LEAST_ONCE",
+          "integer" : 1
+        }, {
+          "name" : "EXACTLY_ONCE",
+          "integer" : 2
+        } ]
+      }, {
+        "name" : "CacheMode",
+        "type_id" : 1042,
+        "enum_fields" : [ {
+          "name" : "LOCAL"
+        }, {
+          "name" : "REPL_SYNC",
+          "integer" : 1
+        }, {
+          "name" : "REPL_ASYNC",
+          "integer" : 2
+        }, {
+          "name" : "INVALIDATION_SYNC",
+          "integer" : 3
+        }, {
+          "name" : "INVALIDATION_ASYNC",
+          "integer" : 4
+        }, {
+          "name" : "DIST_SYNC",
+          "integer" : 5
+        }, {
+          "name" : "DIST_ASYNC",
+          "integer" : 6
+        } ]
+      }, {
+        "name" : "TakeSiteOfflineResponse",
+        "type_id" : 1278,
+        "enum_fields" : [ {
+          "name" : "TSOR_NO_SUCH_SITE"
+        }, {
+          "name" : "TSOR_ALREADY_OFFLINE",
+          "integer" : 1
+        }, {
+          "name" : "TSOR_TAKEN_OFFLINE",
+          "integer" : 2
+        } ]
+      }, {
+        "name" : "SingleKeyBackupWriteCommand.SingleKeyBackupOperation",
+        "type_id" : 1170,
+        "enum_fields" : [ {
+          "name" : "WRITE"
+        }, {
+          "name" : "REMOVE",
+          "integer" : 1
+        }, {
+          "name" : "REMOVE_EXPIRED",
+          "integer" : 2
+        }, {
+          "name" : "REPLACE",
+          "integer" : 3
+        }, {
+          "name" : "COMPUTE",
+          "integer" : 4
+        }, {
+          "name" : "COMPUTE_IF_PRESENT",
+          "integer" : 5
+        }, {
+          "name" : "COMPUTE_IF_ABSENT",
+          "integer" : 6
+        } ]
+      }, {
+        "name" : "SingleKeyFunctionalBackupWriteCommand.SingleKeyFunctionBackupOperation",
+        "type_id" : 1172,
+        "enum_fields" : [ {
+          "name" : "READ_WRITE_KEY_VALUE"
+        }, {
+          "name" : "READ_WRITE",
+          "integer" : 1
+        }, {
+          "name" : "WRITE_ONLY_KEY_VALUE",
+          "integer" : 2
+        }, {
+          "name" : "WRITE_ONLY",
+          "integer" : 3
+        } ]
+      }, {
+        "name" : "CacheTopology.Phase",
+        "type_id" : 1050,
+        "enum_fields" : [ {
+          "name" : "NO_REBALANCE"
+        }, {
+          "name" : "CONFLICT_RESOLUTION",
+          "integer" : 1
+        }, {
+          "name" : "READ_OLD_WRITE_ALL",
+          "integer" : 2
+        }, {
+          "name" : "READ_ALL_WRITE_ALL",
+          "integer" : 3
+        }, {
+          "name" : "READ_NEW_WRITE_ALL",
+          "integer" : 4
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "CacheEntryFunction",
+        "type_id" : 1181,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "predicate",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "biFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "Identity",
+        "type_id" : 1279,
+        "fields" : [ ]
+      }, {
+        "name" : "KeyValueFilterConverterAsCacheEventFilterConverter",
+        "type_id" : 1116,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "converter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "format",
+          "type" : "org.infinispan.persistence.commons.MediaType",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheNotFoundResponse",
+        "type_id" : 51,
+        "fields" : [ ]
+      }, {
+        "name" : "SingleKeyBackupWriteCommand",
+        "type_id" : 1169,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "sequence",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "operation",
+          "type" : "SingleKeyBackupWriteCommand.SingleKeyBackupOperation",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "valueOrFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "EqualityPredicate",
+        "type_id" : 1328,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "object",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CollectReducer",
+        "type_id" : 1308,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "supplier",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "accumulator",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IdentityFunction",
+        "type_id" : 1329,
+        "fields" : [ ]
+      }, {
+        "name" : "NextPublisherCommand",
+        "type_id" : 1142,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "requestId",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapToLongOperation",
+        "type_id" : 1196,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RebalancePhaseConfirmCommand",
+        "type_id" : 1155,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "throwable",
+          "type" : "Throwable",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TopologyAwareSyncConsistentHashFactory",
+        "type_id" : 1234,
+        "fields" : [ ]
+      }, {
+        "name" : "CacheEventFilterAsKeyValueFilter",
+        "type_id" : 1031,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "filter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheDoubleConsumer",
+        "type_id" : 1183,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SumFinalizer",
+        "type_id" : 1321,
+        "fields" : [ ]
+      }, {
+        "name" : "SizeCommand",
+        "type_id" : 1173,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "flagsBitSet",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "wrappedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FilterConverterAsKeyFunction",
+        "type_id" : 1034,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "converter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracCleanupKeysCommand",
+        "type_id" : 1092,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cleanup",
+          "type" : "IracManagerKeyInfo",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "Throwable",
+        "type_id" : 24,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedThrowable",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "implementation",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "message",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "cause",
+          "type" : "Throwable",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "suppressed",
+          "type" : "Throwable",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "SuccessfulObjResponse",
+        "type_id" : 35,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "object",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapToObjLongOperation",
+        "type_id" : 1229,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracClearKeysRequest",
+        "type_id" : 1093,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MarshallableSet",
+        "type_id" : 23,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "size",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "bytes",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "InitialPublisherCommand",
+        "type_id" : 1089,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "requestId",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "deliveryGuarantee",
+          "type" : "DeliveryGuarantee",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "batchSize",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "wrappedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "keys",
+          "type" : "MarshallableSet",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "excludedKeys",
+          "type" : "MarshallableSet",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "explicitFlags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "entryStream",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "trackKeys",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "transformer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SegmentPublisherResult",
+        "type_id" : 1168,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedSuspectedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedObject",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReadWriteManyEntriesCommand",
+        "type_id" : 1154,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "forwarded",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "internalMetadata",
+          "type" : "MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "arguments",
+          "type" : "MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "bifunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SegmentResult",
+        "type_id" : 1145,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "entryCount",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueIfEqualsReturnBoolean",
+        "type_id" : 1294,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "metas",
+          "type" : "MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "oldValue",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReturnReadWriteView",
+        "type_id" : 1288,
+        "fields" : [ ]
+      }, {
+        "name" : "EncoderValueMapper",
+        "type_id" : 1073,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "dataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "KeyPublisherResponse",
+        "type_id" : 1113,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "results",
+          "type" : "MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "completedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "lostSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "complete",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "segmentResults",
+          "type" : "SegmentResult",
+          "is_repeated" : true
+        }, {
+          "id" : 6,
+          "name" : "keys",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStateTransferCancelSendCommand",
+        "type_id" : 1266,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "siteName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStateTransferFinishSendCommand",
+        "type_id" : 1270,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "siteName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "statusOk",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "StateTransferGetListenersCommand",
+        "type_id" : 1178,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "VersionedResult",
+        "type_id" : 1247,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "result",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "numericVersion",
+          "type" : "org.infinispan.persistence.core.NumericVersion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "clusteredVersion",
+          "type" : "org.infinispan.persistence.core.SimpleClusteredVersion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SingleKeyFunctionalBackupWriteCommand",
+        "type_id" : 1171,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "sequence",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "operation",
+          "type" : "SingleKeyFunctionalBackupWriteCommand.SingleKeyFunctionBackupOperation",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 13,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 14,
+          "name" : "prevValue",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 15,
+          "name" : "prevMetadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReadOnlySnapshotView",
+        "type_id" : 1075,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "DataConversion",
+        "type_id" : 1066,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "isKey",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "encoderId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrapperId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "mediaType",
+          "type" : "org.infinispan.persistence.commons.MediaType",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RebalanceStatusRequestCommand",
+        "type_id" : 1159,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReduceWithIdentityReducer",
+        "type_id" : 1317,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "identity",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "biFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "StateTransferCancelCommand",
+        "type_id" : 1176,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "DistinctDoubleOperation",
+        "type_id" : 1199,
+        "fields" : [ ]
+      }, {
+        "name" : "CacheEventFilterConverterAsKeyValueFilterConverter",
+        "type_id" : 1115,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "converter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RemoveReturnPrevOrNull",
+        "type_id" : 1283,
+        "fields" : [ ]
+      }, {
+        "name" : "ComputeCommand",
+        "type_id" : 1064,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "remappingBiFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "computeIfPresent",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "EntryToValueFunction",
+        "type_id" : 1327,
+        "fields" : [ ]
+      }, {
+        "name" : "ReadWrite",
+        "type_id" : 1138,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReduceReducerFinalizer",
+        "type_id" : 1319,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "operator",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "WriteOnlyManyEntriesCommand",
+        "type_id" : 1252,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "forwarded",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "internalMetadata",
+          "type" : "MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "arguments",
+          "type" : "MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "biconsumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ScopeFilter",
+        "type_id" : 1166,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "scope",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueMetasReturnPrevOrNull",
+        "type_id" : 1301,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "metas",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "LimitLongOperation",
+        "type_id" : 1225,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "limit",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MetadataTransientMortalCacheValue",
+        "type_id" : 1128,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MaxReducerFinalizer",
+        "type_id" : 1313,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "comparator",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "EntryFunctionEncoder",
+        "type_id" : 1326,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "mapper",
+          "type" : "EncoderEntryMapper",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "innerFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "GetInDoubtTxInfoCommand",
+        "type_id" : 1083,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracTombstoneCheckRequest",
+        "type_id" : 1105,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "keys",
+          "type" : "MarshallableList",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "BoxedLongOperation",
+        "type_id" : 1221,
+        "fields" : [ ]
+      }, {
+        "name" : "ExceptionResponse",
+        "type_id" : 49,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "exception",
+          "type" : "Throwable",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "Write",
+        "type_id" : 1140,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "WriteOnlyKeyValueCommand",
+        "type_id" : 1250,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "valueMatcher",
+          "type" : "ValueMatcher",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "biconsumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 13,
+          "name" : "argument",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ClusterListenerReplicateCallable",
+        "type_id" : 1057,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "identifier",
+          "type" : "org.infinispan.protostream.commons.UUID",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "origin",
+          "type" : "org.infinispan.persistence.core.Address",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "sync",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "filterAnnotations",
+          "type" : "Class",
+          "is_repeated" : true
+        }, {
+          "id" : 6,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "useStorageFormat",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "filter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "converter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "sameConverter",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SuccessfulMapResponse",
+        "type_id" : 36,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "map",
+          "type" : "MarshallableMap",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TopologyAwareConsistentHashFactory",
+        "type_id" : 1233,
+        "fields" : [ ]
+      }, {
+        "name" : "VersionedPrepareCommand",
+        "type_id" : 1246,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "globalTransaction",
+          "type" : "GlobalTransaction",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "modifications",
+          "type" : "MarshallableList",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "onePhaseCommit",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "retriedCommand",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "versionsSeen",
+          "type" : "MarshallableMap",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStateTransferClearStatusCommand",
+        "type_id" : 1267,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TxCompletionNotificationCommand",
+        "type_id" : 1242,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "xid",
+          "type" : "org.infinispan.global.commons.XidImpl",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "internalId",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "gtx",
+          "type" : "GlobalTransaction",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "InvalidateCommand",
+        "type_id" : 26,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "keys",
+          "type" : "MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MarshallableArray",
+        "type_id" : 16,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "size",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "bytes",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "ClusterEvent",
+        "type_id" : 1054,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "type",
+          "type" : "Type",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "transaction",
+          "type" : "GlobalTransaction",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "origin",
+          "type" : "org.infinispan.persistence.core.Address",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "commandRetried",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "oldValue",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReadWriteKeyCommand",
+        "type_id" : 1151,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "valueMatcher",
+          "type" : "ValueMatcher",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapToDoubleIntOperation",
+        "type_id" : 1216,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetAdapter",
+        "type_id" : 1015,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "elements",
+          "type" : "MarshallableSet",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MetadataTransientMortalCacheEntry",
+        "type_id" : 1127,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SuccessfulTransientCacheValueResponse",
+        "type_id" : 44,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "responseValue",
+          "type" : "TransientCacheValue",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReplicatedConsistentHash",
+        "type_id" : 1162,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "members",
+          "type" : "org.infinispan.persistence.core.Address",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "primaryOwners",
+          "type" : "int32",
+          "is_repeated" : true
+        }, {
+          "id" : 3,
+          "name" : "capacityFactors",
+          "type" : "MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "membersWithoutState",
+          "type" : "org.infinispan.persistence.core.Address",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "AcceptAllKeyValueFilter",
+        "type_id" : 1021,
+        "fields" : [ ]
+      }, {
+        "name" : "MarshallableObject",
+        "type_id" : 22,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bytes",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "message",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CompositeKeyValueFilter",
+        "type_id" : 1063,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "filters",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheLeaveCommand",
+        "type_id" : 1041,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValue",
+        "type_id" : 1290,
+        "fields" : [ ]
+      }, {
+        "name" : "TransientMortalCacheValue",
+        "type_id" : 1241,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "lifespan",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "maxIdle",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CollectorSupplier",
+        "type_id" : 1027,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "supplier",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CollectorReducer",
+        "type_id" : 1310,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "collector",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "Params",
+        "type_id" : 1080,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bits",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "UnsureResponse",
+        "type_id" : 50,
+        "fields" : [ ]
+      }, {
+        "name" : "StateTransferStartCommand",
+        "type_id" : 1179,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FilterConverterAsValueFunction",
+        "type_id" : 1035,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "converter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "VersionedCommitCommand",
+        "type_id" : 1245,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "globalTransaction",
+          "type" : "GlobalTransaction",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "updatedVersions",
+          "type" : "MarshallableMap",
+          "optional" : true
+        } ],
+        "maps" : [ {
+          "key_type" : "int32",
+          "field" : {
+            "id" : 4,
+            "name" : "iracMetadataMap",
+            "type" : "org.infinispan.persistence.core.IracMetadata"
+          }
+        } ]
+      }, {
+        "name" : "IracRequestStateCommand",
+        "type_id" : 1102,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "segments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapLongOperation",
+        "type_id" : 1226,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "operator",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PutMapBackupWriteCommand",
+        "type_id" : 1147,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "sequence",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "map",
+          "type" : "MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "internalMetadata",
+          "type" : "MarshallableMap",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReplicatedConsistentHashFactory",
+        "type_id" : 1163,
+        "fields" : [ ]
+      }, {
+        "name" : "TxReadOnlyKeyCommand",
+        "type_id" : 1243,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "wrappedFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "mutations",
+          "type" : "MarshallableList",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReturnReadOnlyFindIsPresent",
+        "type_id" : 1284,
+        "fields" : [ ]
+      }, {
+        "name" : "ReduceWithInitialSupplierReducer",
+        "type_id" : 1318,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "initialSupplier",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "biFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SuccessfulBooleanResponse",
+        "type_id" : 32,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "responseValue",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TxReadOnlyManyCommand",
+        "type_id" : 1244,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "keys",
+          "type" : "MarshallableCollection",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "mutations",
+          "type" : "MarshallableList",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "DefaultConsistentHashFactory",
+        "type_id" : 1068,
+        "fields" : [ ]
+      }, {
+        "name" : "KeyValuePair",
+        "type_id" : 1117,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TransientMortalCacheEntry",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "lifespan",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "maxIdle",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PrepareCommand",
+        "type_id" : 1143,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "globalTransaction",
+          "type" : "GlobalTransaction",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "modifications",
+          "type" : "MarshallableList",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "onePhaseCommit",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "retriedCommand",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "NoneMatchReducer",
+        "type_id" : 1315,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "predicate",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "BoxedIntOperation",
+        "type_id" : 1210,
+        "fields" : [ ]
+      }, {
+        "name" : "FlatMapIntOperation",
+        "type_id" : 1213,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheShutdownRequestCommand",
+        "type_id" : 1044,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RemoveIfValueEqualsReturnBoolean",
+        "type_id" : 1281,
+        "fields" : [ ]
+      }, {
+        "name" : "MetadataTransientCacheEntry",
+        "type_id" : 1125,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "KeyFunctionEncoder",
+        "type_id" : 1331,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "innerFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReadWriteKeyValueCommand",
+        "type_id" : 1152,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "valueMatcher",
+          "type" : "ValueMatcher",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "argument",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 13,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 14,
+          "name" : "wrappedPrevValue",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 15,
+          "name" : "wrappedPrevMetadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MetadataImmortalCacheEntry",
+        "type_id" : 1121,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "wrappedMetadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueReturnPrevOrNull",
+        "type_id" : 1303,
+        "fields" : [ ]
+      }, {
+        "name" : "FlatMapLongOperation",
+        "type_id" : 1224,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheObjBiConsumer",
+        "type_id" : 1182,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "AutoStateTransferResponse",
+        "type_id" : 1254,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "isOffline",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "stateTransferMode",
+          "type" : "XSiteStateTransferMode",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "VersionedResults",
+        "type_id" : 1248,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "values",
+          "type" : "MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "versions",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracPutManyRequest",
+        "type_id" : 1098,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "updateList",
+          "type" : "MarshallableList",
+          "optional" : true
+        } ],
+        "messages" : [ {
+          "name" : "IracPutManyRequestRemove",
+          "type_id" : 1100,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "key",
+            "type" : "MarshallableObject",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "iracMetadata",
+            "type" : "org.infinispan.persistence.core.IracMetadata",
+            "optional" : true
+          } ]
+        }, {
+          "name" : "IracPutManyRequestWrite",
+          "type_id" : 1101,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "key",
+            "type" : "MarshallableObject",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "iracMetadata",
+            "type" : "org.infinispan.persistence.core.IracMetadata",
+            "optional" : true
+          }, {
+            "id" : 3,
+            "name" : "value",
+            "type" : "MarshallableObject",
+            "optional" : true
+          }, {
+            "id" : 4,
+            "name" : "metadata",
+            "type" : "MarshallableObject",
+            "optional" : true
+          } ]
+        }, {
+          "name" : "IracPutManyRequestExpire",
+          "type_id" : 1099,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "key",
+            "type" : "MarshallableObject",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "iracMetadata",
+            "type" : "org.infinispan.persistence.core.IracMetadata",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "FunctionMapper",
+        "type_id" : 1079,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CancelPublisherCommand",
+        "type_id" : 1051,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "requestId",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PutKeyValueCommand",
+        "type_id" : 27,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "valueMatcher",
+          "type" : "ValueMatcher",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "putIfAbsent",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "returnEntry",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MetaLifespan",
+        "type_id" : 1130,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "lifespan",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "StatsEnvelope",
+        "type_id" : 1081,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "flags",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracUpdateVersionCommand",
+        "type_id" : 1112,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        } ],
+        "maps" : [ {
+          "key_type" : "int32",
+          "field" : {
+            "id" : 2,
+            "name" : "versions",
+            "type" : "org.infinispan.persistence.core.IracEntryVersion"
+          }
+        } ]
+      }, {
+        "name" : "ReductionPublisherRequestCommand",
+        "type_id" : 1160,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "parallelStream",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "deliveryGuarantee",
+          "type" : "DeliveryGuarantee",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "explicitFlags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "entryStream",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "wrappedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "keys",
+          "type" : "MarshallableSet",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "excludedKeys",
+          "type" : "MarshallableSet",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "transformer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "finalizer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueMetasIfAbsentReturnBoolean",
+        "type_id" : 1297,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "metas",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueMetas",
+        "type_id" : 1291,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "metas",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "WriteSkewException",
+        "type_id" : 1078,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "message",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedKey",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedCause",
+          "type" : "Throwable",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CollectorFinalizer",
+        "type_id" : 1309,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "collector",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MetaEntryVersion",
+        "type_id" : 1129,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "numericVersion",
+          "type" : "org.infinispan.persistence.core.NumericVersion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "clusteredVersion",
+          "type" : "org.infinispan.persistence.core.SimpleClusteredVersion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CommandInvocationId",
+        "type_id" : 25,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "requestUUID",
+          "type" : "RequestUUID",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracTombstoneRemoteSiteCheckCommand",
+        "type_id" : 1109,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedKeys",
+          "type" : "MarshallableList",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "DefaultConsistentHash",
+        "type_id" : 1067,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "jGroupsMembers",
+          "type" : "org.infinispan.persistence.core.Address",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "capacityFactors",
+          "type" : "float",
+          "is_repeated" : true
+        }, {
+          "id" : 3,
+          "name" : "numOwners",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "segmentOwners",
+          "type" : "int32",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "SetValueIfAbsentReturnBoolean",
+        "type_id" : 1292,
+        "fields" : [ ]
+      }, {
+        "name" : "CheckTransactionRpcCommand",
+        "type_id" : 1052,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "gtxToCheck",
+          "type" : "GlobalTransaction",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "SuccessfulMetadataMortalCacheValueResponse",
+        "type_id" : 39,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "responseValue",
+          "type" : "MetadataMortalCacheValue",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "StateChunk",
+        "type_id" : 1174,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "isLastChunk",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "entries",
+          "type" : "MarshallableList",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "DistinctIntOperation",
+        "type_id" : 1211,
+        "fields" : [ ]
+      }, {
+        "name" : "IracTouchKeyRequest",
+        "type_id" : 1111,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueMetasReturnView",
+        "type_id" : 1302,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "metas",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheJoinInfo",
+        "type_id" : 1039,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedConsistentHashFactory",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "numSegments",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "numOwners",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "timeout",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "cacheMode",
+          "type" : "CacheMode",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "capacityFactor",
+          "type" : "float",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "persistentUUID",
+          "type" : "org.infinispan.protostream.commons.UUID",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "persistentStateChecksum",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ClusteredGetCommand",
+        "type_id" : 1059,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "isWrite",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MetadataTransientCacheValue",
+        "type_id" : 1126,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SyncConsistentHashFactory",
+        "type_id" : 1231,
+        "fields" : [ ]
+      }, {
+        "name" : "LockControlCommand",
+        "type_id" : 1118,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "globalTransaction",
+          "type" : "GlobalTransaction",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "keys",
+          "type" : "MarshallableCollection",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "unlock",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "flagsBitSetWithoutRemote",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheStatusRequestCommand",
+        "type_id" : 1046,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "viewId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FlatMapToDoubleOperation",
+        "type_id" : 1189,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MetadataImmortalCacheValue",
+        "type_id" : 1122,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "Remove",
+        "type_id" : 1280,
+        "fields" : [ ]
+      }, {
+        "name" : "SuccessfulImmortalCacheValueResponse",
+        "type_id" : 37,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "responseValue",
+          "type" : "ImmortalCacheValue",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "OrFinalizer",
+        "type_id" : 1316,
+        "fields" : [ ]
+      }, {
+        "name" : "CacheState",
+        "type_id" : 1045,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "template",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "configuration",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "flags",
+          "type" : "org.infinispan.global.commons.AdminFlag",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "DistinctLongOperation",
+        "type_id" : 1222,
+        "fields" : [ ]
+      }, {
+        "name" : "NonNullPredicate",
+        "type_id" : 1332,
+        "fields" : [ ]
+      }, {
+        "name" : "IracTombstoneCleanupCommand",
+        "type_id" : 1106,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "tombstonesToRemove",
+          "type" : "IracTombstoneInfo",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "TopologyUpdateStableCommand",
+        "type_id" : 1236,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "persistentUUIDs",
+          "type" : "org.infinispan.protostream.commons.UUID",
+          "is_repeated" : true
+        }, {
+          "id" : 3,
+          "name" : "rebalanceId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "viewId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "currentCH",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "pendingCH",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "topologyRestored",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "actualMembers",
+          "type" : "org.infinispan.persistence.core.Address",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "XSiteEvent",
+        "type_id" : 1259,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "type",
+          "type" : "XSiteEventType",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "siteName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PutMapCommand",
+        "type_id" : 1148,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "map",
+          "type" : "MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "forwarded",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "internalMetadata",
+          "type" : "MarshallableMap",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "NoValueReadOnlyView",
+        "type_id" : 1074,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SuccessfulLongResponse",
+        "type_id" : 38,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "responseValue",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "EncoderKeyMapper",
+        "type_id" : 1071,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "dataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SingleXSiteRpcCommand",
+        "type_id" : 1258,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "command",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "DistinctOperation",
+        "type_id" : 1186,
+        "fields" : [ ]
+      }, {
+        "name" : "CacheAvailabilityUpdateCommand",
+        "type_id" : 1026,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "availabilityMode",
+          "type" : "AvailabilityMode",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "WriteOnlyKeyCommand",
+        "type_id" : 1249,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "valueMatcher",
+          "type" : "ValueMatcher",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "Class",
+        "type_id" : 1014,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "clazz",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IntSummaryStatistics",
+        "type_id" : 1017,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "min",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "max",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "sum",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracTombstoneInfo",
+        "type_id" : 1107,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedKey",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "metadata",
+          "type" : "org.infinispan.persistence.core.IracMetadata",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReturnReadWriteGet",
+        "type_id" : 1287,
+        "fields" : [ ]
+      }, {
+        "name" : "PeekDoubleOperation",
+        "type_id" : 1207,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueIfAbsentReturnPrevOrNull",
+        "type_id" : 1293,
+        "fields" : [ ]
+      }, {
+        "name" : "ManagerStatusResponse",
+        "type_id" : 1119,
+        "fields" : [ {
+          "id" : 2,
+          "name" : "rebalancingEnabled",
+          "type" : "bool",
+          "optional" : true
+        } ],
+        "maps" : [ {
+          "key_type" : "string",
+          "field" : {
+            "id" : 1,
+            "name" : "caches",
+            "type" : "CacheStatusResponse"
+          }
+        } ]
+      }, {
+        "name" : "ReplicableRunnableCommand",
+        "type_id" : 1164,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "runnable",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "subject",
+          "type" : "org.infinispan.persistence.core.Subject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapToLongDoubleOperation",
+        "type_id" : 1205,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SuccessfulMetadataTransientMortalCacheValueResponse",
+        "type_id" : 42,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "responseValue",
+          "type" : "MetadataTransientMortalCacheValue",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStateTransferFinishReceiveCommand",
+        "type_id" : 1269,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "siteName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SuccessfulTransientMortalCacheValueResponse",
+        "type_id" : 45,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "responseValue",
+          "type" : "TransientMortalCacheValue",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracMetadataRequestCommand",
+        "type_id" : 1095,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "versionSeen",
+          "type" : "org.infinispan.persistence.core.IracEntryVersion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetInternalCacheValue",
+        "type_id" : 1289,
+        "fields" : [ ]
+      }, {
+        "name" : "MapDoubleOperation",
+        "type_id" : 1203,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "operator",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FilterLongOperation",
+        "type_id" : 1223,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "predicate",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStateTransferStartSendCommand",
+        "type_id" : 1274,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "siteName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "DoubleSummaryStatistics",
+        "type_id" : 1016,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "min",
+          "type" : "double",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "max",
+          "type" : "double",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "sum",
+          "type" : "double",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ToArrayFinalizer",
+        "type_id" : 1322,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "generator",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStateTransferControlRequest",
+        "type_id" : 1268,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "startReceive",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "AlwaysTruePredicate",
+        "type_id" : 1324,
+        "fields" : [ ]
+      }, {
+        "name" : "WriteWithValue",
+        "type_id" : 1141,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "argument",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "biConsumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ClusteredGetAllCommand",
+        "type_id" : 1058,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "keys",
+          "type" : "MarshallableList",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "globalTransaction",
+          "type" : "GlobalTransaction",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RemoveExpiredCommand",
+        "type_id" : 29,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "valueMatcher",
+          "type" : "ValueMatcher",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "returnEntryNecessary",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "maxIdle",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 13,
+          "name" : "lifespan",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapToObjIntOperation",
+        "type_id" : 1218,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapToLongIntOperation",
+        "type_id" : 1217,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheIntConsumer",
+        "type_id" : 1184,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PublisherResponse",
+        "type_id" : 1144,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "results",
+          "type" : "MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "completedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "lostSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "complete",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "segmentResults",
+          "type" : "SegmentResult",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "SyncReplicatedConsistentHashFactory",
+        "type_id" : 1232,
+        "fields" : [ ]
+      }, {
+        "name" : "RemoveCommand",
+        "type_id" : 28,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "valueMatcher",
+          "type" : "ValueMatcher",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "returnEntryNecessary",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SuccessfulArrayResponse",
+        "type_id" : 31,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "array",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "StateResponseCommand",
+        "type_id" : 1175,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "stateChunks",
+          "type" : "StateChunk",
+          "is_repeated" : true
+        }, {
+          "id" : 4,
+          "name" : "applyState",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "UnsuccessfulResponse",
+        "type_id" : 48,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "object",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MultiKeyFunctionalBackupWriteCommand",
+        "type_id" : 1137,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "sequence",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "writeOnly",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "keys",
+          "type" : "MarshallableCollection",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FlatMapDoubleOperation",
+        "type_id" : 1201,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheTopology",
+        "type_id" : 1049,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "rebalanceId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "restoredFromState",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "phase",
+          "type" : "CacheTopology.Phase",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "membersPersistentUUIDs",
+          "type" : "org.infinispan.protostream.commons.UUID",
+          "is_repeated" : true
+        }, {
+          "id" : 6,
+          "name" : "currentCH",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "pendingCH",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "unionCH",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "actualMembers",
+          "type" : "org.infinispan.persistence.core.Address",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "InvalidateL1Command",
+        "type_id" : 1091,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "keys",
+          "type" : "MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "writeOrigin",
+          "type" : "org.infinispan.persistence.core.Address",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MarshallableMap",
+        "type_id" : 21,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "keys",
+          "type" : "bytes",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "values",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "CacheIntermediatePublisher",
+        "type_id" : 1038,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "intermediateOperations",
+          "type" : "MarshallableDeque",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReadWriteWithValue",
+        "type_id" : 1139,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "argument",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "biFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SuccessfulCollectionResponse",
+        "type_id" : 34,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "collection",
+          "type" : "MarshallableCollection",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ConflictResolutionStartCommand",
+        "type_id" : 1060,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReturnReadWriteFind",
+        "type_id" : 1286,
+        "fields" : [ ]
+      }, {
+        "name" : "MarshallableList",
+        "type_id" : 19,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "size",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "bytes",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "BiFunctionMapper",
+        "type_id" : 1025,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "biFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PeekOperation",
+        "type_id" : 1197,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ListAdapter",
+        "type_id" : 1019,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "elements",
+          "type" : "MarshallableList",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FilterIntOperation",
+        "type_id" : 1212,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "predicate",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MultiClusterEventCommand",
+        "type_id" : 1134,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "events",
+          "type" : "MultiClusterEventCommand.UUIDMap",
+          "is_repeated" : true
+        } ],
+        "messages" : [ {
+          "name" : "UUIDMap",
+          "type_id" : 1135,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "uuid",
+            "type" : "org.infinispan.protostream.commons.UUID",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "events",
+            "type" : "ClusterEvent",
+            "is_repeated" : true
+          } ]
+        } ]
+      }, {
+        "name" : "ReadOnlyKeyCommand",
+        "type_id" : 1149,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "wrappedFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheLongConsumer",
+        "type_id" : 1185,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracTombstoneStateResponseCommand",
+        "type_id" : 1110,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "state",
+          "type" : "IracTombstoneInfo",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "ScopedState",
+        "type_id" : 1167,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "scope",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "name",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FlatMapToLongOperation",
+        "type_id" : 1191,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "BackupMultiKeyAckCommand",
+        "type_id" : 1023,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "id",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "BackupNoopCommand",
+        "type_id" : 1024,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "sequence",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FilterDoubleOperation",
+        "type_id" : 1200,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "predicate",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapIntOperation",
+        "type_id" : 1215,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "operator",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RemoveReturnBoolean",
+        "type_id" : 1282,
+        "fields" : [ ]
+      }, {
+        "name" : "IracTombstonePrimaryCheckCommand",
+        "type_id" : 1108,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "tombstoneToCheck",
+          "type" : "IracTombstoneInfo",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "CacheEntryGroupPredicate",
+        "type_id" : 1029,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "groupName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ClearCommand",
+        "type_id" : 1053,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RollbackCommand",
+        "type_id" : 1165,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "globalTransaction",
+          "type" : "GlobalTransaction",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TransactionInfo",
+        "type_id" : 1238,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "globalTransaction",
+          "type" : "GlobalTransaction",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedModifications",
+          "type" : "MarshallableList",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedKeys",
+          "type" : "MarshallableSet",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStatePushCommand",
+        "type_id" : 1264,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "chunk",
+          "type" : "XSiteState",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "TopologyUpdateCommand",
+        "type_id" : 1235,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "currentCH",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "pendingCH",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "phase",
+          "type" : "CacheTopology.Phase",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "actualMembers",
+          "type" : "org.infinispan.persistence.core.Address",
+          "is_repeated" : true
+        }, {
+          "id" : 6,
+          "name" : "persistentUUIDs",
+          "type" : "org.infinispan.protostream.commons.UUID",
+          "is_repeated" : true
+        }, {
+          "id" : 7,
+          "name" : "availabilityMode",
+          "type" : "AvailabilityMode",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "rebalanceId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "viewId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "NotNullCacheEntryPredicate",
+        "type_id" : 1037,
+        "fields" : [ ]
+      }, {
+        "name" : "ToArrayReducer",
+        "type_id" : 1323,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "generator",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "DistributedCacheStatsCallable",
+        "type_id" : 1070,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "accurateSize",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PeekIntOperation",
+        "type_id" : 1219,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RebalancePolicyUpdateCommand",
+        "type_id" : 1156,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "enabled",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MinReducerFinalizer",
+        "type_id" : 1314,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "comparator",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "InDoubtTxInfo",
+        "type_id" : 1088,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "xid",
+          "type" : "org.infinispan.global.commons.XidImpl",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "internalId",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "status",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FindFirstReducerFinalizer",
+        "type_id" : 1312,
+        "fields" : [ ]
+      }, {
+        "name" : "CacheEventConverterAsConverter",
+        "type_id" : 1030,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "converter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "GlobalTransaction",
+        "type_id" : 1084,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "requestUUID",
+          "type" : "RequestUUID",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "xid",
+          "type" : "org.infinispan.global.commons.XidImpl",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "internalId",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "clientTransaction",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "StateTransferGetTransactionsCommand",
+        "type_id" : 1177,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReadWriteManyCommand",
+        "type_id" : 1153,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "forwarded",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "internalMetadata",
+          "type" : "MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "keys",
+          "type" : "MarshallableCollection",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracStateResponseCommand",
+        "type_id" : 1103,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "stateCollection",
+          "type" : "IracStateResponseCommand.State",
+          "is_repeated" : true
+        } ],
+        "messages" : [ {
+          "name" : "State",
+          "type_id" : 1104,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "keyInfo",
+            "type" : "IracManagerKeyInfo",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "tombstone",
+            "type" : "org.infinispan.persistence.core.IracMetadata",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "XSiteSetStateTransferModeCommand",
+        "type_id" : 1261,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "site",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "mode",
+          "type" : "XSiteStateTransferMode",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ExceptionAckCommand",
+        "type_id" : 1077,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "id",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "throwable",
+          "type" : "Throwable",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ConverterAsCacheEntryFunction",
+        "type_id" : 1032,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "converter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MarshallableLambda",
+        "type_id" : 20,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "capturingClass",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "functionalInterfaceClass",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "functionalInterfaceMethodName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "functionalInterfaceMethodSignature",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "implMethodKind",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "implClass",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "implMethodName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "implMethodSignature",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "instantiatedMethodType",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "arguments",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MultiEntriesFunctionalBackupWriteCommand",
+        "type_id" : 1136,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "sequence",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "writeOnly",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "wrappedEntries",
+          "type" : "MarshallableMap",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ClusterListenerRemoveCallable",
+        "type_id" : 1056,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "identifier",
+          "type" : "org.infinispan.protostream.commons.UUID",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapOperation",
+        "type_id" : 1193,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStateTransferStartReceiveCommand",
+        "type_id" : 1273,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "siteName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteState",
+        "type_id" : 1263,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReplaceCommand",
+        "type_id" : 30,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "oldValue",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "newValue",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "valueMatcher",
+          "type" : "ValueMatcher",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 12,
+          "name" : "returnEntry",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "LimitIntOperation",
+        "type_id" : 1214,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "limit",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SuccessfulBytesResponse",
+        "type_id" : 33,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bytes",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CompleteTransactionCommand",
+        "type_id" : 1062,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "xid",
+          "type" : "org.infinispan.global.commons.XidImpl",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "commit",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MetaMaxIdle",
+        "type_id" : 1131,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "maxIdle",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStatePushRequest",
+        "type_id" : 1265,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "chunk",
+          "type" : "XSiteState",
+          "is_repeated" : true
+        }, {
+          "id" : 3,
+          "name" : "timeoutMillis",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PeekLongOperation",
+        "type_id" : 1230,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapToIntDoubleOperation",
+        "type_id" : 1204,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MarshallableCollection",
+        "type_id" : 17,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "size",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "bytes",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "PrepareResponse",
+        "type_id" : 46,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "newWriteSkewVersions",
+          "type" : "MarshallableMap",
+          "optional" : true
+        } ],
+        "maps" : [ {
+          "key_type" : "int32",
+          "field" : {
+            "id" : 2,
+            "name" : "newIracMetadata",
+            "type" : "org.infinispan.persistence.core.IracMetadata"
+          }
+        } ]
+      }, {
+        "name" : "IracManagerKeyInfo",
+        "type_id" : 1094,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedKey",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "owner",
+          "type" : "RequestUUID",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheShutdownCommand",
+        "type_id" : 1043,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "KeyValueFilterAsCacheEventFilter",
+        "type_id" : 1114,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "filter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RequestUUID",
+        "type_id" : 52,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "mostSignificantBits",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "leastSignificantBits",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "requestId",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FilterOperation",
+        "type_id" : 1187,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "predicate",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStateTransferRestartSendingCommand",
+        "type_id" : 1272,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "siteName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "EntryToKeyFunction",
+        "type_id" : 1325,
+        "fields" : [ ]
+      }, {
+        "name" : "SuccessfulMetadataTransientCacheValueResponse",
+        "type_id" : 41,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "responseValue",
+          "type" : "MetadataTransientCacheValue",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "HeartBeatCommand",
+        "type_id" : 1085,
+        "fields" : [ ]
+      }, {
+        "name" : "XSiteAmendOfflineStatusCommand",
+        "type_id" : 1253,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "siteName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "afterFailures",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "minTimeToWait",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteAutoTransferStatusCommand",
+        "type_id" : 1255,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "site",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MortalCacheValue",
+        "type_id" : 1133,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "lifespan",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TransientCacheValue",
+        "type_id" : 1240,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "maxIdle",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SuccessfulMetadataImmortalMortalCacheValueResponse",
+        "type_id" : 40,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "responseValue",
+          "type" : "MetadataImmortalCacheValue",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapToIntOperation",
+        "type_id" : 1195,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracPrimaryPendingKeyCheckCommand",
+        "type_id" : 1096,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "keys",
+          "type" : "IracManagerKeyInfo",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "BoxedDoubleOperation",
+        "type_id" : 1198,
+        "fields" : [ ]
+      }, {
+        "name" : "ImmortalCacheValue",
+        "type_id" : 1087,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TouchCommand",
+        "type_id" : 1237,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "touchEvenIfExpired",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueMetasIfPresentReturnBoolean",
+        "type_id" : 1299,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "metas",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FlatMapToIntOperation",
+        "type_id" : 1190,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MortalCacheEntry",
+        "type_id" : 1132,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "lifespan",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "AndFinalizer",
+        "type_id" : 1307,
+        "fields" : [ ]
+      }, {
+        "name" : "Optional",
+        "type_id" : 1020,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReadWriteSnapshotView",
+        "type_id" : 1076,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueReturnView",
+        "type_id" : 1304,
+        "fields" : [ ]
+      }, {
+        "name" : "ReturnReadOnlyFindOrNull",
+        "type_id" : 1285,
+        "fields" : [ ]
+      }, {
+        "name" : "MapToObjDoubleOperation",
+        "type_id" : 1206,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "LimitOperation",
+        "type_id" : 1192,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "limit",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueIfPresentReturnPrevOrNull",
+        "type_id" : 1295,
+        "fields" : [ ]
+      }, {
+        "name" : "CacheEntryConsumer",
+        "type_id" : 1180,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "predicate",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "realConsumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ImmortalCacheEntry",
+        "type_id" : 1086,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "KeyValueFilterAsPredicate",
+        "type_id" : 1036,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "filter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "AnyMatchReducer",
+        "type_id" : 1306,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "predicate",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "InternalMetadataImpl",
+        "type_id" : 1090,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedMetadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TransientCacheEntry",
+        "type_id" : 1239,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "maxIdle",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FlatMapOperation",
+        "type_id" : 1188,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracPutKeyValueCommand",
+        "type_id" : 1097,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "wrappedValue",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "wrappedMetadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "expiration",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteStateTransferStatusRequestCommand",
+        "type_id" : 1276,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SumReducer",
+        "type_id" : 1320,
+        "fields" : [ ]
+      }, {
+        "name" : "MetadataMortalCacheValue",
+        "type_id" : 1124,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "XSiteRemoteEventCommand",
+        "type_id" : 1257,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "events",
+          "type" : "XSiteEvent",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "AllMatchReducer",
+        "type_id" : 1305,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "predicate",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "LongSummaryStatistics",
+        "type_id" : 1018,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "min",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "max",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "sum",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MarshallableDeque",
+        "type_id" : 18,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "size",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "bytes",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "SetValueIfPresentReturnBoolean",
+        "type_id" : 1296,
+        "fields" : [ ]
+      }, {
+        "name" : "ReplicableManagerFunctionCommand",
+        "type_id" : 1161,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "subject",
+          "type" : "org.infinispan.persistence.core.Subject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheStreamIntermediateReducer",
+        "type_id" : 1048,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "intermediateOperations",
+          "type" : "MarshallableDeque",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "transformer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "WriteOnlyManyCommand",
+        "type_id" : 1251,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "forwarded",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "internalMetadata",
+          "type" : "MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 10,
+          "name" : "keys",
+          "type" : "MarshallableCollection",
+          "optional" : true
+        }, {
+          "id" : 11,
+          "name" : "consumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapToDoubleOperation",
+        "type_id" : 1194,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MergeFunction",
+        "type_id" : 1120,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "remappingFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueMetasIfPresentReturnPrevOrNull",
+        "type_id" : 1300,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "metas",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheJoinCommand",
+        "type_id" : 1040,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "joinInfo",
+          "type" : "CacheJoinInfo",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "viewId",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CommitCommand",
+        "type_id" : 1061,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "globalTransaction",
+          "type" : "GlobalTransaction",
+          "optional" : true
+        } ],
+        "maps" : [ {
+          "key_type" : "int32",
+          "field" : {
+            "id" : 4,
+            "name" : "iracMetadataMap",
+            "type" : "org.infinispan.persistence.core.IracMetadata"
+          }
+        } ]
+      }, {
+        "name" : "SuccessfulMortalCacheValueResponse",
+        "type_id" : 43,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "responseValue",
+          "type" : "MortalCacheValue",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "LimitDoubleOperation",
+        "type_id" : 1202,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "limit",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReadOnlyManyCommand",
+        "type_id" : 1150,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "keys",
+          "type" : "MarshallableCollection",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "function",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "params",
+          "type" : "Params",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "FilterConverterAsCacheEntryFunction",
+        "type_id" : 1033,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "filterConverter",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RebalanceStartCommand",
+        "type_id" : 1158,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "currentCH",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "pendingCH",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "phase",
+          "type" : "CacheTopology.Phase",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "persistentUUIDs",
+          "type" : "org.infinispan.protostream.commons.UUID",
+          "is_repeated" : true
+        }, {
+          "id" : 6,
+          "name" : "rebalanceId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "viewId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "actualMembers",
+          "type" : "org.infinispan.persistence.core.Address",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "EncoderEntryMapper",
+        "type_id" : 1072,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "keyDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "valueDataConversion",
+          "type" : "DataConversion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetValueMetasIfAbsentReturnPrevOrNull",
+        "type_id" : 1298,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "metas",
+          "type" : "MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ComputeIfAbsentCommand",
+        "type_id" : 1065,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segment",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "mappingFunction",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 9,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CacheStatusResponse",
+        "type_id" : 1047,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheJoinInfo",
+          "type" : "CacheJoinInfo",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheTopology",
+          "type" : "CacheTopology",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "stableTopology",
+          "type" : "CacheTopology",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "availabilityMode",
+          "type" : "AvailabilityMode",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "current",
+          "type" : "org.infinispan.persistence.core.Address",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "GetInDoubtTransactionsCommand",
+        "type_id" : 1082,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CombinerFinalizer",
+        "type_id" : 1311,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "biConsumer",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IdentityTransformer",
+        "type_id" : 1146,
+        "fields" : [ ]
+      } ],
+      "imports" : [ {
+        "path" : "org/infinispan/protostream/message-wrapping.proto"
+      }, {
+        "path" : "global.commons.proto"
+      }, {
+        "path" : "common-java-types.proto"
+      }, {
+        "path" : "persistence.commons.proto"
+      }, {
+        "path" : "persistence.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.core"
+      }
+    }
+  }, {
     "protopath" : "generated:/:persistence.core.proto",
     "def" : {
       "enums" : [ {
+        "name" : "EventLogLevel",
+        "type_id" : 1001,
+        "enum_fields" : [ {
+          "name" : "INFO"
+        }, {
+          "name" : "WARN",
+          "integer" : 1
+        }, {
+          "name" : "ERROR",
+          "integer" : 2
+        }, {
+          "name" : "FATAL",
+          "integer" : 3
+        } ]
+      }, {
+        "name" : "EventLogCategory",
+        "type_id" : 1000,
+        "enum_fields" : [ {
+          "name" : "LIFECYCLE"
+        }, {
+          "name" : "CLUSTER",
+          "integer" : 1
+        }, {
+          "name" : "SECURITY",
+          "integer" : 2
+        }, {
+          "name" : "TASKS",
+          "integer" : 3
+        } ]
+      }, {
         "name" : "AuthorizationPermission",
         "type_id" : 1012,
         "enum_fields" : [ {
@@ -47,38 +6439,270 @@
           "name" : "ALL",
           "integer" : 2147483647
         } ]
-      }, {
-        "name" : "EventLogLevel",
-        "type_id" : 1001,
-        "enum_fields" : [ {
-          "name" : "INFO"
-        }, {
-          "name" : "WARN",
-          "integer" : 1
-        }, {
-          "name" : "ERROR",
-          "integer" : 2
-        }, {
-          "name" : "FATAL",
-          "integer" : 3
-        } ]
-      }, {
-        "name" : "EventLogCategory",
-        "type_id" : 1000,
-        "enum_fields" : [ {
-          "name" : "LIFECYCLE"
-        }, {
-          "name" : "CLUSTER",
-          "integer" : 1
-        }, {
-          "name" : "SECURITY",
-          "integer" : 2
-        }, {
-          "name" : "TASKS",
-          "integer" : 3
-        } ]
       } ],
       "messages" : [ {
+        "name" : "MetaParamsInternalMetadata",
+        "type_id" : 1003,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "numericVersion",
+          "type" : "NumericVersion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "clusteredVersion",
+          "type" : "SimpleClusteredVersion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "lifespan",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 6,
+          "name" : "maxIdle",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 7,
+          "name" : "counterConfiguration",
+          "type" : "org.infinispan.persistence.commons.CounterConfiguration",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "updateCreationTimestamp",
+          "type" : "bool",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "true"
+          } ]
+        } ]
+      }, {
+        "name" : "RemoteMetadata",
+        "type_id" : 1004,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "address",
+          "type" : "Address",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "version",
+          "type" : "SimpleClusteredVersion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TopologyIracVersion",
+        "type_id" : 1007,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "topologyId",
+          "type" : "uint32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "version",
+          "type" : "uint64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      }, {
+        "name" : "IracEntryVersion",
+        "type_id" : 1006,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "entries",
+          "type" : "IracEntryVersion.MapEntry",
+          "is_repeated" : true
+        } ],
+        "messages" : [ {
+          "name" : "MapEntry",
+          "type_id" : 1008,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "site",
+            "type" : "string",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "version",
+            "type" : "TopologyIracVersion",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "MarshalledValueImpl",
+        "type_id" : 1002,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "metadata",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "internalMetadata",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PrivateMetadata",
+        "type_id" : 13,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "iracMetadata",
+          "type" : "IracMetadata",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "numericVersion",
+          "type" : "NumericVersion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "clusteredVersion",
+          "type" : "SimpleClusteredVersion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "NodeVersion",
+        "type_id" : 14,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "major",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "minor",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "patch",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      }, {
+        "name" : "Address",
+        "type_id" : 10,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "mostSignificantBits",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "leastSignificantBits",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "version",
+          "type" : "NodeVersion",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "siteId",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "rackId",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "machineId",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ByteString",
+        "type_id" : 3,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bytes",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
         "name" : "IracMetadata",
         "type_id" : 1009,
         "fields" : [ {
@@ -186,106 +6810,6 @@
           } ]
         } ]
       }, {
-        "name" : "MetaParamsInternalMetadata",
-        "type_id" : 1003,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "numericVersion",
-          "type" : "NumericVersion",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "clusteredVersion",
-          "type" : "SimpleClusteredVersion",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "created",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 4,
-          "name" : "lastUsed",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 5,
-          "name" : "lifespan",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 6,
-          "name" : "maxIdle",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 7,
-          "name" : "counterConfiguration",
-          "type" : "org.infinispan.persistence.commons.CounterConfiguration",
-          "optional" : true
-        }, {
-          "id" : 8,
-          "name" : "updateCreationTimestamp",
-          "type" : "bool",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "true"
-          } ]
-        } ]
-      }, {
-        "name" : "RemoteMetadata",
-        "type_id" : 1004,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "address",
-          "type" : "Address",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "version",
-          "type" : "SimpleClusteredVersion",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "TopologyIracVersion",
-        "type_id" : 1007,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "topologyId",
-          "type" : "uint32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 2,
-          "name" : "version",
-          "type" : "uint64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        } ]
-      }, {
         "name" : "SimpleClusteredVersion",
         "type_id" : 9,
         "fields" : [ {
@@ -316,67 +6840,6 @@
           "is_repeated" : true
         } ]
       }, {
-        "name" : "IracEntryVersion",
-        "type_id" : 1006,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "entries",
-          "type" : "IracEntryVersion.MapEntry",
-          "is_repeated" : true
-        } ],
-        "messages" : [ {
-          "name" : "MapEntry",
-          "type_id" : 1008,
-          "fields" : [ {
-            "id" : 1,
-            "name" : "site",
-            "type" : "string",
-            "optional" : true
-          }, {
-            "id" : 2,
-            "name" : "version",
-            "type" : "TopologyIracVersion",
-            "optional" : true
-          } ]
-        } ]
-      }, {
-        "name" : "MarshalledValueImpl",
-        "type_id" : 1002,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "value",
-          "type" : "bytes",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "metadata",
-          "type" : "bytes",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "created",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 4,
-          "name" : "lastUsed",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 5,
-          "name" : "internalMetadata",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      }, {
         "name" : "NumericVersion",
         "type_id" : 8,
         "fields" : [ {
@@ -388,25 +6851,6 @@
             "name" : "default",
             "value" : "-1"
           } ]
-        } ]
-      }, {
-        "name" : "PrivateMetadata",
-        "type_id" : 13,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "iracMetadata",
-          "type" : "IracMetadata",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "numericVersion",
-          "type" : "NumericVersion",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "clusteredVersion",
-          "type" : "SimpleClusteredVersion",
-          "optional" : true
         } ]
       }, {
         "name" : "RoleSet",
@@ -446,15 +6890,6 @@
       }, {
         "name" : "MarshallableUserObject",
         "type_id" : 2,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "bytes",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "ByteString",
-        "type_id" : 3,
         "fields" : [ {
           "id" : 1,
           "name" : "bytes",
