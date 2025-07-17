@@ -2982,7 +2982,6 @@
                               <source>${maven.multiModuleProjectDirectory}/graalvm/commons/src/main/java</source>
                               <source>${maven.multiModuleProjectDirectory}/graalvm/core/src/main/java</source>
                               <source>${maven.multiModuleProjectDirectory}/gridfs/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/hibernate/cache-commons/src/main/java</source>
                               <source>${maven.multiModuleProjectDirectory}/hibernate/cache-spi/src/main/java</source>
                               <source>${maven.multiModuleProjectDirectory}/hibernate/cache-v62/src/main/java</source>
                               <source>${maven.multiModuleProjectDirectory}/jboss-marshalling/src/main/java</source>

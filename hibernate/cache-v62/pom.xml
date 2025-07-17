@@ -154,6 +154,43 @@
 
    <profiles>
       <profile>
+         <id>coverage</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>build-helper-maven-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>aggregate-classes</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                           <goal>add-source</goal>
+                        </goals>
+                        <configuration combine.self="append">
+                           <sources>
+                              <source>${maven.multiModuleProjectDirectory}/hibernate/cache-commons/src/main/java</source>
+                           </sources>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <argLine combine.self="append">${jacoco.agent.argLine}</argLine>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <profile>
          <id>hibernate-matrix</id>
          <activation>
             <activeByDefault>false</activeByDefault>
