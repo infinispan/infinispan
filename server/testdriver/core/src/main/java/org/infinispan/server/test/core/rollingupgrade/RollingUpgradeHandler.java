@@ -390,6 +390,9 @@ public class RollingUpgradeHandler {
                                      JavaArchive[] artifacts, String[] mavenArtifacts, Properties properties,
                                      List<InfinispanServerListener> listeners) {
       ServerConfigBuilder builder = new ServerConfigBuilder(serverConfigurationFile, defaultServerConfigurationFile);
+      // We ignore the test server directory system property as it would force both to and from version to be ignored
+      // when using the version which is pulled from quay.io
+      builder.removeProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR);
       builder.runMode(ServerRunMode.CONTAINER);
       builder.numServers(nodeCount);
       builder.expectedServers(expectedCount);
@@ -414,12 +417,17 @@ public class RollingUpgradeHandler {
       }
 
       String versionToUse = toOrFrom ? configuration.toVersion() : configuration.fromVersion();
-      final String name = (siteName != null ? siteName : "") + clusterName + "-" + versionToUse;
+      String name = (siteName != null ? siteName : "") + clusterName + "-" + versionToUse;
 
       if (versionToUse.startsWith("image://")) {
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME, versionToUse.substring("image://".length()));
       } else if (versionToUse.startsWith("file://")) {
-         builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR, versionToUse.substring("file://".length()));
+         // Need to strip the file: as testcontainers strips all `file:` occurrences which seems like a bug
+         {
+            versionToUse = versionToUse.substring("file://".length());
+            name = (siteName != null ? siteName : "") + clusterName + "-" + versionToUse;
+         }
+         builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR, versionToUse);
          // For simplicity trim down to the directory name for the rest of the test
          versionToUse = Path.of(versionToUse).getFileName().toString();
 

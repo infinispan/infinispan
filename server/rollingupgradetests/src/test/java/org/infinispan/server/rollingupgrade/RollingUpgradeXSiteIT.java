@@ -28,6 +28,7 @@ public class RollingUpgradeXSiteIT extends InfinispanSuite {
 
    @RegisterExtension
    public static final RollingUpgradeHandlerXSiteExtension SERVERS = RollingUpgradeHandlerXSiteExtension.from(
-         RollingUpgradeXSiteIT.class, XSiteIT.EXTENSION_BUILDER, "15.2.0.Final", "15.2.1.Final");
+         RollingUpgradeXSiteIT.class, XSiteIT.EXTENSION_BUILDER,
+         RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion());
 
 }

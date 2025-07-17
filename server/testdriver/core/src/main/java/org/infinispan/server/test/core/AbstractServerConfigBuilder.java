@@ -98,6 +98,16 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
       return (T) this;
    }
 
+   /**
+    * Removes a property that was either previously defined or imported from the current running system properties
+    * @param name the name of the property to remove
+    * @return this to allow chain invocation
+    */
+   public T removeProperty(String name) {
+      this.properties.remove(name);
+      return (T) this;
+   }
+
    public T enableJMX() {
       this.jmx = true;
       return (T) this;
