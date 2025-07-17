@@ -1,18 +1,5 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:user.commons.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "NullValue",
-        "type_id" : 128,
-        "fields" : [ ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.commons"
-      }
-    }
-  }, {
     "protopath" : "generated:/:persistence.commons.proto",
     "def" : {
       "enums" : [ ],
@@ -132,6 +119,19 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.commons"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:user.commons.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "NullValue",
+        "type_id" : 128,
+        "fields" : [ ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.commons"
       }
     }
   } ]

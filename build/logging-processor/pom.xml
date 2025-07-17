@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-bom</artifactId>
-        <version>15.0.17.Final</version>
+        <version>16.0.0-SNAPSHOT</version>
         <relativePath>../bom/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
