@@ -69,7 +69,9 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
 
    @Override
    protected void onTestsStart(ExtensionContext extensionContext) throws Exception {
-      if (handler == null) {
+      // Only start the handler when the first test of the suite is encountered. This prevents multiple handlers starting
+      // at the beginning of the entire JUnit run and instead only start a new suite after the previous was shutdown:q
+      if (handler == null && !isSuiteClass(extensionContext)) {
          handler = RollingUpgradeHandler.runUntilMixed(configurationBuilder.build());
          // Config is only used with from.. is that okay??
          testServer = new TestServer(handler.getFromConfig(), new CombinedInfinispanServerDriver(handler.getFromDriver(), handler.getToDriver()));
