@@ -2106,6 +2106,13 @@
                      <excludeRoot>target/generated-sources</excludeRoot>
                   </excludeRoots>
                </configuration>
+               <executions>
+                  <execution>
+                     <goals>
+                        <goal>pmd</goal>
+                     </goals>
+                  </execution>
+               </executions>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
