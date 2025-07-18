@@ -3,10 +3,10 @@ package org.infinispan.it.endpoints;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 
 import java.nio.charset.StandardCharsets;
@@ -50,8 +50,6 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<String, CryptoCurrency> remoteCache;
 
-   private static final String CACHE_NAME = "indexed";
-
    HotRodServer hotRodServer;
 
    private RestCacheClient restCacheClient;
@@ -62,9 +60,10 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
+      String cacheName = "indexed-" + getClass().getSimpleName();
       cacheManager = TestCacheManagerFactory.createServerModeCacheManager(EndpointITSCI.INSTANCE, new ConfigurationBuilder());
-      cacheManager.getClassWhiteList().addRegexps(".*");
-      cacheManager.defineConfiguration(CACHE_NAME, getIndexCacheConfiguration().build());
+      cacheManager.getClassAllowList().addRegexps(".*");
+      cacheManager.defineConfiguration(cacheName, getIndexCacheConfiguration().build());
 
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
 
@@ -76,10 +75,10 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       restServer.start(builder.build(), cacheManager);
       restServer.postStart();
       restClient = RestClient.forConfiguration(new RestClientConfigurationBuilder().addServer().host(restServer.getHost()).port(restServer.getPort()).build());
-      restCacheClient = restClient.cache(CACHE_NAME);
+      restCacheClient = restClient.cache(cacheName);
       hotRodServer = startHotRodServer(cacheManager);
       remoteCacheManager = createRemoteCacheManager();
-      remoteCache = remoteCacheManager.getCache(CACHE_NAME);
+      remoteCache = remoteCacheManager.getCache(cacheName);
    }
 
    protected String getEntityName() {
