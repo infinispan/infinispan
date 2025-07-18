@@ -23,7 +23,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
 
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT, REPLICATE_PUTS);
+      return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT);
    }
 
    private final CacheMode cacheMode;
@@ -32,7 +32,6 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    private final L1Configuration l1Configuration;
    private final StateTransferConfiguration stateTransferConfiguration;
    private final PartitionHandlingConfiguration partitionHandlingConfiguration;
-   private final Attribute<Boolean> replicatePuts;
 
    ClusteringConfiguration(AttributeSet attributes, HashConfiguration hashConfiguration,
                            L1Configuration l1Configuration, StateTransferConfiguration stateTransferConfiguration,
@@ -44,7 +43,6 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
       this.l1Configuration = l1Configuration;
       this.stateTransferConfiguration = stateTransferConfiguration;
       this.partitionHandlingConfiguration  = partitionHandlingStrategy;
-      this.replicatePuts = attributes.attribute(REPLICATE_PUTS);
    }
 
    /**
@@ -104,11 +102,4 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    public StateTransferConfiguration stateTransfer() {
       return stateTransferConfiguration;
    }
-
-    /**
-     * If true, puts are replicated to all nodes in the cluster. If false, puts are not replicated.
-     */
-    public boolean replicatePuts() {
-       return replicatePuts.get();
-    }
 }

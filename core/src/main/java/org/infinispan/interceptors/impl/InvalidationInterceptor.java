@@ -27,6 +27,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -87,7 +88,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    @Start
    void start() {
       this.setStatisticsEnabled(cacheConfiguration.statistics().enabled());
-      this.setReplicatePuts(cacheConfiguration.clustering().replicatePuts());
+      this.replicatePuts = cacheConfiguration.clustering().attributes().attribute(ClusteringConfiguration.REPLICATE_PUTS).get();
    }
 
    @Override
@@ -370,10 +371,6 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    @Override
    public void setStatisticsEnabled(boolean enabled) {
       this.statisticsEnabled = enabled;
-   }
-
-   public void setReplicatePuts(boolean replicatePuts) {
-      this.replicatePuts = replicatePuts;
    }
 
    @ManagedAttribute(

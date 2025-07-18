@@ -3,7 +3,6 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_SYNC;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_TYPE;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.REMOTE_TIMEOUT;
-import static org.infinispan.configuration.cache.ClusteringConfiguration.REPLICATE_PUTS;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.Arrays;
@@ -81,23 +80,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
     */
    public ClusteringConfigurationBuilder remoteTimeout(String s) {
       attributes.attribute(REMOTE_TIMEOUT).set(TimeQuantity.valueOf(s));
-      return this;
-   }
-
-
-    /**
-     * If true, puts are replicated to all nodes in the cluster. If false, puts are not replicated.
-     */
-   public ClusteringConfigurationBuilder replicatePuts(boolean b) {
-      attributes.attribute(REPLICATE_PUTS).set(b);
-      return this;
-   }
-
-   /**
-    * Same as {@link #replicatePuts(boolean)} but accepts a string representation of a boolean value.
-    */
-   public ClusteringConfigurationBuilder replicatePuts(String s) {
-      attributes.attribute(REPLICATE_PUTS).set(Boolean.valueOf(s));
       return this;
    }
 

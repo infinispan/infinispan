@@ -25,6 +25,7 @@ import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.CacheType;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
@@ -705,7 +706,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case REPLICATE_PUTS: {
-               builder.clustering().replicatePuts(value);
+               builder.clustering().attributes().attribute(ClusteringConfiguration.REPLICATE_PUTS).set(Boolean.parseBoolean(value));
                break;
             }
             default: {
