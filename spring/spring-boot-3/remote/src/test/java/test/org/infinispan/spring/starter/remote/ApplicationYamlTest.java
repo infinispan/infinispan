@@ -1,16 +1,5 @@
 package test.org.infinispan.spring.starter.remote;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.sasl.RealmCallback;
-
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
@@ -30,7 +19,17 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
+
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.sasl.RealmCallback;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 
 @SpringBootTest(
       classes = {
@@ -40,8 +39,8 @@ import org.springframework.test.context.TestPropertySource;
       properties = {
             "spring.main.banner-mode=off"
       })
-@TestPropertySource(locations = "classpath:test-application.properties")
-public class ApplicationPropertiesTest {
+@ActiveProfiles("yamltest")
+public class ApplicationYamlTest {
 
    @Autowired
    private RemoteCacheManager remoteCacheManager;
