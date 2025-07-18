@@ -5,15 +5,7 @@ import java.util.List;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
-public class CompleteKeyDistribution implements JsonSerialization {
-   private final List<KeyDistributionInfo> distribution;
-   private final boolean containsKeys;
-
-   public CompleteKeyDistribution(List<KeyDistributionInfo> distribution, boolean containsKeys) {
-      this.distribution = distribution;
-      this.containsKeys = containsKeys;
-   }
-
+public record CompleteKeyDistribution(List<KeyDistributionInfo> distribution, boolean containsKeys)  implements JsonSerialization {
    @Override
    public Json toJson() {
       return Json.object()

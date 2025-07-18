@@ -1,118 +1,44 @@
 package org.infinispan.rest.framework.impl;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.rest.framework.Invocation;
 import org.infinispan.rest.framework.Method;
+import org.infinispan.rest.framework.ResourceDescription;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
+import org.infinispan.rest.framework.openapi.Parameter;
+import org.infinispan.rest.framework.openapi.ParameterIn;
+import org.infinispan.rest.framework.openapi.ResponseContent;
+import org.infinispan.rest.framework.openapi.Schema;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * @since 10.0
  */
-public class InvocationImpl implements Invocation {
-
-   private final Set<Method> methods;
-   private final Set<String> paths;
-   private final Function<RestRequest, CompletionStage<RestResponse>> handler;
-   private final String action;
-   private final String name;
-   private final boolean anonymous;
-   private final boolean deprecated;
-   private final AuthorizationPermission permission;
-   private final AuditContext auditContext;
-   private final boolean requireCacheManagerStart;
-
-   private InvocationImpl(Set<Method> methods, Set<String> paths, Function<RestRequest, CompletionStage<RestResponse>> handler,
-                          String action, String name, boolean anonymous, AuthorizationPermission permission,
-                          boolean deprecated, AuditContext auditContext, boolean requireCacheManagerStart) {
-      this.methods = methods;
-      this.paths = paths;
-      this.handler = handler;
-      this.action = action;
-      this.name = name;
-      this.anonymous = anonymous;
-      this.permission = permission;
-      this.deprecated = deprecated;
-      this.auditContext = auditContext;
-      this.requireCacheManagerStart = requireCacheManagerStart;
-   }
-
-   public String getAction() {
-      return action;
-   }
-
-   @Override
-   public Set<Method> methods() {
-      return methods;
-   }
-
-   @Override
-   public Set<String> paths() {
-      return paths;
-   }
-
-
-   @Override
-   public String getName() {
-      return name;
-   }
-
-   @Override
-   public Function<RestRequest, CompletionStage<RestResponse>> handler() {
-      return handler;
-   }
-
-   @Override
-   public boolean anonymous() {
-      return anonymous;
-   }
-
-   @Override
-   public AuthorizationPermission permission() {
-      return permission;
-   }
-
-   @Override
-   public AuditContext auditContext() {
-      return auditContext;
-   }
-
-   @Override
-   public boolean requireCacheManagerStart() {
-      return requireCacheManagerStart;
-   }
-
-   @Override
-   public boolean deprecated() {
-      return deprecated;
-   }
-
-   @Override
-   public String toString() {
-      return "InvocationImpl{" +
-            "action='" + action + '\'' +
-            ", methods=" + methods +
-            ", paths=" + paths +
-            ", handler=" + handler +
-            ", name='" + name + '\'' +
-            ", anonymous=" + anonymous +
-            ", deprecated=" + deprecated +
-            ", permission=" + permission +
-            ", auditContext=" + auditContext +
-            '}';
-   }
-
+public record InvocationImpl(ResourceDescription resourceGroup, Set<Method> methods, Set<String> paths,
+                             Function<RestRequest, CompletionStage<RestResponse>> handler, @Deprecated String action,
+                             String name, boolean anonymous, AuthorizationPermission permission, boolean deprecated,
+                             AuditContext auditContext, Map<HttpResponseStatus, ResponseContent> responses,
+                             List<Parameter> parameters, boolean requireCacheManagerStart) implements Invocation {
    public static class Builder {
       private final Invocations.Builder parent;
-      private final Set<Method> methods = new HashSet<>();
-      private final Set<String> paths = new HashSet<>();
+      private final Set<Method> methods = new HashSet<>(2);
+      private final Set<String> paths = new HashSet<>(2);
+      private final List<Parameter> parameters = new ArrayList<>(2);
       private Function<RestRequest, CompletionStage<RestResponse>> handler;
       private String action = null;
       private String name = null;
@@ -121,7 +47,7 @@ public class InvocationImpl implements Invocation {
       private AuthorizationPermission permission;
       private AuditContext auditContext;
       private boolean requireCacheManagerStart = true;
-
+      private Map<HttpResponseStatus, ResponseContent> responses;
 
       public Builder method(Method method) {
          this.methods.add(method);
@@ -163,6 +89,27 @@ public class InvocationImpl implements Invocation {
          return this;
       }
 
+      public Builder response(HttpResponseStatus status, String description, MediaType type) {
+         return response(status, description, type, null);
+      }
+
+      public Builder response(HttpResponseStatus status, String description, MediaType type, Schema schema) {
+         if (responses == null) {
+            responses = new HashMap<>(2);
+         }
+         responses.compute(status, (s, m) -> {
+            if (m == null) {
+               Map<MediaType, Schema> map = new HashMap<>(2);
+               map.put(type, schema);
+               return new ResponseContent(description, status, map);
+            } else {
+               m.responses().put(type, schema);
+               return m;
+            }
+         });
+         return this;
+      }
+
       public Builder auditContext(AuditContext auditContext) {
          this.auditContext = auditContext;
          return this;
@@ -173,6 +120,7 @@ public class InvocationImpl implements Invocation {
          return this;
       }
 
+      @Deprecated
       public Builder withAction(String action) {
          this.action = action;
          return this;
@@ -196,7 +144,17 @@ public class InvocationImpl implements Invocation {
       }
 
       InvocationImpl build() {
-         return new InvocationImpl(methods, paths, handler, action, name, anonymous, permission, deprecated, auditContext, requireCacheManagerStart);
+         Objects.requireNonNull(handler, "handler must be non-null");
+         return new InvocationImpl(parent.description(), methods, paths, handler, action, name, anonymous, permission, deprecated, auditContext, responses == null ? Collections.emptyMap() : responses, parameters, requireCacheManagerStart);
+      }
+
+      public Builder parameter(Enum<?> name, ParameterIn in, Schema schema, String description) {
+         return parameter(name.toString(), in, schema, description);
+      }
+
+      public Builder parameter(String name, ParameterIn in, Schema schema, String description) {
+         this.parameters.add(new Parameter(name, in, false, schema, description));
+         return this;
       }
    }
 }

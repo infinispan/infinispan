@@ -1,11 +1,17 @@
 package org.infinispan.rest.framework;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
+import org.infinispan.rest.framework.openapi.Parameter;
+import org.infinispan.rest.framework.openapi.ResponseContent;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Defines an invocation to a REST resource.
@@ -22,7 +28,7 @@ public interface Invocation {
    /**
     * Returns the associated action (request parameter) or null.
     */
-   String getAction();
+   String action();
 
    /**
     * Returns one or more paths associated with the invocation.
@@ -33,7 +39,7 @@ public interface Invocation {
    /**
     * The user-friendly name of the invocation
     */
-   default String getName() {
+   default String name() {
       return toString();
    }
 
@@ -65,4 +71,13 @@ public interface Invocation {
     * @return <code>true</code> means the cache manager must be running. <code>false</code>, otherwise.
     */
    boolean requireCacheManagerStart();
+
+   /**
+    * @return The resource group which contains this invocation.
+    */
+   ResourceDescription resourceGroup();
+
+   Collection<Parameter> parameters();
+
+   Map<HttpResponseStatus, ResponseContent> responses();
 }
