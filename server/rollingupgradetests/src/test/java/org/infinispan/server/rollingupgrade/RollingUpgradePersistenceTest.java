@@ -55,7 +55,7 @@ public class RollingUpgradePersistenceTest {
       DatabaseServerListener listener = new DatabaseServerListener(databaseType);
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradePersistenceTest.class.getName(), "15.2.0.Final", "15.2.1.Final")
             .nodeCount(nodeCount)
-            .addArtifacts(PersistenceIT.getJavaArchive())
+            .addArchives(PersistenceIT.getJavaArchive())
             .addMavenArtifacts(PersistenceIT.getJdbcDrivers())
             .addProperty(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true")
             .addListener(listener);

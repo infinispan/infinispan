@@ -16,7 +16,7 @@ public class RollingUpgradeTaskTest {
    public void testHelloWorldTask() throws Throwable {
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradeTaskTest.class.getName(), "15.2.0.Final", "15.2.1.Final")
             .useCustomServerConfiguration("configuration/ClusteredServerTest.xml")
-            .addArtifacts(ClusteredIT.artifacts())
+            .addArchives(ClusteredIT.artifacts())
             .addMavenArtifacts(ClusteredIT.mavenArtifacts())
             .nodeCount(3);
 

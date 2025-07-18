@@ -16,6 +16,7 @@ import org.infinispan.server.test.core.TestServer;
 import org.infinispan.server.test.core.rollingupgrade.CombinedInfinispanServerDriver;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -27,12 +28,15 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
    private TestServer testServer;
    private TestClient testClient;
 
-   // TODO: do we just accept the config ?
    public RollingUpgradeHandlerExtension(RollingUpgradeConfigurationBuilder configurationBuilder) {
       this.configurationBuilder = configurationBuilder;
    }
 
    public static RollingUpgradeHandlerExtension from(Class<?> caller, InfinispanServerExtensionBuilder iseb, String fromVersion, String toVersion) {
+      return new RollingUpgradeHandlerExtension(convertBuilder(caller, iseb, fromVersion, toVersion));
+   }
+
+   public static RollingUpgradeConfigurationBuilder convertBuilder(Class<?> caller, InfinispanServerExtensionBuilder iseb, String fromVersion, String toVersion) {
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(caller.getName(), fromVersion, toVersion);
       InfinispanServerTestConfiguration configuration = iseb.createServerTestConfiguration();
 
@@ -41,9 +45,15 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
       } else {
          builder.useCustomServerConfiguration(configuration.configurationFile());
       }
-      builder.nodeCount(configuration.numServers())
-            .addMavenArtifacts(configuration.mavenArtifacts())
-            .addArtifacts(configuration.archives());
+      String[] artifacts = configuration.mavenArtifacts();
+      if (artifacts != null) {
+         builder.addMavenArtifacts(artifacts);
+      }
+      JavaArchive[] javaArchives = configuration.archives();
+      if (javaArchives != null) {
+         builder.addArchives(javaArchives);
+      }
+      builder.nodeCount(configuration.numServers());
 
       configuration.properties().forEach((k, v) -> {
          if (k instanceof String ks && v instanceof String vs) {
@@ -51,8 +61,7 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
          }
       });
       configuration.listeners().forEach(builder::addListener);
-
-      return new RollingUpgradeHandlerExtension(builder);
+      return builder;
    }
 
    @Override
@@ -62,13 +71,13 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
          if (extensionContext.getExecutionException().isPresent()) {
             handler.exceptionEncountered(extensionContext.getExecutionException().get());
          } else {
-            handler.complete();
+            handler.completeUpgrade(true);
          }
       }
    }
 
    @Override
-   protected void onTestsStart(ExtensionContext extensionContext) throws Exception {
+   protected void onTestsStart(ExtensionContext extensionContext) {
       if (handler == null) {
          handler = RollingUpgradeHandler.runUntilMixed(configurationBuilder.build());
          // Config is only used with from.. is that okay??

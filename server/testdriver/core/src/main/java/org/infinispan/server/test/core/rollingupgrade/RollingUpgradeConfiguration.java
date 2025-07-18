@@ -11,7 +11,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
-public record RollingUpgradeConfiguration(int nodeCount, String fromVersion, String toVersion, String name, boolean xSite,
+public record RollingUpgradeConfiguration(int nodeCount, String fromVersion, String toVersion, String name,
                                           String jgroupsProtocol, int serverCheckTimeSecs, boolean useSharedDataMount,
                                           String serverConfigurationFile, boolean defaultServerConfigurationFile,
                                           Properties properties, JavaArchive[] customArtifacts, String[] mavenArtifacts,

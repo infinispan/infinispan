@@ -41,15 +41,15 @@ public class InfinispanXSiteServerExtension extends AbstractServerExtension impl
       BeforeEachCallback,
       AfterEachCallback {
 
-   private final List<TestServer> testServers;
-   private final Map<String, TestClient> testClients = new HashMap<>();
+   protected final List<TestServer> testServers;
+   protected final Map<String, TestClient> testClients = new HashMap<>();
 
    public InfinispanXSiteServerExtension(List<TestServer> testServers) {
       this.testServers = testServers;
    }
 
    @Override
-   protected void onTestsStart(ExtensionContext extensionContext) {
+   protected void onTestsStart(ExtensionContext extensionContext) throws Exception {
       testServers.forEach((it) -> startTestServer(extensionContext, it));
    }
 
@@ -97,6 +97,18 @@ public class InfinispanXSiteServerExtension extends AbstractServerExtension impl
    //All of methodName will be the same
    public String getMethodName() {
       return testClients.values().iterator().next().getMethodName();
+   }
+
+   @Override
+   public String hostAndPort(String siteName) {
+      for (TestServer server : testServers) {
+         if (siteName.equals(server.getSiteName())) {
+            String host = server.getDriver().getServerAddress(0).getHostAddress();
+            int port = server.getDriver().getServerSocket(0, 11222).getPort();
+            return host + ":" + port;
+         }
+      }
+      throw new IllegalStateException("Site " + siteName + " not found.");
    }
 
    @Override
