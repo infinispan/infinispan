@@ -704,6 +704,10 @@ public class CacheParser implements ConfigurationParser {
                builder.clustering().hash().keyPartitioner(Util.getInstance(value, holder.getClassLoader()));
                break;
             }
+            case REPLICATE_PUTS: {
+               builder.clustering().replicatePuts(value);
+               break;
+            }
             default: {
                this.parseClusteredCacheAttribute(reader, i, attribute, value, builder);
             }
@@ -766,10 +770,6 @@ public class CacheParser implements ConfigurationParser {
          }
          case REMOTE_TIMEOUT: {
             builder.clustering().remoteTimeout(value);
-            break;
-         }
-         case REPLICATE_PUTS: {
-            builder.clustering().replicatePuts(value);
             break;
          }
          default: {
