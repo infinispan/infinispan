@@ -23,7 +23,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
 
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT);
+      return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT, REPLICATE_PUTS);
    }
 
    private final CacheMode cacheMode;
