@@ -31,7 +31,8 @@ import net.spy.memcached.auth.AuthDescriptor;
 public class DefaultRollingUpgradeTest {
    @Test
    public void testDefaultSetting() throws InterruptedException {
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(), "15.2.0.Final", "15.2.1.Final");
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),
+            RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion());
       RollingUpgradeHandler.performUpgrade(builder.build());
    }
 
@@ -40,7 +41,8 @@ public class DefaultRollingUpgradeTest {
       String cacheName = "rolling-upgrade";
       TestUser user = TestUser.ADMIN;
       int nodeCount = 3;
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),"15.2.0.Final", "15.2.1.Final")
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),
+            RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .nodeCount(nodeCount);
       RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
       restBuilder.security().authentication().enable().username(user.getUser()).password(user.getPassword());
@@ -88,7 +90,8 @@ public class DefaultRollingUpgradeTest {
       TestUser user = TestUser.ADMIN;
       int nodeCount = 3;
       ByRef.Integer interactions = new ByRef.Integer(0);
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),"15.2.0.Final", "15.2.1.Final")
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),
+            RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .nodeCount(nodeCount);
 
       RedisURI.Builder respBuilder = RedisURI.builder()
@@ -137,7 +140,8 @@ public class DefaultRollingUpgradeTest {
             .setOpTimeout(TimeUnit.SECONDS.toMillis(30))
             .setAuthDescriptor(AuthDescriptor.typical(user.getUser(), user.getPassword()));
 
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),"15.2.0.Final", "15.2.1.Final")
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),
+            RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .nodeCount(nodeCount);
       builder.handlers(
             uh -> {

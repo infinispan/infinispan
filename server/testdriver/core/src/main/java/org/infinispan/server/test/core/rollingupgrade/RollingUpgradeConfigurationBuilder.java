@@ -19,10 +19,13 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.configuration.StringConfiguration;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
 public class RollingUpgradeConfigurationBuilder {
+   private static final Log log = LogFactory.getLog(RollingUpgradeConfigurationBuilder.class, Log.class);
    private final String fromVersion;
    private final String toVersion;
    private final String name;
@@ -39,6 +42,7 @@ public class RollingUpgradeConfigurationBuilder {
    private int serverCheckTimeSecs = 30;
    private boolean useSharedDataMount = true;
    private BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler = (t, uh) -> {
+      log.error("Rolling upgrade failed due to: " + t);
       throw new RuntimeException(t);
    };
    private Function<ConfigurationBuilder, ConfigurationBuilder> configurationHandler = Function.identity();
