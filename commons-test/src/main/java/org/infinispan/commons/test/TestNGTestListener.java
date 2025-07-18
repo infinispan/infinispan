@@ -138,7 +138,8 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
                  testConstructor != null ? testConstructor.getDeclaringClass() :
                  null;
       if ((clazz.getName().startsWith("org.infinispan.spring.embedded.provider")  ||
-      clazz.getName().startsWith("org.infinispan.spring.embedded.support"))
+      clazz.getName().startsWith("org.infinispan.spring.embedded.support")  ||
+      clazz.getName().startsWith("org.infinispan.cdi.embedded.test.util"))
       &&
           annotation.getExpectedExceptions() != null) {
             return; // Skip tests in the Spring Embedded provider that expect exceptions
