@@ -219,19 +219,6 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    /**
-    * The {@link jakarta.transaction.TransactionManager} to use for the cache
-    *
-    * @param manager an instance of a TransactionManager
-    * @return an instance of the builder
-    * @deprecated since 12.0. To be removed in Infinispan 14. Use {@link #transactionManagerLookup(TransactionManagerLookup)}
-    * instead.
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public RemoteCacheConfigurationBuilder transactionManager(TransactionManager manager) {
-      return transactionManagerLookup(() -> manager);
-   }
-
-   /**
     * The {@link TransactionManagerLookup} to lookup for the {@link TransactionManager} to interact with.
     *
     * @param lookup A {@link TransactionManagerLookup} instance.

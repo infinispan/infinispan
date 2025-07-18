@@ -13,17 +13,12 @@ import static org.infinispan.client.rest.RestHeaders.HOST;
 import static org.infinispan.client.rest.RestHeaders.ORIGIN;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.test.skip.SkipTestNG.skipIf;
-import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.RequestHeader.IF_MODIFIED_SINCE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.test.TestingUtil.k;
@@ -45,8 +40,6 @@ import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.dataconversion.Compression;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -57,11 +50,8 @@ import org.infinispan.rest.TestClass;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.rest.helper.RestServerHelper;
-import org.infinispan.rest.search.entity.Person;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
-import org.infinispan.server.core.dataconversion.JsonTranscoder;
-import org.infinispan.server.core.dataconversion.XMLTranscoder;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -123,23 +113,6 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       assertThat(response).isOk();
       assertThat(response).hasContentType("text/plain");
       assertThat(response).hasReturnedText("test");
-   }
-
-   @Test
-   public void shouldConvertExistingSerializableObjectToJson() {
-      //given
-      TestClass testClass = new TestClass();
-      testClass.setName("test");
-      RestCacheClient objectCache = client.cache("objectCache");
-      join(objectCache.put("test", RestEntity.create(APPLICATION_JSON, testClass.toJson().toString())));
-
-      //when
-      CompletionStage<RestResponse> response = objectCache.get("test", APPLICATION_JSON_TYPE);
-
-      //then
-      assertThat(response).isOk();
-      assertThat(response).hasContentType("application/json");
-      assertThat(response).hasReturnedText("{\"" + TYPE + "\":\"" + TestClass.class.getName() + "\",\"name\":\"test\"}");
    }
 
    @Test
@@ -209,23 +182,6 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       assertThat(response).hasReturnedBytes("v1".getBytes());
       assertThat(response).isOk();
       assertThat(response).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
-   }
-
-   @Test
-   public void shouldReadAsJsonWithPojoCache() {
-      //given
-      TestClass testClass = new TestClass();
-      testClass.setName("test");
-      RestCacheClient pojoCache = client.cache("pojoCache");
-      join(pojoCache.put("test", RestEntity.create(APPLICATION_JSON, testClass.toJson().toString())));
-
-      //when
-      CompletionStage<RestResponse> response = pojoCache.get("test", APPLICATION_JSON_TYPE);
-
-      //then
-      assertThat(response).isOk();
-      assertThat(response).hasContentType(APPLICATION_JSON_TYPE);
-      assertThat(response).hasReturnedText("{\"" + TYPE + "\":\"org.infinispan.rest.TestClass\",\"name\":\"test\"}");
    }
 
    @Test
@@ -448,53 +404,4 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       }
    }
 
-   @Test
-   public void testReplaceExistingObject() {
-      String initialJson = "{\"" + TYPE + "\":\"org.infinispan.rest.TestClass\",\"name\":\"test\"}";
-      String changedJson = "{\"" + TYPE + "\":\"org.infinispan.rest.TestClass\",\"name\":\"test2\"}";
-
-      RestResponse response = writeJsonToCache("key", initialJson, "objectCache");
-      assertThat(response).isOk();
-
-      response = writeJsonToCache("key", changedJson, "objectCache");
-      assertThat(response).isOk();
-
-      response = join(client.cache("objectCache").get("key", APPLICATION_JSON_TYPE));
-
-      Json jsonNode = Json.read(response.body());
-      assertEquals(jsonNode.at("name").asString(), "test2");
-   }
-
-   private RestResponse writeJsonToCache(String key, String json, String cacheName) {
-      RestEntity restEntity = RestEntity.create(APPLICATION_JSON, json);
-      return join(client.cache(cacheName).put(key, restEntity));
-   }
-
-   @Test
-   public void testServerDeserialization() throws Exception {
-      Object value = new Person();
-
-      byte[] jsonMarshalled = (byte[]) new JsonTranscoder().transcode(value, APPLICATION_OBJECT, APPLICATION_JSON);
-      byte[] xmlMarshalled = (byte[]) new XMLTranscoder().transcode(value, APPLICATION_OBJECT, APPLICATION_XML);
-      byte[] javaMarshalled = new JavaSerializationMarshaller().objectToByteBuffer(value);
-
-      String expectError = "Class '" + value.getClass().getName() + "' blocked by deserialization allow list";
-
-      RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, jsonMarshalled);
-      RestEntity xmlEntity = RestEntity.create(APPLICATION_XML, xmlMarshalled);
-      RestEntity javaEntity = RestEntity.create(APPLICATION_SERIALIZED_OBJECT, javaMarshalled);
-
-      CompletionStage<RestResponse> jsonResponse = client.cache("objectCache").put("addr2", jsonEntity);
-      assertThat(jsonResponse).isError();
-      assertThat(jsonResponse).containsReturnedText(expectError);
-
-      CompletionStage<RestResponse> xmlResponse = client.cache("objectCache").put("addr3", xmlEntity);
-      assertThat(xmlResponse).isError();
-      assertThat(xmlResponse).containsReturnedText(expectError);
-
-      CompletionStage<RestResponse> serializationResponse = client.cache("objectCache").put("addr4", javaEntity);
-      assertThat(serializationResponse).isError();
-      assertThat(serializationResponse).containsReturnedText(expectError);
-
-   }
 }

@@ -180,12 +180,9 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
             .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       GlobalAuthorizationConfiguration globalAuthz = globalConfiguration.security().authorization();
       if (globalAuthz.enabled()) {
-         if (!globalAuthz.hasRole(SCHEMA_MANAGER_ROLE)) {
-            globalAuthz.addRole(GlobalAuthorizationConfiguration.DEFAULT_ROLES.get(SCHEMA_MANAGER_ROLE));
-         }
          AuthorizationConfigurationBuilder authorization = cfg.security().authorization().enable();
          // Copy all global roles
-         globalAuthz.roles().keySet().forEach(role -> authorization.role(role));
+         globalAuthz.roles().keySet().forEach(authorization::role);
          // Add a special module which translates permissions
          cfg.addModule(CreatePermissionConfigurationBuilder.class);
       }

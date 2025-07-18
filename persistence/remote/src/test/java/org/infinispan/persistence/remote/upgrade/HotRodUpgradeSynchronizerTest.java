@@ -61,8 +61,8 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
    protected TestCluster configureTargetCluster() {
       return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
-            .cache().name(OLD_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(OLD_PROTOCOL_VERSION)
-            .cache().name(TEST_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(NEW_PROTOCOL_VERSION)
+            .cache().name(OLD_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(OLD_PROTOCOL_VERSION).remoteStoreProperty(RemoteStore.MIGRATION, "true")
+            .cache().name(TEST_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(NEW_PROTOCOL_VERSION).remoteStoreProperty(RemoteStore.MIGRATION, "true")
             .build();
    }
 
@@ -70,7 +70,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       // No op, target cluster is already connected to the source (static remote store added).
    }
 
-   public void testSynchronization() throws Exception {
+   public void testSynchronization() {
       connectTargetCluster();
       RemoteCache<String, String> sourceRemoteCache = sourceCluster.getRemoteCache(TEST_CACHE);
       RemoteCache<String, String> targetRemoteCache = targetCluster.getRemoteCache(TEST_CACHE);
@@ -218,12 +218,12 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    private void doWhenSourceIterationReaches(String key, TestCluster cluster, String cacheName, IterationCallBack callback) {
       cluster.getEmbeddedCaches(cacheName).forEach(c -> {
          PersistenceManager pm = extractComponent(c, PersistenceManager.class);
-         RemoteStore remoteStore = pm.getStores(RemoteStore.class).iterator().next();
-         RemoteCacheImpl remoteCache = TestingUtil.extractField(remoteStore, "remoteCache");
-         RemoteCacheImpl spy = spy(remoteCache);
+         RemoteStore<?, ?> remoteStore = pm.getStores(RemoteStore.class).iterator().next();
+         RemoteCacheImpl<?, ?> remoteCache = TestingUtil.extractField(remoteStore, "remoteCache");
+         RemoteCacheImpl<?, ?> spy = spy(remoteCache);
          doAnswer(invocation -> {
             Object[] params = invocation.getArguments();
-            CloseableIterator<Map.Entry<Object, Object>> iterator = remoteCache.retrieveEntriesWithMetadata((Set<Integer>) params[0], (int) params[1]);
+            CloseableIterator<Map.Entry<Object, MetadataValue<Object>>> iterator = remoteCache.retrieveEntriesWithMetadata((Set<Integer>) params[0], (int) params[1]);
             Marshaller marshaller = new GenericJBossMarshaller();
             return new IteratorMapper<>(iterator, entry -> {
                try {

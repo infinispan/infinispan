@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.annotations.AfterClass;
@@ -68,6 +69,7 @@ public class HotRodUpgradeEncodingsTest extends AbstractInfinispanTest {
    protected TestCluster configureTargetCluster() {
       return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort())
+            .remoteStoreProperty(RemoteStore.MIGRATION, "true")
             .configuredWith(getConfigurationBuilder()).build();
    }
 

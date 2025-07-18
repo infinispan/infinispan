@@ -308,9 +308,6 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
       throw new UnsupportedOperationException();
    }
 
-   @Deprecated(forRemoval=true, since = "12.0")
-   ClassAllowList getClassWhiteList();
-
    ClassAllowList getClassAllowList();
 
    Subject getSubject();

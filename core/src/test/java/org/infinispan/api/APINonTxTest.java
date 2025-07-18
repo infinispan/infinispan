@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 import org.infinispan.Cache;
 import org.infinispan.LockedStream;
 import org.infinispan.commons.lambda.NamedLambdas;
-import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.functional.FunctionalMap;
@@ -479,8 +478,8 @@ public class APINonTxTest extends SingleCacheManagerTest {
       expValues.add(value2);
       expValues.add(value3);
 
-      Set expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
-      Set expValueEntries = ObjectDuplicator.duplicateSet(expValues);
+      Set expKeyEntries = new HashSet(expKeys);
+      Set expValueEntries = new HashSet(expValues);
 
       Set<Object> keys = cache.keySet();
       for (Object key : keys) {

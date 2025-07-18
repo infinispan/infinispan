@@ -190,15 +190,6 @@ public final class DataFormat {
       return defaultMarshaller;
    }
 
-   /**
-    * @deprecated Replaced by {@link #initialize(RemoteCacheManager, String)}.
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public void initialize(RemoteCacheManager remoteCacheManager) {
-      this.marshallerRegistry = remoteCacheManager.getMarshallerRegistry();
-      this.defaultMarshaller = remoteCacheManager.getMarshaller();
-   }
-
    public void initialize(RemoteCacheManager remoteCacheManager, String cacheName) {
       this.marshallerRegistry = remoteCacheManager.getMarshallerRegistry();
       this.defaultMarshaller = remoteCacheManager.getMarshaller();
@@ -221,28 +212,12 @@ public final class DataFormat {
       return server != null && server.keyType == MediaType.APPLICATION_OBJECT;
    }
 
-   /**
-    * @deprecated Since 12.0, will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public byte[] keyToBytes(Object key, int estimateKeySize, int estimateValueSize) {
-      return keyToBytes(key);
-   }
-
    public byte[] keyToBytes(Object key) {
       return client.keyToBytes(key);
    }
 
    public void keyToStream(Object key, OutputStream stream) {
       client.keyToStream(key, stream);
-   }
-
-   /**
-    * @deprecated Since 12.0, will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public byte[] valueToBytes(Object value, int estimateKeySize, int estimateValueSize) {
-      return valueToBytes(value);
    }
 
    public byte[] valueToBytes(Object value) {

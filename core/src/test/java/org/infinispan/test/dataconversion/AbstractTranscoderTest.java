@@ -23,6 +23,4 @@ public abstract class AbstractTranscoderTest {
       assertFalse(supportedMediaTypesList.get(0).match(supportedMediaTypesList.get(1)), "Supported MediaTypes Must be different");
    }
 
-   @Test
-   public abstract void testTranscoderTranscode() throws Exception;
 }

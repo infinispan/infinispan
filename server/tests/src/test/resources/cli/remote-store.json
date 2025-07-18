@@ -2,7 +2,6 @@
   "remote-store": {
     "segmented": false,
     "shared": true,
-    "raw-values": true,
     "cache": "cache-name",
     "remote-server": {
       "host": "127.0.0.1",

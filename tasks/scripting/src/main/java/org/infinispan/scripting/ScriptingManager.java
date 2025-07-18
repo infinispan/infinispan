@@ -22,12 +22,6 @@ public interface ScriptingManager {
    String SCRIPT_CACHE = SCRIPT_CACHE_NAME;
 
    /**
-    * @deprecated since 12.1. Will be removed in 15.0. Use the CREATE permission instead.
-    */
-   @Deprecated(forRemoval=true, since = "12.1")
-   String SCRIPT_MANAGER_ROLE = "___script_manager";
-
-   /**
     * Adds a new named script.
     *
     * @param name

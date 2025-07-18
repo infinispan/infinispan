@@ -2,7 +2,6 @@ package org.infinispan.scripting.impl;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
-import static org.infinispan.scripting.ScriptingManager.SCRIPT_MANAGER_ROLE;
 
 import java.util.EnumSet;
 
@@ -74,7 +73,6 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       cfg.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       GlobalAuthorizationConfiguration globalAuthz = globalConfiguration.security().authorization();
       if (globalAuthz.enabled()) {
-         globalAuthz.addRole(GlobalAuthorizationConfiguration.DEFAULT_ROLES.get(SCRIPT_MANAGER_ROLE));
          AuthorizationConfigurationBuilder authorization = cfg.security().authorization().enable();
          // Copy all global roles
          globalAuthz.roles().keySet().forEach(authorization::role);

@@ -1,8 +1,8 @@
 package org.infinispan.query.config;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.util.Map;
@@ -35,8 +35,8 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().enabled());
-      assertEquals(diskCfg.indexing().storage(), IndexStorage.FILESYSTEM);
-      assertEquals(diskCfg.indexing().path(), "target/");
+      assertEquals(IndexStorage.FILESYSTEM, diskCfg.indexing().storage());
+      assertEquals("target/", diskCfg.indexing().path());
 
       Configuration replDefaults = namedConfigurations.get("repl-with-default").build();
       assertTrue(replDefaults.indexing().enabled());
@@ -44,7 +44,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
    public void testConfigurationFileParsingWithDefaultEnabled() throws IOException {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
-      ConfigurationBuilderHolder holder = parserRegistry.parseFile("configuration-parsing-test-enbledInDefault.xml");
+      ConfigurationBuilderHolder holder = parserRegistry.parseFile("configuration-parsing-test-enabledInDefault.xml");
       Map<String, ConfigurationBuilder> namedConfigurations = holder.getNamedConfigurationBuilders();
       Configuration defaultConfiguration = namedConfigurations.get("default").build();
 
@@ -59,11 +59,11 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
       assertTrue(memoryCfg.indexing().enabled());
-      assertEquals(memoryCfg.indexing().storage(), IndexStorage.LOCAL_HEAP);
+      assertEquals(IndexStorage.LOCAL_HEAP, memoryCfg.indexing().storage());
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().enabled());
-      assertEquals(diskCfg.indexing().storage(), IndexStorage.FILESYSTEM);
-      assertEquals(diskCfg.indexing().path(), "target/");
+      assertEquals(IndexStorage.FILESYSTEM, diskCfg.indexing().storage());
+      assertEquals("target/", diskCfg.indexing().path());
    }
 }

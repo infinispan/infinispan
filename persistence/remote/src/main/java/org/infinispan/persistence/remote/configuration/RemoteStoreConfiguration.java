@@ -22,18 +22,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    static final AttributeDefinition<String> BALANCING_STRATEGY = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.BALANCING_STRATEGY, RoundRobinBalancingStrategy.class.getName()).immutable().build();
    static final AttributeDefinition<Long> CONNECTION_TIMEOUT = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.CONNECT_TIMEOUT, (long) ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT).build();
    static final AttributeDefinition<Boolean> FORCE_RETURN_VALUES = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.FORCE_RETURN_VALUES, false).immutable().build();
-   static final AttributeDefinition<Boolean> HOTROD_WRAPPING = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.HOTROD_WRAPPING, false).immutable().build();
-   static final AttributeDefinition<Boolean> RAW_VALUES = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.RAW_VALUES, false).immutable().build();
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   static final AttributeDefinition<Integer> KEY_SIZE_ESTIMATE = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.KEY_SIZE_ESTIMATE, ConfigurationProperties.DEFAULT_KEY_SIZE).immutable().build();
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   static final AttributeDefinition<Integer> VALUE_SIZE_ESTIMATE = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.VALUE_SIZE_ESTIMATE, ConfigurationProperties.DEFAULT_VALUE_SIZE).immutable().build();
    static final AttributeDefinition<String> MARSHALLER = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.MARSHALLER, null, String.class).immutable().build();
    static final AttributeDefinition<ProtocolVersion> PROTOCOL_VERSION = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.PROTOCOL_VERSION, ProtocolVersion.DEFAULT_PROTOCOL_VERSION)
          .immutable().build();
@@ -47,7 +35,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RemoteStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), BALANCING_STRATEGY, CONNECTION_TIMEOUT, FORCE_RETURN_VALUES,
-            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_CONTAINER, REMOTE_CACHE_NAME, SOCKET_TIMEOUT, TCP_NO_DELAY, VALUE_SIZE_ESTIMATE, URI);
+            MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_CONTAINER, REMOTE_CACHE_NAME, SOCKET_TIMEOUT, TCP_NO_DELAY, URI);
    }
 
    private final ConnectionPoolConfiguration connectionPool;
@@ -89,36 +77,12 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
       return attributes.attribute(FORCE_RETURN_VALUES).get();
    }
 
-   /**
-    * @deprecated since 12.0 - Automatic media type detection in remote store makes this option redundant
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public boolean hotRodWrapping() {
-      return attributes.attribute(RAW_VALUES).get();
-   }
-
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public int keySizeEstimate() {
-      return attributes.attribute(KEY_SIZE_ESTIMATE).get();
-   }
-
    public String marshaller() {
       return attributes.attribute(MARSHALLER).get();
    }
 
    public ProtocolVersion protocol() {
       return attributes.attribute(PROTOCOL_VERSION).get();
-   }
-
-   /**
-    * @deprecated since 12.0 - This option can still be needed when retrieving from a preexisting remote cache
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public boolean rawValues() {
-      return attributes.attribute(RAW_VALUES).get();
    }
 
    public String remoteCacheContainer() {
@@ -139,14 +103,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
 
    public boolean tcpNoDelay() {
       return attributes.attribute(TCP_NO_DELAY).get();
-   }
-
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public int valueSizeEstimate() {
-      return attributes.attribute(VALUE_SIZE_ESTIMATE).get();
    }
 
    public SecurityConfiguration security() {

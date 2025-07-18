@@ -158,11 +158,6 @@ public class AbstractDelegatingEmbeddedCacheManager extends InternalCacheManager
    }
 
    @Override
-   public ClassAllowList getClassWhiteList() {
-      return cm.getClassAllowList();
-   }
-
-   @Override
    public ClassAllowList getClassAllowList() {
       return cm.getClassAllowList();
    }
