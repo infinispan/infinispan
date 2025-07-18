@@ -3,11 +3,12 @@ package org.infinispan.it.endpoints;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -63,8 +64,9 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
    @BeforeClass
    protected void setup() throws Exception {
       cacheManager = TestCacheManagerFactory.createServerModeCacheManager(EndpointITSCI.INSTANCE, new ConfigurationBuilder());
-      cacheManager.getClassWhiteList().addRegexps(".*");
+      cacheManager.getClassAllowList().addRegexps(".*");
       cacheManager.defineConfiguration(CACHE_NAME, getIndexCacheConfiguration().build());
+      assertTrue(cacheManager.getStatus().allowInvocations());
 
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
 
