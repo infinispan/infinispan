@@ -6,6 +6,7 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COMMITTE
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CREATED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EVICTED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.INVALIDATED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOADED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_SHARED_STORE;
@@ -31,7 +32,7 @@ import org.infinispan.util.logging.LogFactory;
 public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
    private static final Log log = LogFactory.getLog(ReadCommittedEntry.class);
 
-   protected K key;
+   protected final K key;
    protected V value;
    protected long created = -1, lastUsed = -1;
    protected short flags = 0;
@@ -63,6 +64,7 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
       LOADED(1 << 8),
       // Set if this write should not be persisted into any underlying shared stores
       SKIP_SHARED_STORE(1 << 9),
+      INVALIDATED(1 << 10),
       ;
 
       final short mask;
@@ -186,6 +188,11 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
    }
 
    @Override
+   public void setInvalidated(boolean invalidated) {
+      setFlag(invalidated, INVALIDATED);
+   }
+
+   @Override
    public boolean skipLookup() {
       //in read committed, it can read from the data container / remote source multiple times.
       return false;
@@ -236,6 +243,11 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
    @Override
    public boolean isEvicted() {
       return isFlagSet(EVICTED);
+   }
+
+   @Override
+   public boolean isInvalidated() {
+      return isFlagSet(INVALIDATED);
    }
 
    @Override

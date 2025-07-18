@@ -54,6 +54,11 @@ public class CacheEntryDelegator implements CacheEntry {
    }
 
    @Override
+   public boolean isInvalidated() {
+      return delegate.isInvalidated();
+   }
+
+   @Override
    public Object getKey() {
       return delegate.getKey();
    }
@@ -121,6 +126,11 @@ public class CacheEntryDelegator implements CacheEntry {
    @Override
    public void setSkipLookup(boolean skipLookup) {
       delegate.setSkipLookup(skipLookup);
+   }
+
+   @Override
+   public void setInvalidated(boolean invalidated) {
+      delegate.setInvalidated(invalidated);
    }
 
    @Override

@@ -57,17 +57,16 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public void commit(DataContainer container) {
+      public void commit(DataContainer<K, V> container) {
          throw new UnsupportedOperationException();
       }
 
       @Override
       public boolean equals(Object o) {
-         if (!(o instanceof InternalCacheEntry))
+         if (!(o instanceof InternalCacheEntry<?, ?> that))
             return false;
 
-         InternalCacheEntry entry = (InternalCacheEntry) o;
-         return entry.equals(this.entry);
+         return that.equals(this.entry);
       }
 
       @Override
@@ -171,6 +170,11 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
+      public boolean isInvalidated() {
+         return entry.isInvalidated();
+      }
+
+      @Override
       public void setCreated(boolean created) {
          throw new UnsupportedOperationException();
       }
@@ -192,6 +196,11 @@ public class CoreImmutables extends Immutables {
 
       @Override
       public void setSkipLookup(boolean skipLookup) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void setInvalidated(boolean invalidated) {
          throw new UnsupportedOperationException();
       }
 
