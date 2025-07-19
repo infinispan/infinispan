@@ -27,6 +27,8 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -77,7 +79,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    @Inject CommandsFactory commandsFactory;
 
    private boolean statisticsEnabled;
-
+   private boolean replicatePuts;
    @Override
    protected Log getLog() {
       return log;
@@ -86,14 +88,21 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    @Start
    void start() {
       this.setStatisticsEnabled(cacheConfiguration.statistics().enabled());
+      this.replicatePuts = cacheConfiguration.clustering().attributes().attribute(ClusteringConfiguration.REPLICATE_PUTS).get();
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (!isPutForExternalRead(command)) {
-         return handleInvalidate(ctx, command, command.getKey());
+      if ((!replicatePuts && !isEntryCreated(ctx, command.getKey())) || isPutForExternalRead(command)) {
+         return invokeNext(ctx, command);
       }
-      return invokeNext(ctx, command);
+      return handleInvalidate(ctx, command, command.getKey());
+   }
+
+
+   private boolean isEntryCreated(InvocationContext ctx, Object key) {
+      CacheEntry<?, ?> e = ctx.lookupEntry(key);
+      return e == null || e.isCreated();
    }
 
    @Override

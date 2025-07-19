@@ -617,6 +617,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       ClusteringConfiguration clustering = configuration.clustering();
       writer.writeAttribute(Attribute.MODE, clustering.cacheMode().isSynchronous() ? "SYNC" : "ASYNC");
       clustering.attributes().write(writer, ClusteringConfiguration.REMOTE_TIMEOUT, Attribute.REMOTE_TIMEOUT);
+      clustering.attributes().write(writer, ClusteringConfiguration.REPLICATE_PUTS, Attribute.REPLICATE_PUTS);
    }
 
    private void writeCommonCacheAttributesElements(ConfigurationWriter writer, String name, Configuration configuration) {
