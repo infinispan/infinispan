@@ -93,7 +93,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if ((!replicatePuts && isEntryCreated(ctx, command.getKey())) || isPutForExternalRead(command)) {
+      if ((!replicatePuts && !isEntryCreated(ctx, command.getKey())) || isPutForExternalRead(command)) {
          return invokeNext(ctx, command);
       }
       return handleInvalidate(ctx, command, command.getKey());
@@ -102,7 +102,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
    private boolean isEntryCreated(InvocationContext ctx, Object key) {
       CacheEntry<?, ?> e = ctx.lookupEntry(key);
-      return e != null && e.isCreated();
+      return e == null || e.isCreated();
    }
 
    @Override
