@@ -4,7 +4,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFact
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.rest.resources.ProtobufResource;
 import org.infinispan.server.functional.extensions.DistributedHelloServerTask;
 import org.infinispan.server.functional.extensions.HelloServerTask;
 import org.infinispan.server.functional.extensions.IsolatedTask;
@@ -47,6 +46,7 @@ import org.infinispan.server.functional.resp.RespStringTest;
 import org.infinispan.server.functional.resp.RespTransactionTest;
 import org.infinispan.server.functional.rest.RestLoggingResource;
 import org.infinispan.server.functional.rest.RestOperations;
+import org.infinispan.server.functional.rest.RestProtobufResourceTest;
 import org.infinispan.server.functional.rest.RestRouter;
 import org.infinispan.server.functional.rest.RestServerResource;
 import org.infinispan.server.test.core.Common;
@@ -96,7 +96,7 @@ import org.junit.platform.suite.api.Suite;
       RespSortedSetTest.class,
       RespStringTest.class,
       RespTransactionTest.class,
-      ProtobufResource.class,
+      RestProtobufResourceTest.class,
 })
 public class ClusteredIT extends InfinispanSuite {
 
