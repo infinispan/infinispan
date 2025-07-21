@@ -1,11 +1,11 @@
 package org.infinispan.server.test.junit5;
 
 import static org.junit.platform.commons.support.AnnotationSupport.findAnnotatedFields;
+import static org.junit.platform.commons.support.AnnotationSupport.findAnnotatedMethods;
 
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,9 +17,12 @@ import org.infinispan.server.test.core.TestServer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.platform.commons.support.HierarchyTraversalMode;
 import org.junit.platform.commons.support.ModifierSupport;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
@@ -55,8 +58,15 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
          return;
 
       SelectClasses selectClasses = clazz.getAnnotation(SelectClasses.class);
-      if (selectClasses != null)
-         Collections.addAll(suiteTestClasses, selectClasses.value());
+      if (selectClasses != null) {
+         for (Class<?> klass : selectClasses.value()) {
+            if (findAnnotatedMethods(klass, Test.class, HierarchyTraversalMode.TOP_DOWN).isEmpty() &&
+            findAnnotatedMethods(klass, ParameterizedTest.class, HierarchyTraversalMode.TOP_DOWN).isEmpty()) {
+               throw new IllegalArgumentException("Class " + klass + " doesn't contain any methods with @Test or @ParameterizedTest annotations");
+            }
+            suiteTestClasses.add(klass);
+         }
+      }
    }
 
    protected boolean isSuiteClass(ExtensionContext extensionContext) {
