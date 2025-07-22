@@ -52,7 +52,7 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
 
    protected String checkCacheReady(String cacheName) {
       if (cacheName != null && cacheManager.cacheExists(cacheName) && !cacheManager.isRunning(cacheName))
-         throw log.cacheIsNotReady(cacheName + "-dec");
+         throw log.cacheIsNotReady(cacheName);
 
       return cacheName;
    }
