@@ -432,12 +432,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
 
       if (javaOpts != null) {
-         String baseImage = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME);
-         if (baseImage == null) {
-            container.withEnv("JAVA_OPTS", javaOpts);
-         } else {
-            container.withEnv("JAVA_OPTIONS", javaOpts);
-         }
+         // We set both environment variables as an image from infinispan-images uses JAVA_OPTIONS
+         // and an image from a directory would use JAVA_OPTS. And a custom image could be either.
+         container.withEnv("JAVA_OPTS", javaOpts);
+         container.withEnv("JAVA_OPTIONS", javaOpts);
       }
 
       // Process any enhancers
