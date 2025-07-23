@@ -19,9 +19,11 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    public static final AttributeDefinition<Boolean> CACHE_SYNC = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, true, Boolean.class).immutable().autoPersist(false).build();
    public static final AttributeDefinition<TimeQuantity> REMOTE_TIMEOUT =
          AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT, TimeQuantity.valueOf("15s")).parser(TimeQuantity.PARSER).build();
+   public static final AttributeDefinition<Boolean> REPLICATE_PUTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REPLICATE_PUTS, true, Boolean.class).immutable().autoPersist(false).build();
+
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT);
+      return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT, REPLICATE_PUTS);
    }
 
    private final CacheMode cacheMode;
