@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-public class RollingUpgradePersistenceTest {
+public class RollingUpgradePersistenceTestIT {
 
    private static final int NUM_ENTRIES = 100;
 
@@ -36,7 +36,7 @@ public class RollingUpgradePersistenceTest {
             </distributed-cache>
             """.formatted(cacheName);
 
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradePersistenceTest.class.getName(),
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradePersistenceTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .nodeCount(nodeCount);
       builder.handlers(
@@ -54,7 +54,7 @@ public class RollingUpgradePersistenceTest {
       String cacheName = "rolling_upgrade_jdbc";
       int nodeCount = 2;
       DatabaseServerListener listener = new DatabaseServerListener(databaseType);
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradePersistenceTest.class.getName(),
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradePersistenceTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .nodeCount(nodeCount)
             .addArchives(PersistenceIT.getJavaArchive())

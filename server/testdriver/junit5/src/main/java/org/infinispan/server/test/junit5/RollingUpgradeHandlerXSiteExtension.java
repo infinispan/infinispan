@@ -2,11 +2,13 @@ package org.infinispan.server.test.junit5;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.server.test.core.TestServer;
 import org.infinispan.server.test.core.rollingupgrade.CombinedInfinispanServerDriver;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfiguration;
+import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeXSiteHandler;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -16,15 +18,26 @@ public class RollingUpgradeHandlerXSiteExtension extends InfinispanXSiteServerEx
    private RollingUpgradeXSiteHandler handler;
 
    private RollingUpgradeHandlerXSiteExtension(Class<?> caller, Map<String, InfinispanServerExtensionBuilder> sites,
-                                              String fromVersion, String toVersion) {
+                                              String fromVersion, String toVersion, Consumer<RollingUpgradeConfigurationBuilder> decorator) {
       super(new ArrayList<>());
-      this.sites = sites.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e ->
-         RollingUpgradeHandlerExtension.convertBuilder(caller.getName() + "-" + e.getKey(), e.getValue(), fromVersion, toVersion).build()));
+      this.sites = sites.entrySet().stream()
+            .collect(Collectors.toMap(
+                  Map.Entry::getKey,
+                  e -> {
+                     RollingUpgradeConfigurationBuilder builder = RollingUpgradeHandlerExtension.convertBuilder(caller.getName() + "-" + e.getKey(), e.getValue(), fromVersion, toVersion);
+                     decorator.accept(builder);
+                     return builder.build();
+                  }));
    }
 
    public static RollingUpgradeHandlerXSiteExtension from(Class<?> caller, InfinispanXSiteServerExtensionBuilder builder,
                                                           String fromVersion, String toVersion) {
-      return new RollingUpgradeHandlerXSiteExtension(caller, builder.siteConfigurations(), fromVersion, toVersion);
+      return from(caller, builder, fromVersion, toVersion, ignore -> {});
+   }
+
+   public static RollingUpgradeHandlerXSiteExtension from(Class<?> caller, InfinispanXSiteServerExtensionBuilder builder,
+                                                          String fromVersion, String toVersion, Consumer<RollingUpgradeConfigurationBuilder> decorator) {
+      return new RollingUpgradeHandlerXSiteExtension(caller, builder.siteConfigurations(), fromVersion, toVersion, decorator);
    }
 
    @Override
