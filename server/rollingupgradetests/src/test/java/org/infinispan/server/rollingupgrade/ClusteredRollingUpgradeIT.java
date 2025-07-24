@@ -11,6 +11,7 @@ import org.infinispan.server.functional.hotrod.HotRodCacheOperations;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.functional.hotrod.HotRodClientMetrics;
 import org.infinispan.server.functional.hotrod.HotRodCounterOperations;
+import org.infinispan.server.functional.hotrod.HotRodFlagCacheOperations;
 import org.infinispan.server.functional.hotrod.HotRodListenerWithDslFilter;
 import org.infinispan.server.functional.hotrod.HotRodMultiMapOperations;
 import org.infinispan.server.functional.hotrod.HotRodTransactionalCacheOperations;
@@ -44,6 +45,7 @@ import org.junit.platform.suite.api.Suite;
 @Suite(failIfNoTests = false)
 @SelectClasses({
       HotRodCacheOperations.class,
+      HotRodFlagCacheOperations.class,
       RestOperations.class,
       RestRouter.class,
       RestServerResource.class,
