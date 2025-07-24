@@ -28,10 +28,10 @@ import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.auth.AuthDescriptor;
 
-public class DefaultRollingUpgradeTest {
+public class DefaultRollingUpgradeTestIT {
    @Test
    public void testDefaultSetting() throws InterruptedException {
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion());
       RollingUpgradeHandler.performUpgrade(builder.build());
    }
@@ -41,7 +41,7 @@ public class DefaultRollingUpgradeTest {
       String cacheName = "rolling-upgrade";
       TestUser user = TestUser.ADMIN;
       int nodeCount = 3;
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .nodeCount(nodeCount);
       RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
@@ -90,7 +90,7 @@ public class DefaultRollingUpgradeTest {
       TestUser user = TestUser.ADMIN;
       int nodeCount = 3;
       ByRef.Integer interactions = new ByRef.Integer(0);
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .nodeCount(nodeCount);
 
@@ -140,7 +140,7 @@ public class DefaultRollingUpgradeTest {
             .setOpTimeout(TimeUnit.SECONDS.toMillis(30))
             .setAuthDescriptor(AuthDescriptor.typical(user.getUser(), user.getPassword()));
 
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTest.class.getName(),
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .nodeCount(nodeCount);
       builder.handlers(

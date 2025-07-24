@@ -10,11 +10,11 @@ import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfiguratio
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
 import org.junit.jupiter.api.Test;
 
-public class RollingUpgradeTaskTest {
+public class RollingUpgradeTaskTestIT {
 
    @Test
    public void testHelloWorldTask() throws Throwable {
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradeTaskTest.class.getName(),
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradeTaskTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .useCustomServerConfiguration("configuration/ClusteredServerTest.xml")
             .addArchives(ClusteredIT.artifacts())
