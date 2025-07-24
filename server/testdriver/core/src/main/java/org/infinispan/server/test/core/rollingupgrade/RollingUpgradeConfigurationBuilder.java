@@ -31,7 +31,7 @@ public class RollingUpgradeConfigurationBuilder {
    private final List<JavaArchive> customArchives = new ArrayList<>();
    private final List<String> mavenArtifacts = new ArrayList<>();
    private final List<InfinispanServerListener> listeners = new ArrayList<>();
-   private String jgroupsProtocol = "test-tcp";
+   private String jgroupsProtocol = "tcp";
    private int serverCheckTimeSecs = 30;
    private boolean useSharedDataMount = true;
    private BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler = (t, uh) -> {

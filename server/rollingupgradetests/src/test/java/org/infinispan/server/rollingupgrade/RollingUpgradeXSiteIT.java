@@ -29,6 +29,6 @@ public class RollingUpgradeXSiteIT extends InfinispanSuite {
    @RegisterExtension
    public static final RollingUpgradeHandlerXSiteExtension SERVERS = RollingUpgradeHandlerXSiteExtension.from(
          RollingUpgradeXSiteIT.class, XSiteIT.EXTENSION_BUILDER,
-         RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion());
+         RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion(), b -> b.jgroupsProtocol("test-tcp"));
 
 }
