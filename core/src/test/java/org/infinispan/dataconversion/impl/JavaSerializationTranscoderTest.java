@@ -1,12 +1,8 @@
 package org.infinispan.dataconversion.impl;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
 import java.util.Collections;
 
 import org.infinispan.commons.configuration.ClassAllowList;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.encoding.impl.JavaSerializationTranscoder;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
@@ -28,15 +24,4 @@ public class JavaSerializationTranscoderTest extends AbstractTranscoderTest {
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 
-   @Override
-   public void testTranscoderTranscode() {
-      MediaType personMediaType = MediaType.fromString("application/x-java-object;type=org.infinispan.test.data.Person");
-      Object result = transcoder.transcode(dataSrc, personMediaType, MediaType.APPLICATION_SERIALIZED_OBJECT);
-
-      assertTrue(result instanceof byte[], "Must be byte[]");
-
-      Object transcodedBack = transcoder.transcode(result, MediaType.APPLICATION_SERIALIZED_OBJECT, personMediaType);
-
-      assertEquals(transcodedBack, dataSrc, "Must be an equal objects");
-   }
 }

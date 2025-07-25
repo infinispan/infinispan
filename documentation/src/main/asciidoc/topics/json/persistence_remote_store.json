@@ -2,7 +2,6 @@
   "distributed-cache": {
     "remote-store": {
       "cache": "mycache",
-      "raw-values": "true",
       "remote-server": [
         {
           "host": "one",
@@ -11,11 +10,7 @@
         {
           "host": "two"
         }
-      ],
-      "connection-pool": {
-        "max-active": "10",
-        "exhausted-action": "CREATE_NEW"
-      }
+      ]
     }
   }
 }

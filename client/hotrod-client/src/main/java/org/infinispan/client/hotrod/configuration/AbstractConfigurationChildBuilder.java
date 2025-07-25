@@ -111,15 +111,6 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
       return builder.forceReturnValues(forceReturnValues);
    }
 
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   @Override
-   public ConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
-      return builder.keySizeEstimate(keySizeEstimate);
-   }
-
    @Override
    public ConfigurationBuilder marshaller(String marshaller) {
       return builder.marshaller(marshaller);
@@ -175,15 +166,6 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
       return builder.tcpKeepAlive(tcpKeepAlive);
    }
 
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   @Override
-   public ConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
-      return builder.valueSizeEstimate(valueSizeEstimate);
-   }
-
    @Override
    public ConfigurationBuilder maxRetries(int retriesPerServer) {
       return builder.maxRetries(retriesPerServer);
@@ -195,12 +177,6 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
-   @Deprecated(forRemoval=true, since = "12.0")
-   public ConfigurationBuilder addJavaSerialWhiteList(String... regExs) {
-      return builder.addJavaSerialAllowList(regExs);
-   }
-
-   @Override
    public ConfigurationBuilder batchSize(int batchSize) {
       return builder.batchSize(batchSize);
    }
@@ -208,11 +184,6 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    @Override
    public StatisticsConfigurationBuilder statistics() {
       return builder.statistics();
-   }
-
-   @Override
-   public TransactionConfigurationBuilder transaction() {
-      return builder.transaction();
    }
 
    @Override

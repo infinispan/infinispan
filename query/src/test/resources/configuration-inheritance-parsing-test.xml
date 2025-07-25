@@ -5,6 +5,9 @@
       xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
    <cache-container default-cache="default">
+      <global-state unclean-shutdown-action="FAIL">
+         <persistent-location path="${project.build.directory}"/>
+      </global-state>
       <local-cache-configuration name="template">
          <indexing storage="local-heap">
             <indexed-entities>

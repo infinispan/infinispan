@@ -2,7 +2,6 @@
   "remote-store": {
     "cache": "myCache",
     "shared": true,
-    "raw-values": true,
     "security": {
       "authentication": {
         "digest": {

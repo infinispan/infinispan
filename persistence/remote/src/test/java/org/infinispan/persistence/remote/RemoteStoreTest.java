@@ -127,7 +127,7 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
             .persistence()
             .addStore(RemoteStoreConfigurationBuilder.class)
             .remoteCacheName(CACHE_NAME)
-            .rawValues(isRawValues);
+            .addProperty(RemoteStore.MIGRATION, "true");
       storeConfigurationBuilder
             .addServer()
             .host(hrServer.getHost())

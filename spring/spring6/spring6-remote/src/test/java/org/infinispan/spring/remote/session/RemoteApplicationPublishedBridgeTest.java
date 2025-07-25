@@ -122,10 +122,8 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
 
       @Override
       public byte[] getEventData() {
-         RemoteCache cache = remoteCacheManager.getCache();
-         int keySizeEstimate = cache.getRemoteCacheManager().getConfiguration().keySizeEstimate();
-         int valueSizeEstimate = cache.getRemoteCacheManager().getConfiguration().valueSizeEstimate();
-         byte[] key = cache.getDataFormat().keyToBytes(sessionId, keySizeEstimate, valueSizeEstimate);
+         RemoteCache<?, ?> cache = remoteCacheManager.getCache();
+         byte[] key = cache.getDataFormat().keyToBytes(sessionId);
 
          int capacity = UnsignedNumeric.sizeUnsignedInt(key.length) + key.length;
 

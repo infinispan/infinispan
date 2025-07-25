@@ -64,7 +64,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       final Integer key = 1;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, embedded.put(key, "v1"));
+      assertNull(embedded.put(key, "v1"));
       assertEquals("v1", remote.get(key));
       assertEquals("v1", embedded.put(key, "v2"));
       assertEquals("v2", remote.get(key));
@@ -75,9 +75,9 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       final Integer key = 2;
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       Cache<Integer, String> embedded = getEmbeddedCache();
-      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
+      assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
       assertEquals("v1", embedded.get(key));
-      assertEquals(null, remote.put(key, "v2"));
+      assertNull(remote.put(key, "v2"));
       assertEquals("v2", remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v3"));
       assertEquals("v3", embedded.get(key));
       assertEquals("v3", remote.withFlags(Flag.FORCE_RETURN_VALUE).remove(key));
@@ -87,7 +87,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       final Integer key = 3;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, embedded.putIfAbsent(key, "v1"));
+      assertNull(embedded.putIfAbsent(key, "v1"));
       assertEquals("v1", remote.get(key));
       assertEquals("v1", embedded.putIfAbsent(key, "v2"));
       assertEquals("v1", remote.get(key));
@@ -98,9 +98,9 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       final Integer key = 4;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(key, "v1"));
+      assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(key, "v1"));
       assertEquals("v1", embedded.get(key));
-      assertEquals(null, remote.putIfAbsent(key, "v2"));
+      assertNull(remote.putIfAbsent(key, "v2"));
       assertEquals("v1", remote.withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(key, "v2"));
       assertEquals("v1", embedded.get(key));
       assertEquals("v1", remote.withFlags(Flag.FORCE_RETURN_VALUE).remove(key));
@@ -110,8 +110,8 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       final Integer key = 5;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, embedded.replace(key, "v1"));
-      assertEquals(null, embedded.put(key, "v1"));
+      assertNull(embedded.replace(key, "v1"));
+      assertNull(embedded.put(key, "v1"));
       assertEquals("v1", embedded.replace(key, "v2"));
       assertEquals("v2", remote.get(key));
       assertEquals("v2", embedded.remove(key));
@@ -121,8 +121,8 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       final Integer key = 6;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).replace(key, "v1"));
-      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
+      assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).replace(key, "v1"));
+      assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
       assertEquals("v1", remote.withFlags(Flag.FORCE_RETURN_VALUE).replace(key, "v2"));
       assertEquals("v2", embedded.get(key));
    }
@@ -131,7 +131,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       final Integer key = 7;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, embedded.put(key, "v1"));
+      assertNull(embedded.put(key, "v1"));
       assertTrue(embedded.replace(key, "v1", "v2"));
       assertEquals("v2", remote.get(key));
       assertEquals("v2", embedded.remove(key));
@@ -141,7 +141,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       final Integer key = 8;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, remote.put(key, "v1"));
+      assertNull(remote.put(key, "v1"));
       VersionedValue<String> versioned = remote.getWithMetadata(key);
       assertEquals("v1", versioned.getValue());
       assertTrue(0 != versioned.getVersion());
@@ -155,39 +155,39 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       final Integer key = 9;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, embedded.put(key, "v1"));
+      assertNull(embedded.put(key, "v1"));
       assertEquals("v1", embedded.remove(key));
-      assertEquals(null, remote.get(key));
+      assertNull(remote.get(key));
    }
 
    public void testHotRodRemoveEmbeddedGet() {
       final Integer key = 10;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
+      assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
       assertEquals("v1", remote.withFlags(Flag.FORCE_RETURN_VALUE).remove(key));
-      assertEquals(null, embedded.get(key));
+      assertNull(embedded.get(key));
    }
 
    public void testEmbeddedRemoveConditionalHotRodGet() {
       final Integer key = 11;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, embedded.put(key, "v1"));
+      assertNull(embedded.put(key, "v1"));
       assertFalse(embedded.remove(key, "vX"));
       assertTrue(embedded.remove(key, "v1"));
-      assertEquals(null, remote.get(key));
+      assertNull(remote.get(key));
    }
 
    public void testHotRodRemoveConditionalEmbeddedGet() {
       final Integer key = 12;
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
+      assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
       VersionedValue<String> versioned = remote.getWithMetadata(key);
       assertFalse(remote.withFlags(Flag.FORCE_RETURN_VALUE).removeWithVersion(key, Long.MAX_VALUE));
       assertTrue(remote.withFlags(Flag.FORCE_RETURN_VALUE).removeWithVersion(key, versioned.getVersion()));
-      assertEquals(null, embedded.get(key));
+      assertNull(embedded.get(key));
    }
 
    public void testEventReceiveBasic() {

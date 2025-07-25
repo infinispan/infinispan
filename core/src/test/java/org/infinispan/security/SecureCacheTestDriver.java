@@ -1,7 +1,6 @@
 package org.infinispan.security;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
@@ -9,12 +8,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
-import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
@@ -29,12 +26,10 @@ public class SecureCacheTestDriver {
 
    private final Metadata metadata;
    private final NullListener listener;
-   private final FooInterceptor interceptor;
    private final CacheEventConverter<String, String, String> converter;
    private final CacheEventFilter<String, String> keyValueFilter;
 
    public SecureCacheTestDriver() {
-      interceptor = new FooInterceptor();
       keyValueFilter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> true;
       converter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> null;
       listener = new NullListener();
@@ -734,11 +729,6 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)
-   public void testWithEncoding_Class(SecureCache<String, String> cache) {
-      cache.withEncoding(IdentityEncoder.class);
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
    public void testGetKeyDataConversion(SecureCache<String, String> cache) {
       cache.getKeyDataConversion();
    }
@@ -746,11 +736,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.NONE)
    public void testGetValueDataConversion(SecureCache<String, String> cache) {
       cache.getValueDataConversion();
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
-   public void testWithEncoding_Class_Class(SecureCache<String, String> cache) {
-      cache.withEncoding(IdentityEncoder.class, IdentityEncoder.class);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
@@ -821,16 +806,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testMerge_Object_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) {
       cache.merge("a", "b", (k, v) -> "no", metadata);
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
-   public void testWithKeyEncoding_Class(SecureCache<String, String> cache) {
-      cache.withKeyEncoding(IdentityEncoder.class);
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
-   public void testWithMediaType_String_String(SecureCache<String, String> cache) {
-      cache.withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_OBJECT_TYPE);
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)

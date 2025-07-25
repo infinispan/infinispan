@@ -18,12 +18,6 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerMBean;
 @Scope(Scopes.GLOBAL)
 public interface ProtobufMetadataManager extends ProtobufMetadataManagerMBean {
 
-   /**
-    * @deprecated since 12.1. Will be removed in 15.0. Use the CREATE permission instead.
-    */
-   @Deprecated(forRemoval=true, since = "12.1")
-   String SCHEMA_MANAGER_ROLE = "___schema_manager";
-
    void registerMarshaller(BaseMarshaller<?> marshaller);
 
    void unregisterMarshaller(BaseMarshaller<?> marshaller);

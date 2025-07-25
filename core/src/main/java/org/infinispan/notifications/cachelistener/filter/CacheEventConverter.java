@@ -31,7 +31,7 @@ public interface CacheEventConverter<K, V, C> {
    /**
     * @return if true, {@link #convert(Object, Object, Metadata, Object, Metadata, EventType)} will be presented with data
     * in the request format rather than the format specified in {@link #format()}. The request format is defined as the MediaType
-    * that a cache was previously decorated with {@link org.infinispan.AdvancedCache#withMediaType(String, String)}.
+    * that a cache was previously decorated with {@link org.infinispan.AdvancedCache#withMediaType(MediaType, MediaType)}.
     */
    @Experimental
    default boolean useRequestFormat() {

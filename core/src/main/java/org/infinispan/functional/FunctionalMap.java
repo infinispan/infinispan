@@ -287,8 +287,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * and hence, the {@link BiConsumer} could be cached and reused each
        * time it's invoked.
        *
-       * <p>Note that when {@link org.infinispan.commons.dataconversion.Encoder encoders}
-       * are in place despite the argument type and value type don't have to match
+       * <p>Note that when transcoders are in place despite the argument type and value type don't have to match
        * the argument will use value encoding.
        *
        * @param key the key associated with the {@link WriteEntryView} to be
@@ -351,24 +350,24 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * {@link CompletableFuture} that will be completed when the write-only
        * operation has been executed against all the entries.
        *
-       * <p>These kind of operations are preferred to traditional end user
+       * <p>These kinds of operations are preferred to traditional end user
        * iterations because the internal logic can often iterate more
        * efficiently since it knows more about the system.
        *
        * <p>Since this is a write-only operation, no entry attributes can be
        * queried, hence the only reasonable thing can be returned is Void.
        *
-       * <p>Note that when {@link org.infinispan.commons.dataconversion.Encoder encoders}
+       * <p>Note that when transcoders
        * are in place despite the argument type and value type don't have to match
        * the argument will use value encoding.
        *
        * @param arguments the key/value pairs associated with each of the
        *             {@link WriteEntryView} passed in the function callbacks
        * @param f operation that consumes a value associated with a key in the
-       *          entries collection and the {@link WriteEntryView} associated
+       *          entry collection and the {@link WriteEntryView} associated
        *          with that key in the cache
        * @return a {@link CompletableFuture} which will be completed when
-       *         the {@link BiConsumer} operation  has been executed against
+       *         the {@link BiConsumer} operation has been executed against
        *         all entries
        */
       <T> CompletableFuture<Void> evalMany(Map<? extends K, ? extends T> arguments, BiConsumer<T, WriteEntryView<K, V>> f);
@@ -557,8 +556,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * simple operations, and hence, the {@link BiFunction} could be cached
        * and reused each time it's invoked.
        *
-       * <p>Note that when {@link org.infinispan.commons.dataconversion.Encoder encoders}
-       * are in place despite the argument type and value type don't have to match
+       * <p>Note that when transcoders are in place despite the argument type and value type don't have to match
        * the argument will use value encoding.
        *
        * <p>The function must not mutate neither the key returned through
@@ -598,12 +596,11 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>This method can be used to implement operations that store a set of
        * keys and return previous values or metadata parameters.
        *
-       * <p>These kind of operations are preferred to traditional end user
+       * <p>These kinds of operations are preferred to traditional end user
        * iterations because the internal logic can often iterate more
        * efficiently since it knows more about the system.
        *
-       * <p>Note that when {@link org.infinispan.commons.dataconversion.Encoder encoders}
-       * are in place despite the argument type and value type don't have to match
+       * <p>Note that when transcoders are in place despite the argument type and value type don't have to match
        * the argument will use value encoding.
        *
        * <p>The function must not mutate neither the key returned through

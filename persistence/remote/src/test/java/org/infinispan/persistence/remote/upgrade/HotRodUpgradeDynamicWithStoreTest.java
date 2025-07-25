@@ -3,6 +3,7 @@ package org.infinispan.persistence.remote.upgrade;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
@@ -30,8 +31,8 @@ public class HotRodUpgradeDynamicWithStoreTest extends HotRodUpgradeWithStoreTes
       ConfigurationBuilder builder = new ConfigurationBuilder();
       RemoteStoreConfigurationBuilder storeBuilder = builder.persistence().addStore(RemoteStoreConfigurationBuilder.class);
 
-      storeBuilder.rawValues(true).shared(true).segmented(false).remoteCacheName(CACHE_NAME).addServer()
-            .host("localhost").port(sourceCluster.getHotRodPort());
+      storeBuilder.shared(true).segmented(false).remoteCacheName(CACHE_NAME).addServer()
+            .host("localhost").port(sourceCluster.getHotRodPort()).addProperty(RemoteStore.MIGRATION, "true");
 
       targetCluster.connectSource(CACHE_NAME, builder.build().persistence().stores().get(0));
    }

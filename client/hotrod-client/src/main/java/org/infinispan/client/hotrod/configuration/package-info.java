@@ -204,18 +204,6 @@
  *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#marshaller(String) marshaller} that serializes keys and values</td>
  *       </tr>
  *       <tr>
- *          <td><b>infinispan.client.hotrod.key_size_estimate</b></td>
- *          <td>Integer</td>
- *          <td>N/A</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#keySizeEstimate(int) estimated&nbsp;size} of keys in bytes when marshalled. This configuration property is deprecated and does not take effect.</td>
- *       </tr>
- *       <tr>
- *          <td><b>infinispan.client.hotrod.value_size_estimate</b></td>
- *          <td>Integer</td>
- *          <td>N/A</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#valueSizeEstimate(int) estimated&nbsp;size} of values in bytes when marshalled. This configuration property is deprecated and does not take effect.</td>
- *       </tr>
- *       <tr>
  *          <td><b>infinispan.client.hotrod.force_return_values</b></td>
  *          <td>Boolean</td>
  *          <td>false</td>
@@ -383,23 +371,12 @@
  *       <tr>
  *          <th colspan="4">Transaction properties</th>
  *       </tr>
- *       <tr>
- *          <td><b>infinispan.client.hotrod.transaction.transaction_manager_lookup</b></td>
- *          <td>String (class name)</td>
- *          <td>{@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#defaultTransactionManagerLookup() GenericTransactionManagerLookup}</td>
- *          <td>[Deprecated] A class to {@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#transactionManagerLookup(org.infinispan.commons.tx.lookup.TransactionManagerLookup) lookup} available transaction managers.</td>
- *       </tr>
- *       <tr>
- *          <td><b>infinispan.client.hotrod.transaction.transaction_mode</b></td>
- *          <td>String ({@link org.infinispan.client.hotrod.configuration.TransactionMode} enum name)</td>
- *          <td>{@link org.infinispan.client.hotrod.configuration.TransactionMode#NONE NONE}</td>
- *          <td>[Deprecated] The default {@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#transactionMode(TransactionMode) transaction&nbsp;mode}</td>
- *       </tr>
+ *
  *        <tr>
  *          <td><b>infinispan.client.hotrod.transaction.timeout</b></td>
  *          <td>long</td>
  *          <td>60000L</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#timeout(long, java.util.concurrent.TimeUnit)} timeout.</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#transactionTimeout(long, java.util.concurrent.TimeUnit)} timeout.</td>
  *       </tr>
  *       <tr>
  *          <th colspan="4">Near cache properties</th>
