@@ -1,6 +1,8 @@
 package org.infinispan.server.functional.hotrod;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.infinispan.test.TestingUtil.extractField;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,6 +13,7 @@ import static org.wildfly.common.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.DataFormat;
@@ -250,6 +253,44 @@ public class HotRodCacheEvents {
          l.expectOnlyModifiedEvent(key);
          remote.remove(key);
          l.expectOnlyRemovedEvent(key);
+      });
+   }
+
+   @ParameterizedTest
+   @ArgumentsSource(ArgsProvider.class)
+   public void testExpirationEventsByManager(ProtocolVersion protocolVersion) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.version(protocolVersion).addContextInitializer(Entities.INSTANCE);
+      org.infinispan.configuration.cache.ConfigurationBuilder serverCB = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      serverCB.clustering().cacheMode(CacheMode.DIST_SYNC).expiration().wakeUpInterval(2, TimeUnit.SECONDS);
+      RemoteCache<Entities.CustomKey, String> c = SERVERS.hotrod()
+            .withClientConfiguration(builder)
+            .withServerConfiguration(serverCB)
+            .create();
+      final EventLogListener<Entities.CustomKey, String> listener = new EventLogListener<>(c);
+      listener.accept((l, remote) -> {
+         l.expectNoEvents();
+         Entities.CustomKey key = new Entities.CustomKey(1);
+         remote.put(key, "one", 1, TimeUnit.SECONDS);
+         l.expectOnlyCreatedEvent(key);
+         l.expectOnlyExpiredEvent(key);
+         assertThat(remote.get(key)).isNull();
+      });
+   }
+
+   @ParameterizedTest
+   @ArgumentsSource(ArgsProvider.class)
+   public void testExpirationEventsByAccess(ProtocolVersion protocolVersion) {
+      final EventLogListener<Entities.CustomKey, String> listener = new EventLogListener<>(remoteCache(protocolVersion));
+      listener.accept((l, remote) -> {
+         l.expectNoEvents();
+         Entities.CustomKey key = new Entities.CustomKey(1);
+         remote.put(key, "one", 1, TimeUnit.SECONDS);
+         l.expectOnlyCreatedEvent(key);
+         // Keep accessing it until it becomes null. An event is triggered because of the access.
+         eventually(() -> remote.get(key) == null);
+         l.expectOnlyExpiredEvent(key);
+         assertThat(remote.get(key)).isNull();
       });
    }
 
