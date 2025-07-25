@@ -19,6 +19,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.test.Combinations;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.server.functional.ClusteredIT;
@@ -194,6 +195,27 @@ public class HotRodFlagCacheOperations {
             }, consumer::completeExceptionally, () -> consumer.complete(null));
 
       consumer.get(15, TimeUnit.SECONDS);
+      assertThat(content).isEmpty();
+      cache.clear();
+   }
+
+   @ParameterizedTest(name = TEST_OUTPUT)
+   @ArgumentsSource(FlagsProvider.class)
+   public void testKeyPublisher(EnumSet<Flag> flags) {
+      RemoteCache<String, String> cache = remoteCache(flags);
+
+      Map<String, String> content = new HashMap<>();
+      for (int i = 0; i < 25; i++) {
+         content.put("key-" + i, "value-" + i);
+      }
+
+      assertThat(cache.isEmpty()).isTrue();
+      cache.putAll(content);
+
+      CloseableIteratorSet<String> keys = cache.keySet();
+      for (String key : keys) {
+         assertThat(content.remove(key)).isNotNull();
+      }
       assertThat(content).isEmpty();
       cache.clear();
    }
