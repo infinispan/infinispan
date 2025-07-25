@@ -12,11 +12,18 @@ import org.infinispan.configuration.parsing.ParserScope;
  * MyParserExtension. This is a simple extension parser which parses modules in the "urn:infinispan:config:mymodule" namespace
  *
  * @author Tristan Tarrant
+ * @author Réda Housni Alaoui
  * @since 5.2
  */
 @Namespace(uri = "urn:infinispan:config:mymodule", root = "sample-element")
 @Namespace(root = "sample-element")
 public class MyParserExtension implements ConfigurationParser {
+
+   private static RuntimeException nextGetNamespacesException;
+
+   public static void enqueueGetNamespacesException(RuntimeException exception) {
+      nextGetNamespacesException = exception;
+   }
 
    @Override
    public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
@@ -57,6 +64,11 @@ public class MyParserExtension implements ConfigurationParser {
 
    @Override
    public Namespace[] getNamespaces() {
+      RuntimeException exception = nextGetNamespacesException;
+      if (exception != null) {
+         nextGetNamespacesException = null;
+         throw exception;
+      }
       return ParseUtils.getNamespaceAnnotations(getClass());
    }
 }

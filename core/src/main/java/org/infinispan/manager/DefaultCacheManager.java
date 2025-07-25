@@ -138,6 +138,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Manik Surtani
  * @author Galder Zamarreño
+ * @author Réda Housni Alaoui
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
@@ -696,8 +697,10 @@ public class DefaultCacheManager extends InternalCacheManager {
          lifecycleLock.unlock();
       }
 
+      CacheManagerJmxRegistration cacheManagerJmxRegistration = null;
       try {
-         globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
+         cacheManagerJmxRegistration = globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class);
+         cacheManagerJmxRegistration.start();
          globalComponentRegistry.start();
          // Some caches are started during postStart and we have to extract it out
          globalComponentRegistry.postStart();
@@ -709,6 +712,10 @@ public class DefaultCacheManager extends InternalCacheManager {
          }
          log.debugf("Started cache manager %s", identifierString());
       } catch (Exception e) {
+         if (cacheManagerJmxRegistration != null) {
+            cacheManagerJmxRegistration.stop();
+         }
+
          log.failedToInitializeGlobalRegistry(e);
 
          boolean performShutdown = false;
