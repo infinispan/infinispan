@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.admin.SchemasAdministration;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
@@ -36,7 +37,7 @@ import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.protostream.schema.Schema;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
@@ -284,9 +285,8 @@ abstract class HotRodAuthorizationTest {
       String schema = TestDomainSCI.INSTANCE.getProtoFile();
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
          RemoteCacheManager remoteCacheManager = ext.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
-         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-         metadataCache.put(BANK_PROTO, schema);
-         metadataCache.remove(BANK_PROTO);
+         remoteCacheManager.administration().schemas().createOrUpdate(Schema.buildFromStringContent(BANK_PROTO, schema));
+         remoteCacheManager.administration().schemas().remove(BANK_PROTO, true);
       }
    }
 
@@ -295,8 +295,9 @@ abstract class HotRodAuthorizationTest {
       String schema = TestDomainSCI.INSTANCE.getProtoFile();
       for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.WRITER)) {
          RemoteCacheManager remoteCacheManager = ext.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
-         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-         Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION, () -> metadataCache.put(BANK_PROTO, schema));
+         SchemasAdministration schemasAdmin = remoteCacheManager.administration().schemas();
+         assertNotNull(schemasAdmin);
+         Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION, () -> schemasAdmin.createOrUpdate(Schema.buildFromStringContent(BANK_PROTO, schema)));
       }
    }
 
@@ -349,8 +350,7 @@ abstract class HotRodAuthorizationTest {
    private org.infinispan.configuration.cache.ConfigurationBuilder prepareIndexedCache() {
       String schema = TestDomainSCI.INSTANCE.getProtoFile();
       RemoteCacheManager remoteCacheManager = ext.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).createRemoteCacheManager();
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put(BANK_PROTO, schema);
+      remoteCacheManager.administration().schemas().createOrUpdate(Schema.buildFromStringContent(BANK_PROTO, schema));
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder
