@@ -9,9 +9,9 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOS
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
@@ -475,10 +475,10 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       RestResponse executeGet() {
          Map<String, String> headers = new HashMap<>();
          if (this.accept != null) {
-            headers.put(RequestHeader.ACCEPT_HEADER.getValue(), this.accept.toString());
+            headers.put(RequestHeader.ACCEPT_HEADER.toString(), this.accept.toString());
          }
          if (keyContentType != null) {
-            headers.put(RequestHeader.KEY_CONTENT_TYPE_HEADER.getValue(), this.keyContentType);
+            headers.put(RequestHeader.KEY_CONTENT_TYPE_HEADER.toString(), this.keyContentType);
          }
          return join(restCacheClient.get(this.key.toString(), headers));
       }
