@@ -16,6 +16,7 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.sifs.TemporaryTable;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.topology.ClusterCacheStatus;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
@@ -47,6 +48,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
          // This acquires the lruLock and also OffHeapConcurrentMap stampedLocks when processing eviction
          builder.allowBlockingCallsInside(SegmentedBoundedOffHeapDataContainer.class.getName(), "ensureSize");
          CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, StateTransferLockImpl.class);
+         // short lock to update the HashMap
+         CommonsBlockHoundIntegration.allowMethodsToBlock(builder, StateConsumerImpl.class, false);
 
          // LimitedExecutor just submits a task to another thread pool
          builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "acquireLock");
