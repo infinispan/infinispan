@@ -3,6 +3,7 @@ package org.infinispan.server.test.api;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.openapi.ApiException;
 import org.infinispan.client.openapi.OpenAPIClient;
 import org.infinispan.client.openapi.configuration.OpenAPIClientConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
@@ -84,26 +85,23 @@ public class OpenAPITestClientDriver extends AbstractTestClientDriver<OpenAPITes
       } else {
          configEntity = RestEntity.create(MediaType.APPLICATION_JSON, forCacheMode(mode != null ? mode : CacheMode.DIST_SYNC).toStringConfiguration(name));
       }
-      client.cache().putCache();
-      future = client.cache(name).createWithConfiguration(configEntity, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
-      try (RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS))) {
-         if (response.status() != 200) {
-            switch (response.status()) {
-               case 400:
-                  throw new IllegalArgumentException("Bad request while attempting to obtain rest client: " + response.status());
-               case 401:
-               case 403:
-                  throw new SecurityException("Authentication error while attempting to obtain rest client = " + response.status());
-               default:
-                  throw new RuntimeException("Could not obtain rest client = " + response.status());
-            }
-         } else {
-            testClient.registerOpenAPICache(name, client);
-            // If the request succeeded without authn but we were expecting to authenticate, it's an error
-            if (client.getConfiguration().security().authentication().enabled() && !response.usedAuthentication()) {
-               throw new SecurityException("Authentication expected but anonymous access succeeded");
-            }
-            return client;
+      try {
+         client.cache().putCache(name, configEntity);
+         testClient.registerOpenAPICache(name, client);
+         // If the request succeeded without authn but we were expecting to authenticate, it's an error
+         if (client.getConfiguration().security().authentication().enabled() && !response.usedAuthentication()) {
+            throw new SecurityException("Authentication expected but anonymous access succeeded");
+         }
+         return client;
+      } catch (ApiException e) {
+         switch (e.getCode()) {
+            case 400:
+               throw new IllegalArgumentException("Bad request while attempting to obtain rest client: " + e.getCode());
+            case 401:
+            case 403:
+               throw new SecurityException("Authentication error while attempting to obtain rest client = " + e.getCode());
+            default:
+               throw new RuntimeException("Could not obtain rest client = " + e.getCode());
          }
       }
    }
