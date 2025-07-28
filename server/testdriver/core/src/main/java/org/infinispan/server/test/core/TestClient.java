@@ -23,6 +23,8 @@ import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
+import org.infinispan.client.openapi.ApiException;
+import org.infinispan.client.openapi.OpenAPIClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.CommonsTestingUtil;
@@ -51,6 +53,7 @@ public class TestClient {
    protected List<AutoCloseable> resources;
    protected Map<String, RemoteCacheManager> hotrodCacheMap;
    protected Map<String, RestClient> restCacheMap;
+   protected Map<String, OpenAPIClient> openAPICacheMap;
    private String methodName;
 
    public TestClient(TestServer testServer) {
@@ -68,6 +71,10 @@ public class TestClient {
 
    public void registerRestCache(String name, RestClient restClient) {
       restCacheMap.put(name, restClient);
+   }
+
+   public void registerOpenAPICache(String name, OpenAPIClient openAPIClient) {
+      openAPICacheMap.put(name, openAPIClient);
    }
 
    public InfinispanServerDriver getServerDriver() {
@@ -123,6 +130,16 @@ public class TestClient {
       if (restCacheMap != null) {
          restCacheMap.forEach( (n, rc) -> rc.cache(n).delete());
          restCacheMap.clear();
+      }
+      if (openAPICacheMap != null) {
+         openAPICacheMap.forEach((n, oc) -> {
+            try {
+               oc.cache().deleteCache(n);
+            } catch (ApiException e) {
+               throw new RuntimeException(e);
+            }
+         });
+         openAPICacheMap.clear();
       }
       if (resources != null) {
          ExecutorService executor = Executors.newSingleThreadExecutor();

@@ -83,9 +83,7 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .response(OK, "All cache keys", APPLICATION_JSON, Schema.STRING_ARRAY)
                .response(NOT_FOUND, CACHE_NOT_FOUND_RESPONSE, TEXT_PLAIN, Schema.STRING)
                .handleWith(this::streamKeys)
-            .invocation(
-
-            ).methods(GET).path("/v3/caches/{cacheName}/entries")
+            .invocation().methods(GET).path("/v3/caches/{cacheName}/entries")
                .operationId("AllCacheEntries")
                .name("Retrieve all entries from a cache")
                .response(OK, "All cache entries", APPLICATION_JSON)
@@ -175,6 +173,7 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
             .invocation().methods(POST, PUT).path("/v3/caches/{cacheName}")
                .operationId("Cache")
                .name("Creates a cache or updates its configuration")
+               .request("The cache configuration", true, Map.of(APPLICATION_XML, Schema.NONE, APPLICATION_JSON, Schema.NONE, APPLICATION_YAML, Schema.NONE))
                .response(OK, "The cache was created or its configuration updated")
                .handleWith(this::createOrUpdate)
             .invocation().method(DELETE).path("/v3/caches/{cacheName}")

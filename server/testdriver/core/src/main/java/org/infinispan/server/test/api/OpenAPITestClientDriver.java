@@ -75,7 +75,7 @@ public class OpenAPITestClientDriver extends AbstractTestClientDriver<OpenAPITes
     * @return new {@link RestClient} instance
     */
    public OpenAPIClient create() {
-      OpenAPIClient restClient = get();
+      OpenAPIClient client = get();
       String name = testClient.getMethodName(qualifiers);
       CompletionStage<RestResponse> future;
       RestEntity configEntity;
@@ -84,7 +84,8 @@ public class OpenAPITestClientDriver extends AbstractTestClientDriver<OpenAPITes
       } else {
          configEntity = RestEntity.create(MediaType.APPLICATION_JSON, forCacheMode(mode != null ? mode : CacheMode.DIST_SYNC).toStringConfiguration(name));
       }
-      future = restClient.cache(name).createWithConfiguration(configEntity, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
+      client.cache().putCache();
+      future = client.cache(name).createWithConfiguration(configEntity, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       try (RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS))) {
          if (response.status() != 200) {
             switch (response.status()) {
@@ -97,12 +98,12 @@ public class OpenAPITestClientDriver extends AbstractTestClientDriver<OpenAPITes
                   throw new RuntimeException("Could not obtain rest client = " + response.status());
             }
          } else {
-            testClient.registerRestCache(name, restClient);
+            testClient.registerOpenAPICache(name, client);
             // If the request succeeded without authn but we were expecting to authenticate, it's an error
-            if (restClient.getConfiguration().security().authentication().enabled() && !response.usedAuthentication()) {
+            if (client.getConfiguration().security().authentication().enabled() && !response.usedAuthentication()) {
                throw new SecurityException("Authentication expected but anonymous access succeeded");
             }
-            return restClient;
+            return client;
          }
       }
    }

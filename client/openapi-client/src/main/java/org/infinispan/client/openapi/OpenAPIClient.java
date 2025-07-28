@@ -3,16 +3,29 @@ package org.infinispan.client.openapi;
 import java.net.http.HttpClient;
 import java.util.concurrent.ExecutorService;
 
+import org.infinispan.client.openapi.api.CacheApi;
 import org.infinispan.client.openapi.configuration.OpenAPIClientConfiguration;
 
 public class OpenAPIClient implements AutoCloseable {
-
+   private final OpenAPIClientConfiguration configuration;
+   private final ApiClient apiClient;
+   private final CacheApi cacheApi;
    private boolean managedExecutorService;
    private ExecutorService executorService;
    private HttpClient httpClient;
 
+   public OpenAPIClient(OpenAPIClientConfiguration configuration) {
+      this.configuration = configuration;
+      apiClient = new ApiClient();
+      cacheApi = new CacheApi(apiClient);
+   }
+
+   public CacheApi cache() {
+      return cacheApi;
+   }
+
    public static OpenAPIClient forConfiguration(OpenAPIClientConfiguration configuration) {
-      return null;
+      return new OpenAPIClient(configuration);
    }
 
    @Override
@@ -25,4 +38,7 @@ public class OpenAPIClient implements AutoCloseable {
       }
    }
 
+   public OpenAPIClientConfiguration getConfiguration() {
+      return configuration;
+   }
 }
