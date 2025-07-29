@@ -40,6 +40,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    @GuardedBy("lock")
    private final List<String> startedComponents = new ArrayList<>();
    private final ConcurrentMap<Thread, ComponentPath> mutatorThreads;
+   private final ComponentRegistryTracker tracker;
    // Needs to lock for updates but not for reads
    private volatile ComponentStatus status;
 
@@ -52,6 +53,9 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       this.next = next;
       this.status = ComponentStatus.RUNNING;
       this.mutatorThreads = new ConcurrentHashMap<>();
+      this.tracker = log.isTraceEnabled()
+            ? ComponentRegistryTracker.timeTracking(this, isGlobal)
+            : ComponentRegistryTracker.disabled();
 
       // No way to look up the next scope's BasicComponentRegistry, but that's not a problem
       registerComponent(BasicComponentRegistry.class, this, false);
@@ -65,6 +69,14 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    @Override
    public <T> ComponentRef<T> lazyGetComponent(Class<T> componentType) {
       return getComponent0(componentType.getName(), componentType, false);
+   }
+
+   @Override
+   public void blameInitialization() {
+      if (tracker != null && log.isTraceEnabled()) {
+         log.tracef("Initialization blame of %s:%n%s", scope, tracker.dump());
+         tracker.clear();
+      }
    }
 
    @Override
@@ -296,8 +308,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          wrapper.aliasTarget = aliasTargetRef;
          wrapper.state = newState;
          popMutatorPath();
-         if (log.isTraceEnabled())
-            log.tracef("Changed status of " + wrapper.name + " to " + wrapper.state);
+         wrapperChangedStatus(wrapper.name, wrapper.state);
          condition.signalAll();
       } finally {
          lock.unlock();
@@ -465,6 +476,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    @Override
    public void rewire() {
       // Rewire is not supposed to be used in production, so we can keep the registry locked for the entire duration
+      tracker.clear();
       lock.lock();
       try {
          if (status == ComponentStatus.TERMINATED) {
@@ -508,6 +520,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    @Override
    public void stop() {
       ArrayList<String> componentsToStop;
+      tracker.clear();
       lock.lock();
       try {
          if (status != ComponentStatus.RUNNING) {
@@ -698,12 +711,28 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
 
          String componentClassName = wrapper.instance != null ? wrapper.instance.getClass().getName() : null;
          String name = pushMutatorPath(wrapper.name, componentClassName);
-         if (log.isTraceEnabled())
-            log.tracef("Changed status of " + name + " to " + wrapper.state);
+         wrapperChangedStatus(name, wrapper.state);
          return true;
       } finally {
          lock.unlock();
       }
+   }
+
+   private void wrapperChangedStatus(String name, WrapperState state) {
+      if (tracker != null) {
+         switch (state) {
+            case EMPTY, STOPPING, STOPPED, FAILED -> { }
+            case INSTANTIATING -> tracker.instantiating(name);
+            case INSTANTIATED -> tracker.instantiated(name);
+            case WIRING -> tracker.wiring(name);
+            case WIRED -> tracker.wired(name);
+            case STARTING -> tracker.starting(name);
+            case STARTED -> tracker.started(name);
+         }
+      }
+
+      if (log.isTraceEnabled())
+         log.tracef("Changed status of " + name + " to " + state);
    }
 
    private void awaitWrapperState(ComponentWrapper wrapper, WrapperState expectedState) {
