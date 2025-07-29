@@ -102,7 +102,7 @@ public class OpenAPIResource implements ResourceHandler {
       Map<String, Schema> schemas = new HashMap<>();
       registry.traverse((ignore, invocation) -> {
          for (String p : invocation.paths()) {
-            if (!p.startsWith("/v3/")) continue; // Skip older apis
+            if (!p.startsWith("/v3/") && !p.endsWith("/openapi")) continue; // Skip older apis and ourselves
             resources.add(invocation.resourceGroup());
             String name = invocation.name() != null
                   ? invocation.name()

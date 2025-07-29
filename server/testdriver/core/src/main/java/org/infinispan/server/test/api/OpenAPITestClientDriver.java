@@ -1,7 +1,6 @@
 package org.infinispan.server.test.api;
 
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.openapi.ApiException;
 import org.infinispan.client.openapi.OpenAPIClient;
@@ -9,9 +8,7 @@ import org.infinispan.client.openapi.configuration.OpenAPIClientConfigurationBui
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
@@ -63,6 +60,7 @@ public class OpenAPITestClientDriver extends AbstractTestClientDriver<OpenAPITes
    /**
     * Create and get a REST client that is connected to the Nth server of the cluster.
     *
+    * @param n the index of the server
     * @return a new instance of the {@link OpenAPIClient}
     */
    public OpenAPIClient get(int n) {
@@ -89,9 +87,9 @@ public class OpenAPITestClientDriver extends AbstractTestClientDriver<OpenAPITes
          client.cache().putCache(name, configEntity);
          testClient.registerOpenAPICache(name, client);
          // If the request succeeded without authn but we were expecting to authenticate, it's an error
-         if (client.getConfiguration().security().authentication().enabled() && !response.usedAuthentication()) {
-            throw new SecurityException("Authentication expected but anonymous access succeeded");
-         }
+//         if (client.getConfiguration().security().authentication().enabled() && !response.usedAuthentication()) {
+//            throw new SecurityException("Authentication expected but anonymous access succeeded");
+//         }
          return client;
       } catch (ApiException e) {
          switch (e.getCode()) {

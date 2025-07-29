@@ -28,7 +28,7 @@ import org.infinispan.commons.util.TypedProperties;
  */
 @BuiltBy(OpenAPIClientConfigurationBuilder.class)
 public class OpenAPIClientConfiguration {
-   private static final AtomicLong CLIENT_IDS = new AtomicLong();
+   public static final AtomicLong CLIENT_IDS = new AtomicLong();
    private final long connectionTimeout;
    private final List<ServerConfiguration> servers;
    private final long socketTimeout;

@@ -25,7 +25,7 @@ public abstract class HttpAuthenticator {
       this.configuration = configuration;
    }
 
-   public  boolean supportsPreauthentication() {
+   public boolean supportsPreauthentication() {
       return false;
    }
 
