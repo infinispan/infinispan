@@ -71,6 +71,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
 
    protected abstract Log getLog();
 
+   public final void blameInitialization() {
+      if (state.allowInvocations())
+         basicComponentRegistry.blameInitialization();
+   }
+
    /**
     * Wires an object instance with dependencies annotated with the {@link Inject} annotation, creating more components
     * as needed based on the Configuration passed in if these additional components don't exist in the {@link
