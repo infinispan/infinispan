@@ -2898,36 +2898,77 @@
             </plugins>
          </build>
       </profile>
+
       <profile>
-         <id>jacocoReport</id>
+         <id>jacocoCopySources</id>
+
+         <properties>
+            <skipTests>true</skipTests>
+            <checkstyle.skip>true</checkstyle.skip>
+         </properties>
 
          <build>
             <plugins>
                <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>properties-maven-plugin</artifactId>
-                  <version>1.2.1</version>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
                   <executions>
                      <execution>
+                        <id>copy-source-classes</id>
                         <phase>validate</phase>
                         <goals>
-                           <goal>set-system-properties</goal>
+                           <goal>run</goal>
                         </goals>
                         <configuration>
-                           <properties>
-                              <property>
-                                 <name>jacoco.reportPath</name>
-                                 <value>${session.executionRootDirectory}/jacoco</value>
-                              </property>
-                           </properties>
+                           <target>
+                              <available file="${dir.jacoco}/classes" type="dir" property="jacocoClasses"/>
+                              <available file="${project.build.directory}/classes" type="dir" property="hasClasses"/>
+                              <echo level="info" message="Copying test classes to jacoco folder (${project.build.directory}/classes)" />
+                              <mkdir dir="${dir.jacoco}/classes" unless:set="jacocoClasses" xmlns:unless="ant:unless"/>
+                              <copy todir="${dir.jacoco}/classes" overwrite="false" includeEmptyDirs="true" preservelastmodified="true"
+                                    if:set="hasClasses" xmlns:if="ant:if">
+                                 <fileset dir="${project.build.directory}/classes" />
+                              </copy>
+                           </target>
                         </configuration>
                      </execution>
                   </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <profile>
+         <id>jacocoReport</id>
+
+         <properties>
+            <skipTests>true</skipTests>
+            <checkstyle.skip>true</checkstyle.skip>
+         </properties>
+
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-clean-plugin</artifactId>
+                  <inherited>false</inherited>
+                  <configuration>
+                     <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                     <filesets>
+                        <fileset>
+                           <directory>${dir.jacoco.report}</directory>
+                        </fileset>
+                        <fileset>
+                           <directory>${dir.jacoco.merged}</directory>
+                        </fileset>
+                     </filesets>
+                  </configuration>
                </plugin>
 
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-antrun-plugin</artifactId>
+                  <inherited>false</inherited>
                   <executions>
                      <execution>
                         <id>delete-existing-jacoco-report</id>
@@ -2938,88 +2979,16 @@
                         <configuration>
                            <target>
                               <echo>Deleting existing Jacoco Report Directory.</echo>
-                              <delete dir="${dir.jacoco.report}"/>
-                              <delete dir="${dir.jacoco.merged}"/>
+                              <move todir="${project.build.directory}/classes-bak">
+                                 <fileset dir="${project.build.directory}/classes"/>
+                              </move>
                               <delete dir="${project.build.directory}/classes"/>
-                              <echo>Copying the generated classes file to ${project.build.directory}/classes
-                              </echo>
-                              <copydir dest="${project.build.directory}/classes"
-                                       src="${jacoco.reportPath}/classes"/>
+                              <mkdir dir="${project.build.directory}/classes" />
+                              <echo>Copying the generated classes file to ${project.build.directory}/classes</echo>
+                              <copy todir="${project.build.directory}/classes">
+                                 <fileset dir="${dir.jacoco}/classes" />
+                              </copy>
                            </target>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>build-helper-maven-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>add-source</id>
-                        <phase>validate</phase>
-                        <goals>
-                           <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                           <sources>
-                              <source>${maven.multiModuleProjectDirectory}/anchored-keys/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/api/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/cdi/common/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/cdi/embedded/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/cdi/remote/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/cli/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/client/hotrod/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/client/hotrod-client/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/client/rest-client/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/commons/all/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/commons/jdk21/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/commons/spi/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/core/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/counter/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/counter-api/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/graalvm/client-hotrod/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/graalvm/commons/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/graalvm/core/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/gridfs/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/hibernate/cache-spi/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/hibernate/cache-v62/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/jboss-marshalling/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/jcache/commons/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/jcache/embedded/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/jcache/remote/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/lock/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/multimap/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/object-filter/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/persistence/jdbc/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/persistence/jdbc-common/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/persistence/remote/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/persistence/rocksdb/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/persistence/sql/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/quarkus/cli/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/query-core/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/query/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/query-dsl/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/remote-query/remote-query-client/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/remote-query/remote-query-server/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/core/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/hotrod/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/insights/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/memcached/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/resp/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/rest/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/router/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/runtime/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/spring/spring6/spring6-common/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/spring/spring6/spring6-embedded/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/spring/spring6/spring6-remote/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/spring/spring-boot-3/embedded/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/spring/spring-boot-3/remote/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/tasks/api/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/tasks/manager/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/tasks/scripting/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/tools/src/main/java</source>
-                           </sources>
                         </configuration>
                      </execution>
                   </executions>
@@ -3029,6 +2998,7 @@
                   <groupId>org.jacoco</groupId>
                   <artifactId>jacoco-maven-plugin</artifactId>
                   <version>${version.jacoco}</version>
+                  <inherited>false</inherited>
                   <executions>
                      <execution>
                         <id>default-merge</id>

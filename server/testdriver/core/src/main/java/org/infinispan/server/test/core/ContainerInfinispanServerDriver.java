@@ -114,6 +114,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private final List<InfinispanGenericContainer> containers;
    private final String[] volumes;
    private String name;
+   private String fullName;
    ImageFromDockerfile image;
    private static final List<String> sites = new ArrayList<>();
    private final NettyLeakDetectionLoggingConsumer leakDetectionLoggingConsumer = new NettyLeakDetectionLoggingConsumer();
@@ -186,6 +187,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    private void configureImage(String fqcn, File rootDir) {
       this.name = abbreviate(fqcn);
+      this.fullName = fqcn;
       // If properties define the cluster stack let that take priority over the system property
       String jGroupsStack = !configuration.properties().containsKey(Server.INFINISPAN_CLUSTER_STACK) ?
             System.getProperty(Server.INFINISPAN_CLUSTER_STACK) : null;
@@ -538,7 +540,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          String isCoverageEnabled = System.getProperty(COVERAGE_ENABLED);
          if (Boolean.parseBoolean(isCoverageEnabled) && !container.isKilled()) {
             //Getting Jacoco Coverage Report after stopping the container
-            container.uploadCoverageInfoToHost(JACOCO_COVERAGE_CONTAINER_PATH, System.getProperty(JACOCO_REPORTS_DIR) + this.name + "-" + server + ".exec");
+            container.uploadCoverageInfoToHost(JACOCO_COVERAGE_CONTAINER_PATH, System.getProperty(JACOCO_REPORTS_DIR) + this.fullName + "-" + server + ".exec");
          }
          eventually("Container wasn't stopped.", () -> !isRunning(server));
          log.infof("Stopped container %s", containerAndSite);
