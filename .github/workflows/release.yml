@@ -13,6 +13,10 @@ on:
       nextVersion:
         description: "Next version"
         required: true
+      latest:
+        description: "Latest stable release"
+        default: true
+        type: boolean
 
 jobs:
   release:
@@ -155,7 +159,7 @@ jobs:
       branch: main
       repository: infinispan/infinispan-images
       ispnVersion: ${{ github.event.inputs.version }}
-      latest: false
+      latest: ${{ github.event.inputs.latest }}
 
   operator:
     needs: images
