@@ -589,9 +589,11 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    }
 
    public static String abbreviate(String name) {
-      String[] split = name.split("\\.");
+      String[] split = name.split("[./-]");
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < split.length - 1; i++) {
+         if (split[i].isBlank())
+            continue;
          sb.append(split[i].charAt(0));
          sb.append('.');
       }
