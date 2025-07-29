@@ -76,8 +76,7 @@ public class OpenAPITestClientDriver extends AbstractTestClientDriver<OpenAPITes
    public OpenAPIClient create() {
       OpenAPIClient client = get();
       String name = testClient.getMethodName(qualifiers);
-      CompletionStage<RestResponse> future;
-      RestEntity configEntity;
+      String configEntity;
       if (serverConfiguration != null) {
          configEntity = RestEntity.create(MediaType.APPLICATION_XML, serverConfiguration.toStringConfiguration(name));
       } else {
@@ -99,7 +98,7 @@ public class OpenAPITestClientDriver extends AbstractTestClientDriver<OpenAPITes
             case 403:
                throw new SecurityException("Authentication error while attempting to obtain rest client = " + e.getCode());
             default:
-               throw new RuntimeException("Could not obtain rest client = " + e.getCode());
+               throw new RuntimeException(e);
          }
       }
    }

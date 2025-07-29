@@ -1,38 +1,13 @@
 package org.infinispan.server.functional.rest;
 
-import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
-import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
-import static org.infinispan.client.rest.RestResponse.OK;
-import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.infinispan.server.test.core.Common.assertResponse;
-import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.Closeable;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import org.infinispan.client.openapi.ApiException;
 import org.infinispan.client.openapi.OpenAPIClient;
 import org.infinispan.client.openapi.api.CacheApi;
 import org.infinispan.client.openapi.configuration.OpenAPIClientConfigurationBuilder;
-import org.infinispan.client.rest.RestCacheClient;
-import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestCounterClient;
-import org.infinispan.client.rest.RestEntity;
-import org.infinispan.client.rest.RestTaskClient.ResultType;
-import org.infinispan.client.rest.configuration.Protocol;
-import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.client.openapi.configuration.Protocol;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.counter.api.CounterConfiguration;
-import org.infinispan.counter.api.CounterType;
-import org.infinispan.counter.configuration.AbstractCounterConfiguration;
-import org.infinispan.counter.configuration.ConvertUtil;
-import org.infinispan.rest.resources.AbstractRestResourceTest;
-import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.junit5.InfinispanServer;
@@ -49,85 +24,14 @@ public class OpenAPIOperations {
 
    @ParameterizedTest
    @EnumSource(Protocol.class)
-   public void testRestOperations(Protocol protocol) {
+   public void testRestOperations(Protocol protocol) throws ApiException {
       OpenAPIClientConfigurationBuilder builder = new OpenAPIClientConfigurationBuilder();
       builder.protocol(protocol);
       OpenAPIClient client = SERVERS.openapi().withClientConfiguration(builder).create();
       CacheApi cache = client.cache();
       String cacheName = SERVERS.getMethodName();
-      assertResponse(NO_CONTENT, cache.post("k1", "v1"), r -> assertEquals(protocol, r.protocol()));
-      assertResponse(OK, cache.get("k1"), r -> {
-         assertEquals(protocol, r.protocol());
-         assertEquals("v1", r.body());
-      });
-      assertResponse(NO_CONTENT, cache.remove("k1"), r -> assertEquals(protocol, r.protocol()));
-      assertResponse(NOT_FOUND, cache.get("k1"), r -> assertEquals(protocol, r.protocol()));
-   }
-
-   @ParameterizedTest
-   @EnumSource(Protocol.class)
-   public void testPutWithTimeToLive(Protocol protocol) throws InterruptedException {
-      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
-      builder.protocol(protocol);
-      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
-      RestCacheClient cache = client.cache(SERVERS.getMethodName());
-      assertStatus(NO_CONTENT, cache.post("k1", "v1", 1, 1));
-      assertStatus(OK, cache.get("k1"));
-      Thread.sleep(2000);
-      assertStatus(NOT_FOUND, cache.get("k1"));
-   }
-
-
-   @ParameterizedTest
-   @EnumSource(Protocol.class)
-   public void taskFilter(Protocol protocol) {
-      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
-      builder.protocol(protocol);
-      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
-
-      List<Json> taskListNode = Json.read(assertStatus(OK, client.tasks().list(ResultType.USER))).asJsonList();
-      taskListNode.forEach(n -> assertFalse(n.at("name").asString().startsWith("@@")));
-   }
-
-   @ParameterizedTest
-   @EnumSource(Protocol.class)
-   public void testCounter(Protocol protocol) {
-      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
-      builder.protocol(protocol);
-      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
-
-      CounterConfiguration configuration = CounterConfiguration
-            .builder(CounterType.WEAK)
-            .initialValue(5)
-            .concurrencyLevel(1)
-            .build();
-
-      AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig("test-counter", configuration);
-      String configJson = AbstractRestResourceTest.counterConfigToJson(config);
-      RestCounterClient counter = client.counter(SERVERS.getMethodName(protocol.name()));
-      assertStatus(OK, counter.create(RestEntity.create(MediaType.APPLICATION_JSON, configJson)));
-
-      assertEquals("5", assertStatus(OK, counter.get()));
-   }
-
-   @ParameterizedTest
-   @EnumSource(Protocol.class)
-   public void testSSECluster(Protocol protocol) throws Exception {
-      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
-      builder.protocol(protocol);
-      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
-      WeakSSEListener sseListener = new WeakSSEListener();
-
-      try (Closeable ignored = client.raw().listen("/rest/v2/container?action=listen", Collections.emptyMap(), sseListener)) {
-         assertTrue(sseListener.await(10, TimeUnit.SECONDS));
-         assertThat(client.cache("caching-listen").createWithConfiguration(RestEntity.create(MediaType.APPLICATION_JSON, "{\"distributed-cache\":{}}"))).isOk();
-
-         sseListener.expectEvent("create-cache", "caching-listen");
-         sseListener.expectEvent("lifecycle-event", "ISPN100002");
-         sseListener.expectEvent("lifecycle-event", "ISPN100010");
-
-         assertThat(client.cache("caching-listen").delete()).isOk();
-         sseListener.expectEvent("remove-cache", "caching-listen");
-      }
+      cache.putCacheEntry(cacheName, "k1", "v1", MediaType.TEXT_PLAIN_TYPE, null, null);
+      String v = cache.getCacheEntry(cacheName, "k1", null);
+      assertEquals("v1", v);
    }
 }

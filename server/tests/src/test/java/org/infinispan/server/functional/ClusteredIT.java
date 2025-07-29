@@ -44,6 +44,7 @@ import org.infinispan.server.functional.resp.RespSetTest;
 import org.infinispan.server.functional.resp.RespSortedSetTest;
 import org.infinispan.server.functional.resp.RespStringTest;
 import org.infinispan.server.functional.resp.RespTransactionTest;
+import org.infinispan.server.functional.rest.OpenAPIOperations;
 import org.infinispan.server.functional.rest.RestLoggingResource;
 import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.functional.rest.RestProtobufResourceTest;
@@ -85,6 +86,7 @@ import org.junit.platform.suite.api.Suite;
       RestLoggingResource.class,
       ScriptingTasks.class,
       ServerTasks.class,
+      OpenAPIOperations.class,
       PojoMarshalling.class,
       HotRodClientMetrics.class,
       RespDistributedTest.class,

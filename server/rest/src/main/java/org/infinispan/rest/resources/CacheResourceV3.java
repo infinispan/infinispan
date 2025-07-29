@@ -70,6 +70,7 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .operationId("CacheEntry")
                .name("Retrieve an entry from a cache")
                .parameter(RequestHeader.EXTENDED_HEADER, ParameterIn.HEADER, false, Schema.BOOLEAN, "Whether to return additional information about the entry in the response headers")
+               .response(OK, "Entry value", APPLICATION_JSON)
                .handleWith(this::getCacheValue)
             .invocation().method(GET).path("/v3/caches/{cacheName}/_distribution/{cacheKey}")
                .operationId("KeyDistribution")
