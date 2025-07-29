@@ -31,4 +31,4 @@ jobs:
           cache: maven
 
       - name: Build Infinispan
-        run: ./mvnw -B -s maven-settings.xml install -DskipTests
+        run: ./mvnw -B -s install -DskipTests
