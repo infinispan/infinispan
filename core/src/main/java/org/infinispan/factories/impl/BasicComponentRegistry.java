@@ -192,4 +192,14 @@ public interface BasicComponentRegistry {
     */
    @Experimental
    <T> ComponentRef<T> lazyGetComponent(Class<T> componentType);
+
+   /**
+    * Display the time components took to initialize.
+    *
+    * <p>
+    *  Display the time each component took between the different status until reaching a running state. It does not verify
+    *  any time after the component has started. The output is only available when trace level log is enabled.
+    * </p>
+    */
+   void blameInitialization();
 }
