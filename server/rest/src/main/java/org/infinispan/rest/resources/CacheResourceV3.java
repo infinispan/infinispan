@@ -9,6 +9,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
+import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
@@ -61,6 +62,7 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .parameter(RequestHeader.KEY_CONTENT_TYPE_HEADER, ParameterIn.HEADER, false, Schema.STRING, "The content type for the key")
                .parameter(RequestHeader.TTL_SECONDS_HEADER, ParameterIn.HEADER, false, Schema.INTEGER, "The time-to-live (TTL) of the entry in seconds")
                .parameter(RequestHeader.MAX_TIME_IDLE_HEADER, ParameterIn.HEADER, false, Schema.INTEGER, "The maximum idle time in seconds")
+               .request("Entry value", true, Map.of(MATCH_ALL, Schema.NONE))
                .response(NO_CONTENT, "Entry was stored")
                .response(CONFLICT, "ETag conflict", TEXT_PLAIN, Schema.STRING)
                .handleWith(this::putValueToCache)
