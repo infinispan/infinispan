@@ -90,10 +90,6 @@ public class GlobalTransaction implements Cloneable {
       this.remote = remote;
    }
 
-   public GlobalTransaction changeAddress(Address address) {
-      return new GlobalTransaction(requestUUID.asNodeUUID(address.getNodeUUID()), getXid(), getInternalId(), isClientTransaction());
-   }
-
    @Override
    public int hashCode() {
       if (hash_code == -1) {
