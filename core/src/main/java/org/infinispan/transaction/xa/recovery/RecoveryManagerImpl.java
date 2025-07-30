@@ -35,6 +35,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -64,6 +65,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    private ComponentRef<TransactionTable> txTable;
    private TransactionCoordinator txCoordinator;
    private TransactionFactory txFactory;
+   private LockManager lockManager;
 
    /**
     * we only broadcast the first time when node is started, then we just return the local cached prepared
@@ -78,12 +80,13 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    @Inject
    public void init(RpcManager rpcManager, CommandsFactory commandsFactory, ComponentRef<TransactionTable> txTable,
-                    TransactionCoordinator txCoordinator, TransactionFactory txFactory) {
+                    TransactionCoordinator txCoordinator, TransactionFactory txFactory, LockManager lockManager) {
       this.rpcManager = rpcManager;
       this.commandFactory = commandsFactory;
       this.txTable = txTable;
       this.txCoordinator = txCoordinator;
       this.txFactory = txFactory;
+      this.lockManager = lockManager;
    }
 
    @Override
@@ -294,16 +297,35 @@ public class RecoveryManagerImpl implements RecoveryManager {
       } else {
          RecoveryAwareRemoteTransaction tx = getPreparedTransaction(xid);
          if (tx == null) return CompletableFuture.completedFuture("Could not find transaction " + xid);
-         GlobalTransaction globalTransaction = tx.getGlobalTransaction();
-         globalTransaction.setAddress(rpcManager.getAddress());
-         globalTransaction.setRemote(false);
-         RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) txFactory.newLocalTransaction(null, globalTransaction, false, tx.getTopologyId());
-         localTx.setModifications(tx.getModifications());
-         localTx.setXid(xid);
-         localTx.addAllAffectedKeys(tx.getAffectedKeys());
-         for (Object lk : tx.getLockedKeys()) localTx.registerLockedKey(lk);
-         return completeTransaction(localTx, commit, xid);
+         RecoveryAwareLocalTransaction localTx = copyToLocalTransaction(tx, xid);
+         return completeTransaction(localTx, commit, xid)
+               .whenComplete((ignored, throwable) -> {
+                  if (throwable == null) {
+                     // If successfully, we must release the lock own by the original GlobalTransaction.
+                     // The other nodes will fetch the original GlobalTransaction from the remote transaction table,
+                     // but the local node does not.
+                     // The local node checks the local transaction table, which does not contain the transaction from the crashed node.
+                     lockManager.unlockAll(tx.getLockedKeys(), tx.getGlobalTransaction());
+                  }
+               });
       }
+   }
+
+   private RecoveryAwareLocalTransaction copyToLocalTransaction(RecoveryAwareRemoteTransaction remoteTx, XidImpl xid) {
+      GlobalTransaction gtx = copyToLocalGlobalTransaction(remoteTx.getGlobalTransaction());
+      RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) txFactory.newLocalTransaction(null, gtx, false, remoteTx.getTopologyId());
+      localTx.setModifications(remoteTx.getModifications());
+      localTx.setXid(xid);
+      localTx.addAllAffectedKeys(remoteTx.getAffectedKeys());
+      remoteTx.getLockedKeys().forEach(localTx::registerLockedKey);
+      return localTx;
+   }
+
+   private GlobalTransaction copyToLocalGlobalTransaction(GlobalTransaction gtx) {
+      GlobalTransaction globalTransaction = txFactory.newGlobalTransaction(rpcManager.getAddress(), false);
+      globalTransaction.setXid(gtx.getXid());
+      globalTransaction.setInternalId(gtx.getInternalId());
+      return globalTransaction;
    }
 
    private CompletionStage<String> completeTransaction(LocalTransaction localTx, boolean commit, XidImpl xid) {
