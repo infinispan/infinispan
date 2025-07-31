@@ -95,8 +95,10 @@ public class ThreadLeakChecker {
                       "|Write-Updater" +
                       "|Write-Poller" +
                       "|VirtualThread-unparker" +
+                      "|VirtualThread-unblocker" +
                       "|Read-Updater" +
                       "|Read-Poller" +
+                      "|MasterPoller" +
                       // Arjuna can start a Listener for recovery that is stopped in a shutdown hook
                       "|Listener:[0-9]" +
                       "|JVMCI-native CompilerThread[0-9]" +
