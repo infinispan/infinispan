@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.BaseMarshallerDelegate;
+import org.infinispan.protostream.GeneratedMarshallerBase;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.WrappedMessage;
@@ -17,7 +19,6 @@ import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.protostream.annotations.impl.GeneratedMarshallerBase;
 import org.infinispan.protostream.impl.SerializationContextImpl;
 import org.springframework.session.MapSession;
 
@@ -131,7 +132,7 @@ public class MapSessionProtoAdapter {
          implements ProtobufTagMarshaller<SessionAttribute> {
 
       private final JavaSerializationMarshaller javaSerializationMarshaller;
-      private org.infinispan.protostream.impl.BaseMarshallerDelegate<WrappedMessage> wrappedMessageDelegate;
+      private BaseMarshallerDelegate<WrappedMessage> wrappedMessageDelegate;
 
       public SessionAttributeRawMarshaller(JavaSerializationMarshaller javaSerializationMarshaller) {
          this.javaSerializationMarshaller = javaSerializationMarshaller;
