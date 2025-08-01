@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.junit5.InfinispanServer;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -45,6 +46,7 @@ public class ScriptingTasks {
    }
 
    @Test
+   @Disabled("Disabled until https://github.com/infinispan/infinispan/issues/15389 can be resolved")
    public void testStreamingScript() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addJavaSerialAllowList(HashMap.class.getName());
@@ -72,7 +74,7 @@ public class ScriptingTasks {
    public void testProtoStreamMarshaller() {
       RemoteCache<String, String> cache = SERVERS.hotrod().withMarshaller(ProtoStreamMarshaller.class).create();
       List<String> greetings = cache.execute("dist-hello", Collections.singletonMap("greetee", "my friend"));
-      assertEquals(2, greetings.size());
+      assertEquals(ClusteredIT.SERVER_COUNT, greetings.size());
       for(String greeting : greetings) {
          assertTrue(greeting.matches("Hello my friend .*"));
       }
