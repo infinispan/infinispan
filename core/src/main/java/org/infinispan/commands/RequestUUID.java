@@ -125,23 +125,6 @@ public final class RequestUUID {
    }
 
    /**
-    * Creates a new {@link RequestUUID} instance by replacing this record's
-    * {@link RequestUUID#nodeUUID node identifier} with the provided {@code otherNodeUUID}, while retaining the
-    * original {@link RequestUUID#requestId request identifier}.
-    * <p>
-    * This method is typically used when an operation, identified by its local {@code requestId}, is being processed or
-    * re-assigned to a different node due to a node failure. It allows tracking the same logical operation (via
-    * {@code requestId}) but associating it with a new originating or processing node (via {@code otherNodeUUID}).
-    *
-    * @param otherNodeUUID The {@link UUID} of the node that this new {@link RequestUUID} should represent as its
-    *                      originator.
-    * @return A new {@link RequestUUID} with the updated node UUID and the original request ID.
-    */
-   public RequestUUID asNodeUUID(UUID otherNodeUUID) {
-      return new RequestUUID(otherNodeUUID, requestId);
-   }
-
-   /**
     * @return A compact representation of this {@link RequestUUID}, containing only the node's logical name and the
     * request ID.
     */
