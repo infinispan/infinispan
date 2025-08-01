@@ -1,5 +1,6 @@
 package org.infinispan.configuration.module;
 
+import java.util.concurrent.atomic.AtomicReference;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -12,11 +13,22 @@ import org.infinispan.configuration.parsing.ParserScope;
  * MyParserExtension. This is a simple extension parser which parses modules in the "urn:infinispan:config:mymodule" namespace
  *
  * @author Tristan Tarrant
+ * @author Réda Housni Alaoui
  * @since 5.2
  */
 @Namespace(uri = "urn:infinispan:config:mymodule", root = "sample-element")
 @Namespace(root = "sample-element")
 public class MyParserExtension implements ConfigurationParser {
+
+   private static final AtomicReference<RuntimeException> nextGetNamespacesException = new AtomicReference<>();
+
+   public static synchronized void enqueueGetNamespacesException(RuntimeException exception) {
+      nextGetNamespacesException.set(exception);
+   }
+
+   public static synchronized void removeGetNamespacesException() {
+      nextGetNamespacesException.set(null);
+   }
 
    @Override
    public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
@@ -57,6 +69,10 @@ public class MyParserExtension implements ConfigurationParser {
 
    @Override
    public Namespace[] getNamespaces() {
+      RuntimeException exception = nextGetNamespacesException.getAndSet(null);
+      if (exception != null) {
+         throw exception;
+      }
       return ParseUtils.getNamespaceAnnotations(getClass());
    }
 }
