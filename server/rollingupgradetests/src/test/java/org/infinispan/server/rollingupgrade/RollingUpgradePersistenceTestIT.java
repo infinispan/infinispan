@@ -38,6 +38,7 @@ public class RollingUpgradePersistenceTestIT {
 
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradePersistenceTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
+            .jgroupsProtocol("tcp")
             .nodeCount(nodeCount);
       builder.handlers(
             uh -> handleInitializer(uh, cacheName, new StringConfiguration(xml)),
@@ -60,6 +61,7 @@ public class RollingUpgradePersistenceTestIT {
             .addArchives(PersistenceIT.getJavaArchive())
             .addMavenArtifacts(PersistenceIT.getJdbcDrivers())
             .addProperty(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true")
+            .jgroupsProtocol("tcp")
             .addListener(listener);
 
       Consumer<TableManipulation> validateTable = table -> {

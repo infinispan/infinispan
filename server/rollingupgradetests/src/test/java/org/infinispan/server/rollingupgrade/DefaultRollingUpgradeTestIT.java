@@ -33,6 +33,7 @@ public class DefaultRollingUpgradeTestIT {
    public void testDefaultSetting() throws InterruptedException {
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion());
+      builder.jgroupsProtocol("tcp");
       RollingUpgradeHandler.performUpgrade(builder.build());
    }
 
@@ -43,6 +44,7 @@ public class DefaultRollingUpgradeTestIT {
       int nodeCount = 3;
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
+            .jgroupsProtocol("tcp")
             .nodeCount(nodeCount);
       RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
       restBuilder.security().authentication().enable().username(user.getUser()).password(user.getPassword());
@@ -92,6 +94,7 @@ public class DefaultRollingUpgradeTestIT {
       ByRef.Integer interactions = new ByRef.Integer(0);
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
+            .jgroupsProtocol("tcp")
             .nodeCount(nodeCount);
 
       RedisURI.Builder respBuilder = RedisURI.builder()
@@ -142,6 +145,7 @@ public class DefaultRollingUpgradeTestIT {
 
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
+            .jgroupsProtocol("tcp")
             .nodeCount(nodeCount);
       builder.handlers(
             uh -> {
