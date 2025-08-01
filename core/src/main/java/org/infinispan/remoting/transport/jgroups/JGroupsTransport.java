@@ -96,6 +96,8 @@ import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.InfinispanTelemetry;
+import org.infinispan.telemetry.SafeAutoClosable;
+import org.infinispan.telemetry.impl.DisabledInfinispanSpan;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -354,8 +356,7 @@ public class JGroupsTransport implements Transport {
       DeliverOrder order = backup.isSync() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
       long timeout = backup.getTimeout();
       XSiteResponseImpl<O> xSiteResponse = new XSiteResponseImpl<>(timeService, backup);
-      try {
-         traceRequest(request, rpcCommand);
+      try (var ignored = traceRequest(request, rpcCommand)) {
          sendCommand(recipient, rpcCommand, request.getRequestId(), order, false, false);
          if (timeout > 0) {
             request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
@@ -1006,14 +1007,17 @@ public class JGroupsTransport implements Transport {
       logRequest(requestId, command, target, "single");
       SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, metricsManager.trackRequest(target));
       addRequest(request);
-      if (!request.onNewView(clusterView.getMembersSet())) {
-         traceRequest(request, command);
-         sendCommand(target, command, requestId, deliverOrder, true, false);
+       if (request.onNewView(clusterView.getMembersSet())) {
+          assert request.isDone();
+          return request;
+       }
+       try (var ignored = traceRequest(request, command)) {
+          sendCommand(target, command, requestId, deliverOrder, true, false);
+         if (timeout > 0) {
+            request.setTimeout(timeoutExecutor, timeout, unit);
+         }
+         return request;
       }
-      if (timeout > 0) {
-         request.setTimeout(timeoutExecutor, timeout, unit);
-      }
-      return request;
    }
 
    @Override
@@ -1032,9 +1036,8 @@ public class JGroupsTransport implements Transport {
       if (request.isDone()) {
          return request;
       }
-      try {
+      try (var ignored = traceRequest(request, command)) {
          addRequest(request);
-         traceRequest(request, command);
          boolean checkView = request.onNewView(clusterView.getMembersSet());
          sendCommand(targets, command, requestId, deliverOrder, checkView);
       } catch (Throwable t) {
@@ -1059,9 +1062,8 @@ public class JGroupsTransport implements Transport {
       if (request.isDone()) {
          return request;
       }
-      try {
+      try (var ignored = traceRequest(request, command)) {
          addRequest(request);
-         traceRequest(request, command);
          request.onNewView(clusterView.getMembersSet());
          sendCommandToAll(command, requestId, deliverOrder);
       } catch (Throwable t) {
@@ -1087,9 +1089,8 @@ public class JGroupsTransport implements Transport {
       if (request.isDone()) {
          return request;
       }
-      try {
+      try (var ignored = traceRequest(request, command)) {
          addRequest(request);
-         traceRequest(request, command);
          request.onNewView(clusterView.getMembersSet());
          sendCommandToAll(command, requestId, deliverOrder);
       } catch (Throwable t) {
@@ -1111,9 +1112,8 @@ public class JGroupsTransport implements Transport {
       StaggeredRequest<T> request =
             new StaggeredRequest<>(collector, requestId, requests, targets, getAddress(), command, deliverOrder,
                   timeout, unit, this);
-      try {
+      try (var ignored = traceRequest(request, command)) {
          addRequest(request);
-         traceRequest(request, command);
          request.onNewView(clusterView.getMembersSet());
          request.sendNextMessage();
       } catch (Throwable t) {
@@ -1146,8 +1146,9 @@ public class JGroupsTransport implements Transport {
 
             ReplicableCommand command = commandGenerator.apply(target);
             logRequest(requestId, command, target, "mixed");
-            traceRequest(request, command); // TODO is correct?
-            sendCommand(target, command, requestId, deliverOrder, true, checkView);
+            try (var ignored = traceRequest(request, command)) { // TODO is correct?
+               sendCommand(target, command, requestId, deliverOrder, true, checkView);
+            }
          }
       } catch (Throwable t) {
          request.cancel(true);
@@ -1178,11 +1179,14 @@ public class JGroupsTransport implements Transport {
       }
    }
 
-   private void traceRequest(AbstractRequest<?> request, TracedCommand command) {
+   private SafeAutoClosable traceRequest(AbstractRequest<?> request, TracedCommand command) {
       var traceSpan = command.getSpanAttributes();
       if (traceSpan != null) {
          InfinispanSpan<Object> span = telemetry.startTraceRequest(command.getOperationName(), traceSpan);
          request.whenComplete(span);
+         return span.makeCurrent();
+      } else {
+         return DisabledInfinispanSpan.instance().makeCurrent();
       }
    }
 
