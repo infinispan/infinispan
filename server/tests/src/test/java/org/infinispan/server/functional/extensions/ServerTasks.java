@@ -45,7 +45,7 @@ public class ServerTasks {
       // We must utilise the GenericJBossMarshaller due to ISPN-8814
       RemoteCache<String, String> cache = SERVERS.hotrod().withMarshaller(GenericJBossMarshaller.class).create();
       List<String> greetings = cache.execute("dist-hello", Collections.singletonMap("greetee", "my friend"));
-      assertEquals(2, greetings.size());
+      assertEquals(ClusteredIT.SERVER_COUNT, greetings.size());
       for(String greeting : greetings) {
          assertTrue(greeting.matches("Hello my friend .*"));
       }
