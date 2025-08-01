@@ -6,7 +6,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOS
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -43,15 +42,17 @@ import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
+import org.infinispan.commons.admin.SchemasAdministration;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.protostream.schema.Schema;
 import org.infinispan.server.persistence.PersistenceIT;
 import org.infinispan.server.test.api.HotRodClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -257,11 +258,14 @@ public class Common {
       RemoteCacheManager remoteCacheManager = hotRodTestClientDriver.createRemoteCacheManager();
 
       if (protoFile != null) {
-         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-         String schema = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, server.getClass().getClassLoader()));
-         metadataCache.putIfAbsent(protoFile, schema);
-         assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-         assertNotNull(metadataCache.get(protoFile));
+         SchemasAdministration schemas = remoteCacheManager.administration().schemas();
+         String content = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, server.getClass().getClassLoader()));
+         schemas.create(Schema.buildFromStringContent(protoFile, content));
+         FileDescriptorSource source = Exceptions.unchecked(() -> FileDescriptorSource.fromResources(protoFile));
+         remoteCacheManager.administration().schemas().create(source);
+
+         assertTrue(schemas.retrieveAllSchemaErrors().isEmpty());
+         assertNotNull(schemas.exists(protoFile));
       }
 
       SerializationContext ctx = MarshallerUtil.getSerializationContext(remoteCacheManager);

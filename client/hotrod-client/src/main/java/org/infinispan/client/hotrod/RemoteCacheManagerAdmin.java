@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.admin.SchemasAdministration;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.BasicConfiguration;
 
@@ -139,4 +140,6 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     */
    @Override
    void assignAlias(String aliasName, String cacheName) throws HotRodClientException;
+
+   SchemasAdministration schemas();
 }

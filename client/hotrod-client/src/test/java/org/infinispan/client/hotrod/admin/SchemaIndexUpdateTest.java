@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import java.util.List;
@@ -26,7 +25,6 @@ import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -42,8 +40,6 @@ public class SchemaIndexUpdateTest extends SingleHotRodServerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
-            .encoding()
-            .mediaType(APPLICATION_PROTOSTREAM_TYPE)
             .indexing()
             .enable()
             .storage(LOCAL_HEAP)
@@ -147,20 +143,16 @@ public class SchemaIndexUpdateTest extends SingleHotRodServerTest {
    }
 
    private RemoteCacheManager clientForSchema(GeneratedSchema schema, String newIndexedEntities) {
-      ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller();
-
       // Register proto schema && entity marshaller on client side
-      schema.registerSchema(marshaller.getSerializationContext());
-      schema.registerMarshallers(marshaller.getSerializationContext());
+      ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller();
+      marshaller.register(schema);
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder = createHotRodClientConfigurationBuilder(hotrodServer.getHost(), hotrodServer.getPort());
       builder.marshaller(marshaller);
       RemoteCacheManager rcm = new RemoteCacheManager(builder.build());
 
       // Register proto schema on server side
-
-      RemoteCache<String, String> metadataCache = rcm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put(schema.getProtoFileName(), schema.getProtoFile());
+      assertThat(rcm.administration().schemas().createOrUpdate(schema).isCreated()).isTrue();
 
       if (newIndexedEntities != null) {
          remoteCacheManager.administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
