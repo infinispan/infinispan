@@ -130,8 +130,6 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/server/report/{nodeName}")
                .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
                .handleWith(this::nodeReport)
-            .invocation().methods(GET).path("/v2/server/cache-managers")
-               .handleWith(this::cacheManagers)
             .invocation().methods(GET).path("/v2/server/ignored-caches/{cache-manager}")
                .deprecated()
                .permission(AuthorizationPermission.ADMIN)
@@ -219,10 +217,6 @@ public class ServerResource implements ResourceHandler {
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
       Set<String> ignored = serverStateManager.getIgnoredCaches();
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(ignored), isPretty(request));
-   }
-
-   private CompletionStage<RestResponse> cacheManagers(RestRequest request) {
-      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(invocationHelper.getServer().cacheManagerNames()), isPretty(request));
    }
 
    private CompletionStage<RestResponse> connectorStartStop(RestRequest request) {

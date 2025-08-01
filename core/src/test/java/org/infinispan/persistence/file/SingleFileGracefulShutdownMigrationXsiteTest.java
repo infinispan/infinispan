@@ -78,7 +78,7 @@ public class SingleFileGracefulShutdownMigrationXsiteTest extends AbstractStateT
    private ConfigurationBuilder cfg(String location) {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.persistence()
-            .addSingleFileStore()
+            .addStore(SingleFileStoreConfigurationBuilder.class)
             .segmented(false)
             .location(location)
             .fetchPersistentState(true);
