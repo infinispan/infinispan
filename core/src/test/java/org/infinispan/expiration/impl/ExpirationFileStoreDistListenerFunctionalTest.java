@@ -1,6 +1,5 @@
 package org.infinispan.expiration.impl;
 
-import static org.infinispan.expiration.impl.ExpirationFileStoreListenerFunctionalTest.FileStoreToUse.SINGLE;
 import static org.infinispan.expiration.impl.ExpirationFileStoreListenerFunctionalTest.FileStoreToUse.SOFT_INDEX;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 
@@ -42,8 +41,6 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
    @Override
    public Object[] factory() {
       return new Object[]{
-            // Test is for single file store with a listener in a dist cache and we don't care about memory storage types
-            new ExpirationFileStoreDistListenerFunctionalTest().fileStoreToUse(SINGLE).cacheMode(CacheMode.DIST_SYNC),
             new ExpirationFileStoreDistListenerFunctionalTest().fileStoreToUse(SOFT_INDEX).cacheMode(CacheMode.DIST_SYNC),
       };
    }
@@ -60,9 +57,6 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
             .expiration().wakeUpInterval(Long.MAX_VALUE)
             .clustering().cacheMode(cacheMode);
       switch (fileStoreToUse) {
-         case SINGLE:
-            config.persistence().addSingleFileStore();
-            break;
          case SOFT_INDEX:
             config.persistence().addSoftIndexFileStore();
             break;
@@ -126,7 +120,7 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
       globalBuilder.globalState().enable().persistentLocation(PERSISTENT_LOCATION);
       EmbeddedCacheManager returned = createClusteredCacheManager(false, globalBuilder, builder, new TransportFlags());
 
-      // Unfortunately we can't reinject timeservice once a cache has been started, thus we have to inject
+      // Unfortunately, we can't reinject timeservice once a cache has been started, thus we have to inject
       // here as well, since we need the cache to verify the cluster was formed
       TestingUtil.replaceComponent(returned, TimeService.class, timeService, true);
       returned.start();

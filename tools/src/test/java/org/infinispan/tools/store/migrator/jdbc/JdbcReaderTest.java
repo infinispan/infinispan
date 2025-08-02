@@ -19,7 +19,7 @@ import static org.infinispan.tools.store.migrator.Element.TIMESTAMP;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
 import static org.infinispan.tools.store.migrator.Element.USERNAME;
 import static org.infinispan.tools.store.migrator.StoreType.JDBC_STRING;
-import static org.infinispan.tools.store.migrator.StoreType.SINGLE_FILE_STORE;
+import static org.infinispan.tools.store.migrator.StoreType.SOFT_INDEX_FILE_STORE;
 import static org.infinispan.tools.store.migrator.TestUtil.propKey;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -49,11 +49,11 @@ public class JdbcReaderTest extends AbstractInfinispanTest {
    private static final int NUM_ENTRIES = 100;
    private static final String CACHE_NAME = "jdbc-cache";
    private static final String JDBC_URL = "jdbc:h2:mem:JdbcReaderTest;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
-   private static final String SFS_LOCATION = CommonsTestingUtil.tmpDirectory(JdbcReaderTest.class);
+   private static final String SIFS_LOCATION = CommonsTestingUtil.tmpDirectory(JdbcReaderTest.class);
 
    @AfterClass
    public void cleanup() {
-      Util.recursiveFileRemove(SFS_LOCATION);
+      Util.recursiveFileRemove(SIFS_LOCATION);
    }
 
    @Test
@@ -80,7 +80,7 @@ public class JdbcReaderTest extends AbstractInfinispanTest {
          IntStream.range(0, NUM_ENTRIES).forEach(i -> cache.put(i, i));
       }
 
-      // Migrate JDBC store to SFS
+      // Migrate JDBC store to SIFS
       Properties properties = new Properties();
       properties.put(propKey(SOURCE, Element.CACHE_NAME), CACHE_NAME);
       properties.put(propKey(SOURCE, TYPE), JDBC_STRING.toString());
@@ -99,15 +99,15 @@ public class JdbcReaderTest extends AbstractInfinispanTest {
       properties.put(propKey(SOURCE, TABLE, STRING, TIMESTAMP, TYPE), "BIGINT");
       properties.put(propKey(SOURCE, SEGMENT_COUNT), "256");
 
-      properties.put(propKey(TARGET, TYPE), SINGLE_FILE_STORE.toString());
+      properties.put(propKey(TARGET, TYPE), SOFT_INDEX_FILE_STORE.toString());
       properties.put(propKey(TARGET, Element.CACHE_NAME), CACHE_NAME);
-      properties.put(propKey(TARGET, LOCATION), SFS_LOCATION);
+      properties.put(propKey(TARGET, LOCATION), SIFS_LOCATION);
 
       new StoreMigrator(properties).run();
 
       // Assert that SFS contains expected number of entries
       builder = new ConfigurationBuilder();
-      builder.persistence().addSingleFileStore().location(SFS_LOCATION);
+      builder.persistence().addSoftIndexFileStore().dataLocation(SIFS_LOCATION);
       try (EmbeddedCacheManager cm = new DefaultCacheManager()) {
          Cache<Integer, Integer> cache = cm.createCache(CACHE_NAME, builder.build());
          assertEquals(NUM_ENTRIES, cache.size());
