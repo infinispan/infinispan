@@ -1,0 +1,4 @@
+//Reference user stories or topics.
+//Please review authoring guidelines in the Contributors Guide.
+
+include::{generated}/openapi/index.adoc[leveloffset=+1]
