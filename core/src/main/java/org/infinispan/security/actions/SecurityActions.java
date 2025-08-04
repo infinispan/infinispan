@@ -66,6 +66,10 @@ public class SecurityActions {
       });
    }
 
+   public static void stopCache(EmbeddedCacheManager cacheManager, String cacheName) {
+      doPrivileged(() -> cacheManager.stopCache(cacheName));
+   }
+
    public static ClusterExecutor getClusterExecutor(final Cache<?, ?> cache) {
       GetClusterExecutorAction action = new GetClusterExecutorAction(cache);
       return doPrivileged(action);
