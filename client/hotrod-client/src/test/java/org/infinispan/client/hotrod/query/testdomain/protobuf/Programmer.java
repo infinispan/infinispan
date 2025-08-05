@@ -35,7 +35,7 @@ public class Programmer {
    @ProtoSchema(
          includeClasses = Programmer.class,
          schemaFileName = "pro.proto",
-         schemaFilePath = "proto",
+         schemaFilePath = "org/infinispan/client/hotrod",
          schemaPackageName = "io.pro",
          service = false
    )

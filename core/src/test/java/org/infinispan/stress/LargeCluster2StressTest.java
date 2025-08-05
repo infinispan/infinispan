@@ -64,7 +64,7 @@ public class LargeCluster2StressTest extends MultipleCacheManagersTest {
       if ((NUM_CACHES & 1) != 0)
          throw new IllegalStateException("NUM_CACHES must be even");
 
-      final ProtocolStackConfigurator configurator = ConfiguratorFactory.getStackConfigurator("default-configs/default-jgroups-udp.xml");
+      final ProtocolStackConfigurator configurator = ConfiguratorFactory.getStackConfigurator("org/infinispan/configuration/default-jgroups-udp.xml");
       ProtocolConfiguration udpConfiguration = configurator.getProtocolStack().get(0);
       assertEquals("UDP", udpConfiguration.getProtocolName());
       udpConfiguration.getProperties().put("mcast_addr", "239.0.0.15");

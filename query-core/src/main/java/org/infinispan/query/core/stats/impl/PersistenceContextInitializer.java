@@ -18,7 +18,7 @@ import org.infinispan.query.core.stats.IndexInfo;
             StatsTask.class
       },
       schemaFileName = "persistence.query.core.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/query/core",
       schemaPackageName = "org.infinispan.persistence.query.core",
       service = false
 )

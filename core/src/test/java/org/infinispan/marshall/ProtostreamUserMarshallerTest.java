@@ -114,7 +114,7 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
    @ProtoSchema(
          includeClasses = ExampleUserPojo.class,
          schemaFileName = "test.core.protostream-user-marshall.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.marshall",
          service = false
    )
@@ -124,7 +124,7 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
    @ProtoSchema(
          includeClasses = AnotherExampleUserPojo.class,
          schemaFileName = "test.core.protostream-another-user-marshall.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.marshall",
          service = false
    )

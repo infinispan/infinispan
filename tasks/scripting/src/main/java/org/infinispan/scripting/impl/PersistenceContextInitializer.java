@@ -19,7 +19,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             ScriptMetadata.class
       },
       schemaFileName = "persistence.scripting.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/scripting",
       schemaPackageName = "org.infinispan.persistence.scripting",
       syntax = ProtoSyntax.PROTO3,
       service = false

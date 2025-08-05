@@ -128,7 +128,7 @@ public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
    @ProtoSchema(
          includeClasses = SecureConsumer.class,
          schemaFileName = "test.core.security.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.security",
          service = false,
          syntax = ProtoSyntax.PROTO3

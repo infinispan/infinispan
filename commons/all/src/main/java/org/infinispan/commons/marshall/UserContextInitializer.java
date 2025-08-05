@@ -16,7 +16,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             NullValue.class,
       },
       schemaFileName = "user.commons.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/commons",
       schemaPackageName = "org.infinispan.commons",
       service = false
 )

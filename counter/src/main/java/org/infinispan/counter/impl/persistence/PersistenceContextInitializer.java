@@ -27,7 +27,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             WeakCounterKey.class
       },
       schemaFileName = "persistence.counters.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/counter",
       schemaPackageName = "org.infinispan.persistence.counters",
       service = false
 )

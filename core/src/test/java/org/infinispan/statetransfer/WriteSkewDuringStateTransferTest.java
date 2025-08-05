@@ -417,7 +417,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
    @ProtoSchema(
          includeClasses = ConsistentHashFactoryImpl.class,
          schemaFileName = "test.core.WriteSkewDuringStateTransferTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.WriteSkewDuringStateTransferTest",
          service = false
    )

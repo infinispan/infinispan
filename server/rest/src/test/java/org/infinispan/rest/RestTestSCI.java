@@ -21,7 +21,7 @@ import org.infinispan.rest.search.entity.PhoneNumber;
             TestClass.class
       },
       schemaFileName = "test.rest.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/server/rest",
       schemaPackageName = "org.infinispan.test.rest",
       service = false
 )

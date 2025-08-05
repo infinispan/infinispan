@@ -38,7 +38,7 @@ public class StableControlledConsistentHashFactory
    @ProtoSchema(
          includeClasses = {StableControlledConsistentHashFactory.class},
          schemaFileName = "test.client.CompleteShutdownDistRetryTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          schemaPackageName = "org.infinispan.test.client.CompleteShutdownDistRetryTest",
          service = false
    )

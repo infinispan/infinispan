@@ -207,7 +207,7 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
                GroupKey.class,
          },
          schemaFileName = "test.core.GroupTestsSCI.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.GroupTestsSCI",
          service = false
    )

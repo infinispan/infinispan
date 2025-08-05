@@ -16,7 +16,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.persistence.remote.upgrade.RemovedFilter.class,
       },
       schemaFileName = "global.remote.store.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/persistence/remote",
       schemaPackageName = "org.infinispan.global.remote.store",
       service = false,
       syntax = ProtoSyntax.PROTO3

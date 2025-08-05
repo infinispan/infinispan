@@ -18,7 +18,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             Storage.class
       },
       schemaFileName = "persistence.counters-api.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/counter/api",
       schemaPackageName = "org.infinispan.persistence.commons", // to preserve backwards compatibility
       service = false
 )

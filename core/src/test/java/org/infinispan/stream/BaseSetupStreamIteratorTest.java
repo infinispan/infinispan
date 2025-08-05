@@ -183,7 +183,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
                MagicKey.class
          },
          schemaFileName = "core.stream.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.stream",
          service = false
    )

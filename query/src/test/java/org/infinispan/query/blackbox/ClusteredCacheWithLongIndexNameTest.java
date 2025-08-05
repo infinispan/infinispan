@@ -113,7 +113,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
    @ProtoSchema(
          includeClasses = ClassWithLongIndexName.class,
          schemaFileName = "test.query.blackbox.ClusteredCacheWithLongIndexNameTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/query",
          schemaPackageName = "org.infinispan.test.ClusteredCacheWithLongIndexNameTest",
          service = false
    )

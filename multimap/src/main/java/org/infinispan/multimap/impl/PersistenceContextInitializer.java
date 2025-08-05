@@ -18,7 +18,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             SortedSetBucket.IndexValue.class,
       },
       schemaFileName = "persistence.multimap.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/multimap",
       schemaPackageName = "org.infinispan.persistence.multimap",
       service = false
 )

@@ -75,7 +75,7 @@ public class AffinityPartitionerTest extends MultipleCacheManagersTest {
    @ProtoSchema(
          includeClasses = AffinityKey.class,
          schemaFileName = "core.distribution.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.distribution",
          service = false
    )

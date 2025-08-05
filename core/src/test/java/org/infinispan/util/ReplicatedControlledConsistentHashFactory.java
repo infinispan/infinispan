@@ -87,7 +87,7 @@ public class ReplicatedControlledConsistentHashFactory implements ConsistentHash
          },
          includeClasses = ReplicatedControlledConsistentHashFactory.class,
          schemaFileName = "test.core.ReplicatedControlledConsistentHashFactory.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.ReplicatedControlledConsistentHashFactory",
          service = false
    )

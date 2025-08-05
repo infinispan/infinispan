@@ -19,7 +19,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter.class,
       },
       schemaFileName = "global.remote.query.server.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/query/server",
       schemaPackageName = "org.infinispan.global.remote.query.server",
       service = false,
       syntax = ProtoSyntax.PROTO3

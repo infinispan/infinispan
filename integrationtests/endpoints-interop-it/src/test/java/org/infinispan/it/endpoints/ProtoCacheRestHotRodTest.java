@@ -63,7 +63,7 @@ public class ProtoCacheRestHotRodTest extends AbstractInfinispanTest {
       String body = response.body();
       Json json = Json.read(body);
       assertThat(json.at("_value").asJsonList())
-            .extracting(j -> j.asString()).containsExactly("ciao", "ciao", "ciao");
+            .extracting(j -> j.at("string").asString()).containsExactly("ciao", "ciao", "ciao");
 
       // 3. Entries with REST (with metadata)
       response = join(cacheFactory.getRestCacheClient().entries(10, true));
@@ -71,7 +71,7 @@ public class ProtoCacheRestHotRodTest extends AbstractInfinispanTest {
       body = response.body();
       json = Json.read(body).asJsonList().get(0).at("value");
       assertThat(json.at("_value").asJsonList())
-            .extracting(j -> j.asString()).containsExactly("ciao", "ciao", "ciao");
+            .extracting(j -> j.at("string").asString()).containsExactly("ciao", "ciao", "ciao");
 
       // 4. Entries with REST (without metadata)
       response = join(cacheFactory.getRestCacheClient().entries(10, false));
@@ -79,6 +79,6 @@ public class ProtoCacheRestHotRodTest extends AbstractInfinispanTest {
       body = response.body();
       json = Json.read(body).asJsonList().get(0).at("value");
       assertThat(json.at("_value").asJsonList())
-            .extracting(j -> j.asString()).containsExactly("ciao", "ciao", "ciao");
+            .extracting(j -> j.at("string").asString()).containsExactly("ciao", "ciao", "ciao");
    }
 }

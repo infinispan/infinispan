@@ -165,7 +165,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
    @ProtoSchema(
          includeClasses = SEntity.class,
          schemaFileName = "test.query.persistence.InconsistentIndexesAfterRestartTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/query",
          schemaPackageName = "org.infinispan.test.InconsistentIndexesAfterRestartTest",
          service = false
    )

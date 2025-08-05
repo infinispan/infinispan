@@ -77,8 +77,8 @@ public class JGroupsConfigBuilder {
       // Load the XML just once
       protocolStackConfigurator.put("test-tcp", loadProtocolStack("stacks/tcp.xml"));
       protocolStackConfigurator.put("test-udp", loadProtocolStack("stacks/udp.xml"));
-      protocolStackConfigurator.put("tcp", loadProtocolStack("default-configs/default-jgroups-tcp.xml"));
-      protocolStackConfigurator.put("udp", loadProtocolStack("default-configs/default-jgroups-udp.xml"));
+      protocolStackConfigurator.put("tcp", loadProtocolStack("org/infinispan/configuration/default-jgroups-tcp.xml"));
+      protocolStackConfigurator.put("udp", loadProtocolStack("org/infinispan/configuration/default-jgroups-udp.xml"));
    }
 
    public static String getJGroupsConfig(String fullTestName, TransportFlags flags) {

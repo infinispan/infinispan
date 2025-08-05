@@ -42,7 +42,7 @@ public class RemoteQueryAccessIT {
             .addPackage("org.infinispan.protostream.sampledomain")
             .addAsServiceProvider(ServerTask.class, RemoteQueryAccessWithStatsTask.class)
             .addAsServiceProvider(SerializationContextInitializer.class, TestDomainSCIImpl.class)
-            .addAsResource("proto/generated/test.protostream.sampledomain.proto");
+            .addAsResource("org/infinispan/test/test.protostream.sampledomain.proto");
 
       return new JavaArchive[]{statistics};
    }

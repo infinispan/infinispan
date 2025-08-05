@@ -508,7 +508,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
                User.Gender.class
          },
          schemaFileName = "test.client.EmbeddedRemoteInteropQueryTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          schemaPackageName = "sample_bank_account",
          service = false
    )

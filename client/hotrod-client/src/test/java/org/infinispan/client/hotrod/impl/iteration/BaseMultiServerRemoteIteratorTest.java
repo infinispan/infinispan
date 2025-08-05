@@ -277,7 +277,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
                SubstringFilterFactory.SubstringFilterConverter.class
          },
          schemaFileName = "test.client.BaseMultiServerRemoteIterator.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          schemaPackageName = "org.infinispan.test.client.BaseMultiServerRemoteIterator",
          service = false
    )

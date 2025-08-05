@@ -16,7 +16,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter.class,
       },
       schemaFileName = "global.query.core.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/query/core",
       schemaPackageName = "org.infinispan.global.query.core",
       service = false,
       syntax = ProtoSyntax.PROTO3
