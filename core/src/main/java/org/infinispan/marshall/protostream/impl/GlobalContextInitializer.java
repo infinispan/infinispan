@@ -375,7 +375,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.xsite.status.TakeSiteOfflineResponse.class,
       },
       schemaFileName = "global.core.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan",
       schemaPackageName = GlobalContextInitializer.PACKAGE_NAME,
       service = false,
       syntax = ProtoSyntax.PROTO3

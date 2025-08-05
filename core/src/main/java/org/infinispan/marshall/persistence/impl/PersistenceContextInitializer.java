@@ -14,8 +14,8 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
-import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.security.mappers.ClusterRoleMapper;
@@ -63,7 +63,7 @@ import org.infinispan.util.logging.events.EventLogLevel;
             SubjectAdapter.class
       },
       schemaFileName = "persistence.core.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan",
       schemaPackageName = PersistenceContextInitializer.PACKAGE_NAME,
       service = false,
       syntax = ProtoSyntax.PROTO2

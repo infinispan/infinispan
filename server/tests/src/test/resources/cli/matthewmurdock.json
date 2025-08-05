@@ -1,10 +1,13 @@
 {
-  "_type":"org.infinispan.rest.search.entity.Person",
-  "id":3,
-  "name":"Matthew",
-  "surname":"Murdock",
-  "gender":"MALE",
-  "address":{"street":"57th St","postCode":"NY 10019"},
-  "phoneNumbers":[]
+  "_type": "org.infinispan.rest.search.entity.Person",
+  "id": 3,
+  "name": "Matthew",
+  "surname": "Murdock",
+  "gender": "MALE",
+  "address": {
+    "street": "57th St",
+    "postCode": "NY 10019"
+  },
+  "phoneNumbers": []
 }
 

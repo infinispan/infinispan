@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -40,6 +39,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.util.KeyValuePair;
 
 public class TestUtil {
@@ -158,7 +158,7 @@ public class TestUtil {
          dependsOn = TestDataSCI.class,
          includeClasses = TestObject.class,
          schemaFileName = "test.tools.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/tools",
          schemaPackageName = "org.infinispan.test.tools",
          service = false
    )

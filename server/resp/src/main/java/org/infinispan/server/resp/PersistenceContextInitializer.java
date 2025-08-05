@@ -14,7 +14,7 @@ import org.infinispan.server.resp.hll.internal.ExplicitSet;
             CompactSet.class,
       },
       schemaFileName = "persistence.resp.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/server/resp",
       schemaPackageName = "org.infinispan.persistence.resp",
       service = false
 )

@@ -163,7 +163,7 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
    @ProtoSchema(
          includeClasses = {Author.class, Memo.class},
          schemaFileName = "test.client.RemoteQueryProtostreamAnnotationsDisableIndexingTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          service = false
    )
    public interface RemoteQueryProtostreamAnnotationsDisableIndexingTestSCI extends GeneratedSchema {

@@ -319,7 +319,7 @@ public class FunctionalListenersTest extends AbstractFunctionalTest {
                TestFunctionalInterfaces.SetConstantOnWriteOnly.class
          },
          schemaFileName = "test.core.functional.listeners.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.functional.listeners",
          service = false,
          syntax = ProtoSyntax.PROTO3

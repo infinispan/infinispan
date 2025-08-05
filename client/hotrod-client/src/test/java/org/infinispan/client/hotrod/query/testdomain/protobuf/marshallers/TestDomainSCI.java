@@ -25,7 +25,7 @@ import org.infinispan.query.dsl.embedded.testdomain.User;
             User.Gender.class
       },
       schemaFileName = "test.client.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/client/hotrod",
       schemaPackageName = "sample_bank_account",
       service = false
 )

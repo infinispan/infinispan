@@ -17,7 +17,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             Metadata.class
       },
       schemaFileName = "test.protostream.sampledomain.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/test",
       schemaPackageName = "sample_bank_account",
       service = false
 )

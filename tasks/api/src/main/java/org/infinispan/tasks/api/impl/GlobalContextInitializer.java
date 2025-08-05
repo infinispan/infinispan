@@ -10,7 +10,7 @@ import org.infinispan.tasks.TaskContext;
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
       includeClasses = TaskContext.class,
       schemaFileName = "global.tasks.api.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/tasks/api",
       schemaPackageName = "org.infinispan.global.tasks.api",
       service = false,
       syntax = ProtoSyntax.PROTO3

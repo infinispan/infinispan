@@ -16,7 +16,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             SleepingCacheRpcCommand.class
       },
       schemaFileName = "test.core.RpcSCI.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan",
       schemaPackageName = "org.infinispan.test.core.RpcSCI",
       service = false,
       syntax = ProtoSyntax.PROTO3

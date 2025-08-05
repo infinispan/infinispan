@@ -36,28 +36,29 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
          "META-INF/services/org\\.infinispan\\.factories\\.impl\\.ModuleMetadataBuilder",
          "META-INF/infinispan-version\\.properties",
          "org/infinispan/protostream/message-wrapping\\.proto",
-         "protostream/common-java-types\\.proto",
-         "protostream/common-java-container-types\\.proto",
-         "proto/generated/user\\.commons\\.proto",
-         "proto/generated/persistence\\.commons\\.proto",
-         "proto/generated/persistence\\.core\\.proto",
-         "proto/generated/persistence\\.counters-api\\.proto",
-         "proto/generated/global\\.commons\\.proto",
-         "proto/generated/global\\.core\\.proto",
-         "default-configs/default-jgroups-udp\\.xml",
-         "default-configs/default-jgroups-tcp\\.xml",
-         "default-configs/default-jgroups-kubernetes\\.xml",
-         "default-configs/default-jgroups-ec2\\.xml",
-         "default-configs/default-jgroups-google\\.xml",
-         "default-configs/default-jgroups-azure\\.xml",
-         "default-configs/default-jgroups-tunnel\\.xml",
+         "org/infinispan/protostream/types/java/common-java-types\\.proto",
+         "org/infinispan/protostream/types/java/common-java-container-types\\.proto",
+         "org/infinispan/protostream/types/protobuf/any\\.proto",
+         "org/infinispan/protostream/types/protobuf/duration\\.proto",
+         "org/infinispan/protostream/types/protobuf/empty\\.proto",
+         "org/infinispan/protostream/types/protobuf/timestamp\\.proto",
+         "org/infinispan/protostream/types/protobuf/wrappers\\.proto",
+         "org/infinispan/commons/user\\.commons\\.proto",
+         "org/infinispan/commons/global\\.commons\\.proto",
+         "org/infinispan/commons/persistence\\.commons\\.proto",
+         "org/infinispan/global\\.core\\.proto",
+         "org/infinispan/persistence\\.core\\.proto",
+         "org/infinispan/counter/api/persistence\\.counters-api\\.proto",
+         "org/infinispan/configuration/default-jgroups-udp\\.xml",
+         "org/infinispan/configuration/default-jgroups-tcp\\.xml",
+         "org/infinispan/configuration/default-jgroups-kubernetes\\.xml",
+         "org/infinispan/configuration/default-jgroups-ec2\\.xml",
+         "org/infinispan/configuration/default-jgroups-google\\.xml",
+         "org/infinispan/configuration/default-jgroups-azure\\.xml",
+         "org/infinispan/configuration/default-jgroups-tunnel\\.xml",
          ClassConfigurator.MAGIC_NUMBER_FILE,
          ClassConfigurator.PROTOCOL_ID_FILE,
          Version.VERSION_FILE
-   );
-
-   static final Collection<Resource> resourceRegexps = Resource.of(
-         "protostream/google/protobuf/.*.proto"
    );
 
    static final Collection<Bundle> bundles = Bundle.of(
@@ -86,8 +87,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
    @Override
    public Stream<Resource> includedResources() {
       return Stream.of(
-            resourceFiles.stream(),
-            resourceRegexps.stream()
+            resourceFiles.stream()
       ).flatMap(Function.identity());
    }
 

@@ -1,10 +1,26 @@
 {
-  "_type":"org.infinispan.rest.search.entity.Person",
-  "id":1,
-  "name":"Jessica",
-  "surname":"Jones",
-  "gender":"FEMALE",
-  "address":{"street":"46th St","postCode":"NY 10036"},
-  "phoneNumbers":[{"number":1111},{"number":2222},{"number":3333}]
+  "_type": "org.infinispan.rest.search.entity.Person",
+  "id": 1,
+  "name": "Jessica",
+  "surname": "Jones",
+  "gender": "FEMALE",
+  "address": {
+    "street": "46th St",
+    "postCode": "NY 10036"
+  },
+  "phoneNumbers": [
+    {
+      "_type": "org.infinispan.rest.search.entity.PhoneNumber",
+      "number": 1111
+    },
+    {
+      "_type": "org.infinispan.rest.search.entity.PhoneNumber",
+      "number": 2222
+    },
+    {
+      "_type": "org.infinispan.rest.search.entity.PhoneNumber",
+      "number": 3333
+    }
+  ]
 }
 

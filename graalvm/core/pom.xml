@@ -149,6 +149,7 @@
                         <configuration>
                            <buildArgs>
                               <buildArg>-J-Xmx5g</buildArg>
+                              <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
                               <buildArg>-J-Djava.util.logging.manager=java.util.logging.LogManager</buildArg>
                               <buildArg>-H:+AllowDeprecatedBuilderClassesOnImageClasspath</buildArg>
                               <buildArg>-H:IncludeResources=embedded.xml</buildArg>

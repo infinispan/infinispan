@@ -15,7 +15,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
       includeClasses = MemcachedMetadata.class,
       schemaFileName = "persistence.memcached.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/server/memcached",
       schemaPackageName = "org.infinispan.persistence.memcached",
       service = false
 )

@@ -17,7 +17,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             SessionUpdateRemappingFunctionProtoAdapter.class,
       },
       schemaFileName = "persistence.spring6.session.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/spring/common",
       schemaPackageName = "org.infinispan.persistence.spring.session",
       service = false
 )

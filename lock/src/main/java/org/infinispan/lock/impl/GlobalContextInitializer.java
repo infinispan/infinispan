@@ -17,7 +17,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.lock.impl.lock.ClusteredLockFilter.class
       },
       schemaFileName = "global.lock.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/counter",
       schemaPackageName = "org.infinispan.global.lock",
       service = false,
       syntax = ProtoSyntax.PROTO3

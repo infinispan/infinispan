@@ -6,7 +6,7 @@ import org.infinispan.Cache;
 import org.infinispan.api.protostream.builder.ProtoBuf;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.test.annotation.TestForIssue;
-import org.infinispan.protostream.impl.ResourceUtils;
+import org.infinispan.protostream.ResourceUtils;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
 

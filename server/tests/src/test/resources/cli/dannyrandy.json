@@ -1,10 +1,18 @@
 {
-  "_type":"org.infinispan.rest.search.entity.Person",
-  "id":4,
-  "name":"Danny",
-  "surname":"Randy",
-  "gender":"MALE",
-  "address":{"street":"Vanderbilt Av.","postCode":"NY 10017"},
-  "phoneNumbers":[{"number":2122561084}]
+  "_type": "org.infinispan.rest.search.entity.Person",
+  "id": 4,
+  "name": "Danny",
+  "surname": "Randy",
+  "gender": "MALE",
+  "address": {
+    "street": "Vanderbilt Av.",
+    "postCode": "NY 10017"
+  },
+  "phoneNumbers": [
+    {
+      "_type": "org.infinispan.rest.search.entity.PhoneNumber",
+      "number": 2122561084
+    }
+  ]
 }
 

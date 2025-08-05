@@ -15,7 +15,7 @@ import org.infinispan.rest.distribution.NodeDistributionInfo;
             KeyDistributionInfo.class,
       },
       schemaFileName = "global.server.rest.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/server/rest",
       schemaPackageName = "org.infinispan.global.server.rest",
       service = false,
       syntax = ProtoSyntax.PROTO3

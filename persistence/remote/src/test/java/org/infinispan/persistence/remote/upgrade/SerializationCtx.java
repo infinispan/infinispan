@@ -6,7 +6,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 @ProtoSchema(
       includeClasses = {CustomObject.class},
       schemaFileName = "rolling.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/persistence/remote",
       schemaPackageName = "org.infinispan.persistence.remote.upgrade",
       service = false
 )

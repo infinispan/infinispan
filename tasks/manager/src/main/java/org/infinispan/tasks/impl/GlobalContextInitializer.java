@@ -13,7 +13,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       dependsOn = org.infinispan.protostream.types.java.CommonTypes.class,
       includeClasses = TaskExecutionImpl.class,
       schemaFileName = "global.tasks.manager.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/tasks",
       schemaPackageName = "org.infinispan.global.tasks.manager",
       service = false,
       syntax = ProtoSyntax.PROTO3

@@ -7,7 +7,7 @@ import org.infinispan.test.integration.data.Person;
 @ProtoSchema(
       includeClasses = Person.class,
       schemaFileName = "person.proto",
-      schemaFilePath = "proto/",
+      schemaFilePath = "org/infinispan/test",
       schemaPackageName = "person_sample"
 )
 public interface PersonSchema extends GeneratedSchema {

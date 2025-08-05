@@ -21,7 +21,7 @@ import org.infinispan.query.dsl.embedded.DslSCI;
             EventLogListener.StaticCacheEventFilterFactory.StaticCacheEventFilter.class,
       },
       schemaFileName = "test.client.event.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/client/hotrod",
       schemaPackageName = "org.infinispan.test.client",
       service = false
 )

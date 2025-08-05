@@ -128,7 +128,7 @@ public class ProtoStreamMarshallerWithAnnotationsTest extends SingleCacheManager
    @ProtoSchema(
          includeClasses = {AnnotatedUser.class},
          schemaFileName = "test.client.ProtoStreamMarshallerWithAnnotationsTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          service = false
    )
    public interface ProtoStreamMarshallerWithAnnotationsTestSCI extends GeneratedSchema {

@@ -23,7 +23,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.counter.impl.function.SetFunction.class
       },
       schemaFileName = "global.counters.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/counter",
       schemaPackageName = "org.infinispan.global.counters",
       service = false,
       syntax = ProtoSyntax.PROTO3

@@ -35,8 +35,8 @@ public class HotRodQueryIT extends AbstractHotRodQueryIT {
       war.addPackage(PersonSchema.class.getPackage().getName());
       war.addClass(Book.class);
       war.addPackage(BookQuerySchema.class.getPackage().getName());
-      war.addAsResource("proto/book.proto");
-      war.addAsResource("proto/person.proto");
+      war.addAsResource("org/infinispan/test/book.proto");
+      war.addAsResource("org/infinispan/test/person.proto");
       addLibrary(war, "org.infinispan:infinispan-query-dsl");
       addLibrary(war, "org.infinispan:infinispan-remote-query-client");
       addLibrary(war, "org.infinispan:infinispan-client-hotrod");

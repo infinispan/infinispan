@@ -33,7 +33,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.server.hotrod.tx.table.functions.XidPredicate.class
       },
       schemaFileName = "global.server.hotrod.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/server/hotrod",
       schemaPackageName = "org.infinispan.global.server.hotrod",
       service = false,
       syntax = ProtoSyntax.PROTO3

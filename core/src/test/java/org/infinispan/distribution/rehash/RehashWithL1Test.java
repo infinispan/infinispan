@@ -116,7 +116,7 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
    @ProtoSchema(
          includeClasses = RehashWithL1Test.MyBaseControlledConsistentHashFactory.class,
          schemaFileName = "test.core.RehashWithL1Test.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.RehashWithL1Test",
          service = false,
          syntax = ProtoSyntax.PROTO3

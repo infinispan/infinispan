@@ -43,7 +43,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.server.resp.json.JsonDebugMemoryFunction.class,
       },
       schemaFileName = "global.resp.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/erver/resp",
       schemaPackageName = "org.infinispan.global.resp",
       service = false,
       syntax = ProtoSyntax.PROTO3

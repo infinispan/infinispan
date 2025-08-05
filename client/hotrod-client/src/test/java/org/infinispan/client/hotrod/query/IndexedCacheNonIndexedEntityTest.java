@@ -110,7 +110,7 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
    @ProtoSchema(
          includeClasses = {Entity.class, EvilTwin.class},
          schemaFileName = "test.client.IndexedCacheNonIndexedEntityTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          service = false
    )
    public interface IndexedCacheNonIndexedEntityTestSCI extends GeneratedSchema {

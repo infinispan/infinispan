@@ -100,7 +100,7 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
    @ProtoSchema(
          includeClasses = TestEntity.class,
          schemaFileName = "test.client.BuiltInAnalyzersTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          service = false
    )
    public interface TestEntitySCI extends GeneratedSchema {
