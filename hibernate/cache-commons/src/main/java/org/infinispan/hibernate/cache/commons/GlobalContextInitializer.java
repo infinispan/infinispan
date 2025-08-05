@@ -23,7 +23,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.hibernate.cache.commons.util.VersionedEntry.ExcludeEmptyFilter.class
       },
       schemaFileName = "global.hibernate.commons.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/hibernate/commons",
       schemaPackageName = "org.infinispan.global.hibernate.commons",
       service = false,
       syntax = ProtoSyntax.PROTO3

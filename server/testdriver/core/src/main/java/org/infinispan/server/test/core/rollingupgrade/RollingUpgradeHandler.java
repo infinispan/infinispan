@@ -237,19 +237,23 @@ public class RollingUpgradeHandler {
 
       try {
          log.debugf("Starting %d nodes to version %s in cluster %s", handler.nodeCount, handler.versionFrom, handler.clusterName);
-         Archive<?>[] artifacts;
-         // If possible, use the "fromVersion" artifacts
+         final Archive<?>[] artifacts;
          try {
-            MavenArtifact mavenArtifacts = new MavenArtifact("org.infinispan", "infinispan-server-tests", configuration.fromVersion(), "artifacts");
-            Path artifactsZip = mavenArtifacts.resolveArtifact("zip");
-            if (artifactsZip == null) {
-               artifacts = configuration.customArtifacts();
-               log.warnf("Could not download custom artifacts for version %s using %s. Failures may happen", configuration.fromVersion(), mavenArtifacts);
+            if (configuration.customArtifacts().length > 0) {
+               // If possible, use the "fromVersion" artifacts
+               MavenArtifact mavenArtifacts = new MavenArtifact("org.infinispan", "infinispan-server-tests", configuration.fromVersion(), "artifacts");
+               Path artifactsZip = mavenArtifacts.resolveArtifact("zip");
+               if (artifactsZip == null) {
+                  artifacts = configuration.customArtifacts();
+                  log.warnf("Could not download custom artifacts for version %s using %s. Failures may happen", configuration.fromVersion(), mavenArtifacts);
+               } else {
+                  artifacts = Unzip.unzip(artifactsZip, Paths.get(CommonsTestingUtil.tmpDirectory(), configuration.fromVersion()))
+                        .stream().map(p -> ShrinkWrap.createFromZipFile(JavaArchive.class, p.toFile()))
+                        .toArray(i -> new Archive<?>[i]);
+                  log.infof("Custom artifacts for version %s using %s", configuration.fromVersion(), mavenArtifacts);
+               }
             } else {
-               artifacts = Unzip.unzip(artifactsZip, Paths.get(CommonsTestingUtil.tmpDirectory(), configuration.fromVersion()))
-                     .stream().map(p -> ShrinkWrap.createFromZipFile(JavaArchive.class, p.toFile()))
-                     .toArray(i -> new Archive<?>[i]);
-               log.infof("Custom artifacts for version %s using %s", configuration.fromVersion(), mavenArtifacts);
+               artifacts = configuration.customArtifacts();
             }
          } catch (IOException e) {
             throw new UncheckedIOException(e);

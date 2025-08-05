@@ -210,7 +210,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
    @ProtoSchema(
          includeClasses = {Author.class, Memo.class},
          schemaFileName = "test.client.RemoteQueryWithProtostreamAnnotationsTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          service = false
    )
    public interface RemoteQueryWithProtostreamAnnotationsTestSCI extends GeneratedSchema {

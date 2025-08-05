@@ -26,7 +26,7 @@ import org.infinispan.protostream.types.java.CommonTypes;
             org.infinispan.commons.util.KeyValueWithPrevious.class,
       },
       schemaFileName = "global.commons.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/commons",
       schemaPackageName = "org.infinispan.global.commons",
       service = false,
       syntax = ProtoSyntax.PROTO3

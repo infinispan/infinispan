@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       },
       schemaPackageName = "org.football",
       schemaFileName = "football.proto",
-      schemaFilePath = "proto",
+      schemaFilePath = "org/infinispan/client/hotrod",
       service = false
 )
 public interface FootballSchema extends GeneratedSchema {

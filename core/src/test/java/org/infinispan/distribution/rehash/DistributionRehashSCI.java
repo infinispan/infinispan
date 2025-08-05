@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             NonTxPrimaryOwnerBecomingNonOwnerTest.CustomConsistentHashFactory.class,
       },
       schemaFileName = "test.core.distribution.rehash.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan",
       schemaPackageName = "org.infinispan.test.core.distribution.rehash",
       service = false,
       syntax = ProtoSyntax.PROTO3

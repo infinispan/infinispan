@@ -17,7 +17,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             WrappedByteArray.class
       },
       schemaFileName = "persistence.commons.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/commons",
       schemaPackageName = "org.infinispan.persistence.commons",
       service = false
 )

@@ -12,7 +12,7 @@ import org.infinispan.test.data.Person;
             SuperPerson.class
       },
       schemaFileName = "test.resp.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/server/resp",
       schemaPackageName = "org.infinispan.server.resp.test",
       service = false
 )

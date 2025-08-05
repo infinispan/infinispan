@@ -19,7 +19,6 @@ import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.server.Server;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
 public class RollingUpgradeConfigurationBuilder {
    private final String fromVersion;
@@ -165,7 +164,7 @@ public class RollingUpgradeConfigurationBuilder {
    public RollingUpgradeConfiguration build() {
       return new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, name, jgroupsProtocol, serverCheckTimeSecs,
             useSharedDataMount, serverConfigurationFile, defaultServerConfigurationFile, properties,
-            customArchives.toArray(new JavaArchive[0]), mavenArtifacts.toArray(new String[0]), listeners,
+            customArchives.toArray(new Archive[0]), mavenArtifacts.toArray(new String[0]), listeners,
             exceptionHandler, initialHandler, isValidServerState, configurationHandler);
    }
 }

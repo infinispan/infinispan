@@ -2308,7 +2308,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
                KeyValuePairArrayAdapter.class
          },
          schemaFileName = "test.core.BaseStreamTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.BaseStreamTest",
          service = false,
          syntax = ProtoSyntax.PROTO3

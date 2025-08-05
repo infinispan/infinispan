@@ -6,7 +6,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 @ProtoSchema(
       includeClasses = AbstractTwoCachesBasicOpsTest.CustomEntryProcessor.class,
       schemaFileName = "test.jcache.commons.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/jcache",
       schemaPackageName = "org.infinispan.test.jcache.commons",
       service = false
 )

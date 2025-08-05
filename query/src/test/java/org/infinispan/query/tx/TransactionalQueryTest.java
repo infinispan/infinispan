@@ -81,7 +81,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
    @ProtoSchema(
          includeClasses = Session.class,
          schemaFileName = "test.query.tx.TransactionalQueryTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/query",
          schemaPackageName = "org.infinispan.test.TransactionalQueryTest",
          service = false
    )

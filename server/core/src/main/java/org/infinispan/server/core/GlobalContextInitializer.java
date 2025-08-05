@@ -15,7 +15,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.server.iteration.IterationFilter.class
       },
       schemaFileName = "global.server.core.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/server/core",
       schemaPackageName = "org.infinispan.global.server.core",
       service = false,
       syntax = ProtoSyntax.PROTO3

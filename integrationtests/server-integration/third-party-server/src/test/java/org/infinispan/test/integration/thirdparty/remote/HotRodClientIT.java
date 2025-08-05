@@ -29,7 +29,7 @@ public class HotRodClientIT extends AbstractHotRodClientIT {
       war.addClass(AbstractHotRodClientIT.class);
       war.addClass(Person.class);
       war.addPackage(PersonSchema.class.getPackage().getName());
-      war.addAsResource("proto/person.proto");
+      war.addAsResource("org/infinispan/test/person.proto");
       addLibrary(war, "org.infinispan:infinispan-client-hotrod");
       return war;
    }

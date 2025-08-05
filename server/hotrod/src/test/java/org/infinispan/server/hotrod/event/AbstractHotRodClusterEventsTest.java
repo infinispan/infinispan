@@ -430,7 +430,7 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
                AcceptedKeyValueConverterFactory.class
          },
          schemaFileName = "test.hotrod.AbstractHotRodClusterEvents.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/server/hotrod",
          schemaPackageName = "org.infinispan.test.hotord.AbstractHotRodClusterEvents",
          service = false
    )

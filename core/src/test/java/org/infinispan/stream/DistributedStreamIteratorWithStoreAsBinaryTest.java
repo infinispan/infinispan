@@ -150,7 +150,7 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
                MapPair.class,
          },
          schemaFileName = "core.stream.binary.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.stream.binary",
          service = false
    )

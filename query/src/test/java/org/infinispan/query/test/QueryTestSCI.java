@@ -29,7 +29,7 @@ import org.infinispan.query.queries.faceting.Car;
             Transaction.class,
       },
       schemaFileName = "test.query.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/query",
       schemaPackageName = "org.infinispan.test.query",
       service = false
 )

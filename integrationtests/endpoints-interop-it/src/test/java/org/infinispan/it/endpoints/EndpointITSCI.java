@@ -12,7 +12,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             EmbeddedRestHotRodTest.Person.class
       },
       schemaFileName = "test.endpoints.it.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/test",
       schemaPackageName = EndpointITSCI.PACKAGE_NAME,
       service = false
 )

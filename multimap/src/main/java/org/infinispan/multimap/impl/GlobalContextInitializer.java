@@ -53,7 +53,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.multimap.impl.function.sortedset.SubsetFunction.class
       },
       schemaFileName = "global.multimap.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/multimap",
       schemaPackageName = "org.infinispan.global.multimap",
       service = false,
       syntax = ProtoSyntax.PROTO3

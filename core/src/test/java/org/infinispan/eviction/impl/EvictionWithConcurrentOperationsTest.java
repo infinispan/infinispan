@@ -775,7 +775,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    @ProtoSchema(
          includeClasses = SameHashCodeKey.class,
          schemaFileName = "test.core.eviction.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.eviction",
          service = false
    )

@@ -466,7 +466,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
                AbstractClusterListenerUtilTest.StringTruncator.class,
          },
          schemaFileName = "core.listeners.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.notifications",
          service = false
    )

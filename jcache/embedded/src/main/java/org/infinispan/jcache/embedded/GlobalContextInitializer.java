@@ -24,7 +24,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.jcache.embedded.functions.ReplaceConditionally.class
       },
       schemaFileName = "global.jcache.embedded.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/jcache/embedded",
       schemaPackageName = "org.infinispan.global.jcache.embedded",
       service = false,
       syntax = ProtoSyntax.PROTO3

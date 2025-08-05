@@ -78,7 +78,7 @@ public class PublisherManagerGetKeyStressTest extends GetAllCommandStressTest {
    @ProtoSchema(
          includeClasses = MapReducer.class,
          schemaFileName = "test.core.PublisherManagerGetKeyStressTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.PublisherManagerGetKeyStressTest",
          service = false,
          syntax = ProtoSyntax.PROTO3

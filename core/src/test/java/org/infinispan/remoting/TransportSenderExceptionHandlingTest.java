@@ -140,7 +140,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
                FailureType.class
          },
          schemaFileName = "test.core.TransportSenderExceptionHandlingTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.TransportSenderExceptionHandlingTest",
          service = false
    )

@@ -8,10 +8,10 @@
         "pattern": "proto/json\\.proto"
       },
       {
-        "pattern": "proto/generated/query.proto"
+        "pattern": "org/infinispan/query/client/query\\.proto"
       },
       {
-        "pattern": "proto/generated/test\\.protostream\\.sampledomain\\.proto"
+        "pattern": "org/infinispan/test/test\\.protostream\\.sampledomain\\.proto"
       },
       {
         "pattern": "image\\.proto"

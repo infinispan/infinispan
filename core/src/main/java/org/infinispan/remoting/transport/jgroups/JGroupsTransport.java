@@ -161,7 +161,7 @@ public class JGroupsTransport implements Transport {
    public static final short REPLY_FLAGS =
          (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() |
                Message.Flag.NO_TOTAL_ORDER.value());
-   protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "default-configs/default-jgroups-udp.xml";
+   protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "org/infinispan/configuration/default-jgroups-udp.xml";
    public static final Log log = LogFactory.getLog(JGroupsTransport.class);
    private static final CompletableFuture<Map<Address, Response>> EMPTY_RESPONSES_FUTURE =
          CompletableFuture.completedFuture(Collections.emptyMap());
