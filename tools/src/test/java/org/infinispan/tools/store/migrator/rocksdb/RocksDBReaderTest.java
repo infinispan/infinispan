@@ -5,8 +5,16 @@ import static org.infinispan.tools.store.migrator.Element.SOURCE;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
 import static org.infinispan.tools.store.migrator.TestUtil.propKey;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Properties;
 
+import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.tools.store.migrator.AbstractReaderTest;
@@ -50,5 +58,23 @@ public class RocksDBReaderTest extends AbstractReaderTest {
       super.configureStoreProperties(properties, type);
       properties.put(propKey(type, TYPE), StoreType.ROCKSDB.toString());
       properties.put(propKey(type, LOCATION), type == SOURCE ? getSourceDir() : getTargetDirectory());
+   }
+
+   @Override
+   protected void beforeMigration() {
+      FileLookup lookup = FileLookupFactory.newInstance();
+      URL url = lookup.lookupFileLocation(Paths.get(getSourceDir(), TEST_CACHE_NAME).toString(), Thread.currentThread().getContextClassLoader());
+      for (File f : new File(url.getPath()).listFiles()) {
+         String filename = f.getName();
+         if (filename.endsWith("_log")) {
+            try {
+               Files.copy(f.toPath(), new File(f.getParentFile(), filename.replace("_log", ".log")).toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+               // should never happen
+               throw new RuntimeException(e);
+            }
+         }
+
+      }
    }
 }
