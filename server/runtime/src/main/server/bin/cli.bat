@@ -7,9 +7,7 @@ set PROCESS_NAME=${infinispan.brand.short-name}-cli
 
 set "DIRNAME=%~dp0%"
 
-setlocal EnableDelayedExpansion
-call "!DIRNAME!common.bat" %*
-setlocal DisableDelayedExpansion
+call "%DIRNAME%common.bat" %*
 
 "%JAVA%" %JAVA_OPTS% ^
    -Dvisualvm.display.name=%PROCESS_NAME% ^
