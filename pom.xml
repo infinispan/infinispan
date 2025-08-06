@@ -1095,13 +1095,6 @@
             <type>test-jar</type>
          </dependency>
          <dependency>
-             <groupId>org.infinispan</groupId>
-             <artifactId>infinispan-server-tests</artifactId>
-             <version>${version.infinispan}</version>
-             <scope>test</scope>
-             <type>test-jar</type>
-         </dependency>
-         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring5-common</artifactId>
             <type>test-jar</type>
@@ -2090,6 +2083,7 @@
                <version>${version.maven.resources}</version>
                <configuration>
                   <encoding>UTF-8</encoding>
+                  <propertiesEncoding>UTF-8</propertiesEncoding>
                </configuration>
             </plugin>
             <plugin>

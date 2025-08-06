@@ -99,11 +99,14 @@ public class EngineConfigTest extends AbstractInfinispanTest {
 
    @Test
    public void testNoIndexLocationWithoutGlobalState() {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.globalState().enabled(true).persistentLocation(tempDir.getPath());
+
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable().addIndexedEntity(Person.class).enable();
 
-      Map<String, Object> properties = resolveIndexingProperties(new GlobalConfigurationBuilder(), builder);
-      assertEquals(System.getProperty("user.dir") + File.separator + "defaultcache", properties.get("hibernate.search.backend.directory.root"));
+      Map<String, Object> properties = resolveIndexingProperties(gcb, builder);
+      assertEquals(tempDir.getPath() + File.separator + "defaultcache", properties.get("hibernate.search.backend.directory.root"));
 
    }
 
