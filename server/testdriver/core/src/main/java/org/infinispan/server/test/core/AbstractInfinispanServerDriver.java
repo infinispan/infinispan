@@ -57,8 +57,8 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.Server;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.test.api.TestUser;
+import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Assume;
 import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
@@ -288,7 +288,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
       // Supplied artifacts
       if (configuration.archives() != null) {
-         for (JavaArchive artifact : configuration.archives()) {
+         for (Archive<?> artifact : configuration.archives()) {
             File jar = libDir.toPath().resolve(artifact.getName()).toFile();
             jar.setWritable(true, false);
             artifact.as(ZipExporter.class).exportTo(jar, true);

@@ -78,7 +78,7 @@ public final class MavenArtifact extends AbstractArtifact {
       return resolveArtifact("jar");
    }
 
-   Path resolveArtifact(String packaging) throws IOException {
+   public Path resolveArtifact(String packaging) throws IOException {
       String artifactRelativePath = relativeArtifactPath(File.separatorChar);
       String artifactRelativeHttpPath = relativeArtifactPath('/');
       final MavenSettings settings = MavenSettings.init();

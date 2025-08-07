@@ -9,12 +9,12 @@ import java.util.function.Predicate;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.server.test.core.InfinispanServerListener;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.jboss.shrinkwrap.api.Archive;
 
 public record RollingUpgradeConfiguration(int nodeCount, String fromVersion, String toVersion, String name,
                                           String jgroupsProtocol, int serverCheckTimeSecs, boolean useSharedDataMount,
                                           String serverConfigurationFile, boolean defaultServerConfigurationFile,
-                                          Properties properties, JavaArchive[] customArtifacts, String[] mavenArtifacts,
+                                          Properties properties, Archive<?>[] customArtifacts, String[] mavenArtifacts,
                                           List<InfinispanServerListener> listeners,
                                           BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler,
                                           Consumer<RollingUpgradeHandler> initialHandler,

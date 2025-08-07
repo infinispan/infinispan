@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestUser;
+import org.infinispan.server.test.artifacts.Artifacts;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
@@ -33,7 +34,7 @@ public class AuthorizationCertIT extends InfinispanSuite {
          InfinispanServerExtensionBuilder.config("configuration/AuthorizationCertTest.xml")
                .runMode(ServerRunMode.CONTAINER)
                .mavenArtifacts(ClusteredIT.mavenArtifacts())
-               .artifacts(ClusteredIT.artifacts())
+               .artifacts(Artifacts.artifacts())
                .build();
 
    static class HotRod extends HotRodAuthorizationTest {

@@ -10,6 +10,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestUser;
+import org.infinispan.server.test.artifacts.Artifacts;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -32,7 +33,7 @@ public class AuthorizationPropertiesIT extends InfinispanSuite {
          InfinispanServerExtensionBuilder.config("configuration/AuthorizationPropertiesTest.xml")
                .runMode(ServerRunMode.CONTAINER)
                .mavenArtifacts(ClusteredIT.mavenArtifacts())
-               .artifacts(ClusteredIT.artifacts())
+               .artifacts(Artifacts.artifacts())
                .numServers(2)
                .build();
 

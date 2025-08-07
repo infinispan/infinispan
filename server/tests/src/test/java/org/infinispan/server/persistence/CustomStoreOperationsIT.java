@@ -11,6 +11,7 @@ import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.tags.Persistence;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.jupiter.api.Test;
@@ -27,11 +28,11 @@ public class CustomStoreOperationsIT {
                .runMode(ServerRunMode.CONTAINER)
                .build();
 
-   private static JavaArchive[] artifacts() {
+   private static Archive<?>[] artifacts() {
       JavaArchive customStoreJar = ShrinkWrap.create(JavaArchive.class, "custom-store.jar");
       customStoreJar.addClass(CustomNonBlockingStore.class);
 
-      return new JavaArchive[] {customStoreJar};
+      return new Archive<?>[] {customStoreJar};
    }
 
    @Test
