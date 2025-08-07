@@ -36,7 +36,6 @@ GC removes indexes before they consume too much memory while still falling back 
 
 `SoftIndexFileStore` creates a B+ tree per configured cache segment.
 This provides an additional "index" as it only has so many elements and provides additional parallelism for index updates.
-Currently we allow for a parallel amount based on one sixteenth of the number of cache segments.
 
 Each entry in the B+ tree is a node.
 By default, the size of each node is limited to 4096 bytes.
@@ -54,7 +53,12 @@ Any number remaning from configured limit is allocated for open data files thems
 
 .Segmentation
 
-Soft-index file stores are always segmented. The append log(s) are not directly segmented and segmentation is handled directly by the index.
+Soft-index file stores by default are segmented. The append log(s) are not directly segmented and segmentation is handled directly by the index.
+It is possible to disable segmentation, which will effectively change the store to store a single index for all contents of the cache as if
+the number of cache segments was set to 1.
+
+Note that this store can be segmented even when not running in a clustered cache such as distributed. In that case the clustering segments
+configuration value is still used to configure how many segments are to be used.
 
 .Expiration
 

@@ -85,6 +85,12 @@ If you encounter this, you have a couple of straightforward solutions:
 
 We recommend monitoring your application's performance after the upgrade, especially if you are running on a system with a low CPU count.
 
+=== FileStore supports not being segmented
+
+When the file store changed to a new implementation in 13.0 it lost the ability to disable segmentation.
+This has been added back in.
+Note that disabling segmentation for the file store should only be done for smaller sized caches.
+
 === Removed legacy Hot Rod client
 
 The legacy Hot Rod client (`org.infinispan:infinispan-hotrod-client-legacy`) has been removed. If, for some reason,

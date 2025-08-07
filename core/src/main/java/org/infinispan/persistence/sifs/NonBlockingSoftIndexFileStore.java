@@ -160,6 +160,16 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    private KeyPartitioner keyPartitioner;
    private InitializationContext ctx;
    private ProgressTracker progressTracker;
+   // This is only initialized when segmentation is disabled to both signal such and also to be used for multi segment operations
+   private IntSet singleSegmentSet;
+
+   private int segmentUsed(int segment) {
+      return singleSegmentSet == null ? segment : 0;
+   }
+
+   private IntSet segmentsUsed(IntSet segments) {
+      return singleSegmentSet == null ? segments : singleSegmentSet;
+   }
 
    @Override
    public Set<Characteristic> characteristics() {
@@ -195,9 +205,18 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       maxKeyLength = configuration.maxNodeSize() - IndexNode.RESERVED_SPACE;
 
       Configuration cacheConfig = ctx.getCache().getCacheConfiguration();
-      int cacheSegments = cacheConfig.clustering().hash().numSegments();
+
+      int cacheSegments;
+      IntSet segments;
+      if (configuration.segmented()) {
+         cacheSegments = cacheConfig.clustering().hash().numSegments();
+         segments = IntSets.immutableRangeSet(cacheConfig.clustering().hash().numSegments());
+      } else {
+         cacheSegments = 1;
+         segments = singleSegmentSet = IntSets.immutableSet(0);
+      }
       temporaryTable = new TemporaryTable(cacheSegments);
-      temporaryTable.addSegments(IntSets.immutableRangeSet(cacheConfig.clustering().hash().numSegments()));
+      temporaryTable.addSegments(segments);
 
       int maxOpenFiles = configuration.openFilesLimit();
       // Use index files between 1 and cacheSegments
@@ -229,7 +248,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       logAppender = new LogAppender(ctx.getNonBlockingManager(), index, temporaryTable, compactor, fileProvider,
             configuration.syncWrites(), configuration.maxFileSize());
       logAppender.start(blockingManager.asExecutor("sifs-log-processor"));
-      startIndex();
+      startIndex(segments);
       final AtomicLong maxSeqId = new AtomicLong(0);
       TimeService ts = ComponentRegistry.componentOf(ctx.getCache(), TimeService.class);
       ScheduledExecutorService timeoutExecutor = ComponentRegistry.componentOf(ctx.getCache(), ScheduledExecutorService.class, TIMEOUT_SCHEDULE_EXECUTOR);
@@ -492,9 +511,9 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       }
    }
 
-   protected void startIndex() {
+   protected void startIndex(IntSet segments) {
       // this call is extracted for better testability
-      index.start();
+      index.start(segments);
    }
 
    @Override
@@ -556,7 +575,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                      // By running approximateSize in an ensureRunOnLast call with a paused logAppender means the size
                      // will be exact as we have no pending updates
                      index.ensureRunOnLast(() -> {
-                        long size = index.approximateSize(segments);
+                        long size = index.approximateSize(segmentsUsed(segments));
                         logAppender.resume()
                                     .whenComplete((___, t) -> {
                                        if (t != null) {
@@ -574,7 +593,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    @Override
    public CompletionStage<Long> approximateSize(IntSet segments) {
       // Approximation doesn't pause the appender so the index can be slightly out of sync
-      return CompletableFuture.completedFuture(index.approximateSize(segments));
+      return CompletableFuture.completedFuture(index.approximateSize(segmentsUsed(segments)));
    }
 
    @Override
@@ -583,9 +602,10 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       if (keyLength > maxKeyLength) {
          return CompletableFuture.failedFuture(log.keyIsTooLong(entry.getKey(), keyLength, configuration.maxNodeSize(), maxKeyLength));
       }
+      int segmentUsed = segmentUsed(segment);
       try {
-         log.tracef("Writing entry for key %s for segment %d", entry.getKey(), segment);
-         return logAppender.storeRequest(segment, entry);
+         log.tracef("Writing entry for key %s for segment %d", entry.getKey(), segmentUsed);
+         return logAppender.storeRequest(segmentUsed, entry);
       } catch (Exception e) {
          return CompletableFuture.failedFuture(new PersistenceException(e));
       }
@@ -603,10 +623,11 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    @Override
    public CompletionStage<Boolean> containsKey(int segment, Object key) {
+      int segmentUsed = segmentUsed(segment);
       try {
          for (;;) {
             // TODO: consider storing expiration timestamp in temporary table
-            EntryPosition entry = temporaryTable.get(segment, key);
+            EntryPosition entry = temporaryTable.get(segmentUsed, key);
             if (entry != null) {
                if (entry.offset < 0) {
                   return CompletableFutures.completedFalse();
@@ -630,7 +651,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                   }, "soft-index-containsKey");
                }
             } else {
-               EntryPosition position = index.getPosition(key, segment, marshaller.objectToBuffer(key));
+               EntryPosition position = index.getPosition(key, segmentUsed, marshaller.objectToBuffer(key));
                return CompletableFutures.booleanStage(position != null);
             }
          }
@@ -641,11 +662,12 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    @Override
    public CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
+      int segmentUsed = segmentUsed(segment);
       return blockingManager.supplyBlocking(() -> {
-         log.tracef("Loading key %s for segment %d", key, segment);
+         log.tracef("Loading key %s for segment %d", key, segmentUsed);
          try {
             for (;;) {
-               EntryPosition entry = temporaryTable.get(segment, key);
+               EntryPosition entry = temporaryTable.get(segmentUsed, key);
                if (entry != null) {
                   if (entry.offset < 0) {
                      log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone", key, entry.file, entry.offset);
@@ -656,7 +678,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                      return marshallableEntry;
                   }
                } else {
-                  EntryRecord record = index.getRecord(key, segment, marshaller.objectToBuffer(key));
+                  EntryRecord record = index.getRecord(key, segmentUsed, marshaller.objectToBuffer(key));
                   if (record == null) {
                      log.tracef("Entry for key=%s not found in index, returning null", key);
                      return null;
@@ -808,9 +830,10 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    @Override
    public Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean includeValues) {
+      IntSet segmentsUsed = segmentsUsed(segments);
       return blockingManager.blockingPublisher(Flowable.defer(() -> {
          Set<Object> seenKeys = new HashSet<>();
-         Flowable<Map.Entry<Object, EntryPosition>> tableFlowable = temporaryTable.publish(segments)
+         Flowable<Map.Entry<Object, EntryPosition>> tableFlowable = temporaryTable.publish(segmentsUsed)
                .doOnNext(entry -> seenKeys.add(entry.getKey()));
          if (filter != null) {
             tableFlowable = tableFlowable.filter(entry -> filter.test((K) entry.getKey()));
@@ -827,7 +850,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             }
             return Maybe.just(marshallableEntry);
          });
-         Flowable<MarshallableEntry<K, V>> indexFlowable = index.publish(segments, includeValues)
+         Flowable<MarshallableEntry<K, V>> indexFlowable = index.publish(segmentsUsed, includeValues)
                .mapOptional(er -> {
                   if (er.getHeader().valueLength() == 0) {
                      return Optional.empty();

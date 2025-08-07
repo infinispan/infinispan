@@ -1,12 +1,10 @@
 package org.infinispan.persistence.sifs.configuration;
 
-import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
 import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.COMPACTION_THRESHOLD;
 import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.OPEN_FILES_LIMIT;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
@@ -160,10 +158,6 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
 
    @Override
    public void validate() {
-      Attribute<Boolean> segmentedAttribute = attributes.attribute(SEGMENTED);
-      if (segmentedAttribute.isModified() && !segmentedAttribute.get()) {
-         throw org.infinispan.util.logging.Log.CONFIG.storeRequiresBeingSegmented(NonBlockingSoftIndexFileStore.class.getSimpleName());
-      }
       super.validate();
       index.validate();
       double compactionThreshold = attributes.attribute(COMPACTION_THRESHOLD).get();
