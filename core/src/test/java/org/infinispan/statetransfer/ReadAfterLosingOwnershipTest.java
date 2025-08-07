@@ -200,7 +200,7 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
    @ProtoSchema(
          includeClasses = SingleKeyConsistentHashFactory.class,
          schemaFileName = "test.core.ReadAfterLostOwnershipTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.ReadAfterLostOwnershipTest",
          service = false,
          syntax = ProtoSyntax.PROTO3

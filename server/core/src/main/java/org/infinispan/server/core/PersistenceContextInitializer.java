@@ -17,7 +17,7 @@ import org.infinispan.server.core.backup.resources.CounterResource;
             CounterResource.CounterBackupEntry.class
       },
       schemaFileName = "persistence.server.core.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/server/core",
       schemaPackageName = "org.infinispan.persistence.server.core",
       service = false
 )

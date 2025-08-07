@@ -20,7 +20,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             Server.ShutdownRunnable.class,
       },
       schemaFileName = "global.server.runtime.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/server",
       schemaPackageName = "org.infinispan.global.server.runtime",
       service = false,
       syntax = ProtoSyntax.PROTO3

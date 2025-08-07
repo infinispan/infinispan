@@ -656,7 +656,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
                FunctionalMapTest.VersionBasedConditionalReplace.class
          },
          schemaFileName = "test.core.functional.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.functional",
          service = false,
          syntax = ProtoSyntax.PROTO3

@@ -50,7 +50,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
    @ProtoSchema(
          includeClasses = AnalyzerTestEntity.class,
          schemaFileName = "test.client.RemoteQueryStringTest",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          schemaPackageName = "sample_bank_account",
          service = false
    )

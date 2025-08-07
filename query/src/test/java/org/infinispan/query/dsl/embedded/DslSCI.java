@@ -25,7 +25,7 @@ import org.infinispan.query.test.QueryTestSCI;
             UserHS.class
       },
       schemaFileName = "test.query.dsl.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/query",
       schemaPackageName = "org.infinispan.test.query.dsl",
       service = false
 )

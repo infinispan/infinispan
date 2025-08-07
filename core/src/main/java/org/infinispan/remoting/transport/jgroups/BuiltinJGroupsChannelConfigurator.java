@@ -17,31 +17,31 @@ public class BuiltinJGroupsChannelConfigurator extends FileJGroupsChannelConfigu
    public static final String TCP_STACK_NAME = "tcp";
 
    public static BuiltinJGroupsChannelConfigurator TCP(Properties properties) {
-      return loadBuiltIn(TCP_STACK_NAME, "default-configs/default-jgroups-tcp.xml", properties);
+      return loadBuiltIn(TCP_STACK_NAME, "org/infinispan/configuration/default-jgroups-tcp.xml", properties);
    }
 
    public static BuiltinJGroupsChannelConfigurator UDP(Properties properties) {
-      return loadBuiltIn("udp", "default-configs/default-jgroups-udp.xml", properties);
+      return loadBuiltIn("udp", "org/infinispan/configuration/default-jgroups-udp.xml", properties);
    }
 
    public static BuiltinJGroupsChannelConfigurator KUBERNETES(Properties properties) {
-      return loadBuiltIn("kubernetes", "default-configs/default-jgroups-kubernetes.xml", properties);
+      return loadBuiltIn("kubernetes", "org/infinispan/configuration/default-jgroups-kubernetes.xml", properties);
    }
 
    public static BuiltinJGroupsChannelConfigurator EC2(Properties properties) {
-      return loadBuiltIn("ec2", "default-configs/default-jgroups-ec2.xml", properties);
+      return loadBuiltIn("ec2", "org/infinispan/configuration/default-jgroups-ec2.xml", properties);
    }
 
    public static BuiltinJGroupsChannelConfigurator GOOGLE(Properties properties) {
-      return loadBuiltIn("google", "default-configs/default-jgroups-google.xml", properties);
+      return loadBuiltIn("google", "org/infinispan/configuration/default-jgroups-google.xml", properties);
    }
 
    public static BuiltinJGroupsChannelConfigurator AZURE(Properties properties) {
-      return loadBuiltIn("azure", "default-configs/default-jgroups-azure.xml", properties);
+      return loadBuiltIn("azure", "org/infinispan/configuration/default-jgroups-azure.xml", properties);
    }
 
    public static BuiltinJGroupsChannelConfigurator TUNNEL(Properties properties) {
-      return loadBuiltIn("tunnel", "default-configs/default-jgroups-tunnel.xml", properties);
+      return loadBuiltIn("tunnel", "org/infinispan/configuration/default-jgroups-tunnel.xml", properties);
    }
 
    private static BuiltinJGroupsChannelConfigurator loadBuiltIn(String name, String path, Properties properties) {

@@ -71,7 +71,7 @@ public class MarshallerPerCacheTest extends SingleHotRodServerTest {
    @ProtoSchema(
          includeClasses = CustomValue.class,
          schemaFileName = "custom-value.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          schemaPackageName = "org.infinispan.test.client.MarshallerPerCacheTest",
          service = false
    )

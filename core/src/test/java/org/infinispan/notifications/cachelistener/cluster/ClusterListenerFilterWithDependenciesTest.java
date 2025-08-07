@@ -91,7 +91,7 @@ public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheMana
                NoOpCacheEventFilterConverterWithDependencies.class
          },
          schemaFileName = "test.core.ClusterListenerFilterWithDependenciesTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.ClusterListenerFilterWithDependenciesTest",
          service = false
    )

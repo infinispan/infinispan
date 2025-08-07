@@ -34,7 +34,7 @@ public class ServiceLoadSerializationContextInitializerTest extends AbstractInfi
    @ProtoSchema(
          includeClasses = ServiceLoadedClass.class,
          schemaFileName = "test.core.protostream-service-loaded-class.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.marshall"
    )
    interface ServiceLoadedSci extends SerializationContextInitializer {

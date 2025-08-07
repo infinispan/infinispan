@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             InvokeProcessorTest.TestExceptionThrowingEntryProcessor.class,
       },
       schemaFileName = "test.jcache.embedded.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/jcache",
       schemaPackageName = "org.infinispan.test.jcache.embedded",
       service = false
 )

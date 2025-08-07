@@ -12,7 +12,7 @@ import org.infinispan.test.data.Person;
             SuperPerson.class
       },
       schemaFileName = "test.multimap.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/multimap",
       schemaPackageName = "org.infinispan.test.multimap",
       service = false
 )

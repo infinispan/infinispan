@@ -32,7 +32,7 @@ import org.infinispan.xsite.irac.IracCustomConflictTest;
             ExpirationFunctionalTest.NoEquals.class,
       },
       schemaFileName = "test.core.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan",
       schemaPackageName = "org.infinispan.test.core",
       service = false
 )

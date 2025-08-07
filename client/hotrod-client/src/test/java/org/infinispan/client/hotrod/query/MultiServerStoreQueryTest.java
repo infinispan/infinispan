@@ -164,7 +164,7 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    @ProtoSchema(
          includeClasses = {News.class, NewsKey.class},
          schemaFileName = "test.client.MultiServerStoreQueryTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          service = false
    )
    public interface MultiServerStoreQueryTestSCI extends GeneratedSchema {

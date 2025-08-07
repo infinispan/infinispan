@@ -34,7 +34,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.query.impl.protostream.adapters.LuceneTotalHitsRelationAdapter.class,
       },
       schemaFileName = "global.query.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/query",
       schemaPackageName = "org.infinispan.global.query",
       service = false,
       syntax = ProtoSyntax.PROTO3

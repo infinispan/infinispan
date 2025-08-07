@@ -141,7 +141,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
    @ProtoSchema(
          includeClasses = {Entity.class},
          schemaFileName = "test.client.ReplicationIndexTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          service = false
    )
    public interface ReplicationIndexTestSCI extends GeneratedSchema {

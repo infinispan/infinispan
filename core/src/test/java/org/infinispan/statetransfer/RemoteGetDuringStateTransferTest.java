@@ -886,7 +886,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    @ProtoSchema(
          includeClasses = SingleKeyConsistentHashFactory.class,
          schemaFileName = "test.core.RemoteGetDuringStateTransferTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.RemoteGetDuringStateTransferTest",
          service = false
    )

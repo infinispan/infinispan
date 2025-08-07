@@ -16,7 +16,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       },
       includeClasses = DistributedScript.class,
       schemaFileName = "global.scripting.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/scripting",
       schemaPackageName = "org.infinispan.global.scripting",
       service = false,
       syntax = ProtoSyntax.PROTO3

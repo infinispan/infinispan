@@ -330,7 +330,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
    @ProtoSchema(
          includeClasses = {ComplexKey.class, ComplexValue.class},
          schemaFileName = "test.client.DataFormatTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          schemaPackageName = "org.infinispan.test.client.DataFormatTest",
          service = false
    )

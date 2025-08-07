@@ -219,7 +219,7 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
                Replicated.class
          },
          schemaFileName = "test.core.ControlledConsistentHashFactory.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.ControlledConsistentHashFactory",
          service = false
    )

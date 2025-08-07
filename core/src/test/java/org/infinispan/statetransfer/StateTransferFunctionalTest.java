@@ -435,7 +435,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
                DelayTransfer.class
          },
          schemaFileName = "test.core.StateTransferFunctionalTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.StateTransferFunctionalTest",
          service = false
    )

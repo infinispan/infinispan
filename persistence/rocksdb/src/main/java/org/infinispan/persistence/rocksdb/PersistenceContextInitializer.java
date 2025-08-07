@@ -17,7 +17,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             RocksDBStore.MetadataImpl.class
       },
       schemaFileName = "persistence.rocksdb.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/persistence/rocksdb",
       schemaPackageName = "org.infinispan.persistence.rocksdb",
       service = false
 )

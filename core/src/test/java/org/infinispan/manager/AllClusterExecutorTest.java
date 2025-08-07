@@ -482,7 +482,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
    @ProtoSchema(
          includeClasses = TestClassLocal.class,
          schemaFileName = "test.core.AllClusterExecutorTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan",
          schemaPackageName = "org.infinispan.test.core.AllClusterExecutorTest",
          service = false,
          syntax = ProtoSyntax.PROTO3

@@ -14,7 +14,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 @ProtoSchema(
       includeClasses = AbstractTableManager.MetadataImpl.class,
       schemaFileName = "persistence.jdbc.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/persistence/jdbc",
       schemaPackageName = "org.infinispan.persistence.jdbc",
       service = false
 )

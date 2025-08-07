@@ -67,7 +67,7 @@ public class EvictionProtobufTest extends MultiHotRodServersTest {
    @ProtoSchema(
          includeClasses = Book.class,
          schemaFileName = "test.EvictionProtobufTest.proto",
-         schemaFilePath = "proto/generated",
+         schemaFilePath = "org/infinispan/client/hotrod",
          schemaPackageName = "sample",
          service = false
    )

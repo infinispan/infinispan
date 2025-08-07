@@ -7,7 +7,7 @@ import org.infinispan.test.integration.data.Book;
 @ProtoSchema(
       includeClasses = Book.class,
       schemaFileName = "book.proto",
-      schemaFilePath = "proto/",
+      schemaFilePath = "org/infinispan/test",
       schemaPackageName = "book_sample"
 )
 public interface BookQuerySchema extends GeneratedSchema {

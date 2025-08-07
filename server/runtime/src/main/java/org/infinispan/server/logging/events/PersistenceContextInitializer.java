@@ -15,7 +15,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
       includeClasses = ServerEventImpl.class,
       schemaFileName = "persistence.event_logger.proto",
-      schemaFilePath = "proto/generated",
+      schemaFilePath = "org/infinispan/server",
       schemaPackageName = "org.infinispan.persistence.event_logger",
       service = false
 )

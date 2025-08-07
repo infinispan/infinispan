@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.util.Collection;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.protostream.GeneratedMarshallerBase;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.TagWriter;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.impl.GeneratedMarshallerBase;
 import org.infinispan.protostream.descriptors.WireType;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

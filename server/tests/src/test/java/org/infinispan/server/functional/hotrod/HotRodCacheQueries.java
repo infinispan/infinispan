@@ -52,7 +52,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  **/
 public class HotRodCacheQueries {
 
-   public static final String BANK_PROTO_FILE = "/proto/generated/test.protostream.sampledomain.proto";
+   public static final String BANK_PROTO_FILE = "/org/infinispan/test/test.protostream.sampledomain.proto";
    public static final String ENTITY_USER = "sample_bank_account.User";
 
    @InfinispanServer(ClusteredIT.class)
