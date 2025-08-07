@@ -664,12 +664,15 @@ class Index {
 
       for (PrimitiveIterator.OfInt iter = removedCacheSegments.iterator(); iter.hasNext(); ) {
          int i = iter.nextInt();
-         removedSegments.add(segments[i]);
-         segments[i] = emptySegment;
-         removedFlowables.add(flowableProcessors[i]);
-         flowableProcessors[i] = emptyFlowable;
+         // If the segment was not owned by us don't do anything with it
+         if (segments[i] != emptySegment) {
+            removedSegments.add(segments[i]);
+            segments[i] = emptySegment;
+            removedFlowables.add(flowableProcessors[i]);
+            flowableProcessors[i] = emptyFlowable;
 
-         sizePerSegment.set(i, 0);
+            sizePerSegment.set(i, 0);
+         }
       }
       // Technically this is an issue with sequential removeSegments being called and then shutdown, but
       // we don't support data consistency with non-shared stores in a cluster (this method is only called in a cluster).
@@ -682,11 +685,12 @@ class Index {
             // removed the segments until the segment file is deleted
             AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
             // Then we need to delete the segment
-            for (int cacheSegment = 0; cacheSegment < addedCount; cacheSegment++) {
+            for (int offset = 0; offset < removedSegments.size(); ++offset) {
+
                // We signal to complete the flowables, once complete the index is updated as we need to
                // update the compactor
-               removedFlowables.get(cacheSegment).onComplete();
-               Segment segment = removedSegments.get(cacheSegment);
+               removedFlowables.get(offset).onComplete();
+               Segment segment = removedSegments.get(offset);
                stage.dependsOn(
                      segment.thenCompose(___ ->
                                  // Now we free all entries in the index, this will include expired and removed entries

@@ -1,7 +1,10 @@
 package org.infinispan.persistence.support;
 
 import java.util.List;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -10,7 +13,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.test.TestingUtil;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -88,7 +91,13 @@ public interface WaitNonBlockingStore<K, V> extends NonBlockingStore<K, V> {
    }
 
    // This method is here solely for byte code augmentation with blockhound
-   default <V> V join(CompletionStage<V> stage) {
-      return CompletionStages.join(stage);
+   default <I> I join(CompletionStage<I> stage) {
+      try {
+         return TestingUtil.join(stage);
+      } catch (ExecutionException e) {
+         throw new CompletionException(e.getCause());
+      } catch (InterruptedException | TimeoutException e) {
+         throw new CompletionException(e);
+      }
    }
 }

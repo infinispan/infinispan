@@ -12,7 +12,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -53,6 +55,7 @@ import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.PersistenceMockUtil;
+import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -672,6 +675,31 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
    public void testIsAvailable() {
       assertTrue(store.checkAvailable());
+   }
+
+   public void testRemoveNonOwnedSegments() throws ExecutionException, InterruptedException, TimeoutException {
+      // Only makes sense if the store is segmented and not shared (note shared always has all segments available)
+      if (!characteristics.contains(NonBlockingStore.Characteristic.SEGMENTABLE) ||
+            !configuration.persistence().usingSegmentedStore() || configuration.persistence().stores().get(0).shared()) {
+         return;
+      }
+
+      if (segmentCount <= 1) {
+         throw new SkipException("Test can only be ran if we have at least 2 segments!");
+      }
+
+      InternalCacheEntry<Object, Object> ice = internalCacheEntry("k1", "v1", -1);
+      assertExpired(ice, false);
+      // Force it to segment 0 so after we remove higher segments the entry is still present
+      TestingUtil.join(store.write(0, marshalledEntry(ice)));
+
+      assertEquals(1, store.sizeWait(segments));
+
+      // Remove all but 0 segment - but do it twice as ST can do sometimes
+      TestingUtil.join(store.removeSegments(IntSets.immutableOffsetIntSet(1, segmentCount)));
+      TestingUtil.join(store.removeSegments(IntSets.immutableOffsetIntSet(1, segmentCount)));
+
+      assertEquals(1, store.sizeWait(segments));
    }
 
    protected final InitializationContext createContext(Configuration configuration) {
