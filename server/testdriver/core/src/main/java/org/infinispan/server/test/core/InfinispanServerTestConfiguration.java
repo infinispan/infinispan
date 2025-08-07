@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.jboss.shrinkwrap.api.Archive;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -31,7 +31,7 @@ public class InfinispanServerTestConfiguration {
    private final ServerRunMode runMode;
    private final Properties properties;
    private final String[] mavenArtifacts;
-   private final JavaArchive[] archives;
+   private final Archive<?>[] archives;
    private final boolean jmx;
    private final boolean parallelStartup;
    private final List<InfinispanServerListener> listeners;
@@ -44,7 +44,7 @@ public class InfinispanServerTestConfiguration {
 
    public InfinispanServerTestConfiguration(String configurationFile, int numServers, int expectedServers,
                                             ServerRunMode runMode, Properties properties, String[] mavenArtifacts,
-                                            JavaArchive[] archives, boolean jmx, boolean parallelStartup,
+                                            Archive<?>[] archives, boolean jmx, boolean parallelStartup,
                                             boolean defaultFile, List<InfinispanServerListener> listeners, String clusterName, String site,
                                             int portOffset, String[] features, String[] dataFiles) {
       this.configurationFile = configurationFile;
@@ -85,7 +85,7 @@ public class InfinispanServerTestConfiguration {
       return properties;
    }
 
-   public JavaArchive[] archives() {
+   public Archive<?>[] archives() {
       return archives;
    }
 

@@ -1,10 +1,12 @@
 package org.infinispan.server.test.core.rollingupgrade;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +21,8 @@ import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.maven.MavenArtifact;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.Server;
@@ -29,8 +33,11 @@ import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerConfigBuilder;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
+import org.infinispan.server.test.core.Unzip;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
 import io.lettuce.core.RedisURI;
@@ -39,7 +46,9 @@ import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
 
 public class RollingUpgradeHandler {
-   public record ConfigAndDriver(InfinispanServerTestConfiguration infinispanServerTestConfiguration, ContainerInfinispanServerDriver containerInfinispanServerDriver) {}
+   public record ConfigAndDriver(InfinispanServerTestConfiguration infinispanServerTestConfiguration,
+                                 ContainerInfinispanServerDriver containerInfinispanServerDriver) {
+   }
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
@@ -62,8 +71,8 @@ public class RollingUpgradeHandler {
 
    private RemoteCacheManager remoteCacheManager;
    private RedisClusterClient respClient;
-   private MemcachedClient[] memcachedClients;
-   private RestClient[] restClients;
+   private final MemcachedClient[] memcachedClients;
+   private final RestClient[] restClients;
 
    private STATE currentState = STATE.NOT_STARTED;
 
@@ -196,6 +205,7 @@ public class RollingUpgradeHandler {
     * after it has a mixed cluster of 1 new and (n-1) old nodes. This allows for processing operations during this
     * period. When done you should complete the Future when it can proceed or set it's exception in whic case it will
     * clean up early.
+    *
     * @param configuration the configuration to use
     * @return a future to signal when it should complete the upgrade
     */
@@ -227,9 +237,27 @@ public class RollingUpgradeHandler {
 
       try {
          log.debugf("Starting %d nodes to version %s in cluster %s", handler.nodeCount, handler.versionFrom, handler.clusterName);
-         handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
-               configuration.jgroupsProtocol(), null,configuration.serverConfigurationFile(),
-               configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
+         Archive<?>[] artifacts;
+         // If possible, use the "fromVersion" artifacts
+         try {
+            MavenArtifact mavenArtifacts = new MavenArtifact("org.infinispan", "infinispan-server-tests", configuration.fromVersion(), "artifacts");
+            Path artifactsZip = mavenArtifacts.resolveArtifact("zip");
+            if (artifactsZip == null) {
+               artifacts = configuration.customArtifacts();
+               log.warnf("Could not download custom artifacts for version %s using %s. Failures may happen", configuration.fromVersion(), mavenArtifacts);
+            } else {
+               artifacts = Unzip.unzip(artifactsZip, Paths.get(CommonsTestingUtil.tmpDirectory(), configuration.fromVersion()))
+                     .stream().map(p -> ShrinkWrap.createFromZipFile(JavaArchive.class, p.toFile()))
+                     .toArray(i -> new Archive<?>[i]);
+               log.infof("Custom artifacts for version %s using %s", configuration.fromVersion(), mavenArtifacts);
+            }
+         } catch (IOException e) {
+            throw new UncheckedIOException(e);
+         }
+
+         handler.fromDriver = handler.startNode(VersionType.FROM, configuration.nodeCount(), configuration.nodeCount(),
+               configuration.jgroupsProtocol(), null, configuration.serverConfigurationFile(),
+               configuration.defaultServerConfigurationFile(), artifacts,
                configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
          handler.currentState = STATE.OLD_RUNNING;
 
@@ -268,7 +296,7 @@ public class RollingUpgradeHandler {
 
       log.debugf("Starting 1 node to version %s at cluster %s", versionTo, clusterName);
       if (toDriver == null) {
-         toDriver = startNode(true, 1, nodeCount,
+         toDriver = startNode(VersionType.TO, 1, nodeCount,
                configuration.jgroupsProtocol(), volumeId, configuration.serverConfigurationFile(),
                configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
                configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
@@ -384,10 +412,10 @@ public class RollingUpgradeHandler {
       return fromDriver.containerInfinispanServerDriver.createRemoteCacheManager(builder);
    }
 
-   private ConfigAndDriver startNode(boolean toOrFrom, int nodeCount, int expectedCount,
+   private ConfigAndDriver startNode(VersionType versionType, int nodeCount, int expectedCount,
                                      String protocol, String volumeId,
                                      String serverConfigurationFile, boolean defaultServerConfigurationFile,
-                                     JavaArchive[] artifacts, String[] mavenArtifacts, Properties properties,
+                                     Archive<?>[] artifacts, String[] mavenArtifacts, Properties properties,
                                      List<InfinispanServerListener> listeners) {
       ServerConfigBuilder builder = new ServerConfigBuilder(serverConfigurationFile, defaultServerConfigurationFile);
       // We ignore the test server directory system property as it would force both to and from version to be ignored
@@ -416,7 +444,7 @@ public class RollingUpgradeHandler {
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true");
       }
 
-      String versionToUse = toOrFrom ? configuration.toVersion() : configuration.fromVersion();
+      String versionToUse = versionType == VersionType.TO ? configuration.toVersion() : configuration.fromVersion();
       String name = (siteName != null ? siteName : "") + clusterName + "-" + versionToUse;
 
       if (versionToUse.startsWith("image://")) {
@@ -432,7 +460,7 @@ public class RollingUpgradeHandler {
          versionToUse = Path.of(versionToUse).getFileName().toString();
 
          String imageName;
-         if (toOrFrom) {
+         if (versionType == VersionType.TO) {
             assert toImageCreated == null;
             imageName = toImageCreated = versionToUse.toLowerCase() + "-to";
          } else {
@@ -460,5 +488,10 @@ public class RollingUpgradeHandler {
          driver.start(name);
       }
       return new ConfigAndDriver(config, driver);
+   }
+
+   enum VersionType {
+      FROM,
+      TO
    }
 }

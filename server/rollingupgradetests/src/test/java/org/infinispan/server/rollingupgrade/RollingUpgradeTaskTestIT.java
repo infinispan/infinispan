@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.server.functional.ClusteredIT;
+import org.infinispan.server.test.artifacts.Artifacts;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ public class RollingUpgradeTaskTestIT {
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradeTaskTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .useCustomServerConfiguration("configuration/ClusteredServerTest.xml")
-            .addArchives(ClusteredIT.artifacts())
+            .addArchives(Artifacts.artifacts())
             .addMavenArtifacts(ClusteredIT.mavenArtifacts())
             .nodeCount(3);
 
