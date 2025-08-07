@@ -395,6 +395,7 @@ jobs:
         shell: bash
         working-directory: test_dir/infinispan
         run: >
+          ./mvnw validate -pl ./ -P jacocoCopySources
           ./mvnw validate -pl ./ -P jacocoReport
 
       - name: Add coverage to PR
