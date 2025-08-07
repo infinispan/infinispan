@@ -1,5 +1,14 @@
 package org.infinispan.security.mappers;
 
+import java.security.Principal;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -16,16 +25,8 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.security.MutablePrincipalRoleMapper;
+import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.actions.SecurityActions;
-
-import java.security.Principal;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * ClusterRoleMapper. This class implements both a {@link MutablePrincipalRoleMapper} storing the mappings in a
@@ -54,6 +55,12 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper, Lifecycle 
 
    @Override
    public void stop() { }
+
+   public static void includeMapperDependency(PrincipalRoleMapper prm, String cacheName) {
+      if (CLUSTER_ROLE_MAPPER_CACHE.equals(cacheName) || !(prm instanceof ClusterRoleMapper crm)) return;
+
+      SecurityActions.addCacheDependency(crm.cacheManager, cacheName, ClusterRoleMapper.CLUSTER_ROLE_MAPPER_CACHE);
+   }
 
    @Override
    public Set<String> principalToRoles(Principal principal) {
