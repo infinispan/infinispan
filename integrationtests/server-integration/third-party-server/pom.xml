@@ -271,11 +271,6 @@
                     <version>${version.arquillian-tomcat-managed}</version>
                     <scope>test</scope>
                 </dependency>
-                <dependency>
-                    <groupId>org.jboss.weld.servlet</groupId>
-                    <artifactId>weld-servlet-shaded</artifactId>
-                    <version>${version.weld-servlet}</version>
-                </dependency>
             </dependencies>
             <build>
                 <plugins>
