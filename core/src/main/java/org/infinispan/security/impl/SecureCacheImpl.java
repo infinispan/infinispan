@@ -14,6 +14,8 @@ import java.util.function.Function;
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
+import jakarta.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CachePublisher;
@@ -26,6 +28,7 @@ import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalSecurityConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -42,11 +45,12 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.SecureCache;
+import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import jakarta.transaction.TransactionManager;
 
 /**
  * SecureCacheImpl.
@@ -155,6 +159,12 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    public void start() {
       authzManager.checkPermission(subject, AuthorizationPermission.LIFECYCLE);
       delegate.start();
+      String name = delegate.getName();
+
+      EmbeddedCacheManager ecm = delegate.getCacheManager();
+      GlobalSecurityConfiguration gsc = SecurityActions.getCacheManagerConfiguration(ecm).security();
+      PrincipalRoleMapper prm = gsc.authorization().principalRoleMapper();
+      ClusterRoleMapper.includeMapperDependency(prm, name);
    }
 
    @Override

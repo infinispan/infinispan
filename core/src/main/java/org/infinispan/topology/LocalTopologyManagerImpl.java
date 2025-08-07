@@ -65,10 +65,12 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -106,6 +108,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Inject PersistentUUIDManager persistentUUIDManager;
    @Inject EventLogManager eventLogManager;
    @Inject CacheManagerNotifier cacheManagerNotifier;
+   @Inject InternalCacheRegistry internalCacheRegistry;
 
    private TopologyManagementHelper helper;
    private ActionSequencer actionSequencer;
@@ -909,7 +912,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    private void stopCache(String cacheName) {
       EmbeddedCacheManager ecm = gcr.getCacheManager();
-      ecm.stopCache(cacheName);
+      log.debugf("Stopping cache due to shutdown: %s", cacheName);
+      SecurityActions.stopCache(ecm, cacheName);
    }
 
    private void deleteCHState(String cacheName) {
