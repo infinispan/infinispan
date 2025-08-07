@@ -524,8 +524,8 @@ class Index {
       return maxSeqId;
    }
 
-   public void start() {
-      addSegments(IntSets.immutableRangeSet(segments.length));
+   public void start(IntSet segments) {
+      addSegments(segments);
    }
 
    static boolean read(FileProvider.Handle handle, ByteBuffer buffer, long offset) throws IOException {

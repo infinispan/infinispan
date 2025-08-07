@@ -30,24 +30,28 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
    protected String tmpDirectory;
 
    protected int segmentCount;
+   protected boolean segmented;
 
-   public SoftIndexFileStoreFunctionalTest(int segmentCount) {
+   public SoftIndexFileStoreFunctionalTest(int segmentCount, boolean segmented) {
       this.segmentCount = segmentCount;
+      this.segmented = segmented;
    }
 
    @Factory
    public static Object[] factory() {
       return new Object[] {
-            new SoftIndexFileStoreFunctionalTest(1),
-            new SoftIndexFileStoreFunctionalTest(10),
-            new SoftIndexFileStoreFunctionalTest(256),
-            new SoftIndexFileStoreFunctionalTest(2048),
+            new SoftIndexFileStoreFunctionalTest(1, true),
+            // This should be effectively the same as 1 segment with segmented
+            new SoftIndexFileStoreFunctionalTest(256, false),
+            new SoftIndexFileStoreFunctionalTest(10, true),
+            new SoftIndexFileStoreFunctionalTest(256, true),
+            new SoftIndexFileStoreFunctionalTest(2048, true),
       };
    }
 
    @Override
    protected String parameters() {
-      return "[" + segmentCount + "]";
+      return "[" + segmentCount + ", " + segmented + "]";
    }
 
    @BeforeClass(alwaysRun = true)
@@ -72,6 +76,7 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
          String cacheName, boolean preload) {
       persistence
             .addSoftIndexFileStore()
+            .segmented(segmented)
             .dataLocation(Paths.get(tmpDirectory, "data").toString())
             .indexLocation(Paths.get(tmpDirectory, "index").toString())
             .purgeOnStartup(false).preload(preload)
