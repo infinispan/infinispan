@@ -2,7 +2,6 @@ package org.infinispan.server.functional.hotrod;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -311,8 +310,7 @@ public class HotRodCacheQueries {
       cache.clustering().cacheMode(CacheMode.DIST_SYNC).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
 
       RemoteCache<String, Entities.Person> peopleCache = SERVERS.hotrod().withClientConfiguration(builder).withServerConfiguration(cache).create();
-      RemoteCache<String, String> metadataCache = peopleCache.getRemoteCacheContainer().getCache(PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put(Entities.INSTANCE.getProtoFileName(), Entities.INSTANCE.getProtoFile());
+      peopleCache.getRemoteCacheContainer().administration().schemas().create(Entities.INSTANCE);
 
       Map<String, Entities.Person> people = new HashMap<>();
       people.put("1", new Entities.Person("Oihana", "Rossignol", 2016, "Paris"));

@@ -2,6 +2,7 @@ package org.infinispan.rest.search.reindex;
 
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
@@ -26,7 +26,6 @@ import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.model.Game;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -48,9 +47,8 @@ public class RestReindexRemoveAndStatisticsTest extends SingleCacheManagerTest {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
 
       // Register proto schema
-      Cache<String, String> metadataCache = cacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.putIfAbsent(Game.GameSchema.INSTANCE.getProtoFileName(), Game.GameSchema.INSTANCE.getProtoFile());
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertTrue(cacheManager.administration().schemas().create(Game.GameSchema.INSTANCE).isCreated());
+      assertFalse(cacheManager.administration().schemas().retrieveError(Game.GameSchema.INSTANCE.getName()).isPresent());
 
       ConfigurationBuilder config = new ConfigurationBuilder();
       config

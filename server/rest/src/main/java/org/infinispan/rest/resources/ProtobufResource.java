@@ -17,9 +17,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.admin.SchemasAdministration;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.query.remote.ProtobufMetadataManager;
@@ -76,15 +78,15 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
 
    private CompletionStage<RestResponse> getSchemasNames(RestRequest request) {
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
-            .getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);
+            .getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, request);
       boolean pretty = isPretty(request);
 
       return CompletableFuture.supplyAsync(() ->
                   Flowable.fromIterable(cache.keySet())
-                        .filter(key -> !((String) key).endsWith(ProtobufMetadataManager.ERRORS_KEY_SUFFIX))
+                        .filter(key -> !((String) key).endsWith(SchemasAdministration.SchemaErrors.ERRORS_KEY_SUFFIX))
                         .map(key -> {
                            String error = (String) cache
-                                 .get(key + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
+                                 .get(key + SchemasAdministration.SchemaErrors.ERRORS_KEY_SUFFIX);
                            ProtoSchema protoSchema = new ProtoSchema();
                            protoSchema.name = (String) key;
                            if (error != null) {
