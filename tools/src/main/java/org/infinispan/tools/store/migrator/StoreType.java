@@ -10,6 +10,5 @@ public enum StoreType {
    JDBC_STRING,
    LEVELDB,
    ROCKSDB,
-   SINGLE_FILE_STORE,
    SOFT_INDEX_FILE_STORE
 }

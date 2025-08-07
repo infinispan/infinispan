@@ -43,7 +43,7 @@ public class SoftIndexFileStoreLockingTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       EmbeddedCacheManager ecm = TestCacheManagerFactory.newDefaultCacheManager(true, global, new ConfigurationBuilder());
       TestingUtil.defineConfiguration(ecm, CACHE_NAME, createCacheConfiguration().build());
       return ecm;
