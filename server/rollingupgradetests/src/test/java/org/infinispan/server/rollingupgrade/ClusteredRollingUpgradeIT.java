@@ -26,6 +26,7 @@ import org.infinispan.server.functional.resp.RespSetTest;
 import org.infinispan.server.functional.resp.RespSortedSetTest;
 import org.infinispan.server.functional.resp.RespStringTest;
 import org.infinispan.server.functional.resp.RespTransactionTest;
+import org.infinispan.server.functional.rest.RestContainerListenerTest;
 import org.infinispan.server.functional.rest.RestLoggingResource;
 import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.functional.rest.RestProtobufResourceTest;
@@ -73,6 +74,7 @@ import org.junit.platform.suite.api.Suite;
       RespSortedSetTest.class,
       RespStringTest.class,
       RespTransactionTest.class,
+      RestContainerListenerTest.class,
       RestProtobufResourceTest.class,
 })
 public class ClusteredRollingUpgradeIT extends InfinispanSuite {
