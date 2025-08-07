@@ -1014,6 +1014,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
             throw t;
          }
       }
+      componentRegistry.blameInitialization();
       log.debugf("Started cache %s on %s", getName(), managerIdentifier());
    }
 
