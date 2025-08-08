@@ -31,6 +31,7 @@ import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.functional.rest.RestProtobufResourceTest;
 import org.infinispan.server.functional.rest.RestRouter;
 import org.infinispan.server.functional.rest.RestServerResource;
+import org.infinispan.server.test.artifacts.Artifacts;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.junit5.InfinispanSuite;
 import org.infinispan.server.test.junit5.RollingUpgradeHandlerExtension;
@@ -84,7 +85,7 @@ public class ClusteredRollingUpgradeIT extends InfinispanSuite {
             .nodeCount(2)
             .useCustomServerConfiguration("configuration/ClusteredServerTest.xml")
             .addMavenArtifacts(ClusteredIT.mavenArtifacts())
-            .addArchives(ClusteredIT.artifacts())
+            .addArchives(Artifacts.artifacts())
             .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
       SERVERS = new RollingUpgradeHandlerExtension(builder);
    }

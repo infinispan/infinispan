@@ -16,7 +16,7 @@ import org.infinispan.server.test.core.TestServer;
 import org.infinispan.server.test.core.rollingupgrade.CombinedInfinispanServerDriver;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.jboss.shrinkwrap.api.Archive;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -53,7 +53,7 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
       if (artifacts != null) {
          builder.addMavenArtifacts(artifacts);
       }
-      JavaArchive[] javaArchives = configuration.archives();
+      Archive<?>[] javaArchives = configuration.archives();
       if (javaArchives != null) {
          builder.addArchives(javaArchives);
       }

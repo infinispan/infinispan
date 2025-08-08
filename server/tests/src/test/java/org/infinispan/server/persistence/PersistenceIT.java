@@ -21,6 +21,7 @@ import org.infinispan.server.test.core.persistence.DatabaseServerListener;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.infinispan.server.test.junit5.InfinispanSuite;
+import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -84,7 +85,7 @@ public class PersistenceIT extends InfinispanSuite {
    }
 
    //Some jdbc drivers are not available through maven (like sybase), in this case we can pass the jdbc driver location
-   public static JavaArchive[] getJavaArchive() {
+   public static Archive<?>[] getJavaArchive() {
       List<JavaArchive> externalJdbcDriver = new ArrayList<>();
 
       if(EXTERNAL_JDBC_DRIVER != null) {
