@@ -1,0 +1,62 @@
+name: Cross-compatibility with new Infinispan Server
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Runs every night at 2:00 AM UTC
+  workflow_dispatch:
+  push:
+
+jobs:
+  nightly-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 14.0.x branch
+        uses: actions/checkout@v4
+        with:
+          ref: 14.0.x
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download and unzip Infinispan Server 15.2.5.Final
+        run: |
+          wget https://github.com/infinispan/infinispan/releases/download/15.2.5.Final/infinispan-server-15.2.5.Final.zip
+          unzip infinispan-server-15.2.5.Final.zip
+
+      - name: Maven Install (skip tests)
+        run: ./mvnw -s maven-settings.xml install -DskipTests -B
+
+      - name: Replace configuration folder from 15.2.x
+        run: |
+          rm -rf server/tests/src/test/resources/configuration
+          git fetch origin 15.2.x
+          git checkout origin/15.2.x -- server/tests/src/test/resources/configuration
+          git checkout origin/15.2.x -- server/tests/src/test/resources/jgroups_metrics.txt
+
+      - name: Maven Verify (server/tests)
+        run: |
+            ./mvnw -s maven-settings.xml clean verify \
+            --B --fae \
+            -pl server/tests -DdefaultExcludedJUnitGroups=embedded,cli \
+            -Dorg.infinispan.test.server.dir=${{ github.workspace }}/infinispan-server-15.2.5.Final/ \
+            -Dorg.infinispan.test.server.container.newerThan14=true \
+            -Dorg.infinispan.test.database.jdbc.drivers=com.oracle.database.jdbc:ojdbc11:23.5.0.24.07,\
+            com.ibm.db2:jcc:12.1.2.0,com.microsoft.sqlserver:mssql-jdbc:12.10.1.jre11
+        # Get GitHub App token to use in API calls
+      - uses: actions/create-github-app-token@v2
+        if: success() || failure()
+        id: app-token
+        with:
+          # required
+          app-id: ${{ secrets.GH_APP_ISPN_ID }}
+          private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: scacap/action-surefire-report@v1
+        with:
+            report_paths: '**/target/*-reports/TEST-*.xml'
+            github_token: ${{ steps.app-token.outputs.token }}
+            check_name: 'Cross-compatibility Test Report'

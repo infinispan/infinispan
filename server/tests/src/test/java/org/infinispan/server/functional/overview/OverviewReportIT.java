@@ -15,9 +15,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+@Tag("embedded")
 public class OverviewReportIT {
 
    public static final String CACHE_NAME = "blablabla";
@@ -29,6 +31,7 @@ public class OverviewReportIT {
                .build();
 
    @Test
+   @Tag("embedded")
    public void testExample() {
       // use HotRod
       RemoteCacheManager cacheManager = SERVERS.hotrod().createRemoteCacheManager();

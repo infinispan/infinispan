@@ -9,12 +9,14 @@ import org.infinispan.server.test.core.KeyCloakServerExtension;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
+@Tag("embedded")
 public class AuthenticationKeyCloakIT extends AbstractAuthenticationKeyCloak {
 
    @RegisterExtension

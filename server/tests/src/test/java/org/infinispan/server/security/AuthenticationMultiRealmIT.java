@@ -12,6 +12,7 @@ import org.infinispan.server.test.core.LdapServerListener;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  **/
 
 @Category(Security.class)
+@Tag("embedded")
 public class AuthenticationMultiRealmIT {
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
