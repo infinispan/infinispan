@@ -35,6 +35,7 @@ import org.infinispan.server.functional.hotrod.HotRodMultiMapOperations;
 import org.infinispan.server.functional.hotrod.HotRodTransactionalCacheOperations;
 import org.infinispan.server.functional.hotrod.IgnoreCaches;
 import org.infinispan.server.functional.memcached.MemcachedOperations;
+import org.infinispan.server.functional.openapi.OpenAPIOperations;
 import org.infinispan.server.functional.resp.RespDistributedTest;
 import org.infinispan.server.functional.resp.RespHashTest;
 import org.infinispan.server.functional.resp.RespListTest;
@@ -85,6 +86,7 @@ import org.junit.platform.suite.api.Suite;
       RestLoggingResource.class,
       ScriptingTasks.class,
       ServerTasks.class,
+      OpenAPIOperations.class,
       PojoMarshalling.class,
       HotRodClientMetrics.class,
       RespDistributedTest.class,
