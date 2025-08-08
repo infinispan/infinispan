@@ -122,9 +122,6 @@
       <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
       <org.infinispan.tests.threads.virtual>true</org.infinispan.tests.threads.virtual>
       <dir.ispn>../</dir.ispn>
-      <dir.jacoco>${maven.multiModuleProjectDirectory}/jacoco/</dir.jacoco>
-      <dir.jacoco.merged>${dir.jacoco}/merged/</dir.jacoco.merged>
-      <dir.jacoco.report>${dir.jacoco}/report/</dir.jacoco.report>
       <rerunFailingTestsCount>0</rerunFailingTestsCount>
       <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Dio.netty.leakDetection.level=paranoid -XX:+UseCodeCacheFlushing</testjvm.commonArgs>
       <!--
@@ -2781,7 +2778,6 @@
       </profile>
       <profile>
          <id>coverage</id>
-
          <build>
             <plugins>
                <plugin>
@@ -2801,28 +2797,6 @@
                   </configuration>
                </plugin>
 
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>properties-maven-plugin</artifactId>
-                  <version>1.2.1</version>
-                  <executions>
-                     <!-- Copy the ant tasks jar. Needed for ts.jacoco.report-ant . -->
-                     <execution>
-                        <goals>
-                           <goal>set-system-properties</goal>
-                        </goals>
-                        <configuration>
-                           <properties>
-                              <property>
-                                 <name>jacoco.reportPath</name>
-                                 <value>${session.executionRootDirectory}/jacoco</value>
-                              </property>
-                           </properties>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-
                <!-- Starting jacoco agent for recording code coverage. -->
                <plugin>
                   <groupId>org.jacoco</groupId>
@@ -2838,7 +2812,14 @@
                   </executions>
                   <configuration>
                      <propertyName>jacoco.agent.argLine</propertyName>
-                     <destFile>${dir.jacoco}/${project.artifactId}.exec</destFile>
+                     <excludes>
+                        <exclude>**/logging/**</exclude>
+                        <exclude>org/infinispan/cli/benchmark/jmh_generated/**</exclude>
+                        <exclude>org/infinispan/objectfilter/impl/ql/parse/**</exclude>
+                        <exclude>org/infinispan/server/hotrod/HotRodDecoder.class</exclude>
+                        <exclude>**/*$___Marshaller_*.class</exclude>
+                        <exclude>org/infinispan/**/test/**</exclude>
+                     </excludes>
                   </configuration>
                </plugin>
                <!-- Overriding surefire configuration, for attaching jacoco agent to command line. -->
@@ -2868,203 +2849,15 @@
                         <version>${version.ant-nodeps}</version>
                      </dependency>
                   </dependencies>
-                  <executions>
-                     <execution>
-                        <id>copy-generated-classes</id>
-                        <phase>test</phase>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                        <configuration>
-                           <target>
-                              <available file="${project.build.directory}/classes" type="dir" property="hasClasses"/>
-                              <echo level="info" message="Copying test classes to jacoco folder" if:set="hasClasses" xmlns:if="ant:if"/>
-                              <copydir dest="${jacoco.reportPath}/classes"
-                                       src="${project.build.directory}/classes"
-                                       if:set="hasClasses" xmlns:if="ant:if"/>
-                              <available file="${jacoco.reportPath}" type="dir" property="jacocoDirCreated"/>
-                              <mkdir dir="${jacoco.reportPath}" unless:set="jacocoDirCreated" xmlns:unless="ant:unless"/>
-                           </target>
-                        </configuration>
-                     </execution>
-                  </executions>
                </plugin>
             </plugins>
          </build>
       </profile>
       <profile>
          <id>jacocoReport</id>
-
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>properties-maven-plugin</artifactId>
-                  <version>1.2.1</version>
-                  <executions>
-                     <execution>
-                        <phase>validate</phase>
-                        <goals>
-                           <goal>set-system-properties</goal>
-                        </goals>
-                        <configuration>
-                           <properties>
-                              <property>
-                                 <name>jacoco.reportPath</name>
-                                 <value>${session.executionRootDirectory}/jacoco</value>
-                              </property>
-                           </properties>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>delete-existing-jacoco-report</id>
-                        <phase>validate</phase>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                        <configuration>
-                           <target>
-                              <echo>Deleting existing Jacoco Report Directory.</echo>
-                              <delete dir="${dir.jacoco.report}"/>
-                              <delete dir="${dir.jacoco.merged}"/>
-                              <delete dir="${project.build.directory}/classes"/>
-                              <echo>Copying the generated classes file to ${project.build.directory}/classes
-                              </echo>
-                              <copydir dest="${project.build.directory}/classes"
-                                       src="${jacoco.reportPath}/classes"/>
-                           </target>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>build-helper-maven-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>add-source</id>
-                        <phase>validate</phase>
-                        <goals>
-                           <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                           <sources>
-                              <source>${maven.multiModuleProjectDirectory}/anchored-keys/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/api/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/cdi/common/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/cdi/embedded/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/cdi/remote/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/cli/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/client/hotrod/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/client/hotrod-client/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/client/rest-client/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/commons/all/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/commons/jdk21/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/commons/spi/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/core/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/counter/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/counter-api/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/graalvm/client-hotrod/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/graalvm/commons/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/graalvm/core/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/gridfs/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/hibernate/cache-spi/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/hibernate/cache-v62/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/jboss-marshalling/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/jcache/commons/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/jcache/embedded/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/jcache/remote/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/lock/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/multimap/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/object-filter/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/persistence/jdbc/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/persistence/jdbc-common/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/persistence/remote/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/persistence/rocksdb/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/persistence/sql/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/quarkus/cli/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/query-core/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/query/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/query-dsl/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/remote-query/remote-query-client/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/remote-query/remote-query-server/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/core/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/hotrod/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/insights/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/memcached/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/resp/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/rest/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/router/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/server/runtime/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/spring/spring6/spring6-common/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/spring/spring6/spring6-embedded/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/spring/spring6/spring6-remote/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/spring/spring-boot-3/embedded/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/spring/spring-boot-3/remote/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/tasks/api/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/tasks/manager/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/tasks/scripting/src/main/java</source>
-                              <source>${maven.multiModuleProjectDirectory}/tools/src/main/java</source>
-                           </sources>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-
-               <plugin>
-                  <groupId>org.jacoco</groupId>
-                  <artifactId>jacoco-maven-plugin</artifactId>
-                  <version>${version.jacoco}</version>
-                  <executions>
-                     <execution>
-                        <id>default-merge</id>
-                        <goals>
-                           <goal>merge</goal>
-                        </goals>
-                        <phase>validate</phase>
-                        <configuration>
-                           <fileSets>
-                              <fileSet>
-                                 <directory>${dir.jacoco}</directory>
-                                 <includes>
-                                    <include>*.exec</include>
-                                 </includes>
-                              </fileSet>
-                           </fileSets>
-                           <destFile>${dir.jacoco.merged}/jacoco.exec</destFile>
-                        </configuration>
-                     </execution>
-                     <execution>
-                        <id>default-report</id>
-                        <goals>
-                           <goal>report</goal>
-                        </goals>
-                        <phase>validate</phase>
-                     </execution>
-                  </executions>
-                  <configuration>
-                     <dataFile>${dir.jacoco.merged}/jacoco.exec</dataFile>
-                     <outputDirectory>${dir.jacoco.report}</outputDirectory>
-                     <excludes>
-                        <exclude>**/logging/**</exclude>
-                        <exclude>org/infinispan/cli/benchmark/jmh_generated/**</exclude>
-                        <exclude>org/infinispan/objectfilter/impl/ql/parse/**</exclude>
-                        <exclude>org/infinispan/server/hotrod/HotRodDecoder.class</exclude>
-                        <exclude>**/*$___Marshaller_*.class</exclude>
-                        <exclude>org/infinispan/**/test/**</exclude>
-                     </excludes>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
+         <modules>
+            <module>jacoco-report-aggregator</module>
+         </modules>
       </profile>
    </profiles>
 </project>

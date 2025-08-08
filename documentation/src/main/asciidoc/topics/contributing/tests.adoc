@@ -87,22 +87,15 @@ This file is not fully closed, so to extract the log file, execute:
 
 === Enabling code coverage generation
 When you run tests, you can enable code coverage recorder for calculating and analysing the {brandname} code coverage.
-You can do this using `coverage` and `jacocoReport` profiles. As a code coverage evaluation tool, the JaCoCo is used. While code coverage recording, besides `coverage` profile you should also add the additional jacoco agent library name so that it is attached to containers while running integration tests.
+You can do this using `coverage` profile. As a code coverage evaluation tool, the JaCoCo is used. While code coverage recording, besides `coverage` profile you should also add the additional jacoco agent library name so that it is attached to containers while running integration tests.
 
- $ mvn test -Pcoverage -Dmaven.test.failure.ignore=true -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
+ $ mvn test -Pcoverage -Dmaven.test.failure.ignore=true -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.13:runtime
 
 Please note, that `-Dmaven.test.failure.ignore=true` is used for generating JaCoCo code coverage report, even if there are test failures.
+The `coverage` profile activates also `jacoco-report-aggregator` module, which in the end of all tests execution aggregates the
+generated Jacoco execution files and generates coverage report based on them.
 
-Executing this will generate `jacoco-<moduleName>.exec` files in `jacoco/` directory in {brandname} Home directory.
-These are the JaCoCo execution data files, which contain full data about the specific module's coverage.
-
-As soon as the coverage execution command is finished, you will need to generate the JaCoCo report, which will merge the generated `jacoco-<moduleName>.exec` files into one file and will create the code coverage report.
-
-For having the report in place, run the following command from your {brandname} home directory:
-
- $ mvn install -pl all -PjacocoReport
-
-The `jacoco/report/` directory will be generated in {brandname} Home directory, which will contain the code coverage report.
+The report is located at {brandname} Home directory's `jacoco-report-aggregator/target/site/jacoco-aggregate/` directory.
 
 == Test groups
 Each test should belong to one or more group.
