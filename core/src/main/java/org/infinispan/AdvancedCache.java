@@ -20,7 +20,6 @@ import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;

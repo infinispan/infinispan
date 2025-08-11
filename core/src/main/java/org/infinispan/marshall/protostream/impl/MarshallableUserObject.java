@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.annotations.ProtoFactory;

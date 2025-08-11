@@ -3,7 +3,6 @@ package org.infinispan.configuration.internal;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 
 /**
  * A {@link Builder} implementation of {@link PrivateGlobalConfiguration}.
@@ -16,7 +15,7 @@ public class PrivateGlobalConfigurationBuilder implements Builder<PrivateGlobalC
 
    private final AttributeSet attributes;
 
-   public PrivateGlobalConfigurationBuilder(GlobalConfigurationBuilder builder) {
+   public PrivateGlobalConfigurationBuilder() {
       this.attributes = PrivateGlobalConfiguration.attributeSet();
    }
 

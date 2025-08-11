@@ -1,6 +1,5 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.commons.time.TimeService;
 
 /**
  * Interface for internal cache entries that expose whether an entry has expired.

@@ -2,7 +2,6 @@ package org.infinispan.interceptors.distribution;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -68,12 +67,6 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
         return flushL1CachesAndInvokeNext(ctx, command);
       }
       return invokeNext(ctx, command);
-   }
-
-   @Override
-   protected boolean skipL1Lookup(FlagAffectedCommand command, Object key) {
-      // TODO: need to skip L1 lookups when the command doesn't require the value to be returned like unsafe return values or write skew check ??
-      return super.skipL1Lookup(command, key);
    }
 
    private boolean shouldFlushL1(TxInvocationContext ctx) {

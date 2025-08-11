@@ -30,7 +30,6 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -106,13 +105,6 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
    @Override
    public Collection<MetricInfo> getCustomMetrics(GlobalMetricsConfiguration configuration) {
       return keyMetrics.getMetrics(configuration.histograms(), cacheMgmtInterceptor -> cacheMgmtInterceptor.keyMetrics, distributionManager == null);
-   }
-
-   @Override
-   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      // This is just here to notify that evictions are counted in the ClusteringDependentLogic via NotifyHelper and
-      // EvictionManager
-      return super.visitEvictCommand(ctx, command);
    }
 
    @Override

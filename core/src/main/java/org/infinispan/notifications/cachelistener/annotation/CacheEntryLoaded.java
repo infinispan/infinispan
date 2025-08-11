@@ -7,7 +7,6 @@ import java.lang.annotation.Target;
 
 import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
 
 /**
  * This annotation should be used on methods that need to be notified when a cache entry is loaded from a {@link

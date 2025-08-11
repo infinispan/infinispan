@@ -1,7 +1,7 @@
 package org.infinispan.cache.impl;
 
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextFactory;
+
 
 /**
  * An interface to build {@link InvocationContext}.

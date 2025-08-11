@@ -74,11 +74,4 @@ public class StateTransferConfiguration extends ConfigurationElement<StateTransf
    public boolean awaitInitialTransfer() {
       return awaitInitialTransfer.get();
    }
-
-   /**
-    * We want to remember if the user didn't configure awaitInitialTransfer for the default cache.
-    */
-   private boolean originalAwaitInitialTransfer() {
-      return !awaitInitialTransfer.isModified();
-   }
 }

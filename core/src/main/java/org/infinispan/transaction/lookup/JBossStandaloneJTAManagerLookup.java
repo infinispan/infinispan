@@ -27,14 +27,10 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
 
    @Inject
    public void init(GlobalConfiguration globalCfg) {
-      init(globalCfg.classLoader());
-   }
-
-   private void init(ClassLoader classLoader) {
       // The TM may be deployed embedded alongside the app, so this needs to be looked up on the same CL as the Cache
       try {
-         manager = Util.loadClass("com.arjuna.ats.jta.TransactionManager", classLoader).getMethod("transactionManager");
-         user = Util.loadClass("com.arjuna.ats.jta.UserTransaction", classLoader).getMethod("userTransaction");
+         manager = Util.loadClass("com.arjuna.ats.jta.TransactionManager", globalCfg.classLoader()).getMethod("transactionManager");
+         user = Util.loadClass("com.arjuna.ats.jta.UserTransaction", globalCfg.classLoader()).getMethod("userTransaction");
       } catch (SecurityException | NoSuchMethodException e) {
          throw new RuntimeException(e);
       }

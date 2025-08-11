@@ -293,7 +293,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    }
 
    @Override
-   public java.util.Map<K, V> getGroup(String groupName) {
+   public Map<K, V> getGroup(String groupName) {
       return cache.getGroup(groupName);
    }
 
