@@ -277,7 +277,7 @@
                 </dependency>
                 <dependency>
                     <groupId>org.jboss.weld.servlet</groupId>
-                    <artifactId>weld-servlet-shaded</artifactId>
+                    <artifactId>weld-servlet-core</artifactId>
                     <version>${version.weld-servlet}</version>
                 </dependency>
             </dependencies>
