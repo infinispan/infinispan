@@ -1,38 +1,5 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:global.scripting.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "DistributedScript",
-        "type_id" : 4805,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "cacheName",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "metadata",
-          "type" : "org.infinispan.persistence.scripting.ScriptMetadata",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "ctxParams",
-          "type" : "org.infinispan.global.core.MarshallableMap",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "global.core.proto"
-      }, {
-        "path" : "persistence.scripting.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.global.scripting"
-      }
-    }
-  }, {
     "protopath" : "generated:/:persistence.scripting.proto",
     "def" : {
       "enums" : [ {
@@ -98,6 +65,39 @@
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.scripting"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:global.scripting.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "DistributedScript",
+        "type_id" : 4805,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "metadata",
+          "type" : "org.infinispan.persistence.scripting.ScriptMetadata",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "ctxParams",
+          "type" : "org.infinispan.global.core.MarshallableMap",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "global.core.proto"
+      }, {
+        "path" : "persistence.scripting.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.scripting"
       }
     }
   } ]
