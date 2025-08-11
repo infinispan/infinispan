@@ -40,6 +40,6 @@ public class DeploymentHelper {
 
    private static void tomcat(WebArchive war) {
       // required for cdi
-      addLibrary(war, "org.jboss.weld.servlet:weld-servlet-shaded");
+      addLibrary(war, "org.jboss.weld.servlet:weld-servlet-core");
    }
 }
