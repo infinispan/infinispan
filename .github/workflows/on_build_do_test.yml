@@ -214,17 +214,21 @@ jobs:
             !**/*[:"<>\*\?]*/**/*.log
             !**/*[:"<>\*\?]*.log
 
-  db:
+  targets-test:
     needs: get-info
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: ${{ matrix.targets == 'tomcat' && 'tomcat' || format('db ({0})', matrix.targets) }}
     runs-on: ubuntu-latest
+    env:
+      TOMCAT_VERSION: 11.0.10
     strategy:
       fail-fast: false
       matrix:
-        dbs:
+        targets:
           - mssql
           - oracle
           - db2
+          - tomcat
     steps:
       - uses: actions/checkout@v5
 
@@ -259,7 +263,7 @@ jobs:
         with:
             app-id: ${{ secrets.GH_APP_ISPN_ID }}
             private-key: ${{ secrets.GH_APP_ISPN_KEY }}
-  
+
       - name: Create Check Run for Test Report
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -268,7 +272,7 @@ jobs:
           SHA="${{ needs.get-info.outputs.source-head-sha }}"
           CHECK_RUN=$(gh api repos/${{ github.repository }}/check-runs \
             -H "Accept: application/vnd.github+json" \
-            -f name="Test Report Result ${{ matrix.dbs }}" \
+            -f name="Test Report Result ${{ matrix.targets }}" \
             -f head_sha="$SHA" \
             -f status="in_progress" \
             -f "output[summary]=Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
@@ -276,22 +280,40 @@ jobs:
             --method POST \
             --jq '.id')
           echo "id=$CHECK_RUN" >> $GITHUB_OUTPUT
-          echo "$CHECK_RUN" > check-run-id-${{ matrix.dbs }}.txt
+          echo "$CHECK_RUN" > check-run-id-${{ matrix.targets }}.txt
 
       - name: Upload Check Run ID
         uses: actions/upload-artifact@v4
         with:
-          name: check-run-id-${{ matrix.dbs }}
-          path: check-run-id-${{ matrix.dbs }}.txt
+          name: check-run-id-${{ matrix.targets }}
+          path: check-run-id-${{ matrix.targets }}.txt
+
+      - name: Download and unzip Apache Tomcat ${{ env.TOMCAT_VERSION }}
+        if: ${{ matrix.targets == 'tomcat' }}
+        run: |
+          wget https://dlcdn.apache.org/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.zip
+          unzip apache-tomcat-${TOMCAT_VERSION}.zip
+          # Set CATALINA_HOME for subsequent steps
+          echo "CATALINA_HOME=${GITHUB_WORKSPACE}/apache-tomcat-${TOMCAT_VERSION}" >> $GITHUB_ENV
+
+      - name: Test Tomcat
+        if: ${{ matrix.targets == 'tomcat' }}
+        run: |
+          cd test_dir/infinispan &&
+          ./mvnw verify -pl server/runtime,\
+          integrationtests/server-integration/server-integration-commons,\
+          integrationtests/server-integration/third-party-server/ \
+          -DcatalinaHome=${CATALINA_HOME} -Dinfinispan.server.integration.launch=tomcat
 
 
       - name: Test
+        if: ${{ matrix.targets != 'tomcat' }}
         run: |
           cd test_dir/infinispan &&
           ./mvnw verify -B -e -pl server/tests -Dmaven.test.failure.ignore=true \
             -Dansi.strip=true \
             -DdefaultTestGroup=database \
-            -Dorg.infinispan.test.database.types=${{ matrix.dbs }} \
+            -Dorg.infinispan.test.database.types=${{ matrix.targets }} \
             -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
             -P coverage \
             -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
@@ -332,7 +354,7 @@ jobs:
         if: (success() || failure())
         uses: actions/upload-artifact@v4
         with:
-          name: surefire-test-report-${{ matrix.dbs }}
+          name: surefire-test-report-${{ matrix.targets }}
           path: |
             test_dir/infinispan/**/target/*-reports*/**/TEST-*.xml
             !test_dir/infinispan/**/target/*-reports*/**/TEST-*FLAKY.xml
@@ -344,7 +366,7 @@ jobs:
             github-sha.txt
 
   coverage:
-    needs: [get-info, ci-build-test-pr, db]
+    needs: [get-info, ci-build-test-pr, targets-test]
     if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.source-event == 'pull_request' }}
     name: Publish Coverage Report
     runs-on: ubuntu-latest
