@@ -32,7 +32,7 @@ public class Sale {
       return id;
    }
 
-   @Basic
+   @Basic(aggregable = true)
    @ProtoField(2)
    public String getCode() {
       return code;

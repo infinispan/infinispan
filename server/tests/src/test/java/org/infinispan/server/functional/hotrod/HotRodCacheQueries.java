@@ -2,7 +2,7 @@ package org.infinispan.server.functional.hotrod;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
+import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,6 +36,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.KeywordVector;
 import org.infinispan.protostream.sampledomain.Metadata;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
@@ -51,7 +52,6 @@ import org.junit.jupiter.params.provider.ValueSource;
  **/
 public class HotRodCacheQueries {
 
-   public static final String BANK_PROTO_FILE = "/org/infinispan/test/test.protostream.sampledomain.proto";
    public static final String ENTITY_USER = "sample_bank_account.User";
 
    @InfinispanServer(ClusteredIT.class)
@@ -60,7 +60,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testAttributeQuery(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -80,7 +80,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testEmbeddedAttributeQuery(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -96,7 +96,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testProjections(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -122,7 +122,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testUninverting(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -133,7 +133,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testIteratorWithQuery(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -152,7 +152,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testIteratorWithQueryAndProjections(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -173,7 +173,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testQueryViaRest(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -189,7 +189,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testManyInClauses(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -217,7 +217,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testWayTooManyInClauses(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
 
       Set<String> values = new HashSet<>();
       for (int i = 0; i < 1026; i++) {
@@ -240,7 +240,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testDeleteStatement(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -256,7 +256,7 @@ public class HotRodCacheQueries {
    @Test
    public void testProjectionAndFilteringOnEmbeddedData() {
       RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,
-              BANK_PROTO_FILE, "sample_bank_account.KeywordVector");
+              TestDomainSCI.INSTANCE, "sample_bank_account.KeywordVector");
       for (int i = 0; i < 10; i++) {
          List<Metadata> metadata = Arrays.asList(new Metadata("key1", "value" + i), new Metadata("key2", "value" + i%2));
          KeywordVector keywordVector = createImage(i, 50, metadata);
@@ -270,7 +270,7 @@ public class HotRodCacheQueries {
    @Test
    public void testVectorSearch() {
       RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,
-            BANK_PROTO_FILE, "sample_bank_account.KeywordVector");
+              TestDomainSCI.INSTANCE, "sample_bank_account.KeywordVector");
 
       KeywordVector center = null;
       for (int i = 0; i < 10; i++) {

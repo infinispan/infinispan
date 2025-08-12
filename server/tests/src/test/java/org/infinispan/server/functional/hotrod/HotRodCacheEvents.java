@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
+import static org.infinispan.server.test.core.Common.getSchemaContent;
 import static org.infinispan.test.TestingUtil.extractField;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,6 +30,7 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.protostream.schema.Schema;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -765,7 +767,8 @@ public class HotRodCacheEvents {
    @ArgumentsSource(ArgsProvider.class)
    public void testJsonEvent(ProtocolVersion protocolVersion) {
       DataFormat jsonValues = DataFormat.builder().valueType(APPLICATION_JSON).valueMarshaller(new UTF8StringMarshaller()).build();
-      RemoteCache<Integer, String> remoteCache = createQueryableCache(SERVERS, false, "/proto/json.proto", "proto.JSON").withDataFormat(jsonValues);
+      Schema jsonSchema = getSchemaContent(SERVERS, "/proto/json.proto");
+      RemoteCache<Integer, String> remoteCache = createQueryableCache(SERVERS, false, jsonSchema, "proto.JSON").withDataFormat(jsonValues);
       new EventLogListener<>(remoteCache).accept((l, cache) -> {
          l.expectNoEvents();
          cache.put(1, "{\"_type\":\"proto.JSON\",\"key\":\"one\"}");
