@@ -28,7 +28,7 @@ jobs:
         publish-image: ${{ steps.publish-image-info.outputs.publish-image }}
         image-name: ${{ steps.image-name.outputs.image-name }}
      steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
 
         - id: workflow-run-info
           uses: ./.github/actions/get-origin-info

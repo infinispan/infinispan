@@ -30,7 +30,7 @@ jobs:
          source-head-branch: ${{ steps.workflow-run-info.outputs.source-head-branch }}
          source-event: ${{ github.event.workflow_run.event }}
       steps:
-         - uses: actions/checkout@v4
+         - uses: actions/checkout@v5
            with:
              sparse-checkout: ".github"
              fetch-depth: 1
@@ -51,7 +51,7 @@ jobs:
       MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           sparse-checkout: ".github"
           fetch-depth: 1
@@ -226,7 +226,7 @@ jobs:
           - oracle
           - db2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Java
         uses: ./.github/actions/setup-java
@@ -351,7 +351,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Java
         uses: ./.github/actions/setup-java
