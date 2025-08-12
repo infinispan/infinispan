@@ -3,7 +3,6 @@ package org.infinispan.query.dsl.embedded.impl;
 import java.util.Arrays;
 
 import org.infinispan.query.objectfilter.SortField;
-import org.infinispan.query.objectfilter.impl.ql.AggregationFunction;
 import org.infinispan.query.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.query.objectfilter.impl.syntax.IndexedFieldProvider;
@@ -53,10 +52,6 @@ public final class QueryAnalyzer<TypeMetadata> {
             }
             aggregation = (AggregationPropertyPath) projectedPath;
 
-            // only count aggregation function is currently supported by Hibernate Search
-            if (!AggregationFunction.COUNT.equals(aggregation.getAggregationFunction())) {
-               return false;
-            }
             boolean aggregationTargetsAProperty = propertyHelper.hasProperty(parsingResult.getTargetEntityMetadata(), aggregation.asArrayPath());
             if (aggregationTargetsAProperty && !(aggregation instanceof CacheValueAggregationPropertyPath)) {
                if (!metadata.isSearchable(aggregation.asArrayPath())) {
