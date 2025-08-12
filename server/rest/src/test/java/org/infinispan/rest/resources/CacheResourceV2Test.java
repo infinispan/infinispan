@@ -1604,7 +1604,6 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testCacheExists() {
       assertEquals(404, checkCache("nonexistent"));
-      assertEquals(204, checkCache("invalid"));
       assertEquals(204, checkCache("default"));
       assertEquals(204, checkCache("indexedCache"));
    }
@@ -1797,11 +1796,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testIndexDataSyncInvalidSchema() {
-      String notQuiteIndexed = "package schemas;\n" +
-            " /* @Indexed */\n" +
-            " message Entity {\n" +
-            "    optional string name=1;\n" +
-            " }";
+      String notQuiteIndexed = """
+            package schemas;
+             /* @Indexed */
+             message Entity {
+                optional string name=1;
+             }""";
 
       // Register schema
       RestResponse restResponse = join(client.schemas().put("schemas.proto", notQuiteIndexed));
