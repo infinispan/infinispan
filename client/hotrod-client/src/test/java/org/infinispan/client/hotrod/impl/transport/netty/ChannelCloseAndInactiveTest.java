@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.retry.AbstractRetryTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import io.netty.channel.Channel;
@@ -32,6 +33,19 @@ public class ChannelCloseAndInactiveTest extends AbstractRetryTest {
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numOwners(1);
       return builder;
+   }
+
+   @BeforeClass(alwaysRun = true)
+   @Override
+   public void createBeforeClass() throws Throwable {
+      super.createBeforeClass();
+      System.setProperty("io.netty.eventLoopThreads", "4");
+   }
+
+   @Override
+   protected boolean cleanupAfterTest() {
+      System.clearProperty("io.netty.eventLoopThreads");
+      return super.cleanupAfterTest();
    }
 
    @Override
