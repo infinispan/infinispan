@@ -38,7 +38,7 @@ jobs:
             asset_name: windows-amd64
             gu_binary: gu.cmd
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Add msbuild to PATH
