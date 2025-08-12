@@ -119,12 +119,32 @@ jobs:
           HIBERNATE_MATRIX: ${{ github.event.workflow_run.event == 'push' && '-Phibernate-matrix' || '' }}
         id: maven-test
         shell: bash
-        run: >
-            cd test_dir/infinispan &&
-            ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
-            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage $HIBERNATE_MATRIX
-            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.13:runtime
-            -Dgithub.action=true
+        run: |
+            cd test_dir/infinispan
+            ./mvnw verify -V -B -e -DrerunFailingTestsCount=2 \
+            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage $HIBERNATE_MATRIX \
+            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime \
+            -Dgithub.action=true &
+            MVN_PID=$!
+            # Wait up to 4 hours (14400 seconds)
+            SECONDS=0
+            while kill -0 $MVN_PID 2>/dev/null; do
+              if [ $SECONDS -ge 14400 ]; then
+                echo "Timeout reached. Dumping Java threads..."
+                # Find all Java processes and dump threads
+                for pid in $(pgrep java); do
+                  echo "Dumping threads for Java process $pid"
+                  echo "Dumps will also be available in the jstack-report artifact"
+                  jstack -l $pid | tee jstack-$pid.txt || echo "jstack failed for $pid"
+                done
+                # Kill the mvn process
+                kill -9 $MVN_PID
+                exit 1
+              fi
+              sleep 30
+            done
+            wait $MVN_PID
+
       # Renewing token since it last for 1 hour and cannot be extended
       # see for more info https://github.com/actions/create-github-app-token/issues/128
       - uses: actions/create-github-app-token@v2
@@ -180,6 +200,15 @@ jobs:
             test_dir/infinispan/**/target/*.exec
             github-sha.txt
             pr-number.txt
+
+      - name: Upload jstack files
+        if: (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: jstack-report
+          path: |
+            **/jstack-*.txt
+          if-no-files-found: ignore
 
 # Create artifact with branch name and surefile flaky test report
       - name: Check flaky report existence
@@ -318,7 +347,7 @@ jobs:
       - name: Test
         if: ${{ matrix.targets != 'tomcat' }}
         run: |
-          cd test_dir/infinispan &&
+          cd test_dir/infinispan && \
           ./mvnw verify -B -e -pl server/tests -Dmaven.test.failure.ignore=true \
             -Dansi.strip=true \
             -DdefaultTestGroup=database \
