@@ -19,6 +19,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.aggregation.QueryAggregationCountTest")
 public class QueryAggregationCountTest extends SingleCacheManagerTest {
 
+   public static final int TOTAL_NOT_NULL_ITEMS = 800;
    public static final int NUMBER_OF_DAYS = 100;
    public static final int CHUNK_SIZE = 10;
 
@@ -67,7 +68,7 @@ public class QueryAggregationCountTest extends SingleCacheManagerTest {
       query = cache.query("select status, count(code) from org.infinispan.query.model.Sale group by status");
       Optional<Integer> totalNotNullItems = query.list().stream()
             .map(objects -> ((Long) objects[1]).intValue()).reduce(Integer::sum);
-      assertThat(totalNotNullItems).hasValue(CHUNK_SIZE * NUMBER_OF_DAYS);
+      assertThat(totalNotNullItems).hasValue(TOTAL_NOT_NULL_ITEMS);
 
       // alias
       query = cache.query("select s.status, count(s.code) from org.infinispan.query.model.Sale s where s.day >= :start and s.day <= :end group by s.status order by s.status");

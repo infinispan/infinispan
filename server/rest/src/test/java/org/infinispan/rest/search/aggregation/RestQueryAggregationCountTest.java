@@ -108,7 +108,7 @@ public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
             "select status, count(code) from Sale group by status", 10, 0);
       assertThat(response).isOk();
       body = Json.read(response.toCompletableFuture().get().body());
-      hits = "[{\"hit\":{\"COUNT(code)\":229,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(code)\":189,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(code)\":196,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(code)\":200,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(code)\":186,\"status\":\"WAITING\"}}]";
+      hits = "[{\"hit\":{\"COUNT(code)\":184,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(code)\":144,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(code)\":163,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(code)\":169,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(code)\":140,\"status\":\"WAITING\"}}]";
       Assertions.assertThat(body.at("hits")).isEqualTo(Json.read(hits));
 
       response = cacheClient.query(

@@ -39,18 +39,19 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.schema.Schema;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.persistence.PersistenceIT;
 import org.infinispan.server.test.api.HotRodClientDriver;
@@ -248,24 +249,30 @@ public class Common {
    }
 
 
-   public static <K, V> RemoteCache<K, V> createQueryableCache(TestClientDriver server, boolean indexed, String protoFile, String entityName) {
+   public static Schema getSchemaContent(TestClientDriver server, String protoFile) {
+       String content = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, server.getClass().getClassLoader()));
+       return Schema.buildFromStringContent(protoFile, content);
+   }
 
+   public static <K, V> RemoteCache<K, V> createQueryableCache(TestClientDriver server, boolean indexed, Schema protoschema, String entityName) {
       ConfigurationBuilder config = new ConfigurationBuilder();
-      config.marshaller(new ProtoStreamMarshaller());
+      ProtoStreamMarshaller protoStreamMarshaller = new ProtoStreamMarshaller();
+      if (protoschema != null) {
+          FileDescriptorSource descriptor = FileDescriptorSource.fromString(protoschema.getName(), protoschema.getContent());
+          protoStreamMarshaller.getSerializationContext().registerProtoFiles(descriptor);
+          config.marshaller(protoStreamMarshaller);
+      }
 
+      config.addContextInitializer(TestDomainSCI.INSTANCE);
       HotRodClientDriver<?> hotRodTestClientDriver = server.hotrod().withClientConfiguration(config);
       RemoteCacheManager remoteCacheManager = hotRodTestClientDriver.createRemoteCacheManager();
 
-      if (protoFile != null) {
-         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-         String schema = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, server.getClass().getClassLoader()));
-         metadataCache.putIfAbsent(protoFile, schema);
+      if (protoschema != null) {
+         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
+         metadataCache.putIfAbsent(protoschema.getName(), protoschema.getContent());
          assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-         assertNotNull(metadataCache.get(protoFile));
+         assertNotNull(metadataCache.get(protoschema.getName()));
       }
-
-      SerializationContext ctx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      TestDomainSCI.INSTANCE.register(ctx);
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE);

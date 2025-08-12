@@ -176,9 +176,47 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          return null;
       }
 
-      SearchAggregation<? extends Map<T, Long>> searchAggregation = scope.aggregation().terms()
-            .field(groupBy[0].asStringPathWithoutAlias(), projectedType)
-            .maxTermCount(Integer.MAX_VALUE).toAggregation();
+      SearchAggregation<?> searchAggregation;
+      String groupByFieldName = groupBy[0].asStringPathWithoutAlias();
+      var aggregationFactory = scope.aggregation();
+      String aggFieldName = aggregationPropertyPath.asStringPathWithoutAlias();
+      switch (aggregationPropertyPath.getAggregationFunction()) {
+          case COUNT -> {
+              if (aggFieldName == null || aggFieldName.isEmpty()) {
+                  // Count(*)
+                  searchAggregation = aggregationFactory.terms()
+                          .field(groupByFieldName, projectedType)
+                          .value(aggregationFactory.count().documents())
+                          .toAggregation();
+              } else {
+                  searchAggregation = aggregationFactory.terms()
+                          .field(groupByFieldName, projectedType)
+                          .value(aggregationFactory.count().field(aggFieldName))
+                          .toAggregation();
+              }
+          }
+          case SUM -> searchAggregation = aggregationFactory.terms()
+                  .field(groupByFieldName, projectedType)
+                  .value(aggregationFactory.sum().field(aggFieldName, Object.class))
+                  .toAggregation();
+
+          case MAX -> searchAggregation = aggregationFactory.terms()
+                  .field(groupByFieldName, projectedType)
+                  .value(aggregationFactory.max().field(aggFieldName, Object.class))
+                  .toAggregation();
+
+          case MIN -> searchAggregation = aggregationFactory.terms()
+                  .field(groupByFieldName, projectedType)
+                  .value(aggregationFactory.min().field(aggFieldName, Object.class))
+                  .toAggregation();
+
+          case AVG -> searchAggregation = aggregationFactory.terms()
+                  .field(groupByFieldName, projectedType)
+                  .value(aggregationFactory.avg().field(aggFieldName, Object.class))
+                  .toAggregation();
+
+          default -> throw new UnsupportedOperationException("Query aggregation not supported " + aggregationPropertyPath.getAggregationFunction().name());
+      }
       return new InfinispanAggregation(searchAggregation, aggregationPropertyPath, displayGroupFirst);
    }
 
