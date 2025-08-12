@@ -2,7 +2,6 @@ package org.infinispan.rest.resources;
 
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.testng.AssertJUnit.assertEquals;
@@ -140,7 +139,6 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
             addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(configForNode.build()), getDefaultCacheBuilder(), TransportFlags.minimalXsiteFlags());
          }
          cacheManagers.forEach(this::defineCaches);
-         cacheManagers.forEach(cm -> cm.defineConfiguration("invalid", getDefaultCacheBuilder().encoding().mediaType(APPLICATION_OBJECT_TYPE).indexing().enabled(true).addIndexedEntities("invalid").build()));
          serverStateManager = new DummyServerStateManager();
          for (EmbeddedCacheManager cm : cacheManagers) {
             BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(BasicComponentRegistry.class);

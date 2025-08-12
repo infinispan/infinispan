@@ -3,6 +3,7 @@ package org.infinispan.rest.resources;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
@@ -34,6 +35,7 @@ import org.assertj.core.api.Assertions;
 import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.io.StringBuilderWriter;
@@ -52,6 +54,7 @@ import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.security.Security;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.KeyValuePair;
@@ -144,13 +147,11 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    public void testHealth() {
       RestResponse response = join(restContainerClient.health());
       ResponseAssertion.assertThat(response).isOk();
-
       Json jsonNode = Json.read(response.body());
       Json clusterHealth = jsonNode.at("cluster_health");
-      // One of the caches is in FAILED state
-      assertEquals(clusterHealth.at("health_status").asString(), HealthStatus.FAILED.toString());
-      assertEquals(clusterHealth.at("number_of_nodes").asInteger(), 2);
-      assertEquals(clusterHealth.at("node_names").asJsonList().size(), 2);
+      assertEquals(HealthStatus.HEALTHY.toString(), clusterHealth.at("health_status").asString());
+      assertEquals(2, clusterHealth.at("number_of_nodes").asInteger());
+      assertEquals(2, clusterHealth.at("node_names").asJsonList().size());
 
       Json cacheHealth = jsonNode.at("cache_health");
       List<String> cacheNames = extractCacheNames(cacheHealth);
@@ -160,6 +161,26 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       response = join(restContainerClient.health(true));
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasNoContent();
+   }
+
+   @Test
+   public void testUnhealthy() {
+      // Create a cache that will report a failed health status
+      Security.doAs(ADMIN, () -> {
+         cacheManagers.forEach(cm -> cm.defineConfiguration(INVALID_CACHE,
+               getDefaultCacheBuilder().encoding().mediaType(APPLICATION_OBJECT_TYPE)
+                     .indexing().enabled(true).addIndexedEntities("invalid").build()));
+         try {
+            cacheManagers.get(0).getCache(INVALID_CACHE);
+         } catch (CacheConfigurationException ignored) {
+         }
+      });
+      RestResponse response = join(restContainerClient.health());
+      ResponseAssertion.assertThat(response).isOk();
+
+      Json jsonNode = Json.read(response.body());
+      Json clusterHealth = jsonNode.at("cluster_health");
+      assertEquals(HealthStatus.FAILED.toString(), clusterHealth.at("health_status").asString());
    }
 
    @Test
@@ -270,11 +291,11 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
          // Assert that all the existing caches and templates have a corresponding event
          List<String> elements = List.of(TEMPLATE_CONFIG, CACHE_1, CACHE_2, CACHE_3, DEFAULT_CACHE,
-               INVALID_CACHE, PROTOBUF_METADATA_CACHE_NAME, SCRIPT_CACHE_NAME);
+               PROTOBUF_METADATA_CACHE_NAME, SCRIPT_CACHE_NAME);
          List<KeyValuePair<String, String>> events = sseListener.poll(elements.size());
          Assertions.assertThat(events).extracting(KeyValuePair::getKey)
                .containsAnyOf("create-cache", "create-template");
-         elements.stream().forEach(element -> {
+         elements.forEach(element -> {
             Iterator<KeyValuePair<String, String>> iterator = events.iterator();
             boolean found = false;
             while (iterator.hasNext() && !found) {
