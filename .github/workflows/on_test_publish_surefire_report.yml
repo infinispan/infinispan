@@ -130,15 +130,16 @@ jobs:
             description: Fail. ${{ steps.test-number.outputs.test_count }} test ran, minimum required is ${{ steps.test-number.outputs.test_min }}
             targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-   db:
+   targets-test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        dbs:
+        targets:
           - mssql
           - oracle
           - db2
+          - tomcat
     steps:
     - name: Set run_id based on event type
       id: run_id
@@ -148,7 +149,7 @@ jobs:
     - name: Download a Build Artifact
       uses: actions/download-artifact@v5
       with:
-        name: surefire-test-report-${{ matrix.dbs }}
+        name: surefire-test-report-${{ matrix.targets }}
         github-token: ${{ github.token }}
         run-id: ${{ steps.run_id.outputs.runid }}
 
@@ -170,7 +171,11 @@ jobs:
         GH_TOKEN: ${{ steps.app-token.outputs.token }}
       id: job-status
       run: |
-        JOB_STATUS=$(gh api https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs --jq '.jobs[] | select(.name=="db (${{ matrix.dbs }})") | .conclusion')
+        if [ "${{ matrix.targets }}" = "tomcat" ]; then
+          JOB_STATUS=$(gh api https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs --jq '.jobs[] | select(.name=="tomcat") | .conclusion')
+        else
+          JOB_STATUS=$(gh api https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs --jq '.jobs[] | select(.name=="db (${{ matrix.targets }})") | .conclusion')
+        fi
         echo "job_status=$JOB_STATUS" >> $GITHUB_OUTPUT
 
     - name: Publish Test Report
@@ -179,7 +184,7 @@ jobs:
       uses: rigazilla/action-surefire-report@summary
       with:
         github_token: ${{ steps.app-token.outputs.token }}
-        check_name: Test Report Result ${{ matrix.dbs }}
+        check_name: Test Report Result ${{ matrix.targets }}
         commit: ${{ steps.github_sha.outputs.content }}
         ignore_flaky_tests: true
         summary: "Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}"
@@ -190,7 +195,7 @@ jobs:
       if: failure()
       uses: actions/download-artifact@v5
       with:
-        name: check-run-id-${{ matrix.dbs }}
+        name: check-run-id-${{ matrix.targets }}
         github-token: ${{ github.token }}
         run-id: ${{ steps.run_id.outputs.runid }}
 
@@ -198,7 +203,7 @@ jobs:
       if: failure()
       id: read_check_id
       run: |
-        CHECK_RUN_ID=$(cat check-run-id-${{ matrix.dbs }}.txt)
+        CHECK_RUN_ID=$(cat check-run-id-${{ matrix.targets }}.txt)
         echo "CHECK_RUN_ID=$CHECK_RUN_ID" >> $GITHUB_ENV
 
     - name: Set failure check if Publish Test Report step failed
