@@ -39,7 +39,6 @@ import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.QueryConfiguration;
-import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.TracingConfiguration;
@@ -738,9 +737,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       }
 
       Class<? extends StoreConfiguration> getFileStoreClass(int schemaMajor) {
-         if (schemaMajor < 13) {
-            return SingleFileStoreConfiguration.class;
-         }
          return SoftIndexFileStoreConfiguration.class;
       }
    }

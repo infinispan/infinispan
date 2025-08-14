@@ -39,15 +39,12 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.PersistenceMockUtil;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.support.AsyncStoreTest")
 public class AsyncStoreTest extends AbstractInfinispanTest {
-   private static final Log log = LogFactory.getLog(AsyncStoreTest.class);
    private AsyncNonBlockingStore<Object, Object> store;
    private TestObjectStreamMarshaller marshaller;
 
