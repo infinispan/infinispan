@@ -2,36 +2,32 @@
 destination="$1"
 sourceDirs="$2"
 
-# Function to copy files with renamed duplicates
+# Function to copy jacoco execution files from DB matrix execution into main server/tests/target directory
+# The exec files are renamed to have corresponding DB suffix for avoiding having duplicate names (i.e. replacing each other)
 copy_files() {
     source_dir="$1"
+    db="${source_dir##*-}"
     for file in "$source_dir"/*; do
-        if [[ -d "$file" ]]; then
-    	      cp -r "$file" "$destination"
-        else
-            # Get the file name and extension
-            filename=$(basename "$file")
-            extension="${filename##*.}"
-            filename_without_extension="${filename%.*}"
+        # Get the file name and extension
+        filename=$(basename "$file")
+        extension="${filename##*.}"
+        filename_without_extension="${filename%.*}"
 
-            # If file exists, rename it to avoid clobbering
-            if [[ -e "$destination/$filename" ]]; then
-                counter=1
-                # Create a new unique filename with a counter if a file with the same name exists
-                while [[ -e "$destination/$filename_without_extension-$counter.$extension" ]]; do
-                    ((counter++))
-                done
-                filename="$filename_without_extension-$counter.$extension"
-            fi
+        #Forming new filename based on DB name
+        filename="$filename_without_extension-$db.$extension"
 
-            # Copy the file to the destination
-            cp "$file" "$destination/$filename"
-        fi
+        # Copy the file to the destination
+        cp "$file" "$destination/server/tests/target/$filename"
     done
 }
 
 for i in $sourceDirs; do
     echo "Copying $i"
-    copy_files $i"/test_dir/infinispan/jacoco/"
+    db="${i##*-}"
+    if [[ "$db" = "main" ]]; then
+      cp -r  $i/test_dir/infinispan/. $destination
+    else
+      copy_files $i
+    fi
 done
 echo "Merging complete!"
