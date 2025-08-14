@@ -5,7 +5,6 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.checkSch
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -17,7 +16,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchema;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -36,12 +34,7 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity("TestEntity");
-
       EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
-      Cache<String, String> metadataCache = manager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("analyzers.proto", TestEntitySCI.INSTANCE.getProtoFile());
-      checkSchemaErrors(metadataCache);
-
       manager.defineConfiguration("test", builder.build());
       return manager;
    }
@@ -57,7 +50,11 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      return new RemoteCacheManager(builder.build());
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
+      remoteCacheManager.administration().schemas().createOrUpdate(TestEntitySCI.INSTANCE);
+      checkSchemaErrors(remoteCacheManager);
+
+      return remoteCacheManager;
    }
 
    @Test

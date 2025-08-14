@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,7 +22,6 @@ import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.impl.AnnotatedDescriptorImpl;
 import org.infinispan.query.remote.ProtobufMetadataManager;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
@@ -90,7 +90,7 @@ public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends Abstra
    }
 
    private void insertSchemas(EmbeddedCacheManager cm) {
-      Cache<String, String> protobufMetadaCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      Cache<String, String> protobufMetadaCache = cm.getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
       // Schemas that are invalid until A.proto is inserted
       protobufMetadaCache.put("D.proto", "import \"B.proto\";\nimport \"C.proto\";\npackage D;\n" +
                                          "message M {\nrequired string s = 1;\n}");
