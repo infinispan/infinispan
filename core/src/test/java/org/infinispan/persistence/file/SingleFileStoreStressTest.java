@@ -25,6 +25,7 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -33,7 +34,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -66,7 +66,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().hash().numSegments(NUM_SEGMENTS);
-      builder.persistence().addSingleFileStore().purgeOnStartup(true).segmented(false);
+      builder.persistence().addStore(SingleFileStoreConfigurationBuilder.class).purgeOnStartup(true).segmented(false);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
       return cacheManager;
