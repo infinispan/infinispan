@@ -29,12 +29,6 @@ public interface RestClient extends AutoCloseable {
    RestClusterClient cluster();
 
    /**
-    * Returns a list of available cache manager names
-    */
-   @Deprecated
-   CompletionStage<RestResponse> cacheManagers();
-
-   /**
     * Operations on the cache manager
     */
    RestContainerClient container();

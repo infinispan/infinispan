@@ -136,7 +136,7 @@ public class SingleFileGracefulShutdownMigrationTest extends AbstractInfinispanT
 
       cbh.newConfigurationBuilder(CACHE_NAME)
             .persistence()
-            .addSingleFileStore()
+            .addStore(SingleFileStoreConfigurationBuilder.class)
             .segmented(false)
             .location(tmpDirectory);
 

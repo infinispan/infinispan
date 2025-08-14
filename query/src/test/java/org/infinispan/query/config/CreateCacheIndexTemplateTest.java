@@ -16,7 +16,7 @@ public class CreateCacheIndexTemplateTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(tmpDirectory(CreateCacheIndexTemplateTest.class));
+      global.globalState().enable().persistentLocation(tmpDirectory(CreateCacheIndexTemplateTest.class));
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable().addIndexedEntities(Person.class);
       return TestCacheManagerFactory.createCacheManager(global, builder);

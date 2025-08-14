@@ -61,7 +61,7 @@ public class SingleFileMigrateCorruptTest extends AbstractInfinispanTest {
       ConfigurationBuilderHolder cbh = new ConfigurationBuilderHolder();
       cbh.newConfigurationBuilder(CACHE_NAME)
             .persistence()
-            .addSingleFileStore()
+            .addStore(SingleFileStoreConfigurationBuilder.class)
             .segmented(false)
             .location(tmpDirectory);
 

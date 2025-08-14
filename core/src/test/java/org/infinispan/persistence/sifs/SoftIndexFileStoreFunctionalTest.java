@@ -3,12 +3,10 @@ package org.infinispan.persistence.sifs;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
@@ -77,8 +75,6 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
       persistence
             .addSoftIndexFileStore()
             .segmented(segmented)
-            .dataLocation(Paths.get(tmpDirectory, "data").toString())
-            .indexLocation(Paths.get(tmpDirectory, "index").toString())
             .purgeOnStartup(false).preload(preload)
             // Effectively disable reaper for tests
             .expiration().wakeUpInterval(Long.MAX_VALUE);
@@ -135,7 +131,7 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
          var dupList = list.stream().map(Map.Entry::getKey)
                .filter(k -> !duplicateKeys.add(k))
                .map(k -> Map.entry(k, TestingUtil.extractComponent(cache, KeyPartitioner.class).getSegment(k)))
-               .collect(Collectors.toList());
+               .toList();
          fail("List contained a duplicate element" + dupList);
       } else {
          assertEquals(keyCount, list.size());

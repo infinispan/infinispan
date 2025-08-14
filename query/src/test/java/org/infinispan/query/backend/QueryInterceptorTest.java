@@ -167,7 +167,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
       ConfigurationBuilder b = new ConfigurationBuilder();
       b.memory().maxCount(maxEntries)
             .persistence().passivation(true)
-            .addSingleFileStore().preload(true)
+            .addSoftIndexFileStore().preload(true)
             .indexing().enable()
             .storage(IndexStorage.FILESYSTEM).path(indexDir.getAbsolutePath())
             .addIndexedEntity(Person.class)

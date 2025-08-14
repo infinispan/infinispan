@@ -597,8 +597,9 @@ public interface ProtoStreamTypeIds {
 
    // Spring integration 5900 -> 5999
    int SPRING_LOWER_BOUND = 5900;
-   @Deprecated(forRemoval = true, since = "13.0")
-   int SPRING_NULL_VALUE = SPRING_LOWER_BOUND;
+
+   // Removed in 16.0
+   // int SPRING_NULL_VALUE = SPRING_LOWER_BOUND;
    int SPRING_SESSION = SPRING_LOWER_BOUND + 1;
    int SPRING_SESSION_ATTRIBUTE = SPRING_LOWER_BOUND + 2;
    int SPRING_SESSION_REMAP = SPRING_LOWER_BOUND + 3;

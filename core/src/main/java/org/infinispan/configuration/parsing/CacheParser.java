@@ -40,7 +40,6 @@ import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
-import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.TransactionConfiguration;
@@ -49,7 +48,6 @@ import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.expiration.TouchMode;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.transaction.LockingMode;
@@ -97,7 +95,7 @@ public class CacheParser implements ConfigurationParser {
       String name = reader.getAttributeValue(Attribute.NAME.getLocalName());
       switch (element) {
          case LOCAL_CACHE: {
-            parseLocalCache(reader, holder, name,false);
+            parseLocalCache(reader, holder, name, false);
             break;
          }
          case LOCAL_CACHE_CONFIGURATION: {
@@ -105,7 +103,7 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case INVALIDATION_CACHE: {
-            parseInvalidationCache(reader, holder, name,false);
+            parseInvalidationCache(reader, holder, name, false);
             break;
          }
          case INVALIDATION_CACHE_CONFIGURATION: {
@@ -160,7 +158,7 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseCacheAttribute(ConfigurationReader reader,
-         int index, Attribute attribute, String value, ConfigurationBuilder builder) {
+                                    int index, Attribute attribute, String value, ConfigurationBuilder builder) {
       switch (attribute) {
          case NAME:
          case CONFIGURATION:
@@ -321,7 +319,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case ROLES: {
-               for(String role : reader.getListAttributeValue(i)) {
+               for (String role : reader.getListAttributeValue(i)) {
                   authzBuilder.role(role);
                }
                break;
@@ -722,8 +720,7 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseSegmentedCacheAttribute(ConfigurationReader reader, int index, Attribute attribute, String value,
-                                             ConfigurationBuilder builder, ClassLoader classLoader)
-      {
+                                             ConfigurationBuilder builder, ClassLoader classLoader) {
       switch (attribute) {
          case SEGMENTS: {
             builder.clustering().hash().numSegments(ParseUtils.parseInt(reader, index, value));
@@ -872,7 +869,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             case GROUPER:
                // JSON/YAML
-               for(String grouper : reader.getListAttributeValue(i)) {
+               for (String grouper : reader.getListAttributeValue(i)) {
                   groups.addGrouper(Util.getInstance(grouper, holder.getClassLoader()));
                }
                break;
@@ -943,9 +940,6 @@ public class CacheParser implements ConfigurationParser {
             case LOADER:
                ignoreElement(reader, element);
                break;
-            case SINGLE_FILE_STORE:
-               parseSingleFileStore(reader, holder);
-               break;
             default:
                reader.handleAny(holder);
          }
@@ -953,23 +947,9 @@ public class CacheParser implements ConfigurationParser {
    }
 
    protected void parseFileStore(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      SoftIndexFileStoreConfigurationBuilder fileStoreBuilder = null;
-
       PersistenceConfigurationBuilder persistence = holder.getCurrentConfigurationBuilder().persistence();
-      AbstractStoreConfigurationBuilder<?, ?> actualStoreConfig;
-      int majorSchema = reader.getSchema().getMajor();
-      boolean legacyFileStore = false;
-      if (majorSchema < 13) {
-         parseSingleFileStore(reader, holder);
-         return;
-      } else if (majorSchema == 13) {
-         fileStoreBuilder = persistence.addStore(SFSToSIFSConfigurationBuilder.class);
-         actualStoreConfig = fileStoreBuilder;
-         legacyFileStore = true;
-      } else {
-         fileStoreBuilder = persistence.addSoftIndexFileStore();
-         actualStoreConfig = fileStoreBuilder;
-      }
+      SoftIndexFileStoreConfigurationBuilder fileStoreBuilder = persistence.addSoftIndexFileStore();
+
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -982,15 +962,6 @@ public class CacheParser implements ConfigurationParser {
             case PATH: {
                fileStoreBuilder.dataLocation(value);
                fileStoreBuilder.indexLocation(value);
-               break;
-            }
-            case FRAGMENTATION_FACTOR:
-            case MAX_ENTRIES: {
-               if (legacyFileStore) {
-                  ignoreAttribute(reader, i);
-               } else {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               }
                break;
             }
             case OPEN_FILES_LIMIT:
@@ -1008,11 +979,11 @@ public class CacheParser implements ConfigurationParser {
                }
                break;
             case PURGE: {
-               actualStoreConfig.purgeOnStartup(ParseUtils.parseBoolean(reader, i, value));
+               fileStoreBuilder.purgeOnStartup(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             default: {
-               parseStoreAttribute(reader, i, actualStoreConfig);
+               parseStoreAttribute(reader, i, fileStoreBuilder);
             }
          }
       }
@@ -1034,7 +1005,7 @@ public class CacheParser implements ConfigurationParser {
                }
                break;
             default:
-               parseStoreElement(reader, actualStoreConfig);
+               parseStoreElement(reader, fileStoreBuilder);
          }
       }
    }
@@ -1098,38 +1069,6 @@ public class CacheParser implements ConfigurationParser {
          }
       }
       ParseUtils.requireNoContent(reader);
-   }
-
-   protected void parseSingleFileStore(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      CONFIG.singleFileStoreDeprecated();
-      SingleFileStoreConfigurationBuilder storeBuilder = holder.getCurrentConfigurationBuilder().persistence().addSingleFileStore();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case RELATIVE_TO: {
-               ParseUtils.attributeRemovedSince(reader, 11, 0, i);
-               ignoreAttribute(reader, i);
-               break;
-            }
-            case PATH: {
-               storeBuilder.location(value);
-               break;
-            }
-            case MAX_ENTRIES: {
-               storeBuilder.maxEntries(ParseUtils.parseInt(reader, i, value));
-               break;
-            }
-            case FRAGMENTATION_FACTOR: {
-               storeBuilder.fragmentationFactor(Float.parseFloat(value));
-               break;
-            }
-            default: {
-               parseStoreAttribute(reader, i, storeBuilder);
-            }
-         }
-      }
-      this.parseStoreElements(reader, storeBuilder);
    }
 
    /**
@@ -1295,60 +1234,42 @@ public class CacheParser implements ConfigurationParser {
       }
 
       if (store != null) {
-         if (store instanceof SingleFileStore) {
-            SingleFileStoreConfigurationBuilder sfs = builder.persistence().addSingleFileStore();
-            if (fetchPersistentState != null)
-               sfs.fetchPersistentState(fetchPersistentState);
-            if (ignoreModifications != null)
-               sfs.ignoreModifications(ignoreModifications);
-            if (purgeOnStartup != null)
-               sfs.purgeOnStartup(purgeOnStartup);
-            if (preload != null)
-               sfs.preload(preload);
-            if (shared != null)
-               sfs.shared(shared);
-            if (transactional != null)
-               sfs.transactional(transactional);
-            if (segmented != null)
-               sfs.segmented(segmented);
-            parseStoreElements(reader, sfs);
-         } else {
-            ConfiguredBy annotation = store.getClass().getAnnotation(ConfiguredBy.class);
-            Class<? extends StoreConfigurationBuilder> builderClass = null;
-            if (annotation != null) {
-               Class<?> configuredBy = annotation.value();
-               if (configuredBy != null) {
-                  BuiltBy builtBy = configuredBy.getAnnotation(BuiltBy.class);
-                  builderClass = builtBy.value().asSubclass(StoreConfigurationBuilder.class);
-               }
+
+         ConfiguredBy annotation = store.getClass().getAnnotation(ConfiguredBy.class);
+         Class<? extends StoreConfigurationBuilder> builderClass = null;
+         if (annotation != null) {
+            Class<?> configuredBy = annotation.value();
+            if (configuredBy != null) {
+               BuiltBy builtBy = configuredBy.getAnnotation(BuiltBy.class);
+               builderClass = builtBy.value().asSubclass(StoreConfigurationBuilder.class);
             }
-
-            StoreConfigurationBuilder configBuilder;
-            // If they don't specify a builder just use the custom configuration builder and set the class
-            if (builderClass == null) {
-               configBuilder = builder.persistence().addStore(CustomStoreConfigurationBuilder.class).customStoreClass(
-                     store.getClass());
-            } else {
-               configBuilder = builder.persistence().addStore(builderClass);
-            }
-
-            if (fetchPersistentState != null)
-               configBuilder.fetchPersistentState(fetchPersistentState);
-            if (ignoreModifications != null)
-               configBuilder.ignoreModifications(ignoreModifications);
-            if (purgeOnStartup != null)
-               configBuilder.purgeOnStartup(purgeOnStartup);
-            if (preload != null)
-               configBuilder.preload(preload);
-            if (shared != null)
-               configBuilder.shared(shared);
-            if (transactional != null)
-               configBuilder.transactional(transactional);
-            if (segmented != null)
-               configBuilder.segmented(segmented);
-
-            parseStoreElements(reader, configBuilder);
          }
+
+         StoreConfigurationBuilder configBuilder;
+         // If they don't specify a builder just use the custom configuration builder and set the class
+         if (builderClass == null) {
+            configBuilder = builder.persistence().addStore(CustomStoreConfigurationBuilder.class).customStoreClass(
+                  store.getClass());
+         } else {
+            configBuilder = builder.persistence().addStore(builderClass);
+         }
+
+         if (fetchPersistentState != null)
+            configBuilder.fetchPersistentState(fetchPersistentState);
+         if (ignoreModifications != null)
+            configBuilder.ignoreModifications(ignoreModifications);
+         if (purgeOnStartup != null)
+            configBuilder.purgeOnStartup(purgeOnStartup);
+         if (preload != null)
+            configBuilder.preload(preload);
+         if (shared != null)
+            configBuilder.shared(shared);
+         if (transactional != null)
+            configBuilder.transactional(transactional);
+         if (segmented != null)
+            configBuilder.segmented(segmented);
+
+         parseStoreElements(reader, configBuilder);
       }
    }
 
@@ -1668,7 +1589,7 @@ public class CacheParser implements ConfigurationParser {
          if (mode == org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL) {
             return NONE;
          }
-         for(TransactionMode txMode : TransactionMode.values()) {
+         for (TransactionMode txMode : TransactionMode.values()) {
             if (txMode.mode == mode && txMode.xaEnabled == xaEnabled && txMode.recoveryEnabled == recoveryEnabled && txMode.batchingEnabled == batchingEnabled)
                return txMode;
          }
@@ -1697,6 +1618,7 @@ public class CacheParser implements ConfigurationParser {
       ASYNC(false),
       ;
       private final boolean sync;
+
       Mode(boolean sync) {
          this.sync = sync;
       }

@@ -56,7 +56,7 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       return TestCacheManagerFactory.newDefaultCacheManager(true, global, new ConfigurationBuilder());
    }
 

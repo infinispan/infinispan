@@ -63,7 +63,7 @@ public class GlobalStateBackwardsCompatibilityTest extends MultipleCacheManagers
 
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.clustering().cacheMode(CacheMode.REPL_SYNC).stateTransfer().timeout(30, TimeUnit.SECONDS)
-            .persistence().addSingleFileStore().location(stateDirectory);
+            .persistence().addSoftIndexFileStore();
       EmbeddedCacheManager manager = addClusterEnabledCacheManager(global, null);
       manager.defineConfiguration(CACHE_NAME, config.build());
    }

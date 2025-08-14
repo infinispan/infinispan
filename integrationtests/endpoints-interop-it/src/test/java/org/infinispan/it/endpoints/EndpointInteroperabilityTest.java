@@ -9,9 +9,9 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOS
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
@@ -30,8 +30,8 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.dataconversion.Base16Codec;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
@@ -221,7 +221,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       byte[] valueMarshalled = marshaller.objectToByteBuffer(value);
 
       defaultMarshalledRemoteCache.put(key, value);
-      assertEquals(defaultMarshalledRemoteCache.get(key), value);
+      assertEquals(value, defaultMarshalledRemoteCache.get(key));
 
       // Read via Rest the raw byte[] as marshalled by the client
       RestResponse response = new RestRequest().cache(MARSHALLED_CACHE_NAME)
@@ -248,24 +248,24 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
             .write();
 
       // Read via Hot Rod
-      assertEquals(defaultMarshalledRemoteCache.get(otherKey), otherValue);
+      assertEquals(otherValue, defaultMarshalledRemoteCache.get(otherKey));
    }
 
    @Test
    public void testStringKeysAndStringValues() {
       // Write via Hot Rod (the HR client is configured with a String marshaller)
       stringRemoteCache.put("key", "true");
-      assertEquals(stringRemoteCache.get("key"), "true");
+      assertEquals("true", stringRemoteCache.get("key"));
 
       // Read via Rest
       RestResponse response = new RestRequest().cache(STRING_CACHE_NAME).key("key").accept(TEXT_PLAIN).read();
-      assertEquals(response.body(), "true");
+      assertEquals("true", response.body());
 
       // Write via rest
       new RestRequest().cache(STRING_CACHE_NAME).key("key2").value("Testing").write();
 
       // Read via Hot Rod
-      assertEquals(stringRemoteCache.get("key2"), "Testing");
+      assertEquals("Testing", stringRemoteCache.get("key2"));
 
       // Get values as JSON from Hot Rod
       Object jsonString = stringRemoteCache.withDataFormat(DataFormat.builder()
@@ -356,7 +356,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       defaultRemoteCache.put(key, value);
       assertEquals(value, defaultRemoteCache.get(key));
 
-      String restKey = StandardConversions.bytesToHex(key);
+      String restKey = Base16Codec.encode(key);
 
       // Read via Rest
       RestResponse response = new RestRequest().cache(DEFAULT_CACHE_NAME)
@@ -370,11 +370,11 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    public void testCacheLifecycle() {
       // Write from Hot Rod
       stringRemoteCache.put("key", "Hello World");
-      assertEquals(stringRemoteCache.get("key"), "Hello World");
+      assertEquals("Hello World", stringRemoteCache.get("key"));
 
       // Read from REST
       RestRequest restRequest = new RestRequest().cache(STRING_CACHE_NAME).key("key").accept(TEXT_PLAIN);
-      assertEquals(restRequest.executeGet().body(), "Hello World");
+      assertEquals("Hello World", restRequest.executeGet().body());
 
       // Delete the cache
       RemoteCacheManagerAdmin admin = stringRemoteCache.getRemoteCacheManager().administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE);
@@ -382,7 +382,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Check cache not available
       assertClientError(() -> stringRemoteCache.get("key"), "CacheNotFoundException");
-      assertEquals(restRequest.executeGet().status(), 404);
+      assertEquals(404, restRequest.executeGet().status());
 
       // Recreate the cache
       RemoteCache<String, String> recreated = admin.getOrCreateCache(stringRemoteCache.getName(), new ConfigurationBuilder()
@@ -392,10 +392,10 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Write from Hot Rod
       recreated.put("key", "Hello World");
-      assertEquals(recreated.get("key"), "Hello World");
+      assertEquals("Hello World", recreated.get("key"));
 
       // Read from REST
-      assertEquals(restRequest.executeGet().body(), "Hello World");
+      assertEquals("Hello World", restRequest.executeGet().body());
    }
 
    private void assertClientError(Runnable runnable, String messagePart) {
@@ -485,7 +485,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       RestResponse read() {
          RestResponse response = executeGet();
-         assertEquals(response.status(), 200);
+         assertEquals(200, response.status());
          return response;
       }
    }

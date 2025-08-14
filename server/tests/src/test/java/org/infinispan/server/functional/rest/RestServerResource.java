@@ -7,9 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -17,7 +14,6 @@ import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.com.google.common.collect.Sets;
 
 /**
  * @since 10.0
@@ -61,6 +57,10 @@ public class RestServerResource {
       RestClient client = SERVERS.rest().create();
       Json infoNode = Json.read(assertStatus(OK, client.server().info()));
       assertNotNull(infoNode.at("version"));
+      if (infoNode.has("cache-manager-name")) {
+         // Introduced in 16.0
+         assertEquals("default", infoNode.at("cache-manager-name").asString());
+      }
    }
 
    @Test
@@ -78,14 +78,6 @@ public class RestServerResource {
       Json infoNode = Json.read(assertStatus(OK, client.server().env()));
       Json osVersion = infoNode.at("os.version");
       assertEquals(System.getProperty("os.version"), osVersion.asString());
-   }
-
-   @Test
-   public void testCacheManagerNames() {
-      RestClient client = SERVERS.rest().create();
-      Json cacheManagers = Json.read(assertStatus(OK, client.cacheManagers()));
-      Set<String> cmNames = cacheManagers.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
-      assertEquals(cmNames, Sets.newHashSet("default"));
    }
 
    @Test

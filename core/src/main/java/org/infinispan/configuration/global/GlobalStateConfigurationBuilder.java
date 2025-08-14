@@ -2,10 +2,12 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.GlobalStateConfiguration.ENABLED;
 import static org.infinispan.configuration.global.GlobalStateConfiguration.UNCLEAN_SHUTDOWN_ACTION;
+import static org.infinispan.configuration.global.GlobalStatePathConfiguration.PATH;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.function.Supplier;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -73,7 +75,7 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
    /**
     * Defines the filesystem path where node-specific persistent data which needs to survive container restarts
     * should be stored. This path will be used as the default storage location for file-based cache stores such as
-    * the default {@link org.infinispan.persistence.file.SingleFileStore} as well as the consistent hash for all caches
+    * the default {@link org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore} as well as the consistent hash for all caches
     * which enables graceful shutdown and restart. Because the data stored in the persistent
     * location is specific to the node that owns it, this path <b>MUST NOT</b> be shared among multiple instances.
     * Defaults to the user.dir system property which usually is where the application was started.
@@ -142,6 +144,9 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
    public void validate() {
       if (attributes.attribute(ENABLED).get() && persistentLocation.getLocation() == null) {
          CONFIG.missingGlobalStatePersistentLocation();
+      }
+      if (!attributes.attribute(ENABLED).get() && persistentLocation.attributes().attribute(PATH).isModified()) {
+         throw new CacheConfigurationException("GlobalState persistent location set, but state not enabled");
       }
       storageConfiguration.validate();
    }

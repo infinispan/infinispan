@@ -123,17 +123,6 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * Adds a single file cache store.
-    * @deprecated since 13.0. To be removed in 16.0 has been replaced by {@link #addSoftIndexFileStore()}
-    */
-   @Deprecated(forRemoval=true, since = "13.0")
-   public SingleFileStoreConfigurationBuilder addSingleFileStore() {
-      SingleFileStoreConfigurationBuilder builder = new SingleFileStoreConfigurationBuilder(this);
-      this.stores.add(builder);
-      return builder;
-   }
-
-   /**
     * Adds a soft index file cache store.
     * @return the configuration for a soft index file store
     */

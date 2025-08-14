@@ -103,11 +103,12 @@ public class RestConnection implements Connection, Closeable {
    }
 
    private void connectInternal() throws IOException {
-      serverVersion = (String) parseBody(fetch(() -> client.server().info()), Map.class).get("version");
+      Map<String, String> map = parseBody(fetch(() -> client.server().info()), Map.class);
+      serverVersion = map.get("version");
+      String containerName = map.get("cache-manager-name");
+      availableContainers = Collections.singletonList(containerName);
+      activeResource = Resource.getRootResource(this).getChild(ContainersResource.NAME, containerName);
       connected = true;
-      availableContainers = parseBody(fetch(() -> client.cacheManagers()), List.class);
-      activeResource = Resource.getRootResource(this)
-            .getChild(ContainersResource.NAME, availableContainers.iterator().next());
       refreshServerInfo();
    }
 
