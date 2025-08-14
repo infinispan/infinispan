@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,7 +36,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    private static final Person RADIM = new Person("Radim", "Tough guy!", 29);
    private static final Person DAN = new Person("Dan", "Not that tough.", 39);
    private static final AnotherGrassEater FLUFFY = new AnotherGrassEater("Fluffy", "Very cute.");
-   private DummyInMemoryStore store;
+   private DummyInMemoryStore<?, ?> store;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
@@ -134,7 +133,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    }
 
    private List<Person> sortByAge(List<Person> people) {
-      new ArrayList<>(people).sort(Comparator.comparingInt(Person::getAge));
+      people.sort(Comparator.comparingInt(Person::getAge));
       return people;
    }
 

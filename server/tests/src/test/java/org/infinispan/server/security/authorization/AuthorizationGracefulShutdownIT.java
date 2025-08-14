@@ -15,6 +15,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationPropertie
 import org.infinispan.commons.test.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.file.SingleFileStoreConfigurationBuilder;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.artifacts.Artifacts;
@@ -41,7 +42,7 @@ public class AuthorizationGracefulShutdownIT {
    public void testGracefulShutdownRestart() throws Exception {
       TestUser user = TestUser.ADMIN;
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSingleFileStore().segmented(false);
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addStore(SingleFileStoreConfigurationBuilder.class).segmented(false);
       RemoteCache<Object, Object> hotRod = SERVERS.hotrod().withServerConfiguration(builder).withClientConfiguration(clientHotRodSecurityConfiguration(user)).create();
 
       populateCache(hotRod);

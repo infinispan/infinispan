@@ -20,7 +20,6 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -46,7 +45,6 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
@@ -155,7 +153,6 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    private BlockingManager blockingManager;
    private boolean segmented;
    private int actualNumSegments;
-   private int maxEntries;
 
    public static File getStoreFile(String directoryPath, String cacheName) {
       return new File(new File(directoryPath), cacheName + ".dat");
@@ -170,7 +167,6 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       this.blockingManager = ctx.getBlockingManager();
 
       keyPartitioner = ctx.getKeyPartitioner();
-      maxEntries = configuration.maxEntries();
       segmented = configuration.segmented();
       if (segmented) {
          actualNumSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
@@ -973,40 +969,13 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
          // add the new entry to in-memory index
          FileEntry oldEntry = segmentEntries.put(marshalledEntry.getKey(), newEntry);
-
-         // if we added an entry, check if we need to evict something
-         if (oldEntry == null)
-            oldEntry = evict();
-
-         // in case we replaced or evicted an entry, add to freeList
+         // in case we replaced an entry, add to freeList
          free(oldEntry);
       } catch (Exception e) {
          throw new PersistenceException(e);
       } finally {
          resizeLock.unlockRead(stamp);
       }
-   }
-
-   /**
-    * Try to evict an entry if the capacity of the cache store is reached.
-    *
-    * @return FileEntry to evict, or null (if unbounded or capacity is not yet reached)
-    */
-   @GuardedBy("resizeLock#readLock")
-   private FileEntry evict() {
-      if (maxEntries > 0) {
-         // When eviction is enabled, segmentation is disabled
-         Map<K, FileEntry> segment0Entries = getSegmentEntries(0);
-         synchronized (segment0Entries) {
-            if (segment0Entries.size() > maxEntries) {
-               Iterator<FileEntry> it = segment0Entries.values().iterator();
-               FileEntry fe = it.next();
-               it.remove();
-               return fe;
-            }
-         }
-      }
-      return null;
    }
 
    @Override
@@ -1607,11 +1576,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          for (int segment : segments) {
             if (entries[segment] != null)
                continue;
-
-            // Only use LinkedHashMap (LRU) for entries when cache store is bounded
-            Map<K, FileEntry> entryMap = configuration.maxEntries() > 0 ?
-                  new LinkedHashMap<>(16, 0.75f, true) :
-                  new HashMap<>();
+            Map<K, FileEntry> entryMap = new HashMap<>();
             entries[segment] = Collections.synchronizedMap(entryMap);
          }
       } finally {

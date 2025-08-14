@@ -19,6 +19,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.file.SingleFileStoreConfigurationBuilder;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.logging.Log;
@@ -72,13 +73,9 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
          if (globalConfiguration.globalState().enabled()) {
             builder.persistence()
                   .availabilityInterval(-1)
-                  .addSingleFileStore()
-                     .location(globalConfiguration.globalState().persistentLocation())
-                     // Internal caches don't need to be segmented
-                     .segmented(false)
+                  .addStore(SingleFileStoreConfigurationBuilder.class)
                      .purgeOnStartup(false)
-                     .preload(true)
-                     .fetchPersistentState(true);
+                     .preload(true);
          } else {
             CONFIG.warnUnableToPersistInternalCaches();
          }
