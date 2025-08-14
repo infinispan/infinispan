@@ -27,6 +27,7 @@ import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.Server;
 import org.infinispan.server.test.api.TestUser;
+import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
@@ -449,16 +450,15 @@ public class RollingUpgradeHandler {
       }
 
       String versionToUse = versionType == VersionType.TO ? configuration.toVersion() : configuration.fromVersion();
-      String name = (siteName != null ? siteName : "") + clusterName + "-" + versionToUse;
+      String name = (siteName != null ? siteName : "") + clusterName + "-";
 
       if (versionToUse.startsWith("image://")) {
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME, versionToUse.substring("image://".length()));
+         name += "image-" + AbstractInfinispanServerDriver.abbreviate(versionToUse);
       } else if (versionToUse.startsWith("file://")) {
          // Need to strip the file: as testcontainers strips all `file:` occurrences which seems like a bug
-         {
-            versionToUse = versionToUse.substring("file://".length());
-            name = (siteName != null ? siteName : "") + clusterName + "-" + versionToUse;
-         }
+         versionToUse = versionToUse.substring("file://".length());
+         name += "file-" + AbstractInfinispanServerDriver.abbreviate(versionToUse);
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR, versionToUse);
          // For simplicity trim down to the directory name for the rest of the test
          versionToUse = Path.of(versionToUse).getFileName().toString();
@@ -473,6 +473,7 @@ public class RollingUpgradeHandler {
          }
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_SNAPSHOT_IMAGE_NAME, imageName);
       } else {
+         name += versionToUse;
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_VERSION, versionToUse);
       }
       InfinispanServerTestConfiguration config = builder.createServerTestConfiguration();
