@@ -3,7 +3,7 @@ package org.infinispan.persistence;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.persistence.file.SingleFileStoreConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**

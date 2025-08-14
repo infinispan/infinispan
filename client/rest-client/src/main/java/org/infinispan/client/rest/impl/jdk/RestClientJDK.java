@@ -46,11 +46,6 @@ public class RestClientJDK implements RestClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> cacheManagers() {
-      return rawClient.get(contextPath + "/v2/server/cache-managers");
-   }
-
-   @Override
    public RestContainerClient container() {
       return new RestContainerClientJDK(rawClient);
    }

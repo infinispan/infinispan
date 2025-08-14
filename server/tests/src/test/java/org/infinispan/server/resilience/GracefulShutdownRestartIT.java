@@ -40,7 +40,7 @@ public class GracefulShutdownRestartIT {
    @Test
    public void testGracefulShutdownRestart() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSingleFileStore().segmented(false);
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSoftIndexFileStore().segmented(false);
       RemoteCache<Object, Object> hotRod = SERVER.hotrod().withServerConfiguration(builder).create();
 
       populateCache(hotRod);
@@ -57,7 +57,7 @@ public class GracefulShutdownRestartIT {
    @Test
    public void testClusterReadyDuringRecovery() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSingleFileStore().segmented(false);
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSoftIndexFileStore().segmented(false);
       RemoteCache<Object, Object> hotRod = SERVER.hotrod().withServerConfiguration(builder).create();
 
       populateCache(hotRod);

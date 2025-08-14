@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.marshall;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
@@ -20,11 +18,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
@@ -62,7 +55,6 @@ public class MarshallerPerCacheTest extends SingleHotRodServerTest {
             .encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE)
             .build();
       Configuration defaultConfig = new org.infinispan.configuration.cache.ConfigurationBuilder().build();
-      cm.createCache(CACHE_TEXT, defaultConfig);
       cm.createCache(CACHE_JAVA_SERIALIZED, defaultConfig);
       cm.createCache(CACHE_DEFAULT, protobufConfig);
       return cm;
@@ -115,46 +107,12 @@ public class MarshallerPerCacheTest extends SingleHotRodServerTest {
       }
    }
 
-   static final class CustomValueMarshaller extends AbstractMarshaller {
-
-      @Override
-      protected ByteBuffer objectToBuffer(Object o, int estimatedSize) {
-         String json;
-         if (o instanceof CustomValue customValue) {
-            json = Json.object().set("field", customValue.getField()).toString();
-         } else {
-            json = Json.make(o).asString();
-         }
-         return ByteBufferImpl.create(json.getBytes(UTF_8));
-      }
-
-      @Override
-      public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-         Json json = Json.read(new String(buf, UTF_8));
-         if (json.has("field")) {
-            return new CustomValue(json.at("field").asString());
-         }
-         return json.asString();
-      }
-
-      @Override
-      public boolean isMarshallable(Object o) {
-         return o instanceof CustomValue || o instanceof String;
-      }
-
-      @Override
-      public MediaType mediaType() {
-         return APPLICATION_JSON;
-      }
-   }
-
    @Override
    protected ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
       ConfigurationBuilder builder = super.createHotRodClientConfigurationBuilder(host, serverPort);
       builder.security().addJavaSerialAllowList(".*CustomValue.*");
       // Configure RemoteCaches with different marshallers
       builder.remoteCache(CACHE_DEFAULT).marshaller(ProtoStreamMarshaller.class);
-      builder.remoteCache(CACHE_TEXT).marshaller(new CustomValueMarshaller());
       builder.remoteCache(CACHE_JAVA_SERIALIZED).marshaller(JavaSerializationMarshaller.class);
       return builder;
    }
@@ -164,7 +122,6 @@ public class MarshallerPerCacheTest extends SingleHotRodServerTest {
       MarshallerRegistry marshallerRegistry = remoteCacheManager.getMarshallerRegistry();
 
       assertMarshallerUsed(CACHE_DEFAULT, marshallerRegistry.getMarshaller(APPLICATION_PROTOSTREAM));
-      assertMarshallerUsed(CACHE_TEXT, new CustomValueMarshaller());
       assertMarshallerUsed(CACHE_JAVA_SERIALIZED, marshallerRegistry.getMarshaller(APPLICATION_SERIALIZED_OBJECT));
    }
 

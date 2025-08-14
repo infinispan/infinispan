@@ -35,6 +35,7 @@ import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -101,9 +102,15 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    }
 
    @Override
+   protected void teardown() {
+      super.teardown();
+      Util.recursiveFileRemove(CommonsTestingUtil.tmpDirectory(this.getClass()));
+   }
+
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       global.cacheContainer().security().authorization().enable();
       return createCacheManager(true, global, new ConfigurationBuilder());
@@ -259,7 +266,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testRemoveCache() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass().getSimpleName(), "remove-cache"));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       final String cacheName = "testRemoveCache";
@@ -280,7 +287,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testRemoveCacheWithPassivation() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass().getSimpleName(), "remove-cache-with-passivation"));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       final String cacheName = "testRemoveCacheWithPassivation";

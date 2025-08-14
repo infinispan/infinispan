@@ -118,7 +118,7 @@ public class IracRestartWithoutGlobalStateTest extends AbstractMultipleSitesTest
    protected void decorateCacheConfiguration(ConfigurationBuilder builder, int siteIndex, int nodeIndex) {
       if (siteIndex == 0 && persistent) {
          String data = tmpDirectory(getClass().getSimpleName(), "site_" + siteIndex, "node_" + nodeIndex);
-         builder.persistence().addSingleFileStore().location(data).fetchPersistentState(true);
+         builder.persistence().addSoftIndexFileStore().dataLocation(data).indexLocation(data).fetchPersistentState(true);
       }
    }
 

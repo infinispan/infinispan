@@ -45,7 +45,6 @@ import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
-import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.cache.StatisticsConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -765,8 +764,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
    private void writeStore(ConfigurationWriter writer, StoreConfiguration configuration) {
       if (configuration instanceof SoftIndexFileStoreConfiguration) {
          writeFileStore(writer, (SoftIndexFileStoreConfiguration) configuration);
-      } else if (configuration instanceof SingleFileStoreConfiguration) {
-         writeSingleFileStore(writer, (SingleFileStoreConfiguration) configuration);
       } else if (configuration instanceof CustomStoreConfiguration) {
          writeCustomStore(writer, (CustomStoreConfiguration) configuration);
       } else {
@@ -843,14 +840,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             IndexConfiguration.INDEX_SEGMENTS,
             IndexConfiguration.MIN_NODE_SIZE,
             IndexConfiguration.MAX_NODE_SIZE);
-   }
-
-   private void writeSingleFileStore(ConfigurationWriter writer, SingleFileStoreConfiguration configuration) {
-      writer.writeStartElement(Element.SINGLE_FILE_STORE);
-      configuration.attributes().write(writer);
-      writeCommonStoreSubAttributes(writer, configuration);
-      writeCommonStoreElements(writer, configuration);
-      writer.writeEndElement();
    }
 
    private void writeCustomStore(ConfigurationWriter writer, CustomStoreConfiguration configuration) {

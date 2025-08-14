@@ -4,7 +4,7 @@ import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;

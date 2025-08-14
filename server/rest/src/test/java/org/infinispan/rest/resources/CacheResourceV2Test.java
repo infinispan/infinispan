@@ -694,7 +694,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testCacheSize() {
       for (int i = 0; i < 100; i++) {
-         putInCache("default", i, "" + i, APPLICATION_JSON_TYPE);
+         putInCache("default", i, "" + i, TEXT_PLAIN_TYPE);
       }
 
       CompletionStage<RestResponse> response = client.cache("default").size();

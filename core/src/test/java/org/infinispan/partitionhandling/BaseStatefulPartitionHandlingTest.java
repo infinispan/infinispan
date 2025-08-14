@@ -66,7 +66,7 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
 
       ConfigurationBuilder config = new ConfigurationBuilder();
       partitionHandlingBuilder(config);
-      config.persistence().addSingleFileStore().location(stateDirectory).fetchPersistentState(true);
+      config.persistence().addSoftIndexFileStore();
 
       ConfigurationBuilder defaultConfig = createDefault ? config : null;
       EmbeddedCacheManager manager = createClusteredCacheManager(start, global, defaultConfig, new TransportFlags());

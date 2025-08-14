@@ -103,7 +103,7 @@ public class PersistenceMockUtil {
          Cache mockCache = mockCache(testClass.getSimpleName(), configuration, timeService, classAllowList, timeoutScheduledExecutor);
          MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(persistenceMarshaller);
          GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-         global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(testClass));
+         global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(testClass));
          return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
                keyPartitioner, persistenceMarshaller, timeService, new ByteBufferFactoryImpl(), mef,
                new WithinThreadExecutor(), global.build(), blockingManager, nonBlockingManager);

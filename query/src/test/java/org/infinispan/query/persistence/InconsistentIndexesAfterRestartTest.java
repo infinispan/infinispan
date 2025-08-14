@@ -82,7 +82,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
             .persistence()
-            .addSingleFileStore()
+            .addSoftIndexFileStore()
             .fetchPersistentState(true)
             .indexing()
             .enable()

@@ -42,11 +42,11 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @Override
    protected void teardown() {
-      super.teardown();
       HotRodClientTestingUtil.killServers(hrServer);
       hrServer = null;
       TestingUtil.killCacheManagers(localCacheManager);
       localCacheManager = null;
+      super.teardown();
    }
 
    @Override

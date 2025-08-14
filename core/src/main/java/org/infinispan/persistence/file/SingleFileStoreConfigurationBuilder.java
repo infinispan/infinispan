@@ -1,18 +1,15 @@
-package org.infinispan.configuration.cache;
+package org.infinispan.persistence.file;
 
-import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
-import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.FRAGMENTATION_FACTOR;
-import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.LOCATION;
-import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.MAX_ENTRIES;
+import static org.infinispan.persistence.file.SingleFileStoreConfiguration.FRAGMENTATION_FACTOR;
+import static org.infinispan.persistence.file.SingleFileStoreConfiguration.LOCATION;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.file.SingleFileStore;
-import org.infinispan.util.logging.Log;
 
 /**
  * Single file cache store configuration builder.
@@ -45,30 +42,6 @@ public class SingleFileStoreConfigurationBuilder
    }
 
    /**
-    * In order to speed up lookups, the single file cache store keeps an index
-    * of keys and their corresponding position in the file. To avoid this
-    * index resulting in memory consumption problems, this cache store can
-    * bounded by a maximum number of entries that it stores. If this limit is
-    * exceeded, entries are removed permanently using the LRU algorithm both
-    * from the in-memory index and the underlying file based cache store.
-    *
-    * So, setting a maximum limit only makes sense when Infinispan is used as
-    * a cache, whose contents can be recomputed or they can be retrieved from
-    * the authoritative data store.
-    *
-    * If this maximum limit is set when the Infinispan is used as an
-    * authoritative data store, it could lead to data loss, and hence it's
-    * not recommended for this use case.
-    *
-    * @deprecated Since 13.0, will be removed in 16.0
-    */
-   @Deprecated(forRemoval=true, since = "13.0")
-   public SingleFileStoreConfigurationBuilder maxEntries(int maxEntries) {
-      attributes.attribute(MAX_ENTRIES).set(maxEntries);
-      return this;
-   }
-
-   /**
     * The store tries to fit in a new entry into an existing entry from a free entry pool (if one is available)
     * However, this existing free entry may be quite bigger than what is required to contain the new entry
     * It may then make sense to split the free entry into two parts:
@@ -80,16 +53,6 @@ public class SingleFileStoreConfigurationBuilder
    public SingleFileStoreConfigurationBuilder fragmentationFactor(float fragmentationFactor) {
       attributes.attribute(FRAGMENTATION_FACTOR).set(fragmentationFactor);
       return this;
-   }
-
-   @Override
-   public void validate() {
-      Attribute<Boolean> segmentedAttribute = attributes.attribute(SEGMENTED);
-      Attribute<Integer> maxEntriesAttribute = attributes.attribute(MAX_ENTRIES);
-      if (segmentedAttribute.get() && maxEntriesAttribute.get() > 0) {
-         throw Log.CONFIG.segmentedSingleFileStoreDoesNotSupportMaxEntries();
-      }
-      super.validate();
    }
 
    @Override

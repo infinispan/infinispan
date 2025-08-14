@@ -55,9 +55,11 @@ public class ConfigurationTest extends AbstractCacheTest {
 
    private static GlobalConfigurationBuilder defaultGlobalConfigurationBuilder(boolean globalStateEnabled) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      builder.globalState().enabled(globalStateEnabled).persistentLocation(PERSISTENT_FOLDER)
-            .temporaryLocation(TEMP_PERSISTENT_FOLDER)
-            .sharedPersistentLocation(SHARED_PERSISTENT_FOLDER);
+      if (globalStateEnabled) {
+         builder.globalState().enabled(true).persistentLocation(PERSISTENT_FOLDER)
+               .temporaryLocation(TEMP_PERSISTENT_FOLDER)
+               .sharedPersistentLocation(SHARED_PERSISTENT_FOLDER);
+      }
       return builder;
    }
 

@@ -47,7 +47,7 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
    private void enableTestJdbcStorage(ConfigurationBuilder configuration) throws Exception {
       configuration
          .persistence()
-            .addSingleFileStore()
+            .addSoftIndexFileStore()
                .async()
                   .enable();
    }

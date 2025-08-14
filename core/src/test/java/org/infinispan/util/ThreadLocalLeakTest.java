@@ -73,7 +73,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
              .locking().concurrencyLevel(2048)
              .invocationBatching().enable()
              .persistence().passivation(false)
-             .addSingleFileStore().shared(false).preload(true);
+             .addSoftIndexFileStore().shared(false).preload(true);
       amendConfiguration(builder);
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.globalState().enable().persistentLocation(tmpDirectory);

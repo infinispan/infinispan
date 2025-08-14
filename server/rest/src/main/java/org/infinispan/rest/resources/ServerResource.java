@@ -85,7 +85,6 @@ import io.netty.handler.ipfilter.IpFilterRuleType;
  */
 public class ServerResource implements ResourceHandler {
    private final InvocationHelper invocationHelper;
-   private static final ServerInfo SERVER_INFO = new ServerInfo();
    private final Executor blockingExecutor;
 
    public ServerResource(InvocationHelper invocationHelper) {
@@ -130,8 +129,6 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/server/report/{nodeName}")
                .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
                .handleWith(this::nodeReport)
-            .invocation().methods(GET).path("/v2/server/cache-managers")
-               .handleWith(this::cacheManagers)
             .invocation().methods(GET).path("/v2/server/ignored-caches/{cache-manager}")
                .deprecated()
                .permission(AuthorizationPermission.ADMIN)
@@ -219,10 +216,6 @@ public class ServerResource implements ResourceHandler {
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
       Set<String> ignored = serverStateManager.getIgnoredCaches();
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(ignored), isPretty(request));
-   }
-
-   private CompletionStage<RestResponse> cacheManagers(RestRequest request) {
-      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(invocationHelper.getServer().cacheManagerNames()), isPretty(request));
    }
 
    private CompletionStage<RestResponse> connectorStartStop(RestRequest request) {
@@ -414,7 +407,7 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> info(RestRequest request) {
-      return asJsonResponseFuture(invocationHelper.newResponse(request), SERVER_INFO.toJson(), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), new ServerInfo(invocationHelper.getServer()).toJson(), isPretty(request));
    }
 
    private CompletionStage<RestResponse> overviewReport(RestRequest request) {
@@ -583,7 +576,11 @@ public class ServerResource implements ResourceHandler {
    }
 
    static class ServerInfo implements JsonSerialization {
-      private static final Json json = Json.object("version", Version.printVersion());
+      private final Json json;
+
+      public ServerInfo(ServerManagement server) {
+         json = Json.object("version", Version.printVersion(), "cache-manager-name", server.getCacheManager().getName());
+      }
 
       @Override
       public Json toJson() {

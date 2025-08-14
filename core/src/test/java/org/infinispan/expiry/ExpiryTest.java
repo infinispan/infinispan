@@ -236,7 +236,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    private CacheContainer createCacheContainerWithStore(String location) {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalBuilder.globalState().persistentLocation(location);
+      globalBuilder.globalState().enable().persistentLocation(location);
       CacheContainer cc = TestCacheManagerFactory.createCacheManager(globalBuilder, new ConfigurationBuilder());
       TestingUtil.replaceComponent(cc, TimeService.class, timeService, true);
       return cc;

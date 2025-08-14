@@ -49,34 +49,34 @@ public class StoreMigrator {
    private static final int DEFAULT_BATCH_SIZE = 1;
    // A list of all internal classes that were previously marshallable, but we no longer provide
    // guarantees over byte compatibility in future versions
-   private static final Set<Class<?>> INTERNAL_BLACKLIST = new HashSet<>();
+   private static final Set<Class<?>> INTERNAL_BAN_LIST = new HashSet<>();
    static {
-      INTERNAL_BLACKLIST.add(ArrayList.class);
-      INTERNAL_BLACKLIST.add(Collections.singletonList(1).getClass());
-      INTERNAL_BLACKLIST.add(Collections.singletonMap(1,1).getClass());
-      INTERNAL_BLACKLIST.add(Collections.singleton(1).getClass());
-      INTERNAL_BLACKLIST.add(ByteBufferImpl.class);
-      INTERNAL_BLACKLIST.add(KeyValuePair.class);
-      INTERNAL_BLACKLIST.add(InternalCacheEntry.class);
-      INTERNAL_BLACKLIST.add(InternalCacheValue.class);
-      INTERNAL_BLACKLIST.add(InternalMetadataImpl.class);
-      INTERNAL_BLACKLIST.add(ImmortalCacheEntry.class);
-      INTERNAL_BLACKLIST.add(MortalCacheEntry.class);
-      INTERNAL_BLACKLIST.add(TransientCacheEntry.class);
-      INTERNAL_BLACKLIST.add(TransientMortalCacheEntry.class);
-      INTERNAL_BLACKLIST.add(ImmortalCacheValue.class);
-      INTERNAL_BLACKLIST.add(MortalCacheValue.class);
-      INTERNAL_BLACKLIST.add(TransientCacheValue.class);
-      INTERNAL_BLACKLIST.add(TransientMortalCacheValue.class);
+      INTERNAL_BAN_LIST.add(ArrayList.class);
+      INTERNAL_BAN_LIST.add(Collections.singletonList(1).getClass());
+      INTERNAL_BAN_LIST.add(Collections.singletonMap(1,1).getClass());
+      INTERNAL_BAN_LIST.add(Collections.singleton(1).getClass());
+      INTERNAL_BAN_LIST.add(ByteBufferImpl.class);
+      INTERNAL_BAN_LIST.add(KeyValuePair.class);
+      INTERNAL_BAN_LIST.add(InternalCacheEntry.class);
+      INTERNAL_BAN_LIST.add(InternalCacheValue.class);
+      INTERNAL_BAN_LIST.add(InternalMetadataImpl.class);
+      INTERNAL_BAN_LIST.add(ImmortalCacheEntry.class);
+      INTERNAL_BAN_LIST.add(MortalCacheEntry.class);
+      INTERNAL_BAN_LIST.add(TransientCacheEntry.class);
+      INTERNAL_BAN_LIST.add(TransientMortalCacheEntry.class);
+      INTERNAL_BAN_LIST.add(ImmortalCacheValue.class);
+      INTERNAL_BAN_LIST.add(MortalCacheValue.class);
+      INTERNAL_BAN_LIST.add(TransientCacheValue.class);
+      INTERNAL_BAN_LIST.add(TransientMortalCacheValue.class);
 
-      INTERNAL_BLACKLIST.add(MetadataImmortalCacheEntry.class);
-      INTERNAL_BLACKLIST.add(MetadataMortalCacheEntry.class);
-      INTERNAL_BLACKLIST.add(MetadataTransientCacheEntry.class);
-      INTERNAL_BLACKLIST.add(MetadataTransientMortalCacheEntry.class);
-      INTERNAL_BLACKLIST.add(MetadataImmortalCacheValue.class);
-      INTERNAL_BLACKLIST.add(MetadataMortalCacheValue.class);
-      INTERNAL_BLACKLIST.add(MetadataTransientCacheValue.class);
-      INTERNAL_BLACKLIST.add(MetadataTransientMortalCacheValue.class);
+      INTERNAL_BAN_LIST.add(MetadataImmortalCacheEntry.class);
+      INTERNAL_BAN_LIST.add(MetadataMortalCacheEntry.class);
+      INTERNAL_BAN_LIST.add(MetadataTransientCacheEntry.class);
+      INTERNAL_BAN_LIST.add(MetadataTransientMortalCacheEntry.class);
+      INTERNAL_BAN_LIST.add(MetadataImmortalCacheValue.class);
+      INTERNAL_BAN_LIST.add(MetadataMortalCacheValue.class);
+      INTERNAL_BAN_LIST.add(MetadataTransientCacheValue.class);
+      INTERNAL_BAN_LIST.add(MetadataTransientMortalCacheValue.class);
    }
    private final Properties properties;
 
@@ -137,7 +137,7 @@ public class StoreMigrator {
 
    private boolean warnAndIgnoreInternalClasses(Object o, boolean output) {
       Class<?> clazz = o.getClass();
-      boolean isBlackListed = !clazz.isPrimitive() && INTERNAL_BLACKLIST.stream().anyMatch(c -> c.isAssignableFrom(clazz));
+      boolean isBlackListed = !clazz.isPrimitive() && INTERNAL_BAN_LIST.stream().anyMatch(c -> c.isAssignableFrom(clazz));
       if (isBlackListed) {
          if (output) {
             System.err.printf("Ignoring entry with class '%s' as this is an internal Infinispan class that" +

@@ -44,7 +44,7 @@ public class SoftIndexFileStoreCompatibilityTest extends AbstractPersistenceComp
    @Override
    protected void amendGlobalConfigurationBuilder(GlobalConfigurationBuilder builder) {
       super.amendGlobalConfigurationBuilder(builder);
-      builder.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory());
+      builder.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory());
    }
 
    @Override
