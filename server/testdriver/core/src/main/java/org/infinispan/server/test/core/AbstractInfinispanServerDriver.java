@@ -302,7 +302,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
             MavenSettings.init();
             for (String artifact : artifacts) {
                Path resolved = Artifact.fromString(artifact).resolveArtifact();
-               Files.copy(resolved, libDir.toPath().resolve(resolved.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+               Path target = libDir.toPath().resolve(resolved.getFileName());
+               Files.copy(resolved, target, StandardCopyOption.REPLACE_EXISTING);
+               log.infof("Added %s (%d bytes)", target, Files.size(target));
             }
          } catch (IOException e) {
             throw new RuntimeException(e);
