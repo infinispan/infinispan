@@ -208,7 +208,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    private void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) {
       String url = String.format("/rest/v2/caches/%s/%s", cacheName, key);
       Map<String, String> headers = new HashMap<>();
-      if (keyContentType != null) headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), contentType);
+      if (keyContentType != null) headers.put(KEY_CONTENT_TYPE_HEADER.toString(), contentType);
 
       CompletionStage<RestResponse> response = client.raw().put(url, headers, RestEntity.create(MediaType.fromString(contentType), value));
 
@@ -240,7 +240,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    private void removeFromCache(String cacheName, Object key, String keyContentType) {
       String url = String.format("/rest/v2/caches/%s/%s", cacheName, key);
       Map<String, String> headers = new HashMap<>();
-      if (keyContentType != null) headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), keyContentType);
+      if (keyContentType != null) headers.put(KEY_CONTENT_TYPE_HEADER.toString(), keyContentType);
 
       CompletionStage<RestResponse> response = client.raw().delete(url, headers);
 
