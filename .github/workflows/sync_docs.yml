@@ -22,7 +22,7 @@ jobs:
         maven-version: 3.9.0
 
     - name: Build docs with Maven
-      run: mvn install -Pdistribution -pl documentation -am -s maven-settings.xml
+      run: mvn install -Pdistribution -pl documentation -am 
 
     - name: Clone infinispan.github.io
       uses: actions/checkout@master
