@@ -525,31 +525,6 @@ public class CacheParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseCompatibility(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      EncodingConfigurationBuilder encoding = builder.encoding();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case ENABLED:
-               if (ParseUtils.parseBoolean(reader, i, value)) {
-                  encoding.key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-                  encoding.value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-               }
-               break;
-            case MARSHALLER:
-               CONFIG.marshallersNotSupported();
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
-
-      ParseUtils.requireNoContent(reader);
-   }
-
    private void parseLocking(ConfigurationReader reader, ConfigurationBuilder builder) {
       ParseUtils.parseAttributes(reader, builder.locking());
       ParseUtils.requireNoContent(reader);
@@ -630,12 +605,12 @@ public class CacheParser implements ConfigurationParser {
          switch (element) {
             case KEY_DATA_TYPE:
                ContentTypeConfigurationBuilder keyBuilder = encodingBuilder.key();
-               parseContentType(reader, holder, keyBuilder);
+               parseContentType(reader, keyBuilder);
                ParseUtils.requireNoContent(reader);
                break;
             case VALUE_DATA_TYPE:
                ContentTypeConfigurationBuilder valueBuilder = encodingBuilder.value();
-               parseContentType(reader, holder, valueBuilder);
+               parseContentType(reader, valueBuilder);
                ParseUtils.requireNoContent(reader);
                break;
             default:
@@ -644,7 +619,7 @@ public class CacheParser implements ConfigurationParser {
       }
    }
 
-   private void parseContentType(ConfigurationReader reader, ConfigurationBuilderHolder holder, ContentTypeConfigurationBuilder builder) {
+   private void parseContentType(ConfigurationReader reader, ContentTypeConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -1433,7 +1408,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case INDEXED_ENTITIES: {
-               parseIndexedEntities(reader, holder, builder);
+               parseIndexedEntities(reader, builder);
                break;
             }
             case PROPERTY: {
@@ -1551,7 +1526,7 @@ public class CacheParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseIndexedEntities(ConfigurationReader reader, ConfigurationBuilderHolder holder, ConfigurationBuilder builder) {
+   private void parseIndexedEntities(ConfigurationReader reader, ConfigurationBuilder builder) {
       ParseUtils.requireNoAttributes(reader);
       String[] entities = reader.readArray(Element.INDEXED_ENTITIES, Element.INDEXED_ENTITY);
       builder.indexing().addIndexedEntities(entities);
