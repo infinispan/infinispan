@@ -13,7 +13,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.context.Flag;
@@ -92,9 +91,6 @@ class TargetStoreFactory {
             if (compressionType != null)
                builder.compressionType(CompressionType.valueOf(compressionType.toUpperCase()));
             return builder;
-         case SINGLE_FILE_STORE:
-            props.required(LOCATION);
-            return new SingleFileStoreConfigurationBuilder(persistenceBuilder).location(props.get(LOCATION));
          case SOFT_INDEX_FILE_STORE:
             props.required(LOCATION);
             props.required(INDEX_LOCATION);
