@@ -15,8 +15,8 @@ import org.infinispan.commons.dataconversion.internal.JsonSerialization;
  */
 public class JsonQueryRequest implements JsonSerialization {
 
-   private static final Integer DEFAULT_OFFSET = 0;
-   private static final Integer DEFAULT_MAX_RESULTS = 10;
+   private static final int DEFAULT_OFFSET = 0;
+   private static final int DEFAULT_MAX_RESULTS = 10;
 
    private final String query;
    private final Integer startOffset;

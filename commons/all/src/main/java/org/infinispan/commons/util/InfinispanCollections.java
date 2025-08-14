@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,6 +47,7 @@ public final class InfinispanCollections {
 
    /**
     * A function that converts an entry into a key/value pair for use in a map.
+    *
     * @param <K> generated key
     * @param <V> generated value
     * @param <E> entry input
@@ -53,6 +55,7 @@ public final class InfinispanCollections {
    public interface MapMakerFunction<K, V, E> {
       /**
        * Transforms the given input into a key/value pair for use in a map
+       *
        * @param input instance of the input type
        * @return a Map.Entry parameterized with K and V
        */
@@ -66,10 +69,10 @@ public final class InfinispanCollections {
     * function.
     *
     * @param input contains the input key/value pair map
-    * @param f function instance to use to transform the value part of the map
-    * @param <K> input map's key type
-    * @param <V> desired output type of the map's value
-    * @param <E> input map's value type
+    * @param f     function instance to use to transform the value part of the map
+    * @param <K>   input map's key type
+    * @param <V>   desired output type of the map's value
+    * @param <E>   input map's value type
     * @return a shallow copy of the input Map with all its values transformed.
     */
    public static <K, V, E> Map<K, V> transformMapValue(Map<K, E> input, Function<E, V> f) {
@@ -90,10 +93,10 @@ public final class InfinispanCollections {
     * Given a collection, transforms the collection to a map given a {@link MapMakerFunction}
     *
     * @param input contains a collection of type E
-    * @param f MapMakerFunction instance to use to transform the collection to a key/value pair
-    * @param <K> output map's key type
-    * @param <V> output type of the map's value
-    * @param <E> input collection's entry type
+    * @param f     MapMakerFunction instance to use to transform the collection to a key/value pair
+    * @param <K>   output map's key type
+    * @param <V>   output type of the map's value
+    * @param <E>   input collection's entry type
     * @return a Map with keys and values generated from the input collection
     */
    public static <K, V, E> Map<K, V> transformCollectionToMap(Collection<? extends E> input, MapMakerFunction<K, V, ? super E> f) {
@@ -117,8 +120,8 @@ public final class InfinispanCollections {
     * Returns the elements that are present in s1 but which are not present
     * in s2, without changing the contents of neither s1, nor s2.
     *
-    * @param s1 first set
-    * @param s2 second set
+    * @param s1  first set
+    * @param s2  second set
     * @param <E> type of objects in Set
     * @return the elements in s1 that are not in s2
     */
@@ -186,5 +189,15 @@ public final class InfinispanCollections {
       return collection instanceof Set ?
             (Set<Object>) collection :
             new HashSet<>(collection);
+   }
+
+
+   public static <K, V> Map<K, V> sortedMapOf(Object... data) {
+      assert data.length % 2 == 0;
+      LinkedHashMap<K, V> map = new LinkedHashMap<>(data.length / 2);
+      for (int i = 0; i < data.length; i += 2) {
+         map.put((K) data[i], (V) data[i + 1]);
+      }
+      return map;
    }
 }
