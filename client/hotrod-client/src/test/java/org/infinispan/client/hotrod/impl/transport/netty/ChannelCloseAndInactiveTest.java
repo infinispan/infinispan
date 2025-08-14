@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.retry.AbstractRetryTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import io.netty.channel.Channel;
@@ -34,9 +35,24 @@ public class ChannelCloseAndInactiveTest extends AbstractRetryTest {
       return builder;
    }
 
+   @BeforeClass(alwaysRun = true)
+   @Override
+   public void createBeforeClass() throws Throwable {
+      super.createBeforeClass();
+      System.setProperty("io.netty.eventLoopThreads", "4");
+   }
+
+   @Override
+   protected boolean cleanupAfterTest() {
+      System.clearProperty("io.netty.eventLoopThreads");
+      return super.cleanupAfterTest();
+   }
+
    @Override
    protected void amendRemoteCacheManagerConfiguration(org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder) {
       builder.maxRetries(1);
+      // We manually stall operations, so let's define something that won't timeout.
+      builder.socketTimeout(60_000);
       builder.connectionPool().maxActive(2);
    }
 
@@ -58,8 +74,9 @@ public class ChannelCloseAndInactiveTest extends AbstractRetryTest {
       eventually(() -> firstChannelRef.get() != null);
       Channel firstChannel = firstChannelRef.get();
 
+      // Eventually the Noop operation is registered.
       HeaderDecoder firstDecoder = ((HeaderDecoder) firstChannel.pipeline().get(HeaderDecoder.NAME));
-      assertThat(firstDecoder.registeredOperations()).isOne();
+      eventually(() -> firstDecoder.registeredOperations() == 1);
 
       // The first channel does not return to the pool. We submit the second operation to create a new channel.
       CrashMidOperationTest.NoopRetryingOperation secondOperation = new CrashMidOperationTest.NoopRetryingOperation(1, channelFactory, remoteCacheManager.getConfiguration(),
@@ -78,7 +95,7 @@ public class ChannelCloseAndInactiveTest extends AbstractRetryTest {
       Channel spyChannel = spy(secondChannel);
       CountDownLatch closeSecondLatch = new CountDownLatch(1);
       doAnswer(ivk -> {
-         closeSecondLatch.await(10, TimeUnit.SECONDS);
+         assertThat(closeSecondLatch.await(10, TimeUnit.SECONDS)).isTrue();
          return ivk.callRealMethod();
       }).when(spyChannel).close();
 
