@@ -85,4 +85,7 @@ public class MockBasicComponentRegistry implements BasicComponentRegistry {
    public <T> ComponentRef<T> lazyGetComponent(Class<T> componentType) {
       return (ComponentRef<T>) components.get(componentType.getName());
    }
+
+   @Override
+   public void blameInitialization() { }
 }
