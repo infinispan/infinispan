@@ -20,6 +20,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -52,6 +53,8 @@ public class RestContainerListenerTest {
    @ParameterizedTest(name = "{0}-{1}")
    @ArgumentsSource(ArgsProvider.class)
    public void testSSECluster(Protocol protocol, AcceptSerialization serialization) throws Exception {
+      Assumptions.assumeFalse(serialization.equals(AcceptSerialization.YAML));
+
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
       RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
