@@ -82,6 +82,10 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_SERVER_CONTAINER_DEBUG = PREFIX + "container.debug";
    /**
+    * Specifies whether the server is newer than 14.0.x
+    */
+   public static final String INFINISPAN_TEST_SERVER_NEWER_THAN_14 = PREFIX + "container.newerThan14";
+   /**
     * Specifies the name of the keycloak base image
     */
    public static final String KEYCLOAK_IMAGE = "org.infinispan.test.keycloakImage";

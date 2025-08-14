@@ -31,6 +31,7 @@ import org.infinispan.counter.configuration.ConvertUtil;
 import org.infinispan.rest.resources.AbstractRestResourceTest;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.functional.ClusteredIT;
+import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -118,7 +119,11 @@ public class RestOperations {
       try (Closeable ignored = client.raw().listen("/rest/v2/container?action=listen", Collections.emptyMap(), sseListener)) {
          assertTrue(sseListener.await(10, TimeUnit.SECONDS));
 
-         assertThat(client.cache("caching-listen").createWithTemplate("org.infinispan.DIST_SYNC")).isOk();
+         if (Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_NEWER_THAN_14)) {
+            assertThat(client.cache("caching-listen").createWithConfiguration(RestEntity.create(MediaType.APPLICATION_JSON, "{\"distributed-cache\":{}}"))).isOk();
+         } else {
+            assertThat(client.cache("caching-listen").createWithTemplate("org.infinispan.DIST_SYNC")).isOk();
+         }
 
          sseListener.expectEvent("create-cache", "caching-listen");
          sseListener.expectEvent("lifecycle-event", "ISPN100002");
