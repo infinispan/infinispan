@@ -47,3 +47,5 @@ classes
 # recording files
 *.jfr
 jacoco-report
+jacoco
+
