@@ -13,10 +13,15 @@ on:
       nextVersion:
         description: "Next version"
         required: true
-      latest:
-        description: "Latest stable release"
-        default: true
-        type: boolean
+      type:
+         type: choice
+         description: The type of release
+         required: true
+         default: default
+         options:
+            - default
+            - latest
+            - prerelease
 
 jobs:
   release:
@@ -37,7 +42,7 @@ jobs:
       - name: Checkout Source
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ inputs.branch }}
           token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
       - name: Configure Git User
@@ -51,13 +56,13 @@ jobs:
 
       - name: Set release version
         run: |
-          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ github.event.inputs.version }}
-          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.version }}
-          sed -i "s/^:ispn_version:.*\$/:ispn_version: ${{ github.event.inputs.version }}/" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc
-          git commit --no-verify -a -m "Releasing ${{ github.event.inputs.version }}"
+          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ inputs.version }}
+          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ inputs.version }}
+          sed -i "s/^:ispn_version:.*\$/:ispn_version: ${{ inputs.version }}/" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc
+          git commit --no-verify -a -m "Releasing ${{ inputs.version }}"
 
       - name: Publish to Central
-        run: mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release -DskipTests clean deploy -Dinfinispan.brand.version=${{ github.event.inputs.version }}
+        run: mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release -DskipTests clean deploy -Dinfinispan.brand.version=${{ inputs.version }}
         env:
           MAVEN_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
@@ -65,22 +70,42 @@ jobs:
 
       - name: Tag Release
         run: |
-          git tag -a ${{ github.event.inputs.version }} -m ${{ github.event.inputs.version }} 
+          git tag -a ${{ inputs.version }} -m ${{ inputs.version }} 
 
       - name: Next Version
         run: |
-          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ github.event.inputs.nextVersion }}
-          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.nextVersion }}
-          git commit --no-verify -a -m "Next version ${{ github.event.inputs.nextVersion }}"
+          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ inputs.nextVersion }}
+          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ inputs.nextVersion }}
+          git commit --no-verify -a -m "Next version ${{ inputs.nextVersion }}"
 
       - name: Push changes
         run: |
-          git push --tags origin ${{ github.event.inputs.branch }}
+          git push --tags origin ${{ inputs.branch }}
 
-      - name: Create Release
+      - name: Create default release
+        if: ${{ inputs.type == 'default' }}
         run: |
-          gh release create ${{ github.event.inputs.version }} --generate-notes
-          gh release upload ${{ github.event.inputs.version }} distribution/target/distribution/infinispan-server-${{ github.event.inputs.version }}.zip
+           gh release create ${{ inputs.version }} --generate-notes --latest=false
+        env:
+           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+      -  name: Create pre-release
+         if: ${{ inputs.type == 'prerelease' }}
+         run: |
+            gh release create ${{ inputs.version }} --generate-notes --latest=false --prerelease
+         env:
+            GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+      -  name: Create latest release
+         if: ${{ inputs.type == 'latest' }}
+         run: |
+            gh release create ${{ inputs.version }} --generate-notes --latest=true
+         env:
+            GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+      - name: Attach server distribution
+        run: |
+          gh release upload ${{ inputs.version }} distribution/target/distribution/infinispan-server-${{ inputs.version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
@@ -90,7 +115,7 @@ jobs:
     steps:
       - uses: gerdemann/http-status-code@1.1.1
         with:
-          url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ github.event.inputs.version }}/infinispan-distribution-${{ github.event.inputs.version }}.pom
+          url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ inputs.version }}/infinispan-distribution-${{ inputs.version }}.pom
           code: 200
           timeout: 10800000
           interval: 10000
@@ -131,7 +156,7 @@ jobs:
       - name: Checkout Release Tag
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.inputs.version }}
+          ref: ${{ inputs.version }}
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Build native executable
@@ -147,7 +172,7 @@ jobs:
       - name: Upload CLI native executable
         id: upload-cli-native-executable
         run: |
-          gh release upload ${{ github.event.inputs.version }} quarkus/cli/target/infinispan-cli-${{ github.event.inputs.version }}-${{ matrix.asset_name }}.zip
+          gh release upload ${{ inputs.version }} quarkus/cli/target/infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
@@ -158,15 +183,15 @@ jobs:
     with:
       branch: main
       repository: infinispan/infinispan-images
-      ispnVersion: ${{ github.event.inputs.version }}
-      latest: ${{ github.event.inputs.latest }}
+      ispnVersion: ${{ inputs.version }}
+      type: ${{ inputs.type }}
 
   operator:
     needs: images
-    if: contains(github.event.inputs.version, '.Final')
+    if: contains(inputs.version, '.Final')
     uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@main
     secrets: inherit
     with:
-      image: quay.io/infinispan/server:${{ github.event.inputs.version }}
+      image: quay.io/infinispan/server:${{ inputs.version }}
       ref: main
       repository: infinispan/infinispan-operator
