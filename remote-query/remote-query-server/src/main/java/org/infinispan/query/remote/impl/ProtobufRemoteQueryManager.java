@@ -13,7 +13,7 @@ import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.query.objectfilter.Matcher;
 import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 
 /**
  * {@link RemoteQueryManager} suitable for caches storing protobuf.

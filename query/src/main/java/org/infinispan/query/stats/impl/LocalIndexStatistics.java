@@ -24,10 +24,10 @@ import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.IndexStatisticsSnapshot;
 import org.infinispan.query.core.stats.impl.IndexStatisticsSnapshotImpl;
-import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
-import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.scope.SearchScope;
-import org.infinispan.search.mapper.session.SearchSession;
+import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.scope.SearchScope;
+import org.infinispan.query.mapper.session.SearchSession;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 

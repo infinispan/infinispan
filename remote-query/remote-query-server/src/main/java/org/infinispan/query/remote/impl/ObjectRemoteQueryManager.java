@@ -16,7 +16,7 @@ import org.infinispan.query.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 
 /**
  * Implementation of {@link RemoteQueryManager} for caches storing deserialized content (Java Objects).

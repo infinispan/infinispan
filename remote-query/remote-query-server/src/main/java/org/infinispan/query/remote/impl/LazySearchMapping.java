@@ -22,15 +22,15 @@ import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
 import org.infinispan.query.remote.impl.util.LazyRef;
-import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
-import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
-import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
-import org.infinispan.search.mapper.mapping.impl.InfinispanMapping;
-import org.infinispan.search.mapper.mapping.metamodel.IndexMetamodel;
-import org.infinispan.search.mapper.scope.SearchScope;
-import org.infinispan.search.mapper.session.SearchSession;
-import org.infinispan.search.mapper.work.SearchIndexer;
+import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
+import org.infinispan.query.mapper.mapping.SearchMappingCommonBuilding;
+import org.infinispan.query.mapper.mapping.impl.InfinispanMapping;
+import org.infinispan.query.mapper.mapping.metamodel.IndexMetamodel;
+import org.infinispan.query.mapper.scope.SearchScope;
+import org.infinispan.query.mapper.session.SearchSession;
+import org.infinispan.query.mapper.work.SearchIndexer;
 
 /**
  * @since 12.0

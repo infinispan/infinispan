@@ -9,8 +9,8 @@ import org.infinispan.query.remote.impl.indexing.ProtobufEntityConverter;
 import org.infinispan.query.remote.impl.mapping.model.ProtobufBootstrapIntrospector;
 import org.infinispan.query.remote.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.query.remote.impl.mapping.typebridge.ProtobufMessageBinder;
-import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
-import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
+import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
+import org.infinispan.query.mapper.mapping.SearchMappingCommonBuilding;
 
 public final class SerializationContextSearchMapping {
 
