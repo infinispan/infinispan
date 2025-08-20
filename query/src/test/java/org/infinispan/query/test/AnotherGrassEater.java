@@ -1,6 +1,7 @@
 package org.infinispan.query.test;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
@@ -55,29 +56,22 @@ public class AnotherGrassEater implements Serializable {
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
       AnotherGrassEater that = (AnotherGrassEater) o;
-
-      if (blurb != null ? !blurb.equals(that.blurb) : that.blurb != null) return false;
-      if (name != null ? !name.equals(that.name) : that.name != null) return false;
-
-      return true;
+      return age == that.age && Objects.equals(name, that.name) && Objects.equals(blurb, that.blurb);
    }
 
    @Override
    public int hashCode() {
-      int result = name != null ? name.hashCode() : 0;
-      result = 31 * result + (blurb != null ? blurb.hashCode() : 0);
-      return result;
+      return Objects.hash(name, blurb, age);
    }
 
    @Override
    public String toString() {
       return "AnotherGrassEater{" +
-              "name='" + name + '\'' +
-              ", blurb='" + blurb + '\'' +
-              '}';
+            "name='" + name + '\'' +
+            ", blurb='" + blurb + '\'' +
+            ", age=" + age +
+            '}';
    }
 }

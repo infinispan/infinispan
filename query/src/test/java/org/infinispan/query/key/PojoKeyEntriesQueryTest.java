@@ -19,7 +19,7 @@ import java.util.List;
 public class PojoKeyEntriesQueryTest extends SingleCacheManagerTest {
 
     @Override
-    protected EmbeddedCacheManager createCacheManager() throws Exception {
+    protected EmbeddedCacheManager createCacheManager() {
         ConfigurationBuilder indexed = new ConfigurationBuilder();
         indexed.indexing().enable()
                 .storage(LOCAL_HEAP)

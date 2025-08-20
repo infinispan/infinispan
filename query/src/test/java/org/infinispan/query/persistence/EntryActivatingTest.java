@@ -12,11 +12,10 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
-import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -33,7 +32,6 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
    Cache<String, Country> cache;
    WaitNonBlockingStore store;
    CacheContainer cm;
-   QueryFactory queryFactory;
    SearchMapping searchMapping;
 
    @BeforeClass

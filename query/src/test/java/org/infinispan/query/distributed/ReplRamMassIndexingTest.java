@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.ReplRamMassIndexingTest")
 public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg
             .indexing()
@@ -36,7 +36,7 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
    }
 
    @Override
-   public void testReindexing() throws Exception {
+   public void testReindexing() {
       final int NUM_CARS = 100;
       for (int i = 0; i < NUM_CARS; ++i) {
          cache(i % NUM_NODES).put("car" + i, new Car("skoda", "white", 42));

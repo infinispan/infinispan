@@ -5,28 +5,22 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
 
-import org.infinispan.commons.test.categories.Profiling;
 import org.infinispan.query.objectfilter.Matcher;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.objectfilter.test.model.Address;
 import org.infinispan.query.objectfilter.test.model.Person;
 import org.infinispan.query.objectfilter.test.model.PhoneNumber;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.testng.annotations.Test;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
-@Category(Profiling.class)
-@Ignore
+@Test(testName = "query.objectfilter.test.perf.PerfTest", groups = "profiling")
 public class PerfTest {
 
    private final int ITERATIONS = 10000000;
-
-   private final int NUM_FILTERS = 1;
 
    @Test
    public void testLikeMatchPerf() throws Exception {
@@ -52,6 +46,7 @@ public class PerfTest {
       Object obj = createPerson1();
 
       int[] matchCount = new int[1];
+      int NUM_FILTERS = 1;
       for (int k = 0; k < NUM_FILTERS; k++) {
          matcher.registerFilter(query, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
       }
@@ -98,7 +93,7 @@ public class PerfTest {
       System.out.println(getClass().getSimpleName() + "." + text + " " + iterationTime + "us");
    }
 
-   protected Matcher createMatcher() throws Exception {
+   protected Matcher createMatcher() {
       return new ReflectionMatcher((ClassLoader) null);
    }
 

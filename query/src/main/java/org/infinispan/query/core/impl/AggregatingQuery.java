@@ -7,15 +7,14 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
+import org.infinispan.commons.query.BaseQuery;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.query.objectfilter.impl.aggregation.RowGrouper;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.impl.BaseQuery;
 
 /**
  * Executes grouping and aggregation on top of a base query.
@@ -34,13 +33,13 @@ public final class AggregatingQuery<T> extends HybridQuery<T, Object[]> {
 
    private final boolean twoPhaseAcc;
 
-   public AggregatingQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache,
+   public AggregatingQuery(AdvancedCache<?, ?> cache,
                            String queryString, Map<String, Object> namedParameters,
                            int noOfGroupingColumns, List<FieldAccumulator> accumulators, boolean twoPhaseAcc,
                            ObjectFilter objectFilter,
                            long startOffset, int maxResults,
                            BaseQuery<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local) {
-      super(queryFactory, cache, queryString, IckleParsingResult.StatementType.SELECT, namedParameters, objectFilter,
+      super(cache, queryString, IckleParsingResult.StatementType.SELECT, namedParameters, objectFilter,
             startOffset, maxResults, baseQuery, queryStatistics, local, false);
       if (!baseQuery.hasProjections()) {
          throw new IllegalArgumentException("Base query must use projections");

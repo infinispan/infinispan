@@ -31,7 +31,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
    private static final int NUM_ENTITIES = 50;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
       cfg.indexing().enable()
             .storage(LOCAL_HEAP)
@@ -81,7 +81,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
       assertEquals(NUM_ENTITIES, indexSize(cache));
    }
 
-   public void testPartiallyReindex() throws Exception {
+   public void testPartiallyReindex() {
       cache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(0, new Person("name" + 0, "blurb" + 0, 0));
       verifyFindsPerson(0, "name" + 0);
       join(Search.getIndexer(cache).run(0));

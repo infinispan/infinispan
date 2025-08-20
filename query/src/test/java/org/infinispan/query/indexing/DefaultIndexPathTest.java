@@ -35,7 +35,7 @@ public class DefaultIndexPathTest extends SingleCacheManagerTest {
    private Path indexLocation2;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config
             .indexing()

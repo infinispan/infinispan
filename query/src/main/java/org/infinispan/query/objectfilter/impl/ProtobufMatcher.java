@@ -2,13 +2,13 @@ package org.infinispan.query.objectfilter.impl;
 
 import java.util.List;
 
-import org.infinispan.query.objectfilter.impl.predicateindex.ProtobufMatcherEvalContext;
-import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
-import org.infinispan.query.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.query.objectfilter.impl.predicateindex.ProtobufMatcherEvalContext;
+import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
+import org.infinispan.query.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
 
 /**
  * @author anistor@redhat.com
@@ -87,18 +87,10 @@ public class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescriptor, In
 
       @Override
       public boolean isComparableProperty(FieldDescriptor attributeMetadata) {
-         switch (attributeMetadata.getJavaType()) {
-            case INT:
-            case LONG:
-            case FLOAT:
-            case DOUBLE:
-            case BOOLEAN:
-            case STRING:
-            case BYTE_STRING:
-            case ENUM:
-               return true;
-         }
-         return false;
+         return switch (attributeMetadata.getJavaType()) {
+            case INT, LONG, FLOAT, DOUBLE, BOOLEAN, STRING, BYTE_STRING, ENUM -> true;
+            default -> false;
+         };
       }
    }
 }

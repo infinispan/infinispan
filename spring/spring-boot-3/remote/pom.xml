@@ -50,17 +50,6 @@
 
     <dependency>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-query-dsl</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.infinispan</groupId>
-          <artifactId>infinispan-commons</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>org.infinispan</groupId>
       <artifactId>infinispan-remote-query-client</artifactId>
       <exclusions>
         <exclusion>

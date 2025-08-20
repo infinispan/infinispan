@@ -56,7 +56,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
    private final ControlledConsistentHashFactory.Default chf = new ControlledConsistentHashFactory.Default(0, 1);
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing()
             .enable()

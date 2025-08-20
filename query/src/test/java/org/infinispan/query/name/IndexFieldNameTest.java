@@ -25,7 +25,7 @@ public class IndexFieldNameTest extends SingleCacheManagerTest {
    public static final String ENTITY_NAME = ChangeName.class.getName();
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.statistics().enable();
       config.indexing().enable()

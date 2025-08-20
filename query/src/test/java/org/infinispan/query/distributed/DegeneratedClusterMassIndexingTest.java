@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 public class DegeneratedClusterMassIndexingTest extends MultipleCacheManagersTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       cfg.indexing()
             .enable()

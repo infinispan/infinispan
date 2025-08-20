@@ -32,7 +32,7 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
          {"cat lover", "code lover", "mystical", "philologist", "algorithm designer", "decisionist", "philosopher"};
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder indexed = new ConfigurationBuilder();
       indexed.indexing().enable()
             .storage(LOCAL_HEAP)

@@ -40,7 +40,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    private DummyInMemoryStore store;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing()
             .enable()

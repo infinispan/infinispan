@@ -37,13 +37,12 @@ public class QueryLimitTest extends SingleHotRodServerTest {
    @Test
    public void testNextPageWithNoMaxResults() {
       RemoteCache<Integer, KeywordEntity> remoteCache = remoteCacheManager.getCache("keyword");
-      for (int i=0; i<20; i++) {
+      for (int i = 0; i < 20; i++) {
          remoteCache.put(i, new KeywordEntity(i + ""));
       }
 
       Query<KeywordEntity> query = remoteCache.query("from KeywordEntity");
       query.startOffset(10);
-      query.maxResults(-1);
 
       QueryResult<KeywordEntity> result = query.execute();
       assertThat(result.count().value()).isEqualTo(20);

@@ -27,7 +27,7 @@ public class IndexingConfigurationIgnoredTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
-   public void destroy() throws Exception {
+   public void destroy() {
       TestingUtil.killCacheManagers(manager);
    }
 

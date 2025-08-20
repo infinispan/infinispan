@@ -56,7 +56,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
       testPutTwice(true, true);
    }
 
-   private void testPutTwice(boolean batching, boolean inTran) throws Exception {
+   private void testPutTwice(boolean batching, boolean inTran) {
       testPutOperation(batching, inTran);
       testPutOperation(batching, inTran);
    }

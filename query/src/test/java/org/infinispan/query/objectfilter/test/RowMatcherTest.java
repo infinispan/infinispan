@@ -1,5 +1,6 @@
 package org.infinispan.query.objectfilter.test;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -9,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.objectfilter.FilterSubscription;
 import org.infinispan.query.objectfilter.Matcher;
 import org.infinispan.query.objectfilter.ObjectFilter;
@@ -16,19 +18,14 @@ import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.objectfilter.impl.RowMatcher;
 import org.infinispan.query.objectfilter.impl.syntax.parser.RowPropertyHelper;
 import org.infinispan.query.objectfilter.test.model.Person;
-import org.infinispan.query.dsl.Query;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.testng.annotations.Test;
 
 /**
  * @author anistor@redhat.com
  * @since 8.0
  */
+@Test(testName = "query.objectfilter.test.RowMatcherTest", groups = "functional")
 public class RowMatcherTest {
-
-   @Rule
-   public ExpectedException expectedException = ExpectedException.none();
 
    private final FilterQueryFactory queryFactory = new FilterQueryFactory();
 
@@ -77,11 +74,8 @@ public class RowMatcherTest {
 
    @Test
    public void shouldRaiseExceptionDueToUnknownAlias() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028502");
-
       String queryString = "from Row p where x.name = 'John'";
-      assertTrue(match(queryString, createPerson1()));
+      assertThatThrownBy(() -> match(queryString, createPerson1())).isInstanceOf(ParsingException.class).hasMessageContaining("ISPN028502");
    }
 
    @Test
@@ -128,20 +122,14 @@ public class RowMatcherTest {
 
    @Test
    public void testMissingProperty1() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028501");
-
       String queryString = "from Row where missingProp is null";
-      assertFalse(match(queryString, createPerson1()));
+      assertThatThrownBy(() -> match(queryString, createPerson1())).isExactlyInstanceOf(ParsingException.class).hasMessageContaining("ISPN028501");
    }
 
    @Test
    public void testMissingProperty2() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028501");
-
       String queryString = "from Row p where p.missingProp is null";
-      assertFalse(match(queryString, createPerson1()));
+      assertThatThrownBy(() -> match(queryString, createPerson1())).isExactlyInstanceOf(ParsingException.class).hasMessageContaining("ISPN028501");
    }
 
    @Test
@@ -527,9 +515,6 @@ public class RowMatcherTest {
 
    @Test
    public void testDisallowGroupingAndAggregations() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("Filters cannot use grouping or aggregations");
-
       String queryString = "SELECT sum(p.age) " +
             "from Row p " +
             "WHERE p.age <= 99 " +
@@ -538,7 +523,8 @@ public class RowMatcherTest {
 
       Matcher matcher = createMatcher();
 
-      matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> {
-      });
+      assertThatThrownBy(() ->
+            matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> {
+            })).isExactlyInstanceOf(ParsingException.class).hasMessageContaining("Filters cannot use grouping or aggregations");
    }
 }

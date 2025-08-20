@@ -5,7 +5,7 @@ import java.util.List;
 
 public class NestedExpr extends BooleanOperatorExpr {
 
-   private String nestedPath;
+   private final String nestedPath;
 
    @Override
    public void appendQueryString(StringBuilder sb) {

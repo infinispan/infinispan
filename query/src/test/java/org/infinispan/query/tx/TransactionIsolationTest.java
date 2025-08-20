@@ -48,7 +48,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
    }
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       builder.transaction().lockingMode(lockingMode);
       builder.indexing().enable()
@@ -145,7 +145,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
 
    static class FailPrepare extends DDAsyncInterceptor {
       @Override
-      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
          return invokeNextThenApply(ctx, command, ((rCtx, rCommand, rv) -> {
             throw new TestException("Induced!");
          }));

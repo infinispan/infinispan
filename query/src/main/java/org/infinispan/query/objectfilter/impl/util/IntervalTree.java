@@ -135,7 +135,7 @@ public final class IntervalTree<K extends Comparable<K>, V> {
       n.left = n.right = sentinel;
 
       Node<K, V> y = root;
-      Node<K, V> x = root != null ? root.left : null;
+      Node<K, V> x = root.left;
       while (x != sentinel) {
          y = x;
          if (n.interval.equals(x.interval)) {
@@ -152,15 +152,13 @@ public final class IntervalTree<K extends Comparable<K>, V> {
          }
       }
       n.parent = y;
-      if (root != null && y == root) {
+      if (y == root) {
          root.max = n.max;
       }
-      if (y != null) {
-         if (y == root || compareLowerBound(n.interval, y.interval)) {
-            y.left = n;
-         } else {
-            y.right = n;
-         }
+      if (y == root || compareLowerBound(n.interval, y.interval)) {
+         y.left = n;
+      } else {
+         y.right = n;
       }
       rebalanceAfterAdd(n);
       return n;
@@ -427,7 +425,7 @@ public final class IntervalTree<K extends Comparable<K>, V> {
    public List<Node<K, V>> stab(K k) {
       Interval<K> i = new Interval<>(k, true, k, true);
       final List<Node<K, V>> nodes = new ArrayList<>();
-      findOverlap(root.left, i, node -> nodes.add(node));
+      findOverlap(root.left, i, nodes::add);
       return nodes;
    }
 

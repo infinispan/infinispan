@@ -8,10 +8,9 @@ import java.util.NoSuchElementException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.HitCount;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -24,11 +23,11 @@ public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
 
    private static final Log LOG = LogFactory.getLog(EmptyResultQuery.class, Log.class);
 
-   public EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
+   public EmptyResultQuery(AdvancedCache<?, ?> cache, String queryString,
                            IckleParsingResult.StatementType statementType,
                            Map<String, Object> namedParameters, long startOffset, int maxResults,
                            LocalQueryStatistics queryStatistics) {
-      super(queryFactory, cache, queryString, statementType, namedParameters, null, startOffset, maxResults, queryStatistics, false);
+      super(cache, queryString, statementType, namedParameters, null, startOffset, maxResults, queryStatistics, false);
    }
 
    @Override
@@ -43,7 +42,7 @@ public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
 
    @Override
    protected ClosableIteratorWithCount<ObjectFilter.FilterResult> getInternalIterator() {
-      return new ClosableIteratorWithCount<ObjectFilter.FilterResult>() {
+      return new ClosableIteratorWithCount<>() {
 
          @Override
          public HitCount count() {

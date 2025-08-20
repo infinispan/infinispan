@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.api.NonIndexedValuesTest")
 public class NonIndexedValuesTest extends SingleCacheManagerTest {
 
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
       c.indexing()
          .enable()

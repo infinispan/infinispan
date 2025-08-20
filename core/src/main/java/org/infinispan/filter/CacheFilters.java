@@ -308,10 +308,7 @@ public final class CacheFilters {
       @Override
       public Stream<C> apply(CacheEntry<K, V> entry) {
          C converted = converter.filterAndConvert(entry.getKey(), entry.getValue(), entry.getMetadata());
-         if (converted == null) {
-            return Stream.empty();
-         }
-         return Stream.of(converted);
+         return Stream.ofNullable(converted);
       }
    }
 }

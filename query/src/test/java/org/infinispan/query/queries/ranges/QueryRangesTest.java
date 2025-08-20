@@ -33,9 +33,9 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    private Person person3;
    private Person person4;
 
-   protected String key1 = "test1";
-   protected String key2 = "test2";
-   protected String key3 = "test3";
+   protected final String key1 = "test1";
+   protected final String key2 = "test2";
+   protected final String key3 = "test3";
 
    public QueryRangesTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -48,7 +48,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    }
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
             .indexing()

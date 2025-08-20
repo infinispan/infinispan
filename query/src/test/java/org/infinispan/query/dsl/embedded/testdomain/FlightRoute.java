@@ -15,23 +15,23 @@ public class FlightRoute {
 
    @Basic(projectable = true, sortable = true)
    @ProtoField(1)
-   public String name;
+   public final String name;
 
    @Latitude(fieldName = "start")
    @ProtoField(2)
-   public Double startLat;
+   public final Double startLat;
 
    @Longitude(fieldName = "start")
    @ProtoField(3)
-   public Double startLon;
+   public final Double startLon;
 
    @Latitude(fieldName = "end")
    @ProtoField(4)
-   public Double endLat;
+   public final Double endLat;
 
    @Longitude(fieldName = "end")
    @ProtoField(5)
-   public Double endLon;
+   public final Double endLon;
 
    @ProtoFactory
    public FlightRoute(String name, Double startLat, Double startLon, Double endLat, Double endLon) {

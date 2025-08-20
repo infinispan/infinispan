@@ -9,16 +9,14 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchema;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -113,20 +111,15 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
       assertMemo1(fromCache);
 
       // get memo1 back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<Memo> query = qf.from(Memo.class)
-            .having("text").like("%ipsum%")
-            .build();
-      List<Memo> list = query.execute().list();
+      Query<Memo> query = remoteCache.query("FROM Memo m WHERE m.text LIKE '%ipsum%'");
+      List<Memo> list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(Memo.class, list.get(0).getClass());
       assertMemo1(list.get(0));
 
       // get memo2 back from remote cache via query and check its attributes
-      query = qf.from(Memo.class)
-            .having("author.name").eq("Adrian")
-            .build();
+      query = remoteCache.query("FROM Memo m WHERE m.author.name = 'Adrian'");
       list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());

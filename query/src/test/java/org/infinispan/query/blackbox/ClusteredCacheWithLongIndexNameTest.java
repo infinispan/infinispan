@@ -28,13 +28,14 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTest {
 
-   private Cache<String, ClassWithLongIndexName> cache0, cache1, cache2;
+   private Cache<String, ClassWithLongIndexName> cache0;
+   private Cache<String, ClassWithLongIndexName> cache2;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       createClusteredCaches(3, SCI.INSTANCE, getDefaultConfiguration());
       cache0 = cache(0);
-      cache1 = cache(1);
+      Cache<String, ClassWithLongIndexName> cache1 = cache(1);
       cache2 = cache(2);
    }
 
@@ -79,6 +80,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
    public static class ClassWithLongIndexName {
 
       @ProtoField(1)
+      final
       String name;
 
       @ProtoFactory

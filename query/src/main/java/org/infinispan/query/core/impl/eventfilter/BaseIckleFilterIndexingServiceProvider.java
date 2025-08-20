@@ -10,6 +10,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -41,7 +42,6 @@ import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.query.objectfilter.FilterCallback;
 import org.infinispan.query.objectfilter.FilterSubscription;
 import org.infinispan.query.objectfilter.Matcher;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * @author anistor@redhat.com
@@ -99,7 +99,7 @@ public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIn
       final boolean isDeltaFilter = isDelta(indexedFilter);
 
       addFilteringInvocationForMatcher(matcher, keyDataConversion, valueDataConversion);
-      Event.Type[] eventTypes = new Event.Type[listeners.keySet().size()];
+      Event.Type[] eventTypes = new Event.Type[listeners.size()];
       int i = 0;
       for (Class<? extends Annotation> annotation : listeners.keySet()) {
          eventTypes[i++] = getEventTypeFromAnnotation(annotation);
@@ -281,7 +281,7 @@ public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIn
 
    private final class DelegatingCacheEntryListenerInvocationImpl<K, V> extends DelegatingCacheEntryListenerInvocation<K, V> {
 
-      protected Callback<K, V> callback;
+      private Callback<K, V> callback;
 
       DelegatingCacheEntryListenerInvocationImpl(CacheEntryListenerInvocation<K, V> invocation) {
          super(invocation);

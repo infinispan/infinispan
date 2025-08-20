@@ -19,7 +19,7 @@ public class SecureMassIndexingTest extends DistributedMassIndexingTest {
    }
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       runAs(ADMIN, super::createCacheManagers);
    }
 

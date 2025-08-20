@@ -1,5 +1,7 @@
 package org.infinispan.query.distributed;
 
+import java.util.Objects;
+
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.Transformable;
@@ -20,25 +22,15 @@ public class NonSerializableKeyType {
    }
 
    @Override
-   public int hashCode() {
-      return keyValue.hashCode();
+   public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      NonSerializableKeyType that = (NonSerializableKeyType) o;
+      return Objects.equals(keyValue, that.keyValue);
    }
 
    @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      NonSerializableKeyType other = (NonSerializableKeyType) obj;
-      if (keyValue == null) {
-         if (other.keyValue != null)
-            return false;
-      } else if (!keyValue.equals(other.keyValue))
-         return false;
-      return true;
+   public int hashCode() {
+      return Objects.hashCode(keyValue);
    }
 
    public static class CustomTransformer implements Transformer {

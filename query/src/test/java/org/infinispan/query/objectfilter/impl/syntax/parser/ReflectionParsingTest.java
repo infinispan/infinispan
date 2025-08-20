@@ -4,12 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import org.junit.Test;
+import org.testng.annotations.Test;
+
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
+@Test(testName = "query.objectfilter.impl.syntax.parser.ReflectionParserTest", groups = "functional")
 public class ReflectionParsingTest extends AbstractParsingTest<Class<?>> {
 
    public ReflectionParsingTest() {

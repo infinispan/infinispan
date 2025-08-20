@@ -19,7 +19,7 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 public class ProgrammaticSearchMappingProviderTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.indexing()
               .enable()

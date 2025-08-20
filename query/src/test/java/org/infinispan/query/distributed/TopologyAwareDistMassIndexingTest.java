@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       List<EmbeddedCacheManager> managers =
             createTopologyAwareCacheNodes(NUM_NODES, CacheMode.DIST_SYNC, false, true,
                   false, getClass().getSimpleName(), Car.class);

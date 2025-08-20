@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 public class TopologyAwareClusteredQueryTest extends ClusteredQueryTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       List<EmbeddedCacheManager> managers = createTopologyAwareCacheNodes(2, getCacheMode(), transactionEnabled(),
                                                                           isIndexLocalOnly(), isRamDirectory(),
                                                                           "default", Person.class);

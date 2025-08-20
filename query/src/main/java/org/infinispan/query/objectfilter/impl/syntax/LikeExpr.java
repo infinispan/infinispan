@@ -16,7 +16,6 @@ public final class LikeExpr implements PrimaryPredicateExpr {
 
    private final ValueExpr child;
    private final Object pattern;
-   private final char escapeChar = DEFAULT_ESCAPE_CHARACTER;
 
    public LikeExpr(ValueExpr child, Object pattern) {
       this.child = child;
@@ -45,7 +44,7 @@ public final class LikeExpr implements PrimaryPredicateExpr {
    }
 
    public char getEscapeChar() {
-      return escapeChar;
+      return DEFAULT_ESCAPE_CHARACTER;
    }
 
    @Override

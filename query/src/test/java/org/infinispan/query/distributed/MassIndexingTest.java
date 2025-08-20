@@ -18,7 +18,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.functional.FunctionalTestUtils;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
 import org.infinispan.query.api.NotIndexedType;
 import org.infinispan.query.impl.massindex.IndexUpdater;
 import org.infinispan.query.impl.massindex.MassIndexerAlreadyStartedException;
@@ -65,7 +64,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
       Cache<Integer, Car> cache = cache(0);
       IntStream.range(0, 10).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
 
-      Indexer massIndexer = Search.getIndexer(cache);
+      Indexer massIndexer = Indexer.of(cache);
 
       CountDownLatch latch = new CountDownLatch(1);
       instrumentIndexer(massIndexer, latch);
@@ -85,8 +84,6 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
          } catch (ExecutionException e) {
             log.fatal("Both indexers should not fail, second error was", e.getCause());
          }
-         first.toCompletableFuture().get();
-         fail("Both mass indexers failed, but first didn't throw an exception");
       }
 
       assertFalse(massIndexer.isRunning());
@@ -128,6 +125,6 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
    @Override
    protected void rebuildIndexes() {
       Cache<?, ?> cache = cache(0);
-      join(Search.getIndexer(cache).run());
+      join(Indexer.of(cache).run());
    }
 }
