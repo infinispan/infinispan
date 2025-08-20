@@ -38,7 +38,7 @@ public class EngineConfigTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
-   public void tearDown() throws Exception {
+   public void tearDown() {
       TestingUtil.killCacheManagers(cacheManager);
       Util.recursiveFileRemove(tempDir);
    }

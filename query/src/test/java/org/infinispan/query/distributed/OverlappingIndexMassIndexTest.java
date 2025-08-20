@@ -31,7 +31,7 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
    protected List<Cache<String, Object>> caches = new ArrayList<>(NUM_NODES);
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg
             .indexing()

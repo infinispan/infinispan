@@ -18,7 +18,7 @@ public class DistributedPaginationTest extends MultipleCacheManagersTest {
    private Cache<Object, Object> node1;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       config
             .clustering().hash().numOwners(2)
@@ -33,7 +33,7 @@ public class DistributedPaginationTest extends MultipleCacheManagersTest {
 
    @BeforeMethod(alwaysRun = true)
    @Override
-   public void createBeforeMethod() throws Throwable {
+   public void createBeforeMethod() {
       PaginationTest.before(node1);
    }
 

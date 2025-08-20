@@ -33,7 +33,7 @@ public class NonIndexedEmbeddedRemoteQueryTest extends EmbeddedRemoteInteropQuer
       return builder;
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type sample_bank_account.Transaction unless the property is indexed and analyzed.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.query.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type sample_bank_account.Transaction unless the property is indexed and analyzed.")
    @Override
    public void testRemoteFullTextQuery() {
       Transaction transaction = new TransactionHS();

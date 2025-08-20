@@ -47,7 +47,7 @@ public class TestableCluster<K, V> {
    }
 
    public synchronized Iterable<Cache<K, V>> iterateAllCaches() {
-      return new ArrayList<Cache<K, V>>(caches);
+      return new ArrayList<>(caches);
    }
 
    public synchronized void killNode(Cache<K, V> cache) {

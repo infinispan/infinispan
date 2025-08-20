@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.indexing()
             .enable()

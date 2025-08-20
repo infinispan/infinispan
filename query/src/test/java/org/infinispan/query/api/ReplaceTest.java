@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 public class ReplaceTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
          .indexing()

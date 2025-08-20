@@ -56,14 +56,14 @@ public class RemoteHitCountAccuracyTest extends SingleHotRodServerTest {
       QueryResult<Game> result = query.execute();
 
       // the hit count accuracy does not allow to compute **an exact** hit count
-      assertThat(result.count().isExact()).isFalse();
+      assertThat(result.count().exact()).isFalse();
 
       query = games.query("from Game where description : 'game'");
       // raise the default accuracy
       query.hitCountAccuracy(5_000);
       result = query.execute();
 
-      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().exact()).isTrue();
       assertThat(result.count().value()).isEqualTo(5_000);
    }
 }

@@ -166,8 +166,7 @@ abstract class ParserBase extends Parser {
 
    private String generateErrorMessage(String localization, String[] tokenNames, RecognitionException e) {
       String message = "";
-      if (e instanceof MismatchedTokenException) {
-         MismatchedTokenException mte = (MismatchedTokenException) e;
+      if (e instanceof MismatchedTokenException mte) {
          String tokenName = "<unknown>";
          if (mte.expecting == Token.EOF) {
             tokenName = "EOF";
@@ -177,8 +176,7 @@ abstract class ParserBase extends Parser {
             }
          }
          message = localization + "mismatched token: " + e.token + "; expecting type " + tokenName;
-      } else if (e instanceof MismatchedTreeNodeException) {
-         MismatchedTreeNodeException mtne = (MismatchedTreeNodeException) e;
+      } else if (e instanceof MismatchedTreeNodeException mtne) {
          String tokenName = "<unknown>";
          if (mtne.expecting == Token.EOF) {
             tokenName = "EOF";
@@ -188,20 +186,15 @@ abstract class ParserBase extends Parser {
             }
          }
          message = localization + "mismatched tree node: " + mtne.node + "; expecting type " + tokenName;
-      } else if (e instanceof NoViableAltException) {
-         NoViableAltException nvae = (NoViableAltException) e;
+      } else if (e instanceof NoViableAltException nvae) {
          message = localization + "state " + nvae.stateNumber + " (decision=" + nvae.decisionNumber + ") no viable alt; token=" + e.token;
-      } else if (e instanceof EarlyExitException) {
-         EarlyExitException eee = (EarlyExitException) e;
+      } else if (e instanceof EarlyExitException eee) {
          message = localization + "required (...)+ loop (decision=" + eee.decisionNumber + ") did not match anything; token=" + e.token;
-      } else if (e instanceof MismatchedNotSetException) {
-         MismatchedNotSetException mse = (MismatchedNotSetException) e;
+      } else if (e instanceof MismatchedNotSetException mse) {
          message = localization + "mismatched token: " + e.token + "; expecting set " + mse.expecting;
-      } else if (e instanceof MismatchedSetException) {
-         MismatchedSetException mse = (MismatchedSetException) e;
+      } else if (e instanceof MismatchedSetException mse) {
          message = localization + "mismatched token: " + e.token + "; expecting set " + mse.expecting;
-      } else if (e instanceof FailedPredicateException) {
-         FailedPredicateException fpe = (FailedPredicateException) e;
+      } else if (e instanceof FailedPredicateException fpe) {
          message = localization + "rule " + fpe.ruleName + " failed predicate: {" + fpe.predicateText + "}?";
       }
       return message;

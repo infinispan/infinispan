@@ -10,8 +10,8 @@ import java.util.TimeZone;
 import org.infinispan.query.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.query.objectfilter.impl.syntax.ComparisonExpr;
-import org.junit.Before;
-import org.junit.Test;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * Test for {@link ExpressionBuilder}.
@@ -19,11 +19,12 @@ import org.junit.Test;
  * @author anistor@redhat.com
  * @since 9.0
  */
+@Test(testName = "query.objectfilter.test.ExpressionBuilderTest", groups = "functional")
 public class ExpressionBuilderTest {
 
    private ExpressionBuilder<Class<?>> builder;
 
-   @Before
+   @BeforeClass
    public void setup() {
       ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(new ReflectionEntityNamesResolver(null));
       builder = new ExpressionBuilder<>(propertyHelper);
@@ -214,7 +215,7 @@ public class ExpressionBuilderTest {
 
    static class TestPropertyHelper extends ReflectionPropertyHelper{
 
-      boolean isNested;
+      final boolean isNested;
 
       public TestPropertyHelper(EntityNameResolver<Class<?>> entityNameResolver, boolean isNested) {
          super(entityNameResolver);

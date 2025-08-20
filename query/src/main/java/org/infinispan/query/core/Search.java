@@ -5,11 +5,9 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
-import org.infinispan.query.objectfilter.ObjectFilter;
-import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
 import org.infinispan.query.core.impl.QueryEngine;
 import org.infinispan.query.core.impl.continuous.ContinuousQueryImpl;
@@ -20,19 +18,17 @@ import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.objectfilter.ObjectFilter;
+import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 
 /**
- * <b>EXPERIMENTAL</b>
- * This is the entry point for the Infinispan index-less query API. It provides the {@link QueryFactory} which is your
- * starting point for building Ickle queries or DSL-based queries, continuous queries and event filters for unindexed
- * caches.
- *
- * @author anistor@redhat.com
+ * @deprecated Use {@link org.infinispan.commons.api.BasicCache#query} instead
  * @since 10.1
  */
+@Deprecated(forRemoval = true)
 public final class Search {
    private Search() {
       // prevent instantiation

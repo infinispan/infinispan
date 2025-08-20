@@ -30,7 +30,7 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
    protected CleanupPhase cleanup = CleanupPhase.AFTER_METHOD;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg
             .indexing()

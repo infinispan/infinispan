@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.MultipleEntitiesMassIndexTest")
 public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
 
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       // Person goes to RAM, Cars goes to Infinispan
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg
@@ -98,7 +98,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
          Query cacheQuery = cache.query(q);
          QueryResult result = cacheQuery.execute();
 
-         assertThat(result.count().isExact()).isTrue();
+         assertThat(result.count().exact()).isTrue();
          assertThat(result.count().value()).isEqualTo(expectedCount);
       }
    }

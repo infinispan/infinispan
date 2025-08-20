@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 public class ManualIndexingTest extends MultipleCacheManagersTest {
 
    protected static final int NUM_NODES = 4;
-   protected List<Cache<String, Car>> caches = new ArrayList<>(NUM_NODES);
+   protected final List<Cache<String, Car>> caches = new ArrayList<>(NUM_NODES);
 
    @Override
    protected void createCacheManagers() throws Throwable {

@@ -21,14 +21,13 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.CacheFilters;
-import org.infinispan.query.objectfilter.ObjectFilter;
-import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.objectfilter.ObjectFilter;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 
 
 /**
@@ -45,11 +44,11 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
 
    private final int defaultMaxResults;
 
-   public EmbeddedQuery(QueryEngine<?> queryEngine, QueryFactory queryFactory, AdvancedCache<?, ?> cache,
+   public EmbeddedQuery(QueryEngine<?> queryEngine, AdvancedCache<?, ?> cache,
                         String queryString, IckleParsingResult.StatementType statementType,
                         Map<String, Object> namedParameters, String[] projection,
                         long startOffset, int maxResults, int defaultMaxResults, LocalQueryStatistics queryStatistics, boolean local) {
-      super(queryFactory, cache, queryString, statementType, namedParameters, projection, startOffset, maxResults, queryStatistics, local);
+      super(cache, queryString, statementType, namedParameters, projection, startOffset, maxResults, queryStatistics, local);
       this.queryEngine = queryEngine;
       this.defaultMaxResults = defaultMaxResults;
 

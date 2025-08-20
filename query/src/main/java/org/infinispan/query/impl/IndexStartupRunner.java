@@ -7,7 +7,7 @@ import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.mapper.log.impl.Log;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.util.logging.LogFactory;
 

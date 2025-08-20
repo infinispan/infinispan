@@ -142,8 +142,7 @@ public final class Predicates<AttributeDomain extends Comparable<AttributeDomain
          if (unorderedPredicates == null) {
             unorderedPredicates = new ArrayList<>();
          } else {
-            for (int i = 0; i < unorderedPredicates.size(); i++) {
-               Subscriptions s = unorderedPredicates.get(i);
+            for (Subscriptions s : unorderedPredicates) {
                if (s.predicate.equals(predicate)) {
                   subscriptions = s;
                   break;

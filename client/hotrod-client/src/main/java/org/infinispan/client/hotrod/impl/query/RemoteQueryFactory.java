@@ -4,21 +4,23 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.event.impl.ContinuousQueryImpl;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryBuilder;
-import org.infinispan.query.dsl.impl.BaseQueryFactory;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.impl.MarshallerRegistration;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
+ * @deprecated Use {@link org.infinispan.commons.api.BasicCache#query(String)} and {@link BasicCache#continuousQuery()} instead.
  */
-public final class RemoteQueryFactory extends BaseQueryFactory {
+@Deprecated(since = "15.0", forRemoval = true)
+public final class RemoteQueryFactory implements QueryFactory {
 
    private final InternalRemoteCache<?, ?> cache;
    private final SerializationContext serializationContext;
@@ -43,23 +45,7 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
 
    @Override
    public <T> Query<T> create(String queryString) {
-      return new RemoteQuery<>(this, cache, serializationContext, queryString);
-   }
-
-   @Override
-   public QueryBuilder from(Class<?> entityType) {
-      String typeName = serializationContext != null ?
-            serializationContext.getMarshaller(entityType).getTypeName() : entityType.getName();
-      return new RemoteQueryBuilder(this, cache, serializationContext, typeName);
-   }
-
-   @Override
-   public QueryBuilder from(String entityType) {
-      if (serializationContext != null) {
-         // just check that the type name is valid
-         serializationContext.getMarshaller(entityType);
-      }
-      return new RemoteQueryBuilder(this, cache, serializationContext, entityType);
+      return new RemoteQuery<>(cache, serializationContext, queryString);
    }
 
    public <K, V> ContinuousQuery<K, V> continuousQuery(RemoteCache<K, V> cache) {

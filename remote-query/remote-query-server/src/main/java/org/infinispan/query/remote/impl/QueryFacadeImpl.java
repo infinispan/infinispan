@@ -37,8 +37,8 @@ public final class QueryFacadeImpl implements QueryFacade {
          MediaType requestMediaType = cache.getValueDataConversion().getRequestMediaType();
          QueryRequest request = remoteQueryManager.decodeQueryRequest(query, requestMediaType);
 
-         int startOffset = request.getStartOffset().intValue();
-         int maxResults = request.getMaxResults();
+         Number startOffset = request.getStartOffset();
+         Number maxResults = request.getMaxResults();
          int hitCountAccuracy = request.hitCountAccuracy();
          boolean local = request.isLocal();
 

@@ -53,7 +53,7 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
          targetMethod = "performWork",
          action = "delay(500)"
    )
-   public void testMassIndexOnAsync() throws Exception {
+   public void testMassIndexOnAsync() {
       final Cache<Object, Object> cache = caches().get(0);
 
       for (int i = 0; i < NUM_ENTRIES; i++) {

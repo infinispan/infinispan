@@ -14,12 +14,12 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
-import org.infinispan.query.objectfilter.Matcher;
-import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.QueryCache;
+import org.infinispan.query.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.ObjectFilter;
 
 /**
  * @author anistor@redhat.com
@@ -141,7 +141,7 @@ public class IckleContinuousQueryCacheEventFilterConverter<K, V, C> extends Abst
             return (C) new ContinuousQueryResult<>(ContinuousQueryResult.ResultType.UPDATED, f2.getProjection() == null ? newValue : null, f2.getProjection());
          } else {
             // result leaving
-            return (C) new ContinuousQueryResult<V>(ContinuousQueryResult.ResultType.LEAVING, (V) null, null);
+            return (C) new ContinuousQueryResult<>(ContinuousQueryResult.ResultType.LEAVING, (V) null, null);
          }
       }
 

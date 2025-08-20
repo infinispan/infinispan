@@ -17,10 +17,10 @@ import org.apache.lucene.search.TopFieldDocs;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.HitCount;
+import org.infinispan.commons.query.TotalHitCount;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.dsl.TotalHitCount;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
 

@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.IndexWithSharedStoreTest")
 public class IndexWithSharedStoreTest extends MultipleCacheManagersTest {
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       createCacheManager("1");
       createCacheManager("2");
    }

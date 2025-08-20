@@ -22,6 +22,7 @@ import org.infinispan.util.ByteString;
 public class SegmentsClusteredQueryCommand extends BaseRpcCommand {
 
    @ProtoField(2)
+   final
    ClusteredQueryOperation clusteredQueryOperation;
 
    @ProtoField(3)

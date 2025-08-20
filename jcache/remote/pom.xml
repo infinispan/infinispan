@@ -25,12 +25,6 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query-dsl</artifactId>
-         <optional>true</optional>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
       </dependency>
 

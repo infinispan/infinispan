@@ -296,6 +296,12 @@ public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>,
    @Override
    V remove(Object key);
 
+   /**
+    * Constructs a {@link Query} object from the supplied Ickle query. The
+    * @param query an ickle query string
+    * @return an instance of {@link Query}
+    * @param <T> the type of object returned by the query
+    */
    <T> Query<T> query(String query);
 
    /**

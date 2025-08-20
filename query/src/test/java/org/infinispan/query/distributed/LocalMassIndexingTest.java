@@ -46,7 +46,7 @@ public class LocalMassIndexingTest extends MultipleCacheManagersTest {
       IntStream.range(0, ENTRIES).forEach(i -> cache.put(i, new Car("brand", "color", 100)));
    }
 
-   public void testReindexing() throws Exception {
+   public void testReindexing() {
       final Indexer indexer0 = Search.getIndexer(cache(0));
       final Indexer indexer1 = Search.getIndexer(cache(1));
       final Indexer indexer2 = Search.getIndexer(cache(2));

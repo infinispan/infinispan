@@ -86,7 +86,6 @@ public final class LikeCondition implements Condition<String> {
          type = Type.Equals;
          value = sb.toString();
          regexPattern = null;
-         length = -1;
       } else {
          if (multi.get(0)) {
             if (singleCount == 0) {
@@ -169,8 +168,8 @@ public final class LikeCondition implements Condition<String> {
          type = Type.Regexp;
          regexPattern = Pattern.compile(regexpPattern.toString());
          value = null;
-         length = -1;
       }
+      length = -1;
    }
 
    @Override
@@ -179,20 +178,14 @@ public final class LikeCondition implements Condition<String> {
          return false;
       }
 
-      switch (type) {
-         case Equals:
-            return attributeValue.equals(value);
-         case StartsWith:
-            return (length == -1 || length == attributeValue.length()) && attributeValue.startsWith(value);
-         case EndsWith:
-            return (length == -1 || length == attributeValue.length()) && attributeValue.endsWith(value);
-         case Contains:
-            return attributeValue.contains(value);
-         case Regexp:
-            return regexPattern.matcher(attributeValue).matches();
-         default:
-            throw new IllegalStateException("Unexpected type " + type);
-      }
+      return switch (type) {
+         case Equals -> attributeValue.equals(value);
+         case StartsWith -> (length == -1 || length == attributeValue.length()) && attributeValue.startsWith(value);
+         case EndsWith -> (length == -1 || length == attributeValue.length()) && attributeValue.endsWith(value);
+         case Contains -> attributeValue.contains(value);
+         case Regexp -> regexPattern.matcher(attributeValue).matches();
+         default -> throw new IllegalStateException("Unexpected type " + type);
+      };
    }
 
    @Override

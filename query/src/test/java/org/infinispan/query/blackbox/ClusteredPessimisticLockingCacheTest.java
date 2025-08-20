@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 public class ClusteredPessimisticLockingCacheTest extends ClusteredCacheTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.transaction().lockingMode(LockingMode.PESSIMISTIC);
       cacheCfg.indexing()

@@ -109,30 +109,21 @@ public final class BooleanFilterNormalizer {
          ComparisonExpr.Type comparisonType = comparisonExpr.getComparisonType();
 
          // handle constant expressions
-         if (leftChild instanceof ConstantValueExpr) {
-            if (rightChild instanceof ConstantValueExpr) {
+         if (leftChild instanceof ConstantValueExpr leftConstant) {
+            if (rightChild instanceof ConstantValueExpr rightConstant) {
                // replace the comparison of the two constants with the actual result
-               ConstantValueExpr leftConstant = (ConstantValueExpr) leftChild;
-               ConstantValueExpr rightConstant = (ConstantValueExpr) rightChild;
                Comparable leftValue = leftConstant.getConstantValue();
                Comparable rightValue = rightConstant.getConstantValue();
                int compRes = leftValue.compareTo(rightValue);
-               switch (comparisonType) {
-                  case LESS:
-                     return ConstantBooleanExpr.forBoolean(compRes < 0);
-                  case LESS_OR_EQUAL:
-                     return ConstantBooleanExpr.forBoolean(compRes <= 0);
-                  case EQUAL:
-                     return ConstantBooleanExpr.forBoolean(compRes == 0);
-                  case NOT_EQUAL:
-                     return ConstantBooleanExpr.forBoolean(compRes != 0);
-                  case GREATER_OR_EQUAL:
-                     return ConstantBooleanExpr.forBoolean(compRes >= 0);
-                  case GREATER:
-                     return ConstantBooleanExpr.forBoolean(compRes > 0);
-                  default:
-                     throw new IllegalStateException("Unexpected comparison type: " + comparisonType);
-               }
+               return switch (comparisonType) {
+                  case LESS -> ConstantBooleanExpr.forBoolean(compRes < 0);
+                  case LESS_OR_EQUAL -> ConstantBooleanExpr.forBoolean(compRes <= 0);
+                  case EQUAL -> ConstantBooleanExpr.forBoolean(compRes == 0);
+                  case NOT_EQUAL -> ConstantBooleanExpr.forBoolean(compRes != 0);
+                  case GREATER_OR_EQUAL -> ConstantBooleanExpr.forBoolean(compRes >= 0);
+                  case GREATER -> ConstantBooleanExpr.forBoolean(compRes > 0);
+                  default -> throw new IllegalStateException("Unexpected comparison type: " + comparisonType);
+               };
             }
 
             // swap operand sides to ensure the constant is always on the right side
@@ -245,8 +236,7 @@ public final class BooleanFilterNormalizer {
          }
 
          // interval predicates are never negated, they are converted instead into the opposite interval
-         if (booleanExpr instanceof ComparisonExpr) {
-            ComparisonExpr c = (ComparisonExpr) booleanExpr;
+         if (booleanExpr instanceof ComparisonExpr c) {
             return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), c.getComparisonType().negate());
          }
 

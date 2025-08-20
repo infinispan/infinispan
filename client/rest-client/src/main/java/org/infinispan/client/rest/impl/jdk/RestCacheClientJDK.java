@@ -302,15 +302,22 @@ public class RestCacheClientJDK implements RestCacheClient {
 
    @Override
    public CompletionStage<RestResponse> query(String query, int maxResults, int offset) {
-
-      return client.get(String.format("%s?action=search&query=%s&max_results=%d&offset=%d", path, sanitize(query), maxResults, offset));
-
+      return query(query, maxResults, offset, -1);
    }
 
    @Override
    public CompletionStage<RestResponse> query(String query, int maxResults, int offset, int hitCountAccuracy) {
-
-      return client.get(String.format("%s?action=search&query=%s&max_results=%d&offset=%d&hit_count_accuracy=%d", path, sanitize(query), maxResults, offset, hitCountAccuracy));
+      StringBuilder sb = new StringBuilder(path).append("?action=search&query=").append(sanitize(query));
+      if (maxResults >= 0) {
+         sb.append("&max_results=").append(maxResults);
+      }
+      if (offset >= 0) {
+         sb.append("&offset=").append(offset);
+      }
+      if (hitCountAccuracy >= 0) {
+         sb.append("&hit_count_accuracy=").append(hitCountAccuracy);
+      }
+      return client.get(sb.toString());
    }
 
    @Override

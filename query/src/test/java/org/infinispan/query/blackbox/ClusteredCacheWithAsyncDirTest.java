@@ -41,8 +41,7 @@ public class ClusteredCacheWithAsyncDirTest extends ClusteredCacheTest {
 
       for (ConfigurationBuilder builder : holder.getNamedConfigurationBuilders().values()) {
          for (StoreConfigurationBuilder storeBuilder : builder.persistence().stores()) {
-            if (storeBuilder instanceof AbstractJdbcStoreConfigurationBuilder) {
-               AbstractJdbcStoreConfigurationBuilder jdbcStoreBuilder = (AbstractJdbcStoreConfigurationBuilder) storeBuilder;
+            if (storeBuilder instanceof AbstractJdbcStoreConfigurationBuilder jdbcStoreBuilder) {
                jdbcStoreBuilder.simpleConnection()
                      .driverClass("org.h2.Driver")
                      .connectionUrl("jdbc:h2:mem:infinispan_string_based_" + nodeIndex + ";DB_CLOSE_DELAY=-1")

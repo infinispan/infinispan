@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.api.InfinispanDirectoryNonIndexedValuesTest")
 public class InfinispanDirectoryNonIndexedValuesTest extends NonIndexedValuesTest {
 
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(isTransactional());
       c.indexing()
             .enable()

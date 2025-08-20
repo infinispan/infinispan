@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 public class CreateCacheIndexTemplateTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.globalState().persistentLocation(tmpDirectory(CreateCacheIndexTemplateTest.class));
       ConfigurationBuilder builder = new ConfigurationBuilder();

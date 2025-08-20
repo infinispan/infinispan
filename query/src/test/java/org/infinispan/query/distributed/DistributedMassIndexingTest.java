@@ -71,7 +71,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       verifyFindsCar(2, "megane");
    }
 
-   public void testPartiallyReindex() throws Exception {
+   public void testPartiallyReindex() {
       cache(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F1NUM"), new Car("megane", "white", 300));
       Search.getIndexer(cache(0)).run(key("F1NUM")).toCompletableFuture().join();
       verifyFindsCar(1, "megane");

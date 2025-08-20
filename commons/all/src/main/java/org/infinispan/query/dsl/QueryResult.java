@@ -1,0 +1,40 @@
+package org.infinispan.query.dsl;
+
+import java.util.OptionalLong;
+
+import org.infinispan.commons.api.query.HitCount;
+
+/**
+ * Represents the result of a {@link Query}.
+ * <p>
+ * If the query was executed using {@link Query#executeStatement()}, the list of results will be empty and
+ * {@link #count()} will return the number of affected entries.
+ *
+ * @param <E> The type of the result. Queries having projections (a SELECT clause) will return an Object[] for each
+ *            result, with the field values. When not using SELECT, the results will contain instances of objects
+ *            corresponding to the cache values matching the query.
+ * @deprecated use {@link org.infinispan.commons.api.query.QueryResult} instead
+ * @since 11.0
+ */
+@Deprecated(since = "14.0", forRemoval = true)
+public interface QueryResult<E> extends org.infinispan.commons.api.query.QueryResult<E> {
+
+   /**
+    * @return The number of hits from the query, ignoring pagination. When the query is non-indexed, for performance
+    * reasons, the hit count is not calculated and will return {@link OptionalLong#empty()}.
+    *
+    * @deprecated replaced by {@link #count()}
+    */
+   @Deprecated
+   default OptionalLong hitCount() {
+      HitCount count = count();
+      return count.exact() ? OptionalLong.of(count.value()) : OptionalLong.empty();
+   }
+
+   /**
+    * @return An object containing information about the number of hits from the query, ignoring pagination.
+    */
+   @Override
+   HitCount count();
+
+}

@@ -48,7 +48,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
    private static final int numberOfEntries = 100;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalConfiguration.jmx().enabled(true).domain(TEST_JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
 

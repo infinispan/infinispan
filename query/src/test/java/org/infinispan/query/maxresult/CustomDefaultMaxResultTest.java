@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 public class CustomDefaultMaxResultTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder indexed = new ConfigurationBuilder();
       indexed
             .query()

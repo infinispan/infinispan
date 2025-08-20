@@ -19,7 +19,7 @@ public class StateTransferQueryIndexTest extends BaseReIndexingTest {
       builder.clustering().stateTransfer().fetchInMemoryState(true);
    }
 
-   public void testQueryAfterAddingNewNode() throws Exception {
+   public void testQueryAfterAddingNewNode() {
       loadCacheEntries(this.<String, Person>caches().get(0));
 
       // Before adding a node, verify that the query resolves properly

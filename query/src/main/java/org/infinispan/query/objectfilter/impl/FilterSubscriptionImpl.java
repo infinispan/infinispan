@@ -53,12 +53,12 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    private Comparator<Comparable<?>[]> comparator;
 
-   protected FilterSubscriptionImpl(String queryString, Map<String, Object> namedParameters,
-                                    boolean useIntervals, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
-                                    BETree beTree, FilterCallback callback, boolean isDeltaFilter,
-                                    String[] projection, Class<?>[] projectionTypes, List<List<AttributeId>> translatedProjection,
-                                    SortField[] sortFields, List<List<AttributeId>> translatedSortProjection,
-                                    Object[] eventTypes) {
+   FilterSubscriptionImpl(String queryString, Map<String, Object> namedParameters,
+                          boolean useIntervals, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
+                          BETree beTree, FilterCallback callback, boolean isDeltaFilter,
+                          String[] projection, Class<?>[] projectionTypes, List<List<AttributeId>> translatedProjection,
+                          SortField[] sortFields, List<List<AttributeId>> translatedSortProjection,
+                          Object[] eventTypes) {
       this.queryString = queryString;
       this.namedParameters = namedParameters;
       this.useIntervals = useIntervals;

@@ -31,7 +31,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
    }
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
             .transaction()

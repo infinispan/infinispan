@@ -30,6 +30,15 @@ The tools module now contains the `Externalizer` and `AdvancedExternalizer` inte
 to facilitate migrating legacy stores to 16.0. In order to use the the `StoreMigrator` all existing `Externalizer`
 implementations need to be updated to reference the new package `org.infinispan.tools.store.migrator.marshaller.common`.
 
+=== Query changes
+
+The query modules have been refactored significantly:
+
+* The `query-dsl` module has been removed. Queries should use Ickle query language
+* The `query-core`, `object-filter` modules have been merged into the `query` module
+* The `remote-query-server` module has been merged into the `server-core` module
+* The `remote-query-client` module has been merged into the `commons` module
+
 === Transport Changes
 It's no longer possible to provide custom `org.infinispan.remoting.transport.Transport` implementations via the `GlobalConfiguration`.
 This was removed with no replacement as in reality Infinispan is tightly coupled to the underlying `JGroupsTransport` implementation.

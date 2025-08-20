@@ -46,7 +46,7 @@ public class PutAllTest extends SingleCacheManagerTest {
    }
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing()
             .enable()

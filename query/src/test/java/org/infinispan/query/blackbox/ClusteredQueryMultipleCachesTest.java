@@ -22,7 +22,7 @@ public class ClusteredQueryMultipleCachesTest extends ClusteredQueryTest {
    Cache<String, Person> cacheBMachine1, cacheBMachine2;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(getCacheMode(), false);
       cacheCfg.indexing().enable()
             .storage(LOCAL_HEAP)

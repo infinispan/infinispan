@@ -65,7 +65,6 @@ class InfinispanIndexedTypeContextImpl<E> implements SearchIndexedEntity, Projec
       private IdentifierMapping identifierMapping;
       private MappedIndexManager indexManager;
       private PojoPathFilter dirtyFilter;
-      private InfinispanSelectionLoadingStrategy loadingStrategy;
 
       Builder(PojoRawTypeIdentifier<E> typeIdentifier, String entityName) {
          this.typeIdentifier = typeIdentifier;
@@ -90,9 +89,9 @@ class InfinispanIndexedTypeContextImpl<E> implements SearchIndexedEntity, Projec
       @Override
       public void applyLoadingBinder(Object binder, PojoEntityLoadingBindingContext context) {
          var castBinder = (InfinispanSelectionLoadingBinder) binder;
-         this.loadingStrategy = castBinder.createLoadingStrategy();
-         if ( this.loadingStrategy != null ) {
-            context.selectionLoadingStrategy( typeIdentifier.javaClass(), this.loadingStrategy );
+         InfinispanSelectionLoadingStrategy loadingStrategy = castBinder.createLoadingStrategy();
+         if ( loadingStrategy != null ) {
+            context.selectionLoadingStrategy( typeIdentifier.javaClass(), loadingStrategy);
          }
       }
 

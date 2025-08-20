@@ -297,16 +297,17 @@ public final class BooleShannonExpansion {
       }
 
       private BooleanExpr replace(PrimaryPredicateExpr primaryPredicateExpr) {
-         switch (PredicateOptimisations.comparePrimaryPredicates(false, primaryPredicateExpr, false, toReplace)) {
-            case IDENTICAL:
+         return switch (PredicateOptimisations.comparePrimaryPredicates(false, primaryPredicateExpr, false, toReplace)) {
+            case IDENTICAL -> {
                found = true;
-               return with;
-            case OPPOSITE:
+               yield with;
+            }
+            case OPPOSITE -> {
                found = true;
-               return with.negate();
-            default:
-               return primaryPredicateExpr;
-         }
+               yield with.negate();
+            }
+            default -> primaryPredicateExpr;
+         };
       }
    }
 

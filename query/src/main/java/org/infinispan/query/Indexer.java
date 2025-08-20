@@ -2,6 +2,9 @@ package org.infinispan.query;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.Cache;
+import org.infinispan.query.impl.ComponentRegistryUtils;
+
 /**
  * Interacts directly with cache indexes.
  *
@@ -41,4 +44,8 @@ public interface Indexer {
     * @return true if the indexer process was started on this node and has not finished yet.
     */
    boolean isRunning();
+
+   static <K, V> Indexer of(Cache<K, V> cache) {
+      return ComponentRegistryUtils.getIndexer(cache.getAdvancedCache());
+   }
 }

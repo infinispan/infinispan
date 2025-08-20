@@ -39,19 +39,18 @@ final class EntityNameTree extends CommonTree {
    }
 
    private static String toString(Tree tree) {
-      switch (tree.getChildCount()) {
-         case 0:
+      return switch (tree.getChildCount()) {
+         case 0 ->
             // a single argument
-            return tree.getText();
-         case 1:
+               tree.getText();
+         case 1 ->
             // an unary operator and the argument
-            return tree.getText() + toString(tree.getChild(0));
-         case 2:
+               tree.getText() + toString(tree.getChild(0));
+         case 2 ->
             // a binary operator and its arguments
-            return toString(tree.getChild(0)) + tree.getText() + toString(tree.getChild(1));
-         default:
-            throw new IllegalStateException("Only unary or binary operators expected.");
-      }
+               toString(tree.getChild(0)) + tree.getText() + toString(tree.getChild(1));
+         default -> throw new IllegalStateException("Only unary or binary operators expected.");
+      };
    }
 
    public String getEntityName() {

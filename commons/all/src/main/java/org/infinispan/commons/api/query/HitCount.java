@@ -9,7 +9,7 @@ public interface HitCount {
     * the hit count is not calculated and will return -1.
     *
     * @return the total hit count value
-    * @see #isExact()
+    * @see #exact()
     */
    int value();
 
@@ -20,6 +20,6 @@ public interface HitCount {
     *
     * @return whether the {@link #value()} is exact
     */
-   boolean isExact();
+   boolean exact();
 
 }

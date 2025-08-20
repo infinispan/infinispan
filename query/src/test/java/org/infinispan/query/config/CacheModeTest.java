@@ -32,7 +32,7 @@ public class CacheModeTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
-   public void tearDown() throws Exception {
+   public void tearDown() {
       Util.recursiveFileRemove(tempDir);
    }
 

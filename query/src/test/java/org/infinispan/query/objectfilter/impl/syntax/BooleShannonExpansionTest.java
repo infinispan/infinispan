@@ -8,12 +8,13 @@ import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 /**
  * @author anistor@redhat.com
  * @since 8.0
  */
+@Test(testName = "query.objectfilter.impl.syntax.BooleShannonExpansionTest", groups = "functional")
 public class BooleShannonExpansionTest {
 
    private final ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(new ReflectionEntityNamesResolver(null));

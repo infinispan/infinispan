@@ -86,10 +86,6 @@ public final class QueryAnalyzer<TypeMetadata> {
       if (!Arrays.equals(groupByPath, sortFields[0].getPath().asArrayPath())) {
          return false;
       }
-      if (!metadata.isSortable(sortFields[0].getPath().asArrayPath())) {
-         return false;
-      }
-
-      return true;
+      return metadata.isSortable(sortFields[0].getPath().asArrayPath());
    }
 }
