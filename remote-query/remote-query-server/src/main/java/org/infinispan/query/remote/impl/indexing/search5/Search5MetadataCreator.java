@@ -20,7 +20,7 @@ import org.infinispan.query.remote.impl.indexing.SpatialFieldMapping;
 import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanAnnotations;
 import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanMetadataCreator;
 import org.infinispan.query.remote.impl.logging.Log;
-import org.infinispan.search.mapper.mapping.impl.DefaultAnalysisConfigurer;
+import org.infinispan.query.mapper.mapping.impl.DefaultAnalysisConfigurer;
 
 //todo [anistor] Should be able to have multiple mappings per field like in Hibernate Search, ie. have a @Fields plural annotation
 

@@ -9,8 +9,8 @@ import org.hibernate.search.engine.reporting.FailureHandler;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.query.core.impl.Log;
-import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.common.impl.EntityReferenceImpl;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.util.logging.LogFactory;
 
 class MassIndexerProgressNotifier {

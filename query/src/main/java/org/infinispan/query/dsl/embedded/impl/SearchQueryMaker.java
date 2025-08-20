@@ -83,10 +83,10 @@ import org.infinispan.query.objectfilter.impl.syntax.parser.FunctionPropertyPath
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.core.impl.Log;
-import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
-import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.scope.SearchScope;
-import org.infinispan.search.mapper.session.SearchSession;
+import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.scope.SearchScope;
+import org.infinispan.query.mapper.session.SearchSession;
 import org.jboss.logging.Logger;
 
 /**

@@ -56,10 +56,11 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.scope.SearchScope;
-import org.infinispan.search.mapper.scope.SearchWorkspace;
-import org.infinispan.search.mapper.work.SearchIndexer;
+import org.infinispan.query.mapper.mapping.EntityConverter;
+import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.scope.SearchScope;
+import org.infinispan.query.mapper.scope.SearchWorkspace;
+import org.infinispan.query.mapper.work.SearchIndexer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -474,7 +475,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * @return {@code true} if there is a chance that this entity is of an indexed types.
     * For protobuf entities which are not yet deserialized,
     * this returns {@code true} even though we don't know the exact type until the entity is deserialized.
-    * The {@link org.infinispan.search.mapper.mapping.EntityConverter entity converter}
+    * The {@link EntityConverter entity converter}
     * that takes care of deserialization will take care of cancelling indexing
     * if it turns out the actual type of the entity is not one that should be indexed.
     */

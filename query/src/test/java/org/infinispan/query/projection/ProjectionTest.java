@@ -14,7 +14,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
+import org.infinispan.query.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
