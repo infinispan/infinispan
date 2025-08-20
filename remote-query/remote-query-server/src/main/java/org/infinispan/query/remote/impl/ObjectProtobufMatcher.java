@@ -1,7 +1,7 @@
 package org.infinispan.query.remote.impl;
 
-import org.infinispan.objectfilter.impl.MetadataAdapter;
-import org.infinispan.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.query.objectfilter.impl.MetadataAdapter;
+import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;

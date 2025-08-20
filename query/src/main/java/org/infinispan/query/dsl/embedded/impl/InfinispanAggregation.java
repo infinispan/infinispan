@@ -3,7 +3,7 @@ package org.infinispan.query.dsl.embedded.impl;
 import java.util.Map;
 
 import org.hibernate.search.engine.search.aggregation.SearchAggregation;
-import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.AggregationPropertyPath;
 
 public class InfinispanAggregation<T> {
 

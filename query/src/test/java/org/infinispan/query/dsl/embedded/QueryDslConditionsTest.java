@@ -28,7 +28,7 @@ import java.util.Map;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.objectfilter.ParsingException;
+import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;

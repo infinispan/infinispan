@@ -7,8 +7,8 @@ import org.infinispan.notifications.cachelistener.EventWrapper;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
-import org.infinispan.objectfilter.Matcher;
-import org.infinispan.objectfilter.impl.FilterResultImpl;
+import org.infinispan.query.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.impl.FilterResultImpl;
 import org.kohsuke.MetaInfServices;
 
 /**

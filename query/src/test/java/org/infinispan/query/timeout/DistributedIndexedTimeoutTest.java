@@ -5,9 +5,9 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -33,7 +33,7 @@ public class DistributedIndexedTimeoutTest extends MultipleCacheManagersTest {
       TestHelper.populate(cache1, 10000);
    }
 
-   @Test(expectedExceptions = SearchTimeoutException.class)
+   @Test(expectedExceptions = TimeoutException.class)
    public void testTimeout() {
       TestHelper.runFullTextQueryWithTimeout(cache1, 1, TimeUnit.NANOSECONDS);
    }

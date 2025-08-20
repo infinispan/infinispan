@@ -18,7 +18,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.QueryConfiguration;
-import org.infinispan.objectfilter.ParsingException;
+import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 import org.infinispan.query.remote.json.JsonQueryErrorResult;
 import org.infinispan.query.remote.json.JsonQueryRequest;

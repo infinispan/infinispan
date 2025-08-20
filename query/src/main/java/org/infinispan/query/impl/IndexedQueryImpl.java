@@ -23,7 +23,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.PartitionHandlingSupport;

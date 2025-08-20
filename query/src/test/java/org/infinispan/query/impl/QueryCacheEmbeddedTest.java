@@ -12,7 +12,7 @@ import org.assertj.core.util.Sets;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.dsl.Query;

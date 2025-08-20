@@ -9,7 +9,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       dependsOn = {
             org.infinispan.marshall.protostream.impl.GlobalContextInitializer.class,
             org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
-            org.infinispan.objectfilter.impl.GlobalContextInitializer.class,
+            org.infinispan.query.objectfilter.impl.GlobalContextInitializer.class,
             org.infinispan.protostream.types.java.CommonTypes.class,
             org.infinispan.query.core.stats.impl.PersistenceContextInitializer.class
       },

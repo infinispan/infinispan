@@ -2,15 +2,15 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import java.util.Arrays;
 
-import org.infinispan.objectfilter.SortField;
-import org.infinispan.objectfilter.impl.ql.AggregationFunction;
-import org.infinispan.objectfilter.impl.ql.PropertyPath;
-import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
-import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
-import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.CacheValueAggregationPropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
+import org.infinispan.query.objectfilter.SortField;
+import org.infinispan.query.objectfilter.impl.ql.AggregationFunction;
+import org.infinispan.query.objectfilter.impl.ql.PropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.BooleanExpr;
+import org.infinispan.query.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.query.objectfilter.impl.syntax.parser.AggregationPropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.CacheValueAggregationPropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 
 public final class QueryAnalyzer<TypeMetadata> {
 

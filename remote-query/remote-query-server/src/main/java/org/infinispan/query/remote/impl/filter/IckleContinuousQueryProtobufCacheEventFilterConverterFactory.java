@@ -5,7 +5,7 @@ import java.util.Map;
 import org.infinispan.filter.NamedFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
-import org.infinispan.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
 import org.kohsuke.MetaInfServices;
 
 /**

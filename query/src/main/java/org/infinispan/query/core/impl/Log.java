@@ -11,7 +11,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CacheBackpressureFullException;
-import org.infinispan.objectfilter.ParsingException;
+import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;

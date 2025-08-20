@@ -9,7 +9,7 @@ import java.util.List;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.objectfilter.ParsingException;
+import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.queries.NumericType;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
