@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestUser;
+import org.infinispan.server.test.artifacts.Artifacts;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
@@ -31,7 +32,7 @@ public class AuthorizationGracefulShutdownIT {
          InfinispanServerExtensionBuilder.config("configuration/AuthorizationPropertiesTest.xml")
                .runMode(ServerRunMode.CONTAINER)
                .mavenArtifacts(ClusteredIT.mavenArtifacts())
-               .artifacts(ClusteredIT.artifacts())
+               .artifacts(Artifacts.artifacts())
                .numServers(2)
                .property(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true")
                .build();
