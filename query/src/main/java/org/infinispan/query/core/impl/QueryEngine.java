@@ -85,7 +85,7 @@ public class QueryEngine<TypeMetadata> {
       propertyHelper = ((BaseMatcher<TypeMetadata, ?, ?>) matcher).getPropertyHelper();
    }
 
-   QueryEngine(AdvancedCache<?, ?> cache) {
+   public QueryEngine(AdvancedCache<?, ?> cache) {
       this(cache, ReflectionMatcher.class);
    }
 
