@@ -1,6 +1,6 @@
 package org.infinispan.query.remote.impl;
 
-import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
+import org.infinispan.query.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.protostream.SerializationContext;
 
 /**

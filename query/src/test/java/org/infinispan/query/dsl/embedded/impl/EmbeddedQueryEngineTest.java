@@ -16,9 +16,9 @@ import java.util.TimeZone;
 
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.ParsingException;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParser;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.DslSCI;
 import org.infinispan.query.dsl.embedded.impl.model.TheEntity;

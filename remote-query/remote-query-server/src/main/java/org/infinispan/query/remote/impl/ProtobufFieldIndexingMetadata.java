@@ -5,7 +5,7 @@ import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.findPro
 import java.util.Map;
 import java.util.function.BiFunction;
 
-import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.query.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;

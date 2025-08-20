@@ -7,7 +7,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
-import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
 import org.infinispan.query.core.impl.continuous.ContinuousQueryImpl;

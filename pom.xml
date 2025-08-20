@@ -57,7 +57,6 @@
       <module>tools</module>
       <module>query-dsl</module>
       <module>query</module>
-      <module>object-filter</module>
       <module>remote-query/remote-query-client</module>
       <module>remote-query/remote-query-server</module>
       <module>persistence</module>

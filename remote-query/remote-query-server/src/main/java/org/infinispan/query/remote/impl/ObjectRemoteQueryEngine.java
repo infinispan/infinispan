@@ -3,7 +3,7 @@ package org.infinispan.query.remote.impl;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.Matcher;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.Query;

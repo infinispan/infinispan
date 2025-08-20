@@ -14,7 +14,7 @@ import java.util.List;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.objectfilter.ParsingException;
+import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.FlightRoute;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
