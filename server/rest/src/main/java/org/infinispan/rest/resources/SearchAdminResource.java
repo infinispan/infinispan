@@ -34,7 +34,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.logging.LogFactory;

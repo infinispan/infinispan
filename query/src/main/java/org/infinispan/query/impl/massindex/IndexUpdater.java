@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.core.impl.Log;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.NotThreadSafe;

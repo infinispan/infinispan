@@ -55,7 +55,7 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 

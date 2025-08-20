@@ -4,8 +4,8 @@ import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.Programm
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.TypeMappingStep;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.search.mapper.mapping.MappingConfigurationContext;
-import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
+import org.infinispan.query.mapper.mapping.MappingConfigurationContext;
+import org.infinispan.query.mapper.mapping.ProgrammaticSearchMappingProvider;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.kohsuke.MetaInfServices;

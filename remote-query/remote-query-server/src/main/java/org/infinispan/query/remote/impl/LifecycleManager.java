@@ -32,8 +32,8 @@ import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.query.stats.impl.LocalIndexStatistics;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
+import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMappingCommonBuilding;
 import org.infinispan.tasks.query.RemoteQueryAccess;
 
 /**

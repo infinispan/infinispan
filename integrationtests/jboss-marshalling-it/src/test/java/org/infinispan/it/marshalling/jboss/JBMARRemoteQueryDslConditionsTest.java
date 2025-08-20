@@ -22,7 +22,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.QueryDslConditionsTest;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;

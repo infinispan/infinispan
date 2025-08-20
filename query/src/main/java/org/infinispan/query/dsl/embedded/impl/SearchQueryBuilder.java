@@ -18,9 +18,9 @@ import org.hibernate.search.engine.search.predicate.SearchPredicate;
 import org.hibernate.search.engine.search.projection.SearchProjection;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
 import org.hibernate.search.engine.search.sort.SearchSort;
-import org.infinispan.search.mapper.scope.SearchScope;
-import org.infinispan.search.mapper.search.loading.context.impl.InfinispanSelectionLoadingOptionsStep;
-import org.infinispan.search.mapper.session.SearchSession;
+import org.infinispan.query.mapper.scope.SearchScope;
+import org.infinispan.query.mapper.search.loading.context.impl.InfinispanSelectionLoadingOptionsStep;
+import org.infinispan.query.mapper.session.SearchSession;
 
 /**
  * Mutable builder for {@link LuceneSearchQuery}.

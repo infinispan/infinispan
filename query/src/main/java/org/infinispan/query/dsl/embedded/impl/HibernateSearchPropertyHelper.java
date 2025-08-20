@@ -20,8 +20,8 @@ import org.infinispan.query.objectfilter.impl.syntax.parser.projection.CacheValu
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.infinispan.query.objectfilter.impl.util.StringHelper;
-import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 
 public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 

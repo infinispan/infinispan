@@ -17,7 +17,7 @@ import org.infinispan.configuration.cache.IndexWriterConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
-import org.infinispan.search.mapper.mapping.impl.CompositeAnalysisConfigurer;
+import org.infinispan.query.mapper.mapping.impl.CompositeAnalysisConfigurer;
 
 /**
  * Extracts Hibernate Search native configuration properties from a {@link IndexingConfiguration}.
