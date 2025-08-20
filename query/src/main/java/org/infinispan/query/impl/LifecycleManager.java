@@ -1,11 +1,14 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.GLOBAL;
+import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.PERSISTENCE;
 import static org.infinispan.query.core.impl.Log.CONTAINER;
 import static org.infinispan.query.impl.config.SearchPropertyExtractor.extractProperties;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -44,6 +47,7 @@ import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.metrics.impl.CacheMetricsRegistration;
+import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
@@ -54,7 +58,10 @@ import org.infinispan.query.backend.TxQueryInterceptor;
 import org.infinispan.query.core.QueryProducerImpl;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.core.stats.IndexStatistics;
+import org.infinispan.query.core.stats.impl.IndexStatisticsSnapshotImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.core.stats.impl.PersistenceContextInitializerImpl;
+import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
@@ -77,7 +84,7 @@ import org.infinispan.util.logging.Log;
  *
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
-@InfinispanModule(name = "query", requiredModules = {"core", "query-core"}, optionalModules = "lucene-directory")
+@InfinispanModule(name = "query", requiredModules = {"core"})
 public class LifecycleManager implements ModuleLifecycle {
 
    /**
@@ -93,6 +100,18 @@ public class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
+         cr.registerComponent(new IndexStatisticsSnapshotImpl(), IndexStatistics.class);
+         cr.registerComponent(new LocalQueryStatistics(), LocalQueryStatistics.class);
+         cr.registerComponent(new SearchStatsRetriever(), SearchStatsRetriever.class);
+         AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
+         ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
+         cr.registerComponent(new ReflectionMatcher(aggregatedClassLoader), ReflectionMatcher.class);
+         org.infinispan.query.core.impl.QueryEngine<Object> engine = new org.infinispan.query.core.impl.QueryEngine<>(cache);
+         cr.registerComponent(engine, org.infinispan.query.core.impl.QueryEngine.class);
+         cr.registerComponent(new QueryProducerImpl(engine), QueryProducer.class);
+      }
+
       StorageConfigurationManager scm = cr.getComponent(StorageConfigurationManager.class);
       LocalQueryStatistics queryStatistics = cr.getComponent(LocalQueryStatistics.class);
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
@@ -411,8 +430,15 @@ public class LifecycleManager implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
+      InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
+      internalCacheRegistry.registerInternalCache(QueryCache.QUERY_CACHE_NAME, QueryCache.getQueryCacheConfig().build(),
+            EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
+      gcr.registerComponent(new QueryCache(), QueryCache.class);
+
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
-      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, new GlobalContextInitializerImpl());
+      ctxRegistry.addContextInitializer(PERSISTENCE, new PersistenceContextInitializerImpl());
+      ctxRegistry.addContextInitializer(GLOBAL, new org.infinispan.query.core.impl.GlobalContextInitializerImpl());
+      ctxRegistry.addContextInitializer(GLOBAL, new GlobalContextInitializerImpl());
    }
 
    @Override
