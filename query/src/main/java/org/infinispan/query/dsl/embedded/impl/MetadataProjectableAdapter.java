@@ -3,8 +3,8 @@ package org.infinispan.query.dsl.embedded.impl;
 import java.util.List;
 
 import org.infinispan.metadata.Metadata;
-import org.infinispan.objectfilter.impl.MetadataAdapter;
-import org.infinispan.objectfilter.impl.predicateindex.MetadataProjectable;
+import org.infinispan.query.objectfilter.impl.MetadataAdapter;
+import org.infinispan.query.objectfilter.impl.predicateindex.MetadataProjectable;
 
 public abstract class MetadataProjectableAdapter<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>>
       implements MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId>,

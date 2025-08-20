@@ -9,7 +9,7 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.Matcher;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 

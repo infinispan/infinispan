@@ -10,8 +10,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.objectfilter.Matcher;
-import org.infinispan.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.query.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 

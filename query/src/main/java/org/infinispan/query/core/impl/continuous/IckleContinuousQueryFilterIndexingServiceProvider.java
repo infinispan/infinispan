@@ -10,7 +10,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
-import org.infinispan.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.Matcher;
 import org.infinispan.query.core.impl.eventfilter.BaseIckleFilterIndexingServiceProvider;
 import org.kohsuke.MetaInfServices;
 

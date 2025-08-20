@@ -9,7 +9,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
+import org.infinispan.query.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.ThreadSafe;

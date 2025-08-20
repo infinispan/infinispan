@@ -1,0 +1,37 @@
+package org.infinispan.query.objectfilter.test.perf;
+
+import org.infinispan.commons.test.categories.Profiling;
+import org.infinispan.query.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.query.objectfilter.test.model.TestDomainSCI;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.experimental.categories.Category;
+
+/**
+ * @author anistor@redhat.com
+ * @since 7.0
+ */
+@Category(Profiling.class)
+@Ignore
+public class ProtobufPerfTest extends PerfTest {
+
+   private SerializationContext serCtx;
+
+   @Before
+   public void setUp() throws Exception {
+      serCtx = ProtobufUtil.newSerializationContext();
+      TestDomainSCI.INSTANCE.registerSchema(serCtx);
+      TestDomainSCI.INSTANCE.registerMarshallers(serCtx);
+   }
+
+   protected Matcher createMatcher() {
+      return new ProtobufMatcher(serCtx, null);
+   }
+
+   protected Object createPerson1() throws Exception {
+      return ProtobufUtil.toWrappedByteArray(serCtx, super.createPerson1());
+   }
+}

@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.dsl.QueryFactory;

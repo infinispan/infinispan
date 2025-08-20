@@ -1,8 +1,8 @@
 package org.infinispan.query.dsl.embedded.impl;
 
 import org.infinispan.metadata.Metadata;
-import org.infinispan.objectfilter.impl.MetadataAdapter;
-import org.infinispan.objectfilter.impl.util.ReflectionHelper;
+import org.infinispan.query.objectfilter.impl.MetadataAdapter;
+import org.infinispan.query.objectfilter.impl.util.ReflectionHelper;
 
 public class ReflectionMetadataProjectableAdapter extends MetadataProjectableAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> {
 
