@@ -25,8 +25,8 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
-import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 
 public final class RemoteHibernateSearchPropertyHelper extends ProtobufPropertyHelper {
 

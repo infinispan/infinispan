@@ -3,7 +3,7 @@ package org.infinispan.query.impl;
 import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionLoadingContext;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.search.mapper.search.loading.context.impl.InfinispanLoadingContext;
+import org.infinispan.query.mapper.search.loading.context.impl.InfinispanLoadingContext;
 
 public class EntityLoaderFactory<E> {
 

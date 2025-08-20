@@ -12,7 +12,7 @@ import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.remote.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.query.remote.impl.mapping.type.ProtobufKeyValuePair;
-import org.infinispan.search.mapper.mapping.EntityConverter;
+import org.infinispan.query.mapper.mapping.EntityConverter;
 
 public final class ProtobufEntityConverter implements EntityConverter {
 

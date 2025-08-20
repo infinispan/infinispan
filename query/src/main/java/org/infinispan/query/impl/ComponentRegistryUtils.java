@@ -17,7 +17,7 @@ import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.security.actions.SecurityActions;
 
 /**

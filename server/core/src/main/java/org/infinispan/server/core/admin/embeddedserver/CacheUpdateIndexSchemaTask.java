@@ -10,7 +10,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.server.core.admin.AdminServerTask;
 
 /**

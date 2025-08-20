@@ -30,7 +30,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 

@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
