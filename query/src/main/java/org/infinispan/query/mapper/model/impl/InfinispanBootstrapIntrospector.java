@@ -23,7 +23,7 @@ import org.hibernate.search.util.common.AssertionFailure;
 import org.hibernate.search.util.common.impl.ReflectionHelper;
 import org.hibernate.search.util.common.reflect.spi.ValueHandleFactory;
 import org.hibernate.search.util.common.reflect.spi.ValueReadHandle;
-import org.infinispan.query.mapper.log.impl.Log;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -72,12 +72,10 @@ public class InfinispanBootstrapIntrospector extends AbstractPojoModelsBootstrap
    }
 
    protected ValueReadHandle<?> createValueReadHandle(Member member) throws IllegalAccessException {
-      if (member instanceof Method) {
-         Method method = (Method) member;
+      if (member instanceof Method method) {
          setAccessible(method);
          return valueHandleFactory.createForMethod(method);
-      } else if (member instanceof Field) {
-         Field field = (Field) member;
+      } else if (member instanceof Field field) {
          setAccessible(field);
          return valueHandleFactory.createForField(field);
       } else {

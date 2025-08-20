@@ -3,12 +3,13 @@ package org.infinispan.query.objectfilter.impl.util;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
+@Test(testName = "query.objectfilter.impl.util.IntervalTest", groups = "functional")
 public class IntervalTest {
 
    @Test

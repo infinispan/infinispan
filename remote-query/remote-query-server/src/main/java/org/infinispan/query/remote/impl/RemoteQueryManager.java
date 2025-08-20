@@ -53,11 +53,11 @@ public interface RemoteQueryManager {
 
    DataConversion getValueDataConversion();
 
-   byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
+   byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Number offset, Number maxResults,
                        Integer hitCountAccuracy, AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal);
 
    byte[] executeDeleteByQuery(String queryString, Map<String, Object> namedParametersMap, AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal);
 
-   BaseRemoteQueryManager.QueryResultWithProjection localQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
+   BaseRemoteQueryManager.QueryResultWithProjection localQuery(String queryString, Map<String, Object> namedParametersMap, Number offset, Number maxResults,
                                                                Integer hitCountAccuracy, AdvancedCache<?, ?> cache, boolean isLocal);
 }

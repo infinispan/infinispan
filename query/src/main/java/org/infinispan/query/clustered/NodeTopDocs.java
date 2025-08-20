@@ -21,8 +21,8 @@ public final class NodeTopDocs {
 
    public final Address address;
    public final TopDocs topDocs;
-   public int totalHitCount;
-   public boolean countIsExact;
+   public final int totalHitCount;
+   public final boolean countIsExact;
    public final Object[] keys;
    public final Object[] projections;
 

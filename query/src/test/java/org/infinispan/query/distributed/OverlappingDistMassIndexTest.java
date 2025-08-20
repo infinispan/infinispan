@@ -19,8 +19,7 @@ import org.testng.annotations.Test;
 public class OverlappingDistMassIndexTest extends OverlappingIndexMassIndexTest {
 
    @Override
-   @SuppressWarnings("unchecked")
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg
             .indexing()

@@ -16,10 +16,9 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.api.query.ContinuousQueryListener;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.commons.api.query.Query;
 import org.infinispan.query.remote.client.impl.ContinuousQueryResult;
 
 /**
@@ -29,7 +28,7 @@ import org.infinispan.query.remote.client.impl.ContinuousQueryResult;
  * @author anistor@redhat.com
  * @since 8.2
  */
-public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
+public final class ContinuousQueryImpl<K, V> implements org.infinispan.commons.api.query.ContinuousQuery<K, V> {
 
    private final RemoteCache<K, V> cache;
 

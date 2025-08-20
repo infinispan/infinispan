@@ -9,9 +9,9 @@ import org.infinispan.api.annotations.indexing.Text;
 @Indexed
 public class Book implements Serializable {
 
-   String title;
-   String author;
-   String editor;
+   final String title;
+   final String author;
+   final String editor;
 
    public Book(String title, String author, String editor) {
       this.title = title;

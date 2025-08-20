@@ -10,19 +10,20 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.objectfilter.test.model.TestDomainSCI;
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
+@Test(testName = "query.objectfilter.test.ProtobufMatcherTest", groups = "functional")
 public class ProtobufParsingTest extends AbstractParsingTest<Descriptor> {
 
    public ProtobufParsingTest() throws IOException {
       super(createPropertyHelper());
    }
 
-   private static ObjectPropertyHelper<Descriptor> createPropertyHelper() throws IOException {
+   private static ObjectPropertyHelper<Descriptor> createPropertyHelper() {
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
       TestDomainSCI.INSTANCE.registerSchema(serCtx);
       TestDomainSCI.INSTANCE.registerMarshallers(serCtx);

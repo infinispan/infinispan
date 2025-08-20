@@ -34,7 +34,7 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
                   .fetchPersistentState(true);
    }
 
-   public void testFetchingPersistentStateUpdatesIndex() throws Exception {
+   public void testFetchingPersistentStateUpdatesIndex() {
       loadCacheEntries(this.<String, Person>caches().get(0));
 
       // Before adding a node, verify that the query resolves properly
@@ -61,8 +61,7 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
    private void checkCacheStoresContainPersons() throws PersistenceException {
       for (Cache<Object, Object> cache : caches()) {
          DummyInMemoryStore store = TestingUtil.getFirstStore(cache);
-         for (int i = 0; i < persons.length; i++)
-            assertEquals(persons[i], store.loadEntry(persons[i].getName()).getValue());
+         for (Person person : persons) assertEquals(person, store.loadEntry(person.getName()).getValue());
       }
    }
 

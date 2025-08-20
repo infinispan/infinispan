@@ -65,8 +65,7 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
       if (child instanceof NotExpr) {
          PrimaryPredicateExpr condition = (PrimaryPredicateExpr) ((NotExpr) child).getChild();
          makePredicateNode(parent, nodes, treeCounters, condition, true, namedParameters);
-      } else if (child instanceof PrimaryPredicateExpr) {
-         PrimaryPredicateExpr condition = (PrimaryPredicateExpr) child;
+      } else if (child instanceof PrimaryPredicateExpr condition) {
          makePredicateNode(parent, nodes, treeCounters, condition, false, namedParameters);
       } else if (child instanceof OrExpr) {
          makeBooleanOperatorNode((OrExpr) child, nodes, treeCounters, new OrNode(parent), namedParameters);
@@ -84,8 +83,7 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
       final List<AttributeId> path = metadataAdapter.mapPropertyNamePathToFieldIdPath(pve.getPropertyPath().asArrayPath());
       final boolean isRepeated = pve.isRepeated();
 
-      if (condition instanceof ComparisonExpr) {
-         ComparisonExpr expr = (ComparisonExpr) condition;
+      if (condition instanceof ComparisonExpr expr) {
          ConstantValueExpr right = (ConstantValueExpr) expr.getRightChild();
          Comparable rightConstant = right.getConstantValueAs(pve.getPrimitiveType(), namedParameters);
          switch (expr.getComparisonType()) {
@@ -130,8 +128,7 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
          }
       } else if (condition instanceof IsNullExpr) {
          addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<>(isRepeated, IsNullCondition.INSTANCE));
-      } else if (condition instanceof LikeExpr) {
-         LikeExpr likeExpr = (LikeExpr) condition;
+      } else if (condition instanceof LikeExpr likeExpr) {
          addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<>(isRepeated, new LikeCondition(likeExpr.getPattern(namedParameters), likeExpr.getEscapeChar())));
       } else {
          throw new IllegalStateException("Unexpected condition type (" + condition.getClass().getSimpleName() + "): " + condition);

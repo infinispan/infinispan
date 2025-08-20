@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 public class IndexFieldNameTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
@@ -43,7 +43,7 @@ public class IndexFieldNameTest extends SingleCacheManagerTest {
       Query<Book> query = cache.query("from org.infinispan.query.model.Book where naming : 'pl*ce' order by label");
       QueryResult<Book> result = query.execute();
 
-      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().exact()).isTrue();
       assertThat(result.count().value()).isEqualTo(2);
       assertThat(result.list()).extracting("title").contains("is*and", "home");
    }

@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.indexedembedded.BooksExampleTest")
 public class BooksExampleTest extends SingleCacheManagerTest {
 
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
             .transaction()

@@ -23,7 +23,7 @@ public class DistributedMaxResultTest extends MultipleCacheManagersTest {
    private Cache<Integer, Developer> node2;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       config
             .clustering()

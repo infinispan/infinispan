@@ -4,12 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import org.junit.Test;
+import org.testng.annotations.Test;
+
 
 /**
  * @author anistor@redhat.com
  * @since 8.1
  */
+@Test(testName = "query.objectfilter.impl.aggregation.DoubleStatTest", groups = "functional")
 public class DoubleStatTest {
 
    private static final double DELTA = 0.0000001d;

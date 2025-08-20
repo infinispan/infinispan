@@ -44,7 +44,7 @@ public class AggregationDistributedIterator implements CloseableIterator<Object[
 
             Comparable<?> group = (Comparable<?>) ((displayGroupFirst) ? items[0] : items[1]);
             Long value = (displayGroupFirst) ? (Long) items[1] : (Long) items[0];
-            aggregations.merge(group, value, (a, b) -> a + b);
+            aggregations.merge(group, value, Long::sum);
          }
       }
 

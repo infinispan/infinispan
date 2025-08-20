@@ -19,10 +19,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.rest.RestClient;
@@ -37,7 +37,6 @@ import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.KeywordVector;
 import org.infinispan.protostream.sampledomain.Metadata;
 import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -138,8 +137,7 @@ public class HotRodCacheQueries {
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      org.infinispan.query.dsl.Query<User> simpleQuery = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<User> simpleQuery = remoteCache.query("FROM sample_bank_account.User WHERE name = 'Tom'");
 
       List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
       try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
@@ -158,8 +156,7 @@ public class HotRodCacheQueries {
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      org.infinispan.query.dsl.Query<Object[]> simpleQuery = qf.create("SELECT surname, name FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<Object[]> simpleQuery = remoteCache.query("SELECT surname, name FROM sample_bank_account.User WHERE name = 'Tom'");
 
       List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
       try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
@@ -200,14 +197,12 @@ public class HotRodCacheQueries {
       User fromCache = remoteCache.get(1);
       assertUser1(fromCache);
 
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-
       Set<String> values = new HashSet<>();
       values.add("Tom");
       for (int i = 0; i < 1024; i++) {
          values.add("test" + i);
       }
-      Query<User> query = qf.from(User.class).having("name").in(values).build();
+      Query<User> query = remoteCache.query("from User where name in (" + values.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) +")");
 
       // this Ickle query translates to a BooleanQuery with 1025 clauses, 1 more than the max default (1024) so
       // executing it will fail unless the server jvm arg -Dinfinispan.query.lucene.max-boolean-clauses=1025 takes effect
@@ -229,8 +224,7 @@ public class HotRodCacheQueries {
          values.add("test" + i);
       }
 
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<User> query = qf.from(User.class).having("name").in(values).build();
+      Query<User> query = remoteCache.query("from User where name in (" + values.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) +")");
 
       // this Ickle query translates to a BooleanQuery with 1026 clauses, 1 more than the configured
       // -Dinfinispan.query.lucene.max-boolean-clauses=1025, so executing the query is expected to fail

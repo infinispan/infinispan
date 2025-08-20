@@ -1,14 +1,13 @@
 package org.infinispan.query.core.impl;
 
-import org.infinispan.query.dsl.QueryBuilder;
-import org.infinispan.query.dsl.impl.BaseQuery;
-import org.infinispan.query.dsl.impl.BaseQueryFactory;
+import org.infinispan.commons.query.BaseQuery;
+import org.infinispan.query.dsl.QueryFactory;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class EmbeddedQueryFactory extends BaseQueryFactory {
+public final class EmbeddedQueryFactory implements QueryFactory {
 
    private final QueryEngine<?> queryEngine;
 
@@ -21,16 +20,6 @@ public final class EmbeddedQueryFactory extends BaseQueryFactory {
 
    @Override
    public <T> BaseQuery<T> create(String queryString) {
-      return new DelegatingQuery<>(queryEngine, this, queryString);
-   }
-
-   @Override
-   public QueryBuilder from(Class<?> type) {
-      return new EmbeddedQueryBuilder(this, queryEngine, type.getName());
-   }
-
-   @Override
-   public QueryBuilder from(String type) {
-      return new EmbeddedQueryBuilder(this, queryEngine, type);
+      return new DelegatingQuery<>(queryEngine, queryString);
    }
 }

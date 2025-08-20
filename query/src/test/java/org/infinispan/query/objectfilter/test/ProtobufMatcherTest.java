@@ -1,32 +1,26 @@
 package org.infinispan.query.objectfilter.test;
 
-import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
-import org.infinispan.query.objectfilter.test.model.TestDomainSCI;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.query.objectfilter.test.model.TestDomainSCI;
 import org.junit.Before;
+import org.testng.annotations.Test;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
+@Test(testName = "query.objectfilter.test.ProtobufMatcherTest", groups = "functional")
 public class ProtobufMatcherTest extends AbstractMatcherTest {
 
    private SerializationContext serCtx;
 
-   private FilterQueryFactory queryFactory;
-
    @Before
-   public void setUp() throws Exception {
+   public void setUp() {
       serCtx = ProtobufUtil.newSerializationContext();
       TestDomainSCI.INSTANCE.registerSchema(serCtx);
       TestDomainSCI.INSTANCE.registerMarshallers(serCtx);
-      queryFactory = new FilterQueryFactory(serCtx);
-   }
-
-   @Override
-   protected FilterQueryFactory createQueryFactory() {
-      return queryFactory;
    }
 
    @Override

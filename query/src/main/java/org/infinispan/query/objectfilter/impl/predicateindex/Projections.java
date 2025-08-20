@@ -45,8 +45,7 @@ final class Projections {
    }
 
    void processProjections(MatcherEvalContext<?, ?, ?> ctx, Object attributeValue) {
-      for (int i = 0; i < subscriptions.size(); i++) {
-         ProjectionSubscription s = subscriptions.get(i);
+      for (ProjectionSubscription s : subscriptions) {
          FilterEvalContext c = ctx.getFilterEvalContext(s.filterSubscription);
          c.processProjection(s.position, attributeValue);
       }

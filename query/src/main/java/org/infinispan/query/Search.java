@@ -6,9 +6,8 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
-import org.infinispan.query.objectfilter.ObjectFilter;
-import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
 import org.infinispan.query.core.impl.continuous.ContinuousQueryImpl;
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
@@ -20,6 +19,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
@@ -31,6 +31,7 @@ import org.infinispan.security.actions.SecurityActions;
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author anistor@redhat.com
  */
+@Deprecated(forRemoval = true)
 public final class Search {
 
    private Search() {
@@ -62,6 +63,7 @@ public final class Search {
    /**
     * Obtains a query factory to build DSL-based Ickle queries.
     */
+   @Deprecated(forRemoval = true)
    public static QueryFactory getQueryFactory(Cache<?, ?> cache) {
       if (cache == null) {
          throw new IllegalArgumentException("The cache parameter cannot be null.");
@@ -79,7 +81,7 @@ public final class Search {
     * Obtains the {@link ContinuousQuery} object for the cache.
     * @deprecated use {@link Cache#continuousQuery()} instead.
     */
-   @Deprecated
+   @Deprecated(since = "14.0", forRemoval = true)
    public static <K, V> ContinuousQuery<K, V> getContinuousQuery(Cache<K, V> cache) {
       return new ContinuousQueryImpl<>(cache);
    }

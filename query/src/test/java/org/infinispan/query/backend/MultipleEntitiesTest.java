@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 public class MultipleEntitiesTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
       cfg.indexing().enable()
             .storage(LOCAL_HEAP)
@@ -57,8 +57,10 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
 @Indexed(index = "instruments")
 class Bond {
    @Basic
+   final
    Date maturity;
    @Basic
+   final
    Long price;
 
    public Bond(Date maturity, Long price) {
@@ -71,9 +73,11 @@ class Bond {
 class Debenture {
 
    @Basic
+   final
    String issuer;
 
    @Basic
+   final
    Double rate;
 
    public Debenture(String issuer, Double rate) {

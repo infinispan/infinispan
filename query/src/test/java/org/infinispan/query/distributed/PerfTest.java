@@ -40,15 +40,13 @@ public class PerfTest extends MultipleCacheManagersTest {
          EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml("indexing-perf.xml");
          registerCacheManager(cacheManager);
       }
-      waitForClusterToForm(new String[]{
-            getDefaultCacheName(),
+      waitForClusterToForm(getDefaultCacheName(),
             "LuceneIndexesMetadata",
             "LuceneIndexesData",
-            "LuceneIndexesLocking",
-      });
+            "LuceneIndexesLocking");
    }
 
-   public void testIndexing() throws Exception {
+   public void testIndexing() {
       int carId = 0;
       int cacheId = 0;
       final long start = System.nanoTime();
@@ -74,8 +72,7 @@ public class PerfTest extends MultipleCacheManagersTest {
    private Cache<String, Car> getWriteOnlyCache(int cacheId) {
       Cache<String, Car> cache = cache(cacheId);
       AdvancedCache<String, Car> advancedCache = cache.getAdvancedCache();
-      AdvancedCache<String, Car> withFlags = advancedCache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_INDEX_CLEANUP);
-      return withFlags;
+      return advancedCache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_INDEX_CLEANUP);
    }
 
    private void verifyFindsCar(int expectedCount, String carMake) {

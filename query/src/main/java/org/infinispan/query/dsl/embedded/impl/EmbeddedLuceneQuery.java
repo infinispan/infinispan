@@ -8,15 +8,14 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
+import org.infinispan.commons.query.BaseQuery;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.QueryResultImpl;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.impl.EntityLoaded;
 import org.infinispan.query.impl.IndexedQuery;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 
 
 /**
@@ -53,11 +52,11 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
     */
    private IndexedQuery<T> indexedListQuery;
 
-   EmbeddedLuceneQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory,
+   EmbeddedLuceneQuery(QueryEngine<TypeMetadata> queryEngine,
                        Map<String, Object> namedParameters, IckleParsingResult<TypeMetadata> parsingResult,
                        String[] projection, QueryEngine.RowProcessor rowProcessor,
                        long startOffset, int maxResults, boolean local) {
-      super(queryFactory, parsingResult.getQueryString(), namedParameters, projection, startOffset, maxResults, local);
+      super(parsingResult.getQueryString(), namedParameters, projection, startOffset, maxResults, local);
       if (rowProcessor != null && (projection == null || projection.length == 0)) {
          throw new IllegalArgumentException("A RowProcessor can only be specified with projections");
       }
@@ -177,9 +176,8 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
       Object[] array;
       if (result instanceof Object[]) {
          array = (Object[]) result;
-      } else if (result instanceof List) {
+      } else if (result instanceof List<?> castedRow) {
          // Hibernate Search 6 uses list to wrap multiple item projection
-         List<?> castedRow = (List<?>) result;
          array = castedRow.toArray(new Object[0]);
       } else {
          // Hibernate Search 6 does not wrap single item projection

@@ -83,7 +83,7 @@ public final class KeyTransformationHandler {
             return Boolean.valueOf(s.substring(2));
          case 'C':
             // This is a Character
-            return Character.valueOf(s.charAt(2));
+            return s.charAt(2);
          case 'U':
             // This is a java.util.UUID
             return UUID.fromString(s.substring(2));

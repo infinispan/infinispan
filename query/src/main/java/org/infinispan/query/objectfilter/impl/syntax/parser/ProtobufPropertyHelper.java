@@ -4,16 +4,9 @@ import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.query.objectfilter.impl.logging.Log;
-import org.infinispan.query.objectfilter.impl.syntax.IndexedFieldProvider;
-import org.infinispan.query.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
-import org.infinispan.query.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
-import org.infinispan.query.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
-import org.infinispan.query.objectfilter.impl.util.StringHelper;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -21,6 +14,12 @@ import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.query.objectfilter.impl.logging.Log;
+import org.infinispan.query.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.query.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
+import org.infinispan.query.objectfilter.impl.util.StringHelper;
 import org.jboss.logging.Logger;
 
 /**
@@ -36,13 +35,16 @@ public class ProtobufPropertyHelper extends ObjectPropertyHelper<Descriptor> {
 
    public static final String VERSION = VersionPropertyPath.VERSION_PROPERTY_NAME;
    public static final int VERSION_FIELD_ATTRIBUTE_ID = 150_000;
+   public static final List<Integer> VERSION_FIELD_ATTRIBUTE = List.of(VERSION_FIELD_ATTRIBUTE_ID);
    public static final int MIN_METADATA_FIELD_ATTRIBUTE_ID = VERSION_FIELD_ATTRIBUTE_ID;
 
    public static final String VALUE = CacheValuePropertyPath.VALUE_PROPERTY_NAME;
    public static final int VALUE_FIELD_ATTRIBUTE_ID = 150_001;
+   public static final List<Integer> VALUE_FIELD_ATTRIBUTE = List.of(VALUE_FIELD_ATTRIBUTE_ID);
 
    public static final String SCORE = ScorePropertyPath.SCORE_PROPERTY_NAME;
    public static final int SCORE_FIELD_ATTRIBUTE_ID = 150_002;
+   public static final List<Integer> SCORE_FIELD_ATTRIBUTE = List.of(SCORE_FIELD_ATTRIBUTE_ID);
 
    public static final int KEY_FIELD_ATTRIBUTE_ID = 150_003;
 
@@ -78,14 +80,16 @@ public class ProtobufPropertyHelper extends ObjectPropertyHelper<Descriptor> {
    @Override
    public List<?> mapPropertyNamePathToFieldIdPath(Descriptor messageDescriptor, String[] propertyPath) {
       if (propertyPath.length == 1) {
-         if (propertyPath[0].equals(VERSION)) {
-            return Arrays.asList(VERSION_FIELD_ATTRIBUTE_ID);
-         }
-         if (propertyPath[0].equals(VALUE)) {
-            return Arrays.asList(VALUE_FIELD_ATTRIBUTE_ID);
-         }
-         if (propertyPath[0].equals(SCORE)) {
-            return Arrays.asList(SCORE_FIELD_ATTRIBUTE_ID);
+         switch (propertyPath[0]) {
+            case VERSION -> {
+               return VERSION_FIELD_ATTRIBUTE;
+            }
+            case VALUE -> {
+               return VALUE_FIELD_ATTRIBUTE;
+            }
+            case SCORE -> {
+               return SCORE_FIELD_ATTRIBUTE;
+            }
          }
       }
 
@@ -95,14 +99,16 @@ public class ProtobufPropertyHelper extends ObjectPropertyHelper<Descriptor> {
    @Override
    public Class<?> getPrimitivePropertyType(Descriptor entityType, String[] propertyPath) {
       if (propertyPath.length == 1) {
-         if (propertyPath[0].equals(VERSION)) {
-            return Long.class;
-         }
-         if (propertyPath[0].equals(VALUE)) {
-            return Object.class;
-         }
-         if (propertyPath[0].equals(SCORE)) {
-            return Float.class;
+         switch (propertyPath[0]) {
+            case VERSION -> {
+               return Long.class;
+            }
+            case VALUE -> {
+               return Object.class;
+            }
+            case SCORE -> {
+               return Float.class;
+            }
          }
       }
 
@@ -110,33 +116,21 @@ public class ProtobufPropertyHelper extends ObjectPropertyHelper<Descriptor> {
       if (field == null) {
          throw log.getNoSuchPropertyException(entityType.getFullName(), StringHelper.join(propertyPath));
       }
-      switch (field.getJavaType()) {
-         case INT:
-            return Integer.class;
-         case LONG:
-            return Long.class;
-         case FLOAT:
-            return Float.class;
-         case DOUBLE:
-            return Double.class;
-         case BOOLEAN:
-            return Boolean.class;
-         case STRING:
-            return String.class;
-         case BYTE_STRING:
-            return byte[].class;
-         case ENUM:
-            return Integer.class;
-         case MESSAGE:
-            switch (field.getTypeName()) {
-               case BIG_INTEGER_COMMON_TYPE:
-                  return BigInteger.class;
-               case BIG_DECIMAL_COMMON_TYPE:
-                  return BigDecimal.class;
-            }
-            return null;
-      }
-      return null;
+      return switch (field.getJavaType()) {
+         case INT, ENUM -> Integer.class;
+         case LONG -> Long.class;
+         case FLOAT -> Float.class;
+         case DOUBLE -> Double.class;
+         case BOOLEAN -> Boolean.class;
+         case STRING -> String.class;
+         case BYTE_STRING -> byte[].class;
+         case MESSAGE -> switch (field.getTypeName()) {
+            case BIG_INTEGER_COMMON_TYPE -> BigInteger.class;
+            case BIG_DECIMAL_COMMON_TYPE -> BigDecimal.class;
+            default -> null;
+         };
+         default -> null;
+      };
    }
 
    @Override

@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 public class ObjectStorageLocalCacheTest extends LocalCacheTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.encoding().key().mediaType(APPLICATION_OBJECT_TYPE)
             .encoding().value().mediaType(APPLICATION_OBJECT_TYPE)

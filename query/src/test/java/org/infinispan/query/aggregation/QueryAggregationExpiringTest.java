@@ -25,7 +25,7 @@ public class QueryAggregationExpiringTest extends SingleCacheManagerTest {
    private final ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.statistics().enable();
       config.indexing().enable()
@@ -38,7 +38,7 @@ public class QueryAggregationExpiringTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void test() throws Exception {
+   public void test() {
       for (int i=0; i<12; i++) {
          int module = i % 4;
          cache.put(i, new Task(100 + i, "type-" + module, "status-" + module, "label-" + module),

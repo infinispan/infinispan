@@ -35,7 +35,7 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
    private static final LatLng SELVA_COORDINATES = LatLng.of(46.5560, 11.7559);
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.statistics().enable();
       config.indexing().enable()

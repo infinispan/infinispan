@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -16,7 +17,6 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.Test;
 
 /**
@@ -26,10 +26,10 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.continuous.ContinuousQueryTest")
 public class ContinuousQueryTest extends SingleCacheManagerTest {
 
-   protected ControlledTimeService timeService = new ControlledTimeService();
+   protected final ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cacheConfiguration = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       //cacheConfiguration.transaction().lockingMode(LockingMode.PESSIMISTIC);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cacheConfiguration);

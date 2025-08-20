@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 public class ObjectStorageClusteredCacheTest extends ClusteredCacheTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg
             .encoding().key().mediaType(APPLICATION_OBJECT_TYPE)

@@ -19,7 +19,7 @@ public class DistributedIndexedTimeoutTest extends MultipleCacheManagersTest {
    protected Cache<Integer, Person> cache1;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg.indexing().enable()
             .storage(LOCAL_HEAP)

@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 public class OrderByTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
@@ -48,7 +48,7 @@ public class OrderByTest extends SingleCacheManagerTest {
       Query<Book> query = cache.query("from org.infinispan.query.model.Book where naming : 'place' order by label");
       QueryResult<Book> result = query.execute();
 
-      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().exact()).isTrue();
       assertThat(result.count().value()).isEqualTo(3);
       assertThat(result.list()).extracting("title").contains("island", "home", "space");
    }

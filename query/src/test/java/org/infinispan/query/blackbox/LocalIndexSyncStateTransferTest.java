@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 public class LocalIndexSyncStateTransferTest extends MultipleCacheManagersTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       createClusteredCaches(2, QueryTestSCI.INSTANCE, getBuilder());
    }
 

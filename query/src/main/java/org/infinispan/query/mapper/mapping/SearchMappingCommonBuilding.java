@@ -22,7 +22,6 @@ public class SearchMappingCommonBuilding {
    private final Collection<ProgrammaticSearchMappingProvider> mappingProviders;
    private final BlockingManager blockingManager;
    private final LuceneWorkExecutorProvider luceneWorkExecutorProvider;
-   private final Integer numberOfShards;
    private final IndexerConfig indexerConfig;
 
    public SearchMappingCommonBuilding(BeanReference<? extends IdentifierBridge<Object>> identifierBridge,
@@ -37,19 +36,17 @@ public class SearchMappingCommonBuilding {
       this.mappingProviders = mappingProviders;
       this.blockingManager = blockingManager;
       this.luceneWorkExecutorProvider = luceneWorkExecutorProvider;
-      this.numberOfShards = numberOfShards;
       this.indexerConfig = indexerConfig;
    }
 
    public SearchMappingBuilder builder(PojoBootstrapIntrospector introspector) {
       InfinispanIndexingFailureHandler indexingFailureHandler = new InfinispanIndexingFailureHandler();
 
-      SearchMappingBuilder builder = SearchMapping.builder(introspector, aggregatedClassLoader, mappingProviders,
+      return SearchMapping.builder(introspector, aggregatedClassLoader, mappingProviders,
                   blockingManager, indexingFailureHandler.failureCounter(), indexerConfig)
             .setProvidedIdentifierBridge(identifierBridge)
             .setProperties(properties)
             .setProperty("backend_work_executor_provider", luceneWorkExecutorProvider)
             .setProperty("hibernate.search.background_failure_handler", indexingFailureHandler);
-      return builder;
    }
 }

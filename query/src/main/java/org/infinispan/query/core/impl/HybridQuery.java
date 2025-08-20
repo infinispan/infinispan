@@ -9,13 +9,12 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -37,10 +36,10 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
    private final boolean allSortFieldsAreStored;
 
-   public HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, IckleParsingResult.StatementType statementType,
+   public HybridQuery(AdvancedCache<?, ?> cache, String queryString, IckleParsingResult.StatementType statementType,
                       Map<String, Object> namedParameters, ObjectFilter objectFilter, long startOffset, int maxResults,
                       Query<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
-      super(queryFactory, cache, queryString, statementType, namedParameters, objectFilter.getProjection(), startOffset, maxResults, queryStatistics, local);
+      super(cache, queryString, statementType, namedParameters, objectFilter.getProjection(), startOffset, maxResults, queryStatistics, local);
       this.objectFilter = objectFilter;
       this.baseQuery = (Query<S>) baseQuery;
       this.allSortFieldsAreStored = allSortFieldsAreStored;
@@ -89,7 +88,7 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
       try (CloseableIterator<EntityEntry<Object, S>> entryIterator =
-                 baseQuery.startOffset(0).maxResults(-1).local(local).entryIterator(false)) {
+                 baseQuery.startOffset(0).local(local).entryIterator(false)) {
          Iterator<ObjectFilter.FilterResult> it =
                new MappingIterator<>(entryIterator, e -> objectFilter.filter(e.key(), e.value(), null));
          int count = 0;
