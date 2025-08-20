@@ -56,7 +56,6 @@
       <module>multimap</module>
       <module>tools</module>
       <module>query-dsl</module>
-      <module>query-core</module>
       <module>query</module>
       <module>object-filter</module>
       <module>remote-query/remote-query-client</module>
