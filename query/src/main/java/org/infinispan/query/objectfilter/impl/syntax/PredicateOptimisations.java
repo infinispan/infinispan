@@ -39,8 +39,7 @@ final class PredicateOptimisations {
     */
    public static PredicateComparisonResult comparePrimaryPredicates(boolean isFirstNegated, PrimaryPredicateExpr first, boolean isSecondNegated, PrimaryPredicateExpr second) {
       if (first.getClass() == second.getClass()) {
-         if (first instanceof ComparisonExpr) {
-            ComparisonExpr comparison1 = (ComparisonExpr) first;
+         if (first instanceof ComparisonExpr comparison1) {
             ComparisonExpr comparison2 = (ComparisonExpr) second;
 
             // We work under these assumptions, which are normally true unless there's's a bug somewhere
@@ -143,8 +142,7 @@ final class PredicateOptimisations {
    private static void optimizeOverlappingIntervalPredicates(List<BooleanExpr> children, boolean isConjunction) {
       for (int i = 0; i < children.size(); i++) {
          BooleanExpr ci = children.get(i);
-         if (ci instanceof ComparisonExpr) {
-            ComparisonExpr first = (ComparisonExpr) ci;
+         if (ci instanceof ComparisonExpr first) {
             assert first.getLeftChild() instanceof PropertyValueExpr;
             assert first.getRightChild() instanceof ConstantValueExpr;
 
@@ -157,8 +155,7 @@ final class PredicateOptimisations {
             int j = i + 1;
             while (j < children.size()) {
                BooleanExpr cj = children.get(j);
-               if (cj instanceof ComparisonExpr) {
-                  ComparisonExpr second = (ComparisonExpr) cj;
+               if (cj instanceof ComparisonExpr second) {
                   assert second.getLeftChild() instanceof PropertyValueExpr;
                   assert second.getRightChild() instanceof ConstantValueExpr;
 

@@ -31,7 +31,7 @@ public class LocalIndexerRemoveTest extends SingleCacheManagerTest {
    private static final int ENTRIES = 5_000;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config
             .indexing()
@@ -88,7 +88,6 @@ public class LocalIndexerRemoveTest extends SingleCacheManagerTest {
       Map<String, IndexInfo> indexInfos = join(searchStatistics.getIndexStatistics().computeIndexInfos());
       String key = TypeA.class.getName();
       assertThat(indexInfos).containsKey(key);
-      IndexInfo indexInfo = indexInfos.get(key);
-      return indexInfo;
+      return indexInfos.get(key);
    }
 }

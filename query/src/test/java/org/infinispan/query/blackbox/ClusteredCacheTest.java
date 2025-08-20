@@ -256,17 +256,11 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       ClusteringDependentLogic cdl = ComponentRegistry.componentOf(cache1, ClusteringDependentLogic.class);
       DistributionInfo distribution = cdl.getCacheTopology().getDistribution(key);
 
-      Predicate<Cache<?, ?>> predicate = null;
-      switch (ownership) {
-         case PRIMARY:
-            predicate = c -> c.getAdvancedCache().getRpcManager().getAddress().equals(distribution.primary());
-            break;
-         case BACKUP:
-            predicate = c -> distribution.writeBackups().contains(c.getAdvancedCache().getRpcManager().getAddress());
-            break;
-         case NON_OWNER:
-            predicate = c -> !distribution.writeOwners().contains(c.getAdvancedCache().getRpcManager().getAddress());
-      }
+      Predicate<Cache<?, ?>> predicate = switch (ownership) {
+         case PRIMARY -> c -> c.getAdvancedCache().getRpcManager().getAddress().equals(distribution.primary());
+         case BACKUP -> c -> distribution.writeBackups().contains(c.getAdvancedCache().getRpcManager().getAddress());
+         case NON_OWNER -> c -> !distribution.writeOwners().contains(c.getAdvancedCache().getRpcManager().getAddress());
+      };
 
       return caches.stream().filter(predicate).findFirst();
    }

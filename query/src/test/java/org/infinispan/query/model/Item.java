@@ -1,5 +1,7 @@
 package org.infinispan.query.model;
 
+import java.util.List;
+
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
@@ -11,22 +13,20 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchema;
 
-import java.util.List;
-
 @Indexed
 public class Item {
 
-   private String code;
+   private final String code;
 
-   private byte[] byteVector;
+   private final byte[] byteVector;
 
-   private float[] floatVector;
+   private final float[] floatVector;
 
-   private String buggy;
+   private final String buggy;
 
-   private Integer ordinal;
+   private final Integer ordinal;
 
-   private List<Metadata> metadata;
+   private final List<Metadata> metadata;
 
    @ProtoFactory
    public Item(String code, byte[] byteVector, float[] floatVector, String buggy, Integer ordinal, List<Metadata> metadata) {

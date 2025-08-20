@@ -1,83 +1,33 @@
 package org.infinispan.query.objectfilter.test;
 
-import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.query.BaseQuery;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.query.objectfilter.impl.logging.Log;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.dsl.impl.BaseQuery;
-import org.infinispan.query.dsl.impl.BaseQueryBuilder;
-import org.infinispan.query.dsl.impl.BaseQueryFactory;
-import org.infinispan.query.dsl.impl.QueryStringCreator;
-import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
  * @since 7.2
  */
-final class FilterQueryFactory extends BaseQueryFactory {
-
-   private final SerializationContext serializationContext;
-
-   FilterQueryFactory(SerializationContext serializationContext) {
-      this.serializationContext = serializationContext;
-   }
+final class FilterQueryFactory implements QueryFactory {
 
    FilterQueryFactory() {
-      this(null);
    }
 
    @Override
    public <T> Query<T> create(String queryString) {
-      return new FilterQuery<>(this, queryString, null, null, -1, -1);
-   }
-
-   @Override
-   public QueryBuilder from(Class<?> entityType) {
-      if (serializationContext != null) {
-         serializationContext.getMarshaller(entityType);
-      }
-      return new FilterQueryBuilder(this, entityType.getName());
-   }
-
-   @Override
-   public QueryBuilder from(String entityType) {
-      if (serializationContext != null) {
-         serializationContext.getMarshaller(entityType);
-      }
-      return new FilterQueryBuilder(this, entityType);
-   }
-
-   private static final class FilterQueryBuilder extends BaseQueryBuilder {
-
-      private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, FilterQueryBuilder.class.getName());
-
-      FilterQueryBuilder(FilterQueryFactory queryFactory, String rootType) {
-         super(queryFactory, rootType);
-      }
-
-      @Override
-      public <T> Query<T> build() {
-         QueryStringCreator generator = new QueryStringCreator();
-         String queryString = accept(generator);
-         if (log.isTraceEnabled()) {
-            log.tracef("Query string : %s", queryString);
-         }
-         return new FilterQuery<>(queryFactory, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
-      }
+      return new FilterQuery<>(queryString, null, null, -1, -1);
    }
 
    private static final class FilterQuery<T> extends BaseQuery<T> {
 
-      FilterQuery(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
-         super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults, false);
+      FilterQuery(String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
+         super(queryString, namedParameters, projection, startOffset, maxResults, false);
       }
 
       @Override

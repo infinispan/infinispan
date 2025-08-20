@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.query.api.continuous.ContinuousQueryListener;
+import org.infinispan.commons.api.query.ContinuousQueryListener;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

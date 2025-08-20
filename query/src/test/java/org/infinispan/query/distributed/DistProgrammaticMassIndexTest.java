@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       createCluster(holder -> {
          String defaultName = getClass().getSimpleName();
          holder.getGlobalConfigurationBuilder().defaultCacheName(defaultName).serialization().addContextInitializer(QueryTestSCI.INSTANCE);

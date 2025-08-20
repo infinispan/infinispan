@@ -11,13 +11,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
+import org.infinispan.commons.query.BaseQuery;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.logging.Log;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.jboss.logging.Logger;
 
 /**
@@ -37,8 +36,8 @@ final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
     */
    private Query<T> query;
 
-   DelegatingQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory, String queryString) {
-      super(queryFactory, queryString);
+   DelegatingQuery(QueryEngine<TypeMetadata> queryEngine, String queryString) {
+      super(queryString);
       this.queryEngine = queryEngine;
 
       // parse and validate early
@@ -52,9 +51,9 @@ final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
       }
    }
 
-   DelegatingQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory, String queryString,
+   DelegatingQuery(QueryEngine<TypeMetadata> queryEngine, String queryString,
                    Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults, boolean local) {
-      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults, local);
+      super(queryString, namedParameters, projection, startOffset, maxResults, local);
       this.queryEngine = queryEngine;
 
       // parse and validate early; we also discover the param names
@@ -92,7 +91,7 @@ final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
    private Query<T> createQuery() {
       // the query is created first time only
       if (query == null) {
-         query = (Query<T>) queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, local);
+         query = (Query<T>) queryEngine.buildQuery(parsingResult, namedParameters, startOffset, maxResults, local);
          if (timeout > 0) {
             query.timeout(timeout, TimeUnit.NANOSECONDS);
          }

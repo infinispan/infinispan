@@ -23,7 +23,7 @@ public class MultipleIndexFieldAnnotationsTest extends SingleCacheManagerTest {
    public static final String BLUE_DESCRIPTION = "Blue is one of the three primary colours in the RYB colour model (traditional color theory), as well as in the RGB (additive) colour model.";
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.indexing().enable()
             .storage(LOCAL_HEAP)

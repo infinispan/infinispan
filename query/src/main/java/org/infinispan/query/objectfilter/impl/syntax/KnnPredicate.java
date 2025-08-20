@@ -98,17 +98,17 @@ public final class KnnPredicate implements PrimaryPredicateExpr {
 
    private int convertToInt(Object valueOrParam, Map<String, Object> namedParameters) {
       return convertValue(valueOrParam, namedParameters,
-            (string) -> Integer.parseInt(string), (number) -> number.intValue());
+            Integer::parseInt, Number::intValue);
    }
 
    private byte convertToByte(Object valueOrParam, Map<String, Object> namedParameters) {
       return convertValue(valueOrParam, namedParameters,
-            (string) -> Byte.parseByte(string), (number) -> number.byteValue());
+            Byte::parseByte, Number::byteValue);
    }
 
    private float convertToFloat(Object valueOrParam, Map<String, Object> namedParameters) {
       return convertValue(valueOrParam, namedParameters,
-            (string) -> Float.parseFloat(string), (number) -> number.floatValue());
+            Float::parseFloat, Number::floatValue);
    }
 
    private <T> T convertValue(Object valueOrParam, Map<String, Object> namedParameters,
@@ -122,8 +122,7 @@ public final class KnnPredicate implements PrimaryPredicateExpr {
       if (valueOrParam instanceof String) {
          value = valueOrParam;
       }
-      if (valueOrParam instanceof ConstantValueExpr.ParamPlaceholder) {
-         ConstantValueExpr.ParamPlaceholder param = (ConstantValueExpr.ParamPlaceholder) valueOrParam;
+      if (valueOrParam instanceof ConstantValueExpr.ParamPlaceholder param) {
          paramName = param.getName();
          value = namedParameters.get(paramName);
       }

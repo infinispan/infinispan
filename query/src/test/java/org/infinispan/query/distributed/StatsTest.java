@@ -50,7 +50,7 @@ public class StatsTest extends MultipleCacheManagersTest {
    private final String hybridQuery = String.format("From %s where nonIndexedField = 'first' and age > 50", Person.class.getName());
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg.statistics().enable();
       cacheCfg.indexing().enable()

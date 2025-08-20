@@ -15,12 +15,13 @@
  */
 package org.infinispan.query.objectfilter.impl.ql.test;
 
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 /**
  * @author anistor@redhat.com
  * @since 9.0
  */
+@Test(testName = "query.objectfilter.impl.ql.test.LexerTest", groups = "functional")
 public class LexerTest extends TestBase {
 
    @Test

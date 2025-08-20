@@ -15,8 +15,10 @@
  */
 package org.infinispan.query.objectfilter.impl.ql.test;
 
-import org.junit.Test;
 
+import org.testng.annotations.Test;
+
+@Test(testName = "query.objectfilter.impl.ql.test.ParserTest", groups = "functional")
 public class ParserTest extends TestBase {
 
    @Test

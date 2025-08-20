@@ -17,15 +17,14 @@ import java.util.stream.StreamSupport;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
+import org.infinispan.commons.query.BaseQuery;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.dsl.impl.logging.Log;
 import org.infinispan.query.objectfilter.ObjectFilter.FilterResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.dsl.impl.BaseQuery;
-import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
 
 /**
@@ -52,11 +51,11 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
 
    protected final LocalQueryStatistics queryStatistics;
 
-   protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
+   protected BaseEmbeddedQuery(AdvancedCache<?, ?> cache, String queryString,
                                IckleParsingResult.StatementType statementType,
                                Map<String, Object> namedParameters, String[] projection, long startOffset,
                                int maxResults, LocalQueryStatistics queryStatistics, boolean local) {
-      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults, local);
+      super(queryString, namedParameters, projection, startOffset, maxResults, local);
       this.statementType = statementType;
       this.cache = cache;
       this.partitionHandlingSupport = new PartitionHandlingSupport(cache);
@@ -138,7 +137,7 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
                      .collect(new TimedCollector<>(Collector.of(() -> new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator)),
                            this::addToPriorityQueue, (q1, q2) -> q1, IDENTITY_FINISH), timeout));
 
-               // trim the results that are outside of the requested range and reverse them
+               // trim the results that are outside the requested range and reverse them
                int queueSize = count[0];
                if (queue.size() > startOffset) {
                   Object[] res = new Object[queue.size() - startOffset];

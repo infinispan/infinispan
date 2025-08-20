@@ -23,10 +23,10 @@ import org.hibernate.search.mapper.pojo.scope.spi.PojoScopeDelegate;
 import org.hibernate.search.util.common.AssertionFailure;
 import org.hibernate.search.util.common.impl.Closer;
 import org.infinispan.query.concurrent.FailureCounter;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.query.mapper.common.impl.EntityReferenceImpl;
-import org.infinispan.query.mapper.log.impl.Log;
 import org.infinispan.query.mapper.mapping.EntityConverter;
 import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.query.mapper.mapping.SearchMapping;
@@ -166,7 +166,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    @Override
    public Map<String, IndexMetamodel> metamodel() {
       return allIndexedEntities().stream()
-            .map(indexedEntity -> new IndexMetamodel(indexedEntity))
+            .map(IndexMetamodel::new)
             .collect(Collectors.toMap(IndexMetamodel::getEntityName, Function.identity()));
    }
 

@@ -20,18 +20,18 @@ import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
+import org.infinispan.commons.query.TotalHitCount;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.PartitionHandlingSupport;
 import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.dsl.TotalHitCount;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 
 /**
  * Lucene based indexed query implementation.
@@ -179,7 +179,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
                   return origin;
                }).collect(Collectors.toList()));
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
-         throw new SearchTimeoutException();
+         throw new TimeoutException();
       }
    }
 
@@ -248,7 +248,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
          return count;
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
-         throw new SearchTimeoutException();
+         throw new TimeoutException();
       }
    }
 
@@ -256,7 +256,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       try {
          return new ScrollerIteratorAdaptor<>(searchQuery.scroll(SCROLL_CHUNK));
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
-         throw new SearchTimeoutException();
+         throw new TimeoutException();
       }
    }
 

@@ -20,7 +20,7 @@ public class ClusteredDistCacheTest extends ClusteredCacheTest {
    protected Cache<Object, Person> cache3;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg.indexing()
             .enable()

@@ -7,9 +7,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.query.SearchTimeoutException;
 
 /**
  * @since 11.0
@@ -47,7 +47,7 @@ class TimedCollector<U, A, R> implements Collector<U, A, R> {
          @Override
          public void accept(A a, U u) {
             if (divBy32(index++) && TIME_SERVICE.isTimeExpired(limit)) {
-               throw new SearchTimeoutException();
+               throw new TimeoutException();
             }
             accumulator.accept(a, u);
          }

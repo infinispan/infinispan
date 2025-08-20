@@ -25,15 +25,16 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       String config = TestingUtil.wrapXMLWithSchema(
-            "<cache-container default-cache=\"default\">" +
-            "   <local-cache name=\"default\">\n" +
-            "      <indexing storage=\"local-heap\">\n" +
-            "         <indexed-entities>\n" +
-            "            <indexed-entity>org.infinispan.query.test.Person</indexed-entity>\n" +
-            "         </indexed-entities>\n" +
-            "      </indexing>\n" +
-            "   </local-cache>\n" +
-            "</cache-container>"
+            """
+                  <cache-container default-cache="default">\
+                     <local-cache name="default">
+                        <indexing storage="local-heap">
+                           <indexed-entities>
+                              <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+                           </indexed-entities>
+                        </indexing>
+                     </local-cache>
+                  </cache-container>"""
       );
       log.tracef("Using test configuration:\n%s", config);
       try (InputStream is = new ByteArrayInputStream(config.getBytes())) {

@@ -4,7 +4,6 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -14,14 +13,14 @@ import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.operations.QueryOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.api.query.HitCount;
+import org.infinispan.commons.query.BaseQuery;
+import org.infinispan.commons.query.TotalHitCount;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.dsl.TotalHitCount;
-import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.impl.BaseQueryResponse;
 
 /**
@@ -35,16 +34,9 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
    private final InternalRemoteCache<?, ?> cache;
    private final SerializationContext serializationContext;
 
-   RemoteQuery(QueryFactory queryFactory, InternalRemoteCache<?, ?> cache, SerializationContext serializationContext,
+   RemoteQuery(InternalRemoteCache<?, ?> cache, SerializationContext serializationContext,
                String queryString) {
-      super(queryFactory, queryString);
-      this.cache = cache;
-      this.serializationContext = serializationContext;
-   }
-
-   RemoteQuery(QueryFactory queryFactory, InternalRemoteCache<?, ?> cache, SerializationContext serializationContext,
-               String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults, boolean local) {
-      super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults, local);
+      super(queryString);
       this.cache = cache;
       this.serializationContext = serializationContext;
    }
@@ -145,7 +137,7 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
       }
 
       @Override
-      public TotalHitCount count() {
+      public HitCount count() {
          return new TotalHitCount(queryResponse.hitCount(), queryResponse.hitCountExact());
       }
 

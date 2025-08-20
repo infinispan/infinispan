@@ -132,26 +132,26 @@ public class RemoteQueryStringTest extends QueryStringTest {
       hotRodServer = null;
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014036: Prefix, wildcard or regexp queries cannot be fuzzy.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.query.objectfilter.ParsingException: ISPN014036: Prefix, wildcard or regexp queries cannot be fuzzy.*")
    @Override
    public void testFullTextWildcardFuzzyNotAllowed() {
       super.testFullTextWildcardFuzzyNotAllowed();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028526: Invalid query.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.query.objectfilter.ParsingException: ISPN028526: Invalid query.*")
    @Override
    public void testFullTextRegexpFuzzyNotAllowed() {
       super.testFullTextRegexpFuzzyNotAllowed();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028522: .*property is analyzed.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.query.objectfilter.ParsingException: ISPN028522: .*property is analyzed.*")
    @Override
    public void testExactMatchOnAnalyzedFieldNotAllowed() {
       // exception is wrapped in HotRodClientException
       super.testExactMatchOnAnalyzedFieldNotAllowed();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: .*unless the property is indexed and analyzed.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.query.objectfilter.ParsingException: ISPN028521: .*unless the property is indexed and analyzed.*")
    @Override
    public void testFullTextTermOnNonAnalyzedFieldNotAllowed() {
       // exception is wrapped in HotRodClientException
@@ -205,14 +205,14 @@ public class RemoteQueryStringTest extends QueryStringTest {
       Query<NotIndexed> select = createQueryFromString("FROM sample_bank_account.NotIndexed WHERE notIndexedField = 'testing delete'");
       QueryResult<NotIndexed> result = select.execute();
       assertThat(result.count().value()).isOne();
-      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().exact()).isTrue();
 
       Query<Transaction> delete = createQueryFromString("DELETE FROM sample_bank_account.NotIndexed WHERE notIndexedField = 'testing delete'");
       assertEquals(1, delete.executeStatement());
 
       result = select.execute();
       assertThat(result.count().value()).isZero();
-      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().exact()).isTrue();
    }
 
    @Override

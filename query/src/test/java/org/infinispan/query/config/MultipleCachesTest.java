@@ -11,9 +11,9 @@ import org.apache.lucene.store.ByteBuffersDirectory;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.helper.TestQueryHelperFactory;
+import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -29,18 +29,19 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       String config = TestingUtil.wrapXMLWithSchema(
-            "<cache-container default-cache=\"default\">" +
-            "   <local-cache name=\"default\">\n" +
-            "      <indexing enabled=\"false\" />\n" +
-            "   </local-cache>\n" +
-            "   <local-cache name=\"indexingenabled\">\n" +
-            "      <indexing storage=\"local-heap\">\n" +
-            "         <indexed-entities>\n" +
-            "            <indexed-entity>org.infinispan.query.test.Person</indexed-entity>\n" +
-            "         </indexed-entities>\n" +
-            "      </indexing>\n" +
-            "   </local-cache>\n" +
-            "</cache-container>"
+            """
+                  <cache-container default-cache="default">\
+                     <local-cache name="default">
+                        <indexing enabled="false" />
+                     </local-cache>
+                     <local-cache name="indexingenabled">
+                        <indexing storage="local-heap">
+                           <indexed-entities>
+                              <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+                           </indexed-entities>
+                        </indexing>
+                     </local-cache>
+                  </cache-container>"""
       );
       log.tracef("Using test configuration:\n%s", config);
       InputStream is = new ByteArrayInputStream(config.getBytes());

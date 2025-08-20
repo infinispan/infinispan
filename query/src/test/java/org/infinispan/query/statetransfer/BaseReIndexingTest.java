@@ -33,7 +33,7 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
    protected abstract void configureCache(ConfigurationBuilder builder);
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
 
       builder.indexing().enable()

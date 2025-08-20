@@ -21,37 +21,25 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
       GREATER;
 
       public Type negate() {
-         switch (this) {
-            case LESS:
-               return GREATER_OR_EQUAL;
-            case LESS_OR_EQUAL:
-               return GREATER;
-            case EQUAL:
-               return NOT_EQUAL;
-            case NOT_EQUAL:
-               return EQUAL;
-            case GREATER_OR_EQUAL:
-               return LESS;
-            case GREATER:
-               return LESS_OR_EQUAL;
-            default:
-               return this;
-         }
+         return switch (this) {
+            case LESS -> GREATER_OR_EQUAL;
+            case LESS_OR_EQUAL -> GREATER;
+            case EQUAL -> NOT_EQUAL;
+            case NOT_EQUAL -> EQUAL;
+            case GREATER_OR_EQUAL -> LESS;
+            case GREATER -> LESS_OR_EQUAL;
+            default -> this;
+         };
       }
 
       public Type reverse() {
-         switch (this) {
-            case LESS:
-               return GREATER;
-            case GREATER:
-               return LESS;
-            case LESS_OR_EQUAL:
-               return GREATER_OR_EQUAL;
-            case GREATER_OR_EQUAL:
-               return LESS_OR_EQUAL;
-            default:
-               return this;
-         }
+         return switch (this) {
+            case LESS -> GREATER;
+            case GREATER -> LESS;
+            case LESS_OR_EQUAL -> GREATER_OR_EQUAL;
+            case GREATER_OR_EQUAL -> LESS_OR_EQUAL;
+            default -> this;
+         };
       }
    }
 

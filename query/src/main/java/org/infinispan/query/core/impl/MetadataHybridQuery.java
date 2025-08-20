@@ -6,24 +6,23 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
-import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 
 public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
 
    private final BitSet scoreProjections;
    private final boolean versionProjection;
 
-   public MetadataHybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
+   public MetadataHybridQuery(AdvancedCache<?, ?> cache, String queryString,
                               IckleParsingResult.StatementType statementType, Map<String, Object> namedParameters,
                               ObjectFilter objectFilter, long startOffset, int maxResults, Query<?> baseQuery,
                               LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
-      super(queryFactory, cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
+      super(cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
             baseQuery, queryStatistics, local, allSortFieldsAreStored);
 
       scoreProjections = new BitSet();
@@ -47,9 +46,14 @@ public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
 
    @Override
    protected ClosableIteratorWithCount<ObjectFilter.FilterResult> getInternalIterator() {
-      ClosableIteratorWithCount<EntityEntry<Object, S>> iterator = baseQuery
-            .startOffset(0).maxResults(hybridMaxResult()).local(local)
-            .scoreRequired(scoreProjections.cardinality() > 0).entryIterator(versionProjection);
+      baseQuery
+            .startOffset(0).local(local)
+            .scoreRequired(scoreProjections.cardinality() > 0);
+      int maxResult = hybridMaxResult();
+      if (maxResult > 0) {
+         baseQuery.maxResults(maxResult);
+      }
+      ClosableIteratorWithCount<EntityEntry<Object, S>> iterator = baseQuery.entryIterator(versionProjection);
       return new MappingEntryIterator<>(iterator, this::filter, iterator.count());
    }
 

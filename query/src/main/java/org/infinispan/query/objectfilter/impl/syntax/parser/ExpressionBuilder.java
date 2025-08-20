@@ -51,7 +51,7 @@ final class ExpressionBuilder<TypeMetadata> {
 
    private TypeMetadata entityType;
 
-   private Map<String, NestedExpr> nestedExprMap = new HashMap<>();
+   private final Map<String, NestedExpr> nestedExprMap = new HashMap<>();
 
    /**
     * Keep track of all the parent expressions ({@code AND}, {@code OR}, {@code NOT}) of the WHERE/HAVING clause of the

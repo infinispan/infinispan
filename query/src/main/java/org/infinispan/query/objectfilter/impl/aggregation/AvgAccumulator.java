@@ -41,8 +41,7 @@ final class AvgAccumulator extends FieldAccumulator {
 
    @Override
    protected void merge(Object[] accRow, Object value) {
-      if (value instanceof DoubleStat) {
-         DoubleStat avgVal = (DoubleStat) value;
+      if (value instanceof DoubleStat avgVal) {
          if (avgVal.getCount() > 0) {
             ((DoubleStat) accRow[outPos]).update(avgVal.getSum(), avgVal.getCount());
          }

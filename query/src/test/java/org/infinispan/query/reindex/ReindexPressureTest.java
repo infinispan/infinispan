@@ -27,7 +27,7 @@ public class ReindexPressureTest extends SingleCacheManagerTest {
    private static final int SIZE = 900;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.statistics().enable();
       // While testing this fails around with queueCount=2 & queueSize=50 so making it more for CI to pass (2.5x2 more)

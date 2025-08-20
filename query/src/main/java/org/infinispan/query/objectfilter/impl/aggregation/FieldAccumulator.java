@@ -62,20 +62,14 @@ public abstract class FieldAccumulator {
    }
 
    public static FieldAccumulator makeAccumulator(AggregationFunction aggregationType, int inColumn, int outColumn, Class<?> propertyType) {
-      switch (aggregationType) {
-         case SUM:
-            return new SumAccumulator(inColumn, outColumn, propertyType);
-         case AVG:
-            return new AvgAccumulator(inColumn, outColumn, propertyType);
-         case MIN:
-            return new MinAccumulator(inColumn, outColumn, propertyType);
-         case MAX:
-            return new MaxAccumulator(inColumn, outColumn, propertyType);
-         case COUNT:
-            return new CountAccumulator(inColumn, outColumn);
-         default:
-            throw new IllegalArgumentException("Aggregation " + aggregationType.name() + " is not supported");
-      }
+      return switch (aggregationType) {
+         case SUM -> new SumAccumulator(inColumn, outColumn, propertyType);
+         case AVG -> new AvgAccumulator(inColumn, outColumn, propertyType);
+         case MIN -> new MinAccumulator(inColumn, outColumn, propertyType);
+         case MAX -> new MaxAccumulator(inColumn, outColumn, propertyType);
+         case COUNT -> new CountAccumulator(inColumn, outColumn);
+         default -> throw new IllegalArgumentException("Aggregation " + aggregationType.name() + " is not supported");
+      };
    }
 
    public static Class<?> getOutputType(AggregationFunction aggregationType, Class<?> propertyType) {

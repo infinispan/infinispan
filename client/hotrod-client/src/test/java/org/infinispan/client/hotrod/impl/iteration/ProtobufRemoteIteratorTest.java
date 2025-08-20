@@ -8,7 +8,7 @@ import static org.infinispan.client.hotrod.impl.iteration.Util.extractValues;
 import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
 import static org.infinispan.client.hotrod.impl.iteration.Util.rangeAsSet;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -18,10 +18,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
@@ -32,8 +32,6 @@ import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.testng.annotations.Test;
 
@@ -109,13 +107,13 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest {
    public void testFilteredIterationWithQuery() {
       RemoteCache<Integer, AccountPB> remoteCache = clients.get(0).getCache();
       populateCache(CACHE_SIZE, Util::newAccountPB, remoteCache);
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
 
       int lowerId = 5;
       int higherId = 8;
-      Query<Account> simpleQuery = queryFactory.<Account>create("FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId")
-                                      .setParameter("lowerId", lowerId)
-                                      .setParameter("higherId", higherId);
+      Query<Account> simpleQuery = remoteCache.query("FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId");
+      simpleQuery
+            .setParameter("lowerId", lowerId)
+            .setParameter("higherId", higherId);
       Set<Entry<Object, Object>> entries = extractEntries(remoteCache.retrieveEntriesByQuery(simpleQuery, null, 10));
       Set<Integer> keys = extractKeys(entries);
 
@@ -123,9 +121,10 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest {
       assertForAll(keys, key -> key >= lowerId && key <= higherId);
       assertForAll(entries, e -> e.getValue() instanceof AccountPB);
 
-      Query<Object[]> projectionsQuery = queryFactory.<Object[]>create("SELECT id, description FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId")
-                                           .setParameter("lowerId", lowerId)
-                                           .setParameter("higherId", higherId);
+      Query<Object[]> projectionsQuery = remoteCache.query("SELECT id, description FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId");
+      projectionsQuery
+            .setParameter("lowerId", lowerId)
+            .setParameter("higherId", higherId);
       Set<Entry<Integer, Object[]>> entriesWithProjection = extractEntries(remoteCache.retrieveEntriesByQuery(projectionsQuery, null, 10));
 
       assertEquals(4, entriesWithProjection.size());

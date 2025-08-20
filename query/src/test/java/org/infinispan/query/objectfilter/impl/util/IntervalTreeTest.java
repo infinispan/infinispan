@@ -4,12 +4,14 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.testng.annotations.Test;
+
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
+@Test(testName = "query.objectfilter.impl.util.IntervalTreeTest", groups = "functional")
 public class IntervalTreeTest {
 
    @Test

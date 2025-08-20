@@ -147,7 +147,7 @@ public final class RowGrouper {
 
    public Iterator<Object[]> finish() {
       if (groups != null) {
-         return new Iterator<Object[]>() {
+         return new Iterator<>() {
 
             private final Iterator<Object[]> iterator = groups.values().iterator();
 

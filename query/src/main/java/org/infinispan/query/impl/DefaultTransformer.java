@@ -16,8 +16,7 @@ import org.infinispan.query.Transformer;
 
 /**
  * WARNING, slow as a senile dog, uses Java Serialization and base64 encoding to get a String representation of an
- * Object. It is highly recommended that you provide your own implementation of {@link
- * org.infinispan.query.Transformer}.
+ * Object. It is highly recommended that you provide your own implementation of {@link org.infinispan.query.Transformer}.
  *
  * @author Navin Surtani
  * @author anistor@redhat.com
@@ -46,8 +45,7 @@ public final class DefaultTransformer implements Transformer {
             ObjectOutputStream oos = new ObjectOutputStream(Base64.getEncoder().wrap(baos));
             oos.writeObject(obj);
             oos.close();
-            byte[] base64encoded = baos.toByteArray();
-            return new String(base64encoded, StandardCharsets.UTF_8);
+            return baos.toString(StandardCharsets.UTF_8);
          } catch (IOException e) {
             log.error("Error while encoding object", e);
             throw new CacheException(e);

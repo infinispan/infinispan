@@ -345,17 +345,14 @@ public final class ReflectionHelper {
    }
 
    private static Class determineMapValueTypeParam(Type genericType) {
-      if (genericType instanceof ParameterizedType) {
-         ParameterizedType type = (ParameterizedType) genericType;
+      if (genericType instanceof ParameterizedType type) {
          Type fieldArgType = type.getActualTypeArguments()[1];
-         if (fieldArgType instanceof TypeVariable) {
-            TypeVariable genericComponentType = (TypeVariable) fieldArgType;
+         if (fieldArgType instanceof TypeVariable genericComponentType) {
             return (Class) genericComponentType.getBounds()[0];
          } else {
             return (Class) fieldArgType;
          }
-      } else if (genericType instanceof Class) {
-         Class c = (Class) genericType;
+      } else if (genericType instanceof Class c) {
          if (c.getGenericSuperclass() != null && Map.class.isAssignableFrom(c.getSuperclass())) {
             Class x = determineMapValueTypeParam(c.getGenericSuperclass());
             if (x != null) {
@@ -376,15 +373,13 @@ public final class ReflectionHelper {
    }
 
    private static Class determineCollectionElementType(Type genericType) {
-      if (genericType instanceof ParameterizedType) {
-         ParameterizedType type = (ParameterizedType) genericType;
+      if (genericType instanceof ParameterizedType type) {
          Type fieldArgType = type.getActualTypeArguments()[0];
          if (fieldArgType instanceof Class) {
             return (Class) fieldArgType;
          }
          return (Class) ((ParameterizedType) fieldArgType).getRawType();
-      } else if (genericType instanceof Class) {
-         Class c = (Class) genericType;
+      } else if (genericType instanceof Class c) {
          if (c.getGenericSuperclass() != null && Collection.class.isAssignableFrom(c.getSuperclass())) {
             Class x = determineCollectionElementType(c.getGenericSuperclass());
             if (x != null) {

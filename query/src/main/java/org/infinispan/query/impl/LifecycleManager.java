@@ -47,8 +47,6 @@ import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.metrics.impl.CacheMetricsRegistration;
-import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.Transformer;
@@ -65,13 +63,15 @@ import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
-import org.infinispan.query.stats.impl.LocalIndexStatistics;
-import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.query.mapper.mapping.ProgrammaticSearchMappingProvider;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.query.mapper.mapping.SearchMappingCommonBuilding;
+import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
+import org.infinispan.query.stats.impl.LocalIndexStatistics;
+import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -162,7 +162,6 @@ public class LifecycleManager implements ModuleLifecycle {
          cr.registerComponent(engine, QueryEngine.class);
 
          // the cast ithis is the only implementation we have
-         @SuppressWarnings("unchecked")
          QueryProducerImpl queryProducer = (QueryProducerImpl) cr.getComponent(QueryProducer.class);
          if (queryProducer != null) {
             queryProducer.upgrade(engine);

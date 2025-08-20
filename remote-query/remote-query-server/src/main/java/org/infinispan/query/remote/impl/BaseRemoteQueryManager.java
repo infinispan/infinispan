@@ -3,8 +3,11 @@ package org.infinispan.query.remote.impl;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.query.BaseQuery;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -13,8 +16,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.query.remote.impl.logging.Log;
 
@@ -58,13 +59,13 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
 
       QuerySerializer<?> querySerializer = querySerializers.getSerializer(outputFormat);
       RemoteQueryResult remoteQueryResult = new RemoteQueryResult(projection, queryResult.count().value(),
-            queryResult.count().isExact(), queryResult.list());
+            queryResult.count().exact(), queryResult.list());
       Object response = querySerializer.createQueryResponse(remoteQueryResult);
       return querySerializer.encodeQueryResponse(response, outputFormat);
    }
 
    @Override
-   public byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
+   public byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Number offset, Number maxResults,
                               Integer hitCountAccuracy, AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal) {
       QueryResultWithProjection resultWithProjection =
               localQuery(queryString, namedParametersMap, offset, maxResults, hitCountAccuracy, cache, isLocal);
@@ -73,13 +74,13 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
 
       QuerySerializer<?> querySerializer = querySerializers.getSerializer(outputFormat);
       RemoteQueryResult remoteQueryResult = new RemoteQueryResult(projection, queryResult.count().value(),
-              queryResult.count().isExact(), queryResult.list());
+              queryResult.count().exact(), queryResult.list());
       Object response = querySerializer.createQueryResponse(remoteQueryResult);
       return querySerializer.encodeQueryResponse(response, outputFormat);
    }
 
    @Override
-   public QueryResultWithProjection localQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
+   public QueryResultWithProjection localQuery(String queryString, Map<String, Object> namedParametersMap, Number offset, Number maxResults,
                                                Integer hitCountAccuracy, AdvancedCache<?, ?> cache, boolean isLocal) {
       if (unknownMediaType) {
          log.warnNoMediaType(cache.getName());
@@ -89,7 +90,7 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
       Query<Object> query = getQueryEngine(cache).makeQuery(queryString, namedParametersMap, offset, maxResults,
             hitCountAccuracy, isLocal);
       QueryResult<Object> execute = query.execute();
-      return new QueryResultWithProjection(execute, query.getProjection());
+      return new QueryResultWithProjection(execute, ((BaseQuery)query).getProjection());
    }
 
    public Object convertKey(Object key, MediaType destinationFormat) {

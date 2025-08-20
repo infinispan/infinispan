@@ -55,7 +55,6 @@
       <module>counter</module>
       <module>multimap</module>
       <module>tools</module>
-      <module>query-dsl</module>
       <module>query</module>
       <module>remote-query/remote-query-client</module>
       <module>remote-query/remote-query-server</module>
