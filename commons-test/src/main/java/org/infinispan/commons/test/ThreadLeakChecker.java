@@ -102,6 +102,7 @@ public class ThreadLeakChecker {
                       // Arjuna can start a Listener for recovery that is stopped in a shutdown hook
                       "|Listener:[0-9]" +
                       "|JVMCI-native CompilerThread[0-9]" +
+                      "|UNKNOWN[\\[\\]a-z]*" +
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
       "org.jboss.as.arquillian.container.CommonManagedDeployableContainer$ConsoleConsumer";
