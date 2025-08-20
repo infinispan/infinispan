@@ -13,7 +13,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 

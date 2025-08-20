@@ -1,0 +1,64 @@
+package org.infinispan.query.objectfilter.impl.predicateindex;
+
+import java.util.Iterator;
+
+import org.infinispan.query.objectfilter.impl.util.ReflectionHelper;
+
+/**
+ * @author anistor@redhat.com
+ * @since 7.0
+ */
+public final class ReflectionMatcherEvalContext extends MatcherEvalContext<Class<?>, ReflectionHelper.PropertyAccessor, String> {
+
+   private final Class<?> entityType;
+
+   public ReflectionMatcherEvalContext(Object userContext, Object eventType, Object key, Object instance,
+                                       Object metadata) {
+      super(userContext, eventType, key, instance, metadata);
+      entityType = instance.getClass();
+   }
+
+   @Override
+   public Class<?> getEntityType() {
+      return entityType;
+   }
+
+   @Override
+   protected void processAttributes(AttributeNode<ReflectionHelper.PropertyAccessor, String> node, Object instance) {
+      for (AttributeNode<ReflectionHelper.PropertyAccessor, String> childAttribute : node.getChildren()) {
+         if (instance == null) {
+            processAttribute(childAttribute, null);
+         } else {
+            ReflectionHelper.PropertyAccessor accessor = childAttribute.getMetadata();
+            if (accessor == null) {
+               Object attributeValue = node.cacheMetadataProjection(key, instance, metadata, childAttribute.getAttribute());
+               if (attributeValue != null) {
+                  processAttribute(childAttribute, attributeValue);
+               }
+               continue;
+            }
+
+            if (accessor.isMultiple()) {
+               Iterator valuesIt = accessor.getValueIterator(instance);
+               if (valuesIt == null) {
+                  // try to evaluate eventual 'is null' predicates for this null collection
+                  processAttribute(childAttribute, null);
+               } else {
+                  while (valuesIt.hasNext()) {
+                     Object attributeValue = valuesIt.next();
+                     processAttribute(childAttribute, attributeValue);
+                  }
+               }
+            } else {
+               Object attributeValue = accessor.getValue(instance);
+               processAttribute(childAttribute, attributeValue);
+            }
+         }
+      }
+   }
+
+   private void processAttribute(AttributeNode<ReflectionHelper.PropertyAccessor, String> attributeNode, Object attributeValue) {
+      attributeNode.processValue(attributeValue, this);
+      processAttributes(attributeNode, attributeValue);
+   }
+}

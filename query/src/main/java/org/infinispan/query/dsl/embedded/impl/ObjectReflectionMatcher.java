@@ -1,9 +1,9 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import org.infinispan.objectfilter.impl.MetadataAdapter;
-import org.infinispan.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
-import org.infinispan.objectfilter.impl.util.ReflectionHelper;
+import org.infinispan.query.objectfilter.impl.MetadataAdapter;
+import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.query.objectfilter.impl.syntax.parser.EntityNameResolver;
+import org.infinispan.query.objectfilter.impl.util.ReflectionHelper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 
 /**

@@ -38,9 +38,9 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.DelegatingCacheEntryListenerInvocation;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
-import org.infinispan.objectfilter.FilterCallback;
-import org.infinispan.objectfilter.FilterSubscription;
-import org.infinispan.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.FilterCallback;
+import org.infinispan.query.objectfilter.FilterSubscription;
+import org.infinispan.query.objectfilter.Matcher;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**

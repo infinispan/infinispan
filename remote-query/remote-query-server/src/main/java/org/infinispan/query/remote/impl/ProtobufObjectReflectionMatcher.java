@@ -3,8 +3,8 @@ package org.infinispan.query.remote.impl;
 import java.io.IOException;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
+import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.query.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 

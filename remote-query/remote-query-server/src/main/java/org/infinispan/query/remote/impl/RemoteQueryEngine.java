@@ -4,8 +4,8 @@ import java.util.Map;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.objectfilter.impl.ProtobufMatcher;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
