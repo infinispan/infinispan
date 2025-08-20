@@ -88,7 +88,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static final Long IMAGE_MEMORY = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY, null);
    private static final Long IMAGE_MEMORY_SWAP = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP, null);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
-   public static final String JACOCO_COVERAGE_CONTAINER_PATH = "/opt/jacoco.exec";
+   public static final String JACOCO_COVERAGE_CONTAINER_PATH = INFINISPAN_SERVER_HOME + "/server/lib/jacoco.exec";
    public static final String JACOCO_COVERAGE_HOST_PATH = "target/";
    public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi9/openjdk-21-runtime";
    private static final String[] IMAGE_DEPENDENCIES = {
