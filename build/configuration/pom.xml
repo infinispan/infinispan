@@ -162,7 +162,7 @@
       <version.testng.engine>1.0.6</version.testng.engine>
 
       <!-- these versions must be kept in sync with ${version.micrometer}: -->
-      <version.io.prometheus.server>1.3.10</version.io.prometheus.server>
+      <version.io.prometheus.server>1.4.1</version.io.prometheus.server>
       <version.io.prometheus.client>0.16.0</version.io.prometheus.client>
       <version.hdrhistogram>2.2.2</version.hdrhistogram>
       <version.latencyutils>2.0.3</version.latencyutils>
