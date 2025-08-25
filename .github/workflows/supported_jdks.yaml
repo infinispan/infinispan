@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         jdk:
-          - '24-ea'
+          - '25-ea'
 
     steps:
       - uses: actions/checkout@v5
