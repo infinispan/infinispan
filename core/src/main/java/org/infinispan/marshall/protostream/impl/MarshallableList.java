@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -44,12 +45,17 @@ public class MarshallableList<T> extends AbstractMarshallableCollection<T> {
    }
 
    @ProtoFactory
-   MarshallableList(int size, List<byte[]> bytes) {
+   MarshallableList(int size, List<byte[]> bytes, List<WrappedMessage> wrappedMessages) {
       throw log.marshallerNotOverridden(getClass().getName());
    }
 
    @ProtoField(2)
    List<byte[]> getBytes() {
+      throw log.marshallerNotOverridden(getClass().getName());
+   }
+
+   @ProtoField(3)
+   List<WrappedMessage> getWrappedMessages() {
       throw log.marshallerNotOverridden(getClass().getName());
    }
 
@@ -59,7 +65,7 @@ public class MarshallableList<T> extends AbstractMarshallableCollection<T> {
 
    public static class Marshaller extends AbstractMarshallableCollection.Marshaller {
 
-      public Marshaller(AbstractInternalProtoStreamMarshaller marshaller) {
+      public Marshaller(GlobalMarshaller marshaller) {
          super(marshaller);
       }
 

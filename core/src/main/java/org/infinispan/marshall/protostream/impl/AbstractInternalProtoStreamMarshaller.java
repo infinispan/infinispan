@@ -132,6 +132,10 @@ public abstract class AbstractInternalProtoStreamMarshaller implements Marshalle
       return unwrapAndInit(ProtobufUtil.fromWrappedByteArray(getSerializationContext(), buf, offset, length));
    }
 
+   public Object objectFromByteBuffer(java.nio.ByteBuffer buf) throws IOException {
+      return unwrapAndInit(ProtobufUtil.fromWrappedByteBuffer(getSerializationContext(), buf));
+   }
+
    @Override
    public BufferSizePredictor getBufferSizePredictor(Object o) {
       return marshallableTypeHints.getBufferSizePredictor(o.getClass());
