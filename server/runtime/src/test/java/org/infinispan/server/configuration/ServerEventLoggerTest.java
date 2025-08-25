@@ -7,31 +7,31 @@ import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.jdkspecific.CallerId;
 import org.infinispan.commons.test.Eventually;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
-import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.server.logging.events.ServerEventImpl;
 import org.infinispan.server.logging.events.ServerEventLogger;
 import org.infinispan.test.CacheManagerCallable;
@@ -39,14 +39,15 @@ import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -62,9 +63,15 @@ public class ServerEventLoggerTest {
    @ClassRule
    public static final JUnitThreadTrackerRule tracker = new JUnitThreadTrackerRule();
 
+
+   @BeforeClass
+   public static void prepare() {
+      Util.recursiveFileRemove(tmpDirectory(TestResourceTracker.getCurrentTestName()));
+   }
+
    @Test
    public void testLocalServerEventLogging() {
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(amendGlobalConfiguration(new GlobalConfigurationBuilder()), new ConfigurationBuilder())) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(amendGlobalConfiguration(new GlobalConfigurationBuilder(), "1"), new ConfigurationBuilder())) {
          @Override
          public void call() throws InterruptedException {
             final CountDownLatch countDown = new CountDownLatch(4);
@@ -122,9 +129,9 @@ public class ServerEventLoggerTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder()), builder),
-            TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder()), builder),
-            TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder()), builder)) {
+            TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder(), "1"), builder),
+            TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder(), "2"), builder),
+            TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder(), "3"), builder)) {
          @Override
          public void call() throws InterruptedException {
             final CountDownLatch countDown = new CountDownLatch(4 * cms.length);
@@ -184,9 +191,7 @@ public class ServerEventLoggerTest {
 
    @Test
    public void testLocalServerEventLoggingPreloading() {
-      GlobalConfigurationBuilder global = amendGlobalConfiguration(new GlobalConfigurationBuilder());
-      global.globalState().enable();
-      deleteGlobalPersistentState(global);
+      GlobalConfigurationBuilder global = amendGlobalConfiguration(new GlobalConfigurationBuilder(), "1");
 
       withCacheManager(startCacheManagerWithGlobalState(global), cm -> {
          EventLogger eventLogger = EventLogManager.getEventLogger(cm);
@@ -201,9 +206,7 @@ public class ServerEventLoggerTest {
    @Test
    public void testCacheContentCanBePassivated() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      GlobalConfigurationBuilder globalBuilder = amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder());
-      globalBuilder.globalState().enable();
-      deleteGlobalPersistentState(globalBuilder);
+      GlobalConfigurationBuilder globalBuilder = amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder(), "1");
       withCacheManager(TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder), cm -> {
          EventLogger eventLogger = EventLogManager.getEventLogger(cm);
          eventLogger.info(EventLogCategory.CLUSTER, "message #1");
@@ -226,16 +229,11 @@ public class ServerEventLoggerTest {
       return cm;
    }
 
-   private static GlobalConfigurationBuilder amendGlobalConfiguration(GlobalConfigurationBuilder global) {
-      String stateDirectory = tmpDirectory(TestResourceTracker.getCurrentTestName());
-      global.globalState().persistentLocation(stateDirectory).sharedPersistentLocation(stateDirectory);
+   private static GlobalConfigurationBuilder amendGlobalConfiguration(GlobalConfigurationBuilder global, String id) {
+      String stateDirectory = tmpDirectory(TestResourceTracker.getCurrentTestName(), CallerId.getCallerMethodName(2), id);
+      global.globalState().enable().persistentLocation(stateDirectory).sharedPersistentLocation(stateDirectory);
       global.serialization().addContextInitializer(new org.infinispan.server.logging.events.PersistenceContextInitializerImpl());
       return global;
-   }
-
-   private static void deleteGlobalPersistentState(GlobalConfigurationBuilder global) {
-      GlobalConfiguration globalCfg = global.build();
-      new File(globalCfg.globalState().persistentLocation() + "/___event_log_cache.dat").delete();
    }
 
    @Listener
