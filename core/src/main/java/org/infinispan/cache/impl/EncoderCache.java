@@ -1,7 +1,5 @@
 package org.infinispan.cache.impl;
 
-import static org.infinispan.util.logging.Log.CONTAINER;
-
 import java.lang.annotation.Annotation;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -519,12 +517,6 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    private void lookupEncoderWrapper() {
       componentRegistry.wireDependencies(keyDataConversion, true);
       componentRegistry.wireDependencies(valueDataConversion, true);
-   }
-
-   private void checkSubclass(Class<?> configured, Class<?> required) {
-      if (!required.isAssignableFrom(configured)) {
-         throw CONTAINER.invalidEncodingClass(configured, required);
-      }
    }
 
    @Override
