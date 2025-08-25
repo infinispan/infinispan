@@ -107,7 +107,7 @@ public class MarshallableObject<T> extends AbstractMarshallableWrapper<T> {
                }
                case (2 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED): {
                   if (delegate == null)
-                     delegate = ((org.infinispan.protostream.impl.SerializationContextImpl) ctx.getSerializationContext()).getMarshallerDelegate(org.infinispan.protostream.WrappedMessage.class);
+                     delegate = ctx.getSerializationContext().getMarshallerDelegate(org.infinispan.protostream.WrappedMessage.class);
                   int length = in.readUInt32();
                   int oldLimit = in.pushLimit(length);
                   message = readMessage(delegate, ctx);
@@ -141,7 +141,7 @@ public class MarshallableObject<T> extends AbstractMarshallableWrapper<T> {
             ctx.getWriter().writeBytes(1, buf.getBuf(), buf.getOffset(), buf.getLength());
          } else {
             if (delegate == null)
-               delegate = ((org.infinispan.protostream.impl.SerializationContextImpl) ctx.getSerializationContext()).getMarshallerDelegate(WrappedMessage.class);
+               delegate = ctx.getSerializationContext().getMarshallerDelegate(WrappedMessage.class);
             writeNestedMessage(delegate, ctx, 2, new WrappedMessage(object));
          }
       }

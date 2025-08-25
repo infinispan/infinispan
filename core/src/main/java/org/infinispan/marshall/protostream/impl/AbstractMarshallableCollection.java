@@ -6,10 +6,12 @@ import java.io.IOException;
 import java.util.Collection;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.protostream.BaseMarshallerDelegate;
 import org.infinispan.protostream.GeneratedMarshallerBase;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.TagWriter;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.WireType;
 import org.infinispan.util.logging.Log;
@@ -32,9 +34,11 @@ abstract class AbstractMarshallableCollection<T> {
 
    abstract static class Marshaller extends GeneratedMarshallerBase implements ProtobufTagMarshaller<AbstractMarshallableCollection> {
       private final String typeName;
-      private final AbstractInternalProtoStreamMarshaller marshaller;
+      private final GlobalMarshaller marshaller;
 
-      protected Marshaller(AbstractInternalProtoStreamMarshaller marshaller) {
+      private volatile BaseMarshallerDelegate<WrappedMessage> delegate;
+
+      protected Marshaller(GlobalMarshaller marshaller) {
          this.marshaller = marshaller;
          this.typeName = getFqTypeName(getJavaClass());
       }
@@ -66,6 +70,17 @@ abstract class AbstractMarshallableCollection<T> {
                   entries.add(marshaller.objectFromByteBuffer(bytes));
                   break;
                }
+               case 3 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
+                  if (delegate == null)
+                     delegate = ctx.getSerializationContext().getMarshallerDelegate(org.infinispan.protostream.WrappedMessage.class);
+                  int length = in.readUInt32();
+                  int oldLimit = in.pushLimit(length);
+                  WrappedMessage message = readMessage(delegate, ctx);
+                  entries.add(message == null ? null : message.getValue());
+                  in.checkLastTagWas(0);
+                  in.popLimit(oldLimit);
+                  break;
+               }
                default: {
                   if (!in.skipField(tag)) done = true;
                }
@@ -81,12 +96,14 @@ abstract class AbstractMarshallableCollection<T> {
             TagWriter writer = ctx.getWriter();
             writer.writeInt32(1, collection.size());
             for (Object entry : collection) {
-               // Null objects are represented as 0 bytes by our internal Protostream marshaller implementations
-               // All marshalling delegated to the user marshaller is wrapped in a MarshallableUserObject message, so
-               // we know that the returned bytes can never be empty. This ensures that we can't misinterpret user
-               // marshaller bytes as a null entry.
-               ByteBuffer buf = marshaller.objectToBuffer(entry);
-               writer.writeBytes(2, buf.getBuf(), buf.getOffset(), buf.getLength());
+               if (!marshaller.isMarshallableWithoutWrapping(entry)) {
+                  ByteBuffer buf = marshaller.objectToBuffer(entry);
+                  writer.writeBytes(2, buf.getBuf(), buf.getOffset(), buf.getLength());
+               } else {
+                  if (delegate == null)
+                     delegate = ctx.getSerializationContext().getMarshallerDelegate(WrappedMessage.class);
+                  writeNestedMessage(delegate, ctx, 3, new WrappedMessage(entry));
+               }
             }
          }
       }

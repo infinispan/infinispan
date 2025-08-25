@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -34,12 +35,17 @@ public class MarshallableCollection<T> extends AbstractMarshallableCollection<T>
    }
 
    @ProtoFactory
-   MarshallableCollection(int size, Collection<T> bytes) {
+   MarshallableCollection(int size, Collection<T> bytes, Collection<WrappedMessage> wrappedMessages) {
       throw log.marshallerNotOverridden(getClass().getName());
    }
 
    @ProtoField(2)
    Collection<byte[]> getBytes() {
+      throw log.marshallerNotOverridden(getClass().getName());
+   }
+
+   @ProtoField(3)
+   Collection<WrappedMessage> getWrappedMessages() {
       throw log.marshallerNotOverridden(getClass().getName());
    }
 
@@ -49,7 +55,7 @@ public class MarshallableCollection<T> extends AbstractMarshallableCollection<T>
 
    public static class Marshaller extends AbstractMarshallableCollection.Marshaller {
 
-      public Marshaller(AbstractInternalProtoStreamMarshaller marshaller) {
+      public Marshaller(GlobalMarshaller marshaller) {
          super(marshaller);
       }
 
