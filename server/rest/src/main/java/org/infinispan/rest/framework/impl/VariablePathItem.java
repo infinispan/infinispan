@@ -1,5 +1,7 @@
 package org.infinispan.rest.framework.impl;
 
+import org.infinispan.rest.framework.PathItem;
+
 /**
  * Path item defined by an expression. The expression supports constant chars plus variable names enclosed by
  * '{' and '}'.
