@@ -6,6 +6,7 @@ import java.util.Deque;
 import java.util.Queue;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -57,12 +58,17 @@ public class MarshallableDeque<T> extends AbstractMarshallableCollection<T> {
    }
 
    @ProtoFactory
-   MarshallableDeque(int size, Deque<byte[]> bytes) {
+   MarshallableDeque(int size, Deque<byte[]> bytes, Deque<WrappedMessage> wrappedMessages) {
       throw log.marshallerNotOverridden(getClass().getName());
    }
 
    @ProtoField(value = 2, collectionImplementation = ArrayDeque.class)
    Deque<byte[]> getBytes() {
+      throw log.marshallerNotOverridden(getClass().getName());
+   }
+
+   @ProtoField(value = 3, collectionImplementation = ArrayDeque.class)
+   Deque<WrappedMessage> getWrappedMessages() {
       throw log.marshallerNotOverridden(getClass().getName());
    }
 
@@ -72,7 +78,7 @@ public class MarshallableDeque<T> extends AbstractMarshallableCollection<T> {
 
    public static class Marshaller extends AbstractMarshallableCollection.Marshaller {
 
-      public Marshaller(AbstractInternalProtoStreamMarshaller marshaller) {
+      public Marshaller(GlobalMarshaller marshaller) {
          super(marshaller);
       }
 
