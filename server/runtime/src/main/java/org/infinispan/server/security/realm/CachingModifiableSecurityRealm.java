@@ -30,7 +30,7 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
    /**
     * Creates a new instance.
     *
-    * @param realm the {@link SecurityRealm} whose {@link RealmIdentity} should be cached..
+    * @param realm the {@link SecurityRealm} whose {@link RealmIdentity} should be cached.
     * @param cache the {@link RealmIdentityCache} instance
     */
    public CachingModifiableSecurityRealm(CacheableSecurityRealm realm, RealmIdentityCache cache) {
