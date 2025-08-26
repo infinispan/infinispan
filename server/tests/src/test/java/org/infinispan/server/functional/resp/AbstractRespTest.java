@@ -25,8 +25,8 @@ public abstract class AbstractRespTest {
       return SERVERS.resp().withVertx(vertx).get();
    }
 
-   protected final RedisAPI createConnection(Vertx vertx, RedisOptions options) {
-      return RedisAPI.api(SERVERS.resp().withOptions(options).withVertx(vertx).get());
+   protected final RedisAPI createDirectConnection(int index, Vertx vertx, RedisOptions options) {
+      return RedisAPI.api(SERVERS.resp().withOptions(options).withVertx(vertx).get(index));
    }
 
    protected RedisAPI createDirectConnection(int index, Vertx vertx) {
