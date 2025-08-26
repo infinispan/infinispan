@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.redis.client.RedisAPI;
+import io.vertx.redis.client.RedisClusterTransactions;
+import io.vertx.redis.client.RedisOptions;
 import io.vertx.redis.client.impl.types.MultiType;
 
 public class RespTransactionTest extends AbstractRespTest {
@@ -16,8 +18,8 @@ public class RespTransactionTest extends AbstractRespTest {
    @Test
    public void testStartTxAndExecuteOperations(Vertx vertx, VertxTestContext ctx) {
       // Using STANDALONE mode here.
-      RedisAPI server0 = createDirectConnection(0, vertx);
-      RedisAPI server1 = createDirectConnection(1, vertx);
+      RedisAPI server0 = createDirectConnection(0, vertx, new RedisOptions().setClusterTransactions(RedisClusterTransactions.SINGLE_NODE));
+      RedisAPI server1 = createDirectConnection(1, vertx, new RedisOptions().setClusterTransactions(RedisClusterTransactions.SINGLE_NODE));
 
       server0.multi()
             .onFailure(ctx::failNow)
