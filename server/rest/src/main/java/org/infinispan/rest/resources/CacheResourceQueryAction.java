@@ -1,10 +1,10 @@
 package org.infinispan.rest.resources;
 
 import static java.util.Collections.emptyMap;
-import static org.infinispan.query.remote.json.JSONConstants.HIT_COUNT_ACCURACY;
-import static org.infinispan.query.remote.json.JSONConstants.MAX_RESULTS;
-import static org.infinispan.query.remote.json.JSONConstants.OFFSET;
-import static org.infinispan.query.remote.json.JSONConstants.QUERY_STRING;
+import static org.infinispan.server.core.query.json.JSONConstants.HIT_COUNT_ACCURACY;
+import static org.infinispan.server.core.query.json.JSONConstants.MAX_RESULTS;
+import static org.infinispan.server.core.query.json.JSONConstants.OFFSET;
+import static org.infinispan.server.core.query.json.JSONConstants.QUERY_STRING;
 import static org.wildfly.security.http.HttpConstants.BAD_REQUEST;
 
 import java.io.IOException;
@@ -19,9 +19,9 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.query.objectfilter.ParsingException;
-import org.infinispan.query.remote.impl.RemoteQueryManager;
-import org.infinispan.query.remote.json.JsonQueryErrorResult;
-import org.infinispan.query.remote.json.JsonQueryRequest;
+import org.infinispan.server.core.query.impl.RemoteQueryManager;
+import org.infinispan.server.core.query.json.JsonQueryErrorResult;
+import org.infinispan.server.core.query.json.JsonQueryRequest;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ContentSource;

@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             PhoneNumber.class
       },
       schemaFileName = "test.object-filter.sampledomain.proto",
-      schemaFilePath = "org/infinispan/objectfilter",
+      schemaFilePath = "org/infinispan/query/objectfilter",
       schemaPackageName = "org.infinispan.query.objectfilter.test.model",
       service = false
 )

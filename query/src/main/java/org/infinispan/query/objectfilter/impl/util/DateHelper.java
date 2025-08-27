@@ -2,6 +2,7 @@ package org.infinispan.query.objectfilter.impl.util;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
 /**
@@ -9,17 +10,15 @@ import java.util.TimeZone;
  * @since 8.1
  */
 public final class DateHelper {
+   public static final DateFormat JPA_DATE_FORMAT;
+   public static final DateTimeFormatter JPA_DATETIME_FORMATTER;
 
-   private static final String DATE_FORMAT = "yyyyMMddHHmmssSSS";   //todo [anistor] is there a standard jpa time format?
-
-   private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
-
-   private DateHelper() {
+   static {
+      JPA_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+      JPA_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+      JPA_DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
    }
 
-   public static DateFormat getJpaDateFormat() {
-      SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-      dateFormat.setTimeZone(GMT_TZ);
-      return dateFormat;
+   private DateHelper() {
    }
 }

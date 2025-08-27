@@ -9,6 +9,7 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,7 +50,6 @@ public class QueryConditionsTest extends AbstractQueryTest {
    protected final String ACCOUNT_TYPE = getModelFactory().getAccountTypeName();
    protected final String TRANSACTION_TYPE = getModelFactory().getTransactionTypeName();
    protected final String USER_TYPE = getModelFactory().getUserTypeName();
-
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -320,16 +320,21 @@ public class QueryConditionsTest extends AbstractQueryTest {
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "Input is not a valid date string: ")
    public void testBetweenArgsAreComparable() {
-      queryCache("FROM " + TRANSACTION_TYPE + " WHERE date between '' AND ''");
+      queryCache("FROM " + TRANSACTION_TYPE + " WHERE date between '' AND ''").execute();
    }
 
    public void testBetween1() throws Exception {
-      Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE date BETWEEN '20130101000000000' AND '20130131000000000'");
+      Query<Transaction> q = queryCache(
+            "FROM %s WHERE date BETWEEN '%s' AND '%s'",
+            TRANSACTION_TYPE,
+            queryDate(LocalDate.of(2013, 1, 1)),
+            queryDate(LocalDate.of(2013, 1, 31))
+      );
       List<Transaction> list = q.list();
       assertEquals(4, list.size());
       for (Transaction t : list) {
-         assertTrue(t.getDate().compareTo(makeDate("2013-01-31")) <= 0);
-         assertTrue(t.getDate().compareTo(makeDate("2013-01-01")) >= 0);
+         assertTrue(compareDate(t.getDate(), LocalDate.of(2013, 1, 31)) <= 0);
+         assertTrue(compareDate(t.getDate(), LocalDate.of(2013, 1, 1)) >= 0);
       }
    }
 
@@ -576,7 +581,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
 
    @Test(expectedExceptions = ParsingException.class)
    public void testIn3() {
-      queryCache("FROM " + USER_TYPE + " WHERE id IN ()");
+      queryCache("FROM " + USER_TYPE + " WHERE id IN ()").execute();
    }
 
    public void testSampleDomainQuery1() {      // all male users
@@ -654,17 +659,26 @@ public class QueryConditionsTest extends AbstractQueryTest {
    }
 
    public void testSampleDomainQuery8() throws Exception {      // all the transactions that happened in January 2013
-      Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE date BETWEEN '20130101000000000' AND '20130131000000000'");
+      Query<Transaction> q = queryCache("FROM %s WHERE date BETWEEN '%s' AND '%s'",
+            TRANSACTION_TYPE,
+            queryDate(LocalDate.of(2013, 1, 1)),
+            queryDate(LocalDate.of(2013, 1, 31))
+      );
       List<Transaction> list = q.list();
       assertEquals(4, list.size());
       for (Transaction t : list) {
-         assertTrue(t.getDate().compareTo(makeDate("2013-01-31")) <= 0);
-         assertTrue(t.getDate().compareTo(makeDate("2013-01-01")) >= 0);
+         assertTrue(compareDate(t.getDate(), LocalDate.of(2013, 1, 31)) <= 0);
+         assertTrue(compareDate(t.getDate(), LocalDate.of(2013, 1, 1)) >= 0);
       }
    }
 
    public void testSampleDomainQuery9() throws Exception {      // all the transactions that happened in January 2013, projected by date field only
-      Query<Object[]> q = queryCache("SELECT date FROM " + TRANSACTION_TYPE + " WHERE date BETWEEN '20130101000000000' AND '20130131000000000'");
+      Query<Object[]> q = queryCache(
+            "SELECT date FROM %s WHERE date BETWEEN '%s' AND '%s'",
+            TRANSACTION_TYPE,
+            queryDate(LocalDate.of(2013, 1, 1)),
+            queryDate(LocalDate.of(2013, 1, 31))
+      );
       List<Object[]> list = q.list();
       assertEquals(4, list.size());
       assertEquals(1, list.get(0).length);
@@ -674,8 +688,8 @@ public class QueryConditionsTest extends AbstractQueryTest {
 
       for (int i = 0; i < 4; i++) {
          Date d = (Date) list.get(i)[0];
-         assertTrue(d.compareTo(makeDate("2013-01-31")) <= 0);
-         assertTrue(d.compareTo(makeDate("2013-01-01")) >= 0);
+         assertTrue(compareDate(d, LocalDate.of(2013, 1, 31)) <= 0);
+         assertTrue(compareDate(d, LocalDate.of(2013, 1, 1)) >= 0);
       }
    }
 
@@ -766,7 +780,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
    }
 
    public void testNullOnIntegerField() {
-      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE age IS NULL AND age != -1");
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE age IS NULL OR age = -1");
       List<User> list = q.list();
       assertEquals(2, list.size());
       assertNull(list.get(0).getAge());
@@ -838,14 +852,20 @@ public class QueryConditionsTest extends AbstractQueryTest {
    }
 
    public void testSampleDomainQuery26() {
-      Query<Account> q = queryCache("FROM " + ACCOUNT_TYPE + " WHERE creationDate = '20130120000000000'");
+      Query<Account> q = queryCache("FROM %s WHERE creationDate = '%s'",
+            ACCOUNT_TYPE,
+            queryDate(LocalDate.of(2013, 1, 20))
+      );
       List<Account> list = q.list();
       assertEquals(1, list.size());
       assertEquals(3, list.get(0).getId());
    }
 
    public void testSampleDomainQuery27() {
-      Query<Account> q = queryCache("FROM " + ACCOUNT_TYPE + " WHERE creationDate < '20130120000000000' ORDER BY id ASC");
+      Query<Account> q = queryCache("FROM %s WHERE creationDate < '%s' ORDER BY id ASC",
+            ACCOUNT_TYPE,
+            queryDate(LocalDate.of(2013, 1, 20))
+      );
       List<Account> list = q.list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).getId());
@@ -853,7 +873,10 @@ public class QueryConditionsTest extends AbstractQueryTest {
    }
 
    public void testSampleDomainQuery28() {
-      Query<Account> q = queryCache("FROM " + ACCOUNT_TYPE + " WHERE creationDate <= '20130120000000000' ORDER BY id ASC");
+      Query<Account> q = queryCache("FROM %s WHERE creationDate <= '%s' ORDER BY id ASC",
+            ACCOUNT_TYPE,
+            queryDate(LocalDate.of(2013, 1, 20))
+      );
       List<Account> list = q.list();
       assertEquals(3, list.size());
       assertEquals(1, list.get(0).getId());
@@ -862,25 +885,23 @@ public class QueryConditionsTest extends AbstractQueryTest {
    }
 
    public void testSampleDomainQuery29() {
-      Query<Account> q = queryCache("FROM " + ACCOUNT_TYPE + " WHERE creationDate > '20130104000000000'");
+      Query<Account> q = queryCache("FROM %s WHERE creationDate > '%s'",
+            ACCOUNT_TYPE,
+            queryDate(LocalDate.of(2013, 1, 4))
+      );
       List<Account> list = q.list();
       assertEquals(1, list.size());
       assertEquals(3, list.get(0).getId());
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014823: maxResults must be greater than 0")
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014823: maxResults cannot be less than 0")
    public void testPagination1() {
-      queryCache("FROM " + USER_TYPE).maxResults(0);
-   }
-
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014823: maxResults must be greater than 0")
-   public void testPagination2() {
-      queryCache("FROM " + USER_TYPE).maxResults(-4);
+      queryCache("FROM " + USER_TYPE).maxResults(-1).execute();
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014824: startOffset cannot be less than 0")
-   public void testPagination3() {
-      queryCache("FROM " + USER_TYPE).startOffset(-3);
+   public void testPagination2() {
+      queryCache("FROM " + USER_TYPE).startOffset(-3).execute();
    }
 
    public void testOrderedPagination4() {
@@ -1373,29 +1394,33 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals(22.0, list.get(0)[0]);  // only non-null "age"s were used in the average
    }
 
-   public void testDateGrouping1() throws Exception {
-      Query<Object[]> q = queryCache("SELECT date FROM " + TRANSACTION_TYPE + " WHERE date BETWEEN '20130215000000000' AND '20130315000000000' GROUP BY date ");
+   public void testDateGrouping1() {
+      Query<Object[]> q = queryCache("SELECT date FROM %s WHERE date BETWEEN '%s' AND '%s' GROUP BY date ",
+            TRANSACTION_TYPE,
+            queryDate(LocalDate.of(2013, 2, 15)),
+            queryDate(LocalDate.of(2013, 3, 15))
+      );
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(makeDate("2013-02-27"), list.get(0)[0]);
+      assertEquals(0, compareDate(list.get(0)[0], LocalDate.of(2013, 2, 27)));
    }
 
-   public void testDateGrouping2() throws Exception {
+   public void testDateGrouping2() {
       Query<Object[]> q = queryCache("SELECT COUNT(date), MIN(date) FROM " + TRANSACTION_TYPE + " WHERE description = 'Hotel' GROUP BY id");
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(2, list.get(0).length);
       assertEquals(1L, list.get(0)[0]);
-      assertEquals(makeDate("2013-02-27"), list.get(0)[1]);
+      assertEquals(0, compareDate(list.get(0)[1], LocalDate.of(2013, 2, 27)));
    }
 
-   public void testDateGrouping3() throws Exception {
+   public void testDateGrouping3() {
       Query<Object[]> q = queryCache("SELECT MIN(date), COUNT(date) FROM " + TRANSACTION_TYPE + " WHERE description = 'Hotel' GROUP BY id");
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(2, list.get(0).length);
-      assertEquals(makeDate("2013-02-27"), list.get(0)[0]);
+      assertEquals(0, compareDate(list.get(0)[0], LocalDate.of(2013, 2, 27)));
       assertEquals(1L, list.get(0)[1]);
    }
 
@@ -1445,9 +1470,9 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals("Spider", list.get(0).getName());
    }
 
-   public void testDateParam() throws Exception {
+   public void testDateParam() {
       Query<Account> q = queryCache("FROM " + ACCOUNT_TYPE + " WHERE creationDate = :param1");
-      q.setParameter("param1", makeDate("2013-01-03"));
+      q.setParameter("param1", queryDate(LocalDate.of(2013, 1, 3)));
       List<Account> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).getId());
@@ -1500,29 +1525,30 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals(143.50909d, (Double) list.get(0)[0], 0.0001d);
       assertEquals(7893d, (Double) list.get(0)[1], 0.0001d);
       assertEquals(55L, list.get(0)[2]);
-      assertEquals(Date.class, list.get(0)[3].getClass());
-      assertEquals(makeDate("2013-01-01"), list.get(0)[3]);
+      assertEquals(0, compareDate(list.get(0)[3], LocalDate.of(2013, 1, 1)));
       assertEquals(2, list.get(0)[4]);
    }
 
-   public void testDateFilteringWithGroupBy() throws Exception {
-      Query<Object[]> q = queryCache("SELECT date FROM " + TRANSACTION_TYPE + " WHERE date BETWEEN '20130215000000000' AND '20130315000000000' GROUP BY date");
+   public void testDateFilteringWithGroupBy() {
+      Query<Object[]> q = queryCache("SELECT date FROM %s WHERE date BETWEEN '%s' AND '%s' GROUP BY date",
+            TRANSACTION_TYPE,
+            queryDate(LocalDate.of(2013, 2, 15)),
+            queryDate(LocalDate.of(2013, 3, 15))
+      );
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(Date.class, list.get(0)[0].getClass());
-      assertEquals(makeDate("2013-02-27"), list.get(0)[0]);
+      assertEquals(0, compareDate(list.get(0)[0], LocalDate.of(2013, 2, 27)));
    }
 
-   public void testAggregateDate() throws Exception {
+   public void testAggregateDate() {
       Query<Object[]> q = queryCache("SELECT COUNT(date), MIN(date) FROM " + TRANSACTION_TYPE + " WHERE description = 'Hotel' GROUP BY id");
       List<Object[]> list = q.list();
 
       assertEquals(1, list.size());
       assertEquals(2, list.get(0).length);
       assertEquals(1L, list.get(0)[0]);
-      assertEquals(java.util.Date.class, list.get(0)[1].getClass());
-      assertEquals(makeDate("2013-02-27"), list.get(0)[1]);
+      assertEquals(0, compareDate(list.get(0)[1], LocalDate.of(2013, 2, 27)));
    }
 
    public void testNotIndexedProjection() {
@@ -1575,14 +1601,14 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals("Expensive shoes 49", list.get(1)[1]);
    }
 
-   public void testDuplicateDateProjection() throws Exception {
+   public void testDuplicateDateProjection() {
       Query<Object[]> q = queryCache("SELECT id, date, date FROM " + TRANSACTION_TYPE + " WHERE description = 'Hotel'");
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(3, list.get(0).length);
       assertEquals(3, list.get(0)[0]);
-      assertEquals(makeDate("2013-02-27"), list.get(0)[1]);
-      assertEquals(makeDate("2013-02-27"), list.get(0)[2]);
+      assertEquals(0, compareDate(list.get(0)[1], LocalDate.of(2013, 2, 27)));
+      assertEquals(0, compareDate(list.get(0)[2], LocalDate.of(2013, 2, 27)));
    }
 
    public void testDuplicateBooleanProjection() {
@@ -1699,13 +1725,13 @@ public class QueryConditionsTest extends AbstractQueryTest {
    }
 
    public void testInstant1() {
-      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE creationDate = '2011-12-03T10:15:30Z'");
+      Query<User> q = queryCache("FROM %s WHERE creationDate = %s", USER_TYPE, instant(Instant.parse("2011-12-03T10:15:30Z")));
       List<User> list = q.list();
       assertEquals(3, list.size());
    }
 
    public void testInstant2() {
-      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE passwordExpirationDate = '2011-12-03T10:15:30Z'");
+      Query<User> q = queryCache("FROM %s WHERE passwordExpirationDate = %s", USER_TYPE, instant(Instant.parse("2011-12-03T10:15:30Z")));
       List<User> list = q.list();
       assertEquals(3, list.size());
    }

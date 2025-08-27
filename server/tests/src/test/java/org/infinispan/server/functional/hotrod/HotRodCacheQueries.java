@@ -202,7 +202,7 @@ public class HotRodCacheQueries {
       for (int i = 0; i < 1024; i++) {
          values.add("test" + i);
       }
-      Query<User> query = remoteCache.query("from User where name in (" + values.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) +")");
+      Query<User> query = remoteCache.query("from sample_bank_account.User where name in (" + values.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) +")");
 
       // this Ickle query translates to a BooleanQuery with 1025 clauses, 1 more than the max default (1024) so
       // executing it will fail unless the server jvm arg -Dinfinispan.query.lucene.max-boolean-clauses=1025 takes effect
@@ -224,7 +224,7 @@ public class HotRodCacheQueries {
          values.add("test" + i);
       }
 
-      Query<User> query = remoteCache.query("from User where name in (" + values.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) +")");
+      Query<User> query = remoteCache.query("from sample_bank_account.User where name in (" + values.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) +")");
 
       // this Ickle query translates to a BooleanQuery with 1026 clauses, 1 more than the configured
       // -Dinfinispan.query.lucene.max-boolean-clauses=1025, so executing the query is expected to fail

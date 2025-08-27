@@ -83,7 +83,7 @@ public abstract class ObjectPropertyHelper<TypeMetadata> {
    public Object convertToPropertyType(Class<?> propertyType, String value) {
       if (Date.class.isAssignableFrom(propertyType)) {
          try {
-            return DateHelper.getJpaDateFormat().parse(value);
+            return DateHelper.JPA_DATE_FORMAT.parse(value);
          } catch (ParseException e) {
             throw log.getInvalidDateLiteralException(value);
          }

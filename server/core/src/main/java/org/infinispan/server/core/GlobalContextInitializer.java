@@ -3,6 +3,7 @@ package org.infinispan.server.core;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
+import org.infinispan.server.core.iteration.IterationFilter;
 
 @ProtoSchema(
       allowNullFields = true,
@@ -12,7 +13,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       },
       includeClasses = {
             org.infinispan.server.core.transport.NettyTransportConnectionStats.ConnectionAdderTask.class,
-            org.infinispan.server.iteration.IterationFilter.class
+            IterationFilter.class
       },
       schemaFileName = "global.server.core.proto",
       schemaFilePath = "org/infinispan/server/core",

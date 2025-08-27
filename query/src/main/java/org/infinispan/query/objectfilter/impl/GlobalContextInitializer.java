@@ -12,7 +12,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult.StatementType.class
       },
       schemaFileName = "global.objectfilter.proto",
-      schemaFilePath = "org/infinispan/objectfilter",
+      schemaFilePath = "org/infinispan/query/objectfilter",
       schemaPackageName = "org.infinispan.global.objectfilter",
       service = false,
       syntax = ProtoSyntax.PROTO3

@@ -28,7 +28,7 @@ import org.jboss.logging.annotations.ValidIdRange;
 import jakarta.transaction.Transaction;
 
 /**
- * Log abstraction for the query-core module.
+ * Log abstraction for the query module.
  *
  * @author anistor@redhat.com
  * @since 10.1
