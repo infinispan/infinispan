@@ -80,6 +80,8 @@ import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.CacheInfo;
 import org.infinispan.server.core.QueryFacade;
 import org.infinispan.server.core.ServerConstants;
+import org.infinispan.server.core.iteration.DefaultIterationManager;
+import org.infinispan.server.core.iteration.IterationManager;
 import org.infinispan.server.core.transport.FlushConsolidationInitializer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -90,8 +92,6 @@ import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.streaming.StreamingManager;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
-import org.infinispan.server.iteration.DefaultIterationManager;
-import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.BlockingManager;
 

@@ -11,12 +11,12 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metrics.impl.MetricsRegistry;
-import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.operations.exceptions.ServiceUnavailableException;
 import org.infinispan.server.core.ServerManagement;
+import org.infinispan.server.core.query.ProtobufMetadataManager;
 
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;

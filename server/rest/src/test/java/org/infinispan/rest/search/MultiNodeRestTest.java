@@ -34,7 +34,7 @@ public abstract class MultiNodeRestTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalBuilder.serialization().addContextInitializer(new org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl());
+      globalBuilder.serialization().addContextInitializer(new org.infinispan.server.core.query.impl.persistence.PersistenceContextInitializerImpl());
       createClusteredCaches(getMembers(), globalBuilder, new ConfigurationBuilder(), true);
 
       cacheManagers.forEach(cm -> {

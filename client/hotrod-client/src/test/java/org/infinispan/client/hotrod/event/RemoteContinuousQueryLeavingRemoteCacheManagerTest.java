@@ -31,7 +31,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverterFactory;
+import org.infinispan.server.core.query.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverterFactory;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.KeyValuePair;
 import org.testng.annotations.Test;

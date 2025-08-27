@@ -56,8 +56,6 @@
       <module>multimap</module>
       <module>tools</module>
       <module>query</module>
-      <module>remote-query/remote-query-client</module>
-      <module>remote-query/remote-query-server</module>
       <module>persistence</module>
       <module>persistence/jdbc</module>
       <module>persistence/jdbc-common</module>
@@ -2806,7 +2804,7 @@
                      <excludes>
                         <exclude>**/logging/**</exclude>
                         <exclude>org/infinispan/cli/benchmark/jmh_generated/**</exclude>
-                        <exclude>org/infinispan/objectfilter/impl/ql/parse/**</exclude>
+                        <exclude>org/infinispan/query/objectfilter/impl/ql/parse/**</exclude>
                         <exclude>org/infinispan/server/hotrod/HotRodDecoder.class</exclude>
                         <exclude>**/*$___Marshaller_*.class</exclude>
                         <exclude>org/infinispan/**/test/**</exclude>

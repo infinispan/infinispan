@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.configuration.StringConfiguration;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
@@ -117,7 +118,7 @@ public abstract class AbstractHotRodQueryIT {
    }
 
    private void registerSchema(RemoteCacheManager rcm, String key, String protoFile) {
-      RemoteCache<String, String> metadataCache = rcm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      RemoteCache<String, String> metadataCache = rcm.getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put(key, protoFile);
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
    }

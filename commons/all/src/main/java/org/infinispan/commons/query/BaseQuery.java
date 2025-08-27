@@ -171,9 +171,9 @@ public abstract class BaseQuery<T> implements Query<T> {
 
    @Override
    public Query<T> startOffset(long startOffset) {
-      /*if (startOffset < 0) {
+      if (startOffset < 0) {
          throw log.startOffsetCannotBeLessThanZero();
-      }*/
+      }
       this.startOffset = (int) startOffset;    //todo [anistor] why accept a long if cache size is int?
       resetQuery();
       return this;
@@ -181,9 +181,9 @@ public abstract class BaseQuery<T> implements Query<T> {
 
    @Override
    public Query<T> maxResults(int maxResults) {
-      /*if (maxResults < 1) {
-         throw log.maxResultMustBeGreaterThanZero();
-      }*/
+      if (maxResults < 0) {
+         throw log.maxResultCannotBeLessThanZero();
+      }
       this.maxResults = maxResults;
       resetQuery();
       return this;

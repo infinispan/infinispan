@@ -154,12 +154,6 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-server</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-scripting</artifactId>
          <scope>test</scope>
       </dependency>
@@ -189,12 +183,6 @@
          <artifactId>infinispan-server-core</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-client</artifactId>
-         <optional>true</optional>
       </dependency>
 
       <dependency>
