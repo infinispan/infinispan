@@ -132,7 +132,7 @@ public final class ConstantValueExpr implements ValueExpr {
          } else if (targetType == Date.class) {
             if (type == String.class) {
                try {
-                  return DateHelper.getJpaDateFormat().parse((String) value);
+                  return DateHelper.JPA_DATE_FORMAT.parse((String) value);
                } catch (ParseException e) {
                   throw new RuntimeException(e);
                }
@@ -182,7 +182,7 @@ public final class ConstantValueExpr implements ValueExpr {
       } else if (constantValue instanceof Character) {
          strVal = "'" + constantValue + "'";
       } else if (constantValue instanceof Date) {
-         strVal = DateHelper.getJpaDateFormat().format((Date) constantValue);
+         strVal = DateHelper.JPA_DATE_FORMAT.format((Date) constantValue);
       } else if (constantValue instanceof Instant) {
          strVal = constantValue.toString();
       } else {
@@ -200,7 +200,7 @@ public final class ConstantValueExpr implements ValueExpr {
       } else if (constantValue instanceof Character) {
          sb.append("'").append(constantValue).append("'");
       } else if (constantValue instanceof Date) {
-         sb.append("'").append(DateHelper.getJpaDateFormat().format((Date) constantValue)).append("'");
+         sb.append("'").append(DateHelper.JPA_DATE_FORMAT.format((Date) constantValue)).append("'");
       } else if (constantValue instanceof Instant) {
          sb.append("'").append(constantValue).append("'");
       } else {

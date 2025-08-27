@@ -308,7 +308,7 @@ public class RestCacheClientJDK implements RestCacheClient {
    @Override
    public CompletionStage<RestResponse> query(String query, int maxResults, int offset, int hitCountAccuracy) {
       StringBuilder sb = new StringBuilder(path).append("?action=search&query=").append(sanitize(query));
-      if (maxResults >= 0) {
+      if (maxResults > 0) {
          sb.append("&max_results=").append(maxResults);
       }
       if (offset >= 0) {

@@ -37,26 +37,6 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query-dsl</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-client</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-server</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-objectfilter</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jdbc</artifactId>
       </dependency>
 
@@ -266,7 +246,7 @@
                         </group>
                         <group>
                            <title>Query API</title>
-                           <packages>org.infinispan.query*:org.infinispan.objectfilter*</packages>
+                           <packages>org.infinispan.query*</packages>
                         </group>
                         <group>
                            <title>Clustered Counter API</title>

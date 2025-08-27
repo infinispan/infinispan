@@ -47,7 +47,7 @@ public class HotRodCacheContinuousQueries {
       final BlockingQueue<Integer> updated = new LinkedBlockingQueue<>();
       final BlockingQueue<Integer> left = new LinkedBlockingQueue<>();
 
-      ContinuousQueryListener<Integer, User> listener = new ContinuousQueryListener<Integer, User>() {
+      ContinuousQueryListener<Integer, User> listener = new ContinuousQueryListener<>() {
          @Override
          public void resultJoining(Integer key, User value) {
             joined.add(key);

@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.iteration.IterationManager;
+import org.infinispan.server.core.iteration.IterationManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;

@@ -6,10 +6,11 @@ import org.infinispan.rest.search.entity.Address;
 import org.infinispan.rest.search.entity.Gender;
 import org.infinispan.rest.search.entity.Person;
 import org.infinispan.rest.search.entity.PhoneNumber;
+import org.infinispan.server.core.query.impl.persistence.PersistenceContextInitializer;
 
 @ProtoSchema(
       dependsOn = {
-            org.infinispan.query.remote.impl.persistence.PersistenceContextInitializer.class,
+            PersistenceContextInitializer.class,
             org.infinispan.rest.GlobalContextInitializer.class,
             org.infinispan.server.core.GlobalContextInitializer.class
       },

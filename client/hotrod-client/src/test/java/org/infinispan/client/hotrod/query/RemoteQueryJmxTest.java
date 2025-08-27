@@ -36,7 +36,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerMBean;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
+import org.infinispan.server.core.query.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

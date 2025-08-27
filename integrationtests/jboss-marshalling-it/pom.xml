@@ -54,16 +54,6 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-client</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-server</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jboss-marshalling</artifactId>
          <scope>test</scope>
       </dependency>

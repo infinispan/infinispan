@@ -60,11 +60,6 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-server</artifactId>
-         <type>jar</type>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
          <exclusions>
             <exclusion>
