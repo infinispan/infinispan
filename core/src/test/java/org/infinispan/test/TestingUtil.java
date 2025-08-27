@@ -406,6 +406,9 @@ public class TestingUtil {
       }
       for (Cache<?, ?> c : caches) {
          c = unwrapSecureCache(c);
+         if (!c.getCacheConfiguration().clustering().cacheMode().isClustered()) {
+            continue;
+         }
          int numOwners = c.getCacheConfiguration().clustering().hash().numOwners();
          DistributionManager distributionManager = c.getAdvancedCache().getDistributionManager();
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();

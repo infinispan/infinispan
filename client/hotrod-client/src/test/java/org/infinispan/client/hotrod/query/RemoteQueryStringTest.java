@@ -32,7 +32,7 @@ import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.impl.GlobalContextInitializer;
+import org.infinispan.server.core.query.impl.GlobalContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

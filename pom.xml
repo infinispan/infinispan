@@ -56,8 +56,6 @@
       <module>multimap</module>
       <module>tools</module>
       <module>query</module>
-      <module>remote-query/remote-query-client</module>
-      <module>remote-query/remote-query-server</module>
       <module>persistence</module>
       <module>persistence/jdbc</module>
       <module>persistence/jdbc-common</module>
