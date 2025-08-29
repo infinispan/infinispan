@@ -255,7 +255,7 @@ GET /rest/v2/caches/{cacheName}/search/indexes/stats
 include::json/rest_index_stats.json[]
 ----
 
-* `indexed_class_names` Provides the class names of the indexes present in the cache. For Protobuf the value is always `org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper`.
+* `indexed_class_names` Provides the class names of the indexes present in the cache. For Protobuf the value is always `org.infinispan.server.core.query.impl.indexing.ProtobufValueWrapper`.
 * `indexed_entities_count` Provides the number of entities indexed per class.
 * `index_sizes` Provides the size, in bytes, for each index in the cache.
 * `reindexing` Indicates if a re-indexing operation was performed for the cache. If the value is `true`, the `MassIndexer` was started in the cache.

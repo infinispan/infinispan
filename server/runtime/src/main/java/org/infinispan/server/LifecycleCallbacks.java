@@ -27,7 +27,7 @@ import org.infinispan.util.logging.events.EventLoggerNotifier;
  * @author Tristan Tarrant
  * @since 8.2
  */
-@InfinispanModule(name = "server-runtime", requiredModules = {"core", "query-core"})
+@InfinispanModule(name = "server-runtime", requiredModules = {"core", "query"})
 public class LifecycleCallbacks implements ModuleLifecycle {
 
    private EventLogger oldEventLogger;

@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.partitionhandling.SharedIndexTest")
 public class SharedIndexTest extends BasePartitionHandlingTest {
 
-   protected int totalEntries = 100;
+   protected final int totalEntries = 100;
 
    public SharedIndexTest() {
       numMembersInCluster = 3;

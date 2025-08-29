@@ -2,8 +2,8 @@ package org.infinispan.rest.search;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
-import static org.infinispan.query.remote.json.JSONConstants.HIT;
-import static org.infinispan.query.remote.json.JSONConstants.HIT_COUNT;
+import static org.infinispan.server.core.query.json.JSONConstants.HIT;
+import static org.infinispan.server.core.query.json.JSONConstants.HIT_COUNT;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;

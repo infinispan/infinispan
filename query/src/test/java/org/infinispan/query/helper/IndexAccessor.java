@@ -20,8 +20,8 @@ import org.hibernate.search.engine.reporting.impl.FailSafeFailureHandlerWrapper;
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 
 /**
  * Provides some low level api index instances.

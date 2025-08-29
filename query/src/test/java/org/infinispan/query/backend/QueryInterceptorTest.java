@@ -159,7 +159,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
       });
    }
 
-   protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
+   protected EmbeddedCacheManager createCacheManager(int maxEntries) {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.globalState().enable().persistentLocation(storeDir.getAbsolutePath());
       globalBuilder.serialization().addContextInitializer(QueryTestSCI.INSTANCE);

@@ -36,8 +36,8 @@ import org.hibernate.search.engine.search.predicate.dsl.PhrasePredicateOptionsSt
 import org.hibernate.search.engine.search.predicate.dsl.PredicateFinalStep;
 import org.hibernate.search.engine.search.predicate.dsl.PredicateScoreStep;
 import org.hibernate.search.engine.search.predicate.dsl.RangePredicateFieldMoreStep;
-import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
 import org.hibernate.search.engine.search.predicate.dsl.RegexpQueryFlag;
+import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
 import org.hibernate.search.engine.search.predicate.dsl.SimpleQueryFlag;
 import org.hibernate.search.engine.search.projection.SearchProjection;
 import org.hibernate.search.engine.search.projection.dsl.DistanceToFieldProjectionValueStep;
@@ -52,41 +52,41 @@ import org.hibernate.search.engine.spatial.DistanceUnit;
 import org.hibernate.search.engine.spatial.GeoPoint;
 import org.hibernate.search.engine.spatial.GeoPolygon;
 import org.hibernate.search.util.common.data.RangeBoundInclusion;
-import org.infinispan.objectfilter.SortField;
-import org.infinispan.objectfilter.impl.ql.PropertyPath;
-import org.infinispan.objectfilter.impl.syntax.AggregationExpr;
-import org.infinispan.objectfilter.impl.syntax.AndExpr;
-import org.infinispan.objectfilter.impl.syntax.BetweenExpr;
-import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
-import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
-import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
-import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
-import org.infinispan.objectfilter.impl.syntax.FullTextBoostExpr;
-import org.infinispan.objectfilter.impl.syntax.FullTextOccurExpr;
-import org.infinispan.objectfilter.impl.syntax.FullTextRangeExpr;
-import org.infinispan.objectfilter.impl.syntax.FullTextRegexpExpr;
-import org.infinispan.objectfilter.impl.syntax.FullTextTermExpr;
-import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
-import org.infinispan.objectfilter.impl.syntax.KnnPredicate;
-import org.infinispan.objectfilter.impl.syntax.LikeExpr;
-import org.infinispan.objectfilter.impl.syntax.NestedExpr;
-import org.infinispan.objectfilter.impl.syntax.NotExpr;
-import org.infinispan.objectfilter.impl.syntax.OrExpr;
-import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
-import org.infinispan.objectfilter.impl.syntax.SpatialWithinBoxExpr;
-import org.infinispan.objectfilter.impl.syntax.SpatialWithinCircleExpr;
-import org.infinispan.objectfilter.impl.syntax.SpatialWithinPolygonExpr;
-import org.infinispan.objectfilter.impl.syntax.Visitor;
-import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.CacheValueAggregationPropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.FunctionPropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.core.impl.Log;
-import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
-import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.scope.SearchScope;
-import org.infinispan.search.mapper.session.SearchSession;
+import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.scope.SearchScope;
+import org.infinispan.query.mapper.session.SearchSession;
+import org.infinispan.query.objectfilter.SortField;
+import org.infinispan.query.objectfilter.impl.ql.PropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.AggregationExpr;
+import org.infinispan.query.objectfilter.impl.syntax.AndExpr;
+import org.infinispan.query.objectfilter.impl.syntax.BetweenExpr;
+import org.infinispan.query.objectfilter.impl.syntax.BooleanExpr;
+import org.infinispan.query.objectfilter.impl.syntax.ComparisonExpr;
+import org.infinispan.query.objectfilter.impl.syntax.ConstantBooleanExpr;
+import org.infinispan.query.objectfilter.impl.syntax.ConstantValueExpr;
+import org.infinispan.query.objectfilter.impl.syntax.FullTextBoostExpr;
+import org.infinispan.query.objectfilter.impl.syntax.FullTextOccurExpr;
+import org.infinispan.query.objectfilter.impl.syntax.FullTextRangeExpr;
+import org.infinispan.query.objectfilter.impl.syntax.FullTextRegexpExpr;
+import org.infinispan.query.objectfilter.impl.syntax.FullTextTermExpr;
+import org.infinispan.query.objectfilter.impl.syntax.IsNullExpr;
+import org.infinispan.query.objectfilter.impl.syntax.KnnPredicate;
+import org.infinispan.query.objectfilter.impl.syntax.LikeExpr;
+import org.infinispan.query.objectfilter.impl.syntax.NestedExpr;
+import org.infinispan.query.objectfilter.impl.syntax.NotExpr;
+import org.infinispan.query.objectfilter.impl.syntax.OrExpr;
+import org.infinispan.query.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.query.objectfilter.impl.syntax.SpatialWithinBoxExpr;
+import org.infinispan.query.objectfilter.impl.syntax.SpatialWithinCircleExpr;
+import org.infinispan.query.objectfilter.impl.syntax.SpatialWithinPolygonExpr;
+import org.infinispan.query.objectfilter.impl.syntax.Visitor;
+import org.infinispan.query.objectfilter.impl.syntax.parser.AggregationPropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.CacheValueAggregationPropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.FunctionPropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.jboss.logging.Logger;
 
 /**
@@ -152,17 +152,17 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    }
 
    private <T> InfinispanAggregation makeAggregation(SearchScope<?> scope, IckleParsingResult<TypeMetadata> parsingResult) {
-      PropertyPath[] groupBy = parsingResult.getGroupBy();
+      PropertyPath<?>[] groupBy = parsingResult.getGroupBy();
       if (groupBy == null || groupBy.length != 1) {
          return null;
       }
 
-      AggregationPropertyPath aggregationPropertyPath = null;
+      AggregationPropertyPath<?> aggregationPropertyPath = null;
       Class<T> projectedType = null;
       boolean displayGroupFirst = false;
 
       for (int i = 0; i < parsingResult.getProjectedPaths().length; i++) {
-         PropertyPath projectedPath = parsingResult.getProjectedPaths()[i];
+         PropertyPath<?> projectedPath = parsingResult.getProjectedPaths()[i];
          if (projectedPath instanceof AggregationPropertyPath) {
             if (projectedType != null) {
                displayGroupFirst = true;
@@ -282,8 +282,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
    private SearchSort makeSort(SearchSortFactory sortFactory, SortField sortField) {
       PropertyPath<?> path = sortField.getPath();
-      if (path instanceof FunctionPropertyPath) {
-         FunctionPropertyPath<?> functionPath = (FunctionPropertyPath<?>) path;
+      if (path instanceof FunctionPropertyPath<?> functionPath) {
          Double lat = (Double) functionPath.getArgs().get(0);
          Double lon = (Double) functionPath.getArgs().get(1);
          DistanceSortOptionsStep<?, ?, ? extends SearchPredicateFactory> optionsStep = sortFactory.distance(functionPath.asStringPathWithoutAlias(), lat, lon);
@@ -315,16 +314,11 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    public PredicateFinalStep visit(FullTextOccurExpr fullTextOccurExpr) {
       PredicateFinalStep childPredicate = fullTextOccurExpr.getChild().acceptVisitor(this);
 
-      switch (fullTextOccurExpr.getOccur()) {
-         case SHOULD:
-            return predicateFactory.bool().should(childPredicate);
-         case MUST:
-         case FILTER:
-            return predicateFactory.bool().must(childPredicate);
-         case MUST_NOT:
-            return predicateFactory.bool().mustNot(childPredicate);
-      }
-      throw new IllegalArgumentException("Unknown boolean occur clause: " + fullTextOccurExpr.getOccur());
+      return switch (fullTextOccurExpr.getOccur()) {
+         case SHOULD -> predicateFactory.bool().should(childPredicate);
+         case MUST, FILTER -> predicateFactory.bool().must(childPredicate);
+         case MUST_NOT -> predicateFactory.bool().mustNot(childPredicate);
+      };
    }
 
    @Override
@@ -332,8 +326,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       BooleanExpr child = fullTextBoostExpr.getChild();
       float boost = fullTextBoostExpr.getBoost();
 
-      if (child instanceof FullTextRegexpExpr) {
-         FullTextRegexpExpr fullTextRegexpExpr = (FullTextRegexpExpr) child;
+      if (child instanceof FullTextRegexpExpr fullTextRegexpExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRegexpExpr.getChild();
 
          return predicateFactory.regexp().field(propertyValueExpr.getPropertyPath().asStringPath())
@@ -378,7 +371,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    private Analyzer getAnalyzer(PropertyPath<?> propertyPath) {
       Optional<IndexFieldDescriptor> indexFieldDescriptor =
             indexedEntity.indexManager().descriptor().field(propertyPath.asStringPath());
-      if (!indexFieldDescriptor.isPresent()) {
+      if (indexFieldDescriptor.isEmpty()) {
          return null;
       }
 
@@ -389,17 +382,14 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
       IndexValueFieldDescriptor valueField = fieldDescriptor.toValueField();
       Optional<String> analyzerName = valueField.type().analyzerName();
-      if (!analyzerName.isPresent()) {
+      if (analyzerName.isEmpty()) {
          return null;
       }
 
       LuceneBackend luceneBackend = indexedEntity.indexManager().backend().unwrap(LuceneBackend.class);
       Optional<? extends Analyzer> analyzer = luceneBackend.analyzer(analyzerName.get());
-      if (!analyzer.isPresent()) {
-         return null;
-      }
+      return analyzer.orElse(null);
 
-      return analyzer.get();
    }
 
    @Override
@@ -487,8 +477,8 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          knn = maxResults;
       }
 
-      KnnPredicateVectorStep knnPredicateVector = predicateFactory.knn(knn).field(absoluteFieldPath);
-      KnnPredicateOptionsStep knnPredicateOptions;
+      KnnPredicateVectorStep<?> knnPredicateVector = predicateFactory.knn(knn).field(absoluteFieldPath);
+      KnnPredicateOptionsStep<?> knnPredicateOptions;
       if (knnPredicate.floats()) {
          knnPredicateOptions = knnPredicateVector.matching(knnPredicate.floatsArray(namedParameters));
       } else {
@@ -607,24 +597,18 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    public PredicateFinalStep visit(ComparisonExpr comparisonExpr) {
       PropertyValueExpr propertyValueExpr = (PropertyValueExpr) comparisonExpr.getLeftChild();
       ConstantValueExpr constantValueExpr = (ConstantValueExpr) comparisonExpr.getRightChild();
-      Comparable value = constantValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(), namedParameters);
+      Comparable<?> value = constantValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(), namedParameters);
       String path = propertyValueExpr.getPropertyPath().asStringPath();
-      switch (comparisonExpr.getComparisonType()) {
-         case NOT_EQUAL:
-            return predicateFactory.bool().mustNot(c -> c.match().field(path).matching(value));
-         case EQUAL:
-            return predicateFactory.match().field(path).matching(value);
-         case LESS:
-            return predicateFactory.range().field(path).lessThan(value);
-         case LESS_OR_EQUAL:
-            return predicateFactory.range().field(path).atMost(value);
-         case GREATER:
-            return predicateFactory.range().field(path).greaterThan(value);
-         case GREATER_OR_EQUAL:
-            return predicateFactory.range().field(path).atLeast(value);
-         default:
-            throw new IllegalStateException("Unexpected comparison type: " + comparisonExpr.getComparisonType());
-      }
+      return switch (comparisonExpr.getComparisonType()) {
+         case NOT_EQUAL -> predicateFactory.bool().mustNot(c -> c.match().field(path).matching(value));
+         case EQUAL -> predicateFactory.match().field(path).matching(value);
+         case LESS -> predicateFactory.range().field(path).lessThan(value);
+         case LESS_OR_EQUAL -> predicateFactory.range().field(path).atMost(value);
+         case GREATER -> predicateFactory.range().field(path).greaterThan(value);
+         case GREATER_OR_EQUAL -> predicateFactory.range().field(path).atLeast(value);
+         default ->
+               throw new IllegalStateException("Unexpected comparison type: " + comparisonExpr.getComparisonType());
+      };
    }
 
    @Override
@@ -634,8 +618,8 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
       ConstantValueExpr fromValueExpr = (ConstantValueExpr) betweenExpr.getFromChild();
       ConstantValueExpr toValueExpr = (ConstantValueExpr) betweenExpr.getToChild();
-      Comparable fromValue = fromValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(), namedParameters);
-      Comparable toValue = toValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(), namedParameters);
+      Comparable<?> fromValue = fromValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(), namedParameters);
+      Comparable<?> toValue = toValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(), namedParameters);
 
       return predicateFactory.range().field(path).between(fromValue, toValue);
    }

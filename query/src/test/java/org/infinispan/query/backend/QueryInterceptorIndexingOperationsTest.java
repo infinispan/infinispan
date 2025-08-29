@@ -89,7 +89,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    }
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       final ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.indexing().enable()
             .storage(LOCAL_HEAP)

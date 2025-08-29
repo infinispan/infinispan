@@ -1,5 +1,6 @@
 package org.infinispan.server.core.backup;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
@@ -46,6 +47,7 @@ import java.util.zip.ZipFile;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -141,7 +143,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
       createAndRestore(
             (source, backupManager) -> backupManager.create(name, null),
             (target, backupManager, backup) -> {
-               assertTrue(target.getCacheNames().isEmpty());
+               assertThat(target.getCacheNames()).containsExactly(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
                assertNull(target.getCacheConfiguration("cache-config"));
                Map<String, BackupManager.Resources> paramMap = Collections.singletonMap("default", params);
                CompletableFuture<Void> stage = backupManager.restore(name, backup, paramMap).toCompletableFuture();
@@ -183,7 +185,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                return backupManager.create(name, null);
             },
             (target, backupManager, backup) -> {
-               assertTrue(target.getCacheNames().isEmpty());
+               assertThat(target.getCacheNames()).containsExactly(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
                await(backupManager.restore(name, backup));
                assertTrue(target.cacheExists(cacheName));
                assertEquals(numEntries, target.getCache(cacheName).size());
@@ -200,7 +202,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                return backupManager.create(name, null);
             },
             (target, backupManager, backup) -> {
-               assertTrue(target.getCacheNames().isEmpty());
+               assertThat(target.getCacheNames()).containsExactly(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
                Map<String, BackupManager.Resources> paramMap = Collections.singletonMap("default",
                      new BackupManagerResources.Builder()
                            .includeAll()
@@ -227,7 +229,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                return backupManager.create(name, null);
             },
             (target, backupManager, backup) -> {
-               assertTrue(target.getCacheNames().isEmpty());
+               assertThat(target.getCacheNames()).containsExactly(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
                Map<String, BackupManager.Resources> paramMap = Collections.singletonMap("default",
                      new BackupManagerResources.Builder()
                            .includeAll()
@@ -251,7 +253,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                return backupManager.create(name, null);
             },
             (target, backupManager, backup) -> {
-               assertTrue(target.getCacheNames().isEmpty());
+               assertThat(target.getCacheNames()).containsExactly(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
                assertNull(target.getCacheConfiguration("cache-config"));
                Map<String, BackupManager.Resources> paramMap = Collections.singletonMap("default",
                      new BackupManagerResources.Builder()
@@ -260,7 +262,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                            .build()
                );
                await(backupManager.restore(name, backup, paramMap));
-               assertTrue(target.getCacheNames().isEmpty());
+               assertThat(target.getCacheNames()).containsExactly(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
                assertNotNull(target.getCacheConfiguration("cache-config"));
             });
    }
@@ -275,10 +277,10 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                return backupManager.create(name, null);
             },
             (target, backupManager, backup) -> {
-               assertTrue(target.getCacheNames().isEmpty());
+               assertThat(target.getCacheNames()).containsExactly(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
                assertNull(target.getCacheConfiguration("cache-config"));
                await(backupManager.restore(name, backup));
-               assertFalse(target.getCacheNames().isEmpty());
+               assertThat(target.getCacheNames()).contains(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, "cache");
                assertNotNull(target.getCacheConfiguration("cache-config"));
 
                Cache<String, String> cache = target.getCache("cache");

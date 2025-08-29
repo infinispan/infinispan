@@ -32,11 +32,11 @@ import org.testng.annotations.Test;
 public class IndexedCacheRestartTest extends AbstractInfinispanTest {
    private EmbeddedCacheManager cm;
 
-   public void testLocalIndexedCacheRestart() throws Exception {
+   public void testLocalIndexedCacheRestart() {
       indexedCacheRestart(false);
    }
 
-   public void testLocalIndexedCacheRestartManager() throws Exception {
+   public void testLocalIndexedCacheRestartManager() {
       indexedCacheRestart(true);
    }
 

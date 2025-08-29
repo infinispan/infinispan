@@ -5,7 +5,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -44,7 +43,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    Cache<String, Person> cacheAMachine1, cacheAMachine2;
    private Query<Person> cacheQuery;
-   protected String queryString = String.format("FROM %s where blurb:'blurb1?'", Person.class.getName());
+   protected final String queryString = String.format("FROM %s where blurb:'blurb1?'", Person.class.getName());
    private final String allPersonsQuery = "FROM " + Person.class.getName();
 
    @Override
@@ -62,7 +61,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(getCacheMode(), false);
       cacheCfg
             .clustering().hash().numOwners(numOwners())
@@ -343,7 +342,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       assertEquals("name14", results.get(9).getName());
    }
 
-   private int countLocalIndex(Cache<String, Person> cache) throws IOException {
+   private int countLocalIndex(Cache<String, Person> cache) {
       IndexReader indexReader = IndexAccessor.of(cache, Person.class).getIndexReader();
       return indexReader.numDocs();
    }

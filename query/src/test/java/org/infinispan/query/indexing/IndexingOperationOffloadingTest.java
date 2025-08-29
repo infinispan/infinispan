@@ -34,7 +34,7 @@ public class IndexingOperationOffloadingTest extends SingleCacheManagerTest {
    private static final int CHUNKS_NUMBER = SIZE / CHUNK_SIZE;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config
             .indexing()

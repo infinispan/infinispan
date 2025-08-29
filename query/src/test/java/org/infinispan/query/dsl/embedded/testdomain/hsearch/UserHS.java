@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -162,6 +163,18 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      UserHS userHS = (UserHS) o;
+      return id == userHS.id && Objects.equals(accountIds, userHS.accountIds) && Objects.equals(surname, userHS.surname) && Objects.equals(salutation, userHS.salutation) && Objects.equals(age, userHS.age) && gender == userHS.gender && Objects.equals(addresses, userHS.addresses) && Objects.equals(creationDate, userHS.creationDate) && Objects.equals(passwordExpirationDate, userHS.passwordExpirationDate) && Objects.equals(notes, userHS.notes);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(id, accountIds, surname, salutation, age, gender, addresses, creationDate, passwordExpirationDate, notes);
+   }
+
+   @Override
    @ProtoField(number = 11)
    public Instant getPasswordExpirationDate() {
       return passwordExpirationDate;
@@ -173,57 +186,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      UserHS other = (UserHS) o;
-
-      if (age != null ? !age.equals(other.age) : other.age != null) return false;
-      if (id != other.id) return false;
-      if (accountIds != null ? !accountIds.equals(other.accountIds) : other.accountIds != null) return false;
-      if (addresses != null ? !addresses.equals(other.addresses) : other.addresses != null) return false;
-      if (gender != other.gender) return false;
-      if (name != null ? !name.equals(other.name) : other.name != null) return false;
-      if (surname != null ? !surname.equals(other.surname) : other.surname != null) return false;
-      if (salutation != null ? !salutation.equals(other.salutation) : other.salutation != null) return false;
-      if (notes != null ? !notes.equals(other.notes) : other.notes != null) return false;
-      if (creationDate != null ? !creationDate.equals(other.creationDate) : other.creationDate != null) return false;
-      if (passwordExpirationDate != null ? !passwordExpirationDate.equals(other.passwordExpirationDate) : other.passwordExpirationDate != null) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = id;
-      result = 31 * result + (accountIds != null ? accountIds.hashCode() : 0);
-      result = 31 * result + (name != null ? name.hashCode() : 0);
-      result = 31 * result + (surname != null ? surname.hashCode() : 0);
-      result = 31 * result + (salutation != null ? salutation.hashCode() : 0);
-      result = 31 * result + (age != null ? age : 0);
-      result = 31 * result + (gender != null ? gender.hashCode() : 0);
-      result = 31 * result + (addresses != null ? addresses.hashCode() : 0);
-      result = 31 * result + (notes != null ? notes.hashCode() : 0);
-      result = 31 * result + (creationDate != null ? creationDate.hashCode() : 0);
-      result = 31 * result + (passwordExpirationDate != null ? passwordExpirationDate.hashCode() : 0);
-      return result;
-   }
-
-   @Override
    public String toString() {
-      return "UserHS{" +
-            "id=" + id +
-            ", name='" + name + '\'' +
-            ", surname='" + surname + '\'' +
-            ", salutation='" + salutation + '\'' +
-            ", accountIds=" + accountIds +
-            ", addresses=" + addresses +
-            ", age=" + age +
-            ", gender=" + gender +
-            ", notes=" + notes +
-            ", creationDate='" + creationDate + '\'' +
-            ", passwordExpirationDate=" + passwordExpirationDate +
-            '}';
+      return "UserHS{" + "id=" + id + ", name='" + name + '\'' + ", surname='" + surname + '\'' + ", salutation='" + salutation + '\'' + ", accountIds=" + accountIds + ", addresses=" + addresses + ", age=" + age + ", gender=" + gender + ", notes=" + notes + ", creationDate='" + creationDate + '\'' + ", passwordExpirationDate=" + passwordExpirationDate + '}';
    }
 }

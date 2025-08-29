@@ -24,8 +24,8 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.query.test.Transaction;
-import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -50,7 +50,7 @@ public class StatsTest extends MultipleCacheManagersTest {
    private final String hybridQuery = String.format("From %s where nonIndexedField = 'first' and age > 50", Person.class.getName());
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg.statistics().enable();
       cacheCfg.indexing().enable()

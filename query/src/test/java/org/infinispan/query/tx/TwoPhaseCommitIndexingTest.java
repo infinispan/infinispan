@@ -30,7 +30,7 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
    private final BlowUpInterceptor nastyInterceptor = new BlowUpInterceptor(injectFailures);
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
       global.serialization().addContextInitializer(QueryTestSCI.INSTANCE);
       TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, nastyInterceptor, TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
@@ -47,7 +47,7 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(global, cfg);
    }
 
-   public void testQueryAfterAddingNewNode() throws Exception {
+   public void testQueryAfterAddingNewNode() {
       //We'll fail the first operation by having an exception thrown after prepare
       //but before the commit:
       store("Astronaut", new Person("Astronaut", "is asking his timezone", 32), true);

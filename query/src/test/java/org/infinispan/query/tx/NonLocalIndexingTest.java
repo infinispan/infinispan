@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 public class NonLocalIndexingTest extends MultipleCacheManagersTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       builder.indexing().enable()
             .storage(LOCAL_HEAP)

@@ -16,21 +16,21 @@ import java.util.stream.Collectors;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
+import org.infinispan.commons.query.TotalHitCount;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.query.SearchTimeoutException;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.dsl.TotalHitCount;
 import org.infinispan.query.dsl.embedded.impl.InfinispanAggregation;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
-import org.infinispan.query.core.impl.Log;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.LogFactory;
 
@@ -169,7 +169,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
          return new QueryResultImpl<>(new TotalHitCount(resultSize, countIsExact), hits);
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
-         throw new SearchTimeoutException();
+         throw new TimeoutException();
       }
    }
 
@@ -198,7 +198,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
          return count;
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
-         throw new SearchTimeoutException();
+         throw new TimeoutException();
       }
    }
 

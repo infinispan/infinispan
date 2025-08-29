@@ -123,7 +123,7 @@ public class EmbeddedIndexingModeTest extends SingleHotRodServerTest {
       Query<Game> query = embCache.query("from org.infinispan.query.model.Game where description : 'the' order by name");
       QueryResult<Game> result = query.execute();
 
-      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().exact()).isTrue();
       assertThat(result.count().value()).isEqualTo(2);
       assertThat(result.list()).extracting("name").containsExactlyInAnyOrder("Civilization 1", "Ultima IV: Quest of the Avatar");
       assertThat(queryStatistics.getLocalIndexedQueryCount()).isOne();
@@ -157,7 +157,7 @@ public class EmbeddedIndexingModeTest extends SingleHotRodServerTest {
       remoteCacheManager.administration().reindexCache(embCache.getName());
       result = query.execute();
 
-      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().exact()).isTrue();
       assertThat(result.count().value()).isEqualTo(2);
       assertThat(result.list()).extracting("name").containsExactlyInAnyOrder("Civilization 1", "Ultima IV: Quest of the Avatar");
       assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(2);
