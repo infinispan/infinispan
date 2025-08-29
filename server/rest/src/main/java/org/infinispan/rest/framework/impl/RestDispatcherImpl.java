@@ -87,7 +87,7 @@ public class RestDispatcherImpl implements RestDispatcher {
 
       try {
          if (invocation.permission() != null) {
-               authorizer.checkPermission(restRequest.getSubject(), invocation.permission(), invocation.getName(), invocation.auditContext());
+               authorizer.checkPermission(restRequest.getSubject(), invocation.permission(), invocation.name(), invocation.auditContext());
             }
             if (restRequest.getSubject() != null) {
                if (invocation.requireCacheManagerStart() && !started)

@@ -44,7 +44,7 @@ public final class LoggingResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("logging", "REST resource to manage logging.")
             .invocation().methods(GET).path("/v2/logging/loggers").handleWith(this::listLoggers)
             .invocation().methods(GET).path("/v2/logging/appenders").handleWith(this::listAppenders)
             .invocation().methods(DELETE).path("/v2/logging/loggers/{loggerName}").handleWith(this::deleteLogger)
