@@ -8,4 +8,4 @@ cache
     .map(function(v) v.toLowerCase())
     .map(function(v) v.split(/[\W]+/))
     .flatMap(function(f) Arrays.stream(f))
-    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+    .collect(function() Collectors.groupingBy(Function.identity(), Collectors.counting()));
