@@ -1,21 +1,11 @@
 package test.org.infinispan.spring.starter.remote;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.sasl.RealmCallback;
-
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ClusterConfiguration;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
@@ -29,7 +19,17 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
+
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.sasl.RealmCallback;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 
 @SpringBootTest(
       classes = {
@@ -39,8 +39,8 @@ import org.springframework.test.context.TestPropertySource;
       properties = {
             "spring.main.banner-mode=off"
       })
-@TestPropertySource(locations = "classpath:test-application.properties")
-public class ApplicationPropertiesTest {
+@ActiveProfiles("yamltest")
+public class ApplicationYamlTest {
 
    @Autowired
    private RemoteCacheManager remoteCacheManager;
@@ -71,14 +71,24 @@ public class ApplicationPropertiesTest {
       assertThat(configuration.batchSize()).isEqualTo(91);
       assertThat(configuration.version()).isEqualTo(ProtocolVersion.PROTOCOL_VERSION_30);
 
+      // pool
+      assertThat(configuration.connectionPool().maxActive()).isEqualTo(90);
+      assertThat(configuration.connectionPool().maxWait()).isEqualTo(20000);
+      assertThat(configuration.connectionPool().minIdle()).isEqualTo(1000);
+      assertThat(configuration.connectionPool().maxPendingRequests()).isEqualTo(845);
+      assertThat(configuration.connectionPool().minEvictableIdleTime()).isEqualTo(9000);
+      assertThat(configuration.connectionPool().exhaustedAction()).isEqualTo(ExhaustedAction.CREATE_NEW);
+
       // Thread pool properties
       assertThat(configuration.asyncExecutorFactory().factory()).isInstanceOf(DefaultAsyncExecutorFactory.class);
       // TODO: how to assert thread pool size ? default-executor-factory-pool-size
 
       // Marshalling properties
       assertThat(configuration.marshallerClass()).isEqualTo(JavaSerializationMarshaller.class);
+      assertThat(configuration.keySizeEstimate()).isEqualTo(88889);
+      assertThat(configuration.valueSizeEstimate()).isEqualTo(11112);
       assertThat(configuration.forceReturnValues()).isTrue();
-      assertThat(configuration.serialAllowList()).contains("APP-KILLER1", "APP-KILLER2");
+      assertThat(configuration.serialWhitelist()).contains("APP-KILLER1", "APP-KILLER2");
       // TODO: Consistent Hash Impl ??
       //assertThat(configuration.consistentHashImpl().getClass().toString()).isEqualTo("");
 
@@ -113,7 +123,8 @@ public class ApplicationPropertiesTest {
       assertThat(configuration.security().authentication().saslProperties()).containsValues("value1", "value2");
 
       // transactions
-      assertThat(configuration.transactionTimeout()).isEqualTo(50000);
+      assertThat(configuration.transaction().transactionMode()).isEqualTo(TransactionMode.NON_DURABLE_XA);
+      assertThat(configuration.transaction().timeout()).isEqualTo(50000);
 
       // xsite
       assertThat(configuration.clusters()).hasSize(1);
