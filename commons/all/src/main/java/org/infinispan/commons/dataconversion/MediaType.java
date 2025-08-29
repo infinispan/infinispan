@@ -54,6 +54,7 @@ public final class MediaType {
 
    // OpenMetrics aka Prometheus content type
    public static final String APPLICATION_OPENMETRICS_TYPE = "application/openmetrics-text";
+   @Deprecated
    public static final String APPLICATION_JAVASCRIPT_TYPE = "application/javascript";
    public static final String APPLICATION_JSON_TYPE = "application/json";
    public static final String APPLICATION_OCTET_STREAM_TYPE = "application/octet-stream";
@@ -80,12 +81,14 @@ public final class MediaType {
    public static final String TEXT_CSS_TYPE = "text/css";
    public static final String TEXT_CSV_TYPE = "text/csv";
    public static final String TEXT_PLAIN_TYPE = "text/plain";
+   public static final String TEXT_JAVASCRIPT_TYPE = "text/javascript";
    public static final String TEXT_HTML_TYPE = "text/html";
    public static final String TEXT_EVENT_STREAM_TYPE = "text/event-stream";
    public static final String MATCH_ALL_TYPE = "*/*";
 
    // OpenMetrics aka Prometheus content type
    public static final MediaType APPLICATION_OPENMETRICS = fromString(APPLICATION_OPENMETRICS_TYPE);
+   @Deprecated
    public static final MediaType APPLICATION_JAVASCRIPT = fromString(APPLICATION_JAVASCRIPT_TYPE);
    public static final MediaType APPLICATION_JSON = fromString(APPLICATION_JSON_TYPE);
    public static final MediaType APPLICATION_OCTET_STREAM = fromString(APPLICATION_OCTET_STREAM_TYPE);
@@ -102,6 +105,7 @@ public final class MediaType {
    public static final MediaType TEXT_CSS = fromString(TEXT_CSS_TYPE);
    public static final MediaType TEXT_CSV = fromString(TEXT_CSV_TYPE);
    public static final MediaType TEXT_HTML = fromString(TEXT_HTML_TYPE);
+   public static final MediaType TEXT_JAVASCRIPT = fromString(TEXT_JAVASCRIPT_TYPE);
    public static final MediaType IMAGE_GIF = fromString(IMAGE_GIF_TYPE);
    public static final MediaType IMAGE_JPEG = fromString(IMAGE_JPEG_TYPE);
    public static final MediaType TEXT_EVENT_STREAM = fromString(TEXT_EVENT_STREAM_TYPE);
