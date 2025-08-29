@@ -1,7 +1,9 @@
 package org.infinispan.server.functional.resp;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutionException;
 
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.BeforeAll;
@@ -63,7 +65,10 @@ public abstract class AbstractRespTest {
             .setType(RedisClientType.STANDALONE)
             .setMaxPoolWaiting(-1)
             .addConnectionString("redis://" + address.getHostString() + ":" + address.getPort());
-
-      return createConnection(vertx, options);
+      try {
+         return RedisAPI.api(CompletionStages.await(SERVERS.resp().withOptions(options).withVertx(vertx).get().connect().toCompletionStage()));
+      } catch (ExecutionException | InterruptedException e) {
+         throw new RuntimeException(e);
+      }
    }
 }
