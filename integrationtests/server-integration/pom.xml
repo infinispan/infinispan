@@ -21,8 +21,8 @@
     <packaging>pom</packaging>
 
     <artifactId>infinispan-server-integration</artifactId>
-    <name>Server Integration</name>
-    <description>Server Integration</description>
+    <name>Infinispan Integration Tests - Server Integration</name>
+    <description>Infinispan Integration Tests - Server Integration</description>
 
     <dependencies>
         <dependency>

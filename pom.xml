@@ -12,8 +12,8 @@
    <artifactId>infinispan-parent</artifactId>
    <version>16.0.0-SNAPSHOT</version>
    <packaging>pom</packaging>
-   <name>Infinispan Common Parent</name>
-   <description>Infinispan common parent POM module</description>
+   <name>Infinispan</name>
+   <description>Infinispan project</description>
    <url>https://infinispan.org</url>
    <licenses>
       <license>
@@ -38,8 +38,8 @@
       <url>https://github.com/infinispan/infinispan/issues</url>
    </issueManagement>
    <modules>
-      <module>build/configuration</module>
       <module>build/bom</module>
+      <module>build/configuration</module>
       <module>build/checkstyle</module>
       <module>build/component-annotations</module>
       <module>build/component-processor</module>
@@ -238,15 +238,6 @@
 
    <dependencyManagement>
       <dependencies>
-
-         <!-- import infinispan bom -->
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-bom</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>import</scope>
-         </dependency>
 
          <dependency>
             <groupId>org.hibernate.search</groupId>
@@ -913,12 +904,6 @@
             <artifactId>hibernate-jpamodelgen</artifactId>
             <version>${version.hibernate.core}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate.lucene-jbossmodules</groupId>
-            <artifactId>lucene-jbossmodules</artifactId>
-            <version>${versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules}</version>
-            <type>zip</type>
          </dependency>
          <dependency>
             <groupId>org.infinispan.arquillian.container</groupId>
@@ -1597,12 +1582,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
             <version>${version.spring.boot}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-            <version>${versionx.org.springframework}</version>
             <scope>test</scope>
          </dependency>
          <dependency>

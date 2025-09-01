@@ -10,7 +10,7 @@
    </parent>
 
    <artifactId>infinispan-jboss-marshalling-it</artifactId>
-   <name>Integration tests - JBoss Marshalling interop</name>
+   <name>Infinispan Integration Tests - JBoss Marshalling</name>
    <description>Integration tests for jboss-marshalling enabled clients and server</description>
 
    <dependencies>

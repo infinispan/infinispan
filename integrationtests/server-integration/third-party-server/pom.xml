@@ -10,8 +10,8 @@
     </parent>
 
     <artifactId>infinispan-third-party-integrationtests</artifactId>
-    <name>Integration tests - Third Party Integration Tests</name>
-    <description>Integration tests - Third Party Integration Tests</description>
+    <name>Infinispan Integration Tests - Third Party Servers</name>
+    <description>Infinispan Integration Tests - Third Party Servers</description>
 
     <properties>
         <version.wildfly>${appserver.version}</version.wildfly>
