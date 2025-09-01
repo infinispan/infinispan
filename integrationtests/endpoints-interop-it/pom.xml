@@ -10,7 +10,7 @@
    </parent>
 
    <artifactId>infinispan-endpoint-interop-it</artifactId>
-   <name>Integration tests - Endpoints interop</name>
+   <name>Infinispan Integration Tests - Endpoints interop</name>
    <description>Integration tests for endpoints and in-VM interoperability</description>
 
    <dependencies>

@@ -2,13 +2,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-bom</artifactId>
+      <version>16.0.0-SNAPSHOT</version>
+      <relativePath>../bom/pom.xml</relativePath>
+   </parent>
+
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-build-configuration-parent</artifactId>
    <version>16.0.0-SNAPSHOT</version>
    <packaging>pom</packaging>
 
-   <name>Infinispan Common Parent</name>
-   <description>Infinispan common parent POM module</description>
+   <name>Infinispan Build Configuration</name>
+   <description>Infinispan build configuration</description>
    <url>https://infinispan.org</url>
    <licenses>
       <license>
@@ -91,7 +98,7 @@
       <version.byteman>4.0.25</version.byteman>
       <version.caffeine>3.2.2</version.caffeine>
       <version.commons.compress>1.28.0</version.commons.compress>
-      <version.console>16.0.3.Final</version.console>
+      <version.console>${versionx.org.infinispan.infinispan-console}</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
       <version.fabric8.kubernetes-client>7.4.0</version.fabric8.kubernetes-client>
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>

@@ -121,26 +121,6 @@
       </dependency>
    </dependencies>
 
-   <profiles>
-      <profile>
-         <id>default-tools.jar</id>
-         <activation>
-            <file>
-               <exists>${java.home}/../lib/tools.jar</exists>
-            </file>
-         </activation>
-         <dependencies>
-            <dependency>
-               <groupId>com.sun</groupId>
-               <artifactId>tools</artifactId>
-               <version>${java.version}</version>
-               <scope>system</scope>
-               <systemPath>${java.home}/../lib/tools.jar</systemPath>
-            </dependency>
-         </dependencies>
-      </profile>
-   </profiles>
-
    <build>
       <plugins>
          <plugin>

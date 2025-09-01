@@ -307,7 +307,7 @@
             </executions>
             <configuration>
                <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
-               <systemPropertyVariables combine.self="append">
+               <systemPropertyVariables>
                   <infinispan.server.hotrod.workerThreads>3</infinispan.server.hotrod.workerThreads>
                </systemPropertyVariables>
                <dependenciesToScan>
