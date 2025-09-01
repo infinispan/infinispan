@@ -10,7 +10,7 @@
       <relativePath>../../pom.xml</relativePath>
    </parent>
 
-   <name>Infinispan Spring Boot 3 Starter Embedded Integration Test</name>
+   <name>Infinispan Spring Boot 3 Starter Embedded IT</name>
    <artifactId>infinispan-spring-boot3-starter-embedded-tests</artifactId>
    <dependencies>
       <dependency>

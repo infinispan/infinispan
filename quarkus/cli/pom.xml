@@ -11,7 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>infinispan-quarkus-cli</artifactId>
-    <name>Infinispan Quarkus :: CLI</name>
+    <name>Infinispan Quarkus - CLI</name>
 
     <properties>
         <product.name>Infinispan</product.name>

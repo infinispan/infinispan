@@ -10,7 +10,7 @@
       <relativePath>../../pom.xml</relativePath>
    </parent>
 
-   <name>Infinispan Spring Boot 3 Starter Session Integration Test</name>
+   <name>Infinispan Spring Boot 3 Starter Session IT</name>
    <artifactId>infinispan-spring-boot3-starter-session-tests</artifactId>
 
    <dependencies>
