@@ -70,6 +70,11 @@ For backwards compatibility, metrics are currently exported in the previous form
 `false` to export metrics in the new format.
 ====
 
+==== Removals
+
+The metric for persisted entries was removed.
+Users should utilize the metrics of approximate size and in-memory entries instead.
+
 === Virtual threads enabled by default (JDK 21+)
 
 This release now enables virtual thread pools by default.
