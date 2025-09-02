@@ -192,8 +192,8 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
 
       org.infinispan.spring.common.session.PersistenceContextInitializerImpl sessionSci =
             new org.infinispan.spring.common.session.PersistenceContextInitializerImpl();
-      sessionSci.registerMarshallers(ctx);
       sessionSci.registerSchema(ctx);
+      sessionSci.registerMarshallers(ctx);
 
       BaseMarshaller sessionAttributeMarshaller =
             new MapSessionProtoAdapter.SessionAttributeRawMarshaller(serializationMarshaller);

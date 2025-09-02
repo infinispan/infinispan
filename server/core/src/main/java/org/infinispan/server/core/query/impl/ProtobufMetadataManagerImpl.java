@@ -58,6 +58,7 @@ import org.infinispan.security.impl.CreatePermissionConfigurationBuilder;
 import org.infinispan.server.core.query.ProtobufMetadataManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 
 /**
  * @author anistor@redhat.com
@@ -172,7 +173,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL).invocationBatching().enable()
-            .transaction().lockingMode(LockingMode.PESSIMISTIC)
+            .transaction().lockingMode(LockingMode.PESSIMISTIC).transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
             .clustering().cacheMode(cacheMode)
             .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
