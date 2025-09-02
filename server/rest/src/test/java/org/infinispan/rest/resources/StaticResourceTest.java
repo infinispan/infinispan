@@ -4,6 +4,7 @@ import static io.netty.handler.codec.http.HttpHeaderNames.ACCEPT_ENCODING;
 import static java.util.Collections.singletonMap;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JS;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSS;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
@@ -39,6 +40,8 @@ public class StaticResourceTest extends AbstractRestResourceTest {
 
    private static final Map<String, String> NO_COMPRESSION = singletonMap(ACCEPT_ENCODING.toString(), "none");
    private RestClient noRedirectsClient;
+   private String CONSOLE_DEFAULT = "index.html";
+   private String CONSOLE_CONFIG_DEFAULT = "config.js";
 
    @BeforeClass(alwaysRun = true)
    public void createBeforeClass() throws Throwable {
@@ -85,10 +88,13 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       assertThat(response).isNotFound();
 
       response = call("/static");
-      assertResponse(response, "static-test/index.html", "<h1>Hello</h1>", TEXT_HTML);
+      assertResponse(response, "static-test/index.html", "/console/", TEXT_HTML);
 
       response = call("/static/index.html");
-      assertResponse(response, "static-test/index.html", "<h1>Hello</h1>", TEXT_HTML);
+      assertResponse(response, "static-test/index.html", "/console/", TEXT_HTML);
+
+      response = call("/static/config.js");
+      assertResponse(response, "static-test/config.js", "/rest", APPLICATION_JS);
 
       response = call("/static/xml/file.xml");
       assertResponse(response, "static-test/xml/file.xml", "<distributed-cache", MediaType.fromString("text/xml"), APPLICATION_XML);
@@ -135,8 +141,11 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       int expireDuration = 60 * 60 * 24 * 31;
       File test = getTestFile(path);
       assertNotNull(test);
-      if (protocol == HTTP_11) {
+      // Console Default and Console config are served as String
+      if (protocol == HTTP_11 && !path.contains(CONSOLE_DEFAULT) && !path.contains(CONSOLE_CONFIG_DEFAULT)) {
          assertThat(response).hasTransferEncoding("chunked");
+      } else {
+         assertThat(response).hasNotTransferEncoding();
       }
       assertThat(response).hasLastModified(test.lastModified());
       assertThat(response).hasCacheControlHeaders("private, max-age=" + expireDuration);
@@ -155,7 +164,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
 
       response = call(path, "Sun, 15 Aug 1971 15:00:00 GMT");
       assertThat(response).isOk();
-      assertThat(response).containsReturnedText("<h1>Hello</h1>");
+      assertThat(response).containsReturnedText("/console/");
 
       response = call(path, DateUtils.toRFC1123(System.currentTimeMillis()));
       assertThat(response).isNotModified();

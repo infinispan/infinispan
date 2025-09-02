@@ -208,6 +208,11 @@ public class ResponseAssertion {
       return this;
    }
 
+    public ResponseAssertion hasNotTransferEncoding() {
+        Assertions.assertThat(response.headers().get(TRANSFER_ENCODING.getValue())).isNull();
+        return this;
+    }
+
    public ResponseAssertion isConflicted() {
       Assertions.assertThat(response.status()).isEqualTo(CONFLICT.code());
       return this;

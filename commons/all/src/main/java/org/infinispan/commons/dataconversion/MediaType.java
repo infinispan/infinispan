@@ -109,6 +109,7 @@ public final class MediaType {
    public static final MediaType APPLICATION_RTF = fromString(APPLICATION_RTF_TYPE);
    public static final MediaType APPLICATION_ZIP = fromString(APPLICATION_ZIP_TYPE);
    public static final MediaType APPLICATION_GZIP = fromString(APPLICATION_GZIP_TYPE);
+   public static final MediaType APPLICATION_JS = fromString(APPLICATION_JAVASCRIPT_TYPE);
    /**
     * @deprecated Since 11.0, without replacement.
     */
