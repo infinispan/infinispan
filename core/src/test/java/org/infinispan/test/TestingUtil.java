@@ -1956,8 +1956,7 @@ public class TestingUtil {
 
    public static ProtoStreamMarshaller createProtoStreamMarshaller(SerializationContextInitializer sci) {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
-      sci.registerSchema(ctx);
-      sci.registerMarshallers(ctx);
+      sci.register(ctx);
       return new ProtoStreamMarshaller(ctx);
    }
 

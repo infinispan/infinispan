@@ -70,10 +70,9 @@ public abstract class AbstractHotRodQueryIT {
       config.marshaller(new ProtoStreamMarshaller());
       try (RemoteCacheManager rcm = new RemoteCacheManager(config.build())) {
          // register schema
-         SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
-         PersonSchema.INSTANCE.registerMarshallers(serializationContext);
-         PersonSchema.INSTANCE.registerSchema(serializationContext);
          registerSchema(rcm, PersonSchema.INSTANCE.getProtoFileName(), PersonSchema.INSTANCE.getProtoFile());
+         SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
+         PersonSchema.INSTANCE.register(serializationContext);
 
          RemoteCache<String, Person> cache = rcm.getCache();
          cache.clear();
@@ -99,10 +98,9 @@ public abstract class AbstractHotRodQueryIT {
       ConfigurationBuilder config = localServerConfiguration();
       config.marshaller(new ProtoStreamMarshaller());
       try (RemoteCacheManager rcm = new RemoteCacheManager(config.build())) {
-         SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
-         PersonSchema.INSTANCE.registerMarshallers(serializationContext);
-         PersonSchema.INSTANCE.registerSchema(serializationContext);
          registerSchema(rcm, PersonSchema.INSTANCE.getProtoFileName(), PersonSchema.INSTANCE.getProtoFile());
+         SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
+         PersonSchema.INSTANCE.register(serializationContext);
 
          RemoteCache<String, Person> cache = rcm.getCache();
          cache.clear();

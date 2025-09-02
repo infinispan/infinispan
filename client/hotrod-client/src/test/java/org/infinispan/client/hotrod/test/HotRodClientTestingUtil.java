@@ -406,8 +406,7 @@ public class HotRodClientTestingUtil {
 
    public static void registerSCI(RemoteCacheManager remoteCacheManager, GeneratedSchema schema) {
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      schema.registerSchema(serCtx);
-      schema.registerMarshallers(serCtx);
+      schema.register(serCtx);
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put(Paths.get(schema.getProtoFileName()).getFileName().toString(), schema.getProtoFile());
       checkSchemaErrors(metadataCache);

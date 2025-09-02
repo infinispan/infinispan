@@ -265,8 +265,7 @@ public class Common {
       }
 
       SerializationContext ctx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      TestDomainSCI.INSTANCE.registerSchema(ctx);
-      TestDomainSCI.INSTANCE.registerMarshallers(ctx);
+      TestDomainSCI.INSTANCE.register(ctx);
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE);

@@ -20,7 +20,6 @@ public final class MarshallerRegistration {
     * @param ctx the serialization context
     */
    public static void init(SerializationContext ctx) {
-      GlobalContextInitializer.INSTANCE.registerSchema(ctx);
-      GlobalContextInitializer.INSTANCE.registerMarshallers(ctx);
+      GlobalContextInitializer.INSTANCE.register(ctx);
    }
 }

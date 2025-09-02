@@ -614,8 +614,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
       SerializationContextInitializer sci = TestDataSCI.INSTANCE;
-      sci.registerSchema(ctx);
-      sci.registerMarshallers(ctx);
+      sci.register(ctx);
       Marshaller userMarshaller = new ProtoStreamMarshaller(ctx);
       WrappedBytes key = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Key("key")));
       WrappedBytes key2 = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Key("key2")));

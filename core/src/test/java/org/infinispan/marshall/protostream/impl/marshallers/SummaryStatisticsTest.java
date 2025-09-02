@@ -19,8 +19,7 @@ public class SummaryStatisticsTest {
 
    public SummaryStatisticsTest() {
       this.ctx = ProtobufUtil.newSerializationContext();
-      GlobalContextInitializerImpl.INSTANCE.registerSchema(ctx);
-      GlobalContextInitializerImpl.INSTANCE.registerMarshallers(ctx);
+      GlobalContextInitializerImpl.INSTANCE.register(ctx);
    }
 
    private <T> T deserialize(T object) throws IOException {

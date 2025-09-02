@@ -370,8 +370,7 @@ abstract class HotRodAuthorizationTest {
       ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller();
       client.marshaller(marshaller);
       SerializationContext ctx = marshaller.getSerializationContext();
-      TestDomainSCI.INSTANCE.registerSchema(ctx);
-      TestDomainSCI.INSTANCE.registerMarshallers(ctx);
+      TestDomainSCI.INSTANCE.register(ctx);
       return client;
    }
 

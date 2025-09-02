@@ -129,8 +129,7 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    }
 
    private static void register(SerializationContextInitializer sci, SerializationContext ctx) {
-      sci.registerSchema(ctx);
-      sci.registerMarshallers(ctx);
+      sci.register(ctx);
    }
 
    // Required until IPROTO-136 is resolved to ensure that custom marshaller implementations are not overridden by

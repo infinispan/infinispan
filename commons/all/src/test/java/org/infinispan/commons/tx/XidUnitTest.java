@@ -7,9 +7,9 @@ import java.util.Random;
 
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.GlobalContextInitializer;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.GlobalContextInitializer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -27,8 +27,7 @@ public class XidUnitTest {
 
    public XidUnitTest() {
       this.ctx = ProtobufUtil.newSerializationContext();
-      GlobalContextInitializer.INSTANCE.registerSchema(ctx);
-      GlobalContextInitializer.INSTANCE.registerMarshallers(ctx);
+      GlobalContextInitializer.INSTANCE.register(ctx);
    }
 
    @Test(expected = IllegalArgumentException.class)

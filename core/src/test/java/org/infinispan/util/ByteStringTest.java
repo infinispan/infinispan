@@ -58,26 +58,17 @@ public class ByteStringTest extends AbstractInfinispanTest {
    }
 
    public void testLargeString() throws Exception {
-      StringBuilder sb = new StringBuilder(128);
-      for (int i = 0; i < 128; i++) {
-         sb.append("a");
-      }
-      ByteString.fromString(sb.toString());
+      ByteString.fromString("a".repeat(128));
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testTooLargeString() throws Exception {
-      StringBuilder sb = new StringBuilder(256);
-      for (int i = 0; i < 256; i++) {
-         sb.append("a");
-      }
-      ByteString.fromString(sb.toString());
+      ByteString.fromString("a".repeat(256));
    }
 
    private SerializationContext ctx() {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
-      PersistenceContextInitializer.INSTANCE.registerSchema(ctx);
-      PersistenceContextInitializer.INSTANCE.registerMarshallers(ctx);
+      PersistenceContextInitializer.INSTANCE.register(ctx);
       return ctx;
    }
 }

@@ -23,8 +23,7 @@ public class ProtoStreamMarshaller extends ImmutableProtoStreamMarshaller {
    }
 
    public void register(SerializationContextInitializer initializer) {
-      initializer.registerSchema(getSerializationContext());
-      initializer.registerMarshallers(getSerializationContext());
+      initializer.register(getSerializationContext());
    }
 
    @Override

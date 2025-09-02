@@ -52,8 +52,7 @@ public class ProtostreamTranscoderTest extends AbstractTranscoderTest {
 
    private SerializationContext createCtx() {
       SerializationContext ctx = ProtobufUtil.newSerializationContext();
-      TestDataSCI.INSTANCE.registerSchema(ctx);
-      TestDataSCI.INSTANCE.registerMarshallers(ctx);
+      TestDataSCI.INSTANCE.register(ctx);
       return ctx;
    }
 

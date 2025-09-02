@@ -431,8 +431,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    private static void registerSerializationContextInitializer(SerializationContext ctx,
                                                                SerializationContextInitializer sci) {
-      sci.registerSchema(ctx);
-      sci.registerMarshallers(ctx);
+      sci.register(ctx);
    }
 
    private static void registerDefaultSchemas(SerializationContext ctx, String... classNames) {
