@@ -4,7 +4,7 @@
 
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-build-configuration-parent</artifactId>
-   <version>15.2.6.Final</version>
+   <version>15.2.7-SNAPSHOT</version>
    <packaging>pom</packaging>
 
    <name>Infinispan Common Parent</name>
@@ -49,7 +49,7 @@
       <maven.compiler.target>17</maven.compiler.target>
       <maven.compiler.release>17</maven.compiler.release>
 
-      <project.build.outputTimestamp>2025-09-03T09:43:27Z</project.build.outputTimestamp>
+      <project.build.outputTimestamp>2025-09-03T10:18:02Z</project.build.outputTimestamp>
 
       <!-- === Branding Configuration === -->
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
@@ -100,7 +100,7 @@
       <version.hamcrest>2.2</version.hamcrest>
       <version.hibernate.core>6.4.10.Final</version.hibernate.core>
       <version.hibernate.search>7.2.3.Final</version.hibernate.search>
-      <version.infinispan>15.2.6.Final</version.infinispan>
+      <version.infinispan>15.2.7-SNAPSHOT</version.infinispan>
       <version.infinispan.arquillian>1.2.0.Beta3</version.infinispan.arquillian>
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.9.Final</version.infinispan.maven-plugins>
