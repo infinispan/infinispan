@@ -1,15 +1,32 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:user.commons.proto",
+    "protopath" : "generated:/:global.commons.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
-        "name" : "NullValue",
-        "type_id" : 128,
-        "fields" : [ ]
+        "name" : "KeyValueWithPrevious",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedKey",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedValue",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedPrev",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "org/infinispan/protostream/message-wrapping.proto"
       } ],
       "package" : {
-        "name" : "org.infinispan.commons"
+        "name" : "org.infinispan.global.commons"
       }
     }
   }, {
@@ -40,33 +57,16 @@
       }
     }
   }, {
-    "protopath" : "generated:/:global.commons.proto",
+    "protopath" : "generated:/:user.commons.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
-        "name" : "KeyValueWithPrevious",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "wrappedKey",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "wrappedValue",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "wrappedPrev",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "org/infinispan/protostream/message-wrapping.proto"
+        "name" : "NullValue",
+        "type_id" : 128,
+        "fields" : [ ]
       } ],
       "package" : {
-        "name" : "org.infinispan.global.commons"
+        "name" : "org.infinispan.commons"
       }
     }
   } ]
