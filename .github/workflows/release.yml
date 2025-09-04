@@ -186,7 +186,7 @@ jobs:
       ispnVersion: ${{ inputs.version }}
       type: ${{ inputs.type }}
 
-  operator:
+  operator-main:
     needs: images
     if: contains(inputs.version, '.Final')
     uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@main
@@ -194,4 +194,14 @@ jobs:
     with:
       image: quay.io/infinispan/server:${{ inputs.version }}
       ref: main
+      repository: infinispan/infinispan-operator
+
+  operator-2-4-x:
+    needs: images
+    if: contains(inputs.version, '.Final') && (startsWith(inputs.version, '15.0.') || startsWith(inputs.version, '15.2.'))
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@2.4.x
+    secrets: inherit
+    with:
+      image: quay.io/infinispan/server:${{ inputs.version }}
+      ref: 2.4.x
       repository: infinispan/infinispan-operator
