@@ -12,7 +12,7 @@
 
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-build-configuration-parent</artifactId>
-   <version>15.0.21.Final</version>
+   <version>15.0.22-SNAPSHOT</version>
    <packaging>pom</packaging>
 
    <name>Infinispan Common Parent</name>
@@ -106,7 +106,7 @@
       <version.hamcrest>2.2</version.hamcrest>
       <version.hibernate.core>6.4.10.Final</version.hibernate.core>
       <version.hibernate.search>7.1.2.Final</version.hibernate.search>
-      <version.infinispan>15.0.21.Final</version.infinispan>
+      <version.infinispan>15.0.22-SNAPSHOT</version.infinispan>
       <version.infinispan.arquillian>1.2.0.Beta3</version.infinispan.arquillian>
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.8.Final</version.infinispan.maven-plugins>
