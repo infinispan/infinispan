@@ -37,9 +37,15 @@ public interface TestClientDriver {
 
    /**
     * Get the REST instance
-    * @return {@link RestTestClientDriver} instance}
+    * @return {@link RestTestClientDriver} instance
     */
    RestTestClientDriver rest();
+
+   /**
+    * Get the OpenAPI instance
+    * @return {@link OpenAPITestClientDriver} instance
+    */
+   OpenAPITestClientDriver openapi();
 
    /**
     * Get the RESP instance.
