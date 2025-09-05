@@ -134,7 +134,7 @@
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
       <version.jboss.shrinkwrap.resolver>3.3.4</version.jboss.shrinkwrap.resolver>
       <version.jcip-annotations>1.0</version.jcip-annotations>
-      <version.jgroups>5.3.16.Final</version.jgroups>
+      <version.jgroups>5.3.21.Final</version.jgroups>
       <version.jgroups.raft>1.0.14.Final</version.jgroups.raft>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
