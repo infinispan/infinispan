@@ -124,7 +124,7 @@ public class SingleFileStoreCompatibilityTest extends AbstractPersistenceCompati
 
    @Override
    protected void configurePersistence(ConfigurationBuilder builder, boolean generatingData) {
-      builder.persistence().addSingleFileStore()
+      builder.persistence().addStore(SingleFileStoreConfigurationBuilder.class)
             .segmented(oldSegmented)
             .location(tmpDirectory);
    }

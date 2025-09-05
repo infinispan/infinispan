@@ -27,8 +27,7 @@ include::{topics}/con_global_persistent_location.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_global_persistent_location.adoc[leveloffset=+2]
 include::{topics}/con_file_based_cache_stores.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_file_stores.adoc[leveloffset=+2]
-include::{topics}/proc_configuring_single_file_stores.adoc[leveloffset=+2]
-
+ò
 //JDBC connection factories
 include::{topics}/con_cache_store_jdbc_connection_factories.adoc[leveloffset=+1]
 include::{topics}/proc_server_configuring_datasources.adoc[leveloffset=+2]

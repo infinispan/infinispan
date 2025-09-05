@@ -30,8 +30,6 @@ public class ExpirationFileStoreListenerFunctionalTest extends ExpirationStoreLi
    @Override
    public Object[] factory() {
       return new Object[]{
-            // Test is for single file store with a listener in a local cache and we don't care about memory storage types
-            new ExpirationFileStoreListenerFunctionalTest().fileStoreToUse(FileStoreToUse.SINGLE).cacheMode(CacheMode.LOCAL),
             new ExpirationFileStoreListenerFunctionalTest().fileStoreToUse(FileStoreToUse.SOFT_INDEX).cacheMode(CacheMode.LOCAL),
       };
    }
@@ -53,9 +51,6 @@ public class ExpirationFileStoreListenerFunctionalTest extends ExpirationStoreLi
             // Prevent the reaper from running, reaperEnabled(false) doesn't work when a store is present
             .expiration().wakeUpInterval(Long.MAX_VALUE);
       switch (fileStoreToUse) {
-         case SINGLE:
-            config.persistence().addSingleFileStore().location(location);
-            break;
          case SOFT_INDEX:
             config.persistence().addSoftIndexFileStore().dataLocation(location);
             break;
