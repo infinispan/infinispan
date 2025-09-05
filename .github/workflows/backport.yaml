@@ -14,7 +14,7 @@ jobs:
     steps:
       - if: contains(github.event.pull_request.labels.*.name, '13.0.x')
         name: 13.0.x Backport
-        uses: kiegroup/git-backporting@v4.8.5
+        uses: kiegroup/git-backporting@v4.8.6
         with:
           target-branch: 13.0.x
           pull-request: ${{ github.event.pull_request.url }}
@@ -23,7 +23,7 @@ jobs:
 
       - if: contains(github.event.pull_request.labels.*.name, '14.0.x')
         name: 14.0.x Backport
-        uses: kiegroup/git-backporting@v4.8.5
+        uses: kiegroup/git-backporting@v4.8.6
         with:
           target-branch: 14.0.x
           pull-request: ${{ github.event.pull_request.url }}
