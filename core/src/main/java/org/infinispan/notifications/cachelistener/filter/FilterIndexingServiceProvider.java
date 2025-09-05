@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
 
 /**
