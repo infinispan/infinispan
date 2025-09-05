@@ -66,7 +66,7 @@ public class QueryAggregationBroadcastTest extends MultipleCacheManagersTest {
       query = cache.query("select status, count(code) from org.infinispan.query.model.Sale group by status");
       Optional<Integer> totalNotNullItems = query.list().stream()
             .map(objects -> ((Long) objects[1]).intValue()).reduce(Integer::sum);
-      assertThat(totalNotNullItems).hasValue(CHUNK_SIZE * NUMBER_OF_DAYS);
+      assertThat(totalNotNullItems).hasValue((CHUNK_SIZE - CHUNK_SIZE / QueryAggregationCountTest.Status.values().length) * NUMBER_OF_DAYS);
 
       // alias
       query = cache.query("select s.status, count(s.code) from org.infinispan.query.model.Sale s where s.day >= :start and s.day <= :end group by s.status order by s.status");
