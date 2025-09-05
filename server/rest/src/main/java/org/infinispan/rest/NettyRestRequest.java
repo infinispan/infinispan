@@ -160,7 +160,7 @@ public class NettyRestRequest implements RestRequest {
 
    @Override
    public MediaType keyContentType() {
-      String header = request.headers().get(KEY_CONTENT_TYPE_HEADER.getValue());
+      String header = request.headers().get(KEY_CONTENT_TYPE_HEADER.toString());
       if (header == null) return DEFAULT_KEY_CONTENT_TYPE;
       return MediaType.fromString(header);
    }
@@ -210,18 +210,18 @@ public class NettyRestRequest implements RestRequest {
 
    @Override
    public Long getMaxIdleTimeSecondsHeader() {
-      return getHeaderAsLong(MAX_TIME_IDLE_HEADER.getValue());
+      return getHeaderAsLong(MAX_TIME_IDLE_HEADER);
    }
 
 
    @Override
    public Long getTimeToLiveSecondsHeader() {
-      return getHeaderAsLong(TTL_SECONDS_HEADER.getValue());
+      return getHeaderAsLong(TTL_SECONDS_HEADER);
    }
 
    @Override
    public EnumSet<CacheContainerAdmin.AdminFlag> getAdminFlags() {
-      String requestFlags = request.headers().get(FLAGS_HEADER.getValue());
+      String requestFlags = request.headers().get(FLAGS_HEADER.toString());
       if (requestFlags == null || requestFlags.isEmpty()) return null;
       try {
          return CacheContainerAdmin.AdminFlag.fromString(requestFlags);
@@ -233,7 +233,7 @@ public class NettyRestRequest implements RestRequest {
    @Override
    public Flag[] getFlags() {
       try {
-         String flags = request.headers().get(FLAGS_HEADER.getValue());
+         String flags = request.headers().get(FLAGS_HEADER.toString());
          if (flags == null || flags.isEmpty()) {
             return null;
          }
@@ -245,12 +245,12 @@ public class NettyRestRequest implements RestRequest {
 
    @Override
    public Long getCreatedHeader() {
-      return getHeaderAsLong(CREATED_HEADER.getValue());
+      return getHeaderAsLong(CREATED_HEADER);
    }
 
    @Override
    public Long getLastUsedHeader() {
-      return getHeaderAsLong(LAST_USED_HEADER.getValue());
+      return getHeaderAsLong(LAST_USED_HEADER);
    }
 
    public Subject getSubject() {
@@ -275,6 +275,10 @@ public class NettyRestRequest implements RestRequest {
       String headerValue = request.headers().get(header);
       if (header == null) return false;
       return Boolean.parseBoolean(headerValue);
+   }
+
+   private Long getHeaderAsLong(Enum<?> header) {
+      return getHeaderAsLong(header.toString());
    }
 
    private Long getHeaderAsLong(String header) {
