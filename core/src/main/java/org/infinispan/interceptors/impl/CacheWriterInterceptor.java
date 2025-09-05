@@ -448,15 +448,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return cacheStores.get();
    }
 
-   @ManagedAttribute(
-         description = "Number of entries currently persisted excluding expired entries",
-         displayName = "Number of persisted entries"
-   )
-   public int getNumberOfPersistedEntries() {
-      long size = CompletionStages.join(persistenceManager.size());
-      return (int) Math.min(size, Integer.MAX_VALUE);
-   }
-
    CompletionStage<Void> storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command) {
       return storeEntry(ctx, key, command, true);
    }
