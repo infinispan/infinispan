@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 public class FullTextParameterTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.indexing().enable()
             .storage(LOCAL_HEAP)

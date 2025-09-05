@@ -131,7 +131,9 @@ public class ServerEventLogger implements EventLogger {
             }
             queryStr += " ORDER BY when DESC";
             Query<EventLog> query = cache.query(queryStr);
-            query.maxResults(count);
+            if (count > 0) {
+               query.maxResults(count);
+            }
             query.setParameter("when", start);
             category.ifPresent(c -> query.setParameter("category", c));
             level.ifPresent(l -> query.setParameter("level", l));

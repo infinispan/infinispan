@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.server.iteration.IterationManager;
+import org.infinispan.server.core.iteration.IterationManager;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;

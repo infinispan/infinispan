@@ -23,7 +23,7 @@ public class ParentJoinNestedTest extends SingleCacheManagerTest {
    private QueryStatistics queryStatistics;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder indexed = new ConfigurationBuilder();
       indexed.statistics().enable();
       indexed.indexing().enable()

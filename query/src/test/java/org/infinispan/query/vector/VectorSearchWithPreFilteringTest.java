@@ -17,9 +17,9 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.model.Item;
 import org.infinispan.query.model.Metadata;
-import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.scope.SearchScope;
-import org.infinispan.search.mapper.session.SearchSession;
+import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.scope.SearchScope;
+import org.infinispan.query.mapper.session.SearchSession;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -32,7 +32,7 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
          {"cat lover", "code lover", "mystical", "philologist", "algorithm designer", "decisionist", "philosopher"};
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder indexed = new ConfigurationBuilder();
       indexed.indexing().enable()
             .storage(LOCAL_HEAP)

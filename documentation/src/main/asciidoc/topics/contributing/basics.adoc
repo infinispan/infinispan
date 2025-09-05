@@ -192,9 +192,7 @@ The last thing to figure out is which id to give to the message. Each module tha
 |server memcached|11001 - 12000
 |server rest|12001 - 13000
 |server resp|13001 - 14000
-|query-core|14001 - 14500
-|search mapper|14501-14800
-|query-dsl|14801 - 15000
+|query|14001 - 15000, 28501 - 29000
 |server router|15001 - 16000
 |clustered locks|16001 - 17000
 |cdi integration|17001 - 18000
@@ -211,7 +209,6 @@ The last thing to figure out is which id to give to the message. Each module tha
 |tasks|27001 - 27500
 |scripting|27501 - 28000
 |remote query server|28001 - 28500
-|object filter|28501 - 29000
 |soft-index file store|29001 - 29500
 |clustered counter|29501 - 30000
 |anchored keys|30001-30500

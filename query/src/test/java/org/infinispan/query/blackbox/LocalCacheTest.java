@@ -36,10 +36,10 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    protected Person person3;
    protected Person person4;
    protected AnotherGrassEater anotherGrassEater;
-   protected String key1 = "Navin";
-   protected String key2 = "BigGoat";
-   protected String key3 = "MiniGoat";
-   protected String anotherGrassEaterKey = "anotherGrassEaterKey";
+   protected final String key1 = "Navin";
+   protected final String key2 = "BigGoat";
+   protected final String key3 = "MiniGoat";
+   protected final String anotherGrassEaterKey = "anotherGrassEaterKey";
 
    public LocalCacheTest() {
       cleanup = CleanupPhase.AFTER_METHOD;

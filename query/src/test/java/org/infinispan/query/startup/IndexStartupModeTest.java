@@ -181,7 +181,7 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
    private boolean matches(int i, String nick) {
       String query = String.format("from %s where nick = '%s'", Developer.class.getName(), nick);
       HitCount hitCount = cache.query(query).execute().count();
-      assertThat(hitCount.isExact()).isTrue();
+      assertThat(hitCount.exact()).isTrue();
       return hitCount.value() == i;
    }
 }

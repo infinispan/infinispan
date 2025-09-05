@@ -62,8 +62,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
             org.infinispan.protostream.GeneratedSchema.class, // ProtoStream
             org.infinispan.commons.CacheException.class, // Commons
             org.infinispan.client.hotrod.RemoteCache.class, // Client
-            org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.class, // Remote Query
-            org.infinispan.query.api.continuous.ContinuousQuery.class // Query DSL
+            org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.class // Remote Query
       );
       return new ReflectionProcessor(featureAccess, index)
             .addImplementations(false, false,

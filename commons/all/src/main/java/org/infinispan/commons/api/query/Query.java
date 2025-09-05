@@ -91,12 +91,34 @@ public interface Query<T> extends Iterable<T> {
     */
    boolean hasProjections();
 
+   /**
+    * Returns the start offset configured for this query.
+    * @return the start offset
+    */
    long getStartOffset();
 
+   /**
+    * Sets the starting offset into the overall result set. Must be equal or greater than 0.
+    * Use it in combination with {@link #maxResults(int)} to implement pagination.
+    * @param startOffset the start offset
+    * @return <code>this</code>, for method chaining
+    */
    Query<T> startOffset(long startOffset);
 
+   /**
+    * Returns the maximum number of results configured for this query.
+    * @return the maximum number of results
+    */
    int getMaxResults();
 
+   /**
+    * Sets the maximum number of results to return. Must be equal or greater than 0. When 0 is set, the execution
+    * of the query will not return any results, but will still information about the
+    * {@link QueryResult#count() total number of hits}. Use it in combination with {@link #startOffset(long)} to
+    * implement pagination.
+    * @param maxResults the maximum number of results to return
+    * @return <code>this</code>, for method chaining
+    */
    Query<T> maxResults(int maxResults);
 
    /**

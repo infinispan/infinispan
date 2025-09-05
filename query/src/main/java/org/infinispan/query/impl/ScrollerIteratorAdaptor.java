@@ -7,7 +7,7 @@ import org.hibernate.search.engine.search.query.SearchScroll;
 import org.hibernate.search.engine.search.query.SearchScrollResult;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.HitCount;
-import org.infinispan.query.dsl.TotalHitCount;
+import org.infinispan.commons.query.TotalHitCount;
 
 /**
  * Adaptor to use a link {@link SearchScroll} as an iterator.

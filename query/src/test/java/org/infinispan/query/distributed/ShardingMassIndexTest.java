@@ -1,7 +1,7 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.Assert.assertEquals;
 
 import org.infinispan.Cache;
@@ -26,8 +26,7 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
    protected static final int NUM_NODES = 3;
 
    @Override
-   @SuppressWarnings("unchecked")
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       // Car is split into 2 shards: one is going to Infinispan Directory with a shared index, the other is
       // going to Ram with a local index
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
@@ -42,7 +41,7 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
    }
 
    @Test(enabled = false, description = "Shards going to different index managers are not currently supported")
-   public void testReindex() throws Exception {
+   public void testReindex() {
       Cache<Integer, Object> cache = cache(0);
       cache.put(1, new Car("mazda", "red", 200));
       cache.put(2, new Car("mazda", "blue", 200));

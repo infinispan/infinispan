@@ -3,7 +3,7 @@ package org.infinispan.server.core;
 import org.infinispan.AdvancedCache;
 
 /**
- * Query facade SPI. This is not meant to be implemented by regular users. At most one implmentation can exist in
+ * Query facade SPI. This is not meant to be implemented by regular users. At most one implementation can exist in
  * server's classpath.
  *
  * @author Galder Zamarreño

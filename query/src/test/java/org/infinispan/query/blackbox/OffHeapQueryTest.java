@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 public class OffHeapQueryTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
       cfg.memory().storage(StorageType.OFF_HEAP).maxCount(10);
       cfg.indexing().enable()
@@ -29,7 +29,7 @@ public class OffHeapQueryTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void testQuery() throws Exception {
+   public void testQuery() {
       cache.put("1", new Person("Donald", "MAGA", 78));
 
       assertEquals(1, getIndexDocs());

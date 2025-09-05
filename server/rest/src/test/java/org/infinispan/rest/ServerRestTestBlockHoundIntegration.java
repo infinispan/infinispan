@@ -1,6 +1,6 @@
 package org.infinispan.rest;
 
-import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
+import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
 import org.kohsuke.MetaInfServices;
 
 import com.arjuna.ats.internal.arjuna.coordinator.ReaperThread;

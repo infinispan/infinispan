@@ -1,0 +1,103 @@
+package org.infinispan.query.objectfilter.impl.syntax.parser;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.infinispan.query.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.query.objectfilter.impl.util.ReflectionHelper;
+
+/**
+ * @author anistor@redhat.com
+ * @since 7.0
+ */
+public class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?>> {
+
+   protected static final IndexedFieldProvider.FieldIndexingMetadata<Class<?>> CLASS_NO_INDEXING = IndexedFieldProvider.noIndexing();
+   private final EntityNameResolver<Class<?>> entityNameResolver;
+
+   public ReflectionPropertyHelper(EntityNameResolver<Class<?>> entityNameResolver) {
+      if (entityNameResolver == null) {
+         throw new IllegalArgumentException("The entityNameResolver argument cannot be null");
+      }
+      this.entityNameResolver = entityNameResolver;
+   }
+
+   @Override
+   public Class<?> getEntityMetadata(String typeName) {
+      return entityNameResolver.resolve(typeName);
+   }
+
+   @Override
+   public List<?> mapPropertyNamePathToFieldIdPath(Class<?> type, String[] propertyPath) {
+      return Arrays.asList(propertyPath);
+   }
+
+   @Override
+   public Class<?> getPrimitivePropertyType(Class<?> entityType, String[] propertyPath) {
+      try {
+         Class<?> propType = getPropertyAccessor(entityType, propertyPath).getPropertyType();
+         if (propType.isEnum()) {
+            return propType;
+         }
+         return primitives.get(propType);
+      } catch (ReflectiveOperationException e) {
+         // ignored
+      }
+      return null;
+   }
+
+   @Override
+   public boolean hasEmbeddedProperty(Class<?> entityType, String[] propertyPath) {
+      try {
+         Class<?> propType = getPropertyAccessor(entityType, propertyPath).getPropertyType();
+         return propType != null && !propType.isEnum() && !primitives.containsKey(propType);
+      } catch (ReflectiveOperationException e) {
+         return false;
+      }
+   }
+
+   @Override
+   public boolean isRepeatedProperty(Class<?> entityType, String[] propertyPath) {
+      try {
+         ReflectionHelper.PropertyAccessor a = ReflectionHelper.getAccessor(entityType, propertyPath[0]);
+         if (a.isMultiple()) {
+            return true;
+         }
+         for (int i = 1; i < propertyPath.length; i++) {
+            a = a.getAccessor(propertyPath[i]);
+            if (a.isMultiple()) {
+               return true;
+            }
+         }
+      } catch (ReflectiveOperationException e) {
+         // ignored
+      }
+      return false;
+   }
+
+   @Override
+   public IndexedFieldProvider<Class<?>> getIndexedFieldProvider() {
+      return typeMetadata -> CLASS_NO_INDEXING;
+   }
+
+   @Override
+   public boolean hasProperty(Class<?> entityType, String[] propertyPath) {
+      try {
+         Class<?> propType = getPropertyAccessor(entityType, propertyPath).getPropertyType();
+         return propType != null;
+      } catch (ReflectiveOperationException e) {
+         return false;
+      }
+   }
+
+   private ReflectionHelper.PropertyAccessor getPropertyAccessor(Class<?> entityClass, String[] propertyPath) throws ReflectiveOperationException {
+      if (propertyPath == null || propertyPath.length == 0) {
+         throw new IllegalArgumentException("propertyPath name cannot be null or empty");
+      }
+      ReflectionHelper.PropertyAccessor accessor = ReflectionHelper.getAccessor(entityClass, propertyPath[0]);
+      for (int i = 1; i < propertyPath.length; i++) {
+         accessor = accessor.getAccessor(propertyPath[i]);
+      }
+      return accessor;
+   }
+}

@@ -13,10 +13,10 @@ import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.impl.IndexerConfig;
-import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
-import org.infinispan.search.mapper.mapping.impl.DefaultAnalysisConfigurer;
-import org.infinispan.search.mapper.model.impl.InfinispanBootstrapIntrospector;
+import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
+import org.infinispan.query.mapper.mapping.impl.DefaultAnalysisConfigurer;
+import org.infinispan.query.mapper.model.impl.InfinispanBootstrapIntrospector;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.mockito.Mockito;
 

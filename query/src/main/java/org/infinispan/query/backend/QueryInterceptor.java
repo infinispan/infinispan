@@ -56,10 +56,11 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.scope.SearchScope;
-import org.infinispan.search.mapper.scope.SearchWorkspace;
-import org.infinispan.search.mapper.work.SearchIndexer;
+import org.infinispan.query.mapper.mapping.EntityConverter;
+import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.scope.SearchScope;
+import org.infinispan.query.mapper.scope.SearchWorkspace;
+import org.infinispan.query.mapper.work.SearchIndexer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -96,9 +97,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    @Inject
    BlockingManager blockingManager;
    @Inject
-   protected KeyPartitioner keyPartitioner;
+   KeyPartitioner keyPartitioner;
    @Inject
-   protected PersistenceManager persistenceManager;
+   PersistenceManager persistenceManager;
 
    private final AtomicBoolean stopping = new AtomicBoolean(false);
    private final ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues;
@@ -109,7 +110,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private final InvocationSuccessFunction<ClearCommand> processClearCommand = this::processClearCommand;
    private final boolean isManualIndexing;
    private final AdvancedCache<?, ?> cache;
-   private final Map<String, Class<?>> indexedClasses;
 
    private SearchMapping searchMapping;
    private SegmentListener segmentListener;
@@ -125,11 +125,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       isPersistenceEnabled = cacheConfiguration.persistence().usingStores();
       javaEmbeddedEntities = cacheConfiguration.indexing().useJavaEmbeddedEntities();
       this.cache = cache;
-      this.indexedClasses = Collections.unmodifiableMap(indexedClasses);
+      Map<String, Class<?>> indexedClasses1 = Collections.unmodifiableMap(indexedClasses);
    }
 
    @Start
-   protected void start() {
+   void start() {
       stopping.set(false);
       boolean isClustered = cache.getCacheConfiguration().clustering().cacheMode().isClustered();
       if (isClustered) {
@@ -141,7 +141,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    @Stop
-   protected void stop() {
+   void stop() {
       persistenceManager.removeStoreListener(storeChangeListener);
    }
 
@@ -474,7 +474,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * @return {@code true} if there is a chance that this entity is of an indexed types.
     * For protobuf entities which are not yet deserialized,
     * this returns {@code true} even though we don't know the exact type until the entity is deserialized.
-    * The {@link org.infinispan.search.mapper.mapping.EntityConverter entity converter}
+    * The {@link EntityConverter entity converter}
     * that takes care of deserialization will take care of cancelling indexing
     * if it turns out the actual type of the entity is not one that should be indexed.
     */

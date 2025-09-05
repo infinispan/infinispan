@@ -12,16 +12,16 @@ import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldTypeDescriptor;
 import org.hibernate.search.engine.backend.types.IndexFieldTraits;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
-import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
-import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
-import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
-import org.infinispan.objectfilter.impl.util.StringHelper;
-import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
-import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.objectfilter.ParsingException;
+import org.infinispan.query.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.query.objectfilter.impl.syntax.parser.EntityNameResolver;
+import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
+import org.infinispan.query.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
+import org.infinispan.query.objectfilter.impl.util.StringHelper;
 
 public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
@@ -49,7 +49,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
          try {
             return DateTools.stringToDate(value);
          } catch (ParseException e) {
-            throw new ParsingException(e);
+            throw new ParsingException(e.getMessage());
          }
       }
 

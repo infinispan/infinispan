@@ -14,8 +14,8 @@
    </Match>
    <Match>
       <Or>
-         <Class name="org.infinispan.objectfilter.impl.ql.parse.IckleLexer"/>
-         <Class name="org.infinispan.objectfilter.impl.ql.parse.IckleParser"/>
+         <Class name="org.infinispan.query.objectfilter.impl.ql.parse.IckleLexer"/>
+         <Class name="org.infinispan.query.objectfilter.impl.ql.parse.IckleParser"/>
       </Or>
    </Match>
    <Match>

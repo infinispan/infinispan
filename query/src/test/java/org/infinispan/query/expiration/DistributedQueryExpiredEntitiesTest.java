@@ -30,7 +30,7 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
    private static final ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
 
@@ -59,7 +59,7 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
       Query<Game> query = cache.query("from org.infinispan.query.model.Game where description : 'trilogy'");
       QueryResult<Game> result = query.execute();
 
-      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().exact()).isTrue();
       assertThat(result.count().value()).isEqualTo(1);
       assertThat(result.list()).extracting("name").contains("Ultima IV: Quest of the Avatar");
 
@@ -68,7 +68,7 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
       query = cache.query("from org.infinispan.query.model.Game where description : 'trilogy'");
       result = query.execute();
 
-      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().exact()).isTrue();
       assertThat(result.count().value()).isEqualTo(1);
 
       // verify that the result list does not contain any null value, but it is empty in this case

@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.indexedembedded.CollectionsIndexingTest")
 public class CollectionsIndexingTest extends SingleCacheManagerTest {
 
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
          .indexing()
@@ -66,7 +66,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void searchOnSimpleField() throws Exception {
+   public void searchOnSimpleField() {
       Country italy = new Country();
       italy.countryName = "Italy";
       cache.put("IT", italy);

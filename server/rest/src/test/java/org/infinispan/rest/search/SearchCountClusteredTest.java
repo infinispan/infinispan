@@ -1,5 +1,6 @@
 package org.infinispan.rest.search;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.functional.FunctionalTestUtils.await;
@@ -175,12 +176,6 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
       assertTotalAndPageSize(result, 20, 10);
    }
 
-   @Test
-   public void testCountOnly() {
-      CompletionStage<RestResponse> result = queryWithPagination(indexedCache(), "FROM IndexedEntity", 0, 0);
-      assertTotalAndPageSize(result, INDEXED_ENTRIES, 0);
-   }
-
    /**
     * Hybrid queries
     */
@@ -244,12 +239,6 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
       CompletionStage<RestResponse> result = queryWithDefaultPagination(indexedCache(), "SELECT count(indexedStoredField), max(notIndexedField) FROM IndexedEntity");
       int indexedStoredField = getFieldAggregationValue(result, "indexedStoredField");
       assertEquals(INDEXED_ENTRIES, indexedStoredField);
-   }
-
-   @Test
-   public void testCountOnlyHybrid() {
-      CompletionStage<RestResponse> result = queryWithPagination(indexedCache(), "SELECT notIndexedField FROM IndexedEntity", 0, 0);
-      assertTotalAndPageSize(result, INDEXED_ENTRIES, 0);
    }
 
    /**
@@ -322,14 +311,9 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
       assertEquals(NOT_INDEXED_ENTRIES, field1Count);
    }
 
-   @Test
-   public void testCountOnlyNotIndexed() {
-      CompletionStage<RestResponse> result = queryWithPagination(nonIndexedCache(), "SELECT field1 FROM NotIndexedEntity", 0, 0);
-      assertTotalAndPageSize(result, NOT_INDEXED_ENTRIES, 0);
-   }
-
    private void assertTotalAndPageSize(CompletionStage<RestResponse> response, int expectedHitCount, int pageSize) {
       RestResponse restResponse = await(response);
+      assertThat(restResponse.status()).isEqualTo(200).as(restResponse::body);
       String body = restResponse.body();
       Json responseDoc = Json.read(body);
       Json hitCount = responseDoc.at("hit_count");

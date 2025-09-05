@@ -65,7 +65,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    private Indexer indexer;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg;
       boolean local = CACHE_MODE == CacheMode.LOCAL;
       if (local) {

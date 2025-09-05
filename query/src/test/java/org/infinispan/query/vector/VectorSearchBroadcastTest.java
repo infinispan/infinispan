@@ -24,7 +24,7 @@ public class VectorSearchBroadcastTest extends MultipleCacheManagersTest {
    private Cache<Object, Object> cache;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder indexed = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       indexed.indexing().enable()
             .storage(LOCAL_HEAP)

@@ -1,5 +1,7 @@
 package org.infinispan.query.queries;
 
+import java.util.Objects;
+
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 
@@ -37,27 +39,20 @@ public class NumericType {
       return name;
    }
 
-   public void setName(String name) {
-      this.name = name;
-   }
-
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
       NumericType that = (NumericType) o;
-
-      if (num1 != that.num1) return false;
-      if (num2 != that.num2) return false;
-
-      return true;
+      return num1 == that.num1 && num2 == that.num2 && Objects.equals(name, that.name);
    }
 
    @Override
    public int hashCode() {
-      int result = num1;
-      result = 31 * result + num2;
-      return result;
+      return Objects.hash(num1, num2, name);
    }
+
+   public void setName(String name) {
+      this.name = name;
+   }
+
 }
