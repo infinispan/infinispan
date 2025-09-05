@@ -168,6 +168,7 @@ jobs:
             !test_dir/infinispan/**/ignored*reports*
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
+            test_dir/infinispan/**/*.hprof
             github-sha.txt
             pr-number.txt
 
