@@ -225,7 +225,7 @@
       <version.org.wildfly.galleon-plugins>7.4.0.Final</version.org.wildfly.galleon-plugins>
       <version.pmd.plugin>3.27.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.2.0</version.owasp-dependency-check-plugin>
-      <version.spotbugs.plugin>4.9.4.0</version.spotbugs.plugin>
+      <version.spotbugs.plugin>4.9.4.2</version.spotbugs.plugin>
       <version.weld-servlet>5.1.3.Final</version.weld-servlet>
 
       <!-- versionx -->
