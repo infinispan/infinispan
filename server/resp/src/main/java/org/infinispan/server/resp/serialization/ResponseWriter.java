@@ -7,9 +7,12 @@ import java.util.concurrent.CompletionException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import javax.security.sasl.SaslException;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespVersion;
+import org.infinispan.server.resp.exception.RespCommandException;
 
 /**
  * Entrypoint to serialize a response in RESP format.
@@ -327,6 +330,10 @@ public interface ResponseWriter {
          ex = ex.getCause();
       }
 
+      if (ex instanceof RespCommandException rce) {
+         return rw -> rw.error(String.format("-%s", rce.getMessage()));
+      }
+
       if (ex instanceof ClassCastException) {
          return ResponseWriter::wrongType;
       }
@@ -343,6 +350,10 @@ public interface ResponseWriter {
 
       if (ex instanceof NumberFormatException) {
          return ResponseWriter::valueNotInteger;
+      }
+
+      if (ex instanceof SecurityException || ex instanceof SaslException) {
+         return ResponseWriter::unauthorized;
       }
 
       return null;
