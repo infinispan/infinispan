@@ -23,7 +23,7 @@ final class CounterIncOrDec {
                   try {
                      prevIntValue = ArgumentUtils.toLong(currentValueBytes) + by;
                   } catch (NumberFormatException e) {
-                     throw new CacheException("value is not an integer or out of range");
+                     return CompletableFuture.failedFuture(new CacheException("value is not an integer or out of range"));
                   }
                   byte[] newValueBytes = ArgumentUtils.toByteArray(prevIntValue);
                   return cache.replaceAsync(key, currentValueBytes, newValueBytes)
@@ -53,11 +53,11 @@ final class CounterIncOrDec {
                   try {
                      prevDoubleValue = ArgumentUtils.toDouble(currentValueBytes) + by;
                   } catch (NumberFormatException e) {
-                     throw new CacheException("value is not a valid float");
+                     return CompletableFuture.failedFuture(new CacheException("value is not a valid float"));
                   }
 
                   if (Double.isNaN(prevDoubleValue) || Double.isInfinite(prevDoubleValue))
-                     throw new IllegalStateException("increment would produce NaN or Infinity");
+                     return CompletableFuture.failedFuture(new IllegalStateException("increment would produce NaN or Infinity"));
 
                   byte[] newValueBytes = ArgumentUtils.toByteArray(prevDoubleValue);
                   return cache.replaceAsync(key, currentValueBytes, newValueBytes)

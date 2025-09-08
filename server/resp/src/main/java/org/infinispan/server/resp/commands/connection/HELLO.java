@@ -46,7 +46,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3AuthHandler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      CompletionStage<Boolean> successStage = null;
+      CompletionStage<Void> successStage = null;
       try {
          handler.writer().version(RespVersion.of(ArgumentUtils.toInt(arguments.get(0))));
       } catch (IllegalArgumentException e) {
@@ -69,12 +69,11 @@ public class HELLO extends RespCommand implements AuthResp3Command {
 
       if (successStage != null) {
          return handler.stageToReturn(successStage, ctx, success -> {
-            RespRequestHandler next = AUTH.silentCreateAfterAuthentication(success, handler);
+            RespRequestHandler next = AUTH.silentCreateAfterAuthentication(handler);
             if (next == null)
                return handler;
 
-            if (success) helloResponse(handler, ctx);
-            else handler.writer().unauthorized();
+            helloResponse(handler, ctx);
             return next;
          });
       }
