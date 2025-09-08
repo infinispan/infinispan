@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.connection;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Version;
@@ -10,6 +11,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.AuthResp3Command;
+import org.infinispan.server.resp.exception.RespCommandException;
 import org.infinispan.server.resp.serialization.ByteBufferUtils;
 import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.RespConstants;
@@ -43,7 +45,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3AuthHandler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      CompletionStage<Boolean> successStage = null;
+      CompletionStage<Void> successStage = null;
 
       byte[] respProtocolBytes = arguments.get(0);
       String version = new String(respProtocolBytes, CharsetUtil.UTF_8);
@@ -60,7 +62,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
          // In case authentication is enabled, HELLO must provide the additional arguments to perform the authentication.
          // A similar behavior of running with `--requirepass <password>`.
          if (!handler.isAuthorized()) {
-            RespErrorUtil.customRawError("-NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time", handler.allocator());
+            return CompletableFuture.failedFuture(new RespCommandException("NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time"));
          } else {
             helloResponse(handler, ctx);
          }
@@ -68,12 +70,11 @@ public class HELLO extends RespCommand implements AuthResp3Command {
 
       if (successStage != null) {
          return handler.stageToReturn(successStage, ctx, success -> {
-            RespRequestHandler next = AUTH.silentCreateAfterAuthentication(success, handler);
+            RespRequestHandler next = AUTH.silentCreateAfterAuthentication(handler);
             if (next == null)
                return handler;
 
-            if (success) helloResponse(handler, ctx);
-            else RespErrorUtil.unauthorized(handler.allocator());
+            helloResponse(handler, ctx);
             return next;
          });
       }
