@@ -209,9 +209,10 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
       log.tracef("Disabling auto read for channel %s until previous command is complete", ctx.channel());
       // Disable reading any more from socket - until command is complete
       ctx.channel().config().setAutoRead(false);
-      stage.whenComplete((handler, t) -> {
+      stage.whenCompleteAsync((handler, t) -> {
          assert ctx.channel().eventLoop().inEventLoop() : "Command should complete only in event loop thread, it was " + Thread.currentThread().getName();
          if (t != null) {
+            log.tracef(t, "Command %s failed, pass to writer", command);
             requestHandler.writer.error(t);
          } else {
             requestHandler = handler; // Instate the new handler if there was no exception
@@ -219,7 +220,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
          flushBufferIfNeeded(ctx, false, stage);
          log.tracef("Re-enabling auto read for channel %s as previous command is complete", ctx.channel());
          resumeAutoRead(ctx);
-      });
+      }, ctx.executor());
    }
 
    @Override

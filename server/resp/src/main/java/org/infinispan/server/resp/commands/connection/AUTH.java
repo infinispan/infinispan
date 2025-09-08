@@ -26,29 +26,21 @@ public class AUTH extends RespCommand implements AuthResp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3AuthHandler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      CompletionStage<Boolean> successStage = handler.performAuth(ctx, arguments.get(0), arguments.get(1));
+      CompletionStage<Void> successStage = handler.performAuth(ctx, arguments.get(0), arguments.get(1));
 
-      return handler.stageToReturn(successStage, ctx, success -> createAfterAuthentication(success, handler));
+      return handler.stageToReturn(successStage, ctx, ignore -> createAfterAuthentication(handler));
    }
 
-   static RespRequestHandler createAfterAuthentication(boolean success, Resp3AuthHandler prev) {
-      RespRequestHandler next = silentCreateAfterAuthentication(success, prev);
+   static RespRequestHandler createAfterAuthentication(Resp3AuthHandler prev) {
+      RespRequestHandler next = silentCreateAfterAuthentication(prev);
       if (next == null)
          return prev;
 
-      if (!success) prev.writer().unauthorized();
-      else prev.writer().ok();
+      prev.writer().ok();
       return next;
    }
 
-   static RespRequestHandler silentCreateAfterAuthentication(boolean success, Resp3AuthHandler prev) {
-      if (!success) return prev;
-
-      try {
-         return prev.respServer().newHandler(prev.cache());
-      } catch (SecurityException ignore) {
-         prev.writer().unauthorized();
-         return null;
-      }
+   static RespRequestHandler silentCreateAfterAuthentication(Resp3AuthHandler prev) {
+      return prev.respServer().newHandler(prev.cache());
    }
 }
