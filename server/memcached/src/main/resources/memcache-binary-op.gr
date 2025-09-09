@@ -26,6 +26,16 @@ init {
    public BinaryOpDecoderImpl(MemcachedServer server) {
       this(server, ANONYMOUS);
    }
+
+   private void updateHeaderParameters() {
+      acquireHeader().replace(requestStart, requestBytes, principalName, key, opCode, opaque, cas);
+   }
+
+   private int preCommand() {
+      assertCacheIsReady();
+      updateHeaderParameters();
+      return 0;
+   }
 }
 
 exceptionally {
@@ -69,7 +79,7 @@ root request
 header returns BinaryHeader
    : { magic != MAGIC_REQ }? { throw new IllegalStateException("Error reading magic byte or message id: " + magic); }
    | { deadEnd = false } op keyLength extrasLength dataType vbucketId totalBodyLength opaque cas valueLength
-     { acquireHeader().replace(requestStart, requestBytes, principalName, key, opCode, opaque, cas) }
+     { acquireHeader() }
    ;
 
 magic: byte;
@@ -105,42 +115,47 @@ value returns byte[]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 
+preCommand returns int
+   : { header == null }? { 0 }
+   | { preCommand() }
+   ;
+
 parameters switch op
 // Operations
-   : { GET }? key { assertCacheIsReady(); if (out.add(get(header, key, false))) { state=0; return false; } }
-   | { GETQ }? key { assertCacheIsReady(); if (out.add(get(header, key, true))) { state=0; return false; } }
-   | { GETK }? key { assertCacheIsReady(); if (out.add(get(header, key, false))) { state=0; return false; } }
-   | { GETKQ }? key { assertCacheIsReady(); if (out.add(get(header, key, true))) { state=0; return false; } }
-   | { SET }? flags expiration key value { assertCacheIsReady(); if (out.add(set(header, key, value, flags, expiration, false))) { state=0; return false; } }
-   | { SETQ }? flags expiration key value { assertCacheIsReady(); if (out.add(set(header, key, value, flags, expiration, true))) { state=0; return false; } }
-   | { ADD }? flags expiration key value { assertCacheIsReady(); if (out.add(add(header, key, value, flags, expiration, false))) { state=0; return false; } }
-   | { ADDQ }? flags expiration key value { assertCacheIsReady(); if (out.add(add(header, key, value, flags, expiration, true))) { state=0; return false; } }
-   | { REPLACE }? flags expiration key value { assertCacheIsReady(); if (out.add(replace(header, key, value, flags, expiration, false))) { state=0; return false; } }
-   | { REPLACEQ }? flags expiration key value { assertCacheIsReady(); if (out.add(replace(header, key, value, flags, expiration, true))) { state=0; return false; } }
-   | { DELETE }? key { assertCacheIsReady(); if (out.add(delete(header, key, false))) { state=0; return false; } }
-   | { DELETEQ }? key { assertCacheIsReady(); if (out.add(delete(header, key, true))) { state=0; return false; } }
-   | { INCREMENT }? delta initial expiration key { assertCacheIsReady(); if (out.add(increment(header, key, delta, initial, expiration, false))) { state=0; return false; } }
-   | { INCREMENTQ }? delta initial expiration key { assertCacheIsReady(); if (out.add(increment(header, key, delta, initial, expiration, true))) { state=0; return false; } }
-   | { DECREMENT }? delta initial expiration key { assertCacheIsReady(); if (out.add(increment(header, key, -delta, initial, expiration, false))) { state=0; return false; } }
-   | { DECREMENTQ }? delta initial expiration key { assertCacheIsReady(); if (out.add(increment(header, key, -delta, initial, expiration, true))) { state=0; return false; } }
+   : { GET }? key preCommand { if (out.add(get(header, key, false))) { state=0; return false; } }
+   | { GETQ }? key preCommand { if (out.add(get(header, key, true))) { state=0; return false; } }
+   | { GETK }? key preCommand { if (out.add(get(header, key, false))) { state=0; return false; } }
+   | { GETKQ }? key preCommand { if (out.add(get(header, key, true))) { state=0; return false; } }
+   | { SET }? flags expiration key value preCommand { if (out.add(set(header, key, value, flags, expiration, false))) { state=0; return false; } }
+   | { SETQ }? flags expiration key value preCommand { if (out.add(set(header, key, value, flags, expiration, true))) { state=0; return false; } }
+   | { ADD }? flags expiration key value preCommand { if (out.add(add(header, key, value, flags, expiration, false))) { state=0; return false; } }
+   | { ADDQ }? flags expiration key value preCommand { if (out.add(add(header, key, value, flags, expiration, true))) { state=0; return false; } }
+   | { REPLACE }? flags expiration key value preCommand { if (out.add(replace(header, key, value, flags, expiration, false))) { state=0; return false; } }
+   | { REPLACEQ }? flags expiration key value preCommand { if (out.add(replace(header, key, value, flags, expiration, true))) { state=0; return false; } }
+   | { DELETE }? key preCommand { if (out.add(delete(header, key, false))) { state=0; return false; } }
+   | { DELETEQ }? key preCommand { if (out.add(delete(header, key, true))) { state=0; return false; } }
+   | { INCREMENT }? delta initial expiration key preCommand { if (out.add(increment(header, key, delta, initial, expiration, false))) { state=0; return false; } }
+   | { INCREMENTQ }? delta initial expiration key preCommand { if (out.add(increment(header, key, delta, initial, expiration, true))) { state=0; return false; } }
+   | { DECREMENT }? delta initial expiration key preCommand { if (out.add(increment(header, key, -delta, initial, expiration, false))) { state=0; return false; } }
+   | { DECREMENTQ }? delta initial expiration key preCommand { if (out.add(increment(header, key, -delta, initial, expiration, true))) { state=0; return false; } }
    | { QUIT }? { if (out.add(quit(header, false))) { state=0; return false; } }
    | { QUITQ }? { quit(header, true) }
-   | { FLUSH }? expiration { assertCacheIsReady(); if (out.add(flush(header, expiration, false))) { state=0; return false; } }
-   | { FLUSHQ }? expiration { assertCacheIsReady(); flush(header, expiration, true) }
-   | { NO_OP }? { if (out.add(noop(header))) { state=0; return false; } }
-   | { VERSION }? { if (out.add(version(header))) { state=0; return false; } }
-   | { APPEND }? key value { assertCacheIsReady(); if (out.add(append(header, key, value, false))) { state=0; return false; } }
-   | { APPENDQ }? key value { assertCacheIsReady(); if (out.add(append(header, key, value, true))) { state=0; return false; } }
-   | { PREPEND }? key value { assertCacheIsReady(); if (out.add(prepend(header, key, value, false))) { state=0; return false; } }
-   | { PREPENDQ }? key value { assertCacheIsReady(); if (out.add(prepend(header, key, value, true))) { state=0; return false; } }
+   | { FLUSH }? expiration preCommand { if (out.add(flush(header, expiration, false))) { state=0; return false; } }
+   | { FLUSHQ }? expiration preCommand { flush(header, expiration, true) }
+   | { NO_OP }? { updateHeaderParameters(); if (out.add(noop(header))) { state=0; return false; } }
+   | { VERSION }? { updateHeaderParameters(); if (out.add(version(header))) { state=0; return false; } }
+   | { APPEND }? key value preCommand { if (out.add(append(header, key, value, false))) { state=0; return false; } }
+   | { APPENDQ }? key value preCommand { if (out.add(append(header, key, value, true))) { state=0; return false; } }
+   | { PREPEND }? key value preCommand { if (out.add(prepend(header, key, value, false))) { state=0; return false; } }
+   | { PREPENDQ }? key value preCommand { if (out.add(prepend(header, key, value, true))) { state=0; return false; } }
    | { VERBOSITY }? verbosity { if (out.add(verbosityLevel(header, verbosity))) { state=0; return false; } }
-   | { TOUCH }? expiration key { assertCacheIsReady(); if (out.add(touch(header, key, expiration))) { state=0; return false; } }
-   | { GAT }? expiration key { assertCacheIsReady(); if (out.add(gat(header, key, expiration, false))) { state=0; return false; } }
-   | { GATQ }? expiration key { assertCacheIsReady(); if (out.add(gat(header, key, expiration, true))) { state=0; return false; } }
-   | { GATK }? expiration key { assertCacheIsReady(); if (out.add(gat(header, key, expiration, false))) { state=0; return false; } }
-   | { GATKQ }? expiration key { assertCacheIsReady(); if (out.add(gat(header, key, expiration, true))) { state=0; return false; } }
-   | { STAT }? key { assertCacheIsReady(); if (out.add(stat(header, key))) { state=0; return false; } }
-   | { CONFIG_GET }? key { assertCacheIsReady(); if (out.add(config(header, key))) { state=0; return false; } }
+   | { TOUCH }? expiration key preCommand { if (out.add(touch(header, key, expiration))) { state=0; return false; } }
+   | { GAT }? expiration key preCommand { if (out.add(gat(header, key, expiration, false))) { state=0; return false; } }
+   | { GATQ }? expiration key preCommand { if (out.add(gat(header, key, expiration, true))) { state=0; return false; } }
+   | { GATK }? expiration key preCommand { if (out.add(gat(header, key, expiration, false))) { state=0; return false; } }
+   | { GATKQ }? expiration key preCommand { if (out.add(gat(header, key, expiration, true))) { state=0; return false; } }
+   | { STAT }? key preCommand { if (out.add(stat(header, key))) { state=0; return false; } }
+   | { CONFIG_GET }? key preCommand { if (out.add(config(header, key))) { state=0; return false; } }
 // Unknown
    | { throw new IllegalArgumentException("Unknown operation " + op); }
    ;
