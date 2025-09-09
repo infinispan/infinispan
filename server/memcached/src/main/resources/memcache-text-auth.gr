@@ -21,6 +21,20 @@ init {
    public TextAuthDecoderImpl(MemcachedServer server) {
       super(server);
    }
+
+   private TextHeader getHeader() {
+      return accessLogging ? new TextHeader(requestBytes, requestStart, principalName, null, null, "auth") : null;
+   }
+}
+
+beforedecode {
+   // We cannot read more than one command at a time
+   if (!ctx.channel().config().isAutoRead()) {
+      log.tracef("Auto read was disabled, not reading next bytes yet");
+      return;
+   } else {
+      log.tracef("Auto read was enabled, reading next bytes");
+   }
 }
 
 exceptionally {
@@ -59,7 +73,7 @@ eol: short;
 
 parameters switch command_name
 // Operations
-   : { set }? key flags exptime vsize eol value eol { auth(value) }
+   : { set }? key flags exptime vsize eol value eol { if (out.add(auth(getHeader(), value))) { state = 0; return false; } }
 // Unknown
    | { throw new IllegalArgumentException("Unknown command " + command_name); }
    ;

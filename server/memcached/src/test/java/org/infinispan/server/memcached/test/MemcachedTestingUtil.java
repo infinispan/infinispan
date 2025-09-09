@@ -3,6 +3,7 @@ package org.infinispan.server.memcached.test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,6 +17,7 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
+import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
 import org.infinispan.server.core.test.transport.TestHandlersChannelInitializer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -93,7 +95,8 @@ public class MemcachedTestingUtil {
             .serverName("localhost").addMechProperty(Sasl.POLICY_NOANONYMOUS, "true");
       builder.authentication().text().authenticator((username, password) -> {
          if (username.equals(USERNAME) && new String(password).equals(PASSWORD)) {
-            return CompletableFuture.completedFuture(new Subject());
+            Subject subject = new Subject(true, Set.of(new SimpleUserPrincipal(USERNAME)), Set.of(), Set.of());
+            return CompletableFuture.completedFuture(subject);
          }
          return CompletableFuture.failedFuture(new SecurityException());
       });
