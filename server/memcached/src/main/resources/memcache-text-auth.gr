@@ -20,6 +20,10 @@ init {
    public TextAuthDecoderImpl(MemcachedServer server) {
       super(server);
    }
+
+   private TextHeader getHeader() {
+      return accessLogging ? new TextHeader(requestBytes, requestStart, principalName, null, null, "auth") : null;
+   }
 }
 
 exceptionally {
@@ -52,7 +56,7 @@ eol: short;
 
 parameters switch command_name
 // Operations
-   : { set }? key flags exptime vsize eol value eol { auth(value) }
+   : { set }? key flags exptime vsize eol value eol { if (out.add(auth(getHeader(), value))) { state = 0; return false; } }
 // Unknown
    | { throw new IllegalArgumentException("Unknown command " + command_name); }
    ;

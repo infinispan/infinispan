@@ -1,5 +1,6 @@
 package org.infinispan.server.memcached.text;
 
+import static org.infinispan.server.memcached.text.TextConstants.CLIENT_ERROR_AUTH;
 import static org.infinispan.server.memcached.text.TextConstants.CLIENT_ERROR_BAD_FORMAT;
 import static org.infinispan.server.memcached.text.TextConstants.CRLF;
 import static org.infinispan.server.memcached.text.TextConstants.SERVER_ERROR;
@@ -38,6 +39,8 @@ public class TextResponse extends MemcachedResponse {
          error = CLIENT_ERROR_BAD_FORMAT + " " + cause.getMessage() + CRLF;
       } else if (cause instanceof UnsupportedOperationException) {
          error = "ERROR" + CRLF;
+      } else if (cause instanceof SecurityException) {
+         error = CLIENT_ERROR_AUTH + cause.getMessage();
       } else {
          error = SERVER_ERROR + " " + cause.getMessage() + CRLF;
       }

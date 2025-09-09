@@ -185,11 +185,10 @@ public class MemcachedInboundAdapter extends ChannelInboundHandlerAdapter {
          ByteBufPool allocator = ctx.channel().attr(ALLOCATOR_KEY).get();
          if (t != null) {
             res.writeFailure(t, allocator);
-            flushBufferIfNeeded(ctx, false, res);
-            return;
+         } else {
+            res.writeResponse(obj, allocator);
          }
 
-         res.writeResponse(obj, allocator);
          flushBufferIfNeeded(ctx, false, res);
          resumeAutoRead(ctx);
       }, ctx.channel().eventLoop());
