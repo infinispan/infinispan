@@ -1,10 +1,13 @@
 package org.infinispan.server.memcached.binary;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.memcached.ByteBufPool;
 import org.infinispan.server.memcached.MemcachedResponse;
+import org.infinispan.server.memcached.MemcachedStatus;
 import org.infinispan.server.memcached.logging.Header;
 
 import io.netty.util.concurrent.Future;
@@ -27,5 +30,8 @@ public class BinaryResponse extends MemcachedResponse {
    public void writeFailure(Throwable throwable, ByteBufPool allocator) {
       Throwable cause = CompletableFutures.extractException(throwable);
       useErrorMessage(cause.getMessage());
+      if (cause instanceof SecurityException) {
+         BinaryDecoder.response(allocator, (BinaryHeader) header, MemcachedStatus.AUTHN_ERROR, Util.EMPTY_BYTE_ARRAY, throwable.getMessage().getBytes(StandardCharsets.US_ASCII));
+      }
    }
 }

@@ -12,6 +12,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.core.transport.ConnectionMetadata;
+import org.infinispan.server.memcached.ByteBufPool;
 import org.infinispan.server.memcached.MemcachedBaseDecoder;
 import org.infinispan.server.memcached.MemcachedInboundAdapter;
 import org.infinispan.server.memcached.MemcachedResponse;
@@ -73,17 +74,21 @@ abstract class BinaryDecoder extends MemcachedBaseDecoder {
       return send(header, CompletableFutures.completedNull());
    }
 
-   protected void response(BinaryHeader header, MemcachedStatus status) {
-      response(header, status, Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY);
+   protected int response(BinaryHeader header, MemcachedStatus status) {
+      return response(header, status, Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY);
    }
 
-   protected void response(BinaryHeader header, MemcachedStatus status, byte[] value) {
-      response(header, status, Util.EMPTY_BYTE_ARRAY, value);
+   protected int response(BinaryHeader header, MemcachedStatus status, byte[] value) {
+      return response(header, status, Util.EMPTY_BYTE_ARRAY, value);
    }
 
-   protected void response(BinaryHeader header, MemcachedStatus status, byte[] key, byte[] value) {
+   protected int response(BinaryHeader header, MemcachedStatus status, byte[] key, byte[] value) {
+      return response(MemcachedInboundAdapter.getAllocator(ctx), header, status, key, value);
+   }
+
+   static int response(ByteBufPool allocator, BinaryHeader header, MemcachedStatus status, byte[] key, byte[] value) {
       int totalLength = key.length + value.length;
-      ByteBuf buf = MemcachedInboundAdapter.getAllocator(ctx).acquire(24 + totalLength);
+      ByteBuf buf = allocator.acquire(24 + totalLength);
       buf.writeByte(MAGIC_RES);
       buf.writeByte(header.getCommand().opCode());
       buf.writeShort(key.length); // key length
@@ -95,6 +100,7 @@ abstract class BinaryDecoder extends MemcachedBaseDecoder {
       buf.writeLong(header.getCas());
       buf.writeBytes(key);
       buf.writeBytes(value);
+      return 24 + totalLength;
    }
 
    protected void response(BinaryHeader header, MemcachedStatus status, int flags, byte[] key, byte[] value) {

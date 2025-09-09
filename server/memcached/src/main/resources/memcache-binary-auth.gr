@@ -23,6 +23,17 @@ init {
    }
 }
 
+
+beforedecode {
+   // We cannot read more than one command at a time
+   if (!ctx.channel().config().isAutoRead()) {
+      log.tracef("Auto read was disabled, not reading next bytes yet");
+      return;
+   } else {
+      log.tracef("Auto read was enabled, reading next bytes");
+   }
+}
+
 exceptionally {
    state = 0;
    if (t instanceof TooLongFrameException tlfe) {
