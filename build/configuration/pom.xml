@@ -148,7 +148,7 @@
       <version.netty>4.1.124.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
-      <version.org.wildfly.arquillian>5.0.1.Final</version.org.wildfly.arquillian>
+      <version.org.wildfly.arquillian>5.1.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.elytron>2.6.4.Final</version.org.wildfly.elytron>
       <version.ow2.asm>9.8</version.ow2.asm>
       <version.party.iroiro.luajava>4.0.2</version.party.iroiro.luajava>
