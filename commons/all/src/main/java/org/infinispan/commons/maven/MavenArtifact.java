@@ -9,12 +9,16 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+
 /**
  * Maven artifact coordinate specification.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class MavenArtifact extends AbstractArtifact {
+   private final Log log = LogFactory.getLog(MavenArtifact.class);
    static final Pattern snapshotPattern = Pattern.compile("-\\d{8}\\.\\d{6}-\\d+$");
    private static final Pattern VALID_PATTERN = Pattern.compile("^([-_a-zA-Z0-9.]+):([-_a-zA-Z0-9.]+):([-_a-zA-Z0-9.]+)(?::([-_a-zA-Z0-9.]+))?$");
 
@@ -102,7 +106,7 @@ public final class MavenArtifact extends AbstractArtifact {
                   return pom;
                }
             } catch (IOException e) {
-               System.out.printf("Could not download '%s' from '%s' repository (%s)%n", artifactRelativePath, remoteRepository, e.getMessage());
+               log.warnf("Could not download '%s' from '%s' repository (%s)%n", artifactRelativePath, remoteRepository, e.getMessage());
                // try next one
             }
          }
@@ -133,13 +137,13 @@ public final class MavenArtifact extends AbstractArtifact {
                   return artifact;
                }
             } catch (IOException e) {
-               System.out.printf("Could not download '%s' from '%s' repository%n", artifactRelativePath, remoteRepository);
+               log.warnf("Could not download '%s' from '%s' repository%n", artifactRelativePath, remoteRepository);
             }
          }
       }
       //could not find it in remote
       if (verbose) {
-         System.out.println("Could not find in any remote repository");
+         log.errorf("Could not find '%s' in any remote repository", this);
       }
       return null;
    }

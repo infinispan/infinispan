@@ -24,4 +24,11 @@ public class LocalArtifact extends AbstractArtifact {
          return null;
       }
    }
+
+   @Override
+   public String toString() {
+      return "LocalArtifact{" +
+            "path=" + path +
+            '}';
+   }
 }
