@@ -18,6 +18,11 @@
 
 package org.infinispan.commons.maven;
 
+import static org.infinispan.commons.configuration.io.xml.XmlPullParser.END_DOCUMENT;
+import static org.infinispan.commons.configuration.io.xml.XmlPullParser.END_TAG;
+import static org.infinispan.commons.configuration.io.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
+import static org.infinispan.commons.configuration.io.xml.XmlPullParser.START_TAG;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,11 +49,6 @@ import org.infinispan.commons.configuration.io.xml.MXParser;
 import org.infinispan.commons.configuration.io.xml.XmlPullParser;
 import org.infinispan.commons.configuration.io.xml.XmlPullParserException;
 
-import static org.infinispan.commons.configuration.io.xml.XmlPullParser.END_DOCUMENT;
-import static org.infinispan.commons.configuration.io.xml.XmlPullParser.END_TAG;
-import static org.infinispan.commons.configuration.io.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
-import static org.infinispan.commons.configuration.io.xml.XmlPullParser.START_TAG;
-
 /**
  * Class to load Maven settings.xml files
  *
@@ -67,11 +67,11 @@ public final class MavenSettings {
       configureDefaults();
    }
 
-   public static MavenSettings init() throws IOException {
+   public static MavenSettings init() {
       return init(null);
    }
 
-   public static MavenSettings init(Path settingsPath) throws IOException {
+   public static MavenSettings init(Path settingsPath) {
       if (mavenSettings != null && Objects.equals(mavenSettings.settingsPath, settingsPath)) {
          return mavenSettings;
       }
@@ -100,11 +100,11 @@ public final class MavenSettings {
       return mavenSettings;
    }
 
-   static MavenSettings parseSettingsXml(Path settings, MavenSettings mavenSettings) throws IOException {
-      try {
-         final MXParser reader = new MXParser();
-         reader.setFeature(FEATURE_PROCESS_NAMESPACES, false);
-         InputStream source = Files.newInputStream(settings, StandardOpenOption.READ);
+   static MavenSettings parseSettingsXml(Path settings, MavenSettings mavenSettings) {
+      final MXParser reader = new MXParser();
+      reader.setFeature(FEATURE_PROCESS_NAMESPACES, false);
+      try (InputStream source = Files.newInputStream(settings, StandardOpenOption.READ)) {
+
          reader.setInput(source, null);
          int eventType;
          while ((eventType = reader.next()) != END_DOCUMENT) {
@@ -123,8 +123,8 @@ public final class MavenSettings {
             }
          }
          return mavenSettings;
-      } catch (XmlPullParserException e) {
-         throw new IOException("Could not parse maven settings.xml");
+      } catch (Exception e) {
+         throw new RuntimeException("Could not parse maven settings.xml", e);
       }
    }
 

@@ -32,4 +32,11 @@ public class URLArtifact extends AbstractArtifact {
       Path dest = tmpDir.resolve(getFilenameFromURL(url));
       return downloadFile(url, dest, verbose, force);
    }
+
+   @Override
+   public String toString() {
+      return "URLArtifact{" +
+            "url=" + url +
+            '}';
+   }
 }

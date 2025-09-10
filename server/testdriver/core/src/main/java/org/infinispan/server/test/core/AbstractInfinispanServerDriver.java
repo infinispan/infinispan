@@ -299,16 +299,16 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    protected void addArtifactsToLibDir(File libDir, String... artifacts) {
       if (artifacts != null && artifacts.length > 0) {
-         try {
-            MavenSettings.init();
-            for (String artifact : artifacts) {
-               Path resolved = Artifact.fromString(artifact).resolveArtifact();
-               Path target = libDir.toPath().resolve(resolved.getFileName());
-               Files.copy(resolved, target, StandardCopyOption.REPLACE_EXISTING);
-               log.infof("Maven Artifact: %s", target);
+         MavenSettings.init();
+         for (String artifact : artifacts) {
+            Artifact a = Artifact.fromString(artifact);
+            log.infof("Artifact: %s", a);
+            try {
+               Path resolved = a.resolveArtifact();
+               Files.copy(resolved, libDir.toPath().resolve(resolved.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+               throw new RuntimeException(e);
             }
-         } catch (IOException e) {
-            throw new RuntimeException(e);
          }
       }
    }
