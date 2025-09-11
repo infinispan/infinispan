@@ -31,7 +31,7 @@ import org.jboss.logging.Logger;
  * </p>
  * <ul>
  *    <li>Use -Dinfinispan.test.parallel.threads=3 (or even less) to narrow down source tests</li>
- *    <li>Set a conditional breakpoint in Thread.start with the name of the leaked thread</li>
+ *    <li>Set a conditional breakpoint in {@link Thread#start()} with the name of the leaked thread</li>
  *    <li>If the thread has the pattern of a particular component, set a conditional breakpoint in that component</li>
  * </ul>
  *
@@ -102,10 +102,12 @@ public class ThreadLeakChecker {
                       // Arjuna can start a Listener for recovery that is stopped in a shutdown hook
                       "|Listener:[0-9]" +
                       "|JVMCI-native CompilerThread[0-9]" +
-                      "|UNKNOWN[\\[\\]a-z]*" +
+                      "|JMX client heartbeat [0-9]" +
+                      "|RMI RenewClean" +
+                      "|RMI GC Daemon" +
+                      "|RMI Scheduler" +
                       ").*");
-   private static final String ARQUILLIAN_CONSOLE_CONSUMER =
-      "org.jboss.as.arquillian.container.CommonManagedDeployableContainer$ConsoleConsumer";
+   private static final Pattern ARQUILLIAN_CONSOLE_CONSUMER_REGEX = Pattern.compile("org\\.jboss(\\.as)?\\.arquillian\\.container[^$]+\\$ConsoleConsumer");
    private static final boolean ENABLED =
       "true".equalsIgnoreCase(System.getProperty("infinispan.test.checkThreadLeaks", "true"));
 
@@ -285,7 +287,7 @@ public class ThreadLeakChecker {
          // Special check for Arquillian, because it uses an unnamed thread to read from the container console
          StackTraceElement[] s = thread.getStackTrace();
          for (StackTraceElement ste : s) {
-            if (ste.getClassName().equals(ARQUILLIAN_CONSOLE_CONSUMER)) {
+            if (ARQUILLIAN_CONSOLE_CONSUMER_REGEX.matcher(ste.getClassName()).matches()) {
                return true;
             }
          }
