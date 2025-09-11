@@ -3,6 +3,7 @@ package org.infinispan.util;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.logging.log4j.core.util.internal.InternalLoggerRegistry;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
 import org.infinispan.commons.test.PolarionJUnitTest;
@@ -116,6 +117,8 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
       // The join is used to allow for a sync API for test simplicity - where as the actual store invocation
       // must be non blocking
       builder.allowBlockingCallsInside(WaitNonBlockingStore.class.getName(), "join");
+      // Log4j's logger factory
+      builder.allowBlockingCallsInside(InternalLoggerRegistry.class.getName(), "computeIfAbsent");
    }
 
    private static void writeJUnitReport(String testName, Throwable throwable, String type) {
