@@ -9,7 +9,7 @@
    </parent>
 
    <artifactId>infinispan-server-parent</artifactId>
-   <name>Infinispan parent pom for server modules</name>
+   <name>Infinispan Server Parent</name>
    <packaging>pom</packaging>
 
    <dependencies>

@@ -170,7 +170,7 @@
                         <goals>
                            <goal>add-source</goal>
                         </goals>
-                        <configuration combine.self="append">
+                        <configuration>
                            <sources>
                               <source>${maven.multiModuleProjectDirectory}/hibernate/cache-commons/src/main/java</source>
                            </sources>
@@ -183,7 +183,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
-                     <argLine combine.self="append">${jacoco.agent.argLine}</argLine>
+                     <argLine>${jacoco.agent.argLine}</argLine>
                   </configuration>
                </plugin>
             </plugins>

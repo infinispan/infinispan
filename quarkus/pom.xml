@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>infinispan-quarkus-parent</artifactId>
-    <name>Infinispan Quarkus :: Parent pom</name>
+    <name>Infinispan Quarkus Parent</name>
     <packaging>pom</packaging>
 
     <properties>
