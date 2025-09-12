@@ -1,0 +1,41 @@
+name: SpotBugs on PR changes
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  spotbugs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0    # Need full history to compare base vs head
+
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
+
+      - name: Find changed classes
+        id: changed
+        run: |
+          chmod +x .github/scripts/changed-classes.sh
+          CLASSES=$(.github/scripts/changed-classes.sh origin/${{ github.event.pull_request.base.ref }} HEAD)
+          echo "classes=$CLASSES" >> $GITHUB_OUTPUT
+
+      - name: Skip if no changes
+        if: steps.changed.outputs.classes == 'NO_CHANGES'
+        run: |
+          echo "No Java classes changed. Skipping SpotBugs."
+          exit 0
+
+      - name: Run SpotBugs on changed classes
+        run: |
+          mvn install spotbugs:spotbugs -DskipTests=true -Dspotbugs.onlyAnalyze="${{ steps.changed.outputs.classes }}"
+
+      - name: Publish SpotBugs report annotation
+        # Using a fork since the original action tries to create/update check-run, which is no more allowed
+        uses: rigazilla/spotbugs-github-action@annotations
+        with:
+          path: '**/target/spotbugsXml.xml'
