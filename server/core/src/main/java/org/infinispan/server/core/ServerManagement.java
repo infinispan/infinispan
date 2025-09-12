@@ -2,10 +2,8 @@ package org.infinispan.server.core;
 
 import java.nio.file.Path;
 import java.security.Principal;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import javax.sql.DataSource;
@@ -38,14 +36,6 @@ public interface ServerManagement {
    void clusterStop();
 
    void containerStop();
-
-   /**
-    * @deprecated Multiple Cache Managers are not supported in the server
-    */
-   @Deprecated(forRemoval=true, since = "13.0")
-   default Set<String> cacheManagerNames() {
-      return Collections.singleton(getCacheManager().getName());
-   }
 
    /**
     * @deprecated Multiple Cache Managers are not supported in the server. Use {@link #getCacheManager()} instead.

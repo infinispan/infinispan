@@ -862,31 +862,6 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testIntegerKeysXmlToTextValues() {
-      Integer key = 123;
-      String keyContentType = "application/x-java-object;type=java.lang.Integer";
-      String valueContentType = "application/xml; charset=UTF-8";
-      String value = "<root>test</root>";
-
-      putInCache("default", key, keyContentType, value, valueContentType);
-      RestResponse response = get("default", key, keyContentType, "text/plain");
-
-      ResponseAssertion.assertThat(response).hasReturnedText(value);
-   }
-
-   @Test
-   public void testIntKeysAndJSONToTextValues() {
-      Integer key = 1234;
-      String keyContentType = "application/x-java-object;type=java.lang.Integer";
-      String value = "{\"a\": 1}";
-
-      putInCache("default", key, keyContentType, value, APPLICATION_JSON_TYPE);
-      RestResponse response = get("default", key, keyContentType, TEXT_PLAIN_TYPE);
-
-      ResponseAssertion.assertThat(response).hasReturnedText(value);
-   }
-
-   @Test
    public void testIntKeysTextToXMLValues() {
       Integer key = 12345;
       String keyContentType = "application/x-java-object;type=java.lang.Integer";

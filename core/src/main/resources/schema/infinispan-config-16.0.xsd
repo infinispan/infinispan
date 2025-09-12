@@ -1529,13 +1529,6 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="single-file-store" type="tns:single-file-store">
-        <xs:annotation>
-          <xs:documentation>
-            Deprecated since 13.0. Defines a filesystem-based cache store that stores its elements in a single file.
-          </xs:documentation>
-        </xs:annotation>
-      </xs:element>
       <xs:any namespace="##other" />
     </xs:choice>
     <xs:attribute name="passivation" type="xs:boolean" default="${Persistence.passivation}">
@@ -2015,40 +2008,6 @@
           <xs:annotation>
             <xs:documentation>Defines the class name of a cache store that
               implements either `CacheLoader`, `CacheWriter`, or both.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="single-file-store">
-    <xs:complexContent>
-      <xs:extension base="tns:store">
-        <xs:attribute name="max-entries" type="xs:int">
-          <xs:annotation>
-            <xs:documentation>
-              Specifies the maximum number of entries that the file store can
-              hold. To increase the speed of lookups, Single File cache stores
-              index keys and their locations in the file. To avoid excessive
-              memory usage, you can configure the maximum number of entries so
-              that entries are removed permanently from both memory and the
-              cache store when the maximum is exceeded. However, this can lead
-              to data loss. You should only set a maximum number of entries if
-              data can be recomputed or retrieved from an authoritative data
-              store. By default, the value is `-1` which means that there is no
-              maximum number of entries.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="path" type="xs:string">
-          <xs:annotation>
-            <xs:documentation>
-              Specifies a filesystem directory for data. The value can be a
-              relative or absolute path. Relative paths are created relative to
-              the configured global persistent location. Absolute paths must be
-              subdirectories of the global persistent location, otherwise an
-              exception is thrown.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
