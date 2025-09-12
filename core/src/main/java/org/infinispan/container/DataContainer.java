@@ -74,7 +74,9 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    default int size() {
       int size = 0;
       // We have to loop through to make sure to remove expired entries
-      for (InternalCacheEntry<K, V> ignore : this) {
+      Iterator<InternalCacheEntry<K, V>> it = iterator();
+      while(it.hasNext()) {
+         it.next();
          if (++size == Integer.MAX_VALUE) return Integer.MAX_VALUE;
       }
       return size;
