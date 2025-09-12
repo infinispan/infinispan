@@ -93,7 +93,7 @@
       <version.commons.compress>1.28.0</version.commons.compress>
       <version.console>16.0.2.Final</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
-      <version.fabric8.kubernetes-client>7.3.1</version.fabric8.kubernetes-client>
+      <version.fabric8.kubernetes-client>7.4.0</version.fabric8.kubernetes-client>
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
       <version.glassfish.jaxb>4.0.5</version.glassfish.jaxb>
       <version.graalvm>24.0.0</version.graalvm>
