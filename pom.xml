@@ -2326,6 +2326,12 @@
                   </goals>
                   <configuration>
                      <rules>
+                        <requireJavaVersion>
+                           <version>21</version>
+                        </requireJavaVersion>
+                        <requireMavenVersion>
+                           <version>3.6.3</version>
+                        </requireMavenVersion>
                         <banDuplicateClasses>
                            <scopes>
                               <scope>compile</scope>
