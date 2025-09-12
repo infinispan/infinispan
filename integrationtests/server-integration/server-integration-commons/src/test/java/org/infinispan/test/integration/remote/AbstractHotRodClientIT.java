@@ -35,8 +35,8 @@ public abstract class AbstractHotRodClientIT {
    @Test
    public void testPutGetCustomObject() {
       SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCache.getRemoteCacheManager());
-      PersonSchema.INSTANCE.registerMarshallers(serializationContext);
       PersonSchema.INSTANCE.registerSchema(serializationContext);
+      PersonSchema.INSTANCE.registerMarshallers(serializationContext);
 
       final Person p = new Person("Martin");
       remoteCache.put("k1", p);
