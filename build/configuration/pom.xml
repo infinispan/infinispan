@@ -145,7 +145,7 @@
       <version.mockito_dep.bytebuddy>1.15.3</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
       <version.nashorn>15.7</version.nashorn>
-      <version.netty>4.1.124.Final</version.netty>
+      <version.netty>4.2.6.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
       <version.org.wildfly.arquillian>5.1.0.Final</version.org.wildfly.arquillian>
