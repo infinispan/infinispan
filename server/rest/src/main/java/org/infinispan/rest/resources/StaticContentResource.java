@@ -76,7 +76,7 @@ public class StaticContentResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("static", "REST endpoint for static resources.")
             .invocation().methods(GET).anonymous(true).path(urlPath + "/").path(urlPath + "/*").handleWith(this::serveFile)
             .create();
    }
