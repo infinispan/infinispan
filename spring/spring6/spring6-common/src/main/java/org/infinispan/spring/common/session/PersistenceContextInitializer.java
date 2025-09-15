@@ -19,7 +19,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "persistence.spring6.session.proto",
       schemaFilePath = "org/infinispan/spring/common",
       schemaPackageName = "org.infinispan.persistence.spring.session",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

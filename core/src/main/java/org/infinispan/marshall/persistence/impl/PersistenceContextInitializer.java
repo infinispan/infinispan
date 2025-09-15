@@ -66,7 +66,8 @@ import org.infinispan.util.logging.events.EventLogLevel;
       schemaFilePath = "org/infinispan",
       schemaPackageName = PersistenceContextInitializer.PACKAGE_NAME,
       service = false,
-      syntax = ProtoSyntax.PROTO2
+      syntax = ProtoSyntax.PROTO2,
+      orderedMarshallers = true
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
 

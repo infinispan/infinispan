@@ -19,7 +19,8 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       schemaFilePath = "org/infinispan/scripting",
       schemaPackageName = "org.infinispan.global.scripting",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 )
 interface GlobalContextInitializer extends SerializationContextInitializer {
 }

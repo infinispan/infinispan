@@ -17,7 +17,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "persistence.memcached.proto",
       schemaFilePath = "org/infinispan/server/memcached",
       schemaPackageName = "org.infinispan.persistence.memcached",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

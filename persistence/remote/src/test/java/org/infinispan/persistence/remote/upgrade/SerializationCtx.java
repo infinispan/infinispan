@@ -8,7 +8,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "rolling.proto",
       schemaFilePath = "org/infinispan/persistence/remote",
       schemaPackageName = "org.infinispan.persistence.remote.upgrade",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface SerializationCtx extends SerializationContextInitializer {
    SerializationCtx INSTANCE = new SerializationCtxImpl();

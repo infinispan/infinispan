@@ -8,7 +8,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "test.jcache.commons.proto",
       schemaFilePath = "org/infinispan/jcache",
       schemaPackageName = "org.infinispan.test.jcache.commons",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface JCacheCommonsTestSCI extends SerializationContextInitializer {
    JCacheCommonsTestSCI INSTANCE = new JCacheCommonsTestSCIImpl();

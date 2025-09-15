@@ -18,7 +18,8 @@ import org.infinispan.query.remote.client.FilterResult;
       schemaFilePath = "org/infinispan/query/client",
       schemaPackageName = "org.infinispan.query.remote.client",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 )
 public interface GlobalContextInitializer extends SerializationContextInitializer {
       GlobalContextInitializer INSTANCE = new GlobalContextInitializerImpl();

@@ -36,7 +36,8 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       schemaFilePath = "org/infinispan/server/hotrod",
       schemaPackageName = "org.infinispan.global.server.hotrod",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 
 )
 public interface GlobalContextInitializer extends SerializationContextInitializer {

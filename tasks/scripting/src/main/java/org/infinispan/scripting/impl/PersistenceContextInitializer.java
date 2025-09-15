@@ -22,7 +22,8 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       schemaFilePath = "org/infinispan/scripting",
       schemaPackageName = "org.infinispan.persistence.scripting",
       syntax = ProtoSyntax.PROTO3,
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

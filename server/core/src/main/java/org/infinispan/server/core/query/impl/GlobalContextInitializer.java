@@ -27,7 +27,8 @@ import org.infinispan.server.core.query.impl.persistence.PersistenceContextIniti
       schemaFilePath = "org/infinispan/query/server",
       schemaPackageName = "org.infinispan.global.remote.query.server",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 )
 public interface GlobalContextInitializer extends SerializationContextInitializer {
       SerializationContextInitializer INSTANCE = new GlobalContextInitializerImpl();

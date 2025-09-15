@@ -34,7 +34,8 @@ import org.infinispan.xsite.irac.IracCustomConflictTest;
       schemaFileName = "test.core.proto",
       schemaFilePath = "org/infinispan",
       schemaPackageName = "org.infinispan.test.core",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface TestDataSCI extends SerializationContextInitializer {
    TestDataSCI INSTANCE = new TestDataSCIImpl();

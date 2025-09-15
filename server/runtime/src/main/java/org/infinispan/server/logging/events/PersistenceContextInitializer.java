@@ -17,7 +17,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "persistence.event_logger.proto",
       schemaFilePath = "org/infinispan/server",
       schemaPackageName = "org.infinispan.persistence.event_logger",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

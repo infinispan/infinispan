@@ -16,7 +16,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "persistence.jdbc.proto",
       schemaFilePath = "org/infinispan/persistence/jdbc",
       schemaPackageName = "org.infinispan.persistence.jdbc",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

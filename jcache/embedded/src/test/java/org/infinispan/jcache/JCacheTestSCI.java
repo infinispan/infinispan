@@ -13,7 +13,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "test.jcache.embedded.proto",
       schemaFilePath = "org/infinispan/jcache",
       schemaPackageName = "org.infinispan.test.jcache.embedded",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface JCacheTestSCI extends SerializationContextInitializer {
    JCacheTestSCI INSTANCE = new JCacheTestSCIImpl();

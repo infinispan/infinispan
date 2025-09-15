@@ -19,7 +19,8 @@ import org.infinispan.server.core.backup.resources.CounterResource;
       schemaFileName = "persistence.server.core.proto",
       schemaFilePath = "org/infinispan/server/core",
       schemaPackageName = "org.infinispan.persistence.server.core",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

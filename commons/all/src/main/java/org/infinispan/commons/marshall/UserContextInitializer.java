@@ -18,7 +18,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "user.commons.proto",
       schemaFilePath = "org/infinispan/commons",
       schemaPackageName = "org.infinispan.commons",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface UserContextInitializer extends SerializationContextInitializer {
 }

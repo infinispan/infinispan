@@ -19,7 +19,8 @@ import org.infinispan.server.core.iteration.IterationFilter;
       schemaFilePath = "org/infinispan/server/core",
       schemaPackageName = "org.infinispan.global.server.core",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 
 )
 public interface GlobalContextInitializer extends SerializationContextInitializer {

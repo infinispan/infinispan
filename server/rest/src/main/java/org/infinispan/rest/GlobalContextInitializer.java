@@ -18,6 +18,7 @@ import org.infinispan.rest.distribution.NodeDistributionInfo;
       schemaFilePath = "org/infinispan/server/rest",
       schemaPackageName = "org.infinispan.global.server.rest",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 )
 public interface GlobalContextInitializer extends SerializationContextInitializer { }

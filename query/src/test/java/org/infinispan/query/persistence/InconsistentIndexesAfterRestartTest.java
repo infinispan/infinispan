@@ -167,7 +167,8 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
          schemaFileName = "test.query.persistence.InconsistentIndexesAfterRestartTest.proto",
          schemaFilePath = "org/infinispan/query",
          schemaPackageName = "org.infinispan.test.InconsistentIndexesAfterRestartTest",
-         service = false
+         service = false,
+         orderedMarshallers = true
    )
    interface SCI extends SerializationContextInitializer {
       SCI INSTANCE = new SCIImpl();

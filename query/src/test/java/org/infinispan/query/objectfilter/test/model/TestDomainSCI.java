@@ -13,7 +13,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "test.object-filter.sampledomain.proto",
       schemaFilePath = "org/infinispan/query/objectfilter",
       schemaPackageName = "org.infinispan.query.objectfilter.test.model",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface TestDomainSCI extends SerializationContextInitializer {
    SerializationContextInitializer INSTANCE = new TestDomainSCIImpl();

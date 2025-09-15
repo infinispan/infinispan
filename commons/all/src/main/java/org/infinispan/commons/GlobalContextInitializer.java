@@ -29,7 +29,8 @@ import org.infinispan.protostream.types.java.CommonTypes;
       schemaFilePath = "org/infinispan/commons",
       schemaPackageName = "org.infinispan.global.commons",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 )
 public interface GlobalContextInitializer extends SerializationContextInitializer {
    GlobalContextInitializer INSTANCE = new GlobalContextInitializerImpl();
