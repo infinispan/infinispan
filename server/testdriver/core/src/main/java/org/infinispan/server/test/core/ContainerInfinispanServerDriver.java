@@ -142,9 +142,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    public static void cleanup(String imageName) {
       try {
-         log.infof("Removing temporary image %s", SNAPSHOT_IMAGE);
+         log.infof("Removing temporary image %s", imageName);
          DOCKER_CLIENT.removeImageCmd(imageName).exec();
-         log.infof("Removed temporary image %s", SNAPSHOT_IMAGE);
+         log.infof("Removed temporary image %s", imageName);
       } catch (Exception e) {
          // Ignore
       }
