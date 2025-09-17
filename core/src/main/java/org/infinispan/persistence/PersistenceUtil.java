@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -34,6 +35,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * @since 6.0
  */
 public class PersistenceUtil {
+
+   private static final Pattern SANITIZE_NAME_PATTERN = Pattern.compile("[^a-zA-Z0-9-_.]");
 
    public static <K, V> int count(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter) {
 
@@ -115,7 +118,7 @@ public class PersistenceUtil {
     * Replace unwanted characters from cache names so they can be used as filenames
     */
    public static String sanitizedCacheName(String cacheName) {
-      return cacheName.replaceAll("[^a-zA-Z0-9-_\\.]", "_");
+      return SANITIZE_NAME_PATTERN.matcher(cacheName).replaceAll("_");
    }
 
    public static Path getQualifiedLocation(GlobalConfiguration globalConfiguration, String location, String cacheName, String qualifier) {
