@@ -108,12 +108,12 @@ public class Common {
    public static final Collection<Protocol> HTTP_PROTOCOLS = Arrays.asList(Protocol.values());
 
    public static final String[] NASHORN_DEPS = new String[]{
-         "org.openjdk.nashorn:nashorn-core:15.4",
-         "org.ow2.asm:asm:9.5",
-         "org.ow2.asm:asm-analysis:9.5",
-         "org.ow2.asm:asm-commons:9.5",
-         "org.ow2.asm:asm-tree:9.5",
-         "org.ow2.asm:asm-util:9.5"
+         "org.openjdk.nashorn:nashorn-core:15.7",
+         "org.ow2.asm:asm:9.8",
+         "org.ow2.asm:asm-analysis:9.8",
+         "org.ow2.asm:asm-commons:9.8",
+         "org.ow2.asm:asm-tree:9.8",
+         "org.ow2.asm:asm-util:9.8"
    };
 
    public static class SaslMechsArgumentProvider implements ArgumentsProvider {

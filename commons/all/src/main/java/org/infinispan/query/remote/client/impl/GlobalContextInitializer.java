@@ -15,7 +15,7 @@ import org.infinispan.query.remote.client.FilterResult;
             QueryResponse.class
       },
       schemaFileName = "query.proto",
-      schemaFilePath = "org/infinispan/query/client",
+      schemaFilePath = "org/infinispan/commons/query/client",
       schemaPackageName = "org.infinispan.query.remote.client",
       service = false,
       syntax = ProtoSyntax.PROTO3,

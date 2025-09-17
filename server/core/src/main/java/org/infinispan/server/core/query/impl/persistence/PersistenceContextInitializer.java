@@ -15,7 +15,7 @@ import org.infinispan.server.core.query.impl.indexing.ProtobufValueWrapper;
 @ProtoSchema(
       includeClasses = ProtobufValueWrapper.class,
       schemaFileName = "persistence.remote_query.proto",
-      schemaFilePath = "org/infinispan/query/server",
+      schemaFilePath = "org/infinispan/server/core/query",
       schemaPackageName = "org.infinispan.persistence.remote_query",
       service = false,
       orderedMarshallers = true

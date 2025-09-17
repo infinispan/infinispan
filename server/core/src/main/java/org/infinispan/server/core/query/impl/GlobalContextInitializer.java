@@ -24,7 +24,7 @@ import org.infinispan.server.core.query.impl.persistence.PersistenceContextIniti
             IckleProtobufFilterAndConverter.class,
       },
       schemaFileName = "global.remote.query.server.proto",
-      schemaFilePath = "org/infinispan/query/server",
+      schemaFilePath = "org/infinispan/server/core/query",
       schemaPackageName = "org.infinispan.global.remote.query.server",
       service = false,
       syntax = ProtoSyntax.PROTO3,
