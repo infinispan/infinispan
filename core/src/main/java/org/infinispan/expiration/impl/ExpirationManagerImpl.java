@@ -289,7 +289,8 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       public void run() {
          LogFactory.pushNDC(cacheName, log.isTraceEnabled());
          try {
-            processExpiration();
+            if (cacheRef.wired().getStatus().allowInvocations())
+               processExpiration();
          } finally {
             LogFactory.popNDC(log.isTraceEnabled());
          }
