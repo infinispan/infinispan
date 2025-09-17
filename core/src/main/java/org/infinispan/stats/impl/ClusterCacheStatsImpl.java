@@ -549,7 +549,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
       @Override
       public Map<String, Number> apply(EmbeddedCacheManager embeddedCacheManager) {
-         if (!embeddedCacheManager.cacheExists(cacheName))
+         if (!embeddedCacheManager.cacheExists(cacheName) || !embeddedCacheManager.isRunning(cacheName))
             return Collections.emptyMap();
 
          AdvancedCache<Object, Object> remoteCache =
