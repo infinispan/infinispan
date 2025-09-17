@@ -1,6 +1,6 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:persistence.scripting.proto",
+    "protopath" : "org:/:infinispan:/:scripting:/:persistence.scripting.proto",
     "def" : {
       "enums" : [ {
         "name" : "ExecutionMode",
@@ -68,7 +68,7 @@
       }
     }
   }, {
-    "protopath" : "generated:/:global.scripting.proto",
+    "protopath" : "org:/:infinispan:/:scripting:/:global.scripting.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {

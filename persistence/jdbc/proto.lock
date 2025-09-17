@@ -1,6 +1,6 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:persistence.jdbc.proto",
+    "protopath" : "org:/:infinispan:/:persistence:/:jdbc:/:persistence.jdbc.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {

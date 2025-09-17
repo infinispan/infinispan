@@ -1,6 +1,6 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:persistence.memcached.proto",
+    "protopath" : "org:/:infinispan:/:server:/:memcached:/:persistence.memcached.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {

@@ -1,6 +1,6 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:persistence.spring6.session.proto",
+    "protopath" : "org:/:infinispan:/:spring:/:common:/:persistence.spring6.session.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {

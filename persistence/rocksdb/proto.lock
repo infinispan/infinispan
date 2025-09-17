@@ -1,6 +1,6 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:persistence.rocksdb.proto",
+    "protopath" : "org:/:infinispan:/:persistence:/:rocksdb:/:persistence.rocksdb.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {

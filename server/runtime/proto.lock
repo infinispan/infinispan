@@ -1,6 +1,6 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:persistence.event_logger.proto",
+    "protopath" : "org:/:infinispan:/:server:/:persistence.event_logger.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
@@ -60,7 +60,7 @@
       }
     }
   }, {
-    "protopath" : "generated:/:global.server.runtime.proto",
+    "protopath" : "org:/:infinispan:/:server:/:global.server.runtime.proto",
     "def" : {
       "enums" : [ {
         "name" : "ExitStatus.ExitMode",

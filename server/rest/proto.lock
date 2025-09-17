@@ -1,6 +1,6 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:global.server.rest.proto",
+    "protopath" : "org:/:infinispan:/:server:/:rest:/:global.server.rest.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {

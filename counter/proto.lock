@@ -1,6 +1,6 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:persistence.counters.proto",
+    "protopath" : "org:/:infinispan:/:counter:/:persistence.counters.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
@@ -59,7 +59,7 @@
       }
     }
   }, {
-    "protopath" : "generated:/:global.counters.proto",
+    "protopath" : "org:/:infinispan:/:counter:/:global.counters.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
