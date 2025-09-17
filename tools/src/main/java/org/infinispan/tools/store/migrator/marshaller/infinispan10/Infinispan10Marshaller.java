@@ -41,8 +41,7 @@ public class Infinispan10Marshaller extends AbstractUnsupportedStreamingMarshall
    }
 
    private void registerInitializer(SerializationContextInitializer initializer) {
-      initializer.registerSchema(ctx);
-      initializer.registerMarshallers(ctx);
+      initializer.register(ctx);
    }
 
    @Override

@@ -47,8 +47,7 @@ public class JCacheManager extends AbstractJCacheManager {
    private void initializeProtoContext(Marshaller marshaller) {
       if (marshaller instanceof ProtoStreamMarshaller) {
          SerializationContext ctx = ((ProtoStreamMarshaller) marshaller).getSerializationContext();
-         GlobalContextInitializer.INSTANCE.registerSchema(ctx);
-         GlobalContextInitializer.INSTANCE.registerMarshallers(ctx);
+         GlobalContextInitializer.INSTANCE.register(ctx);
       }
    }
 

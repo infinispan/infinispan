@@ -20,7 +20,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "persistence.counters-api.proto",
       schemaFilePath = "org/infinispan/counter/api",
       schemaPackageName = "org.infinispan.persistence.commons", // to preserve backwards compatibility
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

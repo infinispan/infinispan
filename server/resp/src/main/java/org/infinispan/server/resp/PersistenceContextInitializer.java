@@ -16,6 +16,7 @@ import org.infinispan.server.resp.hll.internal.ExplicitSet;
       schemaFileName = "persistence.resp.proto",
       schemaFilePath = "org/infinispan/server/resp",
       schemaPackageName = "org.infinispan.persistence.resp",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer { }

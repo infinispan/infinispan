@@ -20,8 +20,7 @@ public class ProtobufPerfTest extends PerfTest {
    @BeforeClass
    public void setUp() {
       serCtx = ProtobufUtil.newSerializationContext();
-      TestDomainSCI.INSTANCE.registerSchema(serCtx);
-      TestDomainSCI.INSTANCE.registerMarshallers(serCtx);
+      TestDomainSCI.INSTANCE.register(serCtx);
    }
 
    protected Matcher createMatcher() {

@@ -49,8 +49,7 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
    @BeforeClass
    protected void registerProtobufSchema() throws Exception {
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      TestEntitySCI.INSTANCE.registerSchema(serCtx);
-      TestEntitySCI.INSTANCE.registerMarshallers(serCtx);
+      TestEntitySCI.INSTANCE.register(serCtx);
    }
 
    @Override

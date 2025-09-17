@@ -19,8 +19,7 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
    @Before
    public void setUp() {
       serCtx = ProtobufUtil.newSerializationContext();
-      TestDomainSCI.INSTANCE.registerSchema(serCtx);
-      TestDomainSCI.INSTANCE.registerMarshallers(serCtx);
+      TestDomainSCI.INSTANCE.register(serCtx);
    }
 
    @Override

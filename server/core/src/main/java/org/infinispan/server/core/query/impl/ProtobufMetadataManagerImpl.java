@@ -49,15 +49,16 @@ import org.infinispan.protostream.types.java.CommonContainerTypesSchema;
 import org.infinispan.protostream.types.java.CommonTypesSchema;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.client.impl.MarshallerRegistration;
-import org.infinispan.server.core.query.impl.indexing.infinispan.InfinispanAnnotations;
-import org.infinispan.server.core.query.impl.indexing.search5.Search5Annotations;
-import org.infinispan.server.core.query.impl.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.CreatePermissionConfigurationBuilder;
 import org.infinispan.server.core.query.ProtobufMetadataManager;
+import org.infinispan.server.core.query.impl.indexing.infinispan.InfinispanAnnotations;
+import org.infinispan.server.core.query.impl.indexing.search5.Search5Annotations;
+import org.infinispan.server.core.query.impl.logging.Log;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 
 /**
  * @author anistor@redhat.com
@@ -87,8 +88,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    }
 
    void register(SerializationContextInitializer initializer) {
-      initializer.registerSchema(getSerializationContext());
-      initializer.registerMarshallers(getSerializationContext());
+      initializer.register(getSerializationContext());
    }
 
    @Start
@@ -126,8 +126,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
          for (SerializationContextInitializer sci : initializers) {
             log.debugf("Registering protostream serialization context initializer: %s", sci.getClass().getName());
             try {
-               sci.registerSchema(serCtx);
-               sci.registerMarshallers(serCtx);
+               sci.register(serCtx);
             } catch (Exception e) {
                throw Log.CONTAINER.errorInitializingSerCtx(e);
             }
@@ -172,7 +171,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL).invocationBatching().enable()
-            .transaction().lockingMode(LockingMode.PESSIMISTIC)
+            .transaction().lockingMode(LockingMode.PESSIMISTIC).transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
             .clustering().cacheMode(cacheMode)
             .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)

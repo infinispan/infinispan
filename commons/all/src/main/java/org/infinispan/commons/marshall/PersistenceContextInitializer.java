@@ -19,7 +19,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "persistence.commons.proto",
       schemaFilePath = "org/infinispan/commons",
       schemaPackageName = "org.infinispan.persistence.commons",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

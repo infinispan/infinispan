@@ -95,8 +95,7 @@ public class IndexSchemaNoDowntimeUpgradeTest extends SingleHotRodServerTest {
       ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller();
 
       // Register proto schema && entity marshaller on client side
-      schema.registerSchema(marshaller.getSerializationContext());
-      schema.registerMarshallers(marshaller.getSerializationContext());
+      schema.register(marshaller.getSerializationContext());
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder = createHotRodClientConfigurationBuilder(hotrodServer.getHost(), hotrodServer.getPort());
       builder.marshaller(marshaller);

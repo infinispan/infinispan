@@ -20,7 +20,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "persistence.multimap.proto",
       schemaFilePath = "org/infinispan/multimap",
       schemaPackageName = "org.infinispan.persistence.multimap",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

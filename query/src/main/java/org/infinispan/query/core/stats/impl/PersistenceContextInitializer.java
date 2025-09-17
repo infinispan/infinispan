@@ -20,7 +20,8 @@ import org.infinispan.query.core.stats.IndexInfo;
       schemaFileName = "persistence.query.core.proto",
       schemaFilePath = "org/infinispan/query/core",
       schemaPackageName = "org.infinispan.persistence.query.core",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

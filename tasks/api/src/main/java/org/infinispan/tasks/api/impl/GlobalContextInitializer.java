@@ -13,7 +13,8 @@ import org.infinispan.tasks.TaskContext;
       schemaFilePath = "org/infinispan/tasks/api",
       schemaPackageName = "org.infinispan.global.tasks.api",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 )
 public interface GlobalContextInitializer extends SerializationContextInitializer {
 }

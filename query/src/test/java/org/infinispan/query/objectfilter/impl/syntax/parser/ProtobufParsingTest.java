@@ -25,8 +25,7 @@ public class ProtobufParsingTest extends AbstractParsingTest<Descriptor> {
 
    private static ObjectPropertyHelper<Descriptor> createPropertyHelper() {
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
-      TestDomainSCI.INSTANCE.registerSchema(serCtx);
-      TestDomainSCI.INSTANCE.registerMarshallers(serCtx);
+      TestDomainSCI.INSTANCE.register(serCtx);
       return new ProtobufPropertyHelper(serCtx, null);
    }
 

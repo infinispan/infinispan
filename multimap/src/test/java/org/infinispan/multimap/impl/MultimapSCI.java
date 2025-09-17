@@ -14,7 +14,8 @@ import org.infinispan.test.data.Person;
       schemaFileName = "test.multimap.proto",
       schemaFilePath = "org/infinispan/multimap",
       schemaPackageName = "org.infinispan.test.multimap",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 interface MultimapSCI extends SerializationContextInitializer {
    MultimapSCI INSTANCE = new MultimapSCIImpl();

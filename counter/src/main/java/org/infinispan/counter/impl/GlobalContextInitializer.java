@@ -26,7 +26,8 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       schemaFilePath = "org/infinispan/counter",
       schemaPackageName = "org.infinispan.global.counters",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 )
 interface GlobalContextInitializer extends SerializationContextInitializer {
 }

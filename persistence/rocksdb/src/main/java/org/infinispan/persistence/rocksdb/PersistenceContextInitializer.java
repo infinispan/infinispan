@@ -19,7 +19,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaFileName = "persistence.rocksdb.proto",
       schemaFilePath = "org/infinispan/persistence/rocksdb",
       schemaPackageName = "org.infinispan.persistence.rocksdb",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

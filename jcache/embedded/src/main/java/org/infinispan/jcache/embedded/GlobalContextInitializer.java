@@ -27,7 +27,8 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       schemaFilePath = "org/infinispan/jcache/embedded",
       schemaPackageName = "org.infinispan.global.jcache.embedded",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 )
 interface GlobalContextInitializer extends SerializationContextInitializer {
 }

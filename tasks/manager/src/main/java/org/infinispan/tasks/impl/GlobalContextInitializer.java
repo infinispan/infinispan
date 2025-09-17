@@ -16,7 +16,8 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       schemaFilePath = "org/infinispan/tasks",
       schemaPackageName = "org.infinispan.global.tasks.manager",
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 )
 public interface GlobalContextInitializer extends SerializationContextInitializer {
 }

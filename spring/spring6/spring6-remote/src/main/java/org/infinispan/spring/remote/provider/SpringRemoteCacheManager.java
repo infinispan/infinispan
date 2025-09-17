@@ -166,8 +166,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
             // Apply the serialization context initializers in the configuration first
             SerializationContext ctx = protoMarshaller.getSerializationContext();
             for (SerializationContextInitializer sci : nativeCacheManager.getConfiguration().getContextInitializers()) {
-               sci.registerSchema(ctx);
-               sci.registerMarshallers(ctx);
+               sci.register(ctx);
             }
          } catch (NoClassDefFoundError e) {
             // Ignore the error, the protostream dependency is missing
@@ -192,8 +191,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
 
       org.infinispan.spring.common.session.PersistenceContextInitializerImpl sessionSci =
             new org.infinispan.spring.common.session.PersistenceContextInitializerImpl();
-      sessionSci.registerMarshallers(ctx);
-      sessionSci.registerSchema(ctx);
+      sessionSci.register(ctx);
 
       BaseMarshaller sessionAttributeMarshaller =
             new MapSessionProtoAdapter.SessionAttributeRawMarshaller(serializationMarshaller);

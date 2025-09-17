@@ -378,7 +378,8 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       schemaFilePath = "org/infinispan",
       schemaPackageName = GlobalContextInitializer.PACKAGE_NAME,
       service = false,
-      syntax = ProtoSyntax.PROTO3
+      syntax = ProtoSyntax.PROTO3,
+      orderedMarshallers = true
 )
 public interface GlobalContextInitializer extends SerializationContextInitializer {
    String PACKAGE_NAME = "org.infinispan.global.core";

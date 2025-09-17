@@ -17,7 +17,8 @@ import org.infinispan.server.core.query.impl.indexing.ProtobufValueWrapper;
       schemaFileName = "persistence.remote_query.proto",
       schemaFilePath = "org/infinispan/query/server",
       schemaPackageName = "org.infinispan.persistence.remote_query",
-      service = false
+      service = false,
+      orderedMarshallers = true
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
 }
