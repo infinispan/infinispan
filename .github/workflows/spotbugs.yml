@@ -32,7 +32,7 @@ jobs:
 
       - name: Run SpotBugs on changed classes
         run: |
-          mvn install spotbugs:spotbugs -DskipTests=true -Dspotbugs.onlyAnalyze="${{ steps.changed.outputs.classes }}"
+          mvn install com.github.spotbugs:spotbugs-maven-plugin:spotbugs -DskipTests=true -Dspotbugs.onlyAnalyze="${{ steps.changed.outputs.classes }}"
 
       - name: Publish SpotBugs report annotation
         # Using a fork since the original action tries to create/update check-run, which is no more allowed
