@@ -5,8 +5,6 @@ import java.util.Arrays;
 
 import org.infinispan.commons.util.Util;
 
-import net.jcip.annotations.NotThreadSafe;
-
 /**
  * ByteArrayOutputStream alternative exposing the internal buffer. Using this, callers don't need to call toByteArray()
  * which copies the internal buffer.
@@ -21,7 +19,6 @@ import net.jcip.annotations.NotThreadSafe;
  * @author Dan Berindei
  * @since 13.0
  */
-@NotThreadSafe
 public final class LazyByteArrayOutputStream extends OutputStream {
    public static final int DEFAULT_SIZE = 32;
    /**

@@ -2,8 +2,8 @@ package org.infinispan.commons.hash;
 
 import java.nio.charset.StandardCharsets;
 
-import net.jcip.annotations.Immutable;
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.Immutable;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * MurmurHash3 implementation in Java, based on Austin Appleby's <a href=

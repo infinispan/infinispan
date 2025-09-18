@@ -44,7 +44,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Basic tests for IRAC tombstone cleanup

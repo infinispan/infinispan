@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Defines a set of logical threads, each with a list of states, and a partial ordering between states.

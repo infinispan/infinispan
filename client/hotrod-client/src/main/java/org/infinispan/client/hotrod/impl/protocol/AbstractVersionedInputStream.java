@@ -4,9 +4,6 @@ import java.io.InputStream;
 
 import org.infinispan.client.hotrod.VersionedMetadata;
 
-import net.jcip.annotations.NotThreadSafe;
-
-@NotThreadSafe
 public abstract class AbstractVersionedInputStream extends InputStream implements VersionedMetadata {
    protected final VersionedMetadata versionedMetadata;
 

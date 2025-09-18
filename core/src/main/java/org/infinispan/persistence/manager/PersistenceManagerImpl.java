@@ -92,6 +92,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -99,7 +101,6 @@ import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import net.jcip.annotations.GuardedBy;
 
 @Scope(Scopes.NAMED_CACHE)
 public class PersistenceManagerImpl implements PersistenceManager {

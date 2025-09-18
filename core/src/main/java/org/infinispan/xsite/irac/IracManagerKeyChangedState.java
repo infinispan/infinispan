@@ -12,7 +12,7 @@ import org.infinispan.commands.RequestUUID;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Default implementation of {@link IracManagerKeyState}.

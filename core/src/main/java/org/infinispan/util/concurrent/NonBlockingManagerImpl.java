@@ -20,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 @Scope(Scopes.GLOBAL)
 public class NonBlockingManagerImpl implements NonBlockingManager {

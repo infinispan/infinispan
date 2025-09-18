@@ -3,7 +3,7 @@ package org.infinispan.xsite.irac;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.XSiteBackup;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Extends {@link XSiteBackup} class with logging configuration.

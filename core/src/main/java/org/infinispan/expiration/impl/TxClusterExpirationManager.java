@@ -4,7 +4,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.LockingMode;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 @ThreadSafe
 public class TxClusterExpirationManager<K, V> extends ClusterExpirationManager<K, V> {

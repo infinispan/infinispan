@@ -12,7 +12,7 @@ import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.NonBlockingManager;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * Aggregates the initialisation state needed by org.infinispan.persistence.spi.NonBlockingStore.

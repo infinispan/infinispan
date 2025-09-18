@@ -5,9 +5,10 @@ import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
+import com.google.errorprone.annotations.Immutable;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import net.jcip.annotations.Immutable;
 
 /**
  * Implements "removeIfUnmodified" operation as defined by

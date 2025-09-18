@@ -7,18 +7,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.CompletableSource;
-import net.jcip.annotations.GuardedBy;
-import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * A {@link XSiteStateProviderState} for synchronous cross-site replication state transfer.

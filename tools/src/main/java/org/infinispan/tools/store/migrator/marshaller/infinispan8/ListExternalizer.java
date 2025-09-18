@@ -11,7 +11,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.tools.store.migrator.marshaller.common.AbstractMigratorExternalizer;
 
-import net.jcip.annotations.Immutable;
+import com.google.errorprone.annotations.Immutable;
 
 /**
  * List externalizer dealing with ArrayList and LinkedList implementations.

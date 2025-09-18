@@ -18,7 +18,7 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 
-import net.jcip.annotations.Immutable;
+import com.google.errorprone.annotations.Immutable;
 
 /**
  * MarshallUtil.

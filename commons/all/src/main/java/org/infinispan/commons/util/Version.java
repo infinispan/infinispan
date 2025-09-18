@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Properties;
 
-import net.jcip.annotations.Immutable;
+import com.google.errorprone.annotations.Immutable;
 
 /**
  * Contains version information about this release of Infinispan.

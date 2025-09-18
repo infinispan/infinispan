@@ -33,7 +33,7 @@ import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.topology.CacheTopology;
 
 import io.netty.channel.ChannelHandlerContext;
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * CLUSTER SHARDS

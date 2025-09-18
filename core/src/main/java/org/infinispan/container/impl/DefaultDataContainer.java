@@ -23,9 +23,9 @@ import org.reactivestreams.Publisher;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Policy;
+import com.google.errorprone.annotations.ThreadSafe;
 
 import io.reactivex.rxjava3.core.Flowable;
-import net.jcip.annotations.ThreadSafe;
 
 /**
  * DefaultDataContainer is both eviction and non-eviction based data container.

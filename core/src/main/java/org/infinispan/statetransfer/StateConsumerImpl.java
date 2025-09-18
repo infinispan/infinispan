@@ -113,7 +113,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import jakarta.transaction.Transaction;
 import jakarta.transaction.TransactionManager;
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * {@link StateConsumer} implementation.

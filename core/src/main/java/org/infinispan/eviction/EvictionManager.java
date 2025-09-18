@@ -7,7 +7,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * Central component that deals with eviction of cache entries.

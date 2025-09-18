@@ -6,9 +6,10 @@ import org.infinispan.security.Security;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.RespCommand;
 
+import com.google.errorprone.annotations.Immutable;
+
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
-import net.jcip.annotations.Immutable;
 
 /**
  * Access data from a single request.

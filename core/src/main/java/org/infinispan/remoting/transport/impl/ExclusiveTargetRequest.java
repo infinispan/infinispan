@@ -9,7 +9,7 @@ import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Request implementation that waits for responses from multiple target nodes.

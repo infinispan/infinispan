@@ -17,7 +17,7 @@ import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.stats.impl.StatsCollector;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 @Scope(Scopes.NAMED_CACHE)
 @ThreadSafe

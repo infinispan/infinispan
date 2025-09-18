@@ -70,8 +70,9 @@ import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 import jakarta.transaction.Transaction;
-import net.jcip.annotations.GuardedBy;
 
 /**
  * @author Mircea Markus

@@ -8,7 +8,7 @@ import java.util.List;
 import org.infinispan.commons.util.Util;
 import org.infinispan.tools.store.migrator.marshaller.common.AbstractMigratorExternalizer;
 
-import net.jcip.annotations.Immutable;
+import com.google.errorprone.annotations.Immutable;
 
 /**
  * @author Ryan Emerson

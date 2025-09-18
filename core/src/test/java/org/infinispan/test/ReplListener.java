@@ -21,7 +21,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -34,6 +33,8 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * A listener that listens for replication events on a cache it is watching.  Typical usage: <code> ReplListener r =

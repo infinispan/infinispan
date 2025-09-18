@@ -2,8 +2,8 @@ package org.infinispan.remoting.transport.jgroups;
 
 import static org.infinispan.metrics.Constants.JGROUPS_CLUSTER_TAG_NAME;
 import static org.infinispan.metrics.Constants.JGROUPS_PREFIX;
-import static org.infinispan.metrics.Constants.VENDOR_PREFIX;
 import static org.infinispan.metrics.Constants.NODE_TAG_NAME;
+import static org.infinispan.metrics.Constants.VENDOR_PREFIX;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ import org.infinispan.remoting.transport.Address;
 import org.jgroups.JChannel;
 import org.jgroups.stack.Protocol;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Concrete implementation of {@link JGroupsMetricsManager}.

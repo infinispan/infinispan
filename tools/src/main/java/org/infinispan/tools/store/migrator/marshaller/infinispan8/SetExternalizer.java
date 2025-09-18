@@ -10,7 +10,7 @@ import java.util.TreeSet;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.tools.store.migrator.marshaller.common.AbstractMigratorExternalizer;
 
-import net.jcip.annotations.Immutable;
+import com.google.errorprone.annotations.Immutable;
 
 /**
  * Set externalizer for all set implementations, i.e. HashSet and TreeSet

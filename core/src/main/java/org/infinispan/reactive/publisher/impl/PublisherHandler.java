@@ -15,6 +15,7 @@ import java.util.function.Function;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -34,16 +35,16 @@ import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCom
 import org.infinispan.reactive.publisher.impl.commands.batch.KeyPublisherResponse;
 import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.Single;
-import net.jcip.annotations.GuardedBy;
 
 /**
  * Handler for holding publisher results between requests of data

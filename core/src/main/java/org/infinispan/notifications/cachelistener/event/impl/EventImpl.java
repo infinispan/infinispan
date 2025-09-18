@@ -28,15 +28,12 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
-import net.jcip.annotations.NotThreadSafe;
-
 /**
  * Basic implementation of an event that covers all event types.
  *
  * @author Manik Surtani
  * @since 4.0
  */
-@NotThreadSafe
 public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntriesEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
                                         CacheEntryPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,
                                         CacheEntryInvalidatedEvent, DataRehashedEvent, TopologyChangedEvent, CacheEntryExpiredEvent, PartitionStatusChangedEvent,
