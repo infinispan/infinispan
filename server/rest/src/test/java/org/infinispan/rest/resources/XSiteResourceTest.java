@@ -27,8 +27,8 @@ import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
-import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
@@ -60,7 +60,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * @since 10.0

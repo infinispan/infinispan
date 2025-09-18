@@ -3,7 +3,7 @@ package org.infinispan.expiration;
 import org.infinispan.configuration.cache.ExpirationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * Central component that deals with expiration of cache entries.

@@ -26,15 +26,12 @@ import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
-import net.jcip.annotations.NotThreadSafe;
-
 /**
  * Maintains topology information about caches.
  *
  * @author gustavonalle
  * @author Dan Berindei
  */
-@NotThreadSafe
 public final class TopologyInfo {
 
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);

@@ -21,7 +21,7 @@ import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.IracXSiteBackup;
 import org.infinispan.xsite.irac.NoOpIracManager;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 @DefaultFactoryFor(classes = {
         IracManager.class,

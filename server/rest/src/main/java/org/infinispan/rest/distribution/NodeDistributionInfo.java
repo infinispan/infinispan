@@ -1,5 +1,7 @@
 package org.infinispan.rest.distribution;
 
+import static org.infinispan.commons.marshall.ProtoStreamTypeIds.CLUSTER_DISTRIBUTION_INFO;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,8 +15,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.stats.ClusterContainerStats;
 import org.infinispan.stats.ContainerStats;
 
-import net.jcip.annotations.Immutable;
-import static org.infinispan.commons.marshall.ProtoStreamTypeIds.CLUSTER_DISTRIBUTION_INFO;
+import com.google.errorprone.annotations.Immutable;
 
 /**
  * Collect node's information and statistics of the local JVM.

@@ -6,7 +6,7 @@ import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * A marshaller is a class that is able to marshall and unmarshall objects efficiently.

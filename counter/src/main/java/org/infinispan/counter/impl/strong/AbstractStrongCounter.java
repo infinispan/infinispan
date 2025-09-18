@@ -38,7 +38,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * A base strong consistent counter implementation.

@@ -17,7 +17,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
-import net.jcip.annotations.Immutable;
+import com.google.errorprone.annotations.Immutable;
 
 /**
  * A transaction state stored globally in all the cluster members.

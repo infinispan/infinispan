@@ -3,10 +3,11 @@ package org.infinispan.util.logging.events.impl;
 import java.time.Instant;
 import java.util.Optional;
 
-import net.jcip.annotations.Immutable;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
+
+import com.google.errorprone.annotations.Immutable;
 
 @Immutable
 public class BaseEventLog implements EventLog {

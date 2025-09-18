@@ -10,7 +10,7 @@ import org.infinispan.client.hotrod.multimap.MetadataCollection;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Marshaller;
 
-import net.jcip.annotations.Immutable;
+import com.google.errorprone.annotations.Immutable;
 
 /**
  * Factory for {@link HotRodOperation} objects on Multimap.

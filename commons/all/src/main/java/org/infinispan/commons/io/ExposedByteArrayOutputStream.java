@@ -2,8 +2,6 @@ package org.infinispan.commons.io;
 
 import java.io.ByteArrayOutputStream;
 
-import net.jcip.annotations.NotThreadSafe;
-
 /**
  * Extends ByteArrayOutputStream, but exposes the internal buffer. Using this, callers don't need to call toByteArray()
  * which copies the internal buffer. <p> Also overrides the superclass' behavior of always doubling the size of the
@@ -17,7 +15,6 @@ import net.jcip.annotations.NotThreadSafe;
  * @since 4.0
  * @deprecated Since 13.0, please use {@link LazyByteArrayOutputStream} instead.
  */
-@NotThreadSafe
 @Deprecated(forRemoval=true, since = "13.0")
 public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
    /**

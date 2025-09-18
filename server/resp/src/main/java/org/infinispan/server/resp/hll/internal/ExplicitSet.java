@@ -13,7 +13,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * The {@link org.infinispan.server.resp.hll.HyperLogLog} explicit representation.

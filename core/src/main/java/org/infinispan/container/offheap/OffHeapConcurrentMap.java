@@ -31,7 +31,7 @@ import org.infinispan.container.impl.PeekableTouchableMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * A {@link ConcurrentMap} implementation that stores the keys and values off the JVM heap in native heap. This map

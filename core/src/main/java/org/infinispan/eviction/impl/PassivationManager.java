@@ -2,11 +2,12 @@ package org.infinispan.eviction.impl;
 
 import java.util.concurrent.CompletionStage;
 
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.JmxStatisticsExposer;
+
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * A passivation manager

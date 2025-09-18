@@ -20,7 +20,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.logging.NDC;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Executes tasks in the given executor, but never has more than {@code maxConcurrentTasks} tasks running at the same

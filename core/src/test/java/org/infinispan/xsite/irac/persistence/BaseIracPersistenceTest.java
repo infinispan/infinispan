@@ -37,7 +37,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * An abstract IRAC test to make sure the {@link IracMetadata} is properly stored and retrieved from persistence.

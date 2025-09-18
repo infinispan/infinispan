@@ -65,7 +65,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.commands.remote.XSiteRequest;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * @author Mircea.Markus@jboss.com

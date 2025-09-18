@@ -20,8 +20,6 @@ import java.util.stream.Stream;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.functional.MetaParam;
 
-import net.jcip.annotations.NotThreadSafe;
-
 /**
  * Represents a {@link MetaParam} collection.
  *
@@ -57,7 +55,6 @@ import net.jcip.annotations.NotThreadSafe;
  *
  * @since 8.0
  */
-@NotThreadSafe
 @Experimental
 public final class MetaParams implements Iterable<MetaParam<?>> {
 

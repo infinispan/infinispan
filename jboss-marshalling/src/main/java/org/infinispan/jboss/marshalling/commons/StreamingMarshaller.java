@@ -8,7 +8,7 @@ import java.io.OutputStream;
 
 import org.infinispan.commons.marshall.Marshaller;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * A specialization of {@link Marshaller} that supports streams.

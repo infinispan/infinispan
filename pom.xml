@@ -688,11 +688,6 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>net.jcip</groupId>
-            <artifactId>jcip-annotations</artifactId>
-            <version>${version.jcip-annotations}</version>
-         </dependency>
-         <dependency>
             <groupId>net.spy</groupId>
             <artifactId>spymemcached</artifactId>
             <version>${versionx.net.spy.spymemcached}</version>
@@ -1824,8 +1819,8 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>net.jcip</groupId>
-         <artifactId>jcip-annotations</artifactId>
+         <groupId>com.google.errorprone</groupId>
+         <artifactId>error_prone_annotations</artifactId>
          <optional>true</optional>
       </dependency>
       <dependency>

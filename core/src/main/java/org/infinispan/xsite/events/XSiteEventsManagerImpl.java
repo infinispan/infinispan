@@ -37,7 +37,7 @@ import org.infinispan.xsite.XSiteNamedCache;
 import org.infinispan.xsite.commands.XSiteLocalEventCommand;
 import org.infinispan.xsite.commands.remote.XSiteRemoteEventCommand;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Default implementation of {@link XSiteEventsManager}.

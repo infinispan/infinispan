@@ -21,6 +21,7 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
@@ -32,16 +33,16 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
+
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.flowables.ConnectableFlowable;
 import io.reactivex.rxjava3.functions.Function;
-import net.jcip.annotations.GuardedBy;
 
 /**
  * A delegating NonBlockingStore implementation that batches write operations and runs the resulting batches on the

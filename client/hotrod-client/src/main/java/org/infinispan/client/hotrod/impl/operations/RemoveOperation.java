@@ -7,8 +7,9 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
+import com.google.errorprone.annotations.Immutable;
+
 import io.netty.buffer.ByteBuf;
-import net.jcip.annotations.Immutable;
 
 /**
  * Implement "remove" operation as described in <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod

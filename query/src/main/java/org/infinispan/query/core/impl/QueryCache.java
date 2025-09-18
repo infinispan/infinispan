@@ -12,7 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * A local cache for 'parsed' queries. Each cache manager has at most one QueryCache which is backed by a lazily created

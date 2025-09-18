@@ -3,7 +3,7 @@ package org.infinispan.filter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.metadata.Metadata;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * A filter for keys with their values.

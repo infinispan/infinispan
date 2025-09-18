@@ -26,8 +26,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.notification.SiteStatusListener;
 
-import net.jcip.annotations.GuardedBy;
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * Keeps the state needed for knowing when a site needs to be taken offline.

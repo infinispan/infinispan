@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -21,7 +19,9 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Object that holds transaction's state on the node where it originated; as opposed to {@link RemoteTransaction}.

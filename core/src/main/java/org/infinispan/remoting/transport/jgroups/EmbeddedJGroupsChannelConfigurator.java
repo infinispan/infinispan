@@ -20,7 +20,7 @@ import org.jgroups.protocols.relay.config.RelayConfig;
 import org.jgroups.stack.Protocol;
 import org.jgroups.util.SocketFactory;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * A JGroups {@link ProtocolStackConfigurator} which

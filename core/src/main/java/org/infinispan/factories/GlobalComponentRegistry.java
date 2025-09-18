@@ -52,7 +52,7 @@ import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.XSiteCacheMapper;
 import org.infinispan.xsite.events.XSiteEventsManager;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * A global component registry where shared components are stored.

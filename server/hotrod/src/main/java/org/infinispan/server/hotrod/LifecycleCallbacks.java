@@ -23,7 +23,7 @@ import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * @author Galder Zamarreño

@@ -6,7 +6,7 @@ import java.io.OutputStream;
 
 import org.infinispan.commons.dataconversion.MediaType;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * A minimal interface that facilitates the marshalling/unmarshalling of objects from the provided {@link

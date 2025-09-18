@@ -4,8 +4,9 @@ import org.infinispan.client.hotrod.transaction.manager.RemoteTransactionManager
 import org.infinispan.commons.tx.lookup.LookupNames;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 import jakarta.transaction.TransactionManager;
-import net.jcip.annotations.GuardedBy;
 
 /**
  * A {@link TransactionManagerLookup} implementation that attempts to locate a {@link TransactionManager}.

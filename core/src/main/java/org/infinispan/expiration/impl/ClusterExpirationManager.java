@@ -37,7 +37,7 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.ThreadSafe;
+import com.google.errorprone.annotations.ThreadSafe;
 
 /**
  * Allows for cluster based expirations to occur.  This provides guarantees that when an entry is expired that it will

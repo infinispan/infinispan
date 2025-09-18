@@ -59,12 +59,12 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.DecoderException;
 import io.reactivex.rxjava3.core.Completable;
-import net.jcip.annotations.GuardedBy;
 
 /**
  * This class handles dispatching various HotRodOperations to the appropriate server.

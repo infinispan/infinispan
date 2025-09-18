@@ -7,7 +7,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 
-import net.jcip.annotations.Immutable;
+import com.google.errorprone.annotations.Immutable;
 
 /**
  * A simple versioning scheme that is cluster-aware

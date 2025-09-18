@@ -15,7 +15,7 @@ import org.infinispan.remoting.transport.jgroups.NoOpJGroupsMetricManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Produces instances of {@link MetricsCollector}. MetricsCollector is optional, based on the presence of Micrometer in

@@ -22,7 +22,7 @@ import org.infinispan.manager.ModuleRepository;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.GuardedBy;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * @author Dan Berindei
