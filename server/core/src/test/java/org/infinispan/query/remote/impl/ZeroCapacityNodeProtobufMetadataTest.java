@@ -7,11 +7,11 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Map;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.core.query.ProtobufMetadataManager;
 import org.infinispan.server.core.query.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -27,7 +27,7 @@ public class ZeroCapacityNodeProtobufMetadataTest extends MultipleCacheManagersT
       addClusterEnabledCacheManager();
       var builder = GlobalConfigurationBuilder.defaultClusteredBuilder().zeroCapacityNode(true);
       addClusterEnabledCacheManager(builder, null);
-      waitForClusterToForm(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      waitForClusterToForm(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
    }
 
    public void testSchemaRegister() {
@@ -50,7 +50,7 @@ public class ZeroCapacityNodeProtobufMetadataTest extends MultipleCacheManagersT
       }
 
       addClusterEnabledCacheManager();
-      waitForClusterToForm(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      waitForClusterToForm(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
 
       for (var m : cacheManagers) {
          checkProtoFileExists(m, "c");
@@ -67,7 +67,7 @@ public class ZeroCapacityNodeProtobufMetadataTest extends MultipleCacheManagersT
 
       var builder = GlobalConfigurationBuilder.defaultClusteredBuilder().zeroCapacityNode(true);
       addClusterEnabledCacheManager(builder, null);
-      waitForClusterToForm(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      waitForClusterToForm(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
 
       for (var m : cacheManagers) {
          checkProtoFileExists(m, "d");
@@ -155,7 +155,7 @@ public class ZeroCapacityNodeProtobufMetadataTest extends MultipleCacheManagersT
    }
 
    private Cache<String, String> protobufCache(int index) {
-      return cache(index, ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      return cache(index, InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
    }
 
    private static SerializationContextRegistry serializationContextRegistry(EmbeddedCacheManager manager) {

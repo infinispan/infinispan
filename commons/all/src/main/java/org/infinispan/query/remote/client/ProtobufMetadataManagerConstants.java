@@ -7,7 +7,14 @@ import org.infinispan.commons.internal.InternalCacheNames;
  *
  * @author anistor@redhat.com
  * @since 7.1
+ * @deprecated since 16.0, use Schemas administration API instead.
+ * <br/>
+ * <code>
+ *    RemoteCacheManager remoteCacheManager = ...;
+ *    RemoteSchemasAdmin schemasAdmin = remoteCacheManager.administration().schemas();
+ * </code>
  */
+@Deprecated
 public interface ProtobufMetadataManagerConstants {
 
    /**

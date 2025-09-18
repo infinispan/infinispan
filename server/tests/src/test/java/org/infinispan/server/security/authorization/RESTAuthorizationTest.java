@@ -66,7 +66,6 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.test.api.TestUser;
@@ -698,8 +697,7 @@ abstract class RESTAuthorizationTest {
    private void createIndexedCache() {
       String schema = TestDomainSCI.INSTANCE.getProtoFile();
       RestClient adminClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
-      RestCacheClient protobufCache = adminClient.cache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      assertStatus(NO_CONTENT, protobufCache.put(BANK_PROTO, schema));
+      assertStatus(OK, adminClient.schemas().put(BANK_PROTO, schema));
 
       String cacheName = ext.getMethodName();
       String cacheConfig = "{\"distributed-cache\":{\"statistics\":true,\"encoding\":{\"media-type\":\"application/x-protostream\"},\"indexing\":{\"enabled\":true,\"storage\":\"local-heap\",\"indexed-entities\":[\"sample_bank_account.User\"]},\"security\":{\"authorization\":{}}}}";

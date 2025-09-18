@@ -8,7 +8,9 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
@@ -34,7 +36,9 @@ public abstract class SingleHotRodServerTest extends SingleCacheManagerTest {
    }
 
    protected HotRodServer createHotRodServer() {
-      return HotRodClientTestingUtil.startHotRodServer(cacheManager);
+      HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
+      serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
+      return HotRodClientTestingUtil.startHotRodServer(cacheManager, serverBuilder);
    }
 
    protected RemoteCacheManager getRemoteCacheManager() {

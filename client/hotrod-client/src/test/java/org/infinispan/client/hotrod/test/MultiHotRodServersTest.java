@@ -17,6 +17,7 @@ import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -118,7 +119,9 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder globalConfigurationBuilder = getServerModeGlobalConfigurationBuilder();
       modifyGlobalConfiguration(globalConfigurationBuilder);
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(globalConfigurationBuilder, builder);
-      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm);
+      HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
+      serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
+      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder);
       servers.add(server);
       return server;
    }

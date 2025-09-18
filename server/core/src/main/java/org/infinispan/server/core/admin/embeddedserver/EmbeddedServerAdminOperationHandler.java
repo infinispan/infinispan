@@ -22,7 +22,9 @@ public class EmbeddedServerAdminOperationHandler extends AdminOperationsHandler 
             new CacheUpdateConfigurationAttributeTask(),
             new TemplateCreateTask(),
             new TemplateRemoveTask(),
-            new TemplateNamesTask()
+            new TemplateNamesTask(),
+            new SchemaSafeDeleteTask(),
+            new SchemaCreateOrUpdateTask()
       );
    }
 }

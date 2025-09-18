@@ -1,16 +1,16 @@
 package org.infinispan.rest.expiration;
 
+import static org.infinispan.commons.util.concurrent.CompletionStages.await;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.api.Assertions;
-import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
@@ -27,7 +27,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.model.Game;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -47,7 +46,7 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
    private RestClient restClient;
 
    @Override
-   protected void createCacheManagers() {
+   protected void createCacheManagers() throws ExecutionException, InterruptedException {
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
 
@@ -55,10 +54,6 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
       EmbeddedCacheManager cacheManager = cacheManagers.get(0); // use the first one
 
       TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);
-
-      Cache<String, String> metadataCache = cacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.putIfAbsent(Game.GameSchema.INSTANCE.getProtoFileName(), Game.GameSchema.INSTANCE.getProtoFile());
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       config.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
       config.expiration()
@@ -76,6 +71,7 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
       restClient = RestClient.forConfiguration(new RestClientConfigurationBuilder().addServer()
             .host(restServer.getHost()).port(restServer.getPort())
             .build());
+      await(restClient.schemas().put(Game.GameSchema.INSTANCE.getName(), Game.GameSchema.INSTANCE.getContent()));
    }
 
    @Test

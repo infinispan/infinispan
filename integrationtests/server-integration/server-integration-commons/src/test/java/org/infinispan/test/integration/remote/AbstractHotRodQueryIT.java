@@ -1,7 +1,6 @@
 package org.infinispan.test.integration.remote;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -9,14 +8,12 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.configuration.StringConfiguration;
-import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.test.integration.data.Book;
 import org.infinispan.test.integration.data.Person;
 import org.infinispan.test.integration.remote.proto.BookQuerySchema;
@@ -38,7 +35,7 @@ public abstract class AbstractHotRodQueryIT {
       try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(config.build())) {
 
          // register schema
-         registerSchema(remoteCacheManager, schema.getProtoFileName(), schema.getProtoFile());
+         registerSchemaInTheServer(remoteCacheManager, schema);
 
          String xmlConfig = """
                <distributed-cache name="books">
@@ -67,13 +64,11 @@ public abstract class AbstractHotRodQueryIT {
    @Test
    public void testRemoteQuery() {
       ConfigurationBuilder config = localServerConfiguration();
-      config.marshaller(new ProtoStreamMarshaller());
+      ProtoStreamMarshaller protoStreamMarshaller = new ProtoStreamMarshaller();
+      protoStreamMarshaller.register(PersonSchema.INSTANCE);
+      config.marshaller(protoStreamMarshaller);
       try (RemoteCacheManager rcm = new RemoteCacheManager(config.build())) {
-         // register schema
-         registerSchema(rcm, PersonSchema.INSTANCE.getProtoFileName(), PersonSchema.INSTANCE.getProtoFile());
-         SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
-         PersonSchema.INSTANCE.register(serializationContext);
-
+         registerSchemaInTheServer(rcm, PersonSchema.INSTANCE);
          RemoteCache<String, Person> cache = rcm.getCache();
          cache.clear();
          cache.put("Adrian", new Person("Adrian"));
@@ -96,11 +91,11 @@ public abstract class AbstractHotRodQueryIT {
    @Test
    public void testUninverting() {
       ConfigurationBuilder config = localServerConfiguration();
-      config.marshaller(new ProtoStreamMarshaller());
+      ProtoStreamMarshaller protoStreamMarshaller = new ProtoStreamMarshaller();
+      protoStreamMarshaller.register(PersonSchema.INSTANCE);
+      config.marshaller(protoStreamMarshaller);
       try (RemoteCacheManager rcm = new RemoteCacheManager(config.build())) {
-         registerSchema(rcm, PersonSchema.INSTANCE.getProtoFileName(), PersonSchema.INSTANCE.getProtoFile());
-         SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
-         PersonSchema.INSTANCE.register(serializationContext);
+         registerSchemaInTheServer(rcm, PersonSchema.INSTANCE);
 
          RemoteCache<String, Person> cache = rcm.getCache();
          cache.clear();
@@ -115,9 +110,9 @@ public abstract class AbstractHotRodQueryIT {
       return config;
    }
 
-   private void registerSchema(RemoteCacheManager rcm, String key, String protoFile) {
-      RemoteCache<String, String> metadataCache = rcm.getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put(key, protoFile);
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+   private void registerSchemaInTheServer(RemoteCacheManager rcm, GeneratedSchema schema) {
+      RemoteSchemasAdmin schemas = rcm.administration().schemas();
+      schemas.createOrUpdate(schema);
+      assertTrue(schemas.retrieveAllSchemaErrors().isEmpty());
    }
 }
