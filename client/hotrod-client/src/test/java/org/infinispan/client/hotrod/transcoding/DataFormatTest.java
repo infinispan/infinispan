@@ -6,7 +6,6 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClie
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createServerModeCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
@@ -48,8 +47,8 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchema;
+import org.infinispan.protostream.schema.Schema;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**
@@ -79,7 +78,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
 
    @Override
    protected HotRodServer createHotRodServer() {
-      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cacheManager, new HotRodServerConfigurationBuilder());
+      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       server.addCacheEventFilterFactory("static-filter-factory", new EventLogListener.StaticCacheEventFilterFactory<>(42));
       server.addCacheEventFilterFactory("raw-static-filter-factory", new EventLogListener.RawStaticCacheEventFilterFactory());
       return server;
@@ -305,9 +304,9 @@ public class DataFormatTest extends SingleHotRodServerTest {
 
    @Test
    public void testJsonFromDefaultCache()  {
-      RemoteCache<String, String> schemaCache = remoteCacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
-      schemaCache.put("schema.proto", "message M { optional string json_key = 1; }");
-      checkSchemaErrors(schemaCache);
+      Schema schema = Schema.buildFromStringContent("schema.proto", "message M { optional string json_key = 1; }");
+      remoteCacheManager.administration().schemas().create(schema);
+      checkSchemaErrors(remoteCacheManager);
 
       DataFormat jsonValues = DataFormat.builder()
             .valueType(APPLICATION_JSON)

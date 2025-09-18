@@ -437,4 +437,24 @@ public interface Log extends BasicLogger {
    @Message(value = "Counter '%s' is not defined.", id = 4120)
    CounterException undefinedCounter(String name);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Error raised when operating schema %s", id = 4121)
+   void crudSchemaError(String schemaName, @Cause Throwable throwable);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Schema %s not found", id = 4122)
+   void schemaNotFound(String schemaName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "A cache is using one entity in the schema %s. Remove not done", id = 4123)
+   void notSafeDelete(String schemaName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error raised when retrieving schemas in errors", id = 4124)
+   void schemasInErrorRetrieveFailure(@Cause Throwable throwable);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error raised when retrieving errors of schemas %s", id = 4125)
+   void schemasInErrorRetrieveFailure(String schemas, @Cause Throwable throwable);
+
 }
