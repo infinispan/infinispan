@@ -139,4 +139,6 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     */
    @Override
    void assignAlias(String aliasName, String cacheName) throws HotRodClientException;
+
+    RemoteSchemasAdmin schemas();
 }
