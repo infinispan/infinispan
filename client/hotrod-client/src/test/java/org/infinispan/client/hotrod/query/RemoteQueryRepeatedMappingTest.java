@@ -5,7 +5,6 @@ import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.client.hotrod.DataFormat;
@@ -16,8 +15,8 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -86,9 +85,7 @@ public class RemoteQueryRepeatedMappingTest extends SingleHotRodServerTest {
    }
 
    private void registerProtoBuf() throws Exception {
-      RemoteCache<String, String> protoCache = remoteCacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
-      String protobuf = Util.getResourceAsString(SCHEMA_FILE, getClass().getClassLoader());
-      protoCache.put(SCHEMA_FILE, protobuf);
+      remoteCacheManager.administration().schemas().createOrUpdate(FileDescriptorSource.fromResources(SCHEMA_FILE));
    }
 
    private StringConfiguration createCacheXMLConfig() {

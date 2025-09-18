@@ -2,12 +2,11 @@ package org.infinispan.client.hotrod.marshall.protostream.builder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.infinispan.Cache;
 import org.infinispan.api.protostream.builder.ProtoBuf;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.test.annotation.TestForIssue;
+import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ResourceUtils;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.marshall.protostream.builder.ProtoBufBuilderTest")
@@ -44,12 +43,8 @@ public class ProtoBufBuilderTest extends SingleHotRodServerTest {
                   .embedded()
       .build();
 
-      Cache<String, String> metadataCache = cacheManager.getCache(
-            ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-
-      metadataCache.put("ciao.proto", generatedSchema);
-      String filesWithErrors = metadataCache.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
-      assertThat(filesWithErrors).isNull();
+      remoteCacheManager.administration().schemas().createOrUpdate(FileDescriptorSource.fromString("ciao.proto", generatedSchema));
+      assertThat( remoteCacheManager.administration().schemas().retrieveAllSchemaErrors().isEmpty()).isTrue();
 
       String expectedSchema = ResourceUtils.getResourceAsString(getClass(), "/proto/ciao.proto");
       assertThat(generatedSchema).isEqualTo(expectedSchema);

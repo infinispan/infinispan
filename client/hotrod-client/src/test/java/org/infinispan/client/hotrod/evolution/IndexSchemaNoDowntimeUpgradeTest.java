@@ -33,7 +33,6 @@ import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -103,9 +102,7 @@ public class IndexSchemaNoDowntimeUpgradeTest extends SingleHotRodServerTest {
 
       // Register proto schema on server side
       if (register) {
-         RemoteCache<String, String> metadataCache = rcm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-         metadataCache.put(schema.getProtoFileName(), schema.getProtoFile());
-
+         rcm.administration().schemas().createOrUpdate(schema);
          // reindexCache would make this test working as well,
          // the difference is that with updateIndexSchema the index state (Lucene directories) is not touched,
          // if the schema change is not retro-compatible reindexCache is required
@@ -117,9 +114,7 @@ public class IndexSchemaNoDowntimeUpgradeTest extends SingleHotRodServerTest {
    @AfterMethod
    void clean() {
       remoteCacheManager.getCache(CACHE_NAME).clear();
-      RemoteCache<String, String> metadataCache = remoteCacheManager
-            .getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.remove("evolution-schema.proto");
+      remoteCacheManager.administration().schemas().remove("evolution-schema.proto", true);
    }
 
    /*

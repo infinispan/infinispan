@@ -1,13 +1,12 @@
 package org.infinispan.server.test.core;
 
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -36,6 +35,7 @@ import org.apache.logging.log4j.core.util.StringBuilderWriter;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
@@ -43,7 +43,6 @@ import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
-import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
@@ -52,7 +51,6 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.schema.Schema;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.persistence.PersistenceIT;
 import org.infinispan.server.test.api.HotRodClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -268,10 +266,9 @@ public class Common {
       RemoteCacheManager remoteCacheManager = hotRodTestClientDriver.createRemoteCacheManager();
 
       if (protoschema != null) {
-         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
-         metadataCache.putIfAbsent(protoschema.getName(), protoschema.getContent());
-         assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-         assertNotNull(metadataCache.get(protoschema.getName()));
+         RemoteSchemasAdmin schemas = remoteCacheManager.administration().schemas();
+         schemas.createOrUpdate(protoschema);
+         assertThat(schemas.retrieveError(protoschema.getName())).isEmpty();
       }
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();

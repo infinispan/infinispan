@@ -1,7 +1,6 @@
 package org.infinispan.server.functional.hotrod;
 
 import static java.util.Collections.singleton;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.rest.helper.RestResponses.assertStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,6 +12,7 @@ import java.util.stream.Collectors;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.rest.helper.RestResponses;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
  */
 public class IgnoreCaches {
 
+   public static final String PROTOSCHEMAS_INTERNAL_CACHE = InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
    @InfinispanServer(ClusteredIT.class)
    public static TestClientDriver SERVERS;
 
@@ -35,27 +36,27 @@ public class IgnoreCaches {
 
       assertTrue(getIgnoredCaches(client).isEmpty());
       assertCacheResponse(client, testCache, 404);
-      assertCacheResponse(client, PROTOBUF_METADATA_CACHE_NAME, 404);
+      assertCacheResponse(client, PROTOSCHEMAS_INTERNAL_CACHE, 404);
 
       ignoreCache(client, testCache);
       assertEquals(singleton(testCache), getIgnoredCaches(client));
       assertCacheResponse(client, testCache, 503);
-      assertCacheResponse(client, PROTOBUF_METADATA_CACHE_NAME, 404);
+      assertCacheResponse(client, PROTOSCHEMAS_INTERNAL_CACHE, 404);
 
-      ignoreCache(client, PROTOBUF_METADATA_CACHE_NAME);
-      assertEquals(asSet(testCache, PROTOBUF_METADATA_CACHE_NAME), getIgnoredCaches(client));
+      ignoreCache(client, PROTOSCHEMAS_INTERNAL_CACHE);
+      assertEquals(asSet(testCache, PROTOSCHEMAS_INTERNAL_CACHE), getIgnoredCaches(client));
       assertCacheResponse(client, testCache, 503);
-      assertCacheResponse(client, PROTOBUF_METADATA_CACHE_NAME, 503);
+      assertCacheResponse(client, PROTOSCHEMAS_INTERNAL_CACHE, 503);
 
       unIgnoreCache(client, testCache);
-      assertEquals(singleton(PROTOBUF_METADATA_CACHE_NAME), getIgnoredCaches(client));
+      assertEquals(singleton(PROTOSCHEMAS_INTERNAL_CACHE), getIgnoredCaches(client));
       assertCacheResponse(client, testCache, 404);
-      assertCacheResponse(client, PROTOBUF_METADATA_CACHE_NAME, 503);
+      assertCacheResponse(client, PROTOSCHEMAS_INTERNAL_CACHE, 503);
 
-      unIgnoreCache(client, PROTOBUF_METADATA_CACHE_NAME);
+      unIgnoreCache(client, PROTOSCHEMAS_INTERNAL_CACHE);
       assertTrue(getIgnoredCaches(client).isEmpty());
       assertCacheResponse(client, testCache, 404);
-      assertCacheResponse(client, PROTOBUF_METADATA_CACHE_NAME, 404);
+      assertCacheResponse(client, PROTOSCHEMAS_INTERNAL_CACHE, 404);
    }
 
    private Set<String> asSet(String... elements) {

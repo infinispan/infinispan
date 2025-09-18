@@ -1,5 +1,6 @@
 package org.infinispan.server.security.authorization;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.HOTROD_CLIENT_SASL_MECHANISM;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.api.query.Query;
@@ -36,7 +38,7 @@ import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.protostream.schema.Schema;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
@@ -86,7 +88,7 @@ abstract class HotRodAuthorizationTest {
          assertEquals("v", cache.get("k"));
          cache.putAll(bulkData);
          assertEquals(11, cache.size());
-         cache.getRemoteCacheManager().administration().removeCache(cache.getName());
+         cache.getRemoteCacheContainer().administration().removeCache(cache.getName());
       }
    }
 
@@ -187,7 +189,7 @@ abstract class HotRodAuthorizationTest {
       RemoteCache<String, String> adminCache = hotRodCreateAuthzCache("application");
       RemoteCache<String, String> appCache = ext.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.APPLICATION)).get();
       appCache.put("k1", "v1");
-      adminCache.getRemoteCacheManager().administration().removeCache(adminCache.getName());
+      adminCache.getRemoteCacheContainer().administration().removeCache(adminCache.getName());
    }
 
    @Test
@@ -247,13 +249,13 @@ abstract class HotRodAuthorizationTest {
       ext.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder).create();
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
          RemoteCache<String, String> cache = ext.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
-         cache.getRemoteCacheManager().administration().updateConfigurationAttribute(cache.getName(), "memory.max-count", "1000");
+         cache.getRemoteCacheContainer().administration().updateConfigurationAttribute(cache.getName(), "memory.max-count", "1000");
       }
 
       for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
          RemoteCache<String, String> cache = ext.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
          Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
-               () -> cache.getRemoteCacheManager().administration().updateConfigurationAttribute(cache.getName(), "memory.max-count", "500")
+               () -> cache.getRemoteCacheContainer().administration().updateConfigurationAttribute(cache.getName(), "memory.max-count", "500")
          );
       }
    }
@@ -284,9 +286,8 @@ abstract class HotRodAuthorizationTest {
       String schema = TestDomainSCI.INSTANCE.getProtoFile();
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
          RemoteCacheManager remoteCacheManager = ext.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
-         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-         metadataCache.put(BANK_PROTO, schema);
-         metadataCache.remove(BANK_PROTO);
+         remoteCacheManager.administration().schemas().createOrUpdate(Schema.buildFromStringContent(BANK_PROTO, schema));
+         remoteCacheManager.administration().schemas().remove(BANK_PROTO, true);
       }
    }
 
@@ -295,8 +296,14 @@ abstract class HotRodAuthorizationTest {
       String schema = TestDomainSCI.INSTANCE.getProtoFile();
       for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.WRITER)) {
          RemoteCacheManager remoteCacheManager = ext.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
-         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-         Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION, () -> metadataCache.put(BANK_PROTO, schema));
+         RemoteSchemasAdmin schemasAdmin = remoteCacheManager.administration().schemas();
+         assertNotNull(schemasAdmin);
+         try {
+            schemasAdmin.createOrUpdate(Schema.buildFromStringContent(BANK_PROTO, schema));
+         } catch (Throwable ex) {
+            Throwable rootCause = Exceptions.getRootCause(ex);
+            assertThat(rootCause).hasMessageMatching(UNAUTHORIZED_EXCEPTION);
+         }
       }
    }
 
@@ -349,8 +356,7 @@ abstract class HotRodAuthorizationTest {
    private org.infinispan.configuration.cache.ConfigurationBuilder prepareIndexedCache() {
       String schema = TestDomainSCI.INSTANCE.getProtoFile();
       RemoteCacheManager remoteCacheManager = ext.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).createRemoteCacheManager();
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put(BANK_PROTO, schema);
+      remoteCacheManager.administration().schemas().createOrUpdate(Schema.buildFromStringContent(BANK_PROTO, schema));
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder

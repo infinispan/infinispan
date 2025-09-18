@@ -1,10 +1,8 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
-import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.test.core.Common.assertStatus;
+import static org.infinispan.server.test.core.Common.assertStatusAndBodyContains;
 
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -81,9 +79,8 @@ abstract class AbstractMultiClusterIT {
    }
 
    protected void addSchema(RestClient client) {
-      RestCacheClient cache = client.cache(PROTOBUF_METADATA_CACHE_NAME);
-      assertStatus(NO_CONTENT, cache.put("schema.proto", "/* @Indexed */ message Person {  /* @Text(projectable = true) */ required string name = 1; }"));
-      assertStatus(NOT_FOUND,  client.cache(PROTOBUF_METADATA_CACHE_NAME).get("schema.proto.errors"));
+      assertStatus(OK, client.schemas().put("schema.proto", "/* @Indexed */ message Person {  /* @Text(projectable = true) */ required string name = 1; }"));
+      assertStatusAndBodyContains(OK, "schema.proto", client.schemas().names());
    }
 
    protected void createCache(String cacheName, ConfigurationBuilder builder, RestClient client) {

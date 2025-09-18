@@ -2,7 +2,6 @@ package org.infinispan.server.functional.hotrod;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,6 +30,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.Address;
@@ -305,8 +305,14 @@ public class HotRodCacheQueries {
       cache.clustering().cacheMode(CacheMode.DIST_SYNC).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
 
       RemoteCache<String, Entities.Person> peopleCache = SERVERS.hotrod().withClientConfiguration(builder).withServerConfiguration(cache).create();
-      RemoteCache<String, String> metadataCache = peopleCache.getRemoteCacheContainer().getCache(PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put(Entities.INSTANCE.getProtoFileName(), Entities.INSTANCE.getProtoFile());
+      // keep old way to make the rolling upgrades test pass for prev versions
+      try {
+         peopleCache.getRemoteCacheContainer().administration().schemas().create(Entities.INSTANCE);
+      } catch (Exception ex) {
+         peopleCache.getRemoteCacheContainer()
+               .getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME)
+               .put(Entities.INSTANCE.getName(), Entities.INSTANCE.getContent());
+      }
 
       Map<String, Entities.Person> people = new HashMap<>();
       people.put("1", new Entities.Person("Oihana", "Rossignol", 2016, "Paris"));

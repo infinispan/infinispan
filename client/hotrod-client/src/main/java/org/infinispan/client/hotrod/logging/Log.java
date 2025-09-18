@@ -440,4 +440,25 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Exception encountered while closing server connection %s", id = 4121)
    void exceptionWhileClosingChannel(Channel channel, @Cause Throwable t);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error raised when operating schema %s", id = 4122)
+   void crudSchemaError(String schemaName, @Cause Throwable throwable);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Schema %s not found", id = 4123)
+   void schemaNotFound(String schemaName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "A cache is using one entity in the schema %s. Remove not done", id = 4124)
+   void notSafeDelete(String schemaName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error raised when retrieving schemas in errors", id = 4125)
+   void schemasInErrorRetrieveFailure(@Cause Throwable throwable);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error raised when retrieving errors of schemas %s", id = 4126)
+   void schemasInErrorRetrieveFailure(String schemas, @Cause Throwable throwable);
+
 }

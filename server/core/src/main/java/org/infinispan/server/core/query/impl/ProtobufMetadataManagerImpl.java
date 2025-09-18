@@ -110,7 +110,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       register(new CommonContainerTypesSchema());
       register(new UserContextInitializerImpl());
 
-      internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME,
+      internalCacheRegistry.registerInternalCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME,
             getProtobufMetadataCacheConfig(globalConfiguration).build(),
             EnumSet.of(InternalCacheRegistry.Flag.USER, InternalCacheRegistry.Flag.PROTECTED, InternalCacheRegistry.Flag.PERSISTENT));
 
@@ -152,7 +152,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
     * @param dependantCacheName the name of the cache depending on the protobuf metadata cache
     */
    public void addCacheDependency(String dependantCacheName) {
-      SecurityActions.addCacheDependency(cacheManager, dependantCacheName, PROTOBUF_METADATA_CACHE_NAME);
+      SecurityActions.addCacheDependency(cacheManager, dependantCacheName, InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
    }
 
    /**
@@ -160,7 +160,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
     */
    public Cache<String, String> getCache() {
       if (protobufSchemaCache == null) {
-         protobufSchemaCache = SecurityActions.getUnwrappedCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME);
+         protobufSchemaCache = SecurityActions.getUnwrappedCache(cacheManager, InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
       }
       return protobufSchemaCache;
    }
