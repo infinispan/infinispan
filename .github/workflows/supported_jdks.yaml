@@ -26,13 +26,13 @@ jobs:
       fail-fast: false
       matrix:
         jdk:
-          - '24-ea'
+          - '25'
 
     steps:
       - uses: actions/checkout@v5
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.jdk }}
           distribution: 'temurin'
