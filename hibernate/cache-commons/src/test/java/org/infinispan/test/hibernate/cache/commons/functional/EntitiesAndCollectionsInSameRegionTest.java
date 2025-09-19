@@ -15,7 +15,7 @@ import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cfg.Environment;
 import org.hibernate.stat.CacheRegionStatistics;
 import org.hibernate.stat.Statistics;
-import org.hibernate.testing.TestForIssue;
+import org.hibernate.testing.orm.junit.JiraKey;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -91,15 +91,15 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
    public void cleanup() throws Exception {
       withTxSession(
          s -> {
-            s.delete(s.get(AnEntity.class, 1));
-            s.delete(s.get(AnotherEntity.class, 1));
+            s.remove(s.get(AnEntity.class, 1));
+            s.remove(s.get(AnotherEntity.class, 1));
          }
       );
    }
 
 
    @Test
-   @TestForIssue(jiraKey = "HHH-10418")
+   @JiraKey(value = "HHH-10418")
    public void testEntitiesAndCollections() throws Exception {
 
       final Statistics stats = sessionFactory().getStatistics();

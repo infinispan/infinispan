@@ -48,7 +48,7 @@ public class AccountDAO {
 			Account account = session.get(Account.class, id);
 			log.debug("Set branch " + branch);
 			account.setBranch(branch);
-			session.update(account);
+			session.merge(account);
 			log.debug("Updated account " + id + " to branch " + branch);
 		});
 	}
@@ -101,7 +101,7 @@ public class AccountDAO {
 			log.debug("Updating account " + id + " to balance " + newBalance);
 			Account account = session.get(Account.class, id);
 			account.setBalance(newBalance);
-			session.update(account);
+			session.merge(account);
 			log.debug("Updated account " + id + " to balance " + newBalance);
 		});
 	}
@@ -153,7 +153,7 @@ public class AccountDAO {
 					try {
 						Object acct = it.next();
 						log.info("Removing " + acct);
-						session.delete(acct);
+						session.remove(acct);
 					} catch (Exception ignored) {
 					}
 				}

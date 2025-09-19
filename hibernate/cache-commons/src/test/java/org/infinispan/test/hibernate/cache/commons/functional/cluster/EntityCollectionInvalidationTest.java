@@ -26,11 +26,12 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.testing.TestForIssue;
+import org.hibernate.testing.orm.junit.JiraKey;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
@@ -48,7 +49,6 @@ import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
 import org.infinispan.test.hibernate.cache.commons.util.ExpectingInterceptor;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -228,7 +228,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 		}
 	}
 
-	@TestForIssue(jiraKey = "HHH-9881")
+	@JiraKey(value = "HHH-9881")
 	@Test
 	public void testConcurrentLoadAndRemoval() throws Exception {
 		if (!remoteCustomerCache.getCacheConfiguration().clustering().cacheMode().isInvalidation()) {
@@ -267,7 +267,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 			try {
 				withTxSession(localFactory, s -> {
 					Customer customer = s.get(Customer.class, idContainer.customerId);
-					s.delete(customer);
+					s.remove(customer);
 				});
 			} catch (Exception e) {
 				log.error("Failure to delete customer", e);
@@ -349,7 +349,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 			cleanup.add(() -> ExpectingInterceptor.cleanup(remoteCustomerCache, remoteCollectionCache, remoteContactCache));
 		}
 
-		withTxSession(sessionFactory, session -> session.save(customer));
+		withTxSession(sessionFactory, session -> session.persist(customer));
 
 		assertTrue(customerLatch.await(2, TimeUnit.SECONDS));
 		assertTrue(collectionLatch.await(2, TimeUnit.SECONDS));
@@ -427,7 +427,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 			ids.contactIds = contactIds;
 			contact.setCustomer( null );
 
-			session.save( customer );
+			session.persist( customer );
 			return ids;
 		});
 	}
@@ -438,14 +438,14 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 			if (c != null) {
 				Set contacts = c.getContacts();
 				for (Iterator it = contacts.iterator(); it.hasNext(); ) {
-					session.delete(it.next());
+					session.remove(it.next());
 				}
 				c.setContacts(null);
-				session.delete(c);
+				session.remove(c);
 			}
 			// since we don't use orphan removal, some contacts may persist
 			for (Contact contact : session.createQuery("from Contact", Contact.class).getResultList()) {
-				session.delete(contact);
+				session.remove(contact);
 			}
 		});
 	}

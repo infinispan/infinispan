@@ -9,7 +9,7 @@ import java.util.Map;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.testing.TestForIssue;
+import org.hibernate.testing.orm.junit.JiraKey;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
@@ -19,7 +19,7 @@ import jakarta.persistence.Cacheable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
-@TestForIssue(jiraKey = "ISPN-8836")
+@JiraKey(value = "ISPN-8836")
 public class CustomConfigTest extends AbstractFunctionalTest {
 
    public static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();

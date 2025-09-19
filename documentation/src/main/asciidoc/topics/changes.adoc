@@ -110,6 +110,12 @@ Note that disabling segmentation for the file store should only be done for smal
 The legacy Hot Rod client (`org.infinispan:infinispan-hotrod-client-legacy`) has been removed. If, for some reason,
 you still need to use it, please use one from previous versions which are still maintained.
 
+=== Hibernate 2LC support updates
+
+We now support Hibernate 7.1 and 6.6 as a second level cache provider.
+
+Hibernate 6.2, 6.4 & 6.5 are no longer supported, but may work. Please upgrade to 6.6.
+
 === Deprecation removals
 
 Everything that was deprecated in 10.x, 11.0 has been removed.

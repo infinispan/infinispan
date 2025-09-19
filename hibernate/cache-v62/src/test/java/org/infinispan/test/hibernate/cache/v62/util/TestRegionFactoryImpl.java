@@ -10,10 +10,11 @@ import org.hibernate.boot.internal.BootstrapContextImpl;
 import org.hibernate.boot.internal.MetadataBuilderImpl;
 import org.hibernate.boot.internal.SessionFactoryOptionsBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cache.cfg.internal.DomainDataRegionConfigImpl;
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.mapping.Collection;
+import org.hibernate.mapping.List;
 import org.hibernate.mapping.Property;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.service.ServiceRegistry;
@@ -86,12 +87,10 @@ class TestRegionFactoryImpl implements TestRegionFactory {
 
    @Override
    public InfinispanBaseRegion buildCollectionRegion(String regionName, AccessType accessType) {
-      Collection collection = mock(Collection.class);
-      when(collection.getRole()).thenReturn(regionName);
-      when(collection.isMutable()).thenReturn(true);
       String rootClassName = regionName.indexOf('.') >= 0 ? regionName.substring(0, regionName.lastIndexOf('.')) : "";
       RootClass owner = rootClassMock(rootClassName);
-      when(collection.getOwner()).thenReturn(owner);
+      List collection = new List(mock(MetadataBuildingContext.class), owner);
+      collection.setRole(regionName);
       DomainDataRegionConfigImpl config = new DomainDataRegionConfigImpl.Builder(regionName).addCollectionConfig(collection, accessType).build();
       return (InfinispanBaseRegion) delegate.buildDomainDataRegion(config, null);
    }

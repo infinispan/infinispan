@@ -20,7 +20,7 @@ import org.hibernate.jpa.QueryHints;
 import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.hibernate.stat.CacheRegionStatistics;
 import org.hibernate.stat.Statistics;
-import org.hibernate.testing.TestForIssue;
+import org.hibernate.testing.orm.junit.JiraKey;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Citizen;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Citizen_;
@@ -84,7 +84,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 		TIME_SERVICE.advance(1);
 
 		withTxSession(s -> {
-			Item loaded = s.load( Item.class, item.getId() );
+			Item loaded = s.getReference( Item.class, item.getId() );
 			assertEquals( 1, loaded.getItems().size() );
 		});
 
@@ -93,7 +93,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 		assertEquals( 1, cStats.getElementCountInMemory() );
 
 		withTxSession(s -> {
-			Item loadedWithCachedCollection = (Item) s.load( Item.class, item.getId() );
+			Item loadedWithCachedCollection = (Item) s.getReference( Item.class, item.getId() );
 			stats.logSummary();
 			assertEquals( item.getName(), loadedWithCachedCollection.getName() );
 			assertEquals( item.getItems().size(), loadedWithCachedCollection.getItems().size() );
@@ -102,13 +102,13 @@ public class ReadWriteTest extends ReadOnlyTest {
 			Item itemElement = loadedWithCachedCollection.getItems().iterator().next();
 			itemElement.setOwner( null );
 			loadedWithCachedCollection.getItems().clear();
-			s.delete( itemElement );
-			s.delete( loadedWithCachedCollection );
+			s.remove( itemElement );
+			s.remove( loadedWithCachedCollection );
 		});
 	}
 
 	@Test
-	@TestForIssue( jiraKey = "HHH-9231" )
+	@JiraKey( value = "HHH-9231" )
 	public void testAddNewOneToManyElementInitFlushLeaveCacheConsistent() throws Exception {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
@@ -137,12 +137,12 @@ public class ReadWriteTest extends ReadOnlyTest {
 			Item item = s.get( Item.class, itemId.get() );
 			Hibernate.initialize( item.getItems() );
 			assertTrue( item.getItems().isEmpty() );
-			s.delete( item );
+			s.remove( item );
 		});
 	}
 
 	@Test
-	@TestForIssue( jiraKey = "HHH-9231" )
+	@JiraKey( value = "HHH-9231" )
 	public void testAddNewOneToManyElementNoInitFlushLeaveCacheConsistent() throws Exception {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
@@ -172,7 +172,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 			Item item = s.get( Item.class, itemId.get() );
 			Hibernate.initialize( item.getItems() );
 			assertTrue( item.getItems().isEmpty() );
-			s.delete( item );
+			s.remove( item );
 		});
 	}
 
@@ -210,7 +210,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 			// which cannot be found.
 			Hibernate.initialize(item.getBagOfItems());
 			assertTrue(item.getBagOfItems().isEmpty());
-			s.delete(item);
+			s.remove(item);
 		});
 	}
 
@@ -219,7 +219,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 			Item item = new Item();
 			item.setName( "steve" );
 			item.setDescription( "steve's item" );
-			s.save( item );
+			s.persist( item );
 			itemId.set(item.getId());
 		});
 	}
@@ -234,7 +234,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 		withTxSession(s -> {
 			OtherItem otherItem = new OtherItem();
 			otherItem.setName( "steve" );
-			s.save( otherItem );
+			s.persist( otherItem );
 			otherItemId.set(otherItem.getId());
 		});
 
@@ -264,7 +264,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 			// which cannot be found.
 			Hibernate.initialize( otherItem.getBagOfItems() );
 			assertTrue( otherItem.getBagOfItems().isEmpty() );
-			s.delete( otherItem );
+			s.remove( otherItem );
 		});
 	}
 
@@ -278,7 +278,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 			VersionedItem item = new VersionedItem();
 			item.setName( "steve" );
 			item.setDescription( "steve's item" );
-			s.save( item );
+			s.persist( item );
 			itemRef.set(item);
 		});
 
@@ -289,7 +289,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 		item.setVersion(item.getVersion() - 1 );
 
 		try {
-			withTxSession(s -> s.update(item));
+			withTxSession(s -> s.merge(item));
 			fail("expected stale write to fail");
 		}
 		catch (Exception e) {
@@ -304,13 +304,13 @@ public class ReadWriteTest extends ReadOnlyTest {
 		assertEquals(initialVersion.longValue(), cachedVersionValue.longValue());
 
 		withTxSession(s -> {
-			VersionedItem item2 = s.load( VersionedItem.class, item.getId() );
-			s.delete( item2 );
+			VersionedItem item2 = s.getReference( VersionedItem.class, item.getId() );
+			s.remove( item2 );
 		});
 	}
 
 	@Test
-	@TestForIssue( jiraKey = "HHH-5690")
+	@JiraKey( value = "HHH-5690")
 	public void testPersistEntityFlushRollbackNotInEntityCache() throws Exception {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
@@ -339,7 +339,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 	}
 
 	@Test
-	@TestForIssue( jiraKey = "HHH-5690")
+	@JiraKey( value = "HHH-5690")
 	public void testPersistEntityFlushEvictGetRollbackNotInEntityCache() throws Exception {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
@@ -416,8 +416,8 @@ public class ReadWriteTest extends ReadOnlyTest {
 		assertEquals("A bog standard item", ser[2]);
 
 		withTxSession(s -> {
-			Item item = s.load(Item.class, idRef.get());
-			s.delete(item);
+			Item item = s.getReference(Item.class, idRef.get());
+			s.remove(item);
 		});
 	}
 
@@ -623,7 +623,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 			assertFalse("2lc entity cache is expected to not contain Citizen id = " + citizens.get(1).getId(),
 					cache.containsEntity(Citizen.class, citizens.get(1).getId()));
 
-			Citizen citizen = s.load(Citizen.class, citizens.get(0).getId());
+			Citizen citizen = s.getReference(Citizen.class, citizens.get(0).getId());
 			assertNotNull(citizen);
 			assertNotNull(citizen.getFirstname()); // proxy gets resolved
 			assertEquals(1, slcStats.getMissCount());
@@ -648,8 +648,8 @@ public class ReadWriteTest extends ReadOnlyTest {
 
 			cache.evictAll();
 
-			s.delete(s.load(Citizen.class, citizens.get(0).getId()));
-			s.delete(s.load(Citizen.class, citizens.get(1).getId()));
+			s.remove(s.getReference(Citizen.class, citizens.get(0).getId()));
+			s.remove(s.getReference(Citizen.class, citizens.get(1).getId()));
 		});
 	}
 

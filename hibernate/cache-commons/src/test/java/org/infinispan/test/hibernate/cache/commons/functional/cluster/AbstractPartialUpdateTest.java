@@ -78,7 +78,7 @@ public abstract class AbstractPartialUpdateTest extends DualNodeTest {
 
          Statistics statsNode1 = getStatistics(remoteFactory);
          withSession(remoteFactory.withOptions(), s -> {
-            Customer customer = s.load(Customer.class, 1);
+            Customer customer = s.getReference(Customer.class, 1);
             assertEquals("JBoss", customer.getName());
          });
 
@@ -89,12 +89,12 @@ public abstract class AbstractPartialUpdateTest extends DualNodeTest {
          final boolean updated = doUpdate();
          if (updated) {
             withSession(localFactory.withOptions(), s -> {
-               Customer customer = s.load(Customer.class, 1);
+               Customer customer = s.getReference(Customer.class, 1);
                assertEquals("JBoss, a division of Red Hat", customer.getName());
             });
 
             withSession(remoteFactory.withOptions(), s -> {
-               Customer customer = s.load(Customer.class, 1);
+               Customer customer = s.getReference(Customer.class, 1);
                assertEquals("JBoss, a division of Red Hat", customer.getName());
             });
          }

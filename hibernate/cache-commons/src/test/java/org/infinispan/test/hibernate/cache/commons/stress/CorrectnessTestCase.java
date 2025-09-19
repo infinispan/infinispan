@@ -860,7 +860,7 @@ public abstract class CorrectnessTestCase {
 
       @Override
       public void run() throws Exception {
-         withRandomFamily((s, f) -> s.delete(f), Ref.of(null), Ref.of(Collections.EMPTY_SET), LockMode.OPTIMISTIC);
+         withRandomFamily((s, f) -> s.remove(f), Ref.of(null), Ref.of(Collections.EMPTY_SET), LockMode.OPTIMISTIC);
       }
    }
 
@@ -916,7 +916,7 @@ public abstract class CorrectnessTestCase {
             }
             it.remove();
             if (person != null) {
-               s.delete(person);
+               s.remove(person);
             }
             return true;
          } else {

@@ -3,13 +3,13 @@ package org.infinispan.test.hibernate.cache.v62.util;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
-import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceInitiator;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
@@ -31,7 +30,6 @@ import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.CachedDomainDataAccess;
 import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.cfg.Environment;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.engine.jdbc.connections.spi.JdbcConnectionAccess;
 import org.hibernate.engine.jdbc.dialect.spi.DialectFactory;
@@ -45,7 +43,6 @@ import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.internal.AbstractSharedSessionContract;
 import org.hibernate.internal.SessionCreationOptions;
 import org.hibernate.internal.SessionFactoryImpl;
-import org.hibernate.internal.util.PropertiesHelper;
 import org.hibernate.jpa.spi.JpaCompliance;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.query.Query;
@@ -55,7 +52,6 @@ import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLoca
 import org.hibernate.resource.transaction.backend.jdbc.spi.JdbcResourceTransactionAccess;
 import org.hibernate.resource.transaction.spi.TransactionCoordinator;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorOwner;
-import org.hibernate.service.StandardServiceInitiators;
 import org.hibernate.service.internal.ProvidedService;
 import org.hibernate.testing.boot.DialectFactoryTestingImpl;
 import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
@@ -63,7 +59,6 @@ import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.v62.impl.DomainDataRegionImpl;
 import org.infinispan.hibernate.cache.v62.impl.Sync;
-import org.infinispan.test.hibernate.cache.commons.functional.NoOpSessionFactoryImplementor;
 import org.infinispan.test.hibernate.cache.commons.util.BatchModeJtaPlatform;
 import org.infinispan.test.hibernate.cache.commons.util.JdbcResourceTransactionMock;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
@@ -85,7 +80,7 @@ public class TestSessionAccessImpl implements TestSessionAccess {
 
    @Override
    public Object mockSession(Class<? extends JtaPlatform> jtaPlatform, ControlledTimeService timeService, RegionFactory regionFactory) {
-      SessionMock session = mock(SessionMock.class);
+      SessionMock session = mock(SessionMock.class, withSettings().extraInterfaces(Session.class));
       when(session.isClosed()).thenReturn(false);
       when(session.isOpen()).thenReturn(true);
 
@@ -112,31 +107,22 @@ public class TestSessionAccessImpl implements TestSessionAccess {
          SqlExceptionHelper sqlExceptionHelper = mock(SqlExceptionHelper.class);
          JdbcServices jdbcServices = mock(JdbcServices.class);
          when(jdbcServices.getSqlExceptionHelper()).thenReturn(sqlExceptionHelper);
-         ServiceRegistryTestingImpl serviceRegistry = createServiceRegistry(true,
-               new BootstrapServiceRegistryBuilder().build(),
-               StandardServiceInitiators.LIST,
-               Arrays.asList(
-                     dialectFactoryService(),
-                     connectionProviderService(),
-                     new ProvidedService<>(JdbcServices.class, jdbcServices)
-               ),
-               PropertiesHelper.map( Environment.getProperties())
-         );
 
          JdbcSessionContext jdbcSessionContext = mock(JdbcSessionContext.class);
-         when(jdbcSessionContext.getServiceRegistry()).thenReturn(serviceRegistry);
+         when(jdbcSessionContext.getJdbcServices()).thenReturn(jdbcServices);
          JpaCompliance jpaCompliance = mock(JpaCompliance.class);
          when(jpaCompliance.isJpaTransactionComplianceEnabled()).thenReturn(true);
          SessionFactoryOptions sessionFactoryOptions = mock(SessionFactoryOptions.class);
          when(sessionFactoryOptions.getJpaCompliance()).thenReturn(jpaCompliance);
 
-         SessionFactoryImplementor sessionFactory = new NoOpSessionFactoryImplementor() {
-            @Override
-            public SessionFactoryOptions getSessionFactoryOptions() {
-               return sessionFactoryOptions;
-            }
-         };
-         when(jdbcSessionContext.getSessionFactory()).thenReturn(sessionFactory);
+         SessionFactoryImplementor sessionFactory = mock(SessionFactoryImplementor.class);
+         when(sessionFactory.getSessionFactoryOptions()).thenReturn(sessionFactoryOptions);
+//         SessionFactoryImplementor sessionFactory = new NoOpSessionFactoryImplementor() {
+//            @Override
+//            public SessionFactoryOptions getSessionFactoryOptions() {
+//               return sessionFactoryOptions;
+//            }
+//         };
          when(jdbcSessionOwner.getJdbcSessionContext()).thenReturn(jdbcSessionContext);
          when(session.getSessionFactory()).thenReturn(sessionFactory);
          when(session.getFactory()).thenReturn(sessionFactory);
@@ -144,7 +130,7 @@ public class TestSessionAccessImpl implements TestSessionAccess {
          when(txOwner.getResourceLocalTransaction()).thenReturn(new JdbcResourceTransactionMock());
          when(txOwner.getJdbcSessionOwner()).thenReturn(jdbcSessionOwner);
          when(txOwner.isActive()).thenReturn(true);
-         txCoord = JdbcResourceLocalTransactionCoordinatorBuilderImpl.INSTANCE
+         txCoord = new JdbcResourceLocalTransactionCoordinatorBuilderImpl()
                .buildTransactionCoordinator(txOwner, null);
          when(session.getTransactionCoordinator()).thenReturn(txCoord);
          when(session.beginTransaction()).then(invocation -> {
@@ -390,14 +376,9 @@ public class TestSessionAccessImpl implements TestSessionAccess {
 
    }
 
-   private abstract class SessionMock extends AbstractSharedSessionContract implements Session {
+   private abstract class SessionMock extends AbstractSharedSessionContract {
       public SessionMock(SessionFactoryImpl factory, SessionCreationOptions options) {
          super(factory, options);
-      }
-
-      @Override
-      public SessionFactoryImplementor getSessionFactory() {
-         return super.getSessionFactory();
       }
    }
 

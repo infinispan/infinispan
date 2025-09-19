@@ -111,13 +111,13 @@ public class JBossStandaloneJtaExampleTest {
          try {
             Session session = sessionFactory.openSession();
             assertEquals(TransactionStatus.ACTIVE, session.getTransaction().getStatus());
-            Item found = session.load(Item.class, item.getId());
+            Item found = session.getReference(Item.class, item.getId());
             Statistics stats = session.getSessionFactory().getStatistics();
             log.info(stats.toString());
             assertEquals(item.getDescription(), found.getDescription());
             assertEquals(0, stats.getSecondLevelCacheMissCount());
             assertEquals(1, stats.getSecondLevelCacheHitCount());
-            session.delete(found);
+            session.remove(found);
             // IMO the flush should not be necessary, but session.close() does not flush
             // and the item is not deleted.
             session.flush();
@@ -193,7 +193,7 @@ public class JBossStandaloneJtaExampleTest {
          if (entityBinding instanceof RootClass) {
             RootClass rootClass = (RootClass) entityBinding;
             rootClass.setCacheConcurrencyStrategy("transactional");
-            rootClass.setCachingExplicitlyRequested(true);
+            rootClass.setCached(true);
          }
       }
       for (Collection collectionBinding : metadata.getCollectionBindings()) {

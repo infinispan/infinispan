@@ -84,7 +84,7 @@ public class CacheKeysFactoryTest extends BaseUnitTestCase {
          assertEquals(keyClassName, key.getClass().getSimpleName());
 
          withTxSession(false, sessionFactory, s -> {
-            Person person = s.load(Person.class, new Name("John", "Black"));
+            Person person = s.getReference(Person.class, new Name("John", "Black"));
             assertEquals(39, person.getAge());
          });
       } finally {

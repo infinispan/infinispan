@@ -74,8 +74,9 @@
             </exclusion>
             <exclusion>
                <groupId>org.junit.jupiter</groupId>
-               <artifactId>junit-jupiter-api</artifactId>
+               <artifactId>junit-jupiter-*</artifactId>
             </exclusion>
+
          </exclusions>
       </dependency>
       <dependency>

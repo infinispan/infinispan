@@ -49,12 +49,12 @@ public class ReadOnlyTest extends SingleNodeTest {
 		log.info("Entry persisted, let's load and delete it.");
 
 		withTxSession(s -> {
-			Item found = s.load(Item.class, item.getId());
+			Item found = s.getReference(Item.class, item.getId());
 			log.info(stats.toString());
 			assertEquals(item.getDescription(), found.getDescription());
 			assertEquals(0, stats.getSecondLevelCacheMissCount());
 			assertEquals(1, stats.getSecondLevelCacheHitCount());
-			s.delete(found);
+			s.remove(found);
 		});
 	}
 
@@ -75,13 +75,13 @@ public class ReadOnlyTest extends SingleNodeTest {
 		TIME_SERVICE.advance(1);
 
 		withTxSession(s -> {
-			Item found = s.load(Item.class, item.getId());
+			Item found = s.getReference(Item.class, item.getId());
 			log.info(stats.toString());
 			assertEquals(item.getDescription(), found.getDescription());
 			assertEquals(1, stats.getSecondLevelCacheMissCount());
 			assertEquals(0, stats.getSecondLevelCacheHitCount());
 			assertEquals(2, stats.getSecondLevelCachePutCount());
-			s.delete(found);
+			s.remove(found);
 		});
 	}
 

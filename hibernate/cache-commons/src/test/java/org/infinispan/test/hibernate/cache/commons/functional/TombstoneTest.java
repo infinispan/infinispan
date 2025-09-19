@@ -14,8 +14,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.hibernate.testing.TestForIssue;
+
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.hibernate.testing.orm.junit.JiraKey;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
@@ -272,7 +273,7 @@ public class TombstoneTest extends AbstractNonInvalidationTest {
    }
 
    protected void assertItemDescription(String expected) throws Exception {
-      assertEquals(expected, withTxSessionApply(s -> s.load(Item.class, itemId).getDescription()));
+      assertEquals(expected, withTxSessionApply(s -> s.getReference(Item.class, itemId).getDescription()));
    }
 
    @Test
@@ -296,7 +297,7 @@ public class TombstoneTest extends AbstractNonInvalidationTest {
       assertItemDescription("Updated item");
    }
 
-   @TestForIssue(jiraKey = "HHH-11323")
+   @JiraKey(value = "HHH-11323")
    @Test
    public void testEvictPutFromLoadDuringUpdate() throws Exception {
       CountDownLatch flushLatch = new CountDownLatch(1);
@@ -325,7 +326,7 @@ public class TombstoneTest extends AbstractNonInvalidationTest {
       cleanup.add(() -> extractInterceptorChain(entityCache).removeInterceptor(BlockingInterceptor.class));
       // the putFromLoad should be blocked in the interceptor
       Future<?> putFromLoad = executor.submit(() -> withTxSessionApply(s -> {
-         assertEquals("Original item", s.load(Item.class, itemId).getDescription());
+         assertEquals("Original item", s.getReference(Item.class, itemId).getDescription());
          return null;
       }));
       putFromLoadBarrier.await(WAIT_TIMEOUT, TimeUnit.SECONDS);

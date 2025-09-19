@@ -7,13 +7,13 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
-import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.CustomRunner;
+import org.hibernate.testing.orm.junit.JiraKey;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -54,7 +54,7 @@ public class QueryStalenessTest {
 
    // TEST disabled until https://hibernate.atlassian.net/browse/HHH-15150 can be resolved
    @Test
-   @TestForIssue(jiraKey = "HHH-10677")
+   @JiraKey(value = "HHH-10677")
    public void testLocalQueryInvalidatedImmediatelly() {
 //      Session s1 = sf1.openSession();
 //      Person person = new Person("John", "Smith", 29);
