@@ -222,7 +222,7 @@
       <versionx.org.jboss.weld.se.weld-se-core>5.1.6.Final</versionx.org.jboss.weld.se.weld-se-core>
       <versionx.org.jboss.weld.weld-core-impl>5.1.6.Final</versionx.org.jboss.weld.weld-core-impl>
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
-      <versionx.org.mariadb.jdbc>3.5.5</versionx.org.mariadb.jdbc>
+      <versionx.org.mariadb.jdbc>3.5.6</versionx.org.mariadb.jdbc>
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
       <versionx.org.postgresql>42.7.7</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>1.21.3</versionx.org.testcontainers.testcontainers>
