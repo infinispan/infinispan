@@ -10,7 +10,18 @@ Therefore, if you need to use `javax` namespace you will still need to utilize H
 
 The {brandname} cache provider version suitable for your application depends on the Hibernate ORM version in use:
 
-.Hibernate ORM 6.2+
+.Hibernate ORM 6.6, 7.1 or newer
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/hibernate_v6.6.xml[]
+----
+
+[NOTE]
+====
+Hibernate ORM 6.5 is supported with {brandname} 15.2.x and older.
+====
+
+.Hibernate ORM 6.2-6.5
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/hibernate_v6.2.xml[]

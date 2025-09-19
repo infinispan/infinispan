@@ -101,13 +101,13 @@ public class JndiRegionFactoryTest extends SingleNodeTest {
       withTxSession(s -> s.persist(item));
 
       withTxSession(s -> {
-         Item found = s.load(Item.class, item.getId());
+         Item found = s.getReference(Item.class, item.getId());
          Statistics stats = sessionFactory.getStatistics();
          log.info(stats.toString());
          assertEquals(item.getDescription(), found.getDescription());
          assertEquals(0, stats.getSecondLevelCacheMissCount());
          assertEquals(1, stats.getSecondLevelCacheHitCount());
-         s.delete(found);
+         s.remove(found);
       });
    }
 }

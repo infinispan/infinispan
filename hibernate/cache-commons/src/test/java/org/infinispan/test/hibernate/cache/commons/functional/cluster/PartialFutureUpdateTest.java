@@ -15,10 +15,10 @@ public class PartialFutureUpdateTest extends AbstractPartialUpdateTest {
    @Override
    protected boolean doUpdate() throws Exception {
       withTxSession(localFactory, s -> {
-         Customer customer = s.load(Customer.class, 1);
+         Customer customer = s.getReference(Customer.class, 1);
          assertEquals("JBoss", customer.getName());
          customer.setName(customer.getName() + ", a division of Red Hat");
-         s.update(customer);
+         s.merge(customer);
       });
       return true;
    }

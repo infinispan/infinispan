@@ -91,8 +91,8 @@ public class VersionedTest extends AbstractNonInvalidationTest {
    @Test
    public void testRemoveRolledBack() throws Exception {
       withTxSession(s -> {
-         Item item = s.load(Item.class, itemId);
-         s.delete(item);
+         Item item = s.getReference(Item.class, itemId);
+         s.remove(item);
          assertSingleCacheEntry();
          s.flush();
 
@@ -105,12 +105,12 @@ public class VersionedTest extends AbstractNonInvalidationTest {
    public void testUpdateRolledBack() throws Exception {
       ByRef<Object> entryRef = new ByRef<>(null);
       withTxSession(s -> {
-         Item item = s.load(Item.class, itemId);
+         Item item = s.getReference(Item.class, itemId);
          item.getDescription();
          Object prevEntry = assertSingleCacheEntry();
          entryRef.set(prevEntry);
          item.setDescription("Updated item");
-         s.update(item);
+         s.merge(item);
          assertEquals(prevEntry, assertSingleCacheEntry());
          s.flush();
          assertEquals(prevEntry, assertSingleCacheEntry());
@@ -123,11 +123,11 @@ public class VersionedTest extends AbstractNonInvalidationTest {
    public void testStaleReadDuringUpdate() throws Exception {
       ByRef<Object> entryRef = testStaleRead((s, item) -> {
          item.setDescription("Updated item");
-         s.update(item);
+         s.merge(item);
       });
       assertNotEquals(entryRef.get(), assertSingleCacheEntry());
       withTxSession(s -> {
-         Item item = s.load(Item.class, itemId);
+         Item item = s.getReference(Item.class, itemId);
          assertEquals("Updated item", item.getDescription());
       });
    }
@@ -135,7 +135,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
    @Test
    public void testStaleReadDuringRemove() throws Exception {
       try {
-         testStaleRead((s, item) -> s.delete(item));
+         testStaleRead((s, item) -> s.remove(item));
          if (accessType == AccessType.NONSTRICT_READ_WRITE) {
             // Nonstrict removes preemptively to prevent permanent cache inconsistency
             fail("Should have thrown an ObjectNotFoundException!");
@@ -174,7 +174,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
                   }
                }
             });
-            Item item = s.load(Item.class, itemId);
+            Item item = s.getReference(Item.class, itemId);
             consumer.accept(s, item);
             s.flush();
          } catch (StaleStateException e) {
@@ -192,7 +192,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       ByRef<Object> entryRef = new ByRef<>(null);
       try {
          withTxSession(s -> {
-            Item item = s.load(Item.class, itemId);
+            Item item = s.getReference(Item.class, itemId);
             assertEquals("Original item", item.getDescription());
             entryRef.set(assertSingleCacheEntry());
          });
@@ -240,9 +240,9 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       TIME_SERVICE.advance(1);
 
       withTxSession(s -> {
-         Item item = s.load(Item.class, itemId);
+         Item item = s.getReference(Item.class, itemId);
          item.setDescription("Updated item");
-         s.update(item);
+         s.merge(item);
       });
 
       assertSingleCacheEntry();
@@ -257,7 +257,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       TIME_SERVICE.advance(1);
 
       withTxSession(s -> {
-         Item item = s.load(Item.class, itemId);
+         Item item = s.getReference(Item.class, itemId);
          assertEquals("Original item", item.getDescription());
       });
 
@@ -272,14 +272,14 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       TIME_SERVICE.advance(1);
 
       withTxSession(s -> {
-         Item item = s.load(Item.class, itemId);
+         Item item = s.getReference(Item.class, itemId);
          OtherItem otherItem = new OtherItem();
          otherItem.setName("Other 1");
          s.persist(otherItem);
          item.addOtherItem(otherItem);
       });
       withTxSession(s -> {
-         Item item = s.load(Item.class, itemId);
+         Item item = s.getReference(Item.class, itemId);
          Set<OtherItem> otherItems = item.getOtherItems();
          assertFalse(otherItems.isEmpty());
          otherItems.remove(otherItems.iterator().next());
@@ -297,7 +297,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       TIME_SERVICE.advance(1);
       Future<Boolean> addFuture = executor.submit(() -> withTxSessionApply(s -> {
          awaitOrThrow(collectionUpdateTestInterceptor.updateLatch);
-         Item item = s.load(Item.class, itemId);
+         Item item = s.getReference(Item.class, itemId);
          OtherItem otherItem = new OtherItem();
          otherItem.setName("Other 2");
          s.persist(otherItem);
@@ -307,7 +307,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       }));
 
       Future<Boolean> readFuture = executor.submit(() -> withTxSessionApply(s -> {
-         Item item = s.load(Item.class, itemId);
+         Item item = s.getReference(Item.class, itemId);
          assertTrue(item.getOtherItems().isEmpty());
          return true;
       }));
@@ -317,7 +317,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       interceptorChain.removeInterceptor(CollectionUpdateTestInterceptor.class);
       interceptorChain.removeInterceptor(AnotherCollectionUpdateTestInterceptor.class);
 
-      withTxSession(s -> assertFalse(s.load(Item.class, itemId).getOtherItems().isEmpty()));
+      withTxSession(s -> assertFalse(s.getReference(Item.class, itemId).getOtherItems().isEmpty()));
    }
 
    class CollectionUpdateTestInterceptor extends DDAsyncInterceptor {

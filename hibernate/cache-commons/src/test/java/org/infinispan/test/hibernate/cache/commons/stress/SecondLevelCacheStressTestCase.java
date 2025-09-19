@@ -317,7 +317,7 @@ public class SecondLevelCacheStressTestCase {
 
                         // Update random entity that has been inserted
                         int id = RANDOM.nextInt(numEntities) + 1;
-                        Family family = (Family) s.load(Family.class, id);
+                        Family family = (Family) s.getReference(Family.class, id);
                         String newSecondName = "Arrizabalaga-" + run;
                         family.setSecondName(newSecondName);
 
@@ -345,7 +345,7 @@ public class SecondLevelCacheStressTestCase {
 
                   int id = updatedIdsSeq.get(RANDOM.nextInt(
                         updatedIdsSeq.size()));
-                  Family family = (Family) s.load(Family.class, id);
+                  Family family = (Family) s.getReference(Family.class, id);
                   String secondName = family.getSecondName();
                   assertNotNull(secondName);
                   assertTrue("Second name not expected: " + secondName,
@@ -393,7 +393,7 @@ public class SecondLevelCacheStressTestCase {
                   Session s = sessionFactory.openSession();
 
                   int id = RANDOM.nextInt(numEntities) + 1;
-                  Family family = (Family) s.load(Family.class, id);
+                  Family family = (Family) s.getReference(Family.class, id);
                   String familyName = family.getName();
                   // Skip ñ check in order to avoid issues...
                   assertTrue("Unexpected family: " + familyName ,
@@ -422,12 +422,12 @@ public class SecondLevelCacheStressTestCase {
 
                         // Get each id and remove it
                         int id = removeIds.poll();
-                        Family family = (Family) s.load(Family.class, id);
+                        Family family = (Family) s.getReference(Family.class, id);
                         String familyName = family.getName();
                         // Skip ñ check in order to avoid issues...
                         assertTrue("Unexpected family: " + familyName ,
                               familyName.startsWith("Zamarre"));
-                        s.delete(family);
+                        s.remove(family);
 
                         s.getTransaction().commit();
                         s.close();

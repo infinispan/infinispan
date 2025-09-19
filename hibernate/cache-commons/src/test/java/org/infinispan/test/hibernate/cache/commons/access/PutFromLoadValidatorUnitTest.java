@@ -24,8 +24,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
-import org.hibernate.testing.TestForIssue;
+
 import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
+import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.junit4.CustomRunner;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -489,7 +490,7 @@ public class PutFromLoadValidatorUnitTest {
 	}
 
 	@Test
-	@TestForIssue(jiraKey = "HHH-9928")
+	@JiraKey(value = "HHH-9928")
 	public void testGetForNullReleasePuts() {
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		cb.simpleCache(true).expiration().maxIdle(500);

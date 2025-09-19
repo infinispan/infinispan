@@ -320,6 +320,12 @@
                </exclusion>
             </exclusions>
          </dependency>
+          <dependency>
+              <groupId>org.checkerframework</groupId>
+              <artifactId>checker-qual</artifactId>
+              <version>${version.checker-qual}</version>
+              <scope>test</scope>
+          </dependency>
          <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-api</artifactId>

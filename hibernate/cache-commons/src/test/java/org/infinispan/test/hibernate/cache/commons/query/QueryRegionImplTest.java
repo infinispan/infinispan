@@ -17,7 +17,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.testing.TestForIssue;
+import org.hibernate.testing.orm.junit.JiraKey;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.test.categories.Smoke;
 import org.infinispan.configuration.cache.IsolationLevel;
@@ -233,7 +233,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 	}
 
 	@Test
-	@TestForIssue(jiraKey = "HHH-7898")
+	@JiraKey(value = "HHH-7898")
 	public void testPutDuringPut() throws Exception {
 		withQueryRegion((sessionFactory, region) -> {
 			withSession(sessionFactory, session -> TEST_SESSION_ACCESS.fromRegion(region).put(session, KEY, VALUE1));
@@ -358,7 +358,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 	}
 
 	@Test
-	@TestForIssue(jiraKey = "HHH-10163")
+	@JiraKey(value = "HHH-10163")
 	public void testEvictAll() throws Exception {
 		withQueryRegion((sessionFactory, region) -> {
 			withSession(sessionFactory, s -> TEST_SESSION_ACCESS.fromRegion(region).put(s, KEY, VALUE1));

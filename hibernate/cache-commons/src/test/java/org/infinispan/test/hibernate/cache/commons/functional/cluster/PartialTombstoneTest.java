@@ -20,10 +20,10 @@ public class PartialTombstoneTest extends AbstractPartialUpdateTest {
    protected boolean doUpdate() throws Exception {
       try {
          withTxSession(localFactory, s -> {
-            Customer customer = s.load(Customer.class, 1);
+            Customer customer = s.getReference(Customer.class, 1);
             assertEquals("JBoss", customer.getName());
             customer.setName(customer.getName() + ", a division of Red Hat");
-            s.update(customer);
+            s.merge(customer);
          });
          fail("Expected update to fail");
          return true;

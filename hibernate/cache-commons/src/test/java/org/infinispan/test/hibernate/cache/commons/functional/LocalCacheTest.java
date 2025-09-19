@@ -11,10 +11,10 @@ import java.util.Map;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
 import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorBuilderImpl;
-import org.hibernate.testing.TestForIssue;
+import org.hibernate.testing.orm.junit.JiraKey;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestException;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
 import org.junit.Test;
@@ -34,7 +34,7 @@ public class LocalCacheTest extends SingleNodeTest {
    }
 
    @Test
-   @TestForIssue(jiraKey = "HHH-12457")
+   @JiraKey(value = "HHH-12457")
    public void testRollback() throws Exception {
       ByRef<Integer> idRef = new ByRef<>(0);
       withTxSession(s -> {
@@ -44,14 +44,14 @@ public class LocalCacheTest extends SingleNodeTest {
          idRef.set(c.getId());
       });
       Exceptions.expectException(TestException.class, () -> withTxSession(s -> {
-         Customer c = s.load(Customer.class, idRef.get());
+         Customer c = s.getReference(Customer.class, idRef.get());
          c.setName("Bar");
          s.persist(c);
          s.flush();
          throw new TestException("Roll me back");
       }));
       withTxSession(s -> {
-         Customer c = s.load(Customer.class, idRef.get());
+         Customer c = s.getReference(Customer.class, idRef.get());
          assertEquals("Foo", c.getName());
       });
    }

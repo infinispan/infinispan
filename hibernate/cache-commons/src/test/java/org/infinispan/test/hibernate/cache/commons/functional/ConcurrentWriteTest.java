@@ -206,7 +206,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 					markRollbackOnly(s);
 					return;
 				}
-				Customer customer = s.load( Customer.class, customerId );
+				Customer customer = s.getReference( Customer.class, customerId );
 				Set<Contact> contacts = customer.getContacts();
 				if ( !contacts.isEmpty() ) {
 					contacts.iterator().next();
@@ -224,7 +224,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 	private Contact getFirstContact(Integer customerId) throws Exception {
 		assert customerId != null;
 		return withTxSessionApply(s -> {
-			Customer customer = s.load(Customer.class, customerId);
+			Customer customer = s.getReference(Customer.class, customerId);
 			Set<Contact> contacts = customer.getContacts();
 			Contact firstContact = contacts.isEmpty() ? null : contacts.iterator().next();
 			if (TERMINATE_ALL_USERS) {
@@ -243,12 +243,13 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 	private Contact addContact(Integer customerId) throws Exception {
 		assert customerId != null;
 		return withTxSessionApply(s -> {
-			final Customer customer = s.load(Customer.class, customerId);
+			final Customer customer = s.getReference(Customer.class, customerId);
 			Contact contact = new Contact();
 			contact.setName("contact name");
 			contact.setTlf("wtf is tlf?");
 			contact.setCustomer(customer);
 			customer.getContacts().add(contact);
+			s.persist(contact);
 			// assuming contact is persisted via cascade from customer
 			if (TERMINATE_ALL_USERS) {
 				markRollbackOnly(s);
@@ -268,7 +269,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 		assert customerId != null;
 
 		withTxSession(s -> {
-			Customer customer = s.load( Customer.class, customerId );
+			Customer customer = s.getReference( Customer.class, customerId );
 			Set<Contact> contacts = customer.getContacts();
 			if ( contacts.size() != 1 ) {
 				throw new IllegalStateException(

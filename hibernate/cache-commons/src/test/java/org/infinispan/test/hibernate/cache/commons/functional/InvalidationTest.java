@@ -18,7 +18,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.hibernate.PessimisticLockException;
-import org.hibernate.testing.TestForIssue;
+import org.hibernate.testing.orm.junit.JiraKey;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
@@ -50,7 +51,7 @@ public class InvalidationTest extends SingleNodeTest {
    }
 
    @Test
-   @TestForIssue(jiraKey = "HHH-9868")
+   @JiraKey(value = "HHH-9868")
    public void testConcurrentRemoveAndPutFromLoad() throws Exception {
 
       final Item item = new Item( "chris", "Chris's Item" );
@@ -74,7 +75,7 @@ public class InvalidationTest extends SingleNodeTest {
                arriveAndAwait(deletePhaser, 2000);
                arriveAndAwait(deletePhaser, 2000);
                log.trace("Item loaded");
-               s.delete(loadedItem);
+               s.remove(loadedItem);
                s.flush();
                log.trace("Item deleted");
                // start get-thread here
@@ -165,7 +166,7 @@ public class InvalidationTest extends SingleNodeTest {
       phaser.awaitAdvanceInterruptibly(phaser.arrive(), timeout, TimeUnit.MILLISECONDS);
    }
 
-   @TestForIssue(jiraKey = "HHH-11304")
+   @JiraKey(value = "HHH-11304")
    @Test
    public void testFailedInsert() throws Exception {
       AdvancedCache pendingPutsCache = getPendingPutsCache(Item.class);
@@ -179,7 +180,7 @@ public class InvalidationTest extends SingleNodeTest {
       assertNoInvalidators(pendingPutsCache);
    }
 
-   @TestForIssue(jiraKey = "HHH-11304")
+   @JiraKey(value = "HHH-11304")
    @Test
    public void testFailedUpdate() throws Exception {
       AdvancedCache pendingPutsCache = getPendingPutsCache(Item.class);
@@ -188,7 +189,7 @@ public class InvalidationTest extends SingleNodeTest {
       withTxSession(s -> s.persist(item));
 
       withTxSession(s -> {
-         Item item2 = s.load(Item.class, item.getId());
+         Item item2 = s.getReference(Item.class, item.getId());
          assertEquals("before-update", item2.getName());
          item2.setName("after-update");
          s.persist(item2);
@@ -199,14 +200,14 @@ public class InvalidationTest extends SingleNodeTest {
       assertNoInvalidators(pendingPutsCache);
 
       withTxSession(s -> {
-         Item item3 = s.load(Item.class, item.getId());
+         Item item3 = s.getReference(Item.class, item.getId());
          assertEquals("before-update", item3.getName());
-         s.delete(item3);
+         s.remove(item3);
       });
       assertNoInvalidators(pendingPutsCache);
    }
 
-   @TestForIssue(jiraKey = "HHH-11304")
+   @JiraKey(value = "HHH-11304")
    @Test
    public void testFailedRemove() throws Exception {
       AdvancedCache pendingPutsCache = getPendingPutsCache(Item.class);
@@ -215,18 +216,18 @@ public class InvalidationTest extends SingleNodeTest {
       withTxSession(s -> s.persist(item));
 
       withTxSession(s -> {
-         Item item2 = s.load(Item.class, item.getId());
+         Item item2 = s.getReference(Item.class, item.getId());
          assertEquals("before-remove", item2.getName());
-         s.delete(item2);
+         s.remove(item2);
          s.flush();
          s.getTransaction().markRollbackOnly();
       });
       assertNoInvalidators(pendingPutsCache);
 
       withTxSession(s -> {
-         Item item3 = s.load(Item.class, item.getId());
+         Item item3 = s.getReference(Item.class, item.getId());
          assertEquals("before-remove", item3.getName());
-         s.delete(item3);
+         s.remove(item3);
       });
       assertNoInvalidators(pendingPutsCache);
    }
