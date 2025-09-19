@@ -110,7 +110,7 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
 
    private GlobalConfigurationBuilder createGlobalConfigurationBuilder() {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      builder.globalState().persistentLocation(tmpDirectory);
+      builder.globalState().enable().persistentLocation(tmpDirectory);
       builder.serialization().addContextInitializer(getSerializationContextInitializer());
       return builder;
    }

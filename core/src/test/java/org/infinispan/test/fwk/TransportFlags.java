@@ -36,14 +36,6 @@ public class TransportFlags {
       return withMerge;
    }
 
-   /**
-    * @deprecated Since 13.0, will be removed in 16.0
-    */
-   @Deprecated(forRemoval=true, since = "13.0")
-   public TransportFlags withPortRange(int portRange) {
-      return withSiteIndex(portRange);
-   }
-
    public TransportFlags withSiteIndex(int siteIndex) {
       this.siteIndex = siteIndex;
       return this;

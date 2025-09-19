@@ -185,7 +185,7 @@ public abstract class AbstractPersistenceCompatibilityTest<T> extends SingleCach
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      builder.globalState().persistentLocation(tmpDirectory);
+      builder.globalState().enable().persistentLocation(tmpDirectory);
       builder.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       amendGlobalConfigurationBuilder(builder);
       return TestCacheManagerFactory.createCacheManager(builder, null);

@@ -1,9 +1,9 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -12,11 +12,9 @@ import java.util.function.Consumer;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
@@ -28,8 +26,8 @@ import org.infinispan.interceptors.impl.PassivationWriterInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -100,7 +98,7 @@ public class AddStoreTest extends AbstractInfinispanTest {
          ConfigurationBuilder cacheBuilder = new ConfigurationBuilder();
          cacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
          location = CommonsTestingUtil.tmpDirectory(this.getClass());
-         cacheBuilder.persistence().addStore(SingleFileStoreConfigurationBuilder.class).location(location);
+         cacheBuilder.persistence().addStore(SoftIndexFileStoreConfigurationBuilder.class).dataLocation(location).indexLocation(location);
 
          ConfigurationBuilder toAddBuilder = new ConfigurationBuilder();
          toAddBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
@@ -195,9 +193,6 @@ public class AddStoreTest extends AbstractInfinispanTest {
                if (store instanceof DummyInMemoryStore) {
                   DummyInMemoryStore dummyInMemoryStore = (DummyInMemoryStore) store;
                   return dummyInMemoryStore.size();
-               } else if (store instanceof SingleFileStore) {
-                  SingleFileStore<?, ?> singleFileStore = (SingleFileStore<?, ?>) store;
-                  return join(singleFileStore.size(IntSets.immutableRangeSet(numSegments)));
                }
                return -1L;
             }).findFirst().orElse(-1L);
@@ -231,7 +226,7 @@ public class AddStoreTest extends AbstractInfinispanTest {
       try {
          location = CommonsTestingUtil.tmpDirectory(this.getClass());
 
-         cacheBuilder.persistence().passivation(true).addStore(SingleFileStoreConfigurationBuilder.class).location(location);
+         cacheBuilder.persistence().passivation(true).addStore(SoftIndexFileStoreConfigurationBuilder.class).dataLocation(location).indexLocation(location);
          cacheBuilder.memory().maxCount(1);
 
          ConfigurationBuilder toAddBuilder = new ConfigurationBuilder();

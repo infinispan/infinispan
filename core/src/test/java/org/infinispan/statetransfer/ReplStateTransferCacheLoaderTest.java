@@ -43,7 +43,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
       Util.recursiveFileRemove(tmpDir);
 
       globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalBuilder.globalState().persistentLocation(tmpDir.getPath());
+      globalBuilder.globalState().enable().persistentLocation(new File(tmpDir, "1").getPath());
 
       // reproduce the MODE-1754 config as closely as possible
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true, true);
@@ -55,7 +55,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
             .useLockStriping(false).isolationLevel(IsolationLevel.READ_COMMITTED)
             .clustering().remoteTimeout(20000)
             .stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(10000)
-            .persistence().addSingleFileStore().location(new File(tmpDir, "store0").getAbsolutePath());
+            .persistence().addSoftIndexFileStore();
 
       createCluster(globalBuilder, builder, 1);
       waitForClusterToForm();
@@ -78,10 +78,10 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
       }
 
       log.info("Adding a new node ..");
-      // make sure this node writes in a different location
-      builder.persistence().clearStores().addSingleFileStore().location(new File(tmpDir, "store0").getAbsolutePath()).fetchPersistentState(true);
-
-      addClusterEnabledCacheManager(globalBuilder, builder);
+      GlobalConfigurationBuilder globalBuilder2 = new GlobalConfigurationBuilder().read(globalBuilder.build());
+      globalBuilder2.globalState().enable().persistentLocation(new File(tmpDir, "2").getPath());
+      builder.clustering().stateTransfer().fetchInMemoryState(true);
+      addClusterEnabledCacheManager(globalBuilder2, builder);
       log.info("Added a new node");
 
       for (int i = 0; i < numKeys; i++) {
