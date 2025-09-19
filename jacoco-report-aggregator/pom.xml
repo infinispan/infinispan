@@ -133,7 +133,11 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring6-common</artifactId>
+            <artifactId>infinispan-spring-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-embedded</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -141,7 +145,19 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring7-embedded</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-remote</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring6-remote</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring7-remote</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -149,7 +165,15 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-boot4-starter-embedded</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring-boot3-starter-remote</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-boot4-starter-remote</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -158,7 +182,17 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-boot4-starter-session-tests</artifactId>
+            <version>${version.infinispan}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring-boot3-starter-embedded-tests</artifactId>
+            <version>${version.infinispan}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-boot4-starter-embedded-tests</artifactId>
             <version>${version.infinispan}</version>
         </dependency>
         <dependency>

@@ -6,10 +6,10 @@ Use the Spring Session API to externalize session data to {brandname}.
 
 . Add dependencies to your `pom.xml`.
 +
-* Embedded caches: `infinispan-spring6-embedded`
-* Remote caches: `infinispan-spring6-remote`
+* Embedded caches: `infinispan-spring6-embedded` or `infinispan-spring7-embedded`
+* Remote caches: `infinispan-spring6-remote` or `infinispan-spring7-remote`
 +
-The following example is for remote caches:
+The following example is for remote caches in Spring 6:
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
