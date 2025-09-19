@@ -4,6 +4,7 @@
 
 Add {brandname} dependencies to your application and use Spring Cache annotations to store data in embedded or remote caches.
 
+include::{topics}/proc_upgrade_from_6_to_7.adoc[leveloffset=+1]
 include::{topics}/proc_setting_up_spring_cache.adoc[leveloffset=+1]
 include::{topics}/proc_using_spring_cache_provider.adoc[leveloffset=+1]
 include::{topics}/con_spring_cache_annotations.adoc[leveloffset=+1]

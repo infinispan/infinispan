@@ -1,0 +1,4 @@
+<dependency>
+  <groupId>org.infinispan</groupId>
+  <artifactId>infinispan-spring-boot4-starter-remote</artifactId>
+</dependency>

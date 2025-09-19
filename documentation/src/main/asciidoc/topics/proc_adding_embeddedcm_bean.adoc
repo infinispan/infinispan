@@ -4,7 +4,7 @@ Configure your application to use embedded caches.
 
 .Procedure
 
-. Add `infinispan-spring-boot3-starter-embedded` to your project's classpath to enable Embedded mode.
+. Add `infinispan-spring-boot3-starter-embedded` or `infinispan-spring-boot4-starter-embedded` to your project's classpath to enable Embedded mode.
 . Use the Spring `@Autowired` annotation to include an `EmbeddedCacheManager` bean in your Java configuration classes, as in the following example:
 +
 [source,java,options="nowrap"]
