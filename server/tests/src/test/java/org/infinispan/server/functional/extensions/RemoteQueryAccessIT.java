@@ -12,6 +12,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.sampledomain.Address;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.sampledomain.TestDomainSCIImpl;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
@@ -49,7 +50,7 @@ public class RemoteQueryAccessIT {
 
    @Test
    public void testRegularRemoteQuery() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, true, null, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, true, TestDomainSCI.INSTANCE, ENTITY_USER);
       for (int i = 0; i < 50; i++) {
          remoteCache.put(i, createUser(i, i % 7));
       }

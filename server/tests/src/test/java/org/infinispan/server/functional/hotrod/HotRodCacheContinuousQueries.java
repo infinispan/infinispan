@@ -1,6 +1,5 @@
 package org.infinispan.server.functional.hotrod;
 
-import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.BANK_PROTO_FILE;
 import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.ENTITY_USER;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,6 +14,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.ContinuousQueryListener;
 import org.infinispan.commons.api.query.Query;
+import org.infinispan.protostream.sampledomain.TestDomainSCIImpl;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -34,7 +34,7 @@ public class HotRodCacheContinuousQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testQueries(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCIImpl.INSTANCE, ENTITY_USER);
 
       remoteCache.put(1, createUser(1, 25));
       remoteCache.put(2, createUser(2, 25));

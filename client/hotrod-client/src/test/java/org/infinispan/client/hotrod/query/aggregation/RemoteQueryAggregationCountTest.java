@@ -3,12 +3,12 @@ package org.infinispan.client.hotrod.query.aggregation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.aggregation.QueryAggregationCountTest.AGGREGATION_RESULT;
-import static org.infinispan.query.aggregation.QueryAggregationCountTest.CHUNK_SIZE;
 import static org.infinispan.query.aggregation.QueryAggregationCountTest.END_DAY;
 import static org.infinispan.query.aggregation.QueryAggregationCountTest.FULL_AGGREGATION_RESULT;
 import static org.infinispan.query.aggregation.QueryAggregationCountTest.NUMBER_OF_DAYS;
 import static org.infinispan.query.aggregation.QueryAggregationCountTest.REV_AGGREGATION_RESULT;
 import static org.infinispan.query.aggregation.QueryAggregationCountTest.START_DAY;
+import static org.infinispan.query.aggregation.QueryAggregationCountTest.TOTAL_NOT_NULL_ITEMS;
 import static org.infinispan.query.aggregation.QueryAggregationCountTest.chunk;
 
 import java.util.Optional;
@@ -71,7 +71,7 @@ public class RemoteQueryAggregationCountTest extends SingleHotRodServerTest {
       query = remoteCache.query("select status, count(code) from Sale group by status");
       Optional<Integer> totalNotNullItems = query.list().stream()
             .map(objects -> ((Long) objects[1]).intValue()).reduce(Integer::sum);
-      assertThat(totalNotNullItems).hasValue(CHUNK_SIZE * NUMBER_OF_DAYS);
+      assertThat(totalNotNullItems).hasValue(TOTAL_NOT_NULL_ITEMS);
 
       // alias
       query = remoteCache.query("select s.status, count(s.code) from Sale s where s.day >= :start and s.day <= :end group by s.status order by s.status");

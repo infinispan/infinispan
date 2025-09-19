@@ -1,6 +1,5 @@
 package org.infinispan.server.functional.hotrod;
 
-import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.BANK_PROTO_FILE;
 import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.ENTITY_USER;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,6 +29,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Address;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.server.functional.ClusteredIT;
@@ -51,7 +51,7 @@ public class HotRodListenerWithDslFilter {
 
    @Test
    public void testEventFilter() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, true, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, true, TestDomainSCI.INSTANCE, ENTITY_USER);
       User user1 = new User();
       user1.setId(1);
       user1.setName("John");
