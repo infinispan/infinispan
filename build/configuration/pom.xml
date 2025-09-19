@@ -178,7 +178,7 @@
       <version.smallrye-mutiny>2.9.4</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->
       <version.spring>6.2.11</version.spring>
-      <version.spring.boot>3.5.5</version.spring.boot>
+      <version.spring.boot>3.5.6</version.spring.boot>
       <version.spring.session>3.5.2</version.spring.session>
 
       <version.kafka.client>3.6.1</version.kafka.client>
