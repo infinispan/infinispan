@@ -1,0 +1,41 @@
+<xsd:schema xmlns="http://www.infinispan.org/schemas/spring"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.infinispan.org/schemas/spring"
+            elementFormDefault="qualified">
+
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xsd:import namespace="http://www.springframework.org/schema/beans"
+                schemaLocation="https://www.springframework.org/schema/beans/spring-beans.xsd"/>
+
+    <xsd:annotation>
+        <xsd:documentation><![CDATA[
+	    Infinispan Spring configuration schema
+		]]></xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:element name="embedded-cache-manager">
+        <xsd:complexType>
+            <xsd:attribute name="id" type="xsd:string"/>
+            <xsd:attribute name="configuration" type="xsd:string"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="remote-cache-manager">
+        <xsd:complexType>
+            <xsd:attribute name="id" type="xsd:string"/>
+            <xsd:attribute name="configuration" type="xsd:string"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="container-cache-manager">
+        <xsd:complexType>
+            <xsd:choice>
+                <xsd:any namespace="##other" minOccurs="0"/>
+            </xsd:choice>
+            <xsd:attribute name="id" type="xsd:string"/>
+            <xsd:attribute name="cache-container-ref" type="xsd:string"/>
+        </xsd:complexType>
+    </xsd:element>
+
+
+</xsd:schema>

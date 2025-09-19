@@ -86,6 +86,8 @@
       <module>archetypes</module>
       <module>spring/spring6</module>
       <module>spring/spring-boot-3</module>
+      <module>spring/spring7</module>
+      <module>spring/spring-boot-4</module>
       <module>cli</module>
       <module>tasks/api</module>
       <module>tasks/manager</module>
@@ -1093,48 +1095,58 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring5-common</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring5-embedded</artifactId>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring5-remote</artifactId>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring6-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
             <version>${version.infinispan}</version>
          </dependency>
+          <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-spring7-common</artifactId>
+              <type>test-jar</type>
+              <scope>test</scope>
+              <version>${version.infinispan}</version>
+          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring6-embedded</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
+          <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-spring7-embedded</artifactId>
+              <version>${version.infinispan}</version>
+          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring6-remote</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
+          <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-spring7-remote</artifactId>
+              <version>${version.infinispan}</version>
+          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring-boot3-starter-embedded</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
+          <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-spring-boot4-starter-embedded</artifactId>
+              <version>${version.infinispan}</version>
+          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring-boot3-starter-remote</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
+          <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-spring-boot4-starter-remote</artifactId>
+              <version>${version.infinispan}</version>
+          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>

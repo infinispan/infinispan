@@ -1,0 +1,11 @@
+DELETE FROM books;
+INSERT INTO books(isbn, author, title) VALUES ('12-678-555', 'Homer', 'Iliad');
+INSERT INTO books(isbn, author, title) VALUES ('12-678-897', 'Joyce, James', 'Finnegans Wake');
+INSERT INTO books(isbn, author, title) VALUES ('13-956-645', 'Sterne, Laurence', 'Tristam Shandy');
+INSERT INTO books(isbn, author, title) VALUES ('15-765-111', 'Proust, Marcel', 'A la recherche du temps perdu');
+INSERT INTO books(isbn, author, title) VALUES ('29-567-555', 'Shakespeare, William', 'King Lear');
+INSERT INTO books(isbn, author, title) VALUES ('28-223-349', 'Pullman, Philip', 'His Dark Materials');
+INSERT INTO books(isbn, author, title) VALUES ('66-666-666', 'Milton, John', 'Paradise Lost');
+INSERT INTO books(isbn, author, title) VALUES ('78-678-671', 'Heidegger, Martin', 'Sein und Zeit');
+INSERT INTO books(isbn, author, title) VALUES ('09-009-009', 'Montaigne, Miguel de', 'Essays');
+INSERT INTO books(isbn, author, title) VALUES ('78-763-555', 'Stephenson, Neal', 'The Baroque Cycle');
