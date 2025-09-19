@@ -11,7 +11,6 @@ import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 
 public class RemoteQuery {
 
@@ -27,8 +26,10 @@ public class RemoteQuery {
       // Grab the generated protobuf schema and registers in the server.
       Path proto = Paths.get(RemoteQuery.class.getClassLoader()
             .getResource("proto/book.proto").toURI());
-      String protoBufCacheName = ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
-      remoteCacheManager.getCache(protoBufCacheName).put("book.proto", Files.readString(proto));
+      remoteCacheManager
+              .administration()
+              .schemas()
+              .createOrUpdate(Schema.buildFromStringContent("book.proto", Files.readString(proto)));
 
       // Obtain the 'books' remote cache
       RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache("books");

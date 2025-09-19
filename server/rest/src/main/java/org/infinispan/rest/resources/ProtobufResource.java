@@ -17,9 +17,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
@@ -76,15 +78,15 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
 
    private CompletionStage<RestResponse> getSchemasNames(RestRequest request) {
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
-            .getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);
+            .getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, request);
       boolean pretty = isPretty(request);
 
       return CompletableFuture.supplyAsync(() ->
                   Flowable.fromIterable(cache.keySet())
-                        .filter(key -> !((String) key).endsWith(ProtobufMetadataManager.ERRORS_KEY_SUFFIX))
+                        .filter(key -> !((String) key).endsWith(RemoteSchemasAdmin.SchemaErrors.ERRORS_KEY_SUFFIX))
                         .map(key -> {
                            String error = (String) cache
-                                 .get(key + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
+                                 .get(key + RemoteSchemasAdmin.SchemaErrors.ERRORS_KEY_SUFFIX);
                            ProtoSchema protoSchema = new ProtoSchema();
                            protoSchema.name = (String) key;
                            if (error != null) {
@@ -108,7 +110,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       if (contents == null || contents.size() == 0) throw new NoDataFoundException("Schema data not sent in the request");
 
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
-            .getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);
+            .getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, request);
 
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
 
@@ -169,7 +171,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       String schemaName = checkMandatorySchemaName(request);
 
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
-            .getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);
+            .getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, request);
 
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       return restCacheManager.getPrivilegedInternalEntry(cache, schemaName, true).thenApply(entry -> {
@@ -199,7 +201,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       String schemaName = checkMandatorySchemaName(request);
 
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
-      AdvancedCache<Object, Object> protobufCache = restCacheManager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);
+      AdvancedCache<Object, Object> protobufCache = restCacheManager.getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, request);
 
       return restCacheManager.getPrivilegedInternalEntry(protobufCache, schemaName, true).thenCompose(entry -> {
          NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
@@ -207,7 +209,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
 
          if (entry instanceof InternalCacheEntry) {
             responseBuilder.status(HttpResponseStatus.NO_CONTENT);
-            return restCacheManager.remove(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, schemaName,
+            return restCacheManager.remove(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, schemaName,
                   MediaType.MATCH_ALL, request)
                   .thenApply(v -> responseBuilder.build());
          }
