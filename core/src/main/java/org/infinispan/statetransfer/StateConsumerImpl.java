@@ -6,6 +6,7 @@ import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 import static org.infinispan.context.Flag.IRAC_STATE;
 import static org.infinispan.context.Flag.PUT_FOR_STATE_TRANSFER;
+import static org.infinispan.context.Flag.SKIP_INDEX_CLEANUP;
 import static org.infinispan.context.Flag.SKIP_LOCKING;
 import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
@@ -128,7 +129,8 @@ public class StateConsumerImpl implements StateConsumer {
    protected static final long STATE_TRANSFER_FLAGS = EnumUtil.bitSetOf(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL,
                                                                         IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
                                                                         SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK,
-                                                                        SKIP_XSITE_BACKUP, SKIP_LOCKING, IRAC_STATE);
+                                                                        SKIP_XSITE_BACKUP, SKIP_LOCKING, IRAC_STATE,
+                                                                        SKIP_INDEX_CLEANUP);
    protected static final long INVALIDATE_FLAGS = STATE_TRANSFER_FLAGS & ~FlagBitSets.PUT_FOR_STATE_TRANSFER;
    public static final String NO_KEY = "N/A";
 
