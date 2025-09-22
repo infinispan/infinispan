@@ -145,7 +145,7 @@ public class MapSessionProtoAdapter {
 
       @Override
       public String getTypeName() {
-         return "org.infinispan.persistence.spring.SessionAttribute";
+         return "org.infinispan.persistence.spring.session.SessionAttribute";
       }
 
       @Override
@@ -166,7 +166,7 @@ public class MapSessionProtoAdapter {
                }
                case 18: {
                   if (wrappedMessageDelegate == null) {
-                     wrappedMessageDelegate = ((SerializationContextImpl) ctx.getSerializationContext()).getMarshallerDelegate(WrappedMessage.class);
+                     wrappedMessageDelegate = ctx.getSerializationContext().getMarshallerDelegate(WrappedMessage.class);
                   }
                   int length = in.readUInt32();
                   int oldLimit = in.pushLimit(length);
