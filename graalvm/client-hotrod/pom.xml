@@ -182,23 +182,7 @@
                         <buildArg>-H:ResourceConfigurationResources=resource-config.json</buildArg>
                         <buildArg>-H:+AllowDeprecatedBuilderClassesOnImageClasspath</buildArg>
                         <!-- Remove the entries below once we upgrade to Native Build Tools 0.11.0 -->
-                        <buildArg>--initialize-at-build-time=org.junit.jupiter.api.DisplayNameGenerator$IndicativeSentences</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor$ClassInfo</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor$LifecycleMethods</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.ClassTemplateInvocationTestDescriptor</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.ClassTemplateTestDescriptor</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.DynamicDescendantFilter$Mode</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.ExclusiveResourceCollector$1</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.MethodBasedTestDescriptor$MethodInfo</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.discovery.ClassSelectorResolver$DummyClassTemplateInvocationContext</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.platform.engine.support.store.NamespacedHierarchicalStore$EvaluatedValue</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.platform.launcher.core.DiscoveryIssueNotifier</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.platform.launcher.core.HierarchicalOutputDirectoryProvider</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.platform.launcher.core.LauncherDiscoveryResult$EngineResultInfo</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.platform.launcher.core.LauncherPhase</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.platform.suite.engine.DiscoverySelectorResolver</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.platform.suite.engine.SuiteTestDescriptor$DiscoveryIssueForwardingListener</buildArg>
-                        <buildArg>--initialize-at-build-time=org.junit.platform.suite.engine.SuiteTestDescriptor$LifecycleMethods</buildArg>
+                        <!--buildArg>- -initialize-at-run-time=org.junit.platform.launcher.core.LauncherPhase</buildArg-->
                      </buildArgs>
                      <metadataRepository>
                         <enabled>true</enabled>

@@ -107,7 +107,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    protected ClientStatistics clientStatistics;
    protected ObjectName mbeanObjectName;
    protected OperationDispatcher dispatcher;
-   protected RemoteQueryFactory queryFactory;
+   protected final RemoteQueryFactory queryFactory;
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService,
                           Function<InternalRemoteCache<K,V>, CacheOperationsFactory> factoryFunction) {
@@ -127,6 +127,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       this.operationsFactory = factoryFunction.apply(this);
       this.clientListenerNotifier = rcm.getListenerNotifier();
       this.flagInt = rcm.getConfiguration().forceReturnValues() ? Flag.FORCE_RETURN_VALUE.getFlagInt() : 0;
+      this.queryFactory = new RemoteQueryFactory(this);
    }
 
    protected RemoteCacheImpl(RemoteCacheImpl<?, ?> other, int flagInt) {
@@ -171,12 +172,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    private void init(int batchSize, OperationDispatcher dispatcher) {
       this.batchSize = batchSize;
       this.dispatcher = dispatcher;
-      // try cautiously
-      try {
-         this.queryFactory = new RemoteQueryFactory(this);
-      } catch (Throwable e) {
-         log.queryDisabled();
-      }
    }
 
    private void registerMBean(ObjectName jmxParent) {
@@ -581,17 +576,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public <T> Query<T> query(String query) {
-      if (queryFactory == null) {
-         throw log.queryNotSupported();
-      }
       return queryFactory.create(query);
    }
 
    @Override
    public ContinuousQuery<K, V> continuousQuery() {
-      if (queryFactory == null) {
-         throw log.queryNotSupported();
-      }
       return queryFactory.continuousQuery(this);
    }
 
