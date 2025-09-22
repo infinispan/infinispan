@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -228,6 +229,86 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          // Try to use an incompatible configuration
          builder.clustering().cacheMode(CacheMode.REPL_SYNC);
          Exceptions.expectRootCause(IllegalArgumentException.class, () -> cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build()));
+      } finally {
+         TestingUtil.killCacheManagers(cm1, cm2);
+      }
+   }
+
+   public void testConfigurationUpdateRestart(Method m) {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
+      GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
+      try {
+         cm1.start();
+         cm2.start();
+         // Create two DIST caches
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
+         cm1.administration().getOrCreateCache("cache1", builder.build());
+         assertTrue(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertTrue(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+
+         // Stop cm2 before updating.
+         cm2.stop();
+
+         // Update the configuration while cm2 is off.
+         builder.clustering().stateTransfer().awaitInitialTransfer(false);
+         cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
+         assertFalse(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+
+         // Start cm2 again successfully. It should have the same configuration as cm1.
+         global2 = statefulGlobalBuilder(state2, false);
+         cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
+         cm2.start();
+         assertFalse(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+      } finally {
+         TestingUtil.killCacheManagers(cm1, cm2);
+      }
+   }
+
+   public void testConfigurationKeptAfterRestart(Method m) {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
+      GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
+      try {
+         cm1.start();
+         cm2.start();
+         // Create two DIST caches
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
+         cm1.administration().getOrCreateCache("cache1", builder.build());
+         assertTrue(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertTrue(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+
+         // Stop cm2 before updating.
+         cm2.stop();
+
+         // Update the configuration while cm2 is off.
+         builder.clustering().stateTransfer().awaitInitialTransfer(false);
+         cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
+         assertFalse(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+
+         // Start cm2 again successfully. It should have the same configuration as cm1.
+         cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, statefulGlobalBuilder(state2, false), new ConfigurationBuilder(), new TransportFlags());
+         cm2.start();
+         assertFalse(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+
+         // Restart both nodes and ensure configuration still updated.
+         TestingUtil.killCacheManagers(cm1, cm2);
+         cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, statefulGlobalBuilder(state1, false), new ConfigurationBuilder(), new TransportFlags());
+         cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, statefulGlobalBuilder(state2, false), new ConfigurationBuilder(), new TransportFlags());
+
+         cm2.start();
+         cm1.start();
+
+         assertFalse(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertFalse(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }
