@@ -50,7 +50,7 @@ public class SpringEmbeddedModule implements ModuleLifecycle {
       ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, sessionSci);
       ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, sessionSci);
 
-      BaseMarshaller sessionAttributeMarshaller = new MapSessionProtoAdapter.SessionAttributeRawMarshaller(serializationMarshaller);
+      BaseMarshaller<?> sessionAttributeMarshaller = new MapSessionProtoAdapter.SessionAttributeRawMarshaller(serializationMarshaller);
       ctxRegistry.addMarshaller(PERSISTENCE, sessionAttributeMarshaller);
       ctxRegistry.addMarshaller(GLOBAL, sessionAttributeMarshaller);
    }
