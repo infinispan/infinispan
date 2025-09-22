@@ -409,12 +409,12 @@ public interface Log extends BasicLogger {
    @Message(value = "The SNI hostname is required when hostname validation is enabled", id = 4112)
    CacheConfigurationException missingSniHostName();
 
-   @LogMessage(level = INFO)
-   @Message(value = "Query module not found. Queries are disabled.", id = 4113)
-   void queryDisabled();
+//   @LogMessage(level = INFO)
+//   @Message(value = "Query module not found. Queries are disabled.", id = 4113)
+//   void queryDisabled();
 
-   @Message(value = "Query module not found. Add remote-query-client to the classpath.", id = 4114)
-   HotRodClientException queryNotSupported();
+//   @Message(value = "Query module not found. Add remote-query-client to the classpath.", id = 4114)
+//   HotRodClientException queryNotSupported();
 
    @LogMessage(level = WARN)
    @Message(value = "Unexpected error while creating the tracing propagation context. Client context tracing will not be propagated.", id = 4115)
