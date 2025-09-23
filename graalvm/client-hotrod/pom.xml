@@ -189,8 +189,6 @@
                         <buildArg>-H:ReflectionConfigurationResources=reflect-config.json</buildArg>
                         <buildArg>-H:ResourceConfigurationResources=resource-config.json</buildArg>
                         <buildArg>-H:+AllowDeprecatedBuilderClassesOnImageClasspath</buildArg>
-                        <!-- Remove the entries below once we upgrade to Native Build Tools 0.11.0 -->
-                        <!--buildArg>- -initialize-at-run-time=org.junit.platform.launcher.core.LauncherPhase</buildArg-->
                      </buildArgs>
                      <metadataRepository>
                         <enabled>true</enabled>
