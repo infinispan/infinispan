@@ -863,7 +863,7 @@ public class StateConsumerImpl implements StateConsumer {
       requestedTransactionalSegments = IntSets.concurrentSet(numSegments);
 
       stateRequestExecutor = new LimitedExecutor("StateRequest-" + cacheName, nonBlockingExecutor, 1);
-      progressTracker = new ProgressTracker("state-transfer-" + cacheName, timeoutExecutor, timeService, timeout >> 2, TimeUnit.MILLISECONDS);
+      progressTracker = new ProgressTracker("state-transfer-" + cacheName, timeoutExecutor, timeService, Math.min(30_000L, timeout >> 2), TimeUnit.MILLISECONDS);
       running = true;
    }
 
