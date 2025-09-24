@@ -1,0 +1,25 @@
+name: Lint GitHub Actions Workflows
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+    types: [opened, synchronize, reopened]
+
+jobs:
+  lint-workflows:
+    runs-on: ubuntu-latest
+    name: Lint GitHub Actions workflows
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: actionlint with reviewdog
+        uses: reviewdog/action-actionlint@v1.67.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-annotations
+          fail_level: warning
+          filter_mode: file
+          level: warning
