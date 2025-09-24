@@ -223,7 +223,7 @@
       <version.maven.resources>3.3.1</version.maven.resources>
       <version.maven.scm>2.1.0</version.maven.scm>
       <version.maven.shade>3.6.1</version.maven.shade>
-      <version.maven.sonatype.central>0.8.0</version.maven.sonatype.central>
+      <version.maven.sonatype.central>0.9.0</version.maven.sonatype.central>
       <version.maven.source>3.3.1</version.maven.source>
       <version.maven.surefire>3.5.4</version.maven.surefire>
       <version.maven.war>3.4.0</version.maven.war>
