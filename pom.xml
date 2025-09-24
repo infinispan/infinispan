@@ -912,11 +912,6 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>org.infinispan.arquillian.container</groupId>
-            <artifactId>infinispan-arquillian-impl</artifactId>
-            <version>${version.infinispan.arquillian}</version>
-         </dependency>
-         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
             <type>test-jar</type>
@@ -1882,13 +1877,6 @@
                <groupId>org.jboss.galleon</groupId>
                <artifactId>galleon-maven-plugin</artifactId>
                <version>${version.org.jboss.galleon}</version>
-               <dependencies>
-                  <dependency>
-                     <groupId>xom</groupId>
-                     <artifactId>xom</artifactId>
-                     <version>${version.xom}</version>
-                  </dependency>
-               </dependencies>
             </plugin>
             <plugin>
                <groupId>org.antlr</groupId>
