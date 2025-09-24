@@ -102,7 +102,7 @@
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
       <version.fabric8.kubernetes-client>7.4.0</version.fabric8.kubernetes-client>
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
-      <version.glassfish.jaxb>4.0.5</version.glassfish.jaxb>
+      <version.glassfish.jaxb>4.0.6</version.glassfish.jaxb>
       <version.graalvm>24.0.0</version.graalvm>
       <version.groovy>2.4.21</version.groovy>
       <version.hamcrest>2.2</version.hamcrest>
