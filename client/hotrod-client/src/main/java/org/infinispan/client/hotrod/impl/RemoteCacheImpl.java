@@ -102,12 +102,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    protected final CacheOperationsFactory operationsFactory;
    protected final ClientListenerNotifier clientListenerNotifier;
    protected final int flagInt;
+   protected final RemoteQueryFactory queryFactory;
    protected int batchSize;
    protected DataFormat dataFormat;
    protected ClientStatistics clientStatistics;
    protected ObjectName mbeanObjectName;
    protected OperationDispatcher dispatcher;
-   protected final RemoteQueryFactory queryFactory;
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService,
                           Function<InternalRemoteCache<K,V>, CacheOperationsFactory> factoryFunction) {
@@ -146,7 +146,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       // set the values for init
       this.batchSize = other.batchSize;
       this.dispatcher = other.dispatcher;
-      this.queryFactory = other.queryFactory;
+      this.queryFactory = new RemoteQueryFactory(this);
    }
 
    @Override
