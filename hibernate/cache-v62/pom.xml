@@ -25,6 +25,16 @@
          <artifactId>infinispan-hibernate-cache-commons</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.hibernate.orm</groupId>
+         <artifactId>hibernate-core</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>net.bytebuddy</groupId>
+               <artifactId>byte-buddy</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-hibernate-cache-commons</artifactId>
          <type>test-jar</type>
