@@ -19,7 +19,6 @@
         <version.spring.session>${version.spring.session4}</version.spring.session>
     </properties>
     <modules>
-        <module>spring7-common</module>
         <module>spring7-embedded</module>
         <module>spring7-remote</module>
     </modules>
