@@ -1,0 +1,99 @@
+{
+  "definitions" : [ {
+    "protopath" : "org:/:infinispan:/:spring:/:common:/:persistence.spring6.session.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "SessionAttribute",
+        "type_id" : 5902,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "name",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedMessage",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "serializedBytes",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "MapSession",
+        "type_id" : 5901,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "id",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "originalId",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "creationTime",
+          "type" : "fixed64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "lastAccessedTime",
+          "type" : "fixed64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "maxInactiveSeconds",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 6,
+          "name" : "attributes",
+          "type" : "SessionAttribute",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "SessionUpdateRemappingFunction",
+        "type_id" : 5903,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "lastAccessedTime",
+          "type" : "fixed64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "maxInactiveSeconds",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "attributes",
+          "type" : "SessionAttribute",
+          "is_repeated" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "org/infinispan/protostream/message-wrapping.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.spring.session"
+      }
+    }
+  } ]
+}

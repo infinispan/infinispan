@@ -79,10 +79,7 @@
       <module>client/hotrod-client-test</module>
       <module>client/infinispan-key-value-store-hotrod</module>
       <module>archetypes</module>
-      <module>spring/spring6</module>
-      <module>spring/spring-boot-3</module>
-      <module>spring/spring7</module>
-      <module>spring/spring-boot-4</module>
+      <module>spring</module>
       <module>cli</module>
       <module>tasks/api</module>
       <module>tasks/manager</module>
