@@ -51,16 +51,9 @@ public class RestReinitializeCacheIT {
 
    @Test
    public void testReinitializeCache() {
-      var clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-      clientBuilder.maxRetries(5);
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC)
-            .persistence().addSoftIndexFileStore();
-      builder.clustering().partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES);
-      RemoteCache<Object, Object> hotRod = SERVER.hotrod()
-            .withServerConfiguration(builder)
-            .withClientConfiguration(clientBuilder)
-            .create();
+      RemoteCache<Object, Object> hotRod = defineCache(CacheMode.DIST_SYNC);
+      RemoteCache<Object, Object> replicatedCache = defineCache(CacheMode.REPL_SYNC);
+      replicatedCache.put("key", "value");
 
       // Insert an entry to the cache.
       hotRod.put("k", "v");
@@ -84,7 +77,7 @@ public class RestReinitializeCacheIT {
       assertCacheMissingMembers(() -> hotRod.get("k"));
 
       // Successfully reinitialize replicated caches
-      reinitialize(rest, "memcachedCache");
+      reinitialize(rest, replicatedCache.getName());
 
       // Add another member, but still missing nodes.
       serverDriver.restart(1);
@@ -98,6 +91,20 @@ public class RestReinitializeCacheIT {
 
       // Initialize the missing member to complete the cluster.
       serverDriver.restart(2);
+   }
+
+   private RemoteCache<Object, Object> defineCache(CacheMode mode) {
+      var clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.maxRetries(5);
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(mode)
+            .persistence().addSoftIndexFileStore();
+      builder.clustering().partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES);
+      return SERVER.hotrod()
+            .withServerConfiguration(builder)
+            .withClientConfiguration(clientBuilder)
+            .withQualifier("cache-" + mode)
+            .create();
    }
 
    @Test

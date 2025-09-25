@@ -35,7 +35,7 @@ public class MemcachedDistributionTest extends MemcachedMultiNodeTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1);
       return TestCacheManagerFactory.createClusteredCacheManager(
-            GlobalConfigurationBuilder.defaultClusteredBuilder().defaultCacheName(cacheName),
+            enableGlobalState(GlobalConfigurationBuilder.defaultClusteredBuilder().defaultCacheName(cacheName), index),
             builder);
    }
 

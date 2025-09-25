@@ -1,11 +1,13 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
 import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -16,9 +18,11 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
@@ -85,7 +89,15 @@ public abstract class AbstractRespTest extends MultipleCacheManagersTest {
       return self();
    }
 
-   protected void amendGlobalConfiguration(GlobalConfigurationBuilder builder) { }
+   protected void amendGlobalConfiguration(GlobalConfigurationBuilder builder) {
+      int length = cacheManagers.size();
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + length);
+      Util.recursiveFileRemove(stateDirectory);
+      builder.globalState().enable()
+            .persistentLocation(stateDirectory)
+            .configurationStorage(ConfigurationStorage.OVERLAY)
+            .sharedPersistentLocation(stateDirectory);
+   }
 
    protected abstract TestSetup setup();
 

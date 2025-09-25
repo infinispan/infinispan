@@ -1,5 +1,6 @@
 package org.infinispan.server.memcached;
 
+import org.infinispan.server.core.transport.CacheInitializeInboundAdapter;
 import org.infinispan.server.core.transport.NettyInitializer;
 import org.infinispan.server.memcached.configuration.MemcachedProtocol;
 
@@ -26,6 +27,7 @@ public class MemcachedChannelInitializer implements NettyInitializer {
             ? memcachedServer.getDecoder()
             : memcachedServer.getDecoder(protocol);
 
+      ch.pipeline().addLast(new CacheInitializeInboundAdapter(memcachedServer));
       ch.pipeline().addLast("decoder", cih);
       if (cih instanceof MemcachedBaseDecoder decoder) {
          memcachedServer.installMemcachedInboundHandler(ch, decoder);

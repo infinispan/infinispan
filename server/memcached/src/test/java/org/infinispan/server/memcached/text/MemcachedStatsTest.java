@@ -71,7 +71,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       ConfigurationBuilder configuration = new ConfigurationBuilder();
       configuration.statistics().enabled(true);
 
-      return TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
+      return TestCacheManagerFactory.createCacheManager(enableGlobalState(globalConfiguration, 0), configuration);
    }
 
    public void testUnsupportedStats() {

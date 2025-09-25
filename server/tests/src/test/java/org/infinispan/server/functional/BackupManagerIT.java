@@ -156,7 +156,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
             },
             client -> {
                // Assert that only caches and the specified "weak-volatile" counter have been backed up. Internal caches will still be present
-               assertStatusAndBodyEquals(OK, "[\"" + PROTOBUF_METADATA_CACHE_NAME + "\",\"" + SCRIPT_CACHE_NAME + "\",\"cache1\",\"memcachedCache\",\"memcachedCache2\",\"respCache\"]", client.caches());
+               assertStatusAndBodyEquals(OK, "[\"" + PROTOBUF_METADATA_CACHE_NAME + "\",\"" + SCRIPT_CACHE_NAME + "\",\"cache1\"]", client.caches());
                assertStatusAndBodyEquals(OK, "[\"weak-volatile\"]", client.counters());
                assertStatus(NOT_FOUND, client.schemas().get("schema.proto"));
                assertStatusAndBodyEquals(OK, "[]", client.tasks().list(RestTaskClient.ResultType.USER));
@@ -219,7 +219,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                assertEquals("scripts/test.js", tasks.iterator().next().at("name").asString());
 
                // Assert that no other content has been restored
-               assertStatusAndBodyEquals(OK, "[\"" + PROTOBUF_METADATA_CACHE_NAME + "\",\"" + SCRIPT_CACHE_NAME + "\",\"memcachedCache\",\"memcachedCache2\",\"respCache\"]", client.caches());
+               assertStatusAndBodyEquals(OK, "[\"" + PROTOBUF_METADATA_CACHE_NAME + "\",\"" + SCRIPT_CACHE_NAME + "\"]", client.caches());
                assertStatusAndBodyEquals(OK, "[]", client.counters());
                assertStatus(NOT_FOUND, client.schemas().get("schema.proto"));
             },

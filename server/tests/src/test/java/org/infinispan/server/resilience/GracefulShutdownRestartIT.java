@@ -143,7 +143,7 @@ public class GracefulShutdownRestartIT {
             .connectionTimeout(RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT * 60);
       RestClient rest = SERVER.rest().withClientConfiguration(restClientBuilder).get();
 
-      CountdownLatchLoggingConsumer consumer = new CountdownLatchLoggingConsumer(1, ".*respCache]\\[Scope=.*]ISPN100010.*");
+      CountdownLatchLoggingConsumer consumer = new CountdownLatchLoggingConsumer(1, ".*CONFIG]\\[Scope=.*]ISPN100010.*");
 
       serverDriver.stop(1);
       serverDriver.restart(1, consumer);
