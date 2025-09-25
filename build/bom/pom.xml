@@ -296,12 +296,7 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-spring6-common</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-spring7-common</artifactId>
+                <artifactId>infinispan-spring-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

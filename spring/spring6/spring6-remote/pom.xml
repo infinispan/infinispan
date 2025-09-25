@@ -40,7 +40,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring6-common</artifactId>
+            <artifactId>infinispan-spring-common</artifactId>
         </dependency>
 
         <dependency>
@@ -68,7 +68,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring6-common</artifactId>
+            <artifactId>infinispan-spring-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
