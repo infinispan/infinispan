@@ -4,6 +4,8 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.server.core.test.ServerTestingUtil.startProtocolServer;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemcachedClient;
@@ -11,6 +13,7 @@ import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemc
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBuilder;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -30,6 +33,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -123,6 +127,13 @@ public class EndpointsCacheFactory<K, V> {
       if (contextInitializer != null)
          globalBuilder.serialization().addContextInitializer(contextInitializer);
 
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + System.identityHashCode(this));
+      Util.recursiveFileRemove(stateDirectory);
+      globalBuilder.globalState().enable()
+            .persistentLocation(stateDirectory)
+            .configurationStorage(ConfigurationStorage.OVERLAY)
+            .sharedPersistentLocation(stateDirectory);
+
       org.infinispan.configuration.cache.ConfigurationBuilder builder =
             new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(cacheMode)
@@ -197,6 +208,7 @@ public class EndpointsCacheFactory<K, V> {
          MemcachedServer server = new MemcachedServer();
          server.start(builder.build(), cacheManager);
          server.postStart();
+         await(server.initializeDefaultCache());
          return server;
       });
       memcachedClient = createMemcachedClient(60000, memcached.getPort());

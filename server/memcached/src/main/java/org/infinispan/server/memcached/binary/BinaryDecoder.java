@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -31,12 +32,17 @@ abstract class BinaryDecoder extends MemcachedBaseDecoder {
    private final BinaryHeader singleHeader = new BinaryHeader();
 
    protected BinaryDecoder(MemcachedServer server, Subject subject) {
-      super(server, subject, server.getCache().getAdvancedCache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, server.getConfiguration().clientEncoding()));
+      super(server, subject);
    }
 
    // Used by the generated decoder.
    public BinaryHeader acquireHeader() {
       return singleHeader;
+   }
+
+   @Override
+   protected final AdvancedCache<byte[], byte[]> createCache(MemcachedServer server) {
+      return server.getCache().getAdvancedCache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, server.getConfiguration().clientEncoding());
    }
 
    @Override

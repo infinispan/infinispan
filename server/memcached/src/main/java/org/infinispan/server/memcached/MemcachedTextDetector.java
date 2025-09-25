@@ -1,5 +1,7 @@
 package org.infinispan.server.memcached;
 
+import static org.infinispan.server.core.transport.CacheInitializeInboundAdapter.CACHE_INITIALIZE_EVENT;
+
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -51,7 +53,9 @@ public class MemcachedTextDetector extends ProtocolDetector {
       // Add the Memcached server handler
       ctx.pipeline().addLast(server.getInitializer(MemcachedProtocol.TEXT));
       Log.SERVER.tracef("Detected Memcached text connection %s", ctx);
+      ctx.fireChannelRegistered();
       // Trigger any protocol-specific rules
       ctx.pipeline().fireUserEventTriggered(AccessControlFilter.EVENT);
+      ctx.pipeline().fireUserEventTriggered(CACHE_INITIALIZE_EVENT);
    }
 }

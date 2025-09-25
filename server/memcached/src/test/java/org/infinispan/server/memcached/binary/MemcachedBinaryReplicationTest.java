@@ -34,7 +34,7 @@ public class MemcachedBinaryReplicationTest extends MemcachedMultiNodeTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.REPL_SYNC);
       return TestCacheManagerFactory.createClusteredCacheManager(
-            GlobalConfigurationBuilder.defaultClusteredBuilder().defaultCacheName(cacheName),
+            enableGlobalState(GlobalConfigurationBuilder.defaultClusteredBuilder().defaultCacheName(cacheName), index),
             builder);
    }
 

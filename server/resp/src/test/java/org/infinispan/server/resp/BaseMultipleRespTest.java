@@ -1,17 +1,23 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.resp.configuration.RespServerConfiguration.DEFAULT_RESP_CACHE;
 import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
 
+import java.io.File;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.resp.test.RespTestingUtil;
@@ -39,7 +45,18 @@ public abstract class BaseMultipleRespTest extends MultipleCacheManagersTest {
             .encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM)
             .clustering().cacheMode(CacheMode.DIST_SYNC)
             .clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner()).numSegments(256);
-      createCluster(cacheBuilder, 2);
+
+      for (int i = 0; i < 2; i++) {
+         String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator +  i);
+         Util.recursiveFileRemove(stateDirectory);
+         GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+         gcb.globalState().enable()
+               .persistentLocation(stateDirectory)
+               .configurationStorage(ConfigurationStorage.OVERLAY)
+               .sharedPersistentLocation(stateDirectory);
+         addClusterEnabledCacheManager(gcb, cacheBuilder);
+      }
+
       defineRespConfiguration(cacheBuilder.build());
       waitForClusterToForm();
 

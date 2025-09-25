@@ -10,9 +10,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.configuration.StringConfiguration;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
@@ -108,6 +110,7 @@ public class DefaultRollingUpgradeTestIT {
                try (StatefulRedisClusterConnection<String, String> conn = client.connect()) {
                   conn.sync().set("foo", "bar");
                }
+               defineConfiguration(uh, "respCache");
                interactions.inc();
             },
             uh -> {
@@ -151,6 +154,7 @@ public class DefaultRollingUpgradeTestIT {
             uh -> {
                MemcachedClient client = uh.memcached(0, memcachedBuilder);
                join(client.set("foo", 0, "bar"));
+               defineConfiguration(uh, "memcachedCache");
                interactions.inc();
             },
             uh -> {
@@ -174,6 +178,19 @@ public class DefaultRollingUpgradeTestIT {
 
       // At least the initial interaction plus one for each node added.
       assertThat(interactions.get()).isGreaterThanOrEqualTo(1 + nodeCount);
+   }
+
+   private static void defineConfiguration(RollingUpgradeHandler ruh, String cacheName) {
+      TestUser user = TestUser.ADMIN;
+      RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
+      restBuilder.security().authentication().enable().username(user.getUser()).password(user.getPassword());
+
+      try (RestClient client = ruh.rest(0, restBuilder)) {
+         RestResponse res = await(client.cache(cacheName).configuration());
+         await(client.cache(cacheName).updateWithConfiguration(RestEntity.create(MediaType.APPLICATION_JSON, res.body()))).close();
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
    }
 
    private static void join(Future<?> future) {

@@ -1,8 +1,10 @@
 package org.infinispan.server.memcached.test;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMemcachedClient;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.memcached.MemcachedServer;
@@ -65,6 +70,16 @@ public abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
    }
 
    protected abstract EmbeddedCacheManager createCacheManager(int index);
+
+   protected final GlobalConfigurationBuilder enableGlobalState(GlobalConfigurationBuilder builder, int index) {
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator +  index);
+      Util.recursiveFileRemove(stateDirectory);
+      builder.globalState().enable()
+            .persistentLocation(stateDirectory)
+            .configurationStorage(ConfigurationStorage.OVERLAY)
+            .sharedPersistentLocation(stateDirectory);
+      return builder;
+   }
 
    protected MemcachedProtocol getProtocol() {
       return MemcachedProtocol.TEXT;

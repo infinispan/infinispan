@@ -6,7 +6,6 @@ import static org.infinispan.server.resp.test.RespTestingUtil.OK;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.resp.SingleNodeRespBaseTest;
@@ -38,11 +37,7 @@ public class PersistentStringCommandTest extends SingleNodeRespBaseTest {
 
    @Override
    protected void amendConfiguration(ConfigurationBuilder builder) {
-      String dir = CommonsTestingUtil.tmpDirectory(baseFolderName() + "/" + nodeId());
-      builder.persistence()
-            .addSoftIndexFileStore()
-            .dataLocation(dir + "/data")
-            .indexLocation(dir + "/index");
+      builder.persistence().addSoftIndexFileStore();
    }
 
    public void testSetGetPersistent() {

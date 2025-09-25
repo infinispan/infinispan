@@ -50,7 +50,7 @@ public class RestReinitializeCacheIT {
    }
 
    @Test
-   public void testReinitializeCache() {
+   public void testReinitializeCache() throws Exception{
       var clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder.maxRetries(5);
       ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -61,6 +61,9 @@ public class RestReinitializeCacheIT {
             .withServerConfiguration(builder)
             .withClientConfiguration(clientBuilder)
             .create();
+
+      // Create memcached cache because it is replicated.
+      SERVER.memcached().get().set("key", 0, "value").get(10, TimeUnit.SECONDS);
 
       // Insert an entry to the cache.
       hotRod.put("k", "v");

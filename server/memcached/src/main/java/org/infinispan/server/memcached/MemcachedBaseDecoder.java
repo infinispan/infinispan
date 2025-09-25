@@ -29,6 +29,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.core.transport.CacheInitializeInboundAdapter;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.memcached.logging.Header;
 import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
@@ -49,14 +50,14 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
    protected static final Subject ANONYMOUS = new Subject();
    protected static final Log log = LogFactory.getLog(MemcachedBaseDecoder.class, Log.class);
    protected final MemcachedServer server;
-   protected final MemcachedStats statistics;
-   protected final boolean statsEnabled;
+   protected MemcachedStats statistics;
+   protected boolean statsEnabled;
    protected final boolean accessLogging;
    protected Temporal requestStart;
    protected ChannelHandlerContext ctx;
-   protected final TimeService timeService;
-   protected final VersionGenerator versionGenerator;
-   protected final AdvancedCache<byte[], byte[]> cache;
+   protected TimeService timeService;
+   protected VersionGenerator versionGenerator;
+   protected AdvancedCache<byte[], byte[]> cache;
    protected final Subject subject;
    protected final String principalName;
    protected final ByRef<MemcachedResponse> current = ByRef.create(null);
@@ -65,23 +66,14 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
    // And this is the ByteBuf pos before decode is performed
    protected int posBefore;
 
-   protected MemcachedBaseDecoder(MemcachedServer server, Subject subject, AdvancedCache<byte[], byte[]> cache) {
+   protected MemcachedBaseDecoder(MemcachedServer server, Subject subject) {
       this.server = server;
       this.subject = subject;
       this.principalName = Security.getSubjectUserPrincipalName(subject);
-      this.cache = cache.withSubject(subject);
-      ComponentRegistry registry = ComponentRegistry.of(cache);
-      VersionGenerator versionGenerator = registry.getComponent(VersionGenerator.class);
-      if (versionGenerator == null) {
-         versionGenerator = new NumericVersionGenerator();
-         registry.registerComponent(versionGenerator, VersionGenerator.class);
-      }
-      this.versionGenerator = versionGenerator;
-      this.timeService = registry.getTimeService();
-      this.statistics = server.getStatistics();
-      this.statsEnabled = statistics != null;
       this.accessLogging = MemcachedAccessLogging.isEnabled();
       this.maxContentLength = server.getConfiguration().maxContentLengthBytes();
+      if (server.isDefaultCacheInitialized() && server.isDefaultCacheRunning())
+         initializeHandler();
    }
 
    protected final void assertCacheIsReady() {
@@ -106,10 +98,42 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
       }
    }
 
+   private void initializeHandler() {
+      AdvancedCache<byte[], byte[]> c = createCache(server);
+      this.cache = c.withSubject(subject);
+      ComponentRegistry registry = ComponentRegistry.of(cache);
+      VersionGenerator versionGenerator = registry.getComponent(VersionGenerator.class);
+      if (versionGenerator == null) {
+         versionGenerator = new NumericVersionGenerator();
+         registry.registerComponent(versionGenerator, VersionGenerator.class);
+      }
+      this.versionGenerator = versionGenerator;
+      this.timeService = registry.getTimeService();
+      this.statistics = server.getStatistics();
+      this.statsEnabled = statistics != null;
+   }
+
+   protected abstract AdvancedCache<byte[], byte[]> createCache(MemcachedServer server);
+
    @Override
    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
       this.ctx = ctx;
       super.handlerAdded(ctx);
+   }
+
+   @Override
+   public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+      if (evt == CacheInitializeInboundAdapter.CACHE_INITIALIZE_EVENT) {
+         initializeHandler();
+         resumeRead();
+      }
+      super.userEventTriggered(ctx, evt);
+   }
+
+   @Override
+   public void channelActive(ChannelHandlerContext ctx) throws Exception {
+      initializeHandler();
+      super.channelActive(ctx);
    }
 
    public void resumeRead() {
