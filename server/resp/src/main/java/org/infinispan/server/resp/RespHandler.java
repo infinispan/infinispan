@@ -3,8 +3,10 @@ package org.infinispan.server.resp;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.core.transport.CacheInitializeInboundAdapter;
 import org.infinispan.server.resp.logging.AccessLoggerManager;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.logging.RespAccessLogger;
@@ -22,6 +24,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
          LogFactory.getLog(RespHandler.class, org.infinispan.server.core.logging.Log.class);
    protected static final int MINIMUM_BUFFER_SIZE;
 
+   private final RespServer respServer;
    protected final BaseRespDecoder resumeHandler;
    protected RespRequestHandler requestHandler;
 
@@ -37,9 +40,11 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
       MINIMUM_BUFFER_SIZE = Integer.parseInt(System.getProperty("infinispan.resp.minimum-buffer-size", "4096"));
    }
 
-   public RespHandler(BaseRespDecoder resumeHandler, RespRequestHandler requestHandler) {
+   public RespHandler(RespServer server, BaseRespDecoder resumeHandler) {
+      this.respServer = server;
       this.resumeHandler = resumeHandler;
-      this.requestHandler = requestHandler;
+      if (server.isDefaultCacheInitialized() && server.isDefaultCacheRunning())
+         requestHandler = initializeRespRequestHandler();
    }
 
    protected ByteBuf allocateBuffer(ChannelHandlerContext ctx, int size) {
@@ -86,23 +91,53 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
       accessLogger.flush(ctx, promise, res);
    }
 
-   @Override
-   public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-      ctx.channel().attr(RespRequestHandler.BYTE_BUF_POOL_ATTRIBUTE_KEY)
-            .set(size -> allocateBuffer(ctx, size));
+   protected RespRequestHandler initializeRespRequestHandler() {
+      AdvancedCache<byte[], byte[]> cache = respServer.getCache();
+      if (respServer.getConfiguration().authentication().enabled()) {
+         return new Resp3AuthHandler(respServer, cache);
+      }
+
+      return respServer.newHandler(cache);
+   }
+
+   private void initializeHandlerState(ChannelHandlerContext ctx) {
+      requestHandler = initializeRespRequestHandler();
       this.accessLogger = traceAccess
             ? new AccessLoggerManager(ctx, requestHandler.respServer().getTimeService())
             : null;
       requestHandler.respServer().metadataRepository().client().incrementConnectedClients();
-      super.channelRegistered(ctx);
+   }
+
+   @Override
+   public void channelActive(ChannelHandlerContext ctx) throws Exception {
+      initializeHandlerState(ctx);
+      super.channelActive(ctx);
+   }
+
+   @Override
+   public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+      if (evt == CacheInitializeInboundAdapter.CACHE_INITIALIZE_EVENT) {
+         initializeHandlerState(ctx);
+         resumeAutoRead(ctx);
+      }
+      super.userEventTriggered(ctx, evt);
+   }
+
+   @Override
+   public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+      ctx.channel().attr(RespRequestHandler.BYTE_BUF_POOL_ATTRIBUTE_KEY)
+            .set(size -> allocateBuffer(ctx, size));
+      super.handlerAdded(ctx);
    }
 
    @Override
    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
       super.channelUnregistered(ctx);
-      requestHandler.handleChannelDisconnect(ctx);
-      if (traceAccess) accessLogger.close();
-      requestHandler.respServer().metadataRepository().client().decrementConnectedClients();
+      if (requestHandler != null) {
+         requestHandler.handleChannelDisconnect(ctx);
+         if (traceAccess) accessLogger.close();
+         requestHandler.respServer().metadataRepository().client().decrementConnectedClients();
+      }
    }
 
    @Override

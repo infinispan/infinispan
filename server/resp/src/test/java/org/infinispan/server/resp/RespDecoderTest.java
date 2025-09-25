@@ -13,6 +13,8 @@ import java.util.Queue;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.server.core.transport.CacheInitializeInboundAdapter;
+import org.infinispan.server.resp.meta.MetadataRepository;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -51,6 +53,8 @@ public class RespDecoderTest {
       RespServer server = mock();
       when(server.getTimeService()).thenReturn(new ControlledTimeService());
       when(server.isDefaultCacheRunning()).thenReturn(true);
+      when(server.isDefaultCacheInitialized()).thenReturn(true);
+      when(server.metadataRepository()).thenReturn(new MetadataRepository());
       queuedCommands = new ArrayDeque<>();
       RespRequestHandler myRespRequestHandler = new RespRequestHandler(server) {
          @Override
@@ -60,7 +64,14 @@ public class RespDecoderTest {
          }
       };
       RespDecoder decoder = new RespDecoder(null);
-      channel = new EmbeddedChannel(new FixedLengthFrameDecoder(1), decoder, new RespHandler(decoder, myRespRequestHandler));
+      RespHandler handler = new RespHandler(server, decoder) {
+         @Override
+         protected RespRequestHandler initializeRespRequestHandler() {
+            return myRespRequestHandler;
+         }
+      };
+      channel = new EmbeddedChannel(new FixedLengthFrameDecoder(1), decoder, handler);
+      channel.pipeline().fireUserEventTriggered(CacheInitializeInboundAdapter.CACHE_INITIALIZE_EVENT);
    }
 
    @AfterClass

@@ -1,5 +1,7 @@
 package org.infinispan.server.memcached;
 
+import static org.infinispan.server.core.transport.CacheInitializeInboundAdapter.CACHE_INITIALIZE_EVENT;
+
 import java.util.List;
 
 import org.infinispan.server.core.ProtocolDetector;
@@ -37,10 +39,9 @@ public class MemcachedAutoDetector extends ProtocolDetector {
       MemcachedBaseDecoder decoder = (MemcachedBaseDecoder) ((MemcachedServer) server).getDecoder(protocol);
       ctx.pipeline().replace(this, "decoder", decoder);
       ((MemcachedServer) server).installMemcachedInboundHandler(ctx.channel(), decoder);
-      // Make sure to fire registered on the newly installed handlers
-      ctx.fireChannelRegistered();
       Log.SERVER.tracef("Detected %s connection", protocol);
       // Trigger any protocol-specific rules
       ctx.pipeline().fireUserEventTriggered(AccessControlFilter.EVENT);
+      ctx.pipeline().fireUserEventTriggered(CACHE_INITIALIZE_EVENT);
    }
 }

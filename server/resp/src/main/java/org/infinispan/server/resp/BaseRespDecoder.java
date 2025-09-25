@@ -29,9 +29,9 @@ public abstract class BaseRespDecoder extends ByteToMessageDecoder {
    }
 
    @Override
-   public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-      super.channelRegistered(ctx);
+   public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
       this.ctx = ctx;
+      super.handlerAdded(ctx);
    }
 
    public void resumeRead() {

@@ -3,12 +3,14 @@ package org.infinispan.server.core;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
@@ -79,6 +81,15 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    public boolean isDefaultCacheRunning() {
       String name = defaultCacheName();
       return name == null || cacheManager.isRunning(name);
+   }
+
+   public boolean isDefaultCacheInitialized() {
+      String name = defaultCacheName();
+      return name == null || cacheManager.cacheExists(name);
+   }
+
+   public CompletionStage<Void> initializeDefaultCache() {
+      return CompletableFutures.completedNull();
    }
 
    private void registerAdminOperationsHandler() {

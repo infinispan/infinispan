@@ -1,5 +1,7 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.server.core.transport.CacheInitializeInboundAdapter.CACHE_INITIALIZE_EVENT;
+
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -56,10 +58,9 @@ public class RespDetector extends ProtocolDetector {
       trimPipeline(ctx);
       // Add the RESP server handler
       ctx.pipeline().addLast(server.getInitializer());
-      // Make sure to fire registered on the newly installed handlers
-      ctx.fireChannelRegistered();
       Log.SERVER.tracef("Detected RESP connection %s", ctx);
       // Trigger any protocol-specific rules
       ctx.pipeline().fireUserEventTriggered(AccessControlFilter.EVENT);
+      ctx.pipeline().fireUserEventTriggered(CACHE_INITIALIZE_EVENT);
    }
 }

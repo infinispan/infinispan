@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
@@ -235,6 +236,7 @@ public class MemcachedTextFunctionalTest extends MemcachedFunctionalTest {
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       CountDownLatch latch = new CountDownLatch(1);
       NoReplyListener listener = new NoReplyListener(latch);
+      Cache<Object, Object> cache = cache(server.getConfiguration().defaultCacheName());
       cache.addListener(listener);
       try {
          sendNoWait(op);
