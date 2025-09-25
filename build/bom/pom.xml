@@ -36,7 +36,7 @@
 
     <properties>
        <versionx.org.infinispan.infinispan-console>16.0.3.Final</versionx.org.infinispan.infinispan-console>
-       <versionx.org.infinispan.protostream>6.0.0.Dev11</versionx.org.infinispan.protostream>
+       <version.protostream>6.0.0.Dev13</version.protostream>
     </properties>
 
     <dependencyManagement>
