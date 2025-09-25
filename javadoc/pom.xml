@@ -318,6 +318,11 @@
                            <artifactId>agroal-api</artifactId>
                            <version>${version.io.agroal}</version>
                         </additionalDependency>
+                         <additionalDependency>
+                             <groupId>io.micrometer</groupId>
+                             <artifactId>micrometer-registry-prometheus-simpleclient</artifactId>
+                             <version>${version.micrometer}</version>
+                         </additionalDependency>
                      </additionalDependencies>
                      <outputDirectory>${javadoc.outputDirectory}</outputDirectory>
                   </configuration>
