@@ -1,5 +1,6 @@
 package org.infinispan.metrics.impl;
 
+import static org.infinispan.commons.util.Util.loadClassStrict;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -43,7 +44,7 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
    @Override
    public Object construct(String componentName) {
       if (componentName.equals(MetricsRegistry.class.getName())) {
-         return createMetricRegistry();
+         return createMetricRegistry(globalConfig.classLoader());
       } else if (componentName.equals(MetricsCollector.class.getName())) {
          if (isMetricsDisabled()) {
             return null;
@@ -56,7 +57,7 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
             return null;
          }
       } else if (componentName.equals(JGroupsMetricsManager.class.getName())) {
-         if (createMetricRegistry() == NoMetricRegistry.NO_OP_INSTANCE) {
+         if (createMetricRegistry(globalConfig.classLoader()) == NoMetricRegistry.NO_OP_INSTANCE) {
             // if no registry available in the classpath, do not try to register/collect metrics in there.
             return NoOpJGroupsMetricManager.INSTANCE;
          } else {
@@ -74,7 +75,7 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
       log.debug("Micrometer metrics are not available because classpath dependencies are missing.", t);
    }
 
-   private synchronized MetricsRegistry createMetricRegistry() {
+   private synchronized MetricsRegistry createMetricRegistry(ClassLoader classLoader) {
       if (registry != null) {
          return registry;
       }
@@ -82,12 +83,27 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
          registry = NoMetricRegistry.NO_OP_INSTANCE;
          return registry;
       }
+
+      String registryClass = "io.micrometer.prometheusmetrics.PrometheusMeterRegistry";
       try {
-         registry = new MetricsRegistryImpl();
-      } catch (Throwable t) {
-         logMissingDependencies(t);
-         registry = NoMetricRegistry.NO_OP_INSTANCE;
+         loadClassStrict(registryClass, classLoader);
+         registry = new PrometheusRegistry();
+      } catch (ClassNotFoundException ignore) {
+         logMissingMicrometerImpl(registryClass);
+         try {
+            registryClass = "io.micrometer.prometheus.PrometheusMeterRegistry";
+            loadClassStrict(registryClass, classLoader);
+            registry = new PrometheusSimpleClientRegistry();
+         } catch (ClassNotFoundException e) {
+            logMissingMicrometerImpl(registryClass);
+            log.warnFallbackToNoOpMetrics(NoMetricRegistry.class.getSimpleName());
+            registry = NoMetricRegistry.NO_OP_INSTANCE;
+         }
       }
       return registry;
+   }
+
+   private void logMissingMicrometerImpl(String clazz) {
+      log.debugf("Micrometer implementation '%s' not available on classpath", clazz);
    }
 }

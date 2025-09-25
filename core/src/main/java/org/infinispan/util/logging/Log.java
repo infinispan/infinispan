@@ -2427,4 +2427,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The single file store has been deprecated. Please use the Soft-Index File Store instead", id = 713)
    void singleFileStoreDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Fallback to %s as required dependencies are not available", id = 714)
+   void warnFallbackToNoOpMetrics(String clazz);
 }

@@ -9,8 +9,6 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import io.micrometer.prometheusmetrics.PrometheusConfig;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.infinispan.commons.stat.CounterMetricInfo;
 import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.stat.DistributionSummaryMetricInfo;
@@ -46,27 +44,25 @@ import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 
 /**
- * Concrete implementation of {@link MetricsRegistry}.
- * <p>
- * It uses {@link MeterRegistry} from micrometer. It can use the instance configured from
- * {@link MicrometerMeterRegistryConfiguration#meterRegistry()} or, if not configured, it instantiates
- * {@link PrometheusMeterRegistry}.
+ * Abstract implementation of {@link MetricsRegistry}.
  */
 @Scope(Scopes.GLOBAL)
-public class MetricsRegistryImpl implements MetricsRegistry {
+abstract class AbstractMetricsRegistry implements MetricsRegistry {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    @Inject GlobalConfiguration globalConfiguration;
    private ScrapeRegistry registry;
-   private JvmMetrics jvmMetrics = new JvmMetrics();
+   private final JvmMetrics jvmMetrics = new JvmMetrics();
 
    @Start
-   public void start() {
+   protected void start() {
       stop();
 
-      boolean registerListeners = registry == null || !registry.isExternalManaged();
-      registry = createMeterRegistry(globalConfiguration);
+      boolean registerListeners = registry == null || !registry.externalManaged();
+      MicrometerMeterRegistryConfiguration configuration = globalConfiguration.module(MicrometerMeterRegistryConfiguration.class);
+      MeterRegistry configuredRegistry = configuration == null ? null : configuration.meterRegistry();
+      registry = createScrapeRegistry(configuredRegistry);
 
       if (registerListeners) {
          if (globalConfiguration.metrics().jvm()) {
@@ -76,32 +72,21 @@ public class MetricsRegistryImpl implements MetricsRegistry {
                jvmMetrics.bindTo(registry.registry());
             }
          }
-         registry.registry().config().onMeterAdded(MetricsRegistryImpl::onMeterAdded);
-         registry.registry().config().onMeterRemoved(MetricsRegistryImpl::onMeterRemoved);
-         registry.registry().config().onMeterRegistrationFailed(MetricsRegistryImpl::onMeterRegistrationFailed);
+         registry.registry().config().onMeterAdded(AbstractMetricsRegistry::onMeterAdded);
+         registry.registry().config().onMeterRemoved(AbstractMetricsRegistry::onMeterRemoved);
+         registry.registry().config().onMeterRegistrationFailed(AbstractMetricsRegistry::onMeterRegistrationFailed);
       }
    }
 
    @Stop
-   public void stop() {
-      if (registry != null && !registry.isExternalManaged()) {
+   protected void stop() {
+      if (registry != null && !registry.externalManaged()) {
          registry.registry().close();
       }
       jvmMetrics.close();
    }
 
-   private static ScrapeRegistry createMeterRegistry(GlobalConfiguration globalConfiguration) {
-      MicrometerMeterRegistryConfiguration configuration = globalConfiguration.module(MicrometerMeterRegistryConfiguration.class);
-      MeterRegistry registry = configuration == null ? null : configuration.meterRegistry();
-      boolean externalManaged = true;
-      if (registry == null) {
-         registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-         externalManaged = false;
-      }
-      return registry instanceof PrometheusMeterRegistry ?
-            new PrometheusRegistry((PrometheusMeterRegistry) registry, externalManaged) :
-            new NoScrapeRegistry(registry, externalManaged);
-   }
+   abstract ScrapeRegistry createScrapeRegistry(MeterRegistry registry);
 
    @Override
    public Set<Object> registerMetrics(Object instance, Collection<MetricInfo> metricInfos, String namePrefix, Map<String, String> tags) {
@@ -185,7 +170,7 @@ public class MetricsRegistryImpl implements MetricsRegistry {
    }
 
    // mainly for testing
-   public MeterRegistry registry() {
+   protected MeterRegistry registry() {
       return registry.registry();
    }
 
@@ -257,7 +242,7 @@ public class MetricsRegistryImpl implements MetricsRegistry {
          allTags.putAll(attrTags);
       }
       return allTags.entrySet().stream()
-            .map(MetricsRegistryImpl::tagFromMapEntry)
+            .map(AbstractMetricsRegistry::tagFromMapEntry)
             .collect(Collectors.toList());
    }
 
@@ -326,54 +311,17 @@ public class MetricsRegistryImpl implements MetricsRegistry {
       return summary.getId();
    }
 
-   private interface ScrapeRegistry {
+   protected interface ScrapeRegistry {
       boolean supportsScrape();
 
       String scrape(String contentType);
 
       MeterRegistry registry();
 
-      boolean isExternalManaged();
+      boolean externalManaged();
    }
 
-   private static class PrometheusRegistry implements ScrapeRegistry {
-      final PrometheusMeterRegistry registry;
-      final boolean externalManaged;
-
-      PrometheusRegistry(PrometheusMeterRegistry registry, boolean externalManaged) {
-         this.registry = registry;
-         this.externalManaged = externalManaged;
-      }
-
-      @Override
-      public boolean supportsScrape() {
-         return true;
-      }
-
-      @Override
-      public String scrape(String contentType) {
-         return registry.scrape(contentType);
-      }
-
-      @Override
-      public MeterRegistry registry() {
-         return registry;
-      }
-
-      @Override
-      public boolean isExternalManaged() {
-         return externalManaged;
-      }
-   }
-
-   private static class NoScrapeRegistry implements ScrapeRegistry {
-      final MeterRegistry registry;
-      final boolean externalManaged;
-
-      NoScrapeRegistry(MeterRegistry registry, boolean externalManaged) {
-         this.registry = registry;
-         this.externalManaged = externalManaged;
-      }
+   protected record NoScrapeRegistry(MeterRegistry registry, boolean externalManaged) implements ScrapeRegistry {
 
       @Override
       public boolean supportsScrape() {
@@ -383,16 +331,6 @@ public class MetricsRegistryImpl implements MetricsRegistry {
       @Override
       public String scrape(String contentType) {
          return null;
-      }
-
-      @Override
-      public MeterRegistry registry() {
-         return registry;
-      }
-
-      @Override
-      public boolean isExternalManaged() {
-         return externalManaged;
       }
    }
 }
