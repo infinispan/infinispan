@@ -1066,6 +1066,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       responseBuilder.contentType(accept);
       if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
          responseBuilder.status(NOT_FOUND).build();
+         return CompletableFuture.completedFuture(responseBuilder.build());
       }
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());

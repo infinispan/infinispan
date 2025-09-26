@@ -233,6 +233,14 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testNonExistingCacheConfig() {
+      RestCacheClient cacheClient = adminClient.cache("non-existing");
+      try (RestResponse response = join(cacheClient.configuration())) {
+         assertThat(response).isNotFound();
+      }
+   }
+
+   @Test
    public void testCacheV2KeyOps() {
       RestCacheClient cacheClient = client.cache("default");
 
