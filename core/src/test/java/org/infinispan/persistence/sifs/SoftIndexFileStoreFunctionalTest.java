@@ -3,7 +3,6 @@ package org.infinispan.persistence.sifs;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
@@ -77,8 +76,6 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
       persistence
             .addSoftIndexFileStore()
             .segmented(segmented)
-            .dataLocation(Paths.get(tmpDirectory, "data").toString())
-            .indexLocation(Paths.get(tmpDirectory, "index").toString())
             .purgeOnStartup(false).preload(preload)
             // Effectively disable reaper for tests
             .expiration().wakeUpInterval(Long.MAX_VALUE);
