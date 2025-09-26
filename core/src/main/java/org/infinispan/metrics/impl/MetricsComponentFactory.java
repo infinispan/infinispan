@@ -43,7 +43,7 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
    @Override
    public Object construct(String componentName) {
       if (componentName.equals(MetricsRegistry.class.getName())) {
-         return createMetricRegistry();
+         return createMetricRegistry(globalConfig.classLoader());
       } else if (componentName.equals(MetricsCollector.class.getName())) {
          if (isMetricsDisabled()) {
             return null;
@@ -56,7 +56,7 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
             return null;
          }
       } else if (componentName.equals(JGroupsMetricsManager.class.getName())) {
-         if (createMetricRegistry() == NoMetricRegistry.NO_OP_INSTANCE) {
+         if (createMetricRegistry(globalConfig.classLoader()) == NoMetricRegistry.NO_OP_INSTANCE) {
             // if no registry available in the classpath, do not try to register/collect metrics in there.
             return NoOpJGroupsMetricManager.INSTANCE;
          } else {
@@ -74,7 +74,7 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
       log.debug("Micrometer metrics are not available because classpath dependencies are missing.", t);
    }
 
-   private synchronized MetricsRegistry createMetricRegistry() {
+   private synchronized MetricsRegistry createMetricRegistry(ClassLoader classLoader) {
       if (registry != null) {
          return registry;
       }
@@ -82,11 +82,18 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
          registry = NoMetricRegistry.NO_OP_INSTANCE;
          return registry;
       }
+
       try {
-         registry = new MetricsRegistryImpl();
-      } catch (Throwable t) {
-         logMissingDependencies(t);
-         registry = NoMetricRegistry.NO_OP_INSTANCE;
+         classLoader.loadClass("io.micrometer.prometheusmetrics.PrometheusMeterRegistry");
+         registry = new PrometheusRegistry();
+      } catch (ClassNotFoundException ignore) {
+         try {
+            classLoader.loadClass("io.micrometer.prometheus.PrometheusMeterRegistry");
+            registry = new PrometheusSimpleClientRegistry();
+         } catch (ClassNotFoundException e) {
+            logMissingDependencies(e);
+            registry = NoMetricRegistry.NO_OP_INSTANCE;
+         }
       }
       return registry;
    }
