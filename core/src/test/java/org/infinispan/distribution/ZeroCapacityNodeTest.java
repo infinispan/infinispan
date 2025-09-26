@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
@@ -162,6 +163,24 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
       assertEquals(1, listener.events.get());
       node1.getCache(cacheName).put("key2", "value2");
       assertEquals(2, listener.events.get());
+   }
+
+   public void testInvalidation() {
+      var cacheName = "invalidation";
+      var key = "k";
+      var value = "v";
+
+      var builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
+      createCache(builder, cacheName);
+
+      var zeroCache = zeroCapacityNode.getCache(cacheName);
+      var cache = node1.getCache(cacheName);
+      cache.put(key, value);
+      assertEquals(value, cache.get(key));
+      assertNull(zeroCache.getAdvancedCache().getCacheEntry(key));
+      zeroCache.put(key, value);
+      assertNull(cache.get(key));
    }
 
    private void createCache(ConfigurationBuilder cb, String cacheName) {
