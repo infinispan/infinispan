@@ -378,6 +378,8 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       protected static ProtostreamFieldType from(int sqlType) {
          switch (sqlType) {
             case Types.INTEGER:
+            case Types.SMALLINT:
+            case Types.TINYINT:
                return INT_32;
             case Types.BIGINT:
                return INT_64;
@@ -392,6 +394,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
             case Types.BOOLEAN:
                return BOOL;
             case Types.CHAR:
+            case Types.CLOB:
             case Types.VARCHAR:
             case Types.NVARCHAR:
             case Types.LONGVARCHAR:
