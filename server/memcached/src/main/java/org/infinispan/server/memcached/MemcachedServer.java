@@ -44,7 +44,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
    }
 
    @Override
-   protected void startInternal() {
+   protected void internalPostStart() {
       if (cacheManager.getCacheConfiguration(configuration.defaultCacheName()) == null) {
          ConfigurationBuilder builder = new ConfigurationBuilder();
          Configuration defaultCacheConfiguration = cacheManager.getDefaultCacheConfiguration();
@@ -58,11 +58,6 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
          builder.statistics().enable();
          cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
       }
-      super.startInternal();
-   }
-
-   @Override
-   protected void internalPostStart() {
       super.internalPostStart();
       memcachedCache = cacheManager.getCache(configuration.defaultCacheName());
       if (memcachedCache.getCacheConfiguration().statistics().enabled()) {
