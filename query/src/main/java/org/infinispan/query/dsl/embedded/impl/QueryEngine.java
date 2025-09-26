@@ -651,6 +651,11 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
                  normalizedWhereClause, parsingResult.getFilteringClause(), sortFields);
       }
 
+      if (parsingResult.hasScoreProjection()) {
+         // Strip all the score projections as the ickle query doesn't support that - taken care of directly in HS
+         queryString = queryString.replaceAll(",? *(?i:score)(\\(\\D+\\))?", "");
+      }
+
       return new IckleParsingResult<>(queryString, parsingResult.getStatementType(), parsingResult.getParameterNames(),
             normalizedWhereClause, null, parsingResult.getFilteringClause(),
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
