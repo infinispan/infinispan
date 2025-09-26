@@ -22,6 +22,10 @@ copy_files() {
 }
 
 for i in $sourceDirs; do
+    if [[ "$i" == *-rolling-upgrades ]]; then
+        echo "Skipping $i as it matches the ignore pattern."
+        continue # 'continue' skips to the next item in the loop
+    fi
     echo "Copying $i"
     db="${i##*-}"
     if [[ "$db" = "main" ]]; then

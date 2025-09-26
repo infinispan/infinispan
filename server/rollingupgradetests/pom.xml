@@ -16,6 +16,7 @@
 
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+      <skipRollingUpgradeTests>true</skipRollingUpgradeTests>
       <defaultTestGroup/>
       <defaultExcludedTestGroup/>
       <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
@@ -180,6 +181,7 @@
          <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
+               <skip>${skipRollingUpgradeTests}</skip>
                <groups combine.self="override">${defaultTestGroup}</groups>
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <parallel>none</parallel>

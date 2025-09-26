@@ -255,7 +255,7 @@ jobs:
   targets-test:
     needs: get-info
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    name: ${{ matrix.targets == 'tomcat' && 'tomcat' || format('db ({0})', matrix.targets) }}
+    name: ${{ matrix.targets == 'tomcat' && 'tomcat' || matrix.targets == 'rolling-upgrades' && 'rolling-upgrades' || format('db ({0})', matrix.targets) }}
     runs-on: ubuntu-latest
     env:
       TOMCAT_VERSION: 11.0.10
@@ -267,6 +267,7 @@ jobs:
           - oracle
           - db2
           - tomcat
+          - rolling-upgrades
     steps:
       - uses: actions/checkout@v5
 
@@ -345,7 +346,7 @@ jobs:
 
 
       - name: Test
-        if: ${{ matrix.targets != 'tomcat' }}
+        if: ${{ matrix.targets != 'tomcat' && matrix.targets != 'rolling-upgrades' }}
         run: |
           cd test_dir/infinispan && \
           ./mvnw verify -B -e -pl server/tests -Dmaven.test.failure.ignore=true \
@@ -353,6 +354,15 @@ jobs:
             -DdefaultTestGroup=database \
             -Dorg.infinispan.test.database.types=${{ matrix.targets }} \
             -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
+            -Pcoverage
+
+      - name: Run rolling upgrades
+        if: ${{ matrix.targets == 'rolling-upgrades' }}
+        run: |
+          cd test_dir/infinispan && \
+          ./mvnw verify -B -e -pl server/rollingupgradetests -Dmaven.test.failures.ignore=true \
+            -Dansi.strip=true \
+            -DskipRollingUpgradeTests=false \
             -Pcoverage
 
       - name: set-commit-failure-status
@@ -449,6 +459,7 @@ jobs:
           mkdir test_dir && cd test_dir
           unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
+          cp -r infinispan infinispan-rolling-upgrade
 
       - uses: actions/download-artifact@v5
         with:
@@ -504,3 +515,22 @@ jobs:
           name: jacocoReport
           path: |
             ${{ github.workspace }}/jacocoReport/
+
+      - name: Report for rolling upgrades
+        shell: bash
+        # language=bash
+        run: |
+          cd test_dir/infinispan-rolling-upgrade
+          mvn clean install -DskipTests=true -pl server/rollingupgradetests -am
+          cp ${{ github.workspace }}/jacoco-files-rolling-upgrades/*.exec test_dir/infinispan-rolling-upgrade/server/rollingupgradetests/target/
+          mvn validate -P jcocoReport
+          mkdir ${{ github.workspace }}/jacocoReport-rolling-upgrade
+          cp -R jacoco-report/ ${{ github.workspace }}/jacocoReport-rolling-upgrade
+
+      - name: Upload jacoco report for rolling upgrade
+        if: (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacocoReport-rolling-upgrade
+          path: |
+            ${{ github.workspace }}/jacocoReport-rolling-upgrade/
