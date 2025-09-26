@@ -3,6 +3,7 @@ package org.infinispan.server.rollingupgrade;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -76,6 +77,12 @@ public class RollingUpgradePersistenceTestIT {
             }
          }
       };
+
+      builder.configurationUpdater(cb -> {
+         // Sometimes the cache can take longer than 2 seconds to startup with the DB
+         cb.socketTimeout((int) TimeUnit.SECONDS.toMillis(5));
+         return cb;
+      });
 
       builder.handlers(ruh -> {
          Database database = listener.getDatabase(databaseType);
