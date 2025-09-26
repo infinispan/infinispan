@@ -162,10 +162,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Object key = command.getKey();
       MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, key);
 
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
-
       Object newValue = command.getValue();
       Metadata metadata = command.getMetadata();
       if (metadata instanceof InternalMetadataImpl internalMetadata) {
@@ -238,7 +234,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return null;
       }
       Object key = command.getKey();
-      MVCCEntry<?, ?> e = (MVCCEntry<?, ?>) ctx.lookupEntry(key);
+      MVCCEntry<?, ?> e = lookupMvccEntry(ctx, key);
       Object prevValue = e.getValue();
       Object optionalValue = command.getValue();
       if (prevValue == null) {
@@ -308,10 +304,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Metadata metadata = command.getMetadata();
       MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, key);
 
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
-
       return command.isRemove() ?
             performRemove(e, ctx, valueMatcher, key, null, null, metadata, true, false, command) :
             performPut(e, ctx, valueMatcher, key, command.getValue(), metadata, command, false, false);
@@ -363,13 +355,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Object key = command.getKey();
       MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, key);
 
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
-
       Object oldValue = e.getValue();
       Object newValue;
-
 
       if (command.isComputeIfPresent() && oldValue == null) {
          command.fail();
@@ -423,13 +410,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) {
       Object key = command.getKey();
       MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, key);
-
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
-
       Object value = e.getValue();
-
       CompletionStage<Void> stage = null;
 
       if (value == null) {
@@ -489,7 +470,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       }
       for (Map.Entry<Object, Object> e : inputMap.entrySet()) {
          Object key = e.getKey();
-         MVCCEntry<Object, Object> contextEntry = lookupMvccEntry(ctx, key);
+         MVCCEntry<Object, Object> contextEntry = lookupMvccEntryMaybeNull(ctx, key);
          if (contextEntry != null) {
             Object newValue = e.getValue();
             Object previousValue = contextEntry.getValue();
@@ -523,9 +504,22 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       return delayedValue(aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null, previousValues);
    }
 
-   private static MVCCEntry<Object, Object> lookupMvccEntry(InvocationContext ctx, Object key) {
+   private static MVCCEntry<Object, Object> lookupMvccEntryMaybeNull(InvocationContext ctx, Object key) {
       //noinspection unchecked
       return (MVCCEntry<Object, Object>) ctx.lookupEntry(key);
+   }
+
+   private static MVCCEntry<Object, Object> lookupMvccEntry(InvocationContext ctx, Object key) {
+      return (MVCCEntry<Object, Object>) lookup(ctx, key);
+   }
+
+   private static CacheEntry<Object, Object> lookup(InvocationContext ctx, Object key) {
+      var e = ctx.lookupEntry(key);
+      if (e == null) {
+         throw new IllegalStateException("Entry for key " + toStr(key) + " not found");
+      }
+      //noinspection unchecked
+      return e;
    }
 
    @Override
@@ -548,7 +542,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return performRemove(e, ctx, ValueMatcher.MATCH_ALWAYS, key, e.getValue() != null ? e.getValue() : null,
                command.getValue(), metadata, false, false, command);
       }
-      if (e != null && !e.isRemoved()) {
+      if (!e.isRemoved()) {
          Object prevValue = e.getValue();
          Object optionalValue = command.getValue();
          Long lifespan = command.getLifespan();
@@ -640,7 +634,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
-      CacheEntry<?, ?> entry = ctx.lookupEntry(command.getKey());
+      CacheEntry<?, ?> entry = lookup(ctx, command.getKey());
       if (entry.isRemoved()) {
          if (log.isTraceEnabled()) {
             log.tracef("Entry has been deleted and is of type %s", entry.getClass().getSimpleName());
@@ -653,7 +647,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
-      CacheEntry<?, ?> entry = ctx.lookupEntry(command.getKey());
+      CacheEntry<?, ?> entry = lookup(ctx, command.getKey());
       if (entry.isNull() || entry.isRemoved()) {
          return null;
       }
@@ -666,10 +660,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) {
       Map<Object, Object> map = new LinkedHashMap<>();
       for (Object key : command.getKeys()) {
-         CacheEntry<?, ?> entry = ctx.lookupEntry(key);
-         if (entry == null) {
-            throw new IllegalStateException("Entry for key " + toStr(key) + " not found");
-         }
+         CacheEntry<?, ?> entry = lookup(ctx, key);
          if (entry.isNull()) {
             if (log.isTraceEnabled()) {
                log.tracef("Entry for key %s is null in current context", toStr(key));
@@ -822,11 +813,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          }
       }
       Object key = command.getKey();
-      CacheEntry<?, ?> entry = ctx.lookupEntry(key);
-
-      if (entry == null) {
-         throw new IllegalStateException();
-      }
+      CacheEntry<?, ?> entry = lookup(ctx, key);
 
       DataConversion keyDataConversion = command.getKeyDataConversion();
       EntryView.ReadEntryView<?, ?> ro = entry.isNull() ? EntryViews.noValue(key, keyDataConversion) :
@@ -837,7 +824,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    }
 
    private Object visitTxReadOnlyKeyCommand(InvocationContext ctx, TxReadOnlyKeyCommand command, List<Mutation> mutations) {
-      MVCCEntry<?, ?> entry = (MVCCEntry<?, ?>) ctx.lookupEntry(command.getKey());
+      MVCCEntry<?, ?> entry = lookupMvccEntry(ctx, command.getKey());
       EntryView.ReadWriteEntryView<?, ?> rw = EntryViews.readWrite(entry, command.getKeyDataConversion(),
             command.getValueDataConversion());
       Object ret = null;
@@ -869,7 +856,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       DataConversion valueDataConversion = command.getValueDataConversion();
       Function<EntryView.ReadEntryView<?, ?>, ?> function = command.getFunction();
       for (Object k : keys) {
-         CacheEntry<?, ?> me = ctx.lookupEntry(k);
+         CacheEntry<?, ?> me = lookup(ctx, k);
          EntryView.ReadEntryView<?, ?> view = me.isNull() ?
                EntryViews.noValue(k, keyDataConversion) :
                EntryViews.readOnly(me, keyDataConversion, valueDataConversion);
@@ -913,7 +900,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) {
-      MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, command.getKey());
+      MVCCEntry<Object, Object> e = lookupMvccEntryMaybeNull(ctx, command.getKey());
 
       // Could be that the key is not local
       if (e == null) return null;
@@ -938,7 +925,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return null;
       }
 
-      MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, command.getKey());
+      MVCCEntry<Object, Object> e = lookupMvccEntryMaybeNull(ctx, command.getKey());
 
       // Could be that the key is not local
       if (e == null) return null;
@@ -992,7 +979,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return null;
       }
 
-      MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, command.getKey());
+      MVCCEntry<Object, Object> e = lookupMvccEntryMaybeNull(ctx, command.getKey());
 
       // Could be that the key is not local, 'null' is how this is signalled
       if (e == null) return null;
@@ -1016,11 +1003,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       DataConversion valueDataConversion = command.getValueDataConversion();
       for (Map.Entry<Object, Object> entry : arguments.entrySet()) {
          MVCCEntry<Object, Object> cacheEntry = lookupMvccEntry(ctx, entry.getKey());
-
-         // Could be that the key is not local, 'null' is how this is signalled
-         if (cacheEntry == null) {
-            throw new IllegalStateException();
-         }
          updateStoreFlags(command, cacheEntry);
          Object decodedValue = valueDataConversion.fromStorage(entry.getValue());
          command.getBiConsumer().accept(decodedValue, EntryViews.writeOnly(cacheEntry, valueDataConversion));
@@ -1030,7 +1012,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) {
-      MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, command.getKey());
+      MVCCEntry<Object, Object> e = lookupMvccEntryMaybeNull(ctx, command.getKey());
 
       // Could be that the key is not local
       if (e == null) return null;
@@ -1053,9 +1035,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       DataConversion valueDataConversion = command.getValueDataConversion();
       for (Object k : command.getAffectedKeys()) {
          MVCCEntry<Object, Object> cacheEntry = lookupMvccEntry(ctx, k);
-         if (cacheEntry == null) {
-            throw new IllegalStateException();
-         }
          updateStoreFlags(command, cacheEntry);
          consumer.accept(EntryViews.writeOnly(cacheEntry, valueDataConversion));
       }
@@ -1096,10 +1075,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       DataConversion valueDataConversion = command.getValueDataConversion();
       arguments.forEach((k, arg) -> {
          MVCCEntry<Object, Object> entry = lookupMvccEntry(ctx, k);
-
-         if (entry == null) {
-            throw new IllegalStateException();
-         }
          Object decodedArgument = valueDataConversion.fromStorage(arg);
          boolean exists = entry.getValue() != null;
          EntryViews.AccessLoggingReadWriteView<?, ?> view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
