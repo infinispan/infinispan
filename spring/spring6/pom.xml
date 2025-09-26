@@ -10,6 +10,13 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
+    <properties>
+        <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+
     <artifactId>infinispan-spring6-parent</artifactId>
     <name>Infinispan Spring 6 support</name>
     <packaging>pom</packaging>
