@@ -132,7 +132,7 @@
       <version.jboss.logging.processor>3.0.4.Final</version.jboss.logging.processor>
       <version.jboss.marshalling>2.2.3.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
-      <version.jboss.narayana>7.2.2.Final</version.jboss.narayana>
+      <version.jboss.narayana>7.3.0.Final</version.jboss.narayana>
       <version.jboss.security>3.0.6.Final</version.jboss.security>
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
