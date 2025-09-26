@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.infinispan.commons.jdkspecific.ProcessInfo;
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.tool.Main;
 
@@ -210,6 +211,9 @@ public class Bootstrap extends Main {
       out.printf("  -v, --version                 %s%n", MSG.toolHelpVersion());
       out.printf("  -D<name>=<value>              %s%n", MSG.serverHelpProperty());
       out.printf("  -P, --properties=<file>       %s%n", MSG.serverHelpProperties());
+      out.printf("  --aot                         %s%n", MSG.serverHelpAOT());
+      out.printf("  --debug <port>                %s%n", MSG.serverHelpDebug());
+      out.printf("  --jmx <port>                  %s%n", MSG.serverHelpJMX());
    }
 
    @Override
@@ -225,6 +229,12 @@ public class Bootstrap extends Main {
       ProcessInfo process = ProcessInfo.getInstance();
       logger.info("JVM arguments = " + process.getArguments());
       logger.info("PID = " + process.getPid());
+      Runtime runtime = Runtime.getRuntime();
+      logger.info("Architecture = " + System.getProperty("os.arch"));
+      logger.info("OS = " + System.getProperty("os.name") + ' ' + System.getProperty("os.version"));
+      logger.info("Processors = " + runtime.availableProcessors());
+      logger.info("Memory total = " + ByteQuantity.Unit.MiB.toString(runtime.totalMemory()));
+      logger.info("Memory max = " + ByteQuantity.Unit.MiB.toString(runtime.maxMemory()));
       if (logger.isLoggable(Level.FINE)) {
          StringBuilder sb = new StringBuilder("Classpath JARs:" + System.lineSeparator());
          URLClassLoader cl = (URLClassLoader) this.getClass().getClassLoader();
