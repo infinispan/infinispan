@@ -113,7 +113,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
             // This way when a response is processed for the timed out operation we can process the bytes properly
             incomplete.put(messageId, opTimeout.op);
             dispatcher.handleResponse(opTimeout.op, messageId, channel, null,
-                  new SocketTimeoutException(this + " timed out after " + configuration.socketTimeout() + " ms"));
+                  new SocketTimeoutException(opTimeout.op + " timed out after " + configuration.socketTimeout() + " ms"));
          } else {
             log.tracef("Rescheduling timeout checker for ~%d ms", TimeUnit.NANOSECONDS.toMillis(nanoDiff));
             channel.eventLoop().schedule(CHECK_TIMEOUTS, nanoDiff, TimeUnit.NANOSECONDS);
