@@ -110,7 +110,7 @@ public class LocalizedCacheTopology extends CacheTopology {
                new DistributionInfo(segmentId, primary, readOwners, writeOwners, writeBackups, localAddress);
          }
          this.maxOwners = cacheTopology.getMembers().size();
-         this.allLocal = readOwnersMap.containsKey(localAddress);
+         this.allLocal = isInvalidation || readOwnersMap.containsKey(localAddress);
       } else {
          assert cacheMode == CacheMode.LOCAL;
          this.numSegments = 1;
