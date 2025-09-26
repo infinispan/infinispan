@@ -1072,6 +1072,20 @@
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring-embedded</artifactId>
+             <type>test-jar</type>
+             <scope>test</scope>
+             <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring-remote</artifactId>
+             <type>test-jar</type>
+             <scope>test</scope>
+             <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring6-embedded</artifactId>
             <version>${version.infinispan}</version>

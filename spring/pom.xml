@@ -61,6 +61,8 @@
     </dependencyManagement>
     <modules>
         <module>common</module>
+        <module>embedded</module>
+        <module>remote</module>
         <module>spring6</module>
         <module>spring7</module>
         <module>spring-boot-3</module>
