@@ -153,4 +153,5 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
       return clusterConfigurationManager.getOrCreateCache(assigned.getName(), configuration, newFlags)
             .thenApply(CompletableFutures.toNullFunction());
    }
+
 }

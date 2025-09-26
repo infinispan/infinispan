@@ -116,4 +116,5 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * @param value the new value to apply to the attribute
     */
    void updateConfigurationAttribute(String cacheName, String attribute, String value);
+
 }

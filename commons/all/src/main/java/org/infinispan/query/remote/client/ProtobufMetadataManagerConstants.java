@@ -7,7 +7,10 @@ import org.infinispan.commons.internal.InternalCacheNames;
  *
  * @author anistor@redhat.com
  * @since 7.1
+ * @deprecated since 16.0
+ * Use {@link org.infinispan.commons.admin.SchemasAdministration API to interact with the schemas API}
  */
+@Deprecated
 public interface ProtobufMetadataManagerConstants {
 
    /**
