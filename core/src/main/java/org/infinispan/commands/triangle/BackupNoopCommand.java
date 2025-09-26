@@ -41,9 +41,4 @@ public class BackupNoopCommand extends BackupWriteCommand {
    WriteCommand createWriteCommand() {
       return null;
    }
-
-   @Override
-   String toStringFields() {
-      return super.toStringFields();
-   }
 }
