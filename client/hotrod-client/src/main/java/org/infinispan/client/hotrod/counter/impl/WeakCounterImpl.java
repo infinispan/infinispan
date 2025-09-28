@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.counter.impl;
 
-import static org.infinispan.client.hotrod.impl.Util.await;
-
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
@@ -26,7 +24,7 @@ class WeakCounterImpl extends BaseCounter implements WeakCounter {
 
    @Override
    public long getValue() {
-      return await(dispatcher.execute(factory.newGetValueOperation(name, useConsistentHash())));
+      return dispatcher.await(dispatcher.execute(factory.newGetValueOperation(name, useConsistentHash())));
    }
 
    @Override
@@ -54,12 +52,12 @@ class WeakCounterImpl extends BaseCounter implements WeakCounter {
 
       @Override
       public void add(long delta) {
-         await(WeakCounterImpl.this.add(delta));
+         dispatcher.await(WeakCounterImpl.this.add(delta));
       }
 
       @Override
       public void reset() {
-         await(WeakCounterImpl.this.reset());
+         dispatcher.await(WeakCounterImpl.this.reset());
       }
 
       @Override
@@ -69,7 +67,7 @@ class WeakCounterImpl extends BaseCounter implements WeakCounter {
 
       @Override
       public void remove() {
-         await(WeakCounterImpl.this.remove());
+         dispatcher.await(WeakCounterImpl.this.remove());
       }
    }
 }

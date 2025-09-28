@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.impl;
 
-import static org.infinispan.client.hotrod.impl.Util.await;
-
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +45,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
       long startTime = clientStatistics != null ? clientStatistics.time() : 0;
       // TODO: what should we make the batch size be?
       HotRodOperation<GetStreamStartResponse> hro = factory.newGetStreamStartOperation(key, 1 << 13);
-      GetStreamStartResponse gsr = await(dispatcher.execute(hro));
+      GetStreamStartResponse gsr = dispatcher.await(dispatcher.execute(hro));
 
       if (gsr == null) {
          if (clientStatistics != null) {
@@ -93,7 +91,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
 
    private OutputStream handlePutStreamOp(HotRodOperation<PutStreamResponse> hro) {
       long startTime = clientStatistics != null ? clientStatistics.time() : 0;
-      PutStreamResponse psr = await(dispatcher.execute(hro));
+      PutStreamResponse psr = dispatcher.await(dispatcher.execute(hro));
 
       return new PutOutputStream((bb, complete) -> {
          var psno = factory.newPutStreamNextOperation(psr.id(), complete, bb, psr.channel());
@@ -102,7 +100,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
             return psnr.thenAccept(___ -> clientStatistics.dataStore(startTime, 1));
          }
          return psnr.thenApply(CompletableFutures.toNullFunction());
-      }, psr.channel().alloc());
+      }, psr.channel().alloc(), dispatcher);
    }
 
    @Override

@@ -1,8 +1,6 @@
 package org.infinispan.client.hotrod;
 
 
-import static org.infinispan.client.hotrod.impl.Util.await;
-
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +27,7 @@ import org.infinispan.api.sync.SyncQuery;
 import org.infinispan.api.sync.SyncStreamingCache;
 import org.infinispan.api.sync.events.cache.SyncCacheEntryListener;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.reactivestreams.FlowAdapters;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -42,10 +41,12 @@ import io.reactivex.rxjava3.disposables.Disposable;
 final class HotRodSyncCache<K, V> implements SyncCache<K, V> {
    private final HotRod hotrod;
    private final InternalRemoteCache<K, V> remoteCache;
+   private final OperationDispatcher dispatcher;
 
    HotRodSyncCache(HotRod hotrod, InternalRemoteCache<K, V> remoteCache) {
       this.hotrod = hotrod;
       this.remoteCache = remoteCache;
+      this.dispatcher = remoteCache.getDispatcher();
    }
 
    // This method is blocking - but only invoked by user code
@@ -71,52 +72,52 @@ final class HotRodSyncCache<K, V> implements SyncCache<K, V> {
 
    @Override
    public CacheEntry<K, V> getEntry(K key, CacheOptions options) {
-      return await(remoteCache.getEntry(key, options));
+      return dispatcher.await(remoteCache.getEntry(key, options));
    }
 
    @Override
    public CacheEntry<K, V> put(K key, V value, CacheWriteOptions options) {
-      return await(remoteCache.put(key, value, options));
+      return dispatcher.await(remoteCache.put(key, value, options));
    }
 
    @Override
    public void set(K key, V value, CacheWriteOptions options) {
-      await(remoteCache.set(key, value, options));
+      dispatcher.await(remoteCache.set(key, value, options));
    }
 
    @Override
    public CacheEntry<K, V> putIfAbsent(K key, V value, CacheWriteOptions options) {
-      return await(remoteCache.putIfAbsent(key, value, options));
+      return dispatcher.await(remoteCache.putIfAbsent(key, value, options));
    }
 
    @Override
    public boolean setIfAbsent(K key, V value, CacheWriteOptions options) {
-      return await(remoteCache.setIfAbsent(key, value, options));
+      return dispatcher.await(remoteCache.setIfAbsent(key, value, options));
    }
 
    @Override
    public boolean replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
-      return await(remoteCache.replace(key, value, version, options));
+      return dispatcher.await(remoteCache.replace(key, value, version, options));
    }
 
    @Override
    public CacheEntry<K, V> getOrReplaceEntry(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
-      return await(remoteCache.getOrReplaceEntry(key, value, version, options));
+      return dispatcher.await(remoteCache.getOrReplaceEntry(key, value, version, options));
    }
 
    @Override
    public boolean remove(K key, CacheOptions options) {
-      return await(remoteCache.remove(key, options));
+      return dispatcher.await(remoteCache.remove(key, options));
    }
 
    @Override
    public boolean remove(K key, CacheEntryVersion version, CacheOptions options) {
-      return await(remoteCache.remove(key, version, options));
+      return dispatcher.await(remoteCache.remove(key, version, options));
    }
 
    @Override
    public CacheEntry<K, V> getAndRemove(K key, CacheOptions options) {
-      return await(remoteCache.getAndRemove(key, options));
+      return dispatcher.await(remoteCache.getAndRemove(key, options));
    }
 
    @Override
@@ -154,7 +155,7 @@ final class HotRodSyncCache<K, V> implements SyncCache<K, V> {
 
    @Override
    public void putAll(Map<K, V> entries, CacheWriteOptions options) {
-      await(remoteCache.putAll(entries, options));
+      dispatcher.await(remoteCache.putAll(entries, options));
    }
 
    @Override
@@ -183,12 +184,12 @@ final class HotRodSyncCache<K, V> implements SyncCache<K, V> {
 
    @Override
    public long estimateSize(CacheOptions options) {
-      return await(remoteCache.estimateSize(options));
+      return dispatcher.await(remoteCache.estimateSize(options));
    }
 
    @Override
    public void clear(CacheOptions options) {
-      await(remoteCache.clear(options));
+      dispatcher.await(remoteCache.clear(options));
    }
 
    @Override

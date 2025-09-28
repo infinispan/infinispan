@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.counter.impl;
 
-import static org.infinispan.client.hotrod.impl.Util.await;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,7 +54,7 @@ public class RemoteCounterManager implements CounterManager {
 
    @Override
    public boolean defineCounter(String name, CounterConfiguration configuration) {
-      return await(dispatcher.execute(factory.newDefineCounterOperation(name, configuration)));
+      return dispatcher.await(dispatcher.execute(factory.newDefineCounterOperation(name, configuration)));
    }
 
    @Override
@@ -65,22 +63,22 @@ public class RemoteCounterManager implements CounterManager {
 
    @Override
    public boolean isDefined(String name) {
-      return await(dispatcher.execute(factory.newIsDefinedOperation(name)));
+      return dispatcher.await(dispatcher.execute(factory.newIsDefinedOperation(name)));
    }
 
    @Override
    public CounterConfiguration getConfiguration(String counterName) {
-      return await(dispatcher.execute(factory.newGetConfigurationOperation(counterName)));
+      return dispatcher.await(dispatcher.execute(factory.newGetConfigurationOperation(counterName)));
    }
 
    @Override
    public void remove(String counterName) {
-      await(dispatcher.execute(factory.newRemoveOperation(counterName, true)));
+      dispatcher.await(dispatcher.execute(factory.newRemoveOperation(counterName, true)));
    }
 
    @Override
    public Collection<String> getCounterNames() {
-      return await(dispatcher.execute(factory.newGetCounterNamesOperation()));
+      return dispatcher.await(dispatcher.execute(factory.newGetCounterNamesOperation()));
    }
 
    public void stop() {

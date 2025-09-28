@@ -39,7 +39,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    private final NearCacheService<K, V> nearcache;
    private final ClientStatistics clientStatistics;
    // This field is used to control updating the near cache with updating the remote server's bloom filter
-   // representation. This value will be non null when bloom filter is enabled, otherwise null. When this
+   // representation. This value will be non-null when bloom filter is enabled, otherwise null. When this
    // value is even it means there is no bloom filter update being sent and the near cache can be updated
    // locally from reads. When a bloom filter is being replicated though the value will be odd and the
    // near cache cannot be updated.
@@ -299,6 +299,6 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    public Channel addNearCacheListener(Object listener, int bloomBits) {
       ClientListenerOperation op = getOperationsFactory().newAddNearCacheListenerOperation(listener,
             bloomBits);
-      return Util.await(getDispatcher().executeAddListener(op));
+      return getDispatcher().await(getDispatcher().executeAddListener(op));
    }
 }

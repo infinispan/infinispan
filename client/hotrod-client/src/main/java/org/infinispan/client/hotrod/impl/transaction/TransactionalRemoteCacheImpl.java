@@ -14,7 +14,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.Util;
 import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.transaction.entry.TransactionEntry;
 import org.infinispan.client.hotrod.logging.Log;
@@ -115,7 +114,7 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    }
 
    private MetadataValue<V> getWithMetadataNotTracked(K key) {
-      return Util.await(super.getWithMetadataAsync(key));
+      return dispatcher.await(super.getWithMetadataAsync(key));
    }
 
    @Override

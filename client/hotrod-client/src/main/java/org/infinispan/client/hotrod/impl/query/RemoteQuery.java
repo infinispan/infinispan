@@ -110,7 +110,7 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
    }
 
    private <R> R awaitQueryResult(CompletionStage<R> rsp) {
-      return timeout == -1 ? await(rsp) : await(rsp.toCompletableFuture(), timeout);
+      return timeout == -1 ? cache.getDispatcher().await(rsp) : await(rsp.toCompletableFuture(), timeout);
    }
 
    private CompletionStage<QueryResultAdapter<T>> internalExecuteAsync() {

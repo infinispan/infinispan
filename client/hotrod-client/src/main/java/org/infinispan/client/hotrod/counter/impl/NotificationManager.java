@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.counter.impl;
 
-import static org.infinispan.client.hotrod.impl.Util.await;
-
 import java.net.SocketAddress;
 import java.util.Iterator;
 import java.util.List;
@@ -86,7 +84,7 @@ public class NotificationManager {
       clientListeners.computeIfAbsent(counterName, name -> {
          AddListenerOperation op = factory.newAddListenerOperation(counterName, listenerId);
          if (address == null) {
-            Channel channel = await(operationDispatcher.execute(op));
+            Channel channel = operationDispatcher.await(operationDispatcher.execute(op));
             channel.pipeline().get(HeaderDecoder.class).addListener(listenerId);
             this.dispatcher = new CounterEventDispatcher(listenerId, clientListeners, ChannelRecord.of(channel), this::failover, () ->
                channel.eventLoop().execute(() -> {
@@ -100,7 +98,7 @@ public class NotificationManager {
                })
             );
          } else {
-            await(operationDispatcher.executeOnSingleAddress(op, address));
+            operationDispatcher.await(operationDispatcher.executeOnSingleAddress(op, address));
          }
 
          notifier.addDispatcher(dispatcher);
@@ -119,7 +117,7 @@ public class NotificationManager {
          if (list.isEmpty()) {
             if (dispatcher != null) {
                RemoveListenerOperation op = factory.newRemoveListenerOperation(counterName, listenerId);
-               if (!await(operationDispatcher.executeOnSingleAddress(op, dispatcher.address()))) {
+               if (!operationDispatcher.await(operationDispatcher.executeOnSingleAddress(op, dispatcher.address()))) {
                   log.debugf("Failed to remove counter listener %s on server side", counterName);
                }
             }
@@ -201,7 +199,7 @@ public class NotificationManager {
             var op = factory.newRemoveListenerOperation(counterName, listenerId);
             aggregateCompletionStage.dependsOn(operationDispatcher.executeOnSingleAddress(op, dispatcher.address()));
          }
-         await(aggregateCompletionStage.freeze());
+         operationDispatcher.await(aggregateCompletionStage.freeze());
          clientListeners.clear();
       } finally {
          lock.unlock();

@@ -46,25 +46,6 @@ public class Util {
    private Util() {
    }
 
-   public static <T> T await(CompletionStage<T> cf) {
-      return await(cf.toCompletableFuture());
-   }
-
-   public static <T> T await(CompletableFuture<T> cf) {
-      try {
-         // timed wait does not do busy waiting
-         return cf.get(BIG_DELAY_NANOS, TimeUnit.NANOSECONDS);
-      } catch (InterruptedException e) {
-         // Need to restore interrupt status because InterruptedException cannot be sent back as is
-         Thread.currentThread().interrupt();
-         throw new HotRodClientException(e);
-      } catch (ExecutionException e) {
-         throw rewrap(e);
-      } catch (TimeoutException e) {
-         throw new IllegalStateException(e);
-      }
-   }
-
    public static <T> T await(CompletionStage<T> cf, long timeoutMillis) {
       return await(cf.toCompletableFuture(), timeoutMillis);
    }
