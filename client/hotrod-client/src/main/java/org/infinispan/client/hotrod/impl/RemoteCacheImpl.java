@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.impl;
 
 import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
-import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.net.SocketAddress;
@@ -107,7 +106,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    protected DataFormat dataFormat;
    protected ClientStatistics clientStatistics;
    protected ObjectName mbeanObjectName;
-   protected OperationDispatcher dispatcher;
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService,
                           Function<InternalRemoteCache<K,V>, CacheOperationsFactory> factoryFunction) {
@@ -326,7 +324,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public ServerStatistics serverStatistics() {
-      return await(serverStatisticsAsync());
+      return dispatcher.await(serverStatisticsAsync());
    }
 
    @Override
@@ -601,7 +599,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       // Must be registered before executing to ensure this is always ran on the event loop, thus guaranteeing
       // events cannot be received until after this has been processed
       // We must wait on the stage to ensure the listeners are indeed registered fully before returning
-      await(dispatcher.executeAddListener(op));
+      dispatcher.await(dispatcher.executeAddListener(op));
    }
 
    @Override
@@ -629,7 +627,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       dispatcher.executeOnSingleAddress(op, sa);
       // This is convoluted but to ensure the caller doesn't return until the listener is completely removed
       // we have to wait on the other stage
-      await(removalStage);
+      dispatcher.await(removalStage);
    }
 
    @Override
@@ -751,7 +749,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
          }
       }
       HotRodOperation<T> op = operationsFactory.executeOperation(taskName, marshalledParams, key);
-      return await(dispatcher.execute(op));
+      return dispatcher.await(dispatcher.execute(op));
    }
 
    @Override

@@ -76,7 +76,7 @@ public class JdbcPing2IT {
       // Kill -9 1
       // Start new server
       // Process hangs
-      var timeout = TimeUnit.MINUTES.toMillis(20);
+      var timeout = TimeUnit.MINUTES.toMillis(1);
       SERVERS.getServerDriver().stop(0);
       Eventually.eventually(assertClusterMembersSize(1, 1), timeout);
       SERVERS.getServerDriver().kill(1);

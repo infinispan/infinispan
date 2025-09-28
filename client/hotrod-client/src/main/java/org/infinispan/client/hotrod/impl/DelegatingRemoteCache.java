@@ -64,11 +64,13 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    @Override
    public void init(Configuration configuration, OperationDispatcher dispatcher) {
       delegate.init(configuration, dispatcher);
+      this.dispatcher = dispatcher;
    }
 
    @Override
    public void init(Configuration configuration, OperationDispatcher dispatcher, ObjectName jmxParent) {
       delegate.init(configuration, dispatcher, jmxParent);
+      this.dispatcher = dispatcher;
    }
 
    @Override

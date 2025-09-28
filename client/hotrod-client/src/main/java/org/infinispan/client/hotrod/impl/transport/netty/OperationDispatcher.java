@@ -109,6 +109,7 @@ public class OperationDispatcher {
    private final ClientListenerNotifier clientListenerNotifier;
    private final CounterTracker totalRetriesMetric;
    private volatile boolean isRunning;
+   private final long awaitTimeout;
 
    public OperationDispatcher(Configuration configuration, ExecutorService executorService, TimeService timeService,
                               ClientListenerNotifier clientListenerNotifier, Consumer<ChannelPipeline> pipelineDecorator) {
@@ -116,6 +117,7 @@ public class OperationDispatcher {
       this.timeService = timeService;
       this.clientListenerNotifier = clientListenerNotifier;
       this.maxRetries = configuration.maxRetries();
+      this.awaitTimeout = Math.max(TimeUnit.MINUTES.toMillis(2), configuration.socketTimeout());
 
       this.connectionFailedServers = configuration.serverFailureTimeout() > 0 ?
             Collections.newSetFromMap(Caffeine.newBuilder()
@@ -201,7 +203,7 @@ public class OperationDispatcher {
 
    public void start() {
       isRunning = true;
-      Util.await(CompletionStages.performSequentially(topologyInfo.getCluster().getInitialServers().iterator(),
+      await(CompletionStages.performSequentially(topologyInfo.getCluster().getInitialServers().iterator(),
             sa -> channelHandler.startChannelIfNeeded(sa)
                   .exceptionally(t -> {
                      if (log.isTraceEnabled())
@@ -916,5 +918,9 @@ public class OperationDispatcher {
 
    public Set<SocketAddress> getConnectionFailedServers() {
       return connectionFailedServers;
+   }
+
+   public <T> T await(CompletionStage<T> cs) {
+      return Util.await(cs, awaitTimeout);
    }
 }

@@ -8,7 +8,6 @@ import java.util.concurrent.CompletionStage;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 
-import org.infinispan.client.hotrod.impl.Util;
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
@@ -18,7 +17,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 /**
  * A Base {@link TransactionTable} with common logic.
  * <p>
- * It contains the functions to handle server requests that don't depend of the cache. Such operations are the commit,
+ * It contains the functions to handle server requests that don't depend on the cache. Such operations are the commit,
  * rollback and forget request and the recovery process.
  *
  * @author Pedro Ruivo
@@ -72,7 +71,7 @@ abstract class AbstractTransactionTable implements TransactionTable {
       try {
          ManagerOperationsFactory factory = assertStartedAndReturnFactory();
          HotRodOperation<Integer> operation = factory.newCompleteTransactionOperation(xid, commit);
-         return Util.await(dispatcher.execute(operation));
+         return dispatcher.await(dispatcher.execute(operation));
       } catch (Exception e) {
          log.debug("Exception while commit/rollback.", e);
          return XAException.XA_HEURRB; //heuristically rolled-back

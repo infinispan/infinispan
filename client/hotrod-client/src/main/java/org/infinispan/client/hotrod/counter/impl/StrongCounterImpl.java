@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.counter.impl;
 
-import static org.infinispan.client.hotrod.impl.Util.await;
-
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
@@ -60,22 +58,22 @@ class StrongCounterImpl extends BaseCounter implements StrongCounter {
 
       @Override
       public long addAndGet(long delta) {
-         return await(StrongCounterImpl.this.addAndGet(delta));
+         return dispatcher.await(StrongCounterImpl.this.addAndGet(delta));
       }
 
       @Override
       public void reset() {
-         await(StrongCounterImpl.this.reset());
+         dispatcher.await(StrongCounterImpl.this.reset());
       }
 
       @Override
       public long getValue() {
-         return await(StrongCounterImpl.this.getValue());
+         return dispatcher.await(StrongCounterImpl.this.getValue());
       }
 
       @Override
       public long compareAndSwap(long expect, long update) {
-         return await(StrongCounterImpl.this.compareAndSwap(expect, update));
+         return dispatcher.await(StrongCounterImpl.this.compareAndSwap(expect, update));
       }
 
       @Override
@@ -90,12 +88,12 @@ class StrongCounterImpl extends BaseCounter implements StrongCounter {
 
       @Override
       public void remove() {
-         await(StrongCounterImpl.this.remove());
+         dispatcher.await(StrongCounterImpl.this.remove());
       }
 
       @Override
       public long getAndSet(long value) {
-         return await(StrongCounterImpl.this.getAndSet(value));
+         return dispatcher.await(StrongCounterImpl.this.getAndSet(value));
       }
    }
 }

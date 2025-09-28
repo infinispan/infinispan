@@ -1,12 +1,12 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import static org.infinispan.client.hotrod.impl.Util.await;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Semaphore;
 import java.util.function.BiFunction;
+
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -16,12 +16,14 @@ public class PutOutputStream extends OutputStream {
    private final BiFunction<ByteBuf, Boolean, CompletionStage<Void>> consumer;
    private final ByteBufAllocator alloc;
    private final Semaphore pendingWrites = new Semaphore(2);
+   private final OperationDispatcher dispatcher;
    private ByteBuf buf;
    private volatile Throwable throwable;
 
-   public PutOutputStream(BiFunction<ByteBuf, Boolean, CompletionStage<Void>> consumer, ByteBufAllocator alloc) {
+   public PutOutputStream(BiFunction<ByteBuf, Boolean, CompletionStage<Void>> consumer, ByteBufAllocator alloc, OperationDispatcher dispatcher) {
       this.consumer = consumer;
       this.alloc = alloc;
+      this.dispatcher = dispatcher;
    }
 
    private void alloc() {
@@ -45,7 +47,7 @@ public class PutOutputStream extends OutputStream {
       // If complete then we have to wait until the last stage is complete. Note all prior stages are guaranteed
       // to be complete as well since they are ordered via single Channel event loop
       if (complete) {
-         await(stage);
+         dispatcher.await(stage);
       }
    }
 

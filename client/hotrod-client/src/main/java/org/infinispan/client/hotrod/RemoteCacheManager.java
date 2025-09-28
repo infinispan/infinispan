@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.impl.Util.checkTransactionSupport;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
@@ -293,7 +292,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    @Override
    public Set<String> getCacheNames() {
       HotRodOperation<String> executeOp = managerOpFactory.executeOperation("@@cache@names", Collections.emptyMap());
-      String names = await(dispatcher.execute(executeOp));
+      String names = dispatcher.await(dispatcher.execute(executeOp));
       Set<String> cacheNames = new TreeSet<>();
       // Simple pattern that matches the result which is represented as a JSON string array, e.g. ["cache1","cache2"]
       Pattern pattern = Pattern.compile(JSON_STRING_ARRAY_ELEMENT_REGEX);
@@ -539,7 +538,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          dispatcher.addCacheTopologyInfoIfAbsent(cacheName);
          HotRodOperation<PingResponse> op = managerOpFactory.newPingOperation(cacheName);
          // Verify if the cache exists on the server first
-         pingResponse = await(dispatcher.execute(op));
+         pingResponse = dispatcher.await(dispatcher.execute(op));
 
          // If ping not successful assume that the cache does not exist
          if (pingResponse.isCacheNotFound()) {
@@ -560,10 +559,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             }
             // Create and re-ping
             HotRodOperation<String> createCacheOp = managerOpFactory.executeOperation("@@cache@getorcreate", params);
-            await(dispatcher.execute(createCacheOp));
+            dispatcher.await(dispatcher.execute(createCacheOp));
             // Execute create and then execute ping after
             HotRodOperation<PingResponse> pingcacheOp = managerOpFactory.newPingOperation(cacheName);
-            pingResponse = await(dispatcher.execute(pingcacheOp));
+            pingResponse = dispatcher.await(dispatcher.execute(pingcacheOp));
          }
       } else {
          pingResponse = PingResponse.EMPTY;
@@ -588,7 +587,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       if (transactionMode == TransactionMode.NONE) {
          remoteCache = createRemoteCache(cacheName, cacheConfiguration, factoryFunction);
       } else {
-         if (!await(checkTransactionSupport(cacheName, managerOpFactory, dispatcher).toCompletableFuture())) {
+         if (!dispatcher.await(checkTransactionSupport(cacheName, managerOpFactory, dispatcher).toCompletableFuture())) {
             throw HOTROD.cacheDoesNotSupportTransactions(cacheName);
          } else {
             TransactionManager transactionManager = getTransactionManager(cacheConfiguration);
