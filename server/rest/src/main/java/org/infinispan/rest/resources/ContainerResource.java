@@ -197,8 +197,11 @@ public class ContainerResource implements ResourceHandler {
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      Json cacheManagerInfo = cacheManager.getCacheManagerInfo().toJson();
-      return asJsonResponseFuture(invocationHelper.newResponse(request), cacheManagerInfo, isPretty(request));
+      return CompletableFuture.supplyAsync(() -> {
+         // toJson is blocking as it invokes the command on the coordinator
+         Json cacheManagerInfo = cacheManager.getCacheManagerInfo().toJson();
+         return addEntityAsJson(cacheManagerInfo, responseBuilder, isPretty(request)).build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
