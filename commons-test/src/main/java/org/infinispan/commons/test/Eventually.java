@@ -6,8 +6,6 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import org.junit.ComparisonFailure;
-
 public class Eventually {
 
    public static final int DEFAULT_TIMEOUT_MILLIS = 10000;
@@ -79,7 +77,8 @@ public class Eventually {
          } while (expectedEndTime - System.nanoTime() > 0);
 
          if (expected instanceof String && value instanceof String) {
-            throw new ComparisonFailure(null, (String) expected, (String) value);
+            throw new AssertionError(
+                  String.format("expected: %s, but was %s", expected, value));
          } else {
             String expectedClass = expected != null ? expected.getClass().getSimpleName() : "";
             String valueClass = value != null ? value.getClass().getSimpleName() : "";
