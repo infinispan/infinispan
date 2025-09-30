@@ -1,4 +1,4 @@
-package test.org.infinispan.spring.starter.remote.actuator;
+package test.org.infinispan.spring.starter.remote.metrics;
 
 import static java.util.Collections.emptyList;
 
@@ -12,8 +12,8 @@ import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.infinispan.spring.common.provider.SpringCache;
-import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinder;
-import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinderProvider;
+import org.infinispan.spring.starter.remote.metrics.RemoteInfinispanCacheMeterBinder;
+import org.infinispan.spring.starter.remote.metrics.RemoteInfinispanCacheMeterBinderProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

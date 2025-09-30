@@ -1,0 +1,84 @@
+# Infinispan Configuration
+infinispan:
+  remote:
+    # Basic Connection Settings
+    server-list: "180.567.112.333:6668"
+    tcp-no-delay: false
+    tcp-keep-alive: true
+    client-intelligence: "TOPOLOGY_AWARE"
+    socket-timeout: 500
+    connect-timeout: 200
+    max-retries: 30
+    batch-size: 91
+    protocol-version: "3.0"
+
+    # Connection Pool Settings
+    connection-pool-max-active: 90
+    connection-pool-exhausted-action: "CREATE_NEW"
+    connection-pool-max-wait: 20000
+    connection-pool-min-idle: 1000
+    connection-pool-min-evictable-idle-time: 9000
+    connection-pool-max-pending-requests: 845
+
+    # Thread Pool Settings
+    default-executor-factory-pool-size: 89
+
+    # Marshalling Settings
+    # marshaller: "org.infinispan.commons.marshall.jboss.GenericJBossMarshaller"
+    force-return-values: true
+
+    # Encryption Settings
+    use-ssl: true
+    key-store-file-name: "classpath:superKeyStoreFile.pfx"
+    key-store-type: "PKCS12"
+    key-store-password: "secret"
+    key-alias: "superAliasKey"
+    key-store-certificate-password: "secret"
+    # mutually exclusive with trust-store-file-name -> trust-store-path: "/path/trust"
+    trust-store-file-name: "classpath:superTrustFile.pfx"
+    trust-store-type: "PKCS12"
+    trust-store-password: "secret"
+    sni-host-name: "elahost"
+    ssl-protocol: "TLSv1.3"
+
+    # Authentication Settings
+    use-auth: true
+    sasl-mechanism: "my-sasl-mechanism"
+    auth-user-name: "oihana"
+    auth-password: "oipass"
+    auth-realm: "oirealm"
+    auth-server-name: "my-server-name"
+    sasl-properties:
+      prop1: "value1"
+      prop2: "value2"
+
+    # Transaction Settings
+    transaction-timeout: 50000
+
+    # Cluster Settings
+    cluster:
+      siteOi: "hostOi1:21222; hostOi2:21223"
+
+    # Statistics Settings
+    statistics: true
+    jmx: true
+    jmx-name: "oiYamlJmx"
+    jmx-domain: "oiYamlJmxDom"
+
+    # Cache Configurations
+    cache:
+      example:
+        configuration: "<distributed-cache/>"
+        force-return-values: true
+      mycache:
+        template-name: "myTemplate"
+        marshaller: "org.infinispan.commons.marshall.JavaSerializationMarshaller"
+      "[org.infinispan.yourcache]":
+        template-name: "org.infinispan.DIST_ASYNC"
+        marshaller: "org.infinispan.commons.marshall.UTF8StringMarshaller"
+        near-cache:
+          mode: "INVALIDATED"
+      "[org.infinispan.*]":
+        template-name: "org.infinispan.REPL_SYNC"
+        transaction:
+          transaction-mode: "NON_XA"

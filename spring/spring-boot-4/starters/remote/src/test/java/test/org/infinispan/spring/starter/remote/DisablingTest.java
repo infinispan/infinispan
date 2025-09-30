@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.infinispan.spring.starter.remote.InfinispanRemoteAutoConfiguration;
 import org.infinispan.spring.starter.remote.InfinispanRemoteCacheManagerAutoConfiguration;
-import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinderProvider;
+import org.infinispan.spring.starter.remote.metrics.RemoteInfinispanCacheMeterBinderProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;

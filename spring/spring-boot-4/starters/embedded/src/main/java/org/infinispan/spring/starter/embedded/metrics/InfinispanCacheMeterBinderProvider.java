@@ -1,4 +1,4 @@
-package org.infinispan.spring.starter.embedded.actuator;
+package org.infinispan.spring.starter.embedded.metrics;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;

@@ -1,4 +1,4 @@
-package org.infinispan.spring.starter.embedded.actuator;
+package org.infinispan.spring.starter.embedded.metrics;
 
 import java.util.concurrent.TimeUnit;
 

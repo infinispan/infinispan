@@ -5,7 +5,7 @@ import static org.infinispan.spring.starter.embedded.InfinispanEmbeddedAutoConfi
 
 import org.infinispan.spring.starter.embedded.InfinispanEmbeddedAutoConfiguration;
 import org.infinispan.spring.starter.embedded.InfinispanEmbeddedCacheManagerAutoConfiguration;
-import org.infinispan.spring.starter.embedded.actuator.InfinispanCacheMeterBinderProvider;
+import org.infinispan.spring.starter.embedded.metrics.InfinispanCacheMeterBinderProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;

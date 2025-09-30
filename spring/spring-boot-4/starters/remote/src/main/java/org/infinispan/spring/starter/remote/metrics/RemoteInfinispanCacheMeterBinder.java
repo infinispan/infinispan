@@ -1,4 +1,4 @@
-package org.infinispan.spring.starter.remote.actuator;
+package org.infinispan.spring.starter.remote.metrics;
 
 import org.infinispan.client.hotrod.RemoteCache;
 

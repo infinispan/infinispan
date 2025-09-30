@@ -42,6 +42,7 @@ public class InfinispanEmbeddedAutoConfigurationIntegrationTest {
       assertThat(defaultCacheConfiguration).isNull();
 
       final GlobalConfiguration globalConfiguration = defaultCacheManager.getCacheManagerConfiguration();
+      assertThat(globalConfiguration.defaultCacheName()).isEmpty();
       assertThat(globalConfiguration.jmx().enabled()).isTrue();
       assertThat(globalConfiguration.jmx().domain()).isEqualTo("org.infinispan");
    }

@@ -1,4 +1,4 @@
-package test.org.infinispan.spring.starter.remote.actuator;
+package test.org.infinispan.spring.starter.remote.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.spring.common.provider.SpringCache;
-import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinderProvider;
+import org.infinispan.spring.starter.remote.metrics.RemoteInfinispanCacheMeterBinderProvider;
 import org.junit.jupiter.api.Test;
 
 import io.micrometer.core.instrument.binder.MeterBinder;
