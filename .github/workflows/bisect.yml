@@ -1,0 +1,51 @@
+name: Bisect
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "The Infinispan branch to checkout for bisection"
+        required: true
+        default: "main"
+      goodCommit:
+        description: "The good commit"
+        required: true
+      badCommit:
+        description: "An optional bad commit. If unspecified, HEAD will be used "
+        required: false
+      mavenModule:
+        description: "The path to the Maven module where the test is"
+        required: true
+      testName:
+         description: "The name of the test"
+         required: true
+
+jobs:
+  bisect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'zulu'
+          server-id: central
+
+      - name: Checkout Source
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-depth: 100
+
+      - name: Run bisection
+        run: |
+          cp .github/scripts/bisect.sh $HOME/bisect.sh
+          $HOME/bisect.sh ${{ inputs.goodCommit }} ${{ inputs.mavenModule }} ${{ inputs.testName }} ${{ inputs.badCommit }}
+
+      - name: Upload report
+        if: (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-test-report
+          path: /home/runner/logs-*.zip
