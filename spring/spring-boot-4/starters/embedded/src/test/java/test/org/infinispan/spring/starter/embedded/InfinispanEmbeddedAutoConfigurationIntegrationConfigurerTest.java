@@ -46,7 +46,7 @@ public class InfinispanEmbeddedAutoConfigurationIntegrationConfigurerTest {
 
    @Test
    public void testWithCacheConfigurer() {
-      assertThat(defaultCacheManager.getCacheNames()).containsExactlyInAnyOrder(InfinispanCacheTestConfiguration.TEST_CACHE_NAME, "default");
+      assertThat(defaultCacheManager.getCacheNames()).containsExactlyInAnyOrder(InfinispanCacheTestConfiguration.TEST_CACHE_NAME);
 
       final Configuration testCacheConfiguration = defaultCacheManager.getCacheConfiguration(InfinispanCacheTestConfiguration.TEST_CACHE_NAME);
       assertThat(testCacheConfiguration.statistics().enabled()).isTrue();

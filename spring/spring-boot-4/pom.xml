@@ -53,8 +53,8 @@
     </build>
 
     <modules>
-        <module>embedded</module>
-        <module>remote</module>
+        <module>starters/embedded</module>
+        <module>starters/remote</module>
         <module>it-tests/session-tests</module>
         <module>it-tests/embedded-tests</module>
     </modules>

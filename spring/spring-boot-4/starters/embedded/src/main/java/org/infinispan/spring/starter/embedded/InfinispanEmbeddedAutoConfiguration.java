@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -42,9 +41,6 @@ public class InfinispanEmbeddedAutoConfiguration {
 
    @Autowired(required = false)
    private final List<InfinispanCacheConfigurer> configurers = Collections.emptyList();
-
-   @Autowired(required = false)
-   private final List<InfinispanConfigurationCustomizer> configurationCustomizers = Collections.emptyList();
 
    @Autowired(required = false)
    private final Map<String, org.infinispan.configuration.cache.Configuration> cacheConfigurations = Collections.emptyMap();
@@ -89,10 +85,6 @@ public class InfinispanEmbeddedAutoConfiguration {
 
          globalConfigurationCustomizers.forEach(customizer -> customizer.customize(globalConfigurationBuilder));
          manager = new DefaultCacheManager(globalConfigurationBuilder.build(), false);
-
-         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-         configurationCustomizers.forEach(customizer -> customizer.customize(configurationBuilder));
-         manager.defineConfiguration("default", configurationBuilder.build());
       }
 
       cacheConfigurations.forEach(manager::defineConfiguration);
