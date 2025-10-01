@@ -98,7 +98,7 @@ jobs:
         - name: Check test number
           id: test-number
           env:
-            MIN_TEST_NUM: 32300
+            MIN_TEST_NUM: 31000
             GH_TOKEN: ${{ github.token }}
           run: |
             if [ "${{ steps.job-status.outputs.job_status }}" != "success" ]; then
@@ -140,6 +140,7 @@ jobs:
           - oracle
           - db2
           - tomcat
+          - rolling-upgrades
     steps:
     - name: Set run_id based on event type
       id: run_id
@@ -172,10 +173,14 @@ jobs:
       id: job-status
       run: |
         if [ "${{ matrix.targets }}" = "tomcat" ]; then
-          JOB_STATUS=$(gh api https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs --jq '.jobs[] | select(.name=="tomcat") | .conclusion')
+          JOB_NAME="tomcat"
+        elif [ "${{ matrix.targets }}" = "rolling-upgrades" ]; then
+          JOB_NAME="rolling-upgrades"
         else
-          JOB_STATUS=$(gh api https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs --jq '.jobs[] | select(.name=="db (${{ matrix.targets }})") | .conclusion')
+          JOB_NAME="db (${{ matrix.targets }})"
         fi
+
+        JOB_STATUS=$(gh api "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs" --jq ".jobs[] | select(.name==\"$JOB_NAME\") | .conclusion")
         echo "job_status=$JOB_STATUS" >> $GITHUB_OUTPUT
 
     - name: Publish Test Report

@@ -16,6 +16,7 @@
 
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+      <skipRollingUpgradeTests>true</skipRollingUpgradeTests>
       <defaultTestGroup/>
       <defaultExcludedTestGroup/>
       <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
@@ -28,7 +29,6 @@
       <test.driverArgs>
          -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir}
          -Dorg.infinispan.test.server.container.ulimit=${org.infinispan.test.server.container.ulimit}
-         -Dorg.infinispan.test.database.jdbc.drivers.file="../tests/target/test-classes/database/jdbc-drivers.txt"
       </test.driverArgs>
    </properties>
 
@@ -168,8 +168,29 @@
    </dependencies>
 
    <build>
+      <testResources>
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>false</filtering>
+         </testResource>
 
-   <plugins>
+         <testResource>
+            <directory>${project.basedir}/../tests/src/test/resources</directory>
+            <filtering>false</filtering>
+            <excludes>
+               <exclude>**/*.txt</exclude>
+            </excludes>
+         </testResource>
+         <testResource>
+            <directory>${project.basedir}/../tests/src/test/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*.txt</include>
+            </includes>
+         </testResource>
+      </testResources>
+
+      <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-checkstyle-plugin</artifactId>
@@ -180,6 +201,7 @@
          <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
+               <skip>${skipRollingUpgradeTests}</skip>
                <groups combine.self="override">${defaultTestGroup}</groups>
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <parallel>none</parallel>
@@ -210,7 +232,6 @@
                <properties>
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener},org.infinispan.server.test.junit4.InfinispanServerTestListener</listener>
-                  <org.infinispan.test.database.jdbc.drivers.file>../tests/target/test-classes/database/jdbc-drivers.txt</org.infinispan.test.database.jdbc.drivers.file>
                </properties>
                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${test.driverArgs} -Djdk.attach.allowAttachSelf=true</argLine>
             </configuration>
