@@ -12,7 +12,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.security.Security;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
-import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.tasks.manager.spi.TaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 
 /**

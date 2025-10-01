@@ -17,7 +17,7 @@ import org.infinispan.server.tasks.ServerTaskEngine;
 import org.infinispan.server.tasks.ServerTaskWrapper;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
-import org.infinispan.tasks.TaskManager;
+import org.infinispan.tasks.manager.TaskManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

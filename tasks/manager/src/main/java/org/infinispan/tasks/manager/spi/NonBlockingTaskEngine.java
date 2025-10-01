@@ -1,4 +1,4 @@
-package org.infinispan.tasks.spi;
+package org.infinispan.tasks.manager.spi;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;

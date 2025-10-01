@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.impl.ScriptTask;
@@ -14,13 +16,11 @@ import org.infinispan.scripting.utils.ScriptingUtils;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
-import org.infinispan.tasks.TaskManager;
-import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.tasks.manager.TaskManager;
+import org.infinispan.tasks.manager.spi.TaskEngine;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(groups="functional", testName="scripting.ScriptingTaskManagerTest")
