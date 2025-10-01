@@ -11,7 +11,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.tasks.TaskContext;
-import org.infinispan.tasks.TaskManager;
+import org.infinispan.tasks.manager.TaskManager;
 
 import io.netty.channel.Channel;
 

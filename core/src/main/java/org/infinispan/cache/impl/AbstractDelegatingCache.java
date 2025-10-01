@@ -17,7 +17,6 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -29,6 +28,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.util.PropertyFormatter;
 
 /**
  * This is a convenient base class for implementing a cache delegate. The only constructor takes a {@link Cache}

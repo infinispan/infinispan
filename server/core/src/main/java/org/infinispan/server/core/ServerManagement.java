@@ -12,7 +12,7 @@ import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.tasks.TaskManager;
+import org.infinispan.tasks.manager.TaskManager;
 
 /**
  * @since 10.0

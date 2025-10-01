@@ -9,7 +9,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
-import org.infinispan.tasks.spi.NonBlockingTaskEngine;
+import org.infinispan.tasks.manager.spi.NonBlockingTaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 
 /**

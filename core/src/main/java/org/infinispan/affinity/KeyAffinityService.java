@@ -5,7 +5,7 @@ import org.infinispan.remoting.transport.Address;
 
 /**
  * Defines a service that generates keys to be mapped to specific nodes in a distributed(vs. replicated) cluster.
- * The service is instantiated through through one of the factory methods from {@link org.infinispan.affinity.KeyAffinityServiceFactory}.
+ * The service is instantiated through one of the factory methods from {@link org.infinispan.affinity.KeyAffinityServiceFactory}.
   * Sample usage:
   * <pre><code>
  *    Cache&lt;String, Long&gt; cache = getDistributedCache();

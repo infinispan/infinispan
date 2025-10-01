@@ -117,7 +117,7 @@ import org.infinispan.server.security.ElytronUsernamePasswordAuthenticator;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.infinispan.server.state.ServerStateManagerImpl;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
-import org.infinispan.tasks.TaskManager;
+import org.infinispan.tasks.manager.TaskManager;
 import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.function.SerializableFunction;

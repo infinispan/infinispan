@@ -29,7 +29,7 @@ import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.tasks.TaskContext;
-import org.infinispan.tasks.TaskManager;
+import org.infinispan.tasks.manager.TaskManager;
 
 /**
  * @since 10.1

@@ -3,4 +3,4 @@
  *
  * @api.public
  */
-package org.infinispan.tasks;
+package org.infinispan.tasks.manager;

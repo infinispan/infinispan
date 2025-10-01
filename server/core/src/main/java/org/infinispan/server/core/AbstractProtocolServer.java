@@ -20,7 +20,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.core.utils.ManageableThreadPoolExecutorService;
-import org.infinispan.tasks.TaskManager;
+import org.infinispan.tasks.manager.TaskManager;
 import org.infinispan.util.concurrent.BlockingManager;
 
 /**

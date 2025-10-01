@@ -3,4 +3,4 @@
  *
  * @api.private
  */
-package org.infinispan.tasks.impl;
+package org.infinispan.tasks.manager.impl;

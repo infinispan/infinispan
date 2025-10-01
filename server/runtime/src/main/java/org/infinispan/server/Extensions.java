@@ -18,7 +18,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.tasks.ServerTaskEngine;
 import org.infinispan.server.tasks.ServerTaskWrapper;
 import org.infinispan.tasks.ServerTask;
-import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.tasks.manager.spi.TaskEngine;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

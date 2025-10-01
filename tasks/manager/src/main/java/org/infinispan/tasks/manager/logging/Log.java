@@ -1,4 +1,4 @@
-package org.infinispan.tasks.logging;
+package org.infinispan.tasks.manager.logging;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Message;

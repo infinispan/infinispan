@@ -1,6 +1,6 @@
-package org.infinispan.tasks.impl;
+package org.infinispan.tasks.manager.impl;
 
-import static org.infinispan.tasks.logging.Messages.MESSAGES;
+import static org.infinispan.tasks.manager.logging.Messages.MESSAGES;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -25,11 +25,11 @@ import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
-import org.infinispan.tasks.TaskExecution;
-import org.infinispan.tasks.TaskManager;
-import org.infinispan.tasks.logging.Log;
-import org.infinispan.tasks.spi.NonBlockingTaskEngine;
-import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.tasks.manager.TaskExecution;
+import org.infinispan.tasks.manager.TaskManager;
+import org.infinispan.tasks.manager.logging.Log;
+import org.infinispan.tasks.manager.spi.NonBlockingTaskEngine;
+import org.infinispan.tasks.manager.spi.TaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
