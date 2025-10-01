@@ -1,4 +1,4 @@
-package org.infinispan.tasks.impl;
+package org.infinispan.tasks.manager.impl;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.tasks.TaskContext;
-import org.infinispan.tasks.TaskExecution;
+import org.infinispan.tasks.manager.TaskExecution;
 
 /**
  * TaskExecutionImpl. A concrete representation of a {@link TaskExecution}

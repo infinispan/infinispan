@@ -1,4 +1,4 @@
-package org.infinispan.tasks;
+package org.infinispan.tasks.manager;
 
 import java.time.Instant;
 import java.util.Optional;

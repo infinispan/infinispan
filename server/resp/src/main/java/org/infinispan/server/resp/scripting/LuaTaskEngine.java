@@ -21,7 +21,7 @@ import org.infinispan.server.resp.serialization.lua.LuaResponseWriter;
 import org.infinispan.server.resp.tx.TransactionContext;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
-import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.tasks.manager.spi.TaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.ChannelHandlerContext;

@@ -22,8 +22,8 @@ import org.infinispan.security.impl.Authorizer;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
+import org.infinispan.tasks.manager.spi.TaskEngine;
 import org.infinispan.tasks.query.RemoteQueryAccess;
-import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 
 /**

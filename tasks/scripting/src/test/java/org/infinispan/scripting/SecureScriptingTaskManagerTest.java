@@ -1,7 +1,7 @@
 package org.infinispan.scripting;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
+import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.InputStream;
@@ -10,6 +10,7 @@ import java.util.List;
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
@@ -23,13 +24,12 @@ import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
-import org.infinispan.tasks.TaskManager;
-import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.tasks.manager.TaskManager;
+import org.infinispan.tasks.manager.spi.TaskEngine;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 /**

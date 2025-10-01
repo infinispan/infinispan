@@ -18,7 +18,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.tasks.TaskManager;
+import org.infinispan.tasks.manager.TaskManager;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
