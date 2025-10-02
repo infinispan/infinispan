@@ -13,6 +13,8 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
       value = Map.class,
       subClassNames = {
             "java.util.HashMap",
+            "java.util.Collections$EmptyMap",
+            "java.util.Collections$SingletonMap",
             "java.util.ImmutableCollections$Map1",
             "java.util.ImmutableCollections$MapN"
       }
