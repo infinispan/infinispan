@@ -1,14 +1,93 @@
 name: Setup Java
 description: Setup Java
 
+inputs:
+  gpg-private-key:
+    description: "GPG private key for signing artifacts"
+    required: false
+    default: ""
+  setup:
+    description: "Whether to 'store' or 'load' setup Java environment"
+    required: false
+  run-id:
+    descrption: "Run id to retrieve the java setup artifact"
+  version:
+    description: "Java version to setup"
+    required: false
+    default: "21"
+  distribution:
+    description: "Java distribution to setup"
+    required: false
+    default: "temurin"
+
 runs:
   using: composite
   steps:
-    - name: Setup Java
-      uses: actions/setup-java@v4
+    # ===== STORE MODE =====
+    # When setup='store', this saves the Java configuration (version and distribution)
+    # as GitHub artifacts. This allows dependent jobs to use the exact same Java setup.
+    # Use case: A build job sets up Java and stores the config, then test jobs load it
+    # to ensure they run with identical Java versions.
+
+    - name: Save Java setup info
+      if: ${{ inputs.setup == 'store' }}
+      shell: bash
+      run: |
+        echo "::notice::storing ./java-setup distro=${{ inputs.distribution }} version=${{ inputs.version }}"
+        # Write the Java version and distribution to text files
+        echo "${{ inputs.version }}" > version.txt
+        echo "${{ inputs.distribution }}" > distribution.txt
+
+    - name: Upload Java setup artifact
+      if: ${{ inputs.setup == 'store' }}
+      uses: actions/upload-artifact@v4
       with:
-        java-version: 21
-        distribution: temurin
+        name: java-setup
+        path: |
+          version.txt
+          distribution.txt
+
+    # ===== LOAD MODE =====
+    # When setup='load', this downloads the Java configuration from a previous job
+    # (specified by run-id) and sets environment variables that will be used
+    # in the "Setup Java" step below. This ensures consistent Java setup across jobs.
+    # The loaded values take precedence over the input parameters.
+
+    - name: Download Java setup artifact
+      if: ${{ inputs.setup == 'load' }}
+      uses: actions/download-artifact@v4
+      with:
+        name: java-setup
+        path: ./java-setup
+        github-token: ${{ github.token }}
+        run-id: ${{ inputs.run-id }}
+
+    - name: Load Java environment
+      if: ${{ inputs.setup == 'load' }}
+      shell: bash
+      run: |
+        # Read the stored Java configuration from the downloaded artifact
+        JAVA_VERSION=$(cat ./java-setup/version.txt)
+        JAVA_DIST=$(cat ./java-setup/distribution.txt)
+        # Set environment variables that will be used by the Setup Java step
+        echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
+        echo "JAVA_DIST=$JAVA_DIST" >> $GITHUB_ENV
+        echo "::notice::from ./java-setup distro=$JAVA_DIST version=$JAVA_VERSION"
+
+    # ===== SETUP JAVA =====
+    # This step runs in all modes (store, load, or direct).
+    # - In load mode: Uses JAVA_VERSION and JAVA_DIST from environment (set above)
+    # - In store/direct mode: Uses the inputs.version and inputs.distribution
+    # The || operator provides fallback values if env vars are not set.
+    - name: Setup Java
+      uses: actions/setup-java@v5
+      with:
+        java-version: ${{ env.JAVA_VERSION || inputs.version }}
+        distribution: ${{ env.JAVA_DIST || inputs.distribution }}
+        server-id: central
+        server-username: MAVEN_USERNAME
+        server-password: MAVEN_PASSWORD
+        gpg-private-key: ${{ inputs.gpg-private-key }}
 
     # Explicitly configure the maven cache instead of using the built-in setup-java cache so that we can exclude
     # all Infinispan modules
