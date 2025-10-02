@@ -6,15 +6,66 @@ inputs:
     description: "GPG private key for signing artifacts"
     required: false
     default: ""
+  setup:
+    description: "Whether to 'store' or 'load' setup Java environment"
+    required: false
+  run-id:
+    descrption: "Run id to retrieve the java setup artifact"
+  version:
+    description: "Java version to setup"
+    required: false
+    default: "25"
+  distribution:
+    description: "Java distribution to setup"
+    required: false
+    default: "zulu"
 
 runs:
   using: composite
   steps:
+    # Store mode: store metadata and Java setup
+    - name: Save Java setup info
+      if: ${{ inputs.setup == 'store' }}
+      shell: bash
+      run: |
+        echo "::notice::storing ./java-setup distro=${{ inputs.distribution }} version=${{ inputs.version }}"
+        echo "${{ inputs.version }}" > version.txt
+        echo "${{ inputs.distribution }}" > distribution.txt
+
+    - name: Upload Java setup artifact
+      if: ${{ inputs.setup == 'store' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: java-setup
+        path: |
+          version.txt
+          distribution.txt
+
+    # Load mode: restore metadata and setup Java again
+    - name: Download Java setup artifact
+      if: ${{ inputs.setup == 'load' }}
+      uses: actions/download-artifact@v4
+      with:
+        name: java-setup
+        path: ./java-setup
+        github-token: ${{ github.token }}
+        run-id: ${{ inputs.run-id }}
+
+    - name: Load Java environment
+      if: ${{ inputs.setup == 'load' }}
+      shell: bash
+      run: |
+        JAVA_VERSION=$(cat ./java-setup/version.txt)
+        JAVA_DIST=$(cat ./java-setup/distribution.txt)
+        echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
+        echo "JAVA_DIST=$JAVA_DIST" >> $GITHUB_ENV
+        echo "::notice::from ./java-setup distro=$JAVA_DIST version=$JAVA_VERSION"
+
     - name: Setup Java
       uses: actions/setup-java@v5
       with:
-        java-version: 25
-        distribution: zulu
+        java-version: ${{ env.JAVA_VERSION || inputs.version }}
+        distribution: ${{ env.JAVA_DIST || inputs.distribution }}
         server-id: central
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
