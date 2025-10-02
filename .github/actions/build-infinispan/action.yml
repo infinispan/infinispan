@@ -6,6 +6,8 @@ runs:
   steps:
     - name: Setup Java
       uses: ./.github/actions/setup-java
+      with:
+        setup: store
 
     - name: Build Infinispan
       shell: bash
