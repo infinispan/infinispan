@@ -257,8 +257,17 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
                   "java.util.ImmutableCollections$ListN",
                   "java.util.ImmutableCollections$List12",
 
+                  // Internal Map Implementations
+                  "java.util.HashMap",
+                  "java.util.Collections$EmptyMap",
+                  "java.util.Collections$SingletonMap",
+                  "java.util.ImmutableCollections$Map1",
+                  "java.util.ImmutableCollections$MapN",
+
                   // Internal Set Implementations
                   "java.util.Collections$EmptySet",
+                  "java.util.ImmutableCollections$SetN",
+                  "java.util.ImmutableCollections$Set12",
                   "java.util.Collections$SingletonSet",
                   "java.util.Collections$SynchronizedSet",
                   "java.util.Collections$UnmodifiableSet"
