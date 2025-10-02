@@ -1,48 +1,6 @@
 {
   "definitions" : [ {
-    "protopath" : "org:/:infinispan:/:server:/:core:/:global.server.core.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "IterationFilter",
-        "type_id" : 6500,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "requestType",
-          "type" : "org.infinispan.persistence.commons.MediaType",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "storageMediaType",
-          "type" : "org.infinispan.persistence.commons.MediaType",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "providedFilter",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "ConnectionAdderTask",
-        "type_id" : 6501,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "serverName",
-          "type" : "string",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "org/infinispan/protostream/message-wrapping.proto"
-      }, {
-        "path" : "persistence.commons.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.global.server.core"
-      }
-    }
-  }, {
-    "protopath" : "org:/:infinispan:/:query:/:server:/:global.remote.query.server.proto",
+    "protopath" : "org:/:infinispan:/:server:/:core:/:query:/:global.remote.query.server.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
@@ -112,7 +70,49 @@
       }
     }
   }, {
-    "protopath" : "org:/:infinispan:/:query:/:server:/:persistence.remote_query.proto",
+    "protopath" : "org:/:infinispan:/:server:/:core:/:global.server.core.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "IterationFilter",
+        "type_id" : 6500,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "requestType",
+          "type" : "org.infinispan.persistence.commons.MediaType",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "storageMediaType",
+          "type" : "org.infinispan.persistence.commons.MediaType",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "providedFilter",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ConnectionAdderTask",
+        "type_id" : 6501,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "serverName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "org/infinispan/protostream/message-wrapping.proto"
+      }, {
+        "path" : "persistence.commons.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.server.core"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:server:/:core:/:query:/:persistence.remote_query.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
