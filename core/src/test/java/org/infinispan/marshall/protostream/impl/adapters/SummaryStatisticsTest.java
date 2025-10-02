@@ -1,33 +1,18 @@
-package org.infinispan.marshall.protostream.impl.marshallers;
+package org.infinispan.marshall.protostream.impl.adapters;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
+
 import java.util.DoubleSummaryStatistics;
 import java.util.IntSummaryStatistics;
 import java.util.LongSummaryStatistics;
 
-import org.infinispan.marshall.protostream.impl.GlobalContextInitializerImpl;
-import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "marshall.SummaryStatisticsTest")
-public class SummaryStatisticsTest {
+@Test(groups = "functional", testName = "adapters.SummaryStatisticsTest")
+public class SummaryStatisticsTest extends AbstractAdapterTest {
 
-   private final SerializationContext ctx;
-
-   public SummaryStatisticsTest() {
-      this.ctx = ProtobufUtil.newSerializationContext();
-      GlobalContextInitializerImpl.INSTANCE.register(ctx);
-   }
-
-   private <T> T deserialize(T object) throws IOException {
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(ctx, object);
-      return ProtobufUtil.fromWrappedByteArray(ctx, bytes);
-   }
-
-   public void testDoubleFiniteStats() throws IOException {
+   public void testDoubleFiniteStats() throws Exception {
       DoubleSummaryStatistics stats = new DoubleSummaryStatistics();
       stats.accept(10.0/3);
       stats.accept(-0.1);
@@ -36,7 +21,7 @@ public class SummaryStatisticsTest {
       assertStatsAreEqual(stats, deserialized);
    }
 
-   public void testDoubleNaN() throws IOException {
+   public void testDoubleNaN() throws Exception {
       DoubleSummaryStatistics stats = new DoubleSummaryStatistics();
       stats.accept(-1);
       stats.accept(Double.NaN);
@@ -54,7 +39,7 @@ public class SummaryStatisticsTest {
       assertStatsAreEqual(stats, deserialized);
    }
 
-   public void testIntStatsAreMarshallable() throws IOException {
+   public void testIntStatsAreMarshallable() throws Exception {
       IntSummaryStatistics original = new IntSummaryStatistics();
       original.accept(1);
       original.accept(-Integer.MAX_VALUE);
@@ -67,7 +52,7 @@ public class SummaryStatisticsTest {
       assertEquals(original.getAverage(), deserialized.getAverage());
    }
 
-   public void testLongStatsAreMarshallable() throws IOException {
+   public void testLongStatsAreMarshallable() throws Exception {
       LongSummaryStatistics original = new LongSummaryStatistics();
       original.accept(1);
       original.accept(-Long.MAX_VALUE);

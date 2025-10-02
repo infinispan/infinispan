@@ -13,6 +13,8 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
       value = Set.class,
       subClassNames = {
             "java.util.Collections$EmptySet",
+            "java.util.ImmutableCollections$SetN",
+            "java.util.ImmutableCollections$Set12",
             "java.util.Collections$SingletonSet",
             "java.util.Collections$SynchronizedSet",
             "java.util.Collections$UnmodifiableSet"
