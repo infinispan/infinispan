@@ -1,4 +1,4 @@
-package org.infinispan.tasks.logging;
+package org.infinispan.tasks.manager.logging;
 
 import static org.jboss.logging.Messages.getBundle;
 

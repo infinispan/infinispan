@@ -1,9 +1,11 @@
-package org.infinispan.tasks;
+package org.infinispan.tasks.manager;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.tasks.Task;
+import org.infinispan.tasks.TaskContext;
+import org.infinispan.tasks.manager.spi.TaskEngine;
 
 /**
  * TaskManager. Allows executing tasks and retrieving the list of currently running tasks

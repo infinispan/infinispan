@@ -8,7 +8,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       allowNullFields = true,
       dependsOn = {
             org.infinispan.tasks.api.impl.GlobalContextInitializer.class,
-            org.infinispan.tasks.impl.GlobalContextInitializer.class
+            org.infinispan.tasks.manager.impl.GlobalContextInitializer.class
       },
       includeClasses = {
             org.infinispan.server.state.ServerStateManagerImpl.IgnoredCaches.class,

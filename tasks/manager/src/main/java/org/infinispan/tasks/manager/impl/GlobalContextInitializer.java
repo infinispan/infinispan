@@ -1,4 +1,4 @@
-package org.infinispan.tasks.impl;
+package org.infinispan.tasks.manager.impl;
 
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoSchema;

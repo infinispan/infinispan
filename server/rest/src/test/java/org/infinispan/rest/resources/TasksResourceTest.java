@@ -17,8 +17,8 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.tasks.DummyTaskEngine;
-import org.infinispan.tasks.TaskManager;
-import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.tasks.manager.TaskManager;
+import org.infinispan.tasks.manager.spi.TaskEngine;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 

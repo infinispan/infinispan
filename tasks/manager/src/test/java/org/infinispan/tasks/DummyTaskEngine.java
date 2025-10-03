@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.tasks.manager.spi.TaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 
 public class DummyTaskEngine implements TaskEngine {

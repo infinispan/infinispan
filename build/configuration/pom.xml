@@ -46,6 +46,9 @@
       <infinispan.olm.k8s.source>operatorhubio-catalog</infinispan.olm.k8s.source>
       <infinispan.olm.name>infinispan</infinispan.olm.name>
       <infinispan.gpg.key>9E31AB27445478DB</infinispan.gpg.key>
+      <!-- This should be updated to a stable version from the previous release -->
+      <infinispan.old.version>16.0.0.Dev04</infinispan.old.version>
+
       <wildfly.brand.name>WildFly</wildfly.brand.name>
       <wildfly.brand.prefix>wildfly</wildfly.brand.prefix>
 
@@ -184,6 +187,7 @@
       <version.maven.help>3.5.1</version.maven.help>
       <version.maven.install>3.1.4</version.maven.install>
       <version.maven.invoker>3.9.1</version.maven.invoker>
+      <version.maven.japicmp>0.23.1</version.maven.japicmp>
       <version.maven.jar>3.4.2</version.maven.jar>
       <version.maven-plugin-plugin>3.15.1</version.maven-plugin-plugin>
       <version.maven.project-info-reports>3.9.0</version.maven.project-info-reports>

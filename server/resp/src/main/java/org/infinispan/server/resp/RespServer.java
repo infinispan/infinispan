@@ -28,7 +28,7 @@ import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 import org.infinispan.server.resp.filter.RespTypeFilterConverterFactory;
 import org.infinispan.server.resp.meta.MetadataRepository;
 import org.infinispan.server.resp.scripting.LuaTaskEngine;
-import org.infinispan.tasks.TaskManager;
+import org.infinispan.tasks.manager.TaskManager;
 import org.infinispan.transaction.LockingMode;
 
 import io.netty.channel.Channel;

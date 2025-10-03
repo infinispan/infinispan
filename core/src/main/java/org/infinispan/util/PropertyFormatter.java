@@ -1,4 +1,4 @@
-package org.infinispan.configuration.format;
+package org.infinispan.util;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
