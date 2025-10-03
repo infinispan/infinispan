@@ -9,6 +9,12 @@ updates:
     rebase-strategy: disabled
     ignore:
       - dependency-name: "io.opentelemetry:*"
+      - dependency-name: "io.netty"
+        update-types: [ "version-update:semver-minor" ]
+      - dependency-name: "io.quarkus"
+        update-types: [ "version-update:semver-minor"]
+      - dependency-name: "io.vertx"
+        update-types: [ "version-update:semver-minor" ]
       - dependency-name: "*"
         update-types: [ "version-update:semver-major" ]
   - package-ecosystem: github-actions
