@@ -120,7 +120,7 @@
       <version.log4j>2.25.2</version.log4j>
       <version.lucene>9.12.1</version.lucene>
       <version.metainf-services>1.11</version.metainf-services>
-      <version.micrometer>1.15.3</version.micrometer>
+      <version.micrometer>1.15.4</version.micrometer>
       <version.mockito>5.20.0</version.mockito>
       <version.nashorn>15.7</version.nashorn>
       <version.netty>4.1.127.Final</version.netty>
