@@ -302,6 +302,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Task '%s' started at %s and done %s", id = 973)
    void taskDone(String name, Instant started, Instant completed);
 
+   @LogMessage(level = INFO)
+   @Message(value = "Virtual threads support: %s", id = 974)
+   void virtualThreadSupport(String status);
+
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
 }
