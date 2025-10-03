@@ -88,11 +88,14 @@ public class JdbcPing2IT {
    }
 
    private Eventually.Condition assertClusterMembersSize(int server, int expectedMembers) {
-      RestClient client = SERVERS.rest().get(server);
-      try (RestResponse info = sync(client.container().info())) {
-         assertEquals(200, info.status());
-         Json json = Json.read(info.body());
-         return () -> json.at("cluster_members").asJsonList().size() == expectedMembers;
-      }
+      return () -> {
+         try (RestClient client = SERVERS.rest().get(server)) {
+            try (RestResponse info = sync(client.container().info())) {
+               assertEquals(200, info.status());
+               Json json = Json.read(info.body());
+               return json.at("cluster_members").asJsonList().size() == expectedMembers;
+            }
+         }
+      };
    }
 }
