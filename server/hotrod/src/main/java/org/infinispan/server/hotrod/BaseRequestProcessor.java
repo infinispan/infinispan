@@ -95,15 +95,20 @@ public class BaseRequestProcessor {
          log.exceptionReported(cause);
          status = OperationStatus.ServerError;
       }
+      HotRodOperation op;
       if (header == null) {
+         op = HotRodOperation.ERROR;
          header = new HotRodHeader(HotRodOperation.ERROR, (byte) 0, 0, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL, null);
       } else {
+         op = header.op;
          header.op = HotRodOperation.ERROR;
       }
       ByteBuf buf = header.encoder().errorResponse(header, server, channel, msg, status);
       int responseBytes = buf.readableBytes();
       ChannelFuture future = channel.writeAndFlush(buf);
       if (header instanceof AccessLoggingHeader) {
+         // Keep header with ERROR to flush to client, but revert to original operation when writing to access log.
+         header.op = op;
          accessLogging.logException(future, (AccessLoggingHeader) header, cause.toString(), responseBytes);
       }
    }
