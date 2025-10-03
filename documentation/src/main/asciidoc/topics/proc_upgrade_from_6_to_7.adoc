@@ -1,0 +1,22 @@
+[id='upgrading-from-6-to-7_{context}']
+= Upgrading Spring integration in {brandname}
+
+== From Spring 6 to Spring 7
+{brandname} supports both Spring 6 and Spring 7.
+To migrate, simply update your Maven dependencies.
+
+* `infinispan-spring6-embedded` by `infinispan-spring7-embedded`
+* `infinispan-spring6-remote` by `infinispan-spring7-remote`
+
+Backward compatibility is maintained, and no functionality should be affected.
+
+== From Spring Boot 3.x to Spring Boot 4.x
+{brandname} supports both Spring Boot 3.x and Spring Boot 4.x.
+To migrate, first update your Maven dependencies.
+* `infinispan-spring-boot3-starter-embedded` by `infinispan-spring-boot4-starter-embedded`
+* `infinispan-spring-boot3-starter-remote` by `infinispan-spring-boot4-starter-remote`
+
+In Embedded mode, the `InfinispanConfigurationCustomizer` bean has been deprecated in Spring Boot 3.x
+and removed in Spring Boot 4 integration. This component was used to customize the default cache,
+which was automatically created. Going forward, use `InfinispanCacheConfigurer` and explicitly
+define a cache named `default` if needed.
