@@ -9,7 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,11 +45,10 @@ public class LuaContext implements AutoCloseable {
 
    private static final String REDIS_API_NAME = "redis";
 
-   private static final String[] LIBRARIES_ALLOW_LIST = {"string", "math", "table", "os"}; // bit, cjson, cmsgpack, struct are not available in luajava
-   private static final String[] REDIS_API_ALLOW_LIST = {"redis", "__redis__err__handler"};
-   private static final String[] LUA_BUILTINS_ALLOW_LIST = {"xpcall", "tostring", "getfenv", "setmetatable", "next", "assert", "tonumber", "rawequal", "collectgarbage", "getmetatable", "rawset", "pcall", "coroutine", "type", "_G", "select", "unpack", "gcinfo", "pairs", "rawget", "loadstring", "ipairs", "_VERSION", "setfenv", "load", "error"};
-   private static final String[] LUA_BUILTINS_NOT_DOCUMENTED_ALLOW_LIST = {"newproxy"};
-   private static final String[] LUA_BUILTINS_REMOVED_AFTER_INITIALIZATION_ALLOW_LIST = {"debug"};
+   private static final Set<String> LIBRARIES_ALLOW_LIST = Set.of("string", "math", "table", "os"); // bit, cjson, cmsgpack, struct are not available in luajava
+   private static final Set<String> REDIS_API_ALLOW_LIST = Set.of("redis", "__redis__err__handler");
+   private static final Set<String> LUA_BUILTINS_ALLOW_LIST = Set.of("xpcall", "tostring", "setmetatable", "next", "assert", "tonumber", "rawequal", "collectgarbage", "getmetatable", "rawset", "pcall", "coroutine", "type", "_G", "select", "unpack", "gcinfo", "pairs", "rawget", "loadstring", "ipairs", "_VERSION", "load", "error");
+   private static final Set<String> LUA_BUILTINS_REMOVED_AFTER_INITIALIZATION_ALLOW_LIST = Set.of("debug");
    private static final Set<String> ALLOW_LISTS;
    private static final Set<String> DENY_LIST = Set.of("dofile", "loadfile", "print");
 
@@ -67,11 +65,10 @@ public class LuaContext implements AutoCloseable {
 
    static {
       ALLOW_LISTS = new HashSet<>();
-      ALLOW_LISTS.addAll(Arrays.asList(LIBRARIES_ALLOW_LIST));
-      ALLOW_LISTS.addAll(Arrays.asList(REDIS_API_ALLOW_LIST));
-      ALLOW_LISTS.addAll(Arrays.asList(LUA_BUILTINS_ALLOW_LIST));
-      ALLOW_LISTS.addAll(Arrays.asList(LUA_BUILTINS_NOT_DOCUMENTED_ALLOW_LIST));
-      ALLOW_LISTS.addAll(Arrays.asList(LUA_BUILTINS_REMOVED_AFTER_INITIALIZATION_ALLOW_LIST));
+      ALLOW_LISTS.addAll(LIBRARIES_ALLOW_LIST);
+      ALLOW_LISTS.addAll(REDIS_API_ALLOW_LIST);
+      ALLOW_LISTS.addAll(LUA_BUILTINS_ALLOW_LIST);
+      ALLOW_LISTS.addAll(LUA_BUILTINS_REMOVED_AFTER_INITIALIZATION_ALLOW_LIST);
    }
 
    final Lua lua;
@@ -96,6 +93,8 @@ public class LuaContext implements AutoCloseable {
    }
 
    private void installRedisAPI() {
+      luaSetAllowListProtection();
+
       lua.newTable();
 
       // redis.sha1hex(string)
@@ -429,12 +428,13 @@ public class LuaContext implements AutoCloseable {
       return 0;
    }
 
-   private static int luaSetAllowListProtection(Lua lua) {
+   private void luaSetAllowListProtection() {
+      lua.push(LUA_GLOBALSINDEX);
       lua.newTable();
       lua.push(LuaContext::luaNewIndexAllowList);
       lua.setField(-2, "__newindex");
       lua.setMetatable(-2);
-      return 0;
+      lua.pop(1);
    }
 
    void registerScript(LuaCode code) {
