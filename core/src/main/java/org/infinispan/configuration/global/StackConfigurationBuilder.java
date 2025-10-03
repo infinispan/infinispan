@@ -13,12 +13,10 @@ import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
  */
 public class StackConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements StackBuilder<StackConfiguration> {
    private final AttributeSet attributes;
-   private final JGroupsConfigurationBuilder jgroups;
    private EmbeddedJGroupsChannelConfigurator configurator;
 
    StackConfigurationBuilder(String name, JGroupsConfigurationBuilder jgroups) {
       super(jgroups.getGlobalConfig());
-      this.jgroups = jgroups;
       attributes = StackConfiguration.attributeDefinitionSet();
       attributes.attribute(NAME).set(name);
    }
