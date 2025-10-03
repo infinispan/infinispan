@@ -41,7 +41,7 @@ init {
    protected HotRodHeader getHeader() {
       if (accessLogging && header != null) {
          // this causes two checks for subject but we don't mind
-         return new AccessLoggingHeader(header, null, key != null ? key : taskName, requestBytes, requestStart);
+         return new AccessLoggingHeader(header, auth.getSubjectWithoutValidation(), key != null ? key : taskName, requestBytes, requestStart);
       } else {
          return header;
       }
@@ -342,8 +342,8 @@ parameters switch opCode
    | { GET_WITH_METADATA }? key { cacheProcessor.getWithMetadata(getHeader(), auth.getSubject(operation), key, 0) }
    | { BULK_GET_KEYS_REQUEST }? scope { cacheProcessor.bulkGetKeys(getHeader(), auth.getSubject(operation), scope); }
    | { QUERY_REQUEST }? queryBytes { cacheProcessor.query(getHeader(), auth.getSubject(operation), queryBytes); }
-   | { AUTH_MECH_LIST_REQUEST }? { auth.authMechList(header); }
-   | { AUTH_REQUEST }? authMech authResponse { auth.auth(header, authMech, authResponse); }
+   | { AUTH_MECH_LIST_REQUEST }? { auth.authMechList(getHeader()); }
+   | { AUTH_REQUEST }? authMech authResponse { auth.auth(getHeader(), authMech, authResponse); }
    | { ADD_CLIENT_LISTENER_REQUEST }? listenerId includeCurrentState listenerParams
       { cacheProcessor.addClientListener(getHeader(), auth.getSubject(operation), listenerId, includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawEvents, listenerInterests, 0); }
    | { ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_REQUEST }? listenerId bloomBits

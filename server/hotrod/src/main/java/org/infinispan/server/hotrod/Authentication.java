@@ -155,4 +155,8 @@ public class Authentication extends BaseRequestProcessor {
       }
       return subject;
    }
+
+   public Subject getSubjectWithoutValidation() {
+      return subject == ANONYMOUS ? null : subject;
+   }
 }
