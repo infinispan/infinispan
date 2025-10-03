@@ -1,13 +1,17 @@
 package org.infinispan.server.memcached;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -38,36 +42,49 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
    private Cache<Object, Object> memcachedCache;
 
    private MemcachedStats statistics;
+   private volatile boolean initialized;
 
    public MemcachedServer() {
       super("Memcached");
    }
 
    @Override
-   protected void startInternal() {
-      if (cacheManager.getCacheConfiguration(configuration.defaultCacheName()) == null) {
+   protected void startCaches() { }
+
+   private CompletionStage<Cache<Object, Object>> getOrCreateMemcachedCache() {
+      Configuration cacheConfiguration;
+      GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
+      if ((cacheConfiguration = SecurityActions.getCacheConfiguration(cacheManager, this.configuration.defaultCacheName())) == null) {
          ConfigurationBuilder builder = new ConfigurationBuilder();
-         Configuration defaultCacheConfiguration = cacheManager.getDefaultCacheConfiguration();
+         Configuration defaultCacheConfiguration = SecurityActions.getDefaultCacheConfiguration(cacheManager);
          if (defaultCacheConfiguration != null) { // We have a default configuration, use that
             builder.read(defaultCacheConfiguration);
-         } else if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
+         } else if (globalConfiguration.isClustered()) { // We are running in clustered mode
             builder.clustering().cacheMode(CacheMode.REPL_SYNC);
          }
          builder.encoding().key().mediaType(MediaType.TEXT_PLAIN);
          builder.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM);
          builder.statistics().enable();
-         cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
+         cacheConfiguration = builder.build();
       }
-      super.startInternal();
+
+      final Configuration c = cacheConfiguration;
+      return getBlockingManager()
+            .supplyBlocking(() -> {
+               Cache<Object, Object> cache = SecurityActions.getOrCreateCache(cacheManager, configuration.defaultCacheName(), c);
+               initialized = true;
+               return cache;
+            }, "initialize-memcached");
    }
 
    @Override
-   protected void internalPostStart() {
-      super.internalPostStart();
-      memcachedCache = cacheManager.getCache(configuration.defaultCacheName());
-      if (memcachedCache.getCacheConfiguration().statistics().enabled()) {
-         statistics = new MemcachedStats();
-      }
+   public CompletionStage<Void> initializeDefaultCache() {
+      return getOrCreateMemcachedCache().thenApply(CompletableFutures.toNullFunction());
+   }
+
+   @Override
+   public boolean isDefaultCacheInitialized() {
+      return initialized;
    }
 
    @Override
@@ -155,6 +172,14 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
     * Returns the cache being used by the Memcached server
     */
    public Cache<Object, Object> getCache() {
+      if (memcachedCache == null) {
+         if (!initialized || !cacheManager.isRunning(configuration.defaultCacheName()))
+            throw new IllegalStateException("Memcached is not initialized");
+         memcachedCache = cacheManager.getCache(configuration.defaultCacheName());
+         if (memcachedCache.getCacheConfiguration().statistics().enabled()) {
+            statistics = new MemcachedStats();
+         }
+      }
       return memcachedCache;
    }
 

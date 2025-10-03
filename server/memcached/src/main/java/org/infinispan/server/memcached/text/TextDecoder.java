@@ -4,6 +4,7 @@ import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.memcached.MemcachedBaseDecoder;
@@ -23,7 +24,12 @@ abstract class TextDecoder extends MemcachedBaseDecoder {
    protected TokenReader reader;
 
    protected TextDecoder(MemcachedServer server, Subject subject) {
-      super(server, subject, server.getCache().getAdvancedCache().withMediaType(MediaType.TEXT_PLAIN, server.getConfiguration().clientEncoding()));
+      super(server, subject);
+   }
+
+   @Override
+   protected final AdvancedCache<byte[], byte[]> createCache(MemcachedServer server) {
+      return server.getCache().getAdvancedCache().withMediaType(MediaType.TEXT_PLAIN, server.getConfiguration().clientEncoding());
    }
 
    @Override

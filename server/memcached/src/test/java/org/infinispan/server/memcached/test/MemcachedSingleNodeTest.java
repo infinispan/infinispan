@@ -1,5 +1,6 @@
 package org.infinispan.server.memcached.test;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMemcachedClient;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.enableAuthentication;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.enableEncryption;
@@ -8,6 +9,7 @@ import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBu
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,7 +24,10 @@ import java.util.stream.Stream;
 
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.DummyServerStateManager;
 import org.infinispan.server.core.ServerStateManager;
@@ -33,6 +38,7 @@ import org.infinispan.server.memcached.text.TextConstants;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
 
@@ -67,7 +73,6 @@ public abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
       server = MemcachedTestingUtil.createMemcachedServer(decoderReplay);
       startServer(server, builder);
       client = createMemcachedClient(server);
-      cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
       return cacheManager;
    }
 
@@ -77,7 +82,19 @@ public abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
    }
 
    protected EmbeddedCacheManager createTestCacheManager() {
-      return TestCacheManagerFactory.createCacheManager(true);
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      TestCacheManagerFactory.amendGlobalConfiguration(globalBuilder, new TransportFlags());
+      return TestCacheManagerFactory.createCacheManager(enableGlobalState(globalBuilder, 0), null, true);
+   }
+
+   protected final GlobalConfigurationBuilder enableGlobalState(GlobalConfigurationBuilder builder, int index) {
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator +  index);
+      Util.recursiveFileRemove(stateDirectory);
+      builder.globalState().enable()
+            .persistentLocation(stateDirectory)
+            .configurationStorage(ConfigurationStorage.OVERLAY)
+            .sharedPersistentLocation(stateDirectory);
+      return builder;
    }
 
    protected abstract MemcachedProtocol getProtocol();

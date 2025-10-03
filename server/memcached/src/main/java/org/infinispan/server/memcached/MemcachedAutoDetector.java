@@ -1,5 +1,7 @@
 package org.infinispan.server.memcached;
 
+import static org.infinispan.server.core.transport.CacheInitializeInboundAdapter.CACHE_INITIALIZE_EVENT;
+
 import java.util.List;
 
 import org.infinispan.server.core.ProtocolDetector;
@@ -42,5 +44,6 @@ public class MemcachedAutoDetector extends ProtocolDetector {
       Log.SERVER.tracef("Detected %s connection", protocol);
       // Trigger any protocol-specific rules
       ctx.pipeline().fireUserEventTriggered(AccessControlFilter.EVENT);
+      ctx.pipeline().fireUserEventTriggered(CACHE_INITIALIZE_EVENT);
    }
 }

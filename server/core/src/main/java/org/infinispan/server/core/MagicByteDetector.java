@@ -1,5 +1,7 @@
 package org.infinispan.server.core;
 
+import static org.infinispan.server.core.transport.CacheInitializeInboundAdapter.CACHE_INITIALIZE_EVENT;
+
 import java.util.List;
 
 import org.infinispan.server.core.logging.Log;
@@ -36,6 +38,7 @@ public abstract class MagicByteDetector extends ProtocolDetector {
          ctx.fireChannelRegistered();
          // Trigger any protocol-specific rules
          ctx.pipeline().fireUserEventTriggered(AccessControlFilter.EVENT);
+         ctx.pipeline().fireUserEventTriggered(CACHE_INITIALIZE_EVENT);
       }
       // Remove this
       ctx.pipeline().remove(this);

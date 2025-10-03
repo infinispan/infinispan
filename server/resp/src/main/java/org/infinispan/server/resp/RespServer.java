@@ -3,15 +3,20 @@ package org.infinispan.server.resp;
 import static org.infinispan.commons.logging.Log.CONFIG;
 
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.scripting.ScriptingManager;
@@ -55,13 +60,13 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    private SegmentSlotRelation segmentSlots;
    private LuaTaskEngine luaTaskEngine;
    private final Random random = new Random(); // TODO: we should be able to set a cluster-wide seed
+   private volatile boolean initialized = false;
 
    public RespServer() {
       super("Resp");
    }
 
-   @Override
-   protected void internalPostStart() {
+   private CompletionStage<AdvancedCache<byte[], byte[]>> initializeRespCache() {
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.timeService = gcr.getTimeService();
       this.iterationManager = new DefaultIterationManager(gcr.getTimeService());
@@ -71,18 +76,20 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       iterationManager.addKeyValueFilterConverterFactory(ComposedFilterConverterFactory.class.getName(), new ComposedFilterConverterFactory());
       dataStructureIterationManager.addKeyValueFilterConverterFactory(GlobMatchFilterConverterFactory.class.getName(), new GlobMatchFilterConverterFactory(true));
       metadataRepository = new MetadataRepository();
-      if (!cacheManager.getCacheManagerConfiguration().features().isAvailable(RESP_SERVER_FEATURE)) {
+
+      GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
+      if (!globalConfiguration.features().isAvailable(RESP_SERVER_FEATURE)) {
          throw CONFIG.featureDisabled(RESP_SERVER_FEATURE);
       }
       String cacheName = configuration.defaultCacheName();
-      Configuration explicitConfiguration = cacheManager.getCacheConfiguration(cacheName);
+      Configuration explicitConfiguration = SecurityActions.getCacheConfiguration(cacheManager, cacheName);
       if (explicitConfiguration == null) {
          ConfigurationBuilder builder = new ConfigurationBuilder();
-         Configuration defaultCacheConfiguration = cacheManager.getDefaultCacheConfiguration();
+         Configuration defaultCacheConfiguration = SecurityActions.getDefaultCacheConfiguration(cacheManager);
          if (defaultCacheConfiguration != null) { // We have a default configuration, use that
             builder.read(defaultCacheConfiguration);
             configuredValueType = builder.encoding().value().mediaType();
-            if (cacheManager.getCacheManagerConfiguration().isClustered() &&
+            if (globalConfiguration.isClustered() &&
                   !(builder.clustering().hash().keyPartitioner() instanceof RESPHashFunctionPartitioner)) {
                throw CONFIG.respCacheUseDefineConsistentHash(cacheName, builder.clustering().hash().keyPartitioner().getClass().getName());
             }
@@ -100,7 +107,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             }
 
          } else {
-            if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
+            if (globalConfiguration.isClustered()) { // We are running in clustered mode
                builder.clustering().cacheMode(CacheMode.DIST_SYNC);
                // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
                builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner());
@@ -109,21 +116,45 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             builder.encoding().value().mediaType(configuredValueType);
          }
          builder.statistics().enable().aliases("0");
-         Configuration cfg = builder.build();
-         cacheManager.defineConfiguration(configuration.defaultCacheName(), cfg);
-         segmentSlots = new SegmentSlotRelation(cfg.clustering().hash().numSegments());
+         explicitConfiguration = builder.build();
       } else {
          if (!RESP_KEY_MEDIA_TYPE.equals(explicitConfiguration.encoding().keyDataType().mediaType()))
             throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType());
 
-         if (cacheManager.getCacheManagerConfiguration().isClustered() &&
+         if (globalConfiguration.isClustered() &&
                !(explicitConfiguration.clustering().hash().keyPartitioner() instanceof RESPHashFunctionPartitioner)) {
             throw CONFIG.respCacheUseDefineConsistentHash(cacheName, explicitConfiguration.clustering().hash().keyPartitioner().getClass().getName());
          }
-         segmentSlots = new SegmentSlotRelation(explicitConfiguration.clustering().hash().numSegments());
       }
+      segmentSlots = new SegmentSlotRelation(explicitConfiguration.clustering().hash().numSegments());
       initializeLuaTaskEngine(gcr);
-      super.internalPostStart();
+      return createRespCache(configuration, explicitConfiguration);
+   }
+
+   private CompletionStage<AdvancedCache<byte[], byte[]>> createRespCache(RespServerConfiguration rsc, Configuration configuration) {
+      return getBlockingManager().supplyBlocking(() -> {
+         try {
+            Cache<byte[], byte[]> c = SecurityActions.getOrCreateCache(cacheManager, rsc.defaultCacheName(), configuration);
+            initialized = true;
+            return c.getAdvancedCache();
+         } catch (Throwable e) {
+            log.errorf(e, "Failed to create resp cache %s", rsc.defaultCacheName());
+            throw CompletableFutures.asCompletionException(e);
+         }
+      }, "create-resp-cache");
+   }
+
+   @Override
+   public CompletionStage<Void> initializeDefaultCache() {
+      return initializeRespCache().thenApply(CompletableFutures.toNullFunction());
+   }
+
+   @Override
+   protected void startCaches() { }
+
+   @Override
+   public boolean isDefaultCacheInitialized() {
+      return initialized;
    }
 
    // To be replaced for svm
@@ -168,10 +199,19 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       }
    }
 
+   public CompletionStage<AdvancedCache<byte[], byte[]>> getInitializedCache() {
+      if (!initialized) {
+         return initializeRespCache();
+      }
+      return CompletableFuture.completedFuture(getCache());
+   }
+
    /**
     * Returns the cache being used by the Resp server
     */
    public AdvancedCache<byte[], byte[]> getCache() {
+      if (!initialized)
+         throw new IllegalStateException("Cache is not initialized");
       return cacheManager.<byte[], byte[]>getCache(configuration.defaultCacheName()).getAdvancedCache();
    }
 

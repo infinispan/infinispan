@@ -59,6 +59,10 @@ public class SecurityActions {
       return doPrivileged(new GetCacheConfigurationFromManagerAction(cacheManager, name));
    }
 
+   public static Configuration getDefaultCacheConfiguration(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(cacheManager::getDefaultCacheConfiguration);
+   }
+
    public static void stopCache(Cache<?, ?> cache) {
       doPrivileged(() -> {
          cache.stop();
