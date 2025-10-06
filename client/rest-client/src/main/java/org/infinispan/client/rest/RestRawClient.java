@@ -68,4 +68,14 @@ public interface RestRawClient {
    }
 
    Closeable listen(String url, Map<String, String> headers, RestEventListener listener);
+
+   default CompletionStage<RestResponse> execute(String method, String path) {
+      return execute(method, path, Map.of());
+   }
+
+   default CompletionStage<RestResponse> execute(String method, String path, Map<String, String> headers) {
+      return execute(method, path, headers, RestEntity.EMPTY);
+   }
+
+   CompletionStage<RestResponse> execute(String method, String path, Map<String, String> headers, RestEntity entity);
 }
