@@ -1949,6 +1949,14 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testForbiddenMethod() {
+      RestRawClient rawClient = client.raw();
+
+      CompletionStage<RestResponse> response = rawClient.execute("NOT-EXIST", "/rest/v2/caches");
+      assertThat(response).isForbidden();
+   }
+
+   @Test
    public void testAccessibleCaches() {
       if (security) {
          RestResponse response = join(adminClient.cachesByRole("ADMIN"));

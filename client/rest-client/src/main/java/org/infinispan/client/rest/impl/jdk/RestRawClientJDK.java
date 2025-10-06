@@ -276,4 +276,16 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
    RestClientConfiguration getConfiguration() {
       return configuration;
    }
+
+   @Override
+   public CompletionStage<RestResponse> execute(String method, String path, Map<String, String> headers, RestEntity entity) {
+      HttpRequest.Builder builder = HttpRequest.newBuilder().timeout(Duration.ofMillis(configuration.socketTimeout()));
+      builder.uri(URI.create(baseURL + path));
+      headers.forEach(builder::header);
+      builder.method(method, entity.bodyPublisher());
+      if (entity.contentType() != null) {
+         builder.header(CONTENT_TYPE, entity.contentType().toString());
+      }
+      return execute(builder, bodyHandlerSupplier(headers));
+   }
 }
