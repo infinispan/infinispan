@@ -179,7 +179,7 @@
       <version.maven.deploy>3.1.4</version.maven.deploy>
       <version.maven.enforcer>3.6.2</version.maven.enforcer>
       <version.maven.exec>3.6.0</version.maven.exec>
-      <version.maven.extra-enforcer-rules>1.10.0</version.maven.extra-enforcer-rules>
+      <version.maven.extra-enforcer-rules>1.11.0</version.maven.extra-enforcer-rules>
       <version.maven.git-commit-id>9.0.2</version.maven.git-commit-id>
       <version.maven.help>3.5.1</version.maven.help>
       <version.maven.install>3.1.4</version.maven.install>
