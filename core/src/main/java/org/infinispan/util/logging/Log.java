@@ -1697,8 +1697,8 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Error transcoding content '%s'", id = 496)
 //   EncodingException errorTranscodingContent(@Cause Throwable cause, Object content);
 
-   @Message(value = "%s encountered unsupported content '%s' during transcoding", id = 497)
-   EncodingException unsupportedContent(String transcoderName, Object content);
+   @Message(value = "%s cannot convert content '%s' from %s to %s", id = 497)
+   EncodingException cannotConvertContent(String transcoderName, Object content, MediaType fromType, MediaType toType);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Indexing mode ALL without owning all data locally (replicated mode).", id = 498)
@@ -1805,7 +1805,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException passivationStoreCannotBeShared(String name);
 
    @Message(value = "Content '%s (MediaType: '%s') cannot be converted to '%s'", id = 533)
-   EncodingException cannotConvertContent(Object content, MediaType contentType, MediaType destination, @Cause Throwable e);
+   EncodingException errorConvertingContent(Object content, MediaType contentType, MediaType destination, @Cause Throwable e);
 
 //   @Message(value = "Grouping requires OBJECT storage type but was: %s", id = 534)
 //   CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(StorageType storageType);
