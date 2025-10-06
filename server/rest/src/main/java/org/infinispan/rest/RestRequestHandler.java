@@ -127,6 +127,7 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
       if (!Method.contains(request.method().name())) {
          NettyRestResponse restResponse = new NettyRestResponse.Builder().status(FORBIDDEN).build();
          sendResponse(ctx, request, restResponse);
+         request.release();
          return;
       }
 
@@ -151,6 +152,7 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
          }
          NettyRestResponse restResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).build();
          sendResponse(ctx, request, restResponse);
+         request.release();
          return;
       }
 
