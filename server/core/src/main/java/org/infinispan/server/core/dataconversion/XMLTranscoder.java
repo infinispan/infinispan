@@ -19,9 +19,9 @@ import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.core.dataconversion.xml.XStreamEngine;
-import org.infinispan.server.core.logging.Log;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
@@ -108,7 +108,7 @@ public class XMLTranscoder extends OneToManyTranscoder {
             throw new CacheException(e);
          }
       }
-      throw logger.unsupportedDataFormat(contentType);
+      throw logger.cannotConvertContent(XMLTranscoder.class.getSimpleName(), content, contentType, destinationType);
    }
 
    private boolean isWellFormed(byte[] content) {

@@ -112,13 +112,13 @@ public class JsonTranscoder extends OneToManyTranscoder {
             }
 
          } catch (IOException e) {
-            throw logger.cannotConvertContent(content, contentType, destinationType, e);
+            throw logger.errorConvertingContent(content, contentType, destinationType, e);
          }
       }
       if (destinationType.match(TEXT_PLAIN)) {
          return convertCharset(content, contentCharset, destinationCharset, outputString);
       }
-      throw logger.unsupportedContent(JsonTranscoder.class.getSimpleName(), content);
+      throw logger.cannotConvertContent(JsonTranscoder.class.getSimpleName(), content, contentType, destinationType);
    }
 
    private Object convertJavaSerializedToJson(byte[] content, Charset destinationCharset, boolean outputAsString) {
@@ -128,7 +128,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
          String json = entity.json().toString();
          return outputAsString ? json : StandardConversions.convertCharset(json, StandardCharsets.UTF_8, destinationCharset);
       } catch (IOException e) {
-         throw logger.cannotConvertContent(content, APPLICATION_SERIALIZED_OBJECT, APPLICATION_JSON, e);
+         throw logger.errorConvertingContent(content, APPLICATION_SERIALIZED_OBJECT, APPLICATION_JSON, e);
       }
    }
 

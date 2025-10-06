@@ -1667,20 +1667,20 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot register Wrapper: duplicate Id %d", id = 486)
    EncodingException duplicateIdWrapper(byte id);
 
-   @Message(value = "Wrapper with class '%s' not found", id = 487)
-   EncodingException wrapperClassNotFound(Class<?> wrapperClass);
-
-   @Message(value = "Wrapper with Id %d not found", id = 488)
-   EncodingException wrapperIdNotFound(byte id);
-
-   @Message(value = "Cannot register Encoder: duplicate Id %d", id = 489)
-   EncodingException duplicateIdEncoder(short id);
-
-   @Message(value = "Encoder with class '%s' not found", id = 490)
-   EncodingException encoderClassNotFound(Class<?> wrapperClass);
-
-   @Message(value = "Encoder with Id %d not found", id = 491)
-   EncodingException encoderIdNotFound(short id);
+//   @Message(value = "Wrapper with class '%s' not found", id = 487)
+//   EncodingException wrapperClassNotFound(Class<?> wrapperClass);
+//
+//   @Message(value = "Wrapper with Id %d not found", id = 488)
+//   EncodingException wrapperIdNotFound(byte id);
+//
+//   @Message(value = "Cannot register Encoder: duplicate Id %d", id = 489)
+//   EncodingException duplicateIdEncoder(short id);
+//
+//   @Message(value = "Encoder with class '%s' not found", id = 490)
+//   EncodingException encoderClassNotFound(Class<?> wrapperClass);
+//
+//   @Message(value = "Encoder with Id %d not found", id = 491)
+//   EncodingException encoderIdNotFound(short id);
 
    @Message(value = "Cannot find transcoder between '%s' to '%s'", id = 492)
    EncodingException cannotFindTranscoder(MediaType mediaType, MediaType another);
@@ -1697,8 +1697,8 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Error transcoding content '%s'", id = 496)
 //   EncodingException errorTranscodingContent(@Cause Throwable cause, Object content);
 
-   @Message(value = "%s encountered unsupported content '%s' during transcoding", id = 497)
-   EncodingException unsupportedContent(String transcoderName, Object content);
+   @Message(value = "%s cannot convert content '%s' from %s to %s", id = 497)
+   EncodingException cannotConvertContent(String transcoderName, Object content, MediaType fromType, MediaType toType);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Indexing mode ALL without owning all data locally (replicated mode).", id = 498)
@@ -1805,7 +1805,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException passivationStoreCannotBeShared(String name);
 
    @Message(value = "Content '%s (MediaType: '%s') cannot be converted to '%s'", id = 533)
-   EncodingException cannotConvertContent(Object content, MediaType contentType, MediaType destination, @Cause Throwable e);
+   EncodingException errorConvertingContent(Object content, MediaType contentType, MediaType destination, @Cause Throwable e);
 
 //   @Message(value = "Grouping requires OBJECT storage type but was: %s", id = 534)
 //   CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(StorageType storageType);
@@ -1976,8 +1976,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot configure both maxCount and maxSize in memory configuration", id = 583)
    CacheConfigurationException cannotProvideBothSizeAndCount();
 
-   @Message(value = "The memory attribute(s) %s have been deprecated and cannot be used in conjunction with the new configuration", id = 584)
-   CacheConfigurationException cannotUseDeprecatedAndReplacement(String legacyName);
+//   @Message(value = "The memory attribute(s) %s have been deprecated and cannot be used in conjunction with the new configuration", id = 584)
+//   CacheConfigurationException cannotUseDeprecatedAndReplacement(String legacyName);
 
    @LogMessage(level = WARN)
    @Message(value = "Single media-type was specified for keys and values, ignoring individual configurations", id = 585)
@@ -2142,8 +2142,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Index path '%s' is not absolute and global state is disabled, will use a dir relative to the current working directory.", id = 626)
    void indexRelativeWorkingDir(String path);
 
-   @Message(value = "Invalid cache loader configuration for '%s'.  This implementation only supports being segmented!", id = 627)
-   CacheConfigurationException storeRequiresBeingSegmented(String name);
+//   @Message(value = "Invalid cache loader configuration for '%s'.  This implementation only supports being segmented!", id = 627)
+//   CacheConfigurationException storeRequiresBeingSegmented(String name);
 
    @Message(value = "Invalid cache roles '%s'", id = 628)
    CacheConfigurationException noSuchGlobalRoles(Set<String> cacheRoles);
@@ -2378,8 +2378,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Tracing collector endpoint '%s' is not valid.", id = 699)
    CacheConfigurationException invalidTracingCollectorEndpoint(String collectorEndpoint, @Cause Throwable e);
 
-   @Message(value = "Cannot use id %d for commands, as it is already in use by %s", id = 700)
-   IllegalArgumentException commandIdAlreadyInUse(byte id, String name);
+//   @Message(value = "Cannot use id %d for commands, as it is already in use by %s", id = 700)
+//   IllegalArgumentException commandIdAlreadyInUse(byte id, String name);
 
    @Message(value = "Security container cannot be enabled/disabled at cache level, since it is configured globally.", id = 701)
    CacheConfigurationException securityCacheTracing();
@@ -2424,9 +2424,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Time between entries/keys retrieved from store exceeded %s ms. Enable TRACE for " + PERSISTENCE_STRING + " to track callers of this", id = 712)
    TimeoutException storeTimeoutBetweenEntries(long ms);
 
-   @LogMessage(level = WARN)
-   @Message(value = "The single file store has been deprecated. Please use the Soft-Index File Store instead", id = 713)
-   void singleFileStoreDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "The single file store has been deprecated. Please use the Soft-Index File Store instead", id = 713)
+//   void singleFileStoreDeprecated();
 
    @LogMessage(level = WARN)
    @Message(value = "Fallback to %s as required dependencies are not available", id = 714)

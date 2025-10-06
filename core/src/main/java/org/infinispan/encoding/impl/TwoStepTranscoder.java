@@ -1,5 +1,7 @@
 package org.infinispan.encoding.impl;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -8,8 +10,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 
 /**
  * Performs conversions where there is no direct transcoder, but there are two transcoders available:
@@ -48,7 +48,7 @@ public class TwoStepTranscoder extends AbstractTranscoder {
          return transcoder1.transcode(object, APPLICATION_OBJECT, destinationType);
       }
 
-      throw logger.unsupportedContent(TwoStepTranscoder.class.getSimpleName(), content);
+      throw logger.cannotConvertContent(TwoStepTranscoder.class.getSimpleName(), content, contentType, destinationType);
    }
 
    @Override
