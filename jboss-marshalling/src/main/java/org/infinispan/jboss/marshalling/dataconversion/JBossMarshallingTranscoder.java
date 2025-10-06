@@ -52,7 +52,7 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
             }
             return marshaller.objectToByteBuffer(unmarshalled);
          } catch (IOException | InterruptedException e) {
-            throw logger.unsupportedContent(JBossMarshallingTranscoder.class.getSimpleName(), content);
+            throw logger.cannotConvertContent(JBossMarshallingTranscoder.class.getSimpleName(), content, contentType, destinationType);
          }
       }
       if (destinationType.match(MediaType.TEXT_PLAIN)) {
@@ -66,7 +66,7 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
          return content;
       }
 
-      throw logger.unsupportedContent(JBossMarshallingTranscoder.class.getSimpleName(), content);
+      throw logger.cannotConvertContent(JBossMarshallingTranscoder.class.getSimpleName(), content, contentType, destinationType);
    }
 
    private byte[] marshall(Object o) {

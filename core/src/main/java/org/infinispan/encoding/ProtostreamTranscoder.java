@@ -99,7 +99,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
             ImmutableSerializationContext ctx = getCtxForMarshalling(content);
             return StandardConversions.convertJavaToProtoStream(content, MediaType.APPLICATION_OBJECT, ctx);
          }
-         throw logger.unsupportedContent(ProtostreamTranscoder.class.getSimpleName(), content);
+         throw logger.cannotConvertContent(ProtostreamTranscoder.class.getSimpleName(), content, contentType, destinationType);
       } catch (InterruptedException | IOException e) {
          throw logger.errorTranscoding(ProtostreamTranscoder.class.getSimpleName(), e);
       }
@@ -107,7 +107,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
 
    private boolean isWrapped(MediaType mediaType) {
       Optional<String> wrappedParam = mediaType.getParameter("wrapped");
-      return (!wrappedParam.isPresent() || !wrappedParam.get().equals("false"));
+      return (wrappedParam.isEmpty() || !wrappedParam.get().equals("false"));
    }
 
    private byte[] marshall(Object decoded, MediaType destinationType) throws IOException {

@@ -15,9 +15,7 @@ import java.util.Set;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.server.core.dataconversion.TranscodingException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -65,8 +63,8 @@ public interface Log extends BasicLogger {
    @Message(value = "%s is still connected to %s", id = 5007)
    void channelStillConnected(Channel ch, SocketAddress address);
 
-   @Message(value = "Illegal number of workerThreads: %d", id = 5010)
-   IllegalArgumentException illegalWorkerThreads(int workerThreads);
+//   @Message(value = "Illegal number of workerThreads: %d", id = 5010)
+//   IllegalArgumentException illegalWorkerThreads(int workerThreads);
 
    @Message(value = "Idle timeout can't be lower than -1: %d", id = 5011)
    IllegalArgumentException illegalIdleTimeout(int idleTimeout);
@@ -124,14 +122,14 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Error during transcoding", id = 5032)
 //   TranscodingException errorDuringTranscoding(@Cause Throwable e);
 
-   @Message(value = "Data format '%s' not supported", id = 5033)
-   TranscodingException unsupportedDataFormat(MediaType contentFormat);
+//   @Message(value = "Data format '%s' not supported", id = 5033)
+//   TranscodingException unsupportedDataFormat(MediaType contentFormat);
 
    @Message(value = "Cannot create clustered caches in non-clustered servers", id = 5034)
    UnsupportedOperationException cannotCreateClusteredCache();
 
-   @Message(value = "Class '%s' blocked by deserialization allow list. Include the class name in the server cache manager allow list to authorize.", id = 5035)
-   CacheException errorDeserializing(String className);
+//   @Message(value = "Class '%s' blocked by deserialization allow list. Include the class name in the server cache manager allow list to authorize.", id = 5035)
+//   CacheException errorDeserializing(String className);
 
    @Message(value = "Illegal number of ioThreads: %d", id = 5036)
    IllegalArgumentException illegalIOThreads(int ioThreads);
