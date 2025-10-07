@@ -11,6 +11,7 @@ import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.transport.AccessControlFilter;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -24,8 +25,9 @@ import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodecFactory;
 import io.netty.handler.codec.http2.CleartextHttp2ServerUpgradeHandler;
 import io.netty.handler.codec.http2.Http2CodecUtil;
-import io.netty.handler.codec.http2.Http2MultiplexCodec;
-import io.netty.handler.codec.http2.Http2MultiplexCodecBuilder;
+import io.netty.handler.codec.http2.Http2FrameCodec;
+import io.netty.handler.codec.http2.Http2FrameCodecBuilder;
+import io.netty.handler.codec.http2.Http2MultiplexHandler;
 import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2StreamFrameToHttpObjectCodec;
@@ -96,8 +98,10 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
    }
 
    private static void configureHttpPipeline(ChannelPipeline pipeline, RestServer restServer) {
-      //TODO [ISPN-12082]: Rework pipeline removing deprecated codecs
-      Http2MultiplexCodec multiplexCodec = Http2MultiplexCodecBuilder.forServer(new ChannelInitializer<>() {
+      Http2FrameCodec h2c = Http2FrameCodecBuilder.forServer()
+            .initialSettings(Http2Settings.defaultSettings())
+            .build();
+      Http2MultiplexHandler multiplexCodec = new Http2MultiplexHandler(new ChannelInitializer<>() {
          @Override
          protected void initChannel(Channel channel) {
             // Creates the HTTP/2 pipeline, where each stream is handled by a sub-channel.
@@ -105,11 +109,11 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
             p.addLast(new Http2StreamFrameToHttpObjectCodec(true));
             addCommonHandlers(p, restServer);
          }
-      }).initialSettings(Http2Settings.defaultSettings()).build();
+      });
 
       UpgradeCodecFactory upgradeCodecFactory = protocol -> {
          if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
-            return new Http2ServerUpgradeCodec(multiplexCodec);
+            return new Http2ServerUpgradeCodec(h2c, multiplexCodec);
          } else {
             return null;
          }
@@ -117,7 +121,21 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
       // handler for clear-text upgrades
       HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, restServer.maxContentLength());
       HttpServerUpgradeHandler upgradeHandler = new HttpServerUpgradeHandler(httpCodec, upgradeCodecFactory, restServer.maxContentLength());
-      CleartextHttp2ServerUpgradeHandler cleartextHttp2ServerUpgradeHandler = new CleartextHttp2ServerUpgradeHandler(httpCodec, upgradeHandler, multiplexCodec);
+      CleartextHttp2ServerUpgradeHandler cleartextHttp2ServerUpgradeHandler = new CleartextHttp2ServerUpgradeHandler(httpCodec, upgradeHandler, new ChannelHandler() {
+         @Override
+         public void handlerAdded(ChannelHandlerContext ctx) {
+            ctx.pipeline().addAfter(ctx.name(), null, h2c);
+            String name = ctx.pipeline().context(h2c).name();
+            ctx.pipeline().addAfter(name, null, multiplexCodec);
+         }
+
+         @Override
+         public void handlerRemoved(ChannelHandlerContext ctx) { }
+
+         @Deprecated
+         @Override
+         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { }
+      });
       pipeline.addLast(cleartextHttp2ServerUpgradeHandler);
 
       addCommonHandlers(pipeline, restServer);
