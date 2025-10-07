@@ -79,8 +79,6 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
 
       ConfigurationBuilder config = new ConfigurationBuilder();
       applyCacheManagerClusteringConfiguration(id, config);
-      config.persistence().addSoftIndexFileStore();
-      config.clustering().stateTransfer().timeout(90, TimeUnit.SECONDS);
       EmbeddedCacheManager manager = addClusterEnabledCacheManager(global, null);
       manager.defineConfiguration(CACHE_NAME, config.build());
    }
@@ -89,6 +87,9 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
 
    protected void applyCacheManagerClusteringConfiguration(String id, ConfigurationBuilder config) {
       applyCacheManagerClusteringConfiguration(config);
+
+      config.persistence().addSoftIndexFileStore();
+      config.clustering().stateTransfer().timeout(90, TimeUnit.SECONDS);
    }
 
    protected void shutdownAndRestart(int extraneousNodePosition, boolean reverse) throws Throwable {
