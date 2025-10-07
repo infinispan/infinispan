@@ -46,11 +46,11 @@ public final class NativeTransport {
    private static boolean useNativeIOUring() {
       try {
          Class.forName("io.netty.incubator.channel.uring.IOUring", true, NativeTransport.class.getClassLoader());
-         if (io.netty.incubator.channel.uring.IOUring.isAvailable()) {
+         if (IOURingNativeTransport.isAvailable()) {
             return !IOURING_DISABLED && IS_LINUX;
          } else {
             if (IS_LINUX) {
-               SERVER.ioUringNotAvailable(io.netty.incubator.channel.uring.IOUring.unavailabilityCause().toString());
+               SERVER.ioUringNotAvailable(IOURingNativeTransport.unavailableCause());
             }
          }
       } catch (ClassNotFoundException e) {
@@ -76,10 +76,12 @@ public final class NativeTransport {
 
    public static MultithreadEventLoopGroup createEventLoopGroup(int maxExecutors, ThreadFactory threadFactory) {
       if (USE_NATIVE_EPOLL) {
+         // new MultiThreadIoEventLoopGroup(maxExecutors, executorService, EpollIoHandler.newFactory());
          return new EpollEventLoopGroup(maxExecutors, threadFactory);
       } else if (USE_NATIVE_IOURING) {
          return IOURingNativeTransport.createEventLoopGroup(maxExecutors, threadFactory);
       } else {
+         // new MultiThreadIoEventLoopGroup(maxExecutors, executorService, NioIoHandler.newFactory(SelectorProvider.provider()));
          return new NioEventLoopGroup(maxExecutors, threadFactory);
       }
    }
