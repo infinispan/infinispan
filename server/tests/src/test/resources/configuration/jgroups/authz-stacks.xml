@@ -1,6 +1,6 @@
 <jgroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="urn:infinispan:config:16.0 https://infinispan.org/schemas/infinispan-config-fragment-16.0.xsd
-            urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.4.xsd"
+            urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.5.xsd"
          xmlns="urn:infinispan:config:16.0"
          xmlns:ispn="urn:infinispan:config:16.0">
    <stack name="global" extends="tcp">
