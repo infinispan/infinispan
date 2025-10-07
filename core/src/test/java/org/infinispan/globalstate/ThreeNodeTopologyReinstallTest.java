@@ -1,7 +1,6 @@
 package org.infinispan.globalstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -40,15 +39,6 @@ public class ThreeNodeTopologyReinstallTest extends AbstractGlobalStateRestartTe
    @Override
    protected void applyCacheManagerClusteringConfiguration(ConfigurationBuilder config) {
       config.clustering().cacheMode(cacheMode).hash().numOwners(getNumOwners());
-   }
-
-   @Override
-   protected void applyCacheManagerClusteringConfiguration(String id, ConfigurationBuilder config) {
-      applyCacheManagerClusteringConfiguration(config);
-      config.clustering().stateTransfer().timeout(90, TimeUnit.SECONDS);
-      config.persistence().addSoftIndexFileStore()
-            .dataLocation(tmpDirectory(this.getClass().getSimpleName(), id, "data"))
-            .indexLocation(tmpDirectory(this.getClass().getSimpleName(), id, "index"));
    }
 
    public void testReinstallTopologyByForce() throws Exception {
