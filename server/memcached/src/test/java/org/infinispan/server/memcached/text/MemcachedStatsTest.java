@@ -76,55 +76,55 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
 
    public void testUnsupportedStats() {
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
-      assertEquals(stats.getVal1().get("pointer_size"), "0");
-      assertEquals(stats.getVal1().get("rusage_user"), "0");
-      assertEquals(stats.getVal1().get("rusage_system"), "0");
-      assertEquals(stats.getVal1().get("bytes"), "0");
-      assertEquals(stats.getVal1().get("connection_structures"), "0");
-      assertEquals(stats.getVal1().get("auth_cmds"), "0");
-      assertEquals(stats.getVal1().get("auth_errors"), "0");
-      assertEquals(stats.getVal1().get("limit_maxbytes"), "0");
-      assertEquals(stats.getVal1().get("conn_yields"), "0");
-      assertEquals(stats.getVal1().get("reclaimed"), "0");
+      assertEquals(stats.val1().get("pointer_size"), "0");
+      assertEquals(stats.val1().get("rusage_user"), "0");
+      assertEquals(stats.val1().get("rusage_system"), "0");
+      assertEquals(stats.val1().get("bytes"), "0");
+      assertEquals(stats.val1().get("connection_structures"), "0");
+      assertEquals(stats.val1().get("auth_cmds"), "0");
+      assertEquals(stats.val1().get("auth_errors"), "0");
+      assertEquals(stats.val1().get("limit_maxbytes"), "0");
+      assertEquals(stats.val1().get("conn_yields"), "0");
+      assertEquals(stats.val1().get("reclaimed"), "0");
    }
 
    public void testUncomparableStats() {
       sleepThread(TimeUnit.SECONDS.toMillis(1));
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
-      assertNotSame(stats.getVal1().get("uptime"), "0");
-      assertNotSame(stats.getVal1().get("time"), "0");
-      assertNotSame(stats.getVal1().get("uptime"), stats.getVal1().get("time"));
+      assertNotSame(stats.val1().get("uptime"), "0");
+      assertNotSame(stats.val1().get("time"), "0");
+      assertNotSame(stats.val1().get("uptime"), stats.val1().get("time"));
    }
 
    public void testStaticStats() {
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
-      assertEquals(stats.getVal1().get("version"), Version.getVersion());
+      assertEquals(stats.val1().get("version"), Version.getVersion());
    }
 
    public void testConnStats() {
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
-      assertEquals(stats.getVal1().get("curr_connections"), "1");
-      assertEquals(stats.getVal1().get("total_connections"), "1");
-      assertEquals(stats.getVal1().get("threads"), "0");
+      assertEquals(stats.val1().get("curr_connections"), "1");
+      assertEquals(stats.val1().get("total_connections"), "1");
+      assertEquals(stats.val1().get("threads"), "0");
    }
 
    public void testStats(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
-      assertEquals(stats.getVal1().get("cmd_set"), "0");
-      assertEquals(stats.getVal1().get("cmd_get"), "0");
-      assertEquals(stats.getVal1().get("get_hits"), "0");
-      assertEquals(stats.getVal1().get("get_misses"), "0");
-      assertEquals(stats.getVal1().get("delete_hits"), "0");
-      assertEquals(stats.getVal1().get("delete_misses"), "0");
-      assertEquals(stats.getVal1().get("curr_items"), "0");
-      assertEquals(stats.getVal1().get("total_items"), "0");
-      assertEquals(stats.getVal1().get("incr_misses"), "0");
-      assertEquals(stats.getVal1().get("incr_hits"), "0");
-      assertEquals(stats.getVal1().get("decr_misses"), "0");
-      assertEquals(stats.getVal1().get("decr_hits"), "0");
-      assertEquals(stats.getVal1().get("cas_misses"), "0");
-      assertEquals(stats.getVal1().get("cas_hits"), "0");
-      assertEquals(stats.getVal1().get("cas_badval"), "0");
+      assertEquals(stats.val1().get("cmd_set"), "0");
+      assertEquals(stats.val1().get("cmd_get"), "0");
+      assertEquals(stats.val1().get("get_hits"), "0");
+      assertEquals(stats.val1().get("get_misses"), "0");
+      assertEquals(stats.val1().get("delete_hits"), "0");
+      assertEquals(stats.val1().get("delete_misses"), "0");
+      assertEquals(stats.val1().get("curr_items"), "0");
+      assertEquals(stats.val1().get("total_items"), "0");
+      assertEquals(stats.val1().get("incr_misses"), "0");
+      assertEquals(stats.val1().get("incr_hits"), "0");
+      assertEquals(stats.val1().get("decr_misses"), "0");
+      assertEquals(stats.val1().get("decr_hits"), "0");
+      assertEquals(stats.val1().get("cas_misses"), "0");
+      assertEquals(stats.val1().get("cas_hits"), "0");
+      assertEquals(stats.val1().get("cas_badval"), "0");
 
       OperationFuture<Boolean> f = client.set(k(m), 0, v(m));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
@@ -132,92 +132,92 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       f = client.set(k(m, "k1-"), 0, v(m, "v1-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       assertEquals(client.get(k(m, "k1-")), v(m, "v1-"));
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("cmd_set"), "2");
-      assertEquals(stats.getVal1().get("cmd_get"), "2");
-      assertEquals(stats.getVal1().get("get_hits"), "2");
-      assertEquals(stats.getVal1().get("get_misses"), "0");
-      assertEquals(stats.getVal1().get("delete_hits"), "0");
-      assertEquals(stats.getVal1().get("delete_misses"), "0");
-      assertEquals(stats.getVal1().get("curr_items"), "2");
-      assertEquals(stats.getVal1().get("total_items"), "2");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("cmd_set"), "2");
+      assertEquals(stats.val1().get("cmd_get"), "2");
+      assertEquals(stats.val1().get("get_hits"), "2");
+      assertEquals(stats.val1().get("get_misses"), "0");
+      assertEquals(stats.val1().get("delete_hits"), "0");
+      assertEquals(stats.val1().get("delete_misses"), "0");
+      assertEquals(stats.val1().get("curr_items"), "2");
+      assertEquals(stats.val1().get("total_items"), "2");
 
       f = client.delete(k(m, "k1-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("curr_items"), "1");
-      assertEquals(stats.getVal1().get("total_items"), "2");
-      assertEquals(stats.getVal1().get("delete_hits"), "1");
-      assertEquals(stats.getVal1().get("delete_misses"), "0");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("curr_items"), "1");
+      assertEquals(stats.val1().get("total_items"), "2");
+      assertEquals(stats.val1().get("delete_hits"), "1");
+      assertEquals(stats.val1().get("delete_misses"), "0");
 
       assertNull(client.get(k(m, "k99-")));
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("get_hits"), "2");
-      assertEquals(stats.getVal1().get("get_misses"), "1");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("get_hits"), "2");
+      assertEquals(stats.val1().get("get_misses"), "1");
 
       f = client.delete(k(m, "k99-"));
       assertFalse(f.get(timeout, TimeUnit.SECONDS));
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("delete_hits"), "1");
-      assertEquals(stats.getVal1().get("delete_misses"), "1");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("delete_hits"), "1");
+      assertEquals(stats.val1().get("delete_misses"), "1");
 
       int future = (int) TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime() + 1000);
       f = client.set(k(m, "k3-"), future, v(m, "v3-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       timeService.advance(1100);
       assertNull(client.get(k(m, "k3-")));
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("curr_items"), "1");
-      assertEquals(stats.getVal1().get("total_items"), "3");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("curr_items"), "1");
+      assertEquals(stats.val1().get("total_items"), "3");
 
       client.incr(k(m, "k4-"), 1);
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("incr_misses"), "1");
-      assertEquals(stats.getVal1().get("incr_hits"), "0");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("incr_misses"), "1");
+      assertEquals(stats.val1().get("incr_hits"), "0");
 
       f = client.set(k(m, "k4-"), 0, "1");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       client.incr(k(m, "k4-"), 1);
       client.incr(k(m, "k4-"), 2);
       client.incr(k(m, "k4-"), 4);
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("incr_misses"), "1");
-      assertEquals(stats.getVal1().get("incr_hits"), "3");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("incr_misses"), "1");
+      assertEquals(stats.val1().get("incr_hits"), "3");
 
       client.decr(k(m, "k5-"), 1);
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("decr_misses"), "1");
-      assertEquals(stats.getVal1().get("decr_hits"), "0");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("decr_misses"), "1");
+      assertEquals(stats.val1().get("decr_hits"), "0");
 
       f = client.set(k(m, "k5-"), 0, "8");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       client.decr(k(m, "k5-"), 1);
       client.decr(k(m, "k5-"), 2);
       client.decr(k(m, "k5-"), 4);
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("decr_misses"), "1");
-      assertEquals(stats.getVal1().get("decr_hits"), "3");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("decr_misses"), "1");
+      assertEquals(stats.val1().get("decr_hits"), "3");
 
       client.cas(k(m, "k6-"), 1234, v(m, "v6-"));
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("cas_misses"), "1");
-      assertEquals(stats.getVal1().get("cas_hits"), "0");
-      assertEquals(stats.getVal1().get("cas_badval"), "0");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("cas_misses"), "1");
+      assertEquals(stats.val1().get("cas_hits"), "0");
+      assertEquals(stats.val1().get("cas_badval"), "0");
 
       f = client.set(k(m, "k6-"), 0, v(m, "v6-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       CASValue value = client.gets(k(m, "k6-"));
       long old = value.getCas();
       client.cas(k(m, "k6-"), value.getCas(), v(m, "v66-"));
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("cas_misses"), "1");
-      assertEquals(stats.getVal1().get("cas_hits"), "1");
-      assertEquals(stats.getVal1().get("cas_badval"), "0");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("cas_misses"), "1");
+      assertEquals(stats.val1().get("cas_hits"), "1");
+      assertEquals(stats.val1().get("cas_badval"), "0");
       client.cas(k(m, "k6-"), old, v(m, "v66-"));
-      stats = getStats(stats.getVal2(), stats.getVal3());
-      assertEquals(stats.getVal1().get("cas_misses"), "1");
-      assertEquals(stats.getVal1().get("cas_hits"), "1");
-      assertEquals(stats.getVal1().get("cas_badval"), "1");
+      stats = getStats(stats.val2(), stats.val3());
+      assertEquals(stats.val1().get("cas_misses"), "1");
+      assertEquals(stats.val1().get("cas_hits"), "1");
+      assertEquals(stats.val1().get("cas_badval"), "1");
    }
 
    private List<MemcachedClient> createMultipleClients(List<MemcachedClient> clients, int number, int from)

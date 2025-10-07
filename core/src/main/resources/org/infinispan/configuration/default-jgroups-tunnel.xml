@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.4.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.5.xsd">
    <TUNNEL bind_addr="${jgroups.tunnel.address,jgroups.bind.address:SITE_LOCAL}"
            bind_port="${jgroups.tunnel.port,jgroups.bind.port:0}"
            port_range="${jgroups.port_range:0}"
