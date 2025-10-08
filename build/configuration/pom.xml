@@ -37,7 +37,7 @@
       <infinispan.brand.short-name>infinispan</infinispan.brand.short-name>
       <infinispan.brand.version>${project.version}</infinispan.brand.version>
       <infinispan.unbranded.version>${project.version}</infinispan.unbranded.version>
-      <infinispan.codename>N/A</infinispan.codename>
+      <infinispan.codename>Keep Rollin'</infinispan.codename>
       <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
       <infinispan.base.version>16.0</infinispan.base.version>
       <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
