@@ -258,7 +258,7 @@ jobs:
     name: ${{ matrix.targets == 'tomcat' && 'tomcat' || format('db ({0})', matrix.targets) }}
     runs-on: ubuntu-latest
     env:
-      TOMCAT_VERSION: 11.0.10
+      TOMCAT_VERSION: 11.0.12
     strategy:
       fail-fast: false
       matrix:
@@ -329,7 +329,10 @@ jobs:
       - name: Download and unzip Apache Tomcat ${{ env.TOMCAT_VERSION }}
         if: ${{ matrix.targets == 'tomcat' }}
         run: |
-          wget https://dlcdn.apache.org/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.zip
+          if ! wget https://dlcdn.apache.org/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.zip; then
+            # Fallback to the archive (much slower)
+            wget https://archive.apache.org/dist/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.zip
+          fi
           unzip apache-tomcat-${TOMCAT_VERSION}.zip
           # Set CATALINA_HOME for subsequent steps
           echo "CATALINA_HOME=${GITHUB_WORKSPACE}/apache-tomcat-${TOMCAT_VERSION}" >> $GITHUB_ENV
