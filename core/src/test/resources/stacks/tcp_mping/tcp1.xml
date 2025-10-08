@@ -14,8 +14,6 @@
         thread_pool.keep_alive_time="5s"
 
         use_vthreads="${jgroups.thread.virtual,org.infinispan.threads.virtual:true}"
-
-        enable_suspect_events="true"
    />
    <RED/>
 
@@ -31,6 +29,7 @@
           ip_ttl="${jgroups.udp.ip_ttl:2}"/>
 
    <MERGE3/>
+   <FD_SOCK2/>
    <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
    <FD_ALL3 timeout="3000"
            interval="1000"

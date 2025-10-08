@@ -4,6 +4,7 @@
          xmlns:ispn="urn:infinispan:config:16.0">
    <stack name="test-tcp" extends="tcp">
       <MERGE3 min_interval="1s" max_interval="5s" ispn:stack.combine="REPLACE"/>
+      <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
    </stack>
@@ -15,6 +16,7 @@
    </stack>
    <stack name="test-jdbc" extends="tcp">
       <MERGE3 min_interval="1s" max_interval="5s" ispn:stack.combine="REPLACE"/>
+      <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
       <JDBC_PING2 stack.combine="REPLACE" stack.position="MPING"

@@ -182,10 +182,10 @@
                     <property name="thread_pool.min_threads">0</property>
                     <property name="thread_pool.max_threads">200</property>
                     <property name="thread_pool.keep_alive_time">5000000000</property>
-                    <property name="enable_suspect_events">true</property>
                 </transport>
                 <protocol type="MPING" socket-binding="jgroups-mping"/>
                 <protocol type="MERGE3"/>
+                <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
                 <protocol type="FD"/>
                 <protocol type="VERIFY_SUSPECT"/>
                 <protocol type="pbcast.NAKACK2">
