@@ -239,6 +239,21 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
             .containsExactly(65.78997502576355, 69.72458363789359, 127.11531555461053, 224.8438726836208,
                   310.6984480274634, 341.0897945700656, 622.8579549605669);
 
+      ickle = String.format("select distance(r.location, 41.90847031512531, 12.455633288333539, km) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = remoteCache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList).extracting(item -> item[0])
+            .containsExactlyInAnyOrder(0.06578997502576356, 0.6228579549605668, 0.06972458363789359, 0.31069844802746344,
+                  0.12711531555461053, 0.2248438726836208, 0.34108979457006555);
+
+      ickle = String.format("select distance(r.location, 41.90847031512531, 12.455633288333539), distance(r.location, 41.90847031512531, 12.455633288333539, km) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = remoteCache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList)
+            .filteredOn(item -> item[0].equals(65.78997502576355)).extracting(item -> item[1]).first().isEqualTo(0.06578997502576356);
+      assertThat(projectList)
+            .filteredOn(item -> item[0].equals(622.8579549605669)).extracting(item -> item[1]).first().isEqualTo(0.6228579549605668);
+
    }
 
    @Test
@@ -305,5 +320,29 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
       list = result.list();
       assertThat(list).extracting(item -> item[0]).containsExactly("Rome-Milan", "Bologna-Venice");
       assertThat(list).extracting(item -> item[1]).containsExactly(2558.7323262164573, 301408.00282977184);
+
+      trainQuery = remoteCache.query(String.format("from %s r where r.departure within circle(:lat, :lon, :distance) and r.arrival within circle(:lat1, :lon1, :distance1)",
+            TRAIN_ROUTE_ENTITY_NAME));
+      trainQuery.setParameter("lat", BOLOGNA_COORDINATES.latitude());
+      trainQuery.setParameter("lon", BOLOGNA_COORDINATES.longitude());
+      trainQuery.setParameter("distance", 300_000);
+      trainQuery.setParameter("lat1", SELVA_COORDINATES.latitude());
+      trainQuery.setParameter("lon1", SELVA_COORDINATES.longitude());
+      trainQuery.setParameter("distance1", 200_000);
+      trainRoutes = trainQuery.list();
+      assertThat(trainRoutes).extracting(TrainRoute::name)
+            .containsExactlyInAnyOrder("Bologna-Venice", "Bologna-Selva");
+
+      trainQuery = remoteCache.query(String.format("from %s r where r.departure within circle(:lat, :lon, :distance) and r.arrival not within circle(:lat1, :lon1, :distance1)",
+            TRAIN_ROUTE_ENTITY_NAME));
+      trainQuery.setParameter("lat", BOLOGNA_COORDINATES.latitude());
+      trainQuery.setParameter("lon", BOLOGNA_COORDINATES.longitude());
+      trainQuery.setParameter("distance", 300_000);
+      trainQuery.setParameter("lat1", SELVA_COORDINATES.latitude());
+      trainQuery.setParameter("lon1", SELVA_COORDINATES.longitude());
+      trainQuery.setParameter("distance1", 200_000);
+      trainRoutes = trainQuery.list();
+      assertThat(trainRoutes).extracting(TrainRoute::name)
+            .containsExactlyInAnyOrder("Milan-Como");
    }
 }

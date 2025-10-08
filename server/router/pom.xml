@@ -136,7 +136,7 @@
                         <usedefaultlisteners>false</usedefaultlisteners>
                         <listener>${junitListener}</listener>
                     </properties>
-                    <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
+                    <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${jacoco.agent.argLine}</argLine>
                 </configuration>
                 <dependencies>
                     <dependency>
