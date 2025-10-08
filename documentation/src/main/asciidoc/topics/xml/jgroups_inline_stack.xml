@@ -3,7 +3,7 @@
   <jgroups>
     <!-- Defines a custom JGroups stack named "prod". -->
     <stack name="prod">
-      <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000" enable_suspect_events="true"/>
+      <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"/>
       <RED/>
       <MPING break_on_coord_rsp="true"
              mcast_addr="${jgroups.mping.mcast_addr:239.2.4.6}"
@@ -11,6 +11,7 @@
              num_discovery_runs="3"
              ip_ttl="${jgroups.udp.ip_ttl:2}"/>
       <MERGE3 />
+      <FD_SOCK2 />
       <FD_ALL3 timeout="3000" interval="1000" timeout_check_interval="1000" />
       <VERIFY_SUSPECT2 timeout="1s" />
       <pbcast.NAKACK2 use_mcast_xmit="false" xmit_interval="200ms" xmit_table_num_rows="50"

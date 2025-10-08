@@ -13,6 +13,7 @@
    </stack>
    <stack name="test-tcp" extends="tcp">
       <MERGE3 min_interval="1s" max_interval="5s" ispn:stack.combine="REPLACE"/>
+      <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
       <relay.RELAY2 site="LON" max_site_masters="3" xmlns="urn:org:jgroups"/>

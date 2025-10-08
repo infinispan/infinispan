@@ -7,8 +7,8 @@
       <TCPGOSSIP initial_hosts="${jgroups.tunnel.gossip_router_hosts:localhost[12001]}"
              stack.combine="REPLACE"
              stack.position="MPING" />
-      <!-- Removes the RED protocol from the stack. -->
-      <RED stack.combine="REMOVE"/>
+      <!-- Removes the FD_SOCK2 protocol from the stack. -->
+      <FD_SOCK2 stack.combine="REMOVE"/>
       <!-- Modifies the timeout value for the VERIFY_SUSPECT2 protocol. -->
       <VERIFY_SUSPECT2 timeout="2s"/>
       <!-- Adds SYM_ENCRYPT to the stack after VERIFY_SUSPECT2. -->

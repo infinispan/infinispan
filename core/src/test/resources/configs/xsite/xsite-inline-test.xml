@@ -18,13 +18,12 @@
               thread_pool.min_threads="0"
               thread_pool.max_threads="8"
               thread_pool.keep_alive_time="5s"
-
-              enable_suspect_events="true"
          />
          <RED/>
          <LOCAL_PING/>
          <MERGE3 max_interval="5s"
                  min_interval="3s"/>
+         <FD_SOCK2/>
          <FD_ALL3 timeout="3000"
                   interval="1000"
          />

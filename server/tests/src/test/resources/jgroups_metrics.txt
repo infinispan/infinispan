@@ -1,3 +1,5 @@
+_fd_sock2_get_actual_bind_port
+_fd_sock2_get_num_suspected_members
 _frag4_get_number_of_received_fragments
 _frag4_get_number_of_sent_fragments
 _gms_get_view_handler_size

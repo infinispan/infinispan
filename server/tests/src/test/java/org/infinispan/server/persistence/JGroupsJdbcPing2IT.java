@@ -35,6 +35,7 @@ import org.infinispan.server.test.core.tags.Database;
 import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.protocols.FD_ALL3;
+import org.jgroups.protocols.FD_SOCK2;
 import org.jgroups.protocols.FRAG4;
 import org.jgroups.protocols.JDBC_PING2;
 import org.jgroups.protocols.MERGE3;
@@ -144,10 +145,11 @@ public class JGroupsJdbcPing2IT {
       }
 
       return new JChannel(
-            new TCP().enableSuspectEvents(true).setBindAddr(InetAddress.getLocalHost()).setBindPort(port),
+            new TCP().setBindAddr(InetAddress.getLocalHost()).setBindPort(port),
             new RED(),
             jdbcPing2,
             new MERGE3().setMinInterval(1000).setMaxInterval(30000),
+            new FD_SOCK2().setOffset(50000),
             new FD_ALL3(),
             new VERIFY_SUSPECT2().setTimeout(1000),
             new NAKACK2(),

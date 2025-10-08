@@ -86,9 +86,10 @@ public class JGroupsConfigBuilder {
       // protocol stack configurator and use that accordingly.
       JGroupsProtocolCfg jgroupsCfg = getJGroupsProtocolCfg(getConfigurator().getProtocolStack());
 
-      if (!flags.withFD()) {
+      if (!flags.withFD())
          removeFailureDetection(jgroupsCfg);
-      }
+      // sockets won't be unexpectedly closed.
+      removeFD_SOCK(jgroupsCfg);
 
       if (!flags.isRelayRequired()) {
          removeRelay2(jgroupsCfg);
@@ -152,12 +153,10 @@ public class JGroupsConfigBuilder {
       jgroupsCfg.removeProtocol(FD).removeProtocol(FD_SOCK).removeProtocol(FD_SOCK2)
                 .removeProtocol(FD_ALL).removeProtocol(FD_ALL2).removeProtocol(FD_ALL3)
                 .removeProtocol(VERIFY_SUSPECT).removeProtocol(VERIFY_SUSPECT2);
+   }
 
-      ProtocolType transportProtocol = jgroupsCfg.transportType;
-      if (transportProtocol == TCP || transportProtocol == TCP_NIO2) {
-         ProtocolConfiguration transport = jgroupsCfg.getProtocol(transportProtocol);
-         transport.getProperties().put("enable_suspect_events", "false");
-      }
+   private static void removeFD_SOCK(JGroupsProtocolCfg jgroupsCfg) {
+      jgroupsCfg.removeProtocol(FD_SOCK).removeProtocol(FD_SOCK2);
    }
 
    private static void removeRelay2(JGroupsProtocolCfg jgroupsCfg) {

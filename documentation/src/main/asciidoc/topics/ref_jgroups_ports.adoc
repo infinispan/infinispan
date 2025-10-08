@@ -15,11 +15,11 @@
 
 |`46655`
 |UDP
-|JGroups multicast when using UDP transport
+|JGroups multicast
 
 m|57800
 |TCP
-|Failure detection by `FD_SOCK2` when using UDP transport.
+|Failure detection is provided by `FD_SOCK2`.
 
 |===
 

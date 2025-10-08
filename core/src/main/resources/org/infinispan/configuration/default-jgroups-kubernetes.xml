@@ -30,8 +30,6 @@
         thread_pool.thread_dumps_enabled="${jgroups.thread_dumps_enabled:false}"
 
         use_vthreads="${jgroups.thread.virtual,org.infinispan.threads.virtual:true}"
-
-        enable_suspect_events="true"
    />
    <RED/>
    <dns.DNS_PING dns_query="${jgroups.dns.query}"
@@ -41,6 +39,7 @@
    <MERGE3 min_interval="10s"
            max_interval="30s"
    />
+   <FD_SOCK2 offset="${jgroups.fd.port-offset:50000}"/>
    <FD_ALL3/>
    <VERIFY_SUSPECT2 timeout="1s"/>
    <pbcast.NAKACK2 use_mcast_xmit="false"
