@@ -700,7 +700,7 @@ class Encoder2x implements VersionedEncoder {
                         LastKnownClientTopologyId lastKnown = lastKnownTopologyIds.get(id);
                         if (lastKnown != null && lastKnown.topologyId == topologyId && lastKnown.timeCaptured != -1) {
                            if (timeService.timeDuration(lastKnown.timeCaptured, TimeUnit.MILLISECONDS) > topologyCheckInterval) {
-                              log.clientNotUpdatingTopology(channel.localAddress(), topologyId);
+                              log.clientNotUpdatingTopology(channel.remoteAddress(), topologyId);
                               // Update last known topology to the current one to avoid logging a message over and over
                               lastKnownTopologyIds.replace(id, new LastKnownClientTopologyId(currentTopologyId, -1));
                            }
