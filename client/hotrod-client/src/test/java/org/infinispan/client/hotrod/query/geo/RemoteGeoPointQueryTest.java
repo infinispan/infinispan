@@ -79,6 +79,15 @@ public class RemoteGeoPointQueryTest extends SingleHotRodServerTest {
             .containsExactlyInAnyOrder("track 2", "track 3");
 
       ickle = String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) and r.end not within circle(41.90847031512531, 12.455633288333539, :distance1) ", HIKING_ENTITY_NAME);
+      query = remoteCache.query(ickle);
+      query.setParameter("distance", 150);
+      query.setParameter("distance1", 150);
+      list = query.list();
+      assertThat(list).extracting(ProtoHiking::name)
+            .containsExactlyInAnyOrder("track 1");
+
+      ickle = String.format("from %s r " +
             "where r.end within box(:a, :b, :c, :d) ", HIKING_ENTITY_NAME);
       query = remoteCache.query(ickle);
       query.setParameter("a", 42.00);
