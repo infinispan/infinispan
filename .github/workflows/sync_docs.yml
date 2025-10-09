@@ -19,14 +19,11 @@ jobs:
     steps:
     - uses: actions/checkout@v5
 
-    - name: Setup Maven
-      uses: s4u/setup-maven-action@v1.19.0
-      with:
-        java-version: 21
-        maven-version: 3.9.9
+    - name: Setup Java
+      uses: ./.github/actions/setup-java
 
     - name: Build docs with Maven
-      run: mvn install -Pdistribution -pl documentation -am
+      run: ./mvnw install -Pdistribution -pl documentation -am
 
     - name: Clone infinispan.github.io
       uses: actions/checkout@master
