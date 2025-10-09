@@ -16,7 +16,7 @@ public class SQLServerSqlManager extends GenericSqlManager {
       upsert.append(")) AS tmp (");
       appendStrings(upsert, allColumns, Function.identity(), ", ");
       upsert.append(") ON (");
-      appendStrings(upsert, keyColumns, key -> tableName + "." + key + " = tmp." + key, ", ");
+      appendStrings(upsert, keyColumns, key -> tableName + "." + key + " = tmp." + key, " AND ");
       upsert.append(") WHEN MATCHED THEN UPDATE SET ");
       appendStrings(upsert, valueIterable(keyColumns, allColumns), value -> value + " = tmp." + value, ", ");
       upsert.append(" WHEN NOT MATCHED THEN INSERT (");
