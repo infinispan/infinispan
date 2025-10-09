@@ -4,6 +4,7 @@
       <hotrod-connector name="hotrod"/>
       <rest-connector name="rest"/>
       <resp-connector name="resp"/>
+      <resp-connector name="resp-dedicated" socket-binding="resp-dedicated" cache="3"/>
       <memcached-connector name="memcached"/>
       <memcached-connector name="memcached-dedicated" socket-binding="memcached" cache="memcachedCache2"/>
 </endpoint>

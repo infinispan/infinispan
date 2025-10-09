@@ -8,4 +8,5 @@
    <socket-binding name="alternate-2" port="11224"/>
    <socket-binding name="alternate-3" port="11225"/>
    <socket-binding name="alternate-4" port="11226"/>
+   <socket-binding name="resp-dedicated" port="6380"/>
 </socket-bindings>

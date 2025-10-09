@@ -1,0 +1,52 @@
+{
+  "infinispan": {
+    "cache-container": {
+      "caches": {
+        "0": {
+          "distributed-cache": {}
+        },
+        "3": {
+          "distributed-cache": {}
+        }
+      }
+    },
+    "server": {
+      "socket-bindings": {
+        "port-offset": "0",
+        "default-interface": "public",
+        "socket-binding": [
+          {
+            "name": "default",
+            "port": "11222"
+          },
+          {
+            "name": "dedicated",
+            "port": "6379"
+          }
+        ]
+      },
+      "endpoints": {
+        "endpoint": {
+          "socket-binding": "default",
+          "security-realm": "default",
+          "connectors": {
+            "rest": {
+              "rest-connector": {}
+            },
+            "resp-default": {
+              "resp-connector": {
+                "cache": "0"
+              }
+            },
+            "resp-dedicated": {
+              "resp-connector": {
+                "socket-binding": "dedicated",
+                "cache": "3"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

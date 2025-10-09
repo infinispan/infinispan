@@ -18,7 +18,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Key/value storage information (storage media type and wrapping).
@@ -28,7 +27,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class StorageConfigurationManager {
-   private static final Log LOG = LogFactory.getLog(StorageConfigurationManager.class, Log.class);
 
    private Wrapper keyWrapper;
    private Wrapper valueWrapper;
@@ -83,7 +81,7 @@ public class StorageConfigurationManager {
                                                      false);
 
       if(keyStorageMediaType.equals(APPLICATION_UNKNOWN) || valueStorageMediaType.equals(APPLICATION_UNKNOWN)) {
-         LOG.unknownEncoding(cacheName);
+         Log.CONTAINER.unknownEncoding(cacheName);
       }
    }
 
