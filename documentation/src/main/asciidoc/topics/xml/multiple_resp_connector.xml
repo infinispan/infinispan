@@ -1,0 +1,19 @@
+<infinispan>
+   <cache-container>
+      <distributed-cache name="0"/>
+      <distributed-cache name="3"/>
+   </cache-container>
+   <server>
+      <socket-bindings>
+         <socket-binding name="default" port="11222"/>
+         <socket-binding name="resp-dedicated" port="6379"/>
+      </socket-bindings>
+      <endpoints>
+         <endpoint socket-binding="default" security-realm="default">
+            <resp-connector name="resp-default" cache="0"/>
+            <resp-connector name="resp-dedicated" socket-binding="dedicated" cache="3"/>
+            <rest-connector/>
+         </endpoint>
+      </endpoints>
+   </server>
+</infinispan>

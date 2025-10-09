@@ -9,3 +9,25 @@ The default `respCache` is mapped to logical database `0`.
 {brandname} can use multiple logical databases even in clustered mode, as opposed to Redis which only supports database
 `0` when using Redis Cluster.
 ====
+
+It is possible to configure multiple `resp-connector`s listening on different sockets and set a different default logical database on each one. This allows a single {brandname} Server to handle different client applications that may not allow selecting a logical database in their configuration.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/multiple_resp_connector.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/multiple_resp_connector.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/multiple_resp_connector.yaml[]
+----
+
+In the above example, clients connecting to port `11222` will use cache `0` by default, and clients connecting to port `6379` will use cache `3` by default.

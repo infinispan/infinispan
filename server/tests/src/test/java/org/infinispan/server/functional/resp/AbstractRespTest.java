@@ -13,7 +13,6 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisAPI;
 import io.vertx.redis.client.RedisConnection;
-import io.vertx.redis.client.RedisOptions;
 
 @ExtendWith(VertxExtension.class)
 public abstract class AbstractRespTest {
@@ -27,10 +26,6 @@ public abstract class AbstractRespTest {
 
    protected final Redis createBaseClient(Vertx vertx) {
       return SERVERS.resp().withVertx(vertx).get();
-   }
-
-   protected final RedisAPI createDirectConnection(int index, Vertx vertx, RedisOptions options) {
-      return RedisAPI.api(SERVERS.resp().withOptions(options).withVertx(vertx).get(index));
    }
 
    protected RedisAPI createDirectConnection(int index, Vertx vertx) {
