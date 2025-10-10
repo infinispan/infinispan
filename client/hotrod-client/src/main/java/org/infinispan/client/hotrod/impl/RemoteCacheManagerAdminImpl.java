@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
+import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -169,12 +170,17 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@assignAlias", params)));
    }
 
+   @Override
+   public RemoteSchemasAdmin schemas() {
+      return new RemoteSchemasAdminImpl(operationsFactory, operationDispatcher, cacheManager);
+   }
+
    private static byte[] flags(EnumSet<AdminFlag> flags) {
       String sFlags = flags.stream().map(AdminFlag::toString).collect(Collectors.joining(","));
       return string(sFlags);
    }
 
-   private static byte[] string(String s) {
+   protected static byte[] string(String s) {
       return s.getBytes(HotRodConstants.HOTROD_STRING_CHARSET);
    }
 }

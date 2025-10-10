@@ -7,7 +7,9 @@ import org.infinispan.commons.internal.InternalCacheNames;
  *
  * @author anistor@redhat.com
  * @since 7.1
+ * @deprecated since 16.0
  */
+@Deprecated
 public interface ProtobufMetadataManagerConstants {
 
    /**

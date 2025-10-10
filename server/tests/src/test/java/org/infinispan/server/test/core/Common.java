@@ -1,12 +1,12 @@
 package org.infinispan.server.test.core;
 
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -36,6 +36,7 @@ import org.apache.logging.log4j.core.util.StringBuilderWriter;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
@@ -52,7 +53,6 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.schema.Schema;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.persistence.PersistenceIT;
 import org.infinispan.server.test.api.HotRodClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -268,9 +268,11 @@ public class Common {
       RemoteCacheManager remoteCacheManager = hotRodTestClientDriver.createRemoteCacheManager();
 
       if (protoschema != null) {
+         RemoteSchemasAdmin schemas = remoteCacheManager.administration().schemas();
          RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
          metadataCache.putIfAbsent(protoschema.getName(), protoschema.getContent());
-         assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+         schemas.createOrUpdate(protoschema);
+         assertThat(schemas.retrieveError(protoschema.getName())).isEmpty();
          assertNotNull(metadataCache.get(protoschema.getName()));
       }
 
