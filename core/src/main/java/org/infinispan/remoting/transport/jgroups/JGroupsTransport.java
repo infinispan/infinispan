@@ -107,6 +107,7 @@ import org.jgroups.Header;
 import org.jgroups.JChannel;
 import org.jgroups.MergeView;
 import org.jgroups.Message;
+import org.jgroups.MessageFactory;
 import org.jgroups.UpHandler;
 import org.jgroups.View;
 import org.jgroups.blocks.RequestCorrelator;
@@ -211,6 +212,10 @@ public class JGroupsTransport implements Transport {
 
    public static FORK findFork(JChannel channel) {
       return channel.getProtocolStack().findProtocol(FORK.class);
+   }
+
+   static {
+      MessageFactory.register(InfinispanMessage.TYPE, InfinispanMessage::new);
    }
 
    /**
