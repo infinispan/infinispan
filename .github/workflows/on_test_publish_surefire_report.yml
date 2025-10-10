@@ -19,7 +19,7 @@ jobs:
         - name: Download Surefire Report Artifact
           uses: actions/download-artifact@v5
           with:
-            name: surefire-test-report
+            pattern: surefire-test-report*
             github-token: ${{ github.token }}
             run-id: ${{ steps.run_id.outputs.runid }}
 
@@ -28,7 +28,7 @@ jobs:
           id: github_sha
           uses: juliangruber/read-file-action@v1
           with:
-            path: ./github-sha.txt
+            path: ./surefire-test-report/github-sha.txt
 
         # Get GitHub App token to use in API calls
         - uses: actions/create-github-app-token@v2
@@ -140,6 +140,7 @@ jobs:
           - oracle
           - db2
           - tomcat
+          - rolling-upgrades
     steps:
     - name: Set run_id based on event type
       id: run_id
@@ -172,10 +173,14 @@ jobs:
       id: job-status
       run: |
         if [ "${{ matrix.targets }}" = "tomcat" ]; then
-          JOB_STATUS=$(gh api https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs --jq '.jobs[] | select(.name=="tomcat") | .conclusion')
+          JOB_NAME="tomcat"
+        elif [ "${{ matrix.targets }}" = "rolling-upgrades" ]; then
+          JOB_NAME="rolling-upgrades"
         else
-          JOB_STATUS=$(gh api https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs --jq '.jobs[] | select(.name=="db (${{ matrix.targets }})") | .conclusion')
+          JOB_NAME="db (${{ matrix.targets }})"
         fi
+
+        JOB_STATUS=$(gh api "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs" --jq ".jobs[] | select(.name==\"$JOB_NAME\") | .conclusion")
         echo "job_status=$JOB_STATUS" >> $GITHUB_OUTPUT
 
     - name: Publish Test Report
