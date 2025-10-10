@@ -265,7 +265,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
-               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true ${jacoco.agent.argLine}</argLine>
             </configuration>
          </plugin>
          <plugin>

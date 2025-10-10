@@ -128,7 +128,7 @@
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
                </systemPropertyVariables>
-               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${jacoco.agent.argLine}</argLine>
                <properties>
                   <listener>${junitListener}</listener>
                </properties>
