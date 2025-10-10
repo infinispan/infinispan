@@ -1,22 +1,23 @@
 package org.infinispan.server.memcached.text;
 
-import static org.infinispan.server.memcached.text.TextConstants.CLIENT_ERROR_AUTH;
 import static org.infinispan.server.memcached.text.TextConstants.STORED;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
 import org.infinispan.server.memcached.MemcachedBaseDecoder;
 import org.infinispan.server.memcached.MemcachedInboundAdapter;
+import org.infinispan.server.memcached.MemcachedResponse;
 import org.infinispan.server.memcached.MemcachedServer;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 
 /**
  * @since 15.0
  **/
 public abstract class TextAuthDecoder extends TextDecoder {
+   private static final CompletionStage<byte[]> FAILED_AUTH = CompletableFuture.failedFuture(new SecurityException("Wrong credentials"));
 
    private final UsernamePasswordAuthenticator authenticator;
 
@@ -25,38 +26,30 @@ public abstract class TextAuthDecoder extends TextDecoder {
       authenticator = server.getConfiguration().authentication().text().authenticator();
    }
 
-   protected void auth(byte[] token) {
+   protected final MemcachedResponse auth(TextHeader header, byte[] token) {
+      return send(header, auth(token));
+   }
+
+   private CompletionStage<byte[]> auth(byte[] token) {
       String s = new String(token, StandardCharsets.US_ASCII);
       String[] parts = s.split(" ");
       if (parts.length != 2) {
-         authFailure("Wrong credentials");
-      } else {
-         authenticator.authenticate(parts[0], parts[1].toCharArray()).handle((subject, t) -> {
-            if (t != null) {
-               authFailure(t.getMessage());
-            } else {
-               ctx.channel().eventLoop().submit(() -> {
-                  ByteBuf buf = MemcachedInboundAdapter.getAllocator(ctx).acquire(STORED.length);
-                  buf.writeBytes(STORED);
-
-                  MemcachedInboundAdapter inbound = ctx.pipeline().get(MemcachedInboundAdapter.class);
-                  MemcachedBaseDecoder decoder = new TextOpDecoderImpl(server, subject);
-                  decoder.registerExceptionHandler(inbound::handleExceptionally);
-                  ctx.pipeline().replace("decoder", "decoder", decoder);
-
-                  inbound.flushBufferIfNeeded(ctx);
-               });
-            }
-            return null;
-         });
+         return FAILED_AUTH;
       }
-   }
 
-   private void authFailure(String message) {
-      ctx.channel().eventLoop().submit(() -> {
-         String s = CLIENT_ERROR_AUTH + message;
-         ByteBuf buf = MemcachedInboundAdapter.getAllocator(ctx).acquire(s.length());
-         ByteBufUtil.writeAscii(buf, s);
+      return CompletionStages.handleAndCompose(authenticator.authenticate(parts[0], parts[1].toCharArray()), (subject, t) -> {
+         if (t != null) {
+            return CompletableFuture.failedFuture(new SecurityException(t.getMessage()));
+         }
+         CompletableFuture<byte[]> cs = new CompletableFuture<>();
+         ctx.channel().eventLoop().submit(() -> {
+            MemcachedInboundAdapter inbound = ctx.pipeline().get(MemcachedInboundAdapter.class);
+            MemcachedBaseDecoder decoder = new TextOpDecoderImpl(server, subject);
+            decoder.registerExceptionHandler(inbound::handleExceptionally);
+            ctx.pipeline().replace("decoder", "decoder", decoder);
+            cs.complete(STORED);
+         });
+         return cs;
       });
    }
 }

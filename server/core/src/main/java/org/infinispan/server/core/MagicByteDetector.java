@@ -33,7 +33,7 @@ public abstract class MagicByteDetector extends ProtocolDetector {
          trimPipeline(ctx);
          // Add the protocol server handler
          ctx.pipeline().addLast(getInitializer());
-         Log.SERVER.tracef("Detected %s connection %s", getName(), ctx);
+         Log.SERVER.infof("Detected %s connection %s", getName(), ctx);
          // Trigger any protocol-specific rules
          ctx.pipeline().fireUserEventTriggered(AccessControlFilter.EVENT);
          ctx.pipeline().fireUserEventTriggered(CACHE_INITIALIZE_EVENT);

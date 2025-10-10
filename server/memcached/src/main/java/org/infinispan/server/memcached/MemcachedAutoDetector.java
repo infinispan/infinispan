@@ -15,9 +15,11 @@ import io.netty.channel.ChannelHandlerContext;
 
 public class MemcachedAutoDetector extends ProtocolDetector {
    public static final String NAME = "memcached-auto-detector";
+   private final MemcachedServer server;
 
    public MemcachedAutoDetector(MemcachedServer server) {
       super(server);
+      this.server = server;
    }
 
    @Override
@@ -36,10 +38,8 @@ public class MemcachedAutoDetector extends ProtocolDetector {
       trimPipeline(ctx);
       MemcachedProtocol protocol = b == BinaryConstants.MAGIC_REQ ? MemcachedProtocol.BINARY : MemcachedProtocol.TEXT;
 
-      MemcachedBaseDecoder decoder = (MemcachedBaseDecoder) ((MemcachedServer) server).getDecoder(protocol);
-      ctx.pipeline().replace(this, "decoder", decoder);
-      ((MemcachedServer) server).installMemcachedInboundHandler(ctx.channel(), decoder);
-      Log.SERVER.tracef("Detected %s connection", protocol);
+      ctx.pipeline().addLast(server.getInitializer(protocol));
+      Log.SERVER.tracef("Memcached AUTO detected %s connection", protocol);
       // Trigger any protocol-specific rules
       ctx.pipeline().fireUserEventTriggered(AccessControlFilter.EVENT);
       ctx.pipeline().fireUserEventTriggered(CACHE_INITIALIZE_EVENT);

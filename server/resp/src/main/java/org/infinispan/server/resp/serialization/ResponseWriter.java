@@ -7,6 +7,8 @@ import java.util.concurrent.CompletionException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import javax.security.sasl.SaslException;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespVersion;
@@ -343,6 +345,10 @@ public interface ResponseWriter {
 
       if (ex instanceof NumberFormatException) {
          return ResponseWriter::valueNotInteger;
+      }
+
+      if (ex instanceof SecurityException || ex instanceof SaslException) {
+         return ResponseWriter::unauthorized;
       }
 
       return null;

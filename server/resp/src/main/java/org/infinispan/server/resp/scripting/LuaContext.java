@@ -289,9 +289,9 @@ public class LuaContext implements AutoCloseable {
       try {
          future.get(); // TODO: handle timeouts ?
       } catch (Throwable t) {
+         handler.writer().error(t);
          Throwable cause = filterCause(t);
          Log.SERVER.debugf(cause, "Error while processing command '%s'", respCommand);
-         return -1;
       }
       if (lua.type(-1) == Lua.LuaType.TABLE) {
          lua.push("err");
