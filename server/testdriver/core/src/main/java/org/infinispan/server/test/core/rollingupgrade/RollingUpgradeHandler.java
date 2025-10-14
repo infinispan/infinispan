@@ -434,6 +434,7 @@ public class RollingUpgradeHandler {
             builder.property((String) k, (String) v);
          }
       });
+      builder.property("jgroups.version.check", "false");
       if (siteName != null) {
          builder.site(siteName);
       }
