@@ -548,10 +548,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          if (!validateCommandViewId(cacheTopology, viewId, sender, cacheName))
             return false;
 
-         log.debugf("Updating local topology for cache %s: %s", cacheName, cacheTopology);
          cacheStatus.setCurrentTopology(cacheTopology);
-         return true;
       }
+      // logging is outside of the synchronized block to avoid deadlocks when running in virtual threads
+      log.debugf("Updated local topology for cache %s: %s", cacheName, cacheTopology);
+      return true;
    }
 
    /**
