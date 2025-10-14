@@ -79,7 +79,7 @@
 
       <!-- org.wildfly / org.jboss.eap -->
       <appserver.groupId>org.wildfly</appserver.groupId>
-      <appserver.version>32.0.0.Final</appserver.version>
+      <appserver.version>37.0.1.Final</appserver.version>
 
       <!-- Java source/target version -->
       <maven.min.version>3.9.0</maven.min.version>
@@ -107,7 +107,6 @@
       <version.hibernate.core>6.4.10.Final</version.hibernate.core>
       <version.hibernate.search>7.1.2.Final</version.hibernate.search>
       <version.infinispan>15.0.22-SNAPSHOT</version.infinispan>
-      <version.infinispan.arquillian>1.2.0.Beta3</version.infinispan.arquillian>
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.8.Final</version.infinispan.maven-plugins>
       <version.insights>2.0.4</version.insights>
@@ -150,7 +149,7 @@
       <version.netty>4.1.124.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
-      <version.org.wildfly.arquillian>5.0.1.Final</version.org.wildfly.arquillian>
+      <version.org.wildfly.arquillian>5.1.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.elytron>2.6.2.Final</version.org.wildfly.elytron>
       <version.ow2.asm>9.7.1</version.ow2.asm>
       <version.picketbox>5.0.3.Final</version.picketbox>
@@ -213,8 +212,8 @@
       <version.maven.sonatype.central>0.7.0</version.maven.sonatype.central>
       <version.maven.source>3.3.1</version.maven.source>
       <version.maven.surefire>3.2.5</version.maven.surefire>
-      <version.org.jboss.galleon>6.0.5.Final</version.org.jboss.galleon>
-      <version.org.wildfly.galleon-plugins>7.0.0.Final</version.org.wildfly.galleon-plugins>
+      <version.org.jboss.galleon>6.1.1.Final</version.org.jboss.galleon>
+      <version.org.wildfly.galleon-plugins>7.3.1.Final</version.org.wildfly.galleon-plugins>
       <version.eclipse.transformer>0.5.0</version.eclipse.transformer>
       <!-- overwrite version in jboss-parent -->
       <version.pmd.plugin>3.21.2</version.pmd.plugin>
