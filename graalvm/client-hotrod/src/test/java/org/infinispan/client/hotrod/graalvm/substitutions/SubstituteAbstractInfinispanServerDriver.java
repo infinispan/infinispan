@@ -24,7 +24,7 @@ import com.oracle.svm.core.annotate.TargetClass;
 public class SubstituteAbstractInfinispanServerDriver {
 
    public static void copyFromJar(String source, final Path target) throws URISyntaxException, IOException {
-      URI resource = SubstituteAbstractInfinispanServerDriver.class.getResource("").toURI();
+      URI resource = SubstituteAbstractInfinispanServerDriver.class.getResource("/").toURI();
       try (FileSystem fileSystem = FileSystems.newFileSystem(resource, Collections.emptyMap())) {
          final Path jarPath = fileSystem.getPath(source);
          Files.walkFileTree(jarPath, new SimpleFileVisitor<>() {
