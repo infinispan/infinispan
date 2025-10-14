@@ -3,6 +3,8 @@ package org.infinispan.rest.logging;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
+import org.infinispan.security.Security;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.logging.Logger;
 import org.jboss.logging.MDC;
@@ -43,8 +45,10 @@ public class RestAccessLoggingHandler {
             remoteAddress = ((InetSocketAddress) ctx.channel().remoteAddress()).getHostString();
          // User
          String who = request.headers().get(X_PRINCIPAL);
-         if (who == null)
-            who = "-";
+         if (who == null) {
+            ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
+            who = metadata.subject() != null ? Security.getSubjectUserPrincipalName(metadata.subject()) : "-";
+         }
          // Date
          long now = System.currentTimeMillis();
          String requestTimeString = request.headers().get(X_REQUEST_TIME);
