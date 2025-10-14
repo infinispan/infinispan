@@ -933,11 +933,6 @@
             <type>zip</type>
          </dependency>
          <dependency>
-            <groupId>org.infinispan.arquillian.container</groupId>
-            <artifactId>infinispan-arquillian-impl</artifactId>
-            <version>${version.infinispan.arquillian}</version>
-         </dependency>
-         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
             <type>test-jar</type>
