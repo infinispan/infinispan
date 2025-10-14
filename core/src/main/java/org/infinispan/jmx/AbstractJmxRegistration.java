@@ -78,6 +78,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
             // first time!
             groupName = initGroup();
 
+            List<ResourceDMBean> registered = new ArrayList<>();
             resourceDMBeans = Collections.synchronizedList(getResourceDMBeansFromComponents());
             this.mBeanServer = mBeanServer;
 
@@ -86,8 +87,11 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
                for (ResourceDMBean resourceDMBean : resourceDMBeans) {
                   ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
                   register(resourceDMBean, objectName, mBeanServer);
+                  registered.add(resourceDMBean);
                }
             } catch (InstanceAlreadyExistsException | IllegalArgumentException e) {
+               // If there were duplicate in the beans, we change it here so we don't deregister duplicated entries when stopping.
+               resourceDMBeans = registered;
                throw CONTAINER.jmxMBeanAlreadyRegistered(globalConfig.jmx().domain(), e);
             } catch (Exception e) {
                throw new CacheException("Failure while registering MBeans", e);
