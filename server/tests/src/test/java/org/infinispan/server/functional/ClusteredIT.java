@@ -82,10 +82,6 @@ import org.junit.platform.suite.api.Suite;
 public class ClusteredIT extends InfinispanSuite {
 
    public static int SERVER_COUNT = 3;
-   // Query is distributed when numOwners < numNodes. When this happens the segments are passed
-   // as a clause. The originating node uses its primary and backup segments so thus we need to
-   // account for 256 * (2/3) + overhead
-   public static int MAX_BOOLEAN_CLAUSES = 1025 + (256 * 2 / 3) + 10;
 
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
@@ -94,7 +90,6 @@ public class ClusteredIT extends InfinispanSuite {
                .runMode(ServerRunMode.CONTAINER)
                .mavenArtifacts(mavenArtifacts())
                .artifacts(Artifacts.artifacts())
-               .property("infinispan.query.lucene.max-boolean-clauses", Integer.toString(MAX_BOOLEAN_CLAUSES))
                .build();
 
    public static String[] mavenArtifacts() {

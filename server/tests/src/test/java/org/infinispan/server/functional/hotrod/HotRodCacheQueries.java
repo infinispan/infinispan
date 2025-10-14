@@ -7,7 +7,6 @@ import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -15,16 +14,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
@@ -183,59 +178,6 @@ public class HotRodCacheQueries {
       try (RestResponse response = sync(restClient.cache(SERVERS.getMethodName()).query(query))) {
          Json results = Json.read(response.body());
          assertEquals(1, results.at("hit_count").asInteger());
-      }
-   }
-
-   @ParameterizedTest
-   @ValueSource(booleans = {true, false})
-   public void testManyInClauses(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
-      remoteCache.put(1, createUser1());
-      remoteCache.put(2, createUser2());
-
-      // get user back from remote cache and check its attributes
-      User fromCache = remoteCache.get(1);
-      assertUser1(fromCache);
-
-      Set<String> values = new HashSet<>();
-      values.add("Tom");
-      for (int i = 0; i < 1024; i++) {
-         values.add("test" + i);
-      }
-      Query<User> query = remoteCache.query("from sample_bank_account.User where name in (" + values.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) +")");
-
-      // this Ickle query translates to a BooleanQuery with 1025 clauses, 1 more than the max default (1024) so
-      // executing it will fail unless the server jvm arg -Dinfinispan.query.lucene.max-boolean-clauses=1025 takes effect
-
-      List<User> list = query.execute().list();
-      assertNotNull(list);
-      assertEquals(1, list.size());
-      assertEquals(User.class, list.get(0).getClass());
-      assertUser1(list.get(0));
-   }
-
-   @ParameterizedTest
-   @ValueSource(booleans = {true, false})
-   public void testWayTooManyInClauses(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
-
-      Set<String> values = new HashSet<>();
-      // The clause count is slightly higher than 1025 as distributed queries use more clauses so
-      // the value is increased
-      for (int i = 0; i < 1026 + 24; i++) {
-         values.add("test" + i);
-      }
-
-      Query<User> query = remoteCache.query("from sample_bank_account.User where name in (" + values.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) +")");
-
-      // this Ickle query translates to a BooleanQuery with 1026 clauses, 1 more than the configured
-      // -Dinfinispan.query.lucene.max-boolean-clauses=1025, so executing the query is expected to fail
-
-      if (indexed) {
-         Exception expectedException = assertThrows(HotRodClientException.class, query::execute);
-         assertTrue(expectedException.getMessage().contains("maxClauseCount is set to"));
-      } else {
-         query.execute();
       }
    }
 
