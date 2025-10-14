@@ -54,7 +54,7 @@
 
       <!-- org.wildfly / org.jboss.eap -->
       <appserver.groupId>org.wildfly</appserver.groupId>
-      <appserver.version>36.0.1.Final</appserver.version>
+      <appserver.version>37.0.1.Final</appserver.version>
 
       <!-- Java source/target version -->
       <maven.min.version>3.9.0</maven.min.version>
