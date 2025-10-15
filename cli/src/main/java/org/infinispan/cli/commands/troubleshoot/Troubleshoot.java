@@ -22,7 +22,7 @@ import org.kohsuke.MetaInfServices;
  * @since 15.0
  */
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "troubleshoot", description = "Execute troubleshooting commands", groupCommands = { AccessLogParse.class })
+@GroupCommandDefinition(name = "troubleshoot", description = "Execute troubleshooting commands", groupCommands = { AccessLogParse.class, PersistentStateParse.class })
 public class Troubleshoot extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)

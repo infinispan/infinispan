@@ -126,7 +126,7 @@ public class FileSystemLock {
 
       try {
          globalLock = globalLockFile.getChannel().tryLock();
-         return globalLock.isValid();
+         return globalLock != null && globalLock.isValid();
       } catch (OverlappingFileLockException ignore) {
          return false;
       }

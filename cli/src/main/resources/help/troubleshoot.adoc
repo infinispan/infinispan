@@ -57,3 +57,30 @@ Generates statistics grouped by clients from the local files `access.log` and `a
 operations, and only accept operations at or after the given. Note the date *must* be quoted.
 
 
+SYNOPSIS
+--------
+*troubleshoot persistent-state* ['OPTIONS'] `PERSISTENT_STATE_DIRECTORY`
+
+
+PERSISTENT STATE OPTIONS
+------------------------
+*--show*='NAME'::
+Inspect the persistent state of a single cache.
+
+*--delete*='NAME'::
+Deletes the persistent state of a single cache.
+This operation only succeeds when the server is *not* running. It will acquire exclusive access to the file through
+the duration of the operation.
+
+
+EXAMPLES
+--------
+`troubleshoot persistent-state server/data` +
+List all existing persistent states in the directory.
+
+`troubleshoot persistent-state server/data --show org.infinispan.CONFIG` +
+Shows the current persistent state for the cache.
+
+`troubleshoot persistent-state server/data --delete org.infinispan.CONFIG` +
+Shows and deletes the persistent state associated with the cache.
+
