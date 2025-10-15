@@ -122,7 +122,20 @@ public class ThreadLeakChecker {
    private static class ThreadInfoLocal extends InheritableThreadLocal<LeakException> {
       @Override
       protected LeakException childValue(LeakException parentValue) {
-         return new LeakException(Thread.currentThread().getName(), parentValue);
+         Thread thread = Thread.currentThread();
+         if (!isVirtualThread(thread)) {
+            return new LeakException(Thread.currentThread().getName(), parentValue);
+         }
+         return null;
+      }
+   }
+
+   private static boolean isVirtualThread(Thread thread) {
+      try {
+         Method isVirtualMethod = Thread.class.getMethod("isVirtual");
+         return (boolean) isVirtualMethod.invoke(thread);
+      } catch (Exception e) {
+         return false;
       }
    }
 
