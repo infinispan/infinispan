@@ -2442,6 +2442,15 @@
           "optional" : true
         } ]
       }, {
+        "name" : "MapAdapter",
+        "type_id" : 1333,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "elements",
+          "type" : "MarshallableMap",
+          "optional" : true
+        } ]
+      }, {
         "name" : "SetValue",
         "type_id" : 1290,
         "fields" : [ ]
