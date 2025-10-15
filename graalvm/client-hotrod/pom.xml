@@ -181,6 +181,7 @@
                         <buildArg>-H:ReflectionConfigurationResources=reflect-config.json</buildArg>
                         <buildArg>-H:ResourceConfigurationResources=resource-config.json</buildArg>
                         <buildArg>-H:+AllowDeprecatedBuilderClassesOnImageClasspath</buildArg>
+                        <buildArg>-H:+SharedArenaSupport</buildArg>
                      </buildArgs>
                      <metadataRepository>
                         <enabled>true</enabled>
