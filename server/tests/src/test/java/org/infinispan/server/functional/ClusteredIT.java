@@ -81,14 +81,15 @@ import org.junit.platform.suite.api.Suite;
 })
 public class ClusteredIT extends InfinispanSuite {
 
+   public static int SERVER_COUNT = 3;
+
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
-               .numServers(2)
+               .numServers(SERVER_COUNT)
                .runMode(ServerRunMode.CONTAINER)
                .mavenArtifacts(mavenArtifacts())
                .artifacts(Artifacts.artifacts())
-               .property("infinispan.query.lucene.max-boolean-clauses", "1025")
                .build();
 
    public static String[] mavenArtifacts() {

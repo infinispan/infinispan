@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.query.BaseQuery;
@@ -70,6 +71,8 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    private static final int MAX_EXPANSION_COFACTORS = 16;
 
    public static final String DEFAULT_ALIAS = "_gen0";
+
+   public static final Pattern SCORE_REMOVAL = Pattern.compile(",? *(?i:score)(\\(\\D+\\))?");
 
    /**
     * Is the cache indexed?
@@ -649,6 +652,11 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       if (!queryString.toUpperCase().contains("JOIN")) {
          queryString = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), projection,
                  normalizedWhereClause, parsingResult.getFilteringClause(), sortFields);
+      }
+
+      if (parsingResult.hasScoreProjection()) {
+         // Strip all the score projections as the ickle query doesn't support that - taken care of directly in HS
+         queryString = SCORE_REMOVAL.matcher(queryString).replaceAll("");
       }
 
       return new IckleParsingResult<>(queryString, parsingResult.getStatementType(), parsingResult.getParameterNames(),
