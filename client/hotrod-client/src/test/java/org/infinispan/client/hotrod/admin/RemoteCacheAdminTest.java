@@ -13,6 +13,13 @@ import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.Flag;
@@ -27,6 +34,8 @@ import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,6 +50,8 @@ import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperat
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
+
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @Test(groups = "functional", testName = "client.hotrod.admin.RemoteCacheAdminTest")
 public class RemoteCacheAdminTest extends MultiHotRodServersTest {
@@ -70,6 +81,15 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder);
       servers.add(server);
       return server;
+   }
+
+   @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(HotRodServer server) {
+      // We are forcing it to localhost to cause the hostname to be updated
+      return createHotRodClientConfigurationBuilder("localhost", server.getPort())
+            // Some of the tests may use some additional concurrency to cause pressure which can cause timeouts
+            // spuriously when it is only 2 seconds
+            .socketTimeout(6000);
    }
 
    @Override
@@ -158,6 +178,41 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
                .getOrCreateCache(cacheName, "template");
+   }
+
+   public void getOrCreateLoop() {
+      IntStream.range(0, 50)
+            .forEach(i -> {
+               String cacheName = "sequential-cache-" + i;
+               String xml = String.format("<distributed-cache name=\"%s\" mode=\"SYNC\" owners=\"2\"></distributed-cache>" , cacheName);
+               client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
+                     .getOrCreateCache(cacheName, new StringConfiguration(xml));
+            });
+   }
+
+   public void getOrCreateConcurrency() throws ExecutionException, InterruptedException, TimeoutException {
+      final int creationCount = 5;
+      CyclicBarrier barrier = new CyclicBarrier(creationCount);
+      try {
+         CompletionStages.performConcurrently(IntStream.range(0, creationCount).boxed(), creationCount, Schedulers.from(testExecutor()),
+                     i -> {
+                        try {
+                           barrier.await(10, TimeUnit.SECONDS);
+                        } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+                           return CompletableFuture.failedFuture(e);
+                        }
+                        String cacheName = "concurrency-cache-" + i;
+                        String xml = String.format("<distributed-cache name=\"%s\" mode=\"SYNC\" owners=\"2\"></distributed-cache>", cacheName);
+                        return CompletableFuture.completedStage(
+                              client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
+                                    .getOrCreateCache(cacheName, new StringConfiguration(xml)));
+                     }
+               ).toCompletableFuture()
+               .get(10, TimeUnit.SECONDS);
+      } catch (Throwable t) {
+         log.fatal("Threads are: " + Util.threadDump());
+         throw t;
+      }
    }
 
    public void getOrCreateWithoutTemplateTest() {
