@@ -9,7 +9,7 @@ import java.util.Objects;
 
 public class RollingUpgradeTestUtil {
    public static String getFromVersion() {
-      return System.getProperty(INFINISPAN_ROLLING_UPGRADE_FROM_VERSION, "16.0.0.Dev04");
+      return System.getProperty(INFINISPAN_ROLLING_UPGRADE_FROM_VERSION, "16.0.0.Dev06");
    }
 
    public static String getToVersion() {
