@@ -14,4 +14,8 @@ public class InfinispanException extends RuntimeException {
    public InfinispanException(String message, Throwable throwable) {
       super(message, throwable);
    }
+
+   public InfinispanException(Throwable ex) {
+      super(ex);
+   }
 }

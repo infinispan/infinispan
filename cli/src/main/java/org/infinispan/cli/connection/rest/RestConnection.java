@@ -277,7 +277,11 @@ public class RestConnection implements Connection, Closeable {
 
    @Override
    public Collection<String> getAvailableSchemas() throws IOException {
-      TransformingIterable<Map<String, String>, String> i = new TransformingIterable<>(getCacheKeys(PROTOBUF_METADATA_CACHE_NAME), SINGLETON_MAP_VALUE);
+      TransformingIterable<Map<String, String>, String> i =
+            new TransformingIterable<>(
+                  new JsonReaderIterable(
+                        parseBody(fetch(() -> client.schemas().names()), InputStream.class)),
+                  SINGLETON_MAP_VALUE);
       List<String> list = new ArrayList<>();
       i.forEach(list::add);
       return list;

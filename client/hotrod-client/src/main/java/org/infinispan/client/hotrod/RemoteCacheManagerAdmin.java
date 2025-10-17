@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.api.Experimental;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.BasicConfiguration;
@@ -139,4 +140,13 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     */
    @Override
    void assignAlias(String aliasName, String cacheName) throws HotRodClientException;
+
+   /**
+    * Returns the Schemas Management API.
+    * This API is marked Experimental and is subject of evolutions or breaking changes.
+    * @since 16.0
+    * @return {@link RemoteSchemasAdmin}
+    */
+   @Experimental
+   RemoteSchemasAdmin schemas();
 }

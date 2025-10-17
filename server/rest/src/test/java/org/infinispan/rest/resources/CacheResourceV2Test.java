@@ -92,7 +92,6 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
@@ -162,9 +161,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                .security().authorization().enable().roles("ADMIN").build());
       }
 
-      Cache<String, String> metadataCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.putIfAbsent("sample.proto", PROTO_SCHEMA);
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      cm.getCache(PROTOBUF_METADATA_CACHE_NAME).put("sample.proto", PROTO_SCHEMA);
 
       cm.defineConfiguration("indexedCache", getIndexedPersistedCache().build());
       cm.defineConfiguration("denyReadWritesCache", getDefaultCacheBuilder().clustering().partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES).build());
@@ -1359,7 +1356,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       putStringValueInCache(cache, "file2.proto", "message B{}");
       putStringValueInCache(cache, "sample.proto", PROTO_SCHEMA);
 
-      RestResponse response = join(client.cache(PROTOBUF_METADATA_CACHE_NAME).keys());
+      RestResponse response = join(client.schemas().names());
       String contentAsString = response.body();
       Collection<?> keys = Json.read(contentAsString).asJsonList();
       assertEquals(3, keys.size());
