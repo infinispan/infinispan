@@ -437,4 +437,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Counter '%s' is not defined.", id = 4120)
    CounterException undefinedCounter(String name);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Exception encountered while closing server connection %s", id = 4121)
+   void exceptionWhileClosingChannel(Channel channel, @Cause Throwable t);
 }

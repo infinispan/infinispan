@@ -478,6 +478,10 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       super.checkpoint();
    }
 
+   /**
+    * This method must only be invoked in the event loop that controls this decoder
+    * @return
+    */
    public Map<Long, HotRodOperation<?>> registeredOperationsById() {
       var map = new HashMap<Long, HotRodOperation<?>>();
       operations.forEach((opTimeout, id) -> {
