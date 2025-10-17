@@ -144,7 +144,7 @@
       <version.hdrhistogram>2.2.2</version.hdrhistogram>
       <version.latencyutils>2.0.3</version.latencyutils>
 
-      <version.quarkus>3.27.0</version.quarkus>
+      <version.quarkus>3.28.4</version.quarkus>
       <version.graalvm>25.0.0</version.graalvm>
       <version.jandex>3.5.0</version.jandex>
 
