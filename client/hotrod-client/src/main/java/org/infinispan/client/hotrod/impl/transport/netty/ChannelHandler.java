@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -29,7 +28,6 @@ import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.SslContextFactory;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -42,8 +40,6 @@ import io.netty.resolver.AddressResolverGroup;
 import io.netty.resolver.dns.DnsNameResolverBuilder;
 import io.netty.resolver.dns.RoundRobinDnsAddressResolverGroup;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.processors.FlowableProcessor;
-import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 public class ChannelHandler {
    private static final Log log = LogFactory.getLog(ChannelHandler.class, Log.class);
@@ -98,13 +94,12 @@ public class ChannelHandler {
       configuration.metricRegistry().createGauge("connection.pool.size", "The total number of connections", channels::size, Map.of(), null);
    }
 
-   public <E> CompletionStage<E> submitOperation(HotRodOperation<E> operation, SocketAddress socketAddress) {
+   public OperationChannel getOrCreateChannelForAddress(SocketAddress socketAddress) {
       OperationChannel operationChannel = channels.get(socketAddress);
       if (operationChannel == null) {
          operationChannel = channels.computeIfAbsent(socketAddress, newOpChannel);
       }
-      operationChannel.sendOperation(operation);
-      return operation.asCompletableFuture();
+      return operationChannel;
    }
 
    public CompletionStage<Void> startChannelIfNeeded(SocketAddress socketAddress) {
@@ -112,9 +107,13 @@ public class ChannelHandler {
       return operationChannel.attemptConnect();
    }
 
-   public List<HotRodOperation<?>> closeChannel(SocketAddress address) {
+   public OperationChannel removeChannel(SocketAddress address) {
       log.tracef("Removing OperationChannel for %s", address);
-      OperationChannel channel = channels.remove(address);
+      return channels.remove(address);
+   }
+
+   public List<HotRodOperation<?>> closeChannel(SocketAddress address) {
+      OperationChannel channel = removeChannel(address);
       if (channel != null) {
          log.tracef("Closing channel for %s", address);
          return channel.close();
@@ -221,41 +220,8 @@ public class ChannelHandler {
    }
 
    public Flowable<HotRodOperation<?>> pendingOperationFlowable() {
-      return Flowable.defer(() -> {
-         FlowableProcessor<HotRodOperation<?>> processor = UnicastProcessor.<HotRodOperation<?>>create()
-               .toSerialized();
-         try {
-            AtomicInteger toComplete = new AtomicInteger(1);
-            for (OperationChannel oc : channels.values()) {
-               Channel channel = oc.getChannel();
-               if (channel == null) {
-                  oc.pendingChannelOperations().forEach(processor::onNext);
-               } else {
-                  toComplete.addAndGet(1);
-                  channel.eventLoop().execute(() -> {
-                     try {
-                        oc.pendingChannelOperations().forEach(processor::onNext);
-                        HeaderDecoder decoder = channel.pipeline().get(HeaderDecoder.class);
-                        decoder.registeredOperationsById()
-                              .forEach((k, v) -> processor.onNext(v));
-                        if (toComplete.decrementAndGet() == 0) {
-                           processor.onComplete();
-                        }
-                     } catch (Throwable t) {
-                        processor.onError(t);
-                     }
-                  });
-               }
-               // All the queued ones first as we can miss if we do registered then queued
-            }
-            if (toComplete.decrementAndGet() == 0) {
-               processor.onComplete();
-            }
-         } catch (Throwable t) {
-            processor.onError(t);
-         }
-         return processor;
-      });
+      return Flowable.fromIterable(channels.values())
+            .flatMap(OperationChannel::pendingOperationFlowable);
    }
 
    public Stream<HotRodOperation<?>> gatherOperations() {

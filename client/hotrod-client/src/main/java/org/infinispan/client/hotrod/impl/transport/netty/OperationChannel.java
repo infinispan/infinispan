@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.reactivestreams.Subscriber;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -26,6 +27,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue;
 import io.netty.util.internal.shaded.org.jctools.queues.MpscUnboundedArrayQueue;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOperation<?>> {
    private static final Log log = LogFactory.getLog(OperationChannel.class);
@@ -260,6 +264,15 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
       return queue;
    }
 
+   /**
+    * Drains the pending queue of operations passing them to the provided Consumer. Note these operations will thus
+    * be never submitted to the underlying Channel and the invoker must process these operations somehow.
+    * @param consumer callback for each non submitted operation
+    */
+   public void drainQueue(MessagePassingQueue.Consumer<HotRodOperation<?>> consumer) {
+      queue.drain(consumer, Integer.MAX_VALUE);
+   }
+
    public List<HotRodOperation<?>> close() {
       acceptingRequests = false;
       CompletableFuture<Void> future = attemptedConnect.getAndSet(null);
@@ -289,5 +302,35 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
             ", channel=" + channel +
             ", acceptingRequests=" + acceptingRequests +
             '}';
+   }
+
+   /**
+    * Provides a flowable that will return all operations that have either not been submitted or have that are waiting
+    * for results to complete. If the channel is connected the {@link Subscriber#onNext(Object)}
+    * and {@link Subscriber#onComplete()} methods will be invoked in the event loop for the given channel ensuring they
+    * are not concurrently processed.
+    * @return Flowable that can be subscribed to provide the operations for the operation channel
+    */
+   public Flowable<HotRodOperation<?>> pendingOperationFlowable() {
+      return Flowable.defer(() -> {
+         Channel channel = this.channel;
+         if (channel == null) {
+            return Flowable.fromIterable(pendingChannelOperations());
+         } else {
+            FlowableProcessor<HotRodOperation<?>> processor = UnicastProcessor.create();
+            channel.eventLoop().execute(() -> {
+               try {
+                  pendingChannelOperations().forEach(processor::onNext);
+                  HeaderDecoder decoder = channel.pipeline().get(HeaderDecoder.class);
+                  decoder.registeredOperationsById()
+                        .forEach((k, v) -> processor.onNext(v));
+                  processor.onComplete();
+               } catch (Throwable t) {
+                  processor.onError(t);
+               }
+            });
+            return processor;
+         }
+      });
    }
 }

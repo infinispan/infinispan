@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -54,6 +53,7 @@ import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -65,6 +65,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.DecoderException;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.internal.functions.Functions;
 
 /**
  * This class handles dispatching various HotRodOperations to the appropriate server.
@@ -100,7 +101,7 @@ public class OperationDispatcher {
    @GuardedBy("lock")
    private Set<HotRodOperation<?>> priorAgeOperations = null;
 
-   @GuardedBy("lock")
+   // This can only be written to when holding the writeLock for lock
    private final Set<SocketAddress> connectionFailedServers;
    private final ChannelHandler channelHandler;
    private final ExecutorService executorService;
@@ -311,11 +312,51 @@ public class OperationDispatcher {
          socketAddress = getBalancer(operation.getCacheName()).nextServer(connectionFailedServers);
       }
       log.tracef("Dispatching %s to %s", operation, socketAddress);
-      return channelHandler.submitOperation(operation, Objects.requireNonNull(socketAddress));
+      long stamp = lock.tryOptimisticRead();
+      OperationChannel operationChannel = channelHandler.getOrCreateChannelForAddress(socketAddress);
+      operationChannel.sendOperation(operation);
+      // If the lock stamp changed - that means a channel may have been modified, verify if it was ours
+      if (!lock.validate(stamp)) {
+         // Note we don't need to acquire the read lock as channelHandler#getChannelForAddress is thread safe. The
+         // callers would would acquire the write lock will try to shut down operations, so all we have to do is
+         // check our own operation only if it is present or not in the queue.
+         handleChannelChangePossibility(operation, socketAddress, operationChannel);
+      }
+      return operation.asCompletableFuture();
+   }
+
+   private void handleChannelChangePossibility(HotRodOperation<?> operation, SocketAddress socketAddress,
+                                                   OperationChannel operationChannel) {
+      log.tracef("Concurrent topology update while sending operation %s", operation);
+      OperationChannel otherChannel = channelHandler.getChannelForAddress(socketAddress);
+      // If the channel no longer matches then we have to see if our operation needs to be resubmitted or not
+      if (otherChannel != operationChannel) {
+         // We only worry about the queue, as any submitted operation will be handled by the close/gracefulClose methods
+         if (operationChannel.pendingChannelOperations().remove(operation)) {
+            log.tracef("Our channel no longer exists so resubmitting operation %s", operation);
+            // Note this can't use the single arg execute method as we may have received a AddClientListener
+            // operation. And if we did it already registered itself so we don't call executeAddListener.
+            execute(operation, Set.of());
+         } else {
+            log.tracef("Operation %s already sent to prior channel, so allowing it to complete", operation);
+         }
+      } else {
+         log.tracef("Our channel did not change, so operation %s can continue unchanged", operation);
+      }
    }
 
    public FailoverRequestBalancingStrategy getBalancer(String cacheName) {
-      return topologyInfo.getOrCreateCacheInfo(cacheName).getBalancer();
+      long stamp = lock.tryOptimisticRead();
+      FailoverRequestBalancingStrategy balancer = topologyInfo.getOrCreateCacheInfo(cacheName).getBalancer();
+      if (!lock.validate(stamp)) {
+         stamp = lock.readLock();
+         try {
+            balancer = topologyInfo.getOrCreateCacheInfo(cacheName).getBalancer();
+         } finally {
+            lock.unlockRead(stamp);
+         }
+      }
+      return balancer;
    }
 
    public ClientIntelligence getClientIntelligence() {
@@ -431,7 +472,7 @@ public class OperationDispatcher {
       for (SocketAddress server : removedServers) {
          HOTROD.removingServer(server);
          connectionFailedServers.remove(server);
-         closeChannel(server);
+         gracefulCloseChannel(server);
       }
    }
 
@@ -559,14 +600,44 @@ public class OperationDispatcher {
          HOTROD.switchedBackToMainCluster();
    }
 
+   // This method can only be invoked while holding the writeLock - this prevents additional channels being changed
+   private void gracefulCloseChannel(SocketAddress server) {
+      OperationChannel operationChannel = channelHandler.removeChannel(server);
+      if (operationChannel != null) {
+         // We have to use the overloaded execute method as we could have a ClientListener operation which
+         // would have already been registered so we don't have to use the executeAddListener method
+         // We have to submit on the executor as execute acquires the read lock
+         operationChannel.drainQueue(hro -> executorService.submit(() -> execute(hro, Set.of())));
+
+         // Any left over pending operations are waited on before closing the channel forcibly. If an operation is
+         // submitted to the queue (can't be processed as flowable is processed in the event loop) that operation
+         // is submitted afterwards on a new channel as above
+         operationChannel.pendingOperationFlowable()
+               .flatMap(hro -> RxJavaInterop.voidCompletionStageToFlowable(hro.asCompletableFuture()))
+               .ignoreElements().doFinally(() -> {
+                  log.tracef("Closing channel for %s as previous operations were complete", server);
+                  handleRemainingOperations(operationChannel.close(), server, false);
+               })
+               .subscribe(Functions.EMPTY_ACTION, t -> log.exceptionWhileClosingChannel(operationChannel.getChannel(), t));
+      }
+   }
+
    private void closeChannel(SocketAddress server) {
       List<HotRodOperation<?>> ops = channelHandler.closeChannel(server);
+      handleRemainingOperations(ops, server, true);
+   }
+
+   private void handleRemainingOperations(List<HotRodOperation<?>> ops, SocketAddress server, boolean force) {
       if (!ops.isEmpty()) {
          // Need to submit on executor as we are currently holding the write lock
          executorService.submit(() -> {
-            TransportException transportException = log.connectionClosed(server, server);
-            for (HotRodOperation<?> op : ops) {
-               handleResponse(op, -1, server, null, transportException);
+            if (force) {
+               TransportException transportException = log.connectionClosed(server, server);
+               for (HotRodOperation<?> op : ops) {
+                  handleResponse(op, -1, server, null, transportException);
+               }
+            } else {
+               ops.forEach(op -> execute(op, Set.of()));
             }
          });
       }
@@ -875,7 +946,10 @@ public class OperationDispatcher {
       }
       SocketAddress unresolved = ChannelRecord.of(channel);
       OperationChannel operationChannel = channelHandler.getChannelForAddress(unresolved);
-      if (operationChannel != null) {
+      // If you have multiple requests that create new connections and remove them (when default hostname doesn't
+      // match server hostname) then it will close the original channel. In this case we could have multiple channels
+      // for the same default hostname so only treat the failure if it matches
+      if (operationChannel != null && operationChannel.getChannel() == channel) {
          handleChannelFailure(operationChannel, t);
       }
    }
