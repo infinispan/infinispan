@@ -58,7 +58,7 @@ jobs:
             ignore_flaky_tests: true
             summary: "Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}"
             report_paths: |
-              **/*-reports*/**/TEST-*.xml
+              **/surefire-test-report/**/*-reports*/**/TEST-*.xml
 
         - name: Download Check Run ID
           if: failure() && steps.job-status.outputs.job_status == 'success'
