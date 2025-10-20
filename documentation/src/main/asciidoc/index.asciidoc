@@ -25,6 +25,7 @@ Plan, configure, deploy, and manage Infinispan clusters.
 
 [unstyled]
 * link:titles/server/server.html[Infinispan Server Guide]
+* link:titles/container_image/container_image.html[Infinispan Server Container Image Guide]
 * link:titles/cli/cli.html[Using the Command Line Interface (CLI)]
 * link:titles/rest/rest.html[Using the REST API]
 * link:titles/security/security.html[Security guide]

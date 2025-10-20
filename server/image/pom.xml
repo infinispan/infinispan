@@ -19,6 +19,7 @@
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
       <defaultTestGroup/>
       <defaultExcludedTestGroup/>
+      <image.platforms>linux/amd64,linux/arm64</image.platforms>
       <server.output.dir>../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.output.dir>
       <jdk.dist>https://api.adoptium.net/v3/binary/latest/25/ga/linux/${arch}/jdk/hotspot/normal/eclipse</jdk.dist>
       <server.dist>target/${infinispan.brand.prefix}-server-${infinispan.brand.version}.zip</server.dist>
@@ -69,12 +70,14 @@
                            <name>infinispan/server:${project.version}</name>
                            <build>
                               <args>
-                                 <ARCH>${os.detected.arch}</ARCH>
                                  <BRAND_NAME>${infinispan.brand.name}</BRAND_NAME>
                                  <BRAND_VERSION>${infinispan.brand.version}</BRAND_VERSION>
                                  <JDK_DIST>${jdk.dist}</JDK_DIST>
                                  <SERVER_DIST>${server.dist}</SERVER_DIST>
                               </args>
+                              <buildx>
+                                 <platforms>${image.platforms}</platforms>
+                              </buildx>
                               <contextDir>${basedir}</contextDir>
                               <dockerFile>src/main/docker/Dockerfile</dockerFile>
                            </build>

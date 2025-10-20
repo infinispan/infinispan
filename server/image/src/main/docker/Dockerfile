@@ -1,43 +1,116 @@
-FROM registry.redhat.io/ubi10 AS ubi-micro-build
-
-# Arguments
+## Arguments
+# The name of the OpenJDK package (e.g. java-25-openjdk-headless) in case it should be installed from the distribution repository.
+# If set, JDK_DIST below will be ignored.
+ARG OPENJDK_PACKAGE=""
+# Packages needed by the builder
+ARG BUILDER_PACKAGES="file unzip wget"
+# Packages to be installed in the target image
+ARG MAIN_PACKAGES="coreutils-single grep sed iproute lsof vim-minimal ${OPENJDK_PACKAGE}"
+# Packages to be removed
+ARG REMOVE_PACKAGES="alsa-lib avahi-libs cups-filesystem cups-libs gawk p11-kit"
+# The path to the root filesystem in the builder
+ARG NEWROOT=/new-root-fs
+# The path where DNF cache files should be stored
+ARG DNF_CACHE=/tmp/dnf-cache
+# Replace "--releasever 10" below with "--use-host-config" once DNF is upgraded
+ARG DNF_FLAGS="-y --installroot=${NEWROOT} \
+      --releasever 10 \
+      --nodocs \
+      --setopt=install_weak_deps=False \
+      --setopt=cachedir=${DNF_CACHE} \
+      --setopt=system_cachedir=${DNF_CACHE} \
+      --setopt=logdir=${DNF_CACHE} \
+      --setopt=varsdir=${DNF_CACHE}"
+# The JDK distribution. Can be a local file or a remote URL. Supports zip, tar.gz and rpm.
+# If it points to an empty file, the JDK will be downloaded from Adoptium.
+# If OPENJDK_PACKAGE is non-empty, then that will be used instead.
+ARG JDK_DIST=src/main/docker/adoptium
+# The Infinispan server distribution. Can be a local file or a remote URL. Must be a zip.
+ARG SERVER_DIST
+# The target architecture. This is automatically configured by the container builder.
+ARG TARGETARCH
+# The path where the Infinispan server will be installed
+ARG WORKDIR=/opt/infinispan
+# Brand name
+ARG BRAND_NAME=Infinispan
+# Brand version
 ARG BRAND_VERSION
-ARG BRAND_NAME
+# The base image
+ARG BASE_IMAGE=scratch
+
+# Builder
+FROM registry.access.redhat.com/ubi10 AS builder
+# Repeat the arguments, since they have been reset by the FROM directive above
+ARG NEWROOT
+ARG DNF_CACHE
+ARG DNF_FLAGS
 ARG JDK_DIST
 ARG SERVER_DIST
-
-# Copy the server distribution
-ADD $SERVER_DIST /tmp/infinispan
+ARG BUILDER_PACKAGES
+ARG OPENJDK_PACKAGE
+ARG MAIN_PACKAGES
+ARG REMOVE_PACKAGES
+ARG TARGETARCH
+ARG WORKDIR
 
 # Add the JDK distribution
 ADD $JDK_DIST /tmp/jdk
 
-ADD src/main/docker/build.sh /tmp/
-RUN bash /tmp/build.sh glibc-langpack-en findutils grep sed iproute lsof tzdata-java vim-minimal
+# Add the Infinispan server distribution
+ADD $SERVER_DIST /tmp/infinispan
 
-FROM registry.redhat.io/ubi10-micro
-ENV LANG=en_US.UTF-8
+# Add builder packages
+RUN dnf install -y --nodocs ${BUILDER_PACKAGES}
 
-COPY --from=ubi-micro-build /tmp/null/rootfs/ /
-COPY --from=ubi-micro-build --chown=185:0 /opt/infinispan /opt/infinispan
-ADD src/main/docker/launch.sh /opt/infinispan/bin/
+# Add target packages
+RUN mkdir -p ${NEWROOT} ${DNF_CACHE}
+RUN dnf ${DNF_FLAGS} install ${MAIN_PACKAGES}
 
-RUN echo "infinispan:x:0:root" >> /etc/group && \
-    echo "infinispan:x:185:0:infinispan user:/opt/infinispan:/sbin/nologin" >> /etc/passwd
+# Install the JDK distribution
+ADD src/main/docker/install-jdk.sh /tmp/
+RUN /tmp/install-jdk.sh ${TARGETARCH} ${NEWROOT} /tmp/jdk ${OPENJDK_PACKAGE}
 
-USER 185
+# Remove unwanted packages. Ignore errors
+RUN rpm -r ${NEWROOT} --erase --nodeps --allmatches ${REMOVE_PACKAGES} || true
 
-# Build the AOT cache
-RUN /opt/infinispan/bin/server.sh --aot || true
+# Delete unnecessary files
+RUN rm -rf \
+      ${NEWROOT}/usr/lib/sysimage \
+      ${NEWROOT}/usr/share/licenses \
+      ${NEWROOT}/usr/share/locale \
+      ${NEWROOT}/var/lib/dnf \
+      ${NEWROOT}${DNF_CACHE}
 
+# Install the Infinispan server distribution
+ADD src/main/docker/install-server.sh /tmp/
+RUN /tmp/install-server.sh ${NEWROOT} ${WORKDIR}
+ADD src/main/docker/launch.sh ${NEWROOT}${WORKDIR}/bin/
+ENV JAVA_HOME=${NEWROOT}/usr/lib/jvm/default-java
+RUN ${NEWROOT}/${WORKDIR}/bin/server.sh --aot || true
+RUN chown -R 65532:65532 ${NEWROOT}/${WORKDIR}
+
+# Target image
+FROM ${BASE_IMAGE}
+ARG NEWROOT
+ARG WORKDIR
+ARG BRAND_NAME
+ARG BRAND_VERSION
+
+# Copy from the builder image to the target
+COPY --from=builder ${NEWROOT} /
+
+# We run the container unprivileged, create a writable HOME
+WORKDIR ${WORKDIR}
+ENV HOME=${WORKDIR}
 ENV ISPN_HOME=/opt/infinispan
 ENV USER=default
-
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+ENV LANG=C.UTF-8
+USER 65532
 EXPOSE 11222 11221 11223 2157 46655 57800 7800 7900 8080 8443
-
 ENTRYPOINT [ "/opt/infinispan/bin/launch.sh" ]
 
-# common labels
+# Labels
 ARG URL="https://infinispan.org/"
 ARG SERVER_DESCRIPTION="Provides a scalable in-memory distributed database designed for fast access to large volumes of data."
 ARG SERVER_DISPLAY_NAME="${BRAND_NAME} Server"

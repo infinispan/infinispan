@@ -17,7 +17,7 @@ on:
          type: choice
          description: The type of release
          required: true
-         default: default
+         default: "default"
          options:
             - default
             - latest
@@ -178,17 +178,27 @@ jobs:
 
   images:
     needs: published
+    if: startsWith(inputs.version, '16.')
+    uses: ./.github/workflows/release_image.yml
+    secrets: inherit
+    with:
+      branch: ${{ inputs.branch }}
+      version: ${{ inputs.version }}
+      type: ${{ inputs.type }}
+
+  images-legacy:
+    needs: published
+    if: startsWith(inputs.version, '15.') || startsWith(inputs.version, '14.') || startsWith(inputs.version, '13.')
     uses: infinispan/infinispan-images/.github/workflows/release.yml@main
     secrets: inherit
     with:
       branch: main
-      repository: infinispan/infinispan-images
       ispnVersion: ${{ inputs.version }}
-      type: ${{ inputs.type }}
+      repository: infinispan/infinispan-images
 
   operator-main:
     needs: images
-    if: contains(inputs.version, '.Final')
+    if: ${{ !contains(inputs.version, '.Dev') }}
     uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@main
     secrets: inherit
     with:
@@ -197,8 +207,8 @@ jobs:
       repository: infinispan/infinispan-operator
 
   operator-2-4-x:
-    needs: images
-    if: contains(inputs.version, '.Final') && (startsWith(inputs.version, '15.0.') || startsWith(inputs.version, '15.2.'))
+    needs: images-legacy
+    if: contains(inputs.version, '.Final') && (startsWith(inputs.version, '15.'))
     uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@2.4.x
     secrets: inherit
     with:
