@@ -14,6 +14,7 @@
 
    <properties>
       <infinispan.test.parallel.threads>5</infinispan.test.parallel.threads>
+      <jacoco.agent.argLine/>
    </properties>
 
    <dependencies>
@@ -265,7 +266,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
-               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true ${jacoco.agent.argLine}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true @{jacoco.agent.argLine}</argLine>
             </configuration>
          </plugin>
          <plugin>
