@@ -12,6 +12,10 @@
     <name>Infinispan Multi Tenant Router</name>
     <description>Infinispan Multi Tenant Router</description>
 
+    <properties>
+        <jacoco.agent.argLine/>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -136,7 +140,7 @@
                         <usedefaultlisteners>false</usedefaultlisteners>
                         <listener>${junitListener}</listener>
                     </properties>
-                    <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${jacoco.agent.argLine}</argLine>
+                    <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} @{jacoco.agent.argLine}</argLine>
                 </configuration>
                 <dependencies>
                     <dependency>

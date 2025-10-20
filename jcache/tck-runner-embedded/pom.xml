@@ -24,6 +24,7 @@
       <embedded.CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</embedded.CacheInvocationContextImpl>
 
       <jvm.x64.args />
+      <jacoco.agent.argLine/>
    </properties>
 
    <dependencies>
@@ -128,7 +129,7 @@
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
                </systemPropertyVariables>
-               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${jacoco.agent.argLine}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} @{jacoco.agent.argLine}</argLine>
                <properties>
                   <listener>${junitListener}</listener>
                </properties>
