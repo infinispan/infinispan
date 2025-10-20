@@ -1175,10 +1175,10 @@
             <version>${version.party.iroiro.luajava}</version>
          </dependency>
          <dependency>
-            <groupId>party.iroiro.luajava</groupId>
-            <artifactId>lua51-platform</artifactId>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-lua51-platform</artifactId>
             <classifier>natives-desktop</classifier>
-            <version>${version.party.iroiro.luajava}</version>
+            <version>${version.infinispan.lua.natives}</version>
          </dependency>
          <dependency>
             <groupId>party.iroiro.luajava</groupId>
@@ -3082,4 +3082,16 @@
          </build>
       </profile>
    </profiles>
+   <repositories>
+      <repository>
+         <id>maven-snapshots</id>
+         <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+         <releases>
+            <enabled>false</enabled>
+         </releases>
+      </repository>
+   </repositories>
 </project>

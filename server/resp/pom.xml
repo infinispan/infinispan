@@ -52,8 +52,8 @@
          <artifactId>gdx-jnigen-loader</artifactId>
       </dependency>
       <dependency>
-         <groupId>party.iroiro.luajava</groupId>
-         <artifactId>lua51-platform</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-lua51-platform</artifactId>
          <classifier>natives-desktop</classifier>
       </dependency>
       <dependency>
