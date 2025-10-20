@@ -209,7 +209,7 @@
       <versionx.org.assertj.assertj-core>3.27.6</versionx.org.assertj.assertj-core>
       <versionx.org.apache.mina.mina>2.2.4</versionx.org.apache.mina.mina>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.19.1</versionx.org.codehaus.mojo.versions-maven-plugin>
-      <versionx.org.codehaus.mojo.xml-maven-plugin>1.1.0</versionx.org.codehaus.mojo.xml-maven-plugin>
+      <versionx.org.codehaus.mojo.xml-maven-plugin>1.2.0</versionx.org.codehaus.mojo.xml-maven-plugin>
       <versionx.org.dom4j.dom4j>2.2.0</versionx.org.dom4j.dom4j>
       <versionx.org.javassist.javassist>3.29.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>4.0.0.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
