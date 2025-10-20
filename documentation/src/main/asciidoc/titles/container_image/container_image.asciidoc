@@ -1,0 +1,25 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:sectanchors:
+:stem: asciimath
+:context: image
+
+//Title
+= Guide to Infinispan Server Container Images
+
+The Infinispan Server container images runs in a dedicated Java Virtual Machine (JVM) and provides client access to remote caches through Hot Rod or REST endpoints.
+Infinispan Server speeds time to deployment by separating caches from application logic and offers built-in capabilities for monitoring and administration.
+
+//User stories
+include::stories.adoc[]

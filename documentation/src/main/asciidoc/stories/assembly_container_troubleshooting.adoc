@@ -1,0 +1,66 @@
+= Troubleshooting {brandname} container images
+
+== Image Configuration
+The image scripts that are used to configure and launch the executables can be debugged by setting the environment variable `DEBUG=TRUE` as follows:
+
+[source,bash]
+----
+ docker run -e DEBUG=true infinispan/<image-name>
+----
+
+== {brandname} Server
+It's also possible to debug the {brandname} Server in the image by setting the `DEBUG_PORT` environment variable as follows:
+
+[source,bash]
+----
+docker run -e DEBUG_PORT="*:8787" -p 8787:8787 infinispan/server
+----
+
+== Image Tools
+In order to keep the image size as small as possible, we include a minimal set of tools and utilities to help debug issues with the container.
+
+
+|===
+|Task |Command
+
+|Text editor
+|`vi`
+
+|Get the PID of the Java process
+|`ps -fC java`
+
+|Get socket/file information
+|`lsof`
+
+|List all open files excluding network sockets
+|`lsof \| grep -v 'IP\|IPv4\|IPv6\|TCP\|UDP\|sock\|FIFO\|STRM\|unix'`
+
+|List all TCP sockets
+|`lsof -i TCP`
+
+|List all UDP sockets
+|`lsof -i UDP`
+
+|Network configuration
+|`ip`
+
+|Show unicast routes
+|`ip route`
+
+|Show multicast routes
+|`ip maddress`
+
+|===
+
+
+| Task                                          | Command                 |
+|-----------------------------------------------|-------------------------|
+| Text editor                                   | vi                      |
+| Get the PID of the java process               | ps -fC java             |
+| Get socket/file information                   | lsof                    |
+| List all open files excluding network sockets | lsof\|grep -v "IPv[46]" |
+| List all TCP sockets                          | ss -t -a                |
+| List all UDP sockets                          | ss -u -a                |
+| Network configuration                         | ip                      |
+| Show unicast routes                           | ip route                |
+| Show multicast routes                         | ip maddress             |
