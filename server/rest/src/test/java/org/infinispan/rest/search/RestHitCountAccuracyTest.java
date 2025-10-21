@@ -1,15 +1,14 @@
 package org.infinispan.rest.search;
 
+import static org.infinispan.commons.util.concurrent.CompletionStages.await;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
@@ -24,7 +23,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.model.Game;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -44,11 +42,6 @@ public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
 
-      // Register proto schema
-      Cache<String, String> metadataCache = cacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.putIfAbsent(Game.GameSchema.INSTANCE.getProtoFileName(), Game.GameSchema.INSTANCE.getProtoFile());
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-
       ConfigurationBuilder config = new ConfigurationBuilder();
       config
          .encoding()
@@ -67,7 +60,7 @@ public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
       restClient = RestClient.forConfiguration(new RestClientConfigurationBuilder().addServer()
             .host(restServer.getHost()).port(restServer.getPort()).protocol(Protocol.HTTP_20)
             .build());
-
+      await(restClient.schemas().put(Game.GameSchema.INSTANCE.getName(), Game.GameSchema.INSTANCE.getContent()));
       return cacheManager;
    }
 

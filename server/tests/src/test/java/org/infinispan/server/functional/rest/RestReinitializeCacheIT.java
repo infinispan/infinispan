@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.client.rest.RestResponseInfo.BAD_REQUEST;
 import static org.infinispan.client.rest.RestResponseInfo.NO_CONTENT;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
@@ -19,6 +18,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.RestClientConfigurationProperties;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.test.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -124,7 +124,7 @@ public class RestReinitializeCacheIT {
 
       // Internal caches are initialized even with missing members.
       // Attempts to initialize return an error.
-      try (RestResponse response = sync(rest.cache(PROTOBUF_METADATA_CACHE_NAME).markTopologyStable(false))) {
+      try (RestResponse response = sync(rest.cache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME).markTopologyStable(false))) {
          assertThat(response.status()).isEqualTo(BAD_REQUEST);
          assertThat(response.body()).isEqualTo("\"Cache '___protobuf_metadata' is internal\"");
       }
