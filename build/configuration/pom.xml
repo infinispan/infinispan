@@ -165,7 +165,7 @@
       <version.native.maven.plugin>0.11.2</version.native.maven.plugin>
       <version.maven>3.9.11</version.maven>
       <version.maven.antlr3>3.5.2</version.maven.antlr3>
-      <version.maven.antrun>3.1.0</version.maven.antrun>
+      <version.maven.antrun>3.2.0</version.maven.antrun>
       <version.maven.archetype>3.4.1</version.maven.archetype>
       <version.maven.assembly>3.7.1</version.maven.assembly>
       <version.maven.buildhelper>3.6.1</version.maven.buildhelper>
