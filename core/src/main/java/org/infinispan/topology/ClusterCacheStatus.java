@@ -816,7 +816,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       var persistedCH = joinInfo.getConsistentHashFactory().fromPersistentState(state, persistentUUIDManager.persistentUUIDToAddress());
       var ch = persistedCH.consistentHash();
       if (persistedCH.hasMissingMembers() || !getExpectedMembers().containsAll(ch.getMembers())) {
-         log.recoverFromStateMissingMembers(cacheName, expectedMembers, ch.getMembers().size());
+         log.recoverFromStateMissingMembers(cacheName, expectedMembers, persistedCH.totalMembers());
          return null;
       }
 
