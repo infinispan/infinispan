@@ -33,6 +33,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
@@ -55,7 +56,6 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.PublisherTransformers;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
@@ -242,7 +242,7 @@ public class CacheResource extends AbstractContainerResource {
                cmd.setInternalMetadata(entry.internalMetadata);
                return cmd;
             })
-            .flatMap(cmd -> RxJavaInterop.voidCompletionStageToFlowable(invocationHelper.invokeAsync(cmd, 1)), batchSize)
+            .flatMap(cmd -> Flowable.fromCompletionStage(invocationHelper.invokeAsync(cmd, 1).thenApply(CompletableFutures.toTrueFunction())), batchSize)
             .count()
             .toCompletionStage()
             .thenAccept(entries -> log.debugf("Cache %s restored %d entries", cacheName, entries));
