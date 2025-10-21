@@ -62,5 +62,17 @@
         </license>
       </licenses>
     </dependency>
+    <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-lua51-platform</artifactId>
+      <version/>
+      <licenses>
+        <license>
+          <name>MIT License</name>
+          <url>https://www.lua.org/license.html</url>
+          <distribution>repo</distribution>
+        </license>
+      </licenses>
+    </dependency>
   </dependencies>
 </licenseSummary>
