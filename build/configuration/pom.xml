@@ -132,7 +132,7 @@
       <version.org.wildfly.elytron>2.7.0.Final</version.org.wildfly.elytron>
       <version.ow2.asm>9.9</version.ow2.asm>
       <version.party.iroiro.luajava>4.0.2</version.party.iroiro.luajava>
-      <version.infinispan.lua.natives>1.1.0-SNAPSHOT</version.infinispan.lua.natives>
+      <version.infinispan.lua.natives>1.0.0</version.infinispan.lua.natives>
       <version.reactivestreams>1.0.4</version.reactivestreams>
       <version.rocksdb>9.11.2</version.rocksdb>
       <version.rxjava>3.1.12</version.rxjava>
