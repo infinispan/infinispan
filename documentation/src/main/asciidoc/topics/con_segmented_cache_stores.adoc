@@ -1,24 +1,16 @@
 [id='segmented-cache-stores_{context}']
 = Segmented cache stores
-Cache stores can organize data into hash space segments to which keys map.
+Cache stores can organize data into hash space segments to which keys map. Stores are segmented by default.
 
 Segmented stores increase read performance for bulk operations; for example,
 streaming over data (`Cache.size`, `Cache.entrySet.stream`), pre-loading the
 cache, and doing state transfer operations.
 
-However, segmented stores can also result in loss of performance for write
-operations. This performance loss applies particularly to batch write
-operations that can take place with transactions or write-behind stores. For
-this reason, you should evaluate the overhead for write operations before you
-enable segmented stores. The performance gain for bulk read operations might
-not be acceptable if there is a significant performance loss for write
-operations.
+
 
 [IMPORTANT]
 ====
-The number of segments you configure for cache stores must match the number of
-segments you define in the {brandname} configuration with the
-`clustering.hash.numSegments` parameter.
+
 
 If you change the `numSegments` parameter in the configuration after you add a
 segmented cache store, {brandname} cannot read data from that cache store.

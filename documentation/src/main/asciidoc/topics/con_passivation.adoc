@@ -6,9 +6,9 @@ and potentially expensive writes to persistent storage.
 
 Activation is the process of restoring entries to memory from the cache store
 when there is an attempt to access passivated entries. For this reason, when you
-enable passivation, you must configure cache stores that implement both
-`CacheWriter` and `CacheLoader` interfaces so they can write and load entries
-from persistent storage.
+enable passivation, you must configure a cache store that implements the
+`NonBlockingStore` interface. The store's `characteristics()` method must
+also indicate that it supports both read and write operations.
 
 When {brandname} evicts an entry from the cache, it notifies cache listeners
 that the entry is passivated then stores the entry in the cache store. When

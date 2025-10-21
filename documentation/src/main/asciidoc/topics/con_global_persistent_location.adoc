@@ -40,7 +40,8 @@ In most cases this is the directory where your application starts.
 
 For clustered embedded caches, such as replicated or distributed, you should always enable and configure a global persistent location to restore cluster topology.
 
-You should never configure an absolute path for a file-based cache store that is outside the global persistent location.
+When using a file-based cache store, you should always configure a global persistent location. You should never configure an absolute path for a file-based cache store that is outside this location.
+For more details, see xref:proc_configuring_global_persistent_location.adoc[Configuring the Global Persistent Location].
 If you do, {brandname} writes the following exception to logs:
 
 ----

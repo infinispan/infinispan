@@ -15,13 +15,13 @@ Data overflow::
 Using eviction and passivation techniques ensures that {brandname} keeps only
 frequently used data in-memory and writes older entries to persistent storage.
 
-include::{topics}/con_passivation.adoc[leveloffset=+1]
-include::{topics}/con_how_passivation_works.adoc[leveloffset=+2]
-include::{topics}/con_write_through.adoc[leveloffset=+1]
-include::{topics}/con_write_behind.adoc[leveloffset=+1]
 include::{topics}/con_segmented_cache_stores.adoc[leveloffset=+1]
 include::{topics}/con_shared_cache_stores.adoc[leveloffset=+1]
 include::{topics}/con_transactions_with_cache_stores.adoc[leveloffset=+1]
+include::{topics}/con_write_through.adoc[leveloffset=+1]
+include::{topics}/con_write_behind.adoc[leveloffset=+1]
+include::{topics}/con_passivation.adoc[leveloffset=+1]
+include::{topics}/con_how_passivation_works.adoc[leveloffset=+2]
 
 include::{topics}/con_global_persistent_location.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_global_persistent_location.adoc[leveloffset=+2]
