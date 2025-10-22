@@ -91,8 +91,6 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
       writeProcessor = UnicastProcessor.create();
       writeProcessor.observeOn(Schedulers.from(executor))
             .subscribe(this, e -> log.warn("Exception encountered while performing write log request ", e), () -> {
-               completionProcessor.onComplete();
-               completionProcessor = null;
                if (logFile != null) {
                   Util.close(logFile);
                   // add the current appended file - note this method will fail if it is already present, which will
@@ -100,6 +98,8 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
                   compactor.addLogFileOnShutdown(logFile.fileId, nextExpirationTime);
                   logFile = null;
                }
+               completionProcessor.onComplete();
+               completionProcessor = null;
             });
 
       completionProcessor = UnicastProcessor.create();
