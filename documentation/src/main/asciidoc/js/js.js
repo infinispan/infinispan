@@ -24,6 +24,7 @@ $(document).ready(function() {
     $('#dchooser').append('</optgroup>');
     $('#dchooser').append('<optgroup label="Operations">');
     $('#dchooser').append('<option value="/titles/server/server.html">Server</option>');
+    $('#dchooser').append('<option value="/titles/container_image/container_image.html">Container image</option>');
     $('#dchooser').append('<option value="/docs/infinispan-operator/main/operator.html">Operator</option>');
     $('#dchooser').append('<option value="/docs/helm-chart/main/helm-chart.html">Helm Chart</option>');
     $('#dchooser').append('<option value="/titles/cli/cli.html">Command Line Interface (CLI)</option>');

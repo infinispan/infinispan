@@ -1,24 +1,24 @@
-= Getting started with {brandname} Server Container Images
+= Getting started with the {brandname} Server Container Image
 
-To get started with {brandname} Server container images on your local machine simply execute:
+To get started with {brandname} Server container image on your local machine simply execute:
 
-[source,bash]
+
+.Docker
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-docker run -p 11222:11222 infinispan/server
-----
-
-or
-
-[source,bash]
-----
-podman run --net=host -p 11222:11222 infinispan/server
+include::cmd_examples/server_docker.adoc[]
 ----
 
-> When utilising [podman](https://podman.io/) it's necessary for the `--net=host` to be passed when not executing as `sudo`.
+.Podman
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::cmd_examples/server_podman.adoc[]
+----
+> When utilising [podman](https://podman.io/) it is necessary for the `--net=host` to be passed when not executing as `sudo`.
 
 By default, the image has authentication enabled on all exposed endpoints. When executing the above command the image automatically generates a username/password combo with the `admin` role, prints the values to stdout and then starts the Infinispan server with the authenticated Hotrod and Rest endpoints exposed on port `11222`. Therefore, it's necessary to utilise the printed credentials when accessing the exposed endpoints via clients.
 
-It is also possible to provide an admin username/password combination via environment variables:
+It is also possible to provide an administrator username/password combination via environment variables:
 
 [source,bash]
 ----

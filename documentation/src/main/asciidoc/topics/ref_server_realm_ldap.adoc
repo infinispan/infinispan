@@ -26,6 +26,10 @@ credential:: Corresponds to the password associated with the principal mentioned
 The principal for LDAP connections must have necessary privileges to perform LDAP queries and access specific attributes.
 ====
 
+
+NOTE: If the `url` uses LDAPS, it may be necessary to define a link:{server_docs}#configuring-encryption[server identity] containing an appropriate truststore and reference it in the `ldap-realm.client-ssl-context` configuration attribute.
+
+
 [TIP]
 ====
 Enabling `connection-pooling` significantly improves the performance of authentication to LDAP servers.
