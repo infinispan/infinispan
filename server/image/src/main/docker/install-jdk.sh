@@ -71,9 +71,14 @@ else
       popd || exit
       ;;
     inode/x-empty | empty)
-      if [ "$ARCHITECTURE" == amd64 ]; then
-        ARCHITECTURE=x64
-      fi
+      case "$ARCHITECTURE" in
+        amd64)
+          ARCHITECTURE=x64
+          ;;
+        arm64)
+          ARCHITECTURE=aarch64
+          ;;
+      esac
       echo "Downloading Temurin OpenJDK for ${ARCHITECTURE}"
       wget -qO /tmp/jdk https://api.adoptium.net/v3/binary/latest/25/ga/linux/"${ARCHITECTURE}"/jdk/hotspot/normal/eclipse
       tar xzvf /tmp/jdk -C "$JVM_PATH"
