@@ -1,0 +1,38 @@
+[id='server-container-requirements_{context}']
+= {brandname} Server container image
+
+{brandname} Server as a container image requires a container manager, such as link:https://docker.com[Docker] or link:https://podman.io[Podman].
+
+== Container registries
+
+The {brandname} Server container image is available at the following registries:
+
+
+|===
+|Registry |URL
+
+|Docker Hub
+|https://hub.docker.com/r/infinispan/server
+
+|Quay.io
+|https://quay.io/repository/infinispan/server
+
+|===
+
+== Container execution
+
+Start an instance of {brandname} Server by executing the following command:
+
+.Docker
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::cmd_examples/server_docker.adoc[]
+----
+
+.Podman
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::cmd_examples/server_podman.adoc[]
+----
+
+For more detailed information about the {brandname} Server container image, refer to the link:{container_image_docs}/container_image.html[Container Image guide].

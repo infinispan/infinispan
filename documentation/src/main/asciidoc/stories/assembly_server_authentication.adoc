@@ -2,7 +2,7 @@
 :context: endpoint-authentication
 = Endpoint authentication mechanisms
 
-{brandname} Server can use custom SASL and HTTP authentication mechanisms for Hot Rod and REST endpoints.
+{brandname} Server can use custom authentication mechanisms for Hot Rod and binary Memcached (SASL) and REST (HTTP) endpoints. The RESP endpoint does not offer alternative authentication mechanisms, because of its specification.
 
 include::{topics}/con_server_authentication.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_server_authentication.adoc[leveloffset=+1]

@@ -1,15 +1,17 @@
 <security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="urn:infinispan:server:15.0 https://infinispan.org/schemas/infinispan-server-15.0.xsd"
-          xmlns="urn:infinispan:server:15.0">
+          xsi:schemaLocation="urn:infinispan:server:16.0 https://infinispan.org/schemas/infinispan-server-16.0.xsd"
+          xmlns="urn:infinispan:server:16.0">
    <security-realms>
-      <security-realm name="default">
+      <security-realm name="keycloak">
          <server-identities>
             <ssl>
                <truststore path="ca.pfx" password="secret"/>
             </ssl>
          </server-identities>
+      </security-realm>
+      <security-realm name="default">
          <token-realm name="infinispan" auth-server-url="https://${org.infinispan.test.host.address}:14568/auth/" client-id="infinispan-console">
-            <oauth2-introspection
+            <oauth2-introspection client-ssl-context="keycloak"
                     introspection-url="https://${org.infinispan.test.host.address}:14568/realms/infinispan/protocol/openid-connect/token/introspect"
                     client-id="infinispan-server" client-secret="1fdca4ec-c416-47e0-867a-3d471af7050f"/>
          </token-realm>

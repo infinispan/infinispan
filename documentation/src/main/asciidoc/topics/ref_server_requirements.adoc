@@ -1,14 +1,14 @@
 [id='server-requirements_{context}']
-= {brandname} Server requirements
+= {brandname} Server distribution requirements
 
 //Community
 ifdef::community[]
-{brandname} Server requires a Java Virtual Machine and works with Java {jdkminversion} and later.
+{brandname} Server as a standalone process requires a Java Virtual Machine and works with Java {jdkminversion} and later.
 
 [NOTE]
 ====
 {brandname} Server does not support versions prior to Java {jdkminversion}. However, you can use Hot Rod clients from older versions
-of {brandname} which still work fine with more recent servers.
+of {brandname} which still work fine with more recent servers. See the link:{hotrod_docs}#client-server-compatibility_hotrod-java-client[Hot Rod compatibility documentation] for more details.
 ====
 endif::community[]
 

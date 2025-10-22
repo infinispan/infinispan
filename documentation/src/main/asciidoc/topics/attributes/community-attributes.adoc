@@ -93,6 +93,12 @@
 //Server
 :server_docs: ../server/server.html
 
+//Server image
+:container_image_docs: ../container_image/container_image.html
+
+//REST
+:resp_docs: ../resp/resp.html
+
 //REST
 :rest_docs: ../rest/rest.html
 

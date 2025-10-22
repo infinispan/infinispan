@@ -25,3 +25,5 @@ include::json/server_token_realm_oauth.json[]
 ----
 include::yaml/server_token_realm_oauth.yaml[]
 ----
+
+NOTE: If the `introspection-url` uses HTTPS, it may be necessary to define a link:{server_docs}#configuring-encryption[server identity] containing an appropriate truststore and reference it in the `oauth2-introspection.client-ssl-context` configuration attribute.

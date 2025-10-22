@@ -24,6 +24,10 @@ join and leave, which enables dynamic load balancing and failover.
 In distributed cache modes, the consistent hashing algorithm also makes it
 possible to route Hot Rod client requests directly to primary owners.
 
+[role="_additional-resources"]
+.Additional resources
+* link:{hotrod_docs}[Hot Rod client documentation]
+
 == REST
 
 {brandname} exposes a RESTful interface that allows HTTP clients to access
@@ -34,12 +38,20 @@ balancing and failover capabilities. However, HTTP load balancers maintain
 static cluster views and require manual updates when cluster topology changes
 occur.
 
+[role="_additional-resources"]
+.Additional resources
+* link:{rest_docs}[REST API documentation]
+
 == RESP
 
 {brandname} provides an implementation of the link:https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md[RESP3] protocol
 used by link:https://redis.io/[Redis], link:https://valkey.io/[Valkey], link:https://aws.amazon.com/elasticache/Elasticache[Elasticache] and others.
 
 The RESP connector supports a large subset of the Redis commands.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{resp_docs}[RESP endpoint documentation]
 
 == Memcached
 
@@ -53,3 +65,7 @@ There are some Memcached client implementations, such as the link:https://metacp
 Perl client, that can offer load balancing and failover detection capabilities
 with static lists of {brandname} server addresses that require manual updates
 when cluster topology changes occur.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{memcached_docs}[Memcached endpoint documentation]
