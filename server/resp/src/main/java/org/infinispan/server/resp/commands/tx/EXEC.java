@@ -106,6 +106,11 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
    private CompletionStage<Void> orderlyExecution(Resp3Handler handler, ChannelHandlerContext ctx,
                                                List<TransactionCommand> commands) {
       return CompletionStages.performSequentially(commands.iterator(),
-            cmd -> cmd.perform(handler, ctx).thenApply(CompletableFutures.toNullFunction()));
+            cmd -> cmd.perform(handler, ctx)
+                  .exceptionally(t -> {
+                     Resp3Response.error(t, handler.allocator());
+                     return null;
+                  })
+                  .thenApply(CompletableFutures.toNullFunction()));
    }
 }

@@ -28,7 +28,7 @@ init {
    }
 
    private TextHeader getHeader() {
-      return accessLogging ? new TextHeader(requestBytes, requestStart, principalName, key, command_name) : null;
+      return accessLogging ? new TextHeader(requestBytes, requestStart, principalName, key, keys, command_name != null ? command_name.name() : null) : null;
    }
 }
 

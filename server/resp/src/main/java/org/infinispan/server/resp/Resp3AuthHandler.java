@@ -2,6 +2,7 @@ package org.infinispan.server.resp;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
@@ -41,18 +42,18 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
       return myStage;
    }
 
-   public CompletionStage<Boolean> performAuth(ChannelHandlerContext ctx, byte[] username, byte[] password) {
+   public CompletionStage<Void> performAuth(ChannelHandlerContext ctx, byte[] username, byte[] password) {
       return performAuth(ctx, new String(username, StandardCharsets.UTF_8), new String(password, StandardCharsets.UTF_8));
    }
 
-   public CompletionStage<Boolean> performAuth(ChannelHandlerContext ctx) {
+   public CompletionStage<Void> performAuth(ChannelHandlerContext ctx) {
       return performAuth(ctx, (String) null, null);
    }
 
-   private CompletionStage<Boolean> performAuth(ChannelHandlerContext ctx, String username, String password) {
+   private CompletionStage<Void> performAuth(ChannelHandlerContext ctx, String username, String password) {
       RespAuthenticator authenticator = respServer.getConfiguration().authentication().authenticator();
       if (authenticator == null) {
-         return CompletableFutures.booleanStage(handleAuthResponse(ctx, null));
+         return CompletableFuture.failedFuture(new SecurityException("invalid username-password pair or user is disabled"));
       }
 
       CompletionStage<Subject> authentication;
@@ -62,7 +63,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
                   ? authenticator.clientCertAuth(ctx.channel())
                   : CompletableFutures.completedNull();
          } catch (SaslException e) {
-            throw CompletableFutures.asCompletionException(e);
+            return CompletableFuture.failedFuture(e);
          }
       } else {
          authentication = authenticator.usernamePasswordAuth(username, password.toCharArray());
@@ -70,19 +71,17 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
 
       return authentication
             // Note we have to write to our variables in the event loop (in this case cache)
-            .thenApplyAsync(r -> handleAuthResponse(ctx, r), ctx.channel().eventLoop())
-            .exceptionally(t -> false);
+            .thenAcceptAsync(r -> handleAuthResponse(ctx, r), ctx.channel().eventLoop());
    }
 
-   private boolean handleAuthResponse(ChannelHandlerContext ctx, Subject subject) {
+   private void handleAuthResponse(ChannelHandlerContext ctx, Subject subject) {
       assert ctx.channel().eventLoop().inEventLoop();
       if (subject == null) {
-         return false;
+         throw new SecurityException("invalid username-password pair or user is disabled");
       }
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
       metadata.subject(subject);
-      setCache(cache.withSubject(subject));
-      return true;
+      setCache(cache().withSubject(subject));
    }
 
    private void handleUnauthorized(ChannelHandlerContext ctx) {

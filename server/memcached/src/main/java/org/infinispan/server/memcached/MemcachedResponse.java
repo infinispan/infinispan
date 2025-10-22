@@ -40,7 +40,7 @@ public abstract class MemcachedResponse {
    }
 
    public boolean isSuccessful() {
-      return failure == null;
+      return failure == null && errorMessage == null;
    }
 
    public void writeResponse(Object response, ByteBufPool allocator) {
@@ -51,6 +51,8 @@ public abstract class MemcachedResponse {
             responseBytes = writeResponse((byte[]) response, allocator);
          } else if (response instanceof CharSequence) {
             responseBytes = writeResponse((CharSequence) response, allocator);
+         } else if (response instanceof ResponseWriter writer) {
+            responseBytes = writer.write(allocator);
          } else {
             responseBytes = writeResponse((ByteBuf) response, allocator);
          }
@@ -114,5 +116,10 @@ public abstract class MemcachedResponse {
       ByteBuf output = allocator.acquire(size);
       output.writeBytes(response);
       return size;
+   }
+
+   @FunctionalInterface
+   public interface ResponseWriter {
+      int write(ByteBufPool allocator);
    }
 }

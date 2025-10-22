@@ -7,7 +7,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -87,16 +86,7 @@ public abstract class RespRequestHandler {
       try {
          return actualHandleRequest(ctx, command, arguments);
       } catch (Exception e) {
-         // Extract the handler capable of writing the error message.
-         Consumer<ByteBufPool> writer = RespErrorUtil.handleException(e);
-
-         // If there is no writer capable of handling the message, return the exception to the lower level to handle.
-         if (writer == null) {
-            return CompletableFuture.failedFuture(e);
-         }
-
-         writer.accept(allocatorToUse);
-         return myStage();
+         return CompletableFuture.failedFuture(e);
       }
    }
 
@@ -198,27 +188,12 @@ public abstract class RespRequestHandler {
       if (biConsumer != null) {
          // Note that this method is only ever invoked in the event loop, so this whenCompleteAsync can never complete
          // until this request completes, meaning the thenApply will always be invoked in the event loop as well
-         return CompletionStages.handleAndComposeAsync(stage, (e, t) -> {
-            if (t != null) {
-               Resp3Response.error(t, allocator());
-            } else {
-               try {
-                  biConsumer.accept(e, allocatorToUse);
-               } catch (Throwable innerT) {
-                  return CompletableFuture.failedFuture(innerT);
-               }
-            }
-            return myStage;
+         return stage.thenApplyAsync(e -> {
+            biConsumer.accept(e, allocatorToUse);
+            return this;
          }, ctx.channel().eventLoop());
       }
-      return stage.handleAsync((value, t) -> {
-         if (t != null) {
-            Resp3Response.error(t, allocator());
-            // If exception, never use handler
-            return this;
-         }
-         return handlerWhenComplete.apply(value);
-      }, ctx.channel().eventLoop());
+      return stage.thenApplyAsync(handlerWhenComplete, ctx.channel().eventLoop());
    }
 
 }
