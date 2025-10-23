@@ -1,11 +1,10 @@
 [id='cross-site-automatic-offline_{context}']
 = Automatic offline parameters for backup locations
 
-Operations to replicate data across clusters are resource intensive, using excessive RAM and CPU.
 To avoid wasting resources {brandname} can take backup locations offline when they stop accepting requests after a specific period of time.
 
-{brandname} takes remote sites offline based on the number of failed sequential requests and the time interval since the first failure.
-Requests are failed when the target cluster does not have any nodes in the cross-site view (JGroups bridge) or when a timeout expires before the target cluster acknowledges the request.
+{brandname} takes remote clusters offline based on the number of failed sequential requests and/or the time interval since the first failure.
+Requests fail when a response is not received or a connection between cluster is down.
 
 [discrete]
 == Backup timeouts
@@ -62,23 +61,21 @@ include::yaml/xsite_backup_number_failures.yaml[]
 [discrete]
 == Time to wait
 
-You can also specify how long to wait before taking sites offline when backup operations fail.
-If a backup request succeeds before the wait time runs out, {brandname} does not take the site offline.
+You can also specify how long to wait before taking backup cluster offline following a failure.
+If a backup request succeeds before the wait time elapses, {brandname} does not take the backup location offline.
+The elapsed time is checked only after a write operation.
+Therefore, if the cluster has no load, the backup location will not transition to the offline state.
 
-One or two minutes is generally a suitable time to wait before automatically taking backup locations offline.
-If the wait period is too short then backup locations go offline too soon.
-You then need to bring clusters back online and perform state transfer operations to ensure data is in sync between the clusters.
+One to two minutes is generally a suitable wait time before automatically taking backup locations offline.
+If the wait period is too short, backup locations might go offline too soon.
+You then need to bring the clusters back online and perform state transfer operations to ensure data synchronization.
 
-A negative or zero value for the number of failures is equivalent to a value of `1`.
-{brandname} uses only a minimum time to wait to take backup locations offline after a failure occurs, for example:
+[INFO]
+====
+If both `after-failures` and `min-wait` are configured, both conditions must be met.
+====
 
-[source,xml,options="nowrap",subs=attributes+]
-----
-<take-offline after-failures="-1"
-              min-wait="10000"/>
-----
-
-In the following example, if a cluster attempts to replicate data to NYC and there are more than five consecutive failures and 15 seconds elapse after the first failed operation, NYC automatically goes offline:
+In the following example, if a cluster attempts to replicate data to NYC and there are more than five consecutive failures and 15 seconds elapse after the initial failure, NYC automatically goes offline:
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]

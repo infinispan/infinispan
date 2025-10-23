@@ -1,6 +1,9 @@
-distributedCache:
-  backups:
-    NYC:
-      backup:
-        strategy: "ASYNC"
-        timeout: "10000"
+infinispan:
+  cacheContainer:
+    distributedCache:
+      name: "customers"
+      backups:
+        NYC:
+          backup:
+            strategy: "ASYNC"
+            timeout: "10000"

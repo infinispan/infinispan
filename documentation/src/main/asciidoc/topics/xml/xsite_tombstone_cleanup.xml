@@ -1,5 +1,26 @@
-<distributed-cache>
-   <backups tombstone-map-size="512000" max-cleanup-delay="30000">
-      <backup site="LON" strategy="ASYNC"/>
-   </backups>
-</distributed-cache>
+<infinispan>
+   <jgroups>
+      <stack name="bridge" extends="tcp">
+         <TCP bind_port="7900"/>
+         <TCPPING initial_hosts="127.0.0.1[7900]"
+                  stack.combine="REPLACE"
+                  stack.position="MPING"/>
+      </stack>
+      <stack name="xsite" extends="udp">
+         <relay.RELAY2 site="NYC"
+                       max_site_masters="1000"/>
+         <remote-sites default-stack="bridge">
+            <remote-site name="LON"/>
+            <remote-site name="NYC"/>
+         </remote-sites>
+      </stack>
+   </jgroups>
+   <cache-container>
+      <transport stack="xsite"/>
+      <distributed-cache name="eu-customers">
+         <backups tombstone-map-size="512000" max-cleanup-delay="30000">
+            <backup site="LON" strategy="ASYNC"/>
+         </backups>
+      </distributed-cache>
+   </cache-container>
+</infinispan>

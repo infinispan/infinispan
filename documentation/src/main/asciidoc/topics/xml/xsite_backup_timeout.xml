@@ -1,7 +1,11 @@
-<distributed-cache>
-  <backups>
-    <backup site="NYC"
-            strategy="ASYNC"
-            timeout="10s" />
-  </backups>
-</distributed-cache>
+<infinispan>
+   <cache-container>
+      <distributed-cache name="customers">
+         <backups>
+            <backup site="NYC"
+                    strategy="ASYNC"
+                    timeout="10s"/>
+         </backups>
+      </distributed-cache>
+   </cache-container>
+</infinispan>

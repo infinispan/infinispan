@@ -5,27 +5,21 @@ infinispan:
         stack:
           extends: "tcp"
           TCP:
-            bindPort: "7900"
+            bindPort: "7900" # <1>
           TCPPING:
-            initialHosts: "127.0.0.1[7900]"
+            initialHosts: "127.0.0.1[7900]" # <2>
             stack.position: "MPING"
             stack.combine: "REPLACE"
       xsite:
         stack:
           extends: "udp"
-          relay.RELAY2:
-            site: "NYC"
+          relay.RELAY2: # <3>
+            site: "LON"
             maxSiteMasters: "1000"
           remoteSites:
-            defaultStack: "bridge"
+            defaultStack: "bridge" # <4>
             remoteSite:
-              name: "NYC"
+              name: "LON"
   cacheContainer:
     transport:
-      stack: "xsite"
-    distributedCache:
-      name: "customers"
-      backups:
-        LON:
-          backup:
-            strategy: "ASYNC"
+      stack: "xsite" # <5>

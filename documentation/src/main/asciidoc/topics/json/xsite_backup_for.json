@@ -1,16 +1,56 @@
 {
-  "distributed-cache": {
-    "name": "eu-customers",
-    "backups": {
-      "LON": {
-        "backup": {
-          "strategy": "ASYNC"
+  "infinispan": {
+    "jgroups": {
+      "stacks": {
+        "bridge": {
+          "stack": {
+            "extends": "tcp",
+            "TCP": {
+              "bind_port": "7900"
+            },
+            "TCPPING": {
+              "initial_hosts": "127.0.0.1[7900]",
+              "stack.position": "MPING",
+              "stack.combine": "REPLACE"
+            }
+          }
+        },
+        "xsite": {
+          "stack": {
+            "extends": "udp",
+            "relay.RELAY2": {
+              "site": "NYC",
+              "max_site_masters": "1000"
+            },
+            "remote-sites": {
+              "default-stack": "bridge",
+              "cluster": "xsite",
+              "remote-site": {
+                "name": "NYC"
+              }
+            }
+          }
         }
       }
     },
-    "backup-for" : {
-      "remote-cache" : "customers",
-      "remote-site" : "LON"
+    "cache-container": {
+      "transport": {
+        "stack": "xsite"
+      },
+      "distributed-cache": {
+        "name": "eu-customers",
+        "backups": {
+          "LON": {
+            "backup": {
+              "strategy": "ASYNC"
+            }
+          }
+        },
+        "backup-for": {
+          "remote-cache": "customers",
+          "remote-site": "LON"
+        }
+      }
     }
   }
 }
