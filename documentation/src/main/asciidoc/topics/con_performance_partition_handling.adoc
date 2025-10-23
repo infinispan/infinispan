@@ -9,7 +9,10 @@ When this happens, {brandname} caches in minority partitions enter **DEGRADED** 
 Garbage collection (GC) pauses are the most common cause of network partitions.
 When GC pauses result in nodes becoming unresponsive, {brandname} clusters can start operating in a split brain network.
 
-Rather than dealing with network partitions, try to avoid GC pauses by controlling JVM heap usage and by monitoring and tuning the GC. The default G1GC is appropriate for most use cases but needs tuning according to the usage pattern. A different GC implementation, such as Shenandoah, could be beneficial but might not work well if there are many short living objects. For information about the Shenandoah GC, see link:https://docs.redhat.com/en/documentation/red_hat_build_of_openjdk/21/html-single/using_shenandoah_garbage_collector_with_red_hat_build_of_openjdk_21/index#shenandoah-gc-overview[Shenandoah garbage collector]. 
+Rather than dealing with network partitions, try to avoid GC pauses by controlling JVM heap usage and by monitoring and tuning the GC.
+The default G1GC is appropriate for most use cases but needs tuning according to the usage pattern.
+A low-pause collector like ZGC or Shenandoah GC may also be a good fit, provided it is tuned correctly.
+For more on ZGC, see the link:https://wiki.openjdk.org/display/zgc[ZGC wiki], or the link:https://docs.redhat.com/en/documentation/red_hat_build_of_openjdk/21/html-single/using_shenandoah_garbage_collector_with_red_hat_build_of_openjdk_21/index#shenandoah-gc-overview[Shenandoah garbage collector]. .
 ====
 
 .CAP theorem and partition handling strategies

@@ -69,6 +69,12 @@ For the +PERMANENT+ flag to take effect, you must enable global state and set a 
 
 For more information about configuration storage providers, see link:../../apidocs/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#configurationStorage(org.infinispan.globalstate.ConfigurationStorage)[GlobalStateConfigurationBuilder#configurationStorage()].
 
+[TIP]
+====
+Visit the code tutorials to try examples with embedded {brandname}.
+See the link:{code_tutorials_root}/infinispan-embedded[code tutorial with embedded caches].
+====
+
 [role="_additional-resources"]
 .Additional resources
 * link:../../apidocs/org/infinispan/manager/EmbeddedCacheManager.html[EmbeddedCacheManager]

@@ -4,7 +4,7 @@
 {brandname} has two deployment models for caches, remote and embedded.
 Both deployment models allow applications to access data with significantly lower latency for read operations and higher throughput for write operations in comparison with traditional database systems.
 
-Remote caches:: {brandname} Server nodes run in a dedicated Java Virtual Machine (JVM). Clients access remote caches using either Hot Rod, a binary TCP protocol, or REST over HTTP.
+Remote caches:: {brandname} Server nodes run in a dedicated Java Virtual Machine (JVM). Clients access remote caches using either Hot Rod, a binary TCP protocol, REST over HTTP, and RESP or Memcached with the appropriate client.
 
 Embedded caches:: {brandname} runs in the same JVM as your Java application, meaning that data is stored in the memory space where code is executed.
 

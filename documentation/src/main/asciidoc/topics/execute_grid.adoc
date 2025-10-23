@@ -1,4 +1,5 @@
 [id='executing-code-grid_{context}']
+:stem:
 = Cluster Executor
 
 Since you have a group of machines, it makes sense to leverage their combined
@@ -18,7 +19,7 @@ interface as an argument. Also since these arguments will be sent to other nodes
 used a nice trick to ensure our lambdas are immediately Serializable.  That is by having the arguments implement both
 Serializable and the real argument type (ie. Runnable or Function).  The JRE will pick the most specific class when
 determining which method to invoke, so in that case your lambdas will always be serializable.
-It is also possible to use ProtoStream marshalling to reduce message size further.
+It is also possible to use link:{encoding_docs}#protostream_marshalling[ProtoStream marshalling] to reduce message size further.
 
 The manager by default will submit a given command to all nodes in the cluster including the node
 where it was submitted from. You can control on which nodes the task is executed on
@@ -37,7 +38,7 @@ requests to at the scope of same or different machine, rack or site level.
 include::code_examples/SameRack.java[]
 ----
 
-To use this topology base filtering you must enable topology aware consistent hashing through Server Hinting.
+To use this topology base filtering you must enable topology aware consistent hashing through link:{config_docs}#server-hinting_clustered-caches[Server Hinting].
 
 You can also filter using a predicate based on the `Address` of the node. This can also
 be optionally combined with topology based filtering in the previous code snippet.
@@ -56,10 +57,10 @@ include::code_examples/Predicate.java[]
 == Timeout
 
 Cluster Executor allows for a timeout to be set per invocation. This defaults to the distributed sync timeout
-as configured on the Transport Configuration. This timeout works in both a clustered and non clustered
-Cache Manager. The executor may or may not interrupt the threads executing a task when the timeout expires. However
+as configured on the Transport Configuration. This timeout works in both a clustered and non-clustered
+Cache Manager. The executor may or may not interrupt the threads executing a task when the timeout expires. However,
 when the timeout occurs any `Consumer` or `Future` will be completed passing back a `TimeoutException`.
-This value can be overridden by ivoking the
+This value can be overridden by invoking the
 link:../../apidocs/org/infinispan/manager/ClusterExecutor.html#timeout-long-java.util.concurrent.TimeUnit-[timeout]
 method and supplying the desired duration.
 
@@ -82,8 +83,8 @@ include::code_examples/SingleNode.java[]
 When running in single node submission it may be desirable to also allow the Cluster Executor
 handle cases where an exception occurred during the processing of a given command by retrying
 the command again.
-When this occurs the Cluster Executor will choose a single node again to resubmit the command to
-up to the desired number of failover attempts. Note the chosen node could be any node that passes
+When this occurs, the Cluster Executor will choose a single node again to resubmit the command to
+up to the desired number of failover attempts. Note that, the chosen node could be any node that passes
 the topology or predicate check. Failover is enabled by invoking the overridden
 link:../../apidocs/org/infinispan/manager/ClusterExecutor.html#singleNodeSubmission-int-[singleNodeSubmission]
 method. The given command will be resubmitted again to a single node until either
@@ -94,16 +95,16 @@ failover count.
 This example shows how you can use the ClusterExecutor to estimate the value of PI.
 
 Pi approximation can greatly benefit from parallel distributed execution via
-Cluster Executor. Recall that area of the square is Sa = 4r2 and area of the
-circle is Ca=pi*r2. Substituting r2 from the second equation into the first
-one it turns out that pi = 4 * Ca/Sa. Now, image that we can shoot very large
+Cluster Executor. Recall that the area of the square is stem:[S_a = 4r^{2}] and the area of the
+circle is stem:[C_a=\pi r^2]. Substituting stem:[r^2] from the second equation into the first
+one it turns out that stem:[\pi = 4\frac{C_a}{S_a}]. Now, image that we can shoot very large
 number of darts into a square; if we take ratio of darts that land inside a
-circle over a total number of darts shot we will approximate Ca/Sa value. Since
-we know that pi = 4 * Ca/Sa we can easily derive approximate value of pi. The
-more darts we shoot the better approximation we get. In the example below we
-shoot 1 billion darts but instead of "shooting" them serially we parallelize
-work of dart shooting across the entire {brandname} cluster. Note this will
-work in a cluster of 1 was well, but will be slower.
+circle over a total number of darts shot, we will approximate the stem:[\frac{C_a}{S_a}] value. Since
+we know that stem:[\pi = 4\frac{C_a}{S_a}], we can approximate the value of stem:[\pi]. The
+more darts we shoot, the better approximation we get. In the example below, we
+shoot 1 billion darts, but instead of "shooting" them serially, we parallelize
+the work of dart shooting across the entire {brandname} cluster. Note that, this
+works in a cluster of one as well, but likely slower.
 
 [source,java]
 ----

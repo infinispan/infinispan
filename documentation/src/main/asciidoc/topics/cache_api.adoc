@@ -1,7 +1,7 @@
 [id='cache-modes_{context}']
 = Cache API
 
-{brandname} provides a link:../../apidocs/org/infinispan/Cache.html[Cache] interface that exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
+{brandname} provides a link:../../apidocs/org/infinispan/Cache.html[Cache] interface that exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things, potentially replicating an entry to a remote node or looking up an entry from a remote node, or even a cache store.
 
 For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to {brandname}'s Cache should be trivial.
 
@@ -10,10 +10,10 @@ Certain methods exposed in Map have certain performance consequences when used w
 link:../../apidocs/org/infinispan/Cache.html#size()[size()] ,
 link:../../apidocs/org/infinispan/Cache.html#values()[values()] ,
 link:../../apidocs/org/infinispan/Cache.html#keySet()[keySet()] and
-link:../../apidocs/org/infinispan/Cache.html#entrySet()[entrySet()] .
+link:../../apidocs/org/infinispan/Cache.html#entrySet()[entrySet()].
 Specific methods on the `keySet`, `values` and `entrySet` are fine for use please see their Javadoc for further details.
 
-Attempting to perform these operations globally would have large performance impact as well as become a scalability bottleneck.  As such, these methods should only be used for informational or debugging purposes only.
+Attempting to perform these operations globally could have large performance impact as well as become a scalability bottleneck.  As such, these methods should be avoided in production code and only be used for informational or debugging purposes only.
 
 It should be noted that using certain flags with the link:../../apidocs/org/infinispan/AdvancedCache.html#withFlags(java.util.Collection)[withFlags()] method can mitigate some of these concerns, please check each method's documentation for more details.
 
@@ -34,7 +34,7 @@ To understand how to use this operation, let's look at basic example. Imagine a 
 include::code_examples/PersonId.java[]
 ----
 
-Note that link:../../apidocs/org/infinispan/Cache.html#putForExternalRead(K,V)[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:{jdkdocroot}/java/util/Map.html#put-K-V-[put] operation, otherwise the possibility of caching corrupt data is likely.
+Note that link:../../apidocs/org/infinispan/Cache.html#putForExternalRead(K,V)[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:{jdkdocroot}/java/util/Map.html#put-K-V-[put] operation, otherwise the possibility of caching inconsistent data is likely.
 
 == AdvancedCache API
 In addition to the simple Cache interface, {brandname} offers an link:../../apidocs/org/infinispan/AdvancedCache.html[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained:
@@ -56,12 +56,12 @@ include::code_examples/AdvancedCacheWithFlags.java[]
 ==  Asynchronous API
 In addition to synchronous API methods like link:{jdkdocroot}/java/util/Map.html#put-K-V-[Cache.put()] , link:{jdkdocroot}/java/util/Map.html#remove-java.lang.Object-[Cache.remove()] , etc., {brandname} also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
 
-These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:../../apidocs/org/infinispan/commons/api/AsyncCache.html#putAsync(K,V)[Cache.putAsync()] , link:../../apidocs/org/infinispan/commons/api/AsyncCache.html#removeAsync(java.lang.Object)[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[CompletableFuture] that contains the actual result of the operation.
+These methods are named in a similar fashion to their blocking counterparts, with "Async" appended. E.g., link:../../apidocs/org/infinispan/commons/api/AsyncCache.html#putAsync(K,V)[Cache.putAsync()] , link:../../apidocs/org/infinispan/commons/api/AsyncCache.html#removeAsync(java.lang.Object)[Cache.removeAsync()] , etc. These asynchronous counterparts return a link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[CompletableFuture] that contains the actual result of the operation.
 
 For example, in a cache parameterized as `Cache<String, String>`, `Cache.put(String key, String value)` returns `String` while `Cache.putAsync(String key, String value)` returns `CompletableFuture<String>`.
 
 === Why use such an API?
-Non-blocking APIs are powerful in that they provide all of the guarantees of synchronous communications - with the ability to handle communication failures and exceptions - with the ease of not having to block until a call completes.  This allows you to better harness parallelism in your system.  For example:
+Non-blocking APIs are powerful in that they provide all of the guarantees of synchronous communications - with the ability to handle communication failures and exceptions - with the ease of not having to block until a call completes. This allows you to better harness parallelism in your system. For example:
 
 [source,java]
 ----
@@ -69,12 +69,12 @@ include::code_examples/NonBlocking.java[]
 ----
 
 === Which processes actually happen asynchronously?
-There are 4 things in {brandname} that can be considered to be on the critical path of a typical write operation.
-These are, in order of cost:
+There are four things in {brandname} that can be considered to be on the critical path of a typical write operation.
+These are, in descending order of cost:
 
-* network calls
-* marshalling
-* writing to a cache store (optional)
-* locking
+. network calls
+. marshalling
+. writing to a cache store (optional)
+. locking
 
-Using the async methods will take the network calls and marshalling off the critical path.  For various technical reasons, writing to a cache store and acquiring locks, however, still happens in the caller's thread.
+Using the async methods will take the network calls and marshalling off the critical path. For various technical reasons, writing to a cache store and acquiring locks, however, still happens in the caller's thread.
