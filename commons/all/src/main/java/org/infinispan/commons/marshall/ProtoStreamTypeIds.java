@@ -437,6 +437,9 @@ public interface ProtoStreamTypeIds {
    int NON_NULL_PREDICATE = CORE_LOWER_BOUND + 332;
 
    int ADAPTER_MAP = CORE_LOWER_BOUND + 333;
+   // Additional PublisherReducers
+   int COLLECTOR_FINALIZER_SUPPLIER = CORE_LOWER_BOUND + 335;
+   int COLLECTOR_REDUCER_SUPPLIER = CORE_LOWER_BOUND + 336;
 
    // Counter range 4000 -> 4199
    int COUNTERS_LOWER_BOUND = 4000;

@@ -10,15 +10,18 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.CachePublisher;
 import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSets;
@@ -240,24 +243,28 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       Set<MagicKey> keys = keysHandler.apply(entries);
 
       // We always fork, as some methods may block a resource that is invoked on the main thread
-      Future<CompletionStage<Long>> future = fork(() -> {
-         ClusterPublisherManager<MagicKey, String> cpm = TestingUtil.extractComponent(cache(0), ClusterPublisherManager.class);
-         CompletionStage<Long> stageCount;
+      Future<CompletionStage<List<Object>>> future = fork(() -> {
+         CachePublisher<MagicKey, String> cp = this.<MagicKey, String>cache(0).getAdvancedCache().cachePublisher();
+         cp = parallel ? cp.parallelReduction() : cp.sequentialReduction();
+         cp = deliveryGuarantee.applyToPublisher(cp);
+         cp = keys != null ? cp.withKeys(keys) : cp.withAllKeys();
          if (isEntry) {
-            stageCount = cpm.entryReduction(parallel, null, keys, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
-                  PublisherReducers.count(), PublisherReducers.add());
-         } else {
-            stageCount = cpm.keyReduction(parallel, null, keys, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
-                  PublisherReducers.count(), PublisherReducers.add());
+            return cp.entryReduction(PublisherReducers.collectorIdentityReducer(Collectors::toList),
+                  PublisherReducers.collectorIdentityFinalizer(Collectors::toList));
          }
-         return stageCount;
+         return cp.keyReduction(PublisherReducers.collectorIdentityReducer(Collectors::toList),
+               PublisherReducers.collectorIdentityFinalizer(Collectors::toList));
       });
 
       performOperation.run();
 
-      Long actualCount = future.get(10, TimeUnit.SECONDS)
+      List<?> actualCount = future.get(10, TimeUnit.SECONDS)
             .toCompletableFuture().get(10, TimeUnit.SECONDS);
-      // Should be 1 entry per node
-      assertEquals(expectedAmount, actualCount.intValue());
+      int actualSize = actualCount.size();
+      // When it is AT_MOST_ONCE if a segment moves it can be missed. We are only moving one segment so it
+      // can be missed sometimes
+      if (deliveryGuarantee != DeliveryGuarantee.AT_MOST_ONCE || (actualSize != expectedAmount && actualSize != expectedAmount - 1)) {
+         assertEquals("Retrieved values are: " + actualCount, expectedAmount, actualCount.size());
+      }
    }
 }
