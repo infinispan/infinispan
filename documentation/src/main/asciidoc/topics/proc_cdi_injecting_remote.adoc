@@ -17,8 +17,8 @@ public @interface RemoteGreetingCache { <2>
 }
 ----
 +
-<1> names the cache to inject.
-<2> creates a `@RemoteGreetingCache` qualifier.
+<1> Names the cache to inject.
+<2> Creates a `@RemoteGreetingCache` qualifier.
 +
 . Add the `@RemoteGreetingCache` qualifier to your cache injection point.
 +
@@ -72,5 +72,5 @@ public class Config {
 }
 ----
 +
-<1> creates the bean once for the application. Producers that create Cache Managers should always include the `@ApplicationScoped` annotation to avoid creating multiple Cache Managers, which are heavy weight objects.
-<2> creates a new `RemoteCacheManager` instance that is bound to the `@RemoteGreetingCache` qualifier.
+<1> Creates the bean once for the application. Producers that create Cache Managers should always include the `@ApplicationScoped` annotation to avoid creating multiple Cache Managers, which are heavy weight objects.
+<2> Creates a new `RemoteCacheManager` instance that is bound to the `@RemoteGreetingCache` qualifier.

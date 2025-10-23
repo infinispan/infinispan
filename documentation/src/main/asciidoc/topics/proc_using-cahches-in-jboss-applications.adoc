@@ -10,7 +10,7 @@ You can access {brandname} caches in your applications through resource lookup.
 .Prerequisites
 
 * {wildflybrandname} is running.
-* You have created {brandname} cahches in {wildflybrandname}.
+* You have created {brandname} caches in {wildflybrandname}.
 
 .Procedure
 

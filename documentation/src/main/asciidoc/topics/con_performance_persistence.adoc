@@ -46,3 +46,7 @@ Additionally, if the cache has reached the size limit, then {brandname} performs
 Another aspect of persistent storage that can affect {brandname} cluster performance is pre-loading caches.
 This capability populates your caches with data when {brandname} clusters start so they are "warm" and can handle reads and writes straight away.
 Pre-loading caches can slow down {brandname} cluster start times and result in out of memory exceptions if the amount of data in persistent storage is greater than the amount of available RAM.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{config_docs}#persistence[Configuring persistent storage]

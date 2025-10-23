@@ -1,6 +1,6 @@
 [id='quarkus_inject_embedded']
 = Injecting Embedded Caches
-Inject a `EmbeddedCacheManager` instance into your Quarkus application to interact with {brandname} caches..
+Inject a `EmbeddedCacheManager` instance into your Quarkus application to interact with {brandname} caches.
 
 .Procedure
 

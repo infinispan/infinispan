@@ -17,7 +17,7 @@ You do so by:
 . Implementing custom commands and interceptors to provide the desired functionality
 . Add ProtoStream annotations to commands to ensure they can be marshalled
 . Generate `.proto` schema files and marshaller code by creating an interface annotated with `@ProtoSchema`
-. Register the generated `SerilaizationContextInitializer` with the `GLOBAL` `SerializationContextRegistry`
+. Register the generated `SerializationContextInitializer` with the `GLOBAL` `SerializationContextRegistry`
 
 See the link:https://github.com/infinispan/infinispan/tree/main/query[infinispan-query] module as an example of a custom
 module that adds both custom commands and interceptors.
