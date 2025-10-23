@@ -68,7 +68,7 @@ RUN dnf ${DNF_FLAGS} install ${MAIN_PACKAGES}
 
 # Install the JDK distribution
 ADD src/main/docker/install-jdk.sh /tmp/
-RUN /tmp/install-jdk.sh ${TARGETARCH} ${NEWROOT} /tmp/jdk ${OPENJDK_PACKAGE}
+RUN /tmp/install-jdk.sh ${NEWROOT} /tmp/jdk ${OPENJDK_PACKAGE}
 
 # Remove unwanted packages. Ignore errors
 RUN rpm -r ${NEWROOT} --erase --nodeps --allmatches ${REMOVE_PACKAGES} || true

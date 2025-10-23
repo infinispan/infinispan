@@ -1,9 +1,15 @@
 #!/bin/bash
 
-ARCHITECTURE="$1"
-ROOTFS="$2"
-JDK="$3"
-OPENJDK_PACKAGE="$4"
+ROOTFS="$1"
+JDK="$2"
+OPENJDK_PACKAGE="$3"
+
+ARCHITECTURE=$( uname -m )
+case "$ARCHITECTURE" in
+  x86_64)
+    ARCHITECTURE=x64
+    ;;
+esac
 
 JVM_PATH="$ROOTFS"/usr/lib/jvm
 JAVA_HOME="$JVM_PATH"/default-java
@@ -71,14 +77,6 @@ else
       popd || exit
       ;;
     inode/x-empty | empty)
-      case "$ARCHITECTURE" in
-        amd64)
-          ARCHITECTURE=x64
-          ;;
-        arm64)
-          ARCHITECTURE=aarch64
-          ;;
-      esac
       echo "Downloading Temurin OpenJDK for ${ARCHITECTURE}"
       wget -qO /tmp/jdk https://api.adoptium.net/v3/binary/latest/25/ga/linux/"${ARCHITECTURE}"/jdk/hotspot/normal/eclipse
       tar xzvf /tmp/jdk -C "$JVM_PATH"
