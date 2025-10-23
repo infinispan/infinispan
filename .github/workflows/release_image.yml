@@ -58,33 +58,59 @@ jobs:
             VERSION: ${{ inputs.version }}
             TYPE: ${{ inputs.type }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - name: Log in to Docker Hub
+        uses: redhat-actions/podman-login@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: docker.io
 
-      - name: Login to Quay
-        uses: docker/login-action@v3
+      - name: Log in to Quay.io
+        uses: redhat-actions/podman-login@v1
         with:
-          registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_TOKEN }}
+          registry: quay.io
 
-      - name: Build
-        uses: docker/build-push-action@v6
+      - name: Install qemu
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+
+      - name: Build image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
         with:
-          context: ./server/image
           build-args: |
             BRAND_VERSION=${{ inputs.version }}
             BRAND_NAME=Infinispan
             JDK_DIST=src/main/docker/adoptium
             SERVER_DIST=https://github.com/infinispan/infinispan/releases/download/${{ inputs.version }}/infinispan-server-${{ inputs.version }}.zip
-          platforms: linux/amd64,linux/arm64
-          pull: true
-          push: ${{ inputs.push }}
-          file: ./server/image/src/main/docker/Dockerfile
+          containerfiles: ./server/image/src/main/docker/Dockerfile
+          context: ./server/image
+          platforms: linux/amd64, linux/arm64
           tags: ${{ env.IMAGE_TAGS }}
+
+      - name: Push to Docker Hub
+        id: push-to-docker
+        if: ${{ inputs.push }}
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: docker.io
+
+      - name: Print Docker Hub image url
+        run: echo "Image pushed to ${{ steps.push-to-docker.outputs.registry-paths }}"
+
+      - name: Push to Quay.io
+        id: push-to-quay
+        if: ${{ inputs.push }}
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: quay.io
+
+      - name: Print Quay.io image url
+        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"

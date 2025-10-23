@@ -68,7 +68,7 @@ RUN dnf ${DNF_FLAGS} install ${MAIN_PACKAGES}
 
 # Install the JDK distribution
 ADD src/main/docker/install-jdk.sh /tmp/
-RUN /tmp/install-jdk.sh ${TARGETARCH} ${NEWROOT} /tmp/jdk ${OPENJDK_PACKAGE}
+RUN /tmp/install-jdk.sh ${NEWROOT} /tmp/jdk ${OPENJDK_PACKAGE}
 
 # Remove unwanted packages. Ignore errors
 RUN rpm -r ${NEWROOT} --erase --nodeps --allmatches ${REMOVE_PACKAGES} || true
@@ -86,7 +86,7 @@ ADD src/main/docker/install-server.sh /tmp/
 RUN /tmp/install-server.sh ${NEWROOT} ${WORKDIR}
 ADD src/main/docker/launch.sh ${NEWROOT}${WORKDIR}/bin/
 ENV JAVA_HOME=${NEWROOT}/usr/lib/jvm/default-java
-RUN ${NEWROOT}/${WORKDIR}/bin/server.sh --aot || true
+#RUN ${NEWROOT}/${WORKDIR}/bin/server.sh --aot || true
 RUN chown -R 65532:65532 ${NEWROOT}/${WORKDIR}
 
 # Target image
