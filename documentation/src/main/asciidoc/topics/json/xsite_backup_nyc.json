@@ -1,10 +1,50 @@
 {
-  "replicated-cache": {
-    "name": "customers",
-    "backups": {
-      "NYC": {
-        "backup" : {
-          "strategy" : "ASYNC"
+  "infinispan": {
+    "jgroups": {
+      "stacks": {
+        "bridge": {
+          "stack": {
+            "extends": "tcp",
+            "TCP": {
+              "bind_port": "7900"
+            },
+            "TCPPING": {
+              "initial_hosts": "127.0.0.1[7900]",
+              "stack.position": "MPING",
+              "stack.combine": "REPLACE"
+            }
+          }
+        },
+        "xsite": {
+          "stack": {
+            "extends": "udp",
+            "relay.RELAY2": {
+              "site": "LON",
+              "max_site_masters": "1000"
+            },
+            "remote-sites": {
+              "default-stack": "bridge",
+              "cluster": "xsite",
+              "remote-site": {
+                "name": "LON"
+              }
+            }
+          }
+        }
+      }
+    },
+    "cache-container": {
+      "transport": {
+        "stack": "xsite"
+      },
+      "replicated-cache": {
+        "name": "customers",
+        "backups": {
+          "NYC": {
+            "backup": {
+              "strategy": "ASYNC"
+            }
+          }
         }
       }
     }

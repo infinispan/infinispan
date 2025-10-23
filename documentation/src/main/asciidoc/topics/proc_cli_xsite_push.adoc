@@ -1,7 +1,7 @@
 [id='pushing-cross-site-state-transfer_{context}']
 = Pushing state to backup locations
 
-Transfer cache state to backup locations.
+Transfer the cache state to backup locations.
 
 .Prerequisites
 
@@ -13,12 +13,13 @@ Transfer cache state to backup locations.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-site push-site-state --cache=cacheName --site=NYC
+site push-site-state --cache=<cache-name-here> --site=NYC
 ----
 
 [TIP]
 ====
-Use the `--all-caches` option to push state transfer for all caches.
+Replace `--cache=<cache-name-here>` with `--all-caches` option to push state transfer for all caches.
+Pushing the state has an high resource demand, so use this option with caution.
 ====
 
 For more information and examples, run the [command]`help site` command.

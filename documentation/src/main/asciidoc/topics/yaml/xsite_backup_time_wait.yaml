@@ -1,9 +1,12 @@
-distributedCache:
-  backups:
-    NYC:
-      backup:
-        strategy: "ASYNC"
-        timeout: "10000"
-        takeOffline:
-          afterFailures: "5"
-          minWait: "15000"
+infinispan:
+  cacheContainer:
+    distributedCache:
+      name: "customers"
+      backups:
+        NYC:
+          backup:
+            strategy: "ASYNC"
+            timeout: "10000"
+            takeOffline:
+              afterFailures: "5"
+              minWait: "15000"

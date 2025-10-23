@@ -11,7 +11,12 @@ Change cross-site state transfer settings to optimize performance and specify wh
 .. Set the maximum number of attempts for {brandname} to retry failed state transfers with `max-retries` or `maxRetries`.
 .. Specify the time to wait, in milliseconds, between retry attempts with `wait-time` or `waitTime`.
 .. Specify if state transfer operations happen automatically or manually with `mode`.
-. Open your {brandname} configuration for editing.
++
+[IMPORTANT]
+====
+Automatic state transfer between cluster only available for asynchronous backup strategy.
+====
+. Save and close your {brandname} configuration for editing.
 
 [discrete]
 == State transfer configuration

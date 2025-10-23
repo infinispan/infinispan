@@ -1,9 +1,34 @@
-distributedCache:
-  name: "eu-customers"
-  backups:
-    LON:
-      backup:
-        strategy: "ASYNC"
-  backupFor:
-    remoteCache: "customers"
-    remoteSite: "LON"
+infinispan:
+  jgroups:
+    stacks:
+      bridge:
+        stack:
+          extends: "tcp"
+          TCP:
+            bindPort: "7900"
+          TCPPING:
+            initialHosts: "127.0.0.1[7900]"
+            stack.position: "MPING"
+            stack.combine: "REPLACE"
+      xsite:
+        stack:
+          extends: "udp"
+          relay.RELAY2:
+            site: "NYC"
+            maxSiteMasters: "1000"
+          remoteSites:
+            defaultStack: "bridge"
+            remoteSite:
+              name: "NYC"
+  cacheContainer:
+    transport:
+      stack: "xsite"
+    distributedCache:
+      name: "eu-customers"
+      backups:
+        LON:
+          backup:
+            strategy: "ASYNC"
+      backupFor:
+        remoteCache: "customers"
+        remoteSite: "LON"

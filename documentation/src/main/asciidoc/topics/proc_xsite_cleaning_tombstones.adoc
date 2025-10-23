@@ -12,7 +12,7 @@ You can configure the frequency for this task by defining a target size for tomb
 +
 If the number of tombstones increases beyond this number then {brandname} runs the cleanup task more frequently.
 Likewise, if the number of tombstones is less than this number then {brandname} does not run the cleanup task as frequently.
-. Add the `max-cleanup-delay` attribute and specify the maximum delay, in milliseconds, between tombstone cleanup tasks.
+. Add the `max-cleanup-delay` attribute and specify the maximum delay, in milliseconds, between the tombstone cleanup tasks.
 . Save the changes to your configuration.
 
 [discrete]
