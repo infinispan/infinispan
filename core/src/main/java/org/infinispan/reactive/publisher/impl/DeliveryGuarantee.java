@@ -1,5 +1,6 @@
 package org.infinispan.reactive.publisher.impl;
 
+import org.infinispan.CachePublisher;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.Proto;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -17,20 +18,37 @@ public enum DeliveryGuarantee {
     * is most performant as it never requires retrying data or returning extra data for the sake of consistency. However,
     * under a stable topology this will return the same results as {@link #EXACTLY_ONCE}.
     */
-   AT_MOST_ONCE,
+   AT_MOST_ONCE {
+      @Override
+      <K, V> CachePublisher<K, V> applyToPublisher(CachePublisher<K, V> cachePublisher) {
+         return cachePublisher.atMostOnce();
+      }
+   },
    /**
     * The in between guarantee that provides a view of all data, but may return duplicates during a topology change. This
     * guarantee does not send identity values, but instead will retry an operation, most likely returning duplicates.
     * However, under a stable topology this will return the same results as {@link #EXACTLY_ONCE}.
     */
-   AT_LEAST_ONCE,
+   AT_LEAST_ONCE {
+      @Override
+      <K, V> CachePublisher<K, V> applyToPublisher(CachePublisher<K, V> cachePublisher) {
+         return cachePublisher.atLeastOnce();
+      }
+   },
    /**
     * The most strict guarantee that guarantees that an entry is seen exactly one time in results. This is the most
     * expensive guarantee as it may require copying identity values to the originator (ie. keys) to ensure that a
     * value is not returned more than once for a given key.
     */
-   EXACTLY_ONCE,
+   EXACTLY_ONCE {
+      @Override
+      <K, V> CachePublisher<K, V> applyToPublisher(CachePublisher<K, V> cachePublisher) {
+         return cachePublisher.exactlyOnce();
+      }
+   },
    ;
+
+    abstract <K, V> CachePublisher<K, V> applyToPublisher(CachePublisher<K, V> cachePublisher);
 
    private static final DeliveryGuarantee[] CACHED_VALUES = DeliveryGuarantee.values();
 

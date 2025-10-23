@@ -13,6 +13,7 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
@@ -20,6 +21,7 @@ import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.function.SerializableSupplier;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -50,12 +52,90 @@ public class PublisherReducers {
       return new CollectReducer<>(MarshallableObject.create(supplier), MarshallableObject.create(consumer));
    }
 
+   /**
+    * A collector that is used only for its supplier and accumulator. The combiner and finisher are not used. If used
+    * in a distributed publisher the supplier will be invoked on each node first and then the accumulator is invoked for
+    * the data in that node.
+    */
    public static <I, E> Function<Publisher<I>, CompletionStage<E>> collectorReducer(Collector<? super I, E, ?> collector) {
       return new CollectorReducer<>(MarshallableObject.create(collector));
    }
 
+   /**
+    * Use this when a collector cannot be serialized for {@link #collectorReducer(Collector)}.
+    */
+   public static <I, E> Function<Publisher<I>, CompletionStage<E>> collectorReducer(
+         SerializableSupplier<Collector<? super I, E, ?>> collectorSupplier) {
+      return new CollectorReducerSupplier<>(MarshallableObject.create(collectorSupplier));
+   }
+
+   /**
+    * Used as an alternative to {@link #collectorReducer(Collector)} to simplify generics when a Collector doesn't
+    * define its intermediate type, such as {@link Collectors#toList()}.
+    */
+   public static <I, E> Function<Publisher<I>, CompletionStage<E>> collectorIdentityReducer(
+         Collector<? super I, ?, E> collectorSupplier) {
+      if (!collectorSupplier.characteristics().contains(Collector.Characteristics.IDENTITY_FINISH)) {
+         throw new IllegalArgumentException("collectorFinalizerIdentity provided a collectorSupplier " + collectorSupplier + " that doesn't contain identity finish!");
+      }
+      return new CollectorReducerSupplier<>(MarshallableObject.create((Supplier) collectorSupplier));
+   }
+
+   /**
+    * Used as an alternative to {@link #collectorReducer(Collector)} that allows for serializing a supplier that
+    * creates a collector on the remote nodes. Useful when a collector can't be serialized like the ones from
+    * {@link Collectors} class.
+    */
+   public static <I, E> Function<Publisher<I>, CompletionStage<E>> collectorIdentityReducer(
+         SerializableSupplier<Collector<? super I, ?, E>> collectorSupplier) {
+      if (!collectorSupplier.get().characteristics().contains(Collector.Characteristics.IDENTITY_FINISH)) {
+         throw new IllegalArgumentException("collectorFinalizerIdentity provided a collectorSupplier " + collectorSupplier + " that doesn't contain identity finish!");
+      }
+      return new CollectorReducerSupplier<>(MarshallableObject.create((Supplier) collectorSupplier));
+   }
+
+   /**
+    * A collector that is used for its combiner only. The supplier and accumulator are not used. It is used when
+    * combining results from multiple nodes, parallel publishers and when multiple segments are used.
+    */
    public static <E> Function<Publisher<E>, CompletionStage<E>> collectorFinalizer(Collector<?, E, ?> collector) {
       return new CollectorFinalizer<>(MarshallableObject.create(collector));
+   }
+
+   /**
+    * Used as an alternative to {@link #collectorFinalizer(Collector)} that allows for serializing a supplier that
+    * creates a collector on the remote nodes. Useful when a collector can't be serialized like the ones from
+    * {@link Collectors} class.
+    */
+   public static <E> Function<Publisher<E>, CompletionStage<E>> collectorFinalizer(
+         SerializableSupplier<Collector<?, E, ?>> collectorSupplier) {
+      return new CollectorFinalizerSupplier<>(MarshallableObject.create(collectorSupplier));
+   }
+
+   /**
+    * Provides a collector based publisher finalizer where the collector must have identity finish and thus the
+    * intermediate type is normally. This method is here for typing purposes.
+    * not defined in the {@link java.util.stream.Collectors} class methods. Note only the combiner is used and the
+    * finalizer is not actually used and thus why it must have identity finish.
+    */
+   public static <E> Function<Publisher<E>, CompletionStage<E>> collectorIdentityFinalizer(Collector<?, ?, E> collector) {
+      if (!collector.characteristics().contains(Collector.Characteristics.IDENTITY_FINISH)) {
+         throw new IllegalArgumentException("collectorFinalizerIdentity provided a collector " + collector + " that doesn't contain identity finish!");
+      }
+      return new CollectorFinalizer<>(MarshallableObject.create((Collector<?, E, ?>) collector));
+   }
+
+   /**
+    * Used as an alternative to {@link #collectorReducer(Collector)} that allows for serializing a supplier that
+    * creates a collector on the remote nodes. Useful when a collector can't be serialized like the ones from
+    * {@link Collectors} class.
+    */
+   public static <E> Function<Publisher<E>, CompletionStage<E>> collectorIdentityFinalizer(
+         SerializableSupplier<Collector<?, ?, E>> collectorSupplier) {
+      if (!collectorSupplier.get().characteristics().contains(Collector.Characteristics.IDENTITY_FINISH)) {
+         throw new IllegalArgumentException("collectorFinalizerIdentity provided a collector " + collectorSupplier + " that doesn't contain identity finish!");
+      }
+      return new CollectorFinalizerSupplier<>(MarshallableObject.create((Supplier) collectorSupplier));
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<E>> accumulate(BiConsumer<E, E> biConsumer) {
@@ -187,7 +267,7 @@ public class PublisherReducers {
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.COLLECTOR_FINALIZER)
-   public static final class CollectorFinalizer<E, R> implements Function<Publisher<E>, CompletionStage<E>> {
+   public static final class CollectorFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
 
       @ProtoField(1)
       final MarshallableObject<Collector<?, E, ?>> collector;
@@ -200,6 +280,29 @@ public class PublisherReducers {
       @Override
       public CompletionStage<E> apply(Publisher<E> ePublisher) {
          Collector<?, E, ?> collector = this.collector.get();
+         return Flowable.fromPublisher(ePublisher)
+               .reduce(collector.combiner()::apply)
+               // This is to ensure at least the default value is provided - this shouldnt be required - but
+               // the disconnect between reducer and finalizer for collector leaves this ambiguous
+               .switchIfEmpty(Single.fromCallable(collector.supplier()::get))
+               .toCompletionStage();
+      }
+   }
+
+   @ProtoTypeId(ProtoStreamTypeIds.COLLECTOR_FINALIZER_SUPPLIER)
+   public static final class CollectorFinalizerSupplier<E> implements Function<Publisher<E>, CompletionStage<E>> {
+
+      @ProtoField(1)
+      final MarshallableObject<Supplier<Collector<?, E, ?>>> collectorSupplier;
+
+      @ProtoFactory
+      CollectorFinalizerSupplier(MarshallableObject<Supplier<Collector<?, E, ?>>> collectorSupplier) {
+         this.collectorSupplier = collectorSupplier;
+      }
+
+      @Override
+      public CompletionStage<E> apply(Publisher<E> ePublisher) {
+         Collector<?, E, ?> collector = this.collectorSupplier.get().get();
          return Flowable.fromPublisher(ePublisher)
                .reduce(collector.combiner()::apply)
                // This is to ensure at least the default value is provided - this shouldnt be required - but
@@ -246,6 +349,26 @@ public class PublisherReducers {
       @Override
       public CompletionStage<E> apply(Publisher<I> iPublisher) {
          Collector<? super I, E, ?> collector = this.collector.get();
+         return Flowable.fromPublisher(iPublisher)
+               .collect(collector.supplier()::get, collector.accumulator()::accept)
+               .toCompletionStage();
+      }
+   }
+
+   @ProtoTypeId(ProtoStreamTypeIds.COLLECTOR_REDUCER_SUPPLIER)
+   public static final class CollectorReducerSupplier<I, E> implements Function<Publisher<I>, CompletionStage<E>> {
+
+      @ProtoField(1)
+      final MarshallableObject<Supplier<Collector<? super I, E, ?>>> collectorSupplier;
+
+      @ProtoFactory
+      CollectorReducerSupplier(MarshallableObject<Supplier<Collector<? super I, E, ?>>> collectorSupplier) {
+         this.collectorSupplier = collectorSupplier;
+      }
+
+      @Override
+      public CompletionStage<E> apply(Publisher<I> iPublisher) {
+         Collector<? super I, E, ?> collector = this.collectorSupplier.get().get();
          return Flowable.fromPublisher(iPublisher)
                .collect(collector.supplier()::get, collector.accumulator()::accept)
                .toCompletionStage();
