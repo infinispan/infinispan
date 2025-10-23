@@ -2,7 +2,6 @@
 //Please review authoring guidelines in the Contributors Guide.
 
 include::{stories}/assembly_configuring_maven_repository.adoc[leveloffset=+1]
-include::{stories}/assembly_virtual_threads.adoc[leveloffset=+1]
 include::{stories}/assembly_creating_embedded_caches.adoc[leveloffset=+1]
 include::{stories}/assembly_authorization_embedded.adoc[leveloffset=+1]
 include::{stories}/assembly_configuring_statistics_jmx.adoc[leveloffset=+1]
@@ -18,7 +17,7 @@ include::{stories}/assembly_cdi.adoc[leveloffset=+1]
 include::{stories}/assembly_multimap_cache.adoc[leveloffset=+1]
 //Community content
 ifdef::community[]
-include::{stories}/assembly_custom_interceptors.adoc[leveloffset=+1]
+//include::{stories}/assembly_custom_interceptors.adoc[leveloffset=+1]
 include::{stories}/assembly_functional_map_api.adoc[leveloffset=+1]
 include::{stories}/assembly_anchored_keys.adoc[leveloffset=+1]
 include::{stories}/assembly_extending.adoc[leveloffset=+1]

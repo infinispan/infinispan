@@ -36,4 +36,4 @@ Otherwise the following message is written to {brandname} logs:
 [role="_additional-resources"]
 .Additional resources
 * link:{jgroups_docs}[JGroups 5 Manual]
-* link:{jgroups_schema}[JGroups 5.4 Schema]
+* link:{jgroups_schema}[JGroups 5.5 Schema]

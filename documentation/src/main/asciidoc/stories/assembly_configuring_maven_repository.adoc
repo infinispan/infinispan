@@ -3,7 +3,7 @@ ifdef::context[:parent-context: {context}]
 :context: configuring-maven-repository
 = Adding {brandname} to your Maven repository
 
-{brandname} Java distributions are available from Maven.
+{brandname} Java distributions are available from Maven and requires at least JDK {jdkminversion}.
 
 //Community content
 ifdef::community[]

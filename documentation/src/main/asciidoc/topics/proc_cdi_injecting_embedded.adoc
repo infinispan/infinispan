@@ -80,6 +80,7 @@ method or do not add any qualifier.
 ====
 . Add the `@GreetingCache` qualifier to your cache injection point.
 +
+[source,java]
 ----
 ...
 import jakarta.inject.Inject;
