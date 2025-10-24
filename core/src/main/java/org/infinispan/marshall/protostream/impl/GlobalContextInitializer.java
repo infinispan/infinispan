@@ -359,6 +359,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.xsite.commands.remote.XSiteStateTransferControlRequest.class,
             org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand.class,
             org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand.class,
+            org.infinispan.xsite.commands.XSiteLocalEventCommand.class,
             org.infinispan.xsite.commands.XSiteSetStateTransferModeCommand.class,
             org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand.class,
             org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand.class,
