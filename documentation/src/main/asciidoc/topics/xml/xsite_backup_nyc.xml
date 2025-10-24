@@ -1,6 +1,27 @@
-<replicated-cache name="customers">
-  <backups>
-    <backup site="NYC"
-            strategy="ASYNC" />
-  </backups>
-</replicated-cache>
+<infinispan>
+   <jgroups>
+      <stack name="bridge" extends="tcp">
+         <TCP bind_port="7900"/>
+         <TCPPING initial_hosts="127.0.0.1[7900]"
+                  stack.combine="REPLACE"
+                  stack.position="MPING"/>
+      </stack>
+      <stack name="xsite" extends="udp">
+         <relay.RELAY2 site="LON"
+                       max_site_masters="1000"/>
+         <remote-sites default-stack="bridge">
+            <remote-site name="LON"/>
+            <remote-site name="NYC"/>
+         </remote-sites>
+      </stack>
+   </jgroups>
+   <cache-container>
+      <transport stack="xsite"/>
+      <replicated-cache name="customers">
+         <backups>
+            <backup site="NYC"
+                    strategy="ASYNC"/>
+         </backups>
+      </replicated-cache>
+   </cache-container>
+</infinispan>

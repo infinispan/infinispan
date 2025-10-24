@@ -1,5 +1,6 @@
 [id='rest_v2_xsite_sites_status_{context}']
 = Getting status of all backup locations
+
 Retrieve the status of all backup locations with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
@@ -7,8 +8,7 @@ Retrieve the status of all backup locations with `GET` requests.
 GET /rest/v2/caches/{cacheName}/x-site/backups/
 ----
 
-{brandname} responds with the status of each backup location in JSON format, as
-in the following example:
+{brandname} responds with the status of each backup location in JSON format, as in the following example:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
@@ -29,23 +29,23 @@ in the following example:
 ----
 
 .Returned Status
-
 |===
 |Value |Description
 
 |`online`
-| All nodes in the local cluster have a cross-site view with the backup location.
+| All nodes in the local cluster have the backup location with `online` status.
 
 |`offline`
-| No nodes in the local cluster have a cross-site view with the backup location.
+| All nodes in the local cluster have the backup location with `offline` status.
 
 |`mixed`
-| Some nodes in the local cluster have a cross-site view with the backup location, other nodes in the local cluster do not have a cross-site view. The response indicates status for each node.
+| Some nodes in the local cluster have the backup location with `online` status while others have the backup location with `offline` status.
+The response indicates status for each node.
 |===
-
 
 [id='rest_v2_xsite_site_status_{context}']
 = Getting status of specific backup locations
+
 Retrieve the status of a backup location with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
@@ -53,8 +53,7 @@ Retrieve the status of a backup location with `GET` requests.
 GET /rest/v2/caches/{cacheName}/x-site/backups/{siteName}
 ----
 
-{brandname} responds with the status of each node in the site in JSON
-format, as in the following example:
+{brandname} responds with the status of each node in JSON format, as in the following example:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
@@ -65,23 +64,23 @@ format, as in the following example:
 ----
 
 .Returned Status
-
 |===
 |Value |Description
 
 |`online`
-| The node is online.
+| The node has `+{siteName}+` with `online` status
 
 |`offline`
-| The node is offline.
+| The node has `+{siteName}+` with `offline` status
 
 |`failed`
-| Not possible to retrieve status. The remote cache could be shutting down or a network error occurred during the request.
+| Not possible to retrieve status.
+The remote cache could be shutting down or a network error occurred during the request.
 |===
-
 
 [id='rest_v2_xsite_take_site_offline_{context}']
 = Taking backup locations offline
+
 Take backup locations offline with `POST` requests and the
 `?action=take-offline` parameter.
 
@@ -90,9 +89,9 @@ Take backup locations offline with `POST` requests and the
 POST /rest/v2/caches/{cacheName}/x-site/backups/{siteName}?action=take-offline
 ----
 
-
 [id='rest_v2_xsite_bring_backup_online_{context}']
 = Bringing backup locations online
+
 Bring backup locations online with the `?action=bring-online` parameter.
 
 [source,options="nowrap",subs=attributes+]
@@ -100,9 +99,9 @@ Bring backup locations online with the `?action=bring-online` parameter.
 POST /rest/v2/caches/{cacheName}/x-site/backups/{siteName}?action=bring-online
 ----
 
-
 [id='rest_v2_xsite_start_push_{context}']
 = Pushing state to backup locations
+
 Push cache state to a backup location with the `?action=start-push-state`
 parameter.
 
@@ -111,9 +110,9 @@ parameter.
 POST /rest/v2/caches/{cacheName}/x-site/backups/{siteName}?action=start-push-state
 ----
 
-
 [id='rest_v2_xsite_cancel_state_push_{context}']
 = Canceling state transfer
+
 Cancel state transfer operations with the `?action=cancel-push-state` parameter.
 
 [source,options="nowrap",subs=attributes+]
@@ -123,6 +122,7 @@ POST /rest/v2/caches/{cacheName}/x-site/backups/{siteName}?action=cancel-push-st
 
 [id='rest_v2_xsite_state_push_{context}']
 = Getting state transfer status
+
 Retrieve status of state transfer operations with the
 `?action=push-state-status` parameter.
 
@@ -131,8 +131,7 @@ Retrieve status of state transfer operations with the
 GET /rest/v2/caches/{cacheName}/x-site/backups?action=push-state-status
 ----
 
-{brandname} responds with the status of state transfer for each backup location
-in JSON format, as in the following example:
+{brandname} responds with the status of state transfer for each backup location in JSON format, as in the following example:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
@@ -143,27 +142,29 @@ in JSON format, as in the following example:
 ----
 
 .Returned status
-
 |===
 |Value |Description
 
 |`SENDING`
-| State transfer to the backup location is in progress.
+| The state transfer to the backup location is in progress.
 
 |`OK`
-| State transfer completed successfully.
+| The state transfer completed successfully.
 
 |`ERROR`
-| An error occurred with state transfer. Check log files.
+| An error occurred with state transfer.
+Check the log files.
 
 |`CANCELLING`
-| State transfer cancellation is in progress.
+| The state transfer cancellation is in progress.
 |===
 
 [id='rest_v2_xsite_clear_transfer_status_{context}']
 = Clearing state transfer status
-Clear state transfer status for sending sites with the
+
+Clear the state transfer status in the sending cluster with the
 `?action=clear-push-state-status` parameter.
+It is recommended to clear it before starting the push for a new state transfer.
 
 [source,options="nowrap",subs=attributes+]
 ----
@@ -172,11 +173,11 @@ POST /rest/v2/caches/{cacheName}/x-site/local?action=clear-push-state-status
 
 [id='rest_v2_xsite_tuning_takeoffline_{context}']
 = Modifying take offline conditions
-Sites go offline if certain conditions are met. Modify the take offline
-parameters to control when backup locations automatically go offline.
+
+The backup location go offline when certain conditions are met.
+Modify the take offline parameters to control when backup locations automatically go offline.
 
 .Procedure
-
 . Check configured take offline parameters with `GET` requests and the
 `take-offline-config` parameter.
 +
@@ -185,8 +186,7 @@ parameters to control when backup locations automatically go offline.
 GET /rest/v2/caches/{cacheName}/x-site/backups/{siteName}/take-offline-config
 ----
 +
-The {brandname} response includes `after_failures` and `min_wait` fields as
-follows:
+The {brandname} response includes `after_failures` and `min_wait` fields as follows:
 +
 [source,json,options="nowrap",subs=attributes+]
 ----
@@ -195,23 +195,43 @@ follows:
   "min_wait": 1000
 }
 ----
-. Modify take offline parameters in the body of `PUT` requests.
+. Modify the take offline parameters in the body of `PUT` requests.
 +
 [source,options="nowrap",subs=attributes+]
 ----
 PUT /rest/v2/caches/{cacheName}/x-site/backups/{siteName}/take-offline-config
 ----
+
 If the operation successfully completes, the service returns `204 (No Content)`.
 
 [id='rest_v2_xsite_cancel_receive_state_{context}']
 = Canceling state transfer from receiving sites
-If the connection between two backup locations breaks, you can cancel state
-transfer on the site that is receiving the push.
 
-Cancel state transfer from a remote site and keep the current state of the
-local cache with the `?action=cancel-receive-state` parameter.
+If the connection between two backup locations breaks, you can cancel state transfer on the backup location that is receiving the push.
+
+Cancel state transfer from another location and keep the current state of the local cache with the `?action=cancel-receive-state` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
 POST /rest/v2/caches/{cacheName}/x-site/backups/{siteName}?action=cancel-receive-state
+----
+
+[id='rest_v2_xsite_get_state_transfer_mode_{context}']
+= Retrieving the state transfer mode
+
+Check the state transfer mode with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode
+----
+
+[id='rest_v2_xsite_set_state_transfer_mode_{context}']
+= Setting the state transfer mode
+
+Configure the state transfer mode with the `?action=set` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode?action=set&mode={mode}
 ----

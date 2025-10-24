@@ -1,49 +1,41 @@
 [id='concurrent-writes-conflicting-entries_{context}']
 = Concurrent writes and conflicting entries
 
-Conflicting entries can occur with Active/Active site configurations if clients
-write to the same entries at the same time but at different sites.
+Conflicting entries can occur with Active/Active configurations if clients write to the same entries at the same time but at different clusters.
 
-For example, client A writes to "k1" in **LON** at the same time that client B
-writes to "k1" in **NYC**. In this case, "k1" has a different value in **LON**
-than in **NYC**. After replication occurs, there is no guarantee which value
-for "k1" exists at which site.
+For example, client A writes to "k1" in **LON** at the same time that client B writes to "k1" in **NYC**.
+In this case, "k1" has a different value in **LON**
+than in **NYC**.
+After replication occurs, there is no guarantee which value for "k1" exists at which cluster.
 
-To ensure data consistency, {brandname} uses a vector clock algorithm to detect
-conflicting entries during backup operations, as in the following illustration:
+To ensure data consistency, {brandname} uses a vector clock algorithm to detect conflicting entries during backup operations, as in the following illustration:
 
 [source,options="nowrap"]
 ----
 include::asciidoc_examples/xsite_async_conflicts.adoc[]
 ----
 
-Vector clocks are timestamp metadata that increment with each write to an
-entry. In the preceding example, `0,0` represents the initial value for the
-vector clock on "k1".
+Vector clocks are timestamp metadata that increment with each write to an entry.
+In the preceding example, `0,0` represents the initial value for the vector clock on "k1".
 
 A client puts "k1=2" in **LON** and the vector clock is `1,0`, which
-{brandname} replicates to **NYC**. A client then puts "k1=3" in **NYC** and the
-vector clock updates to `1,1`, which {brandname} replicates to **LON**.
+{brandname} replicates to **NYC**.
+A client then puts "k1=3" in **NYC** and the vector clock updates to `1,1`, which {brandname} replicates to **LON**.
 
-However if a client puts "k1=5" in **LON** at the same time that a client puts
-"k1=8" in **NYC**, {brandname} detects a conflicting entry because the vector
-value for "k1" is not strictly greater or less between **LON** and **NYC**.
+However if a client puts "k1=5" in **LON** at the same time that a client puts "k1=8" in **NYC**, {brandname} detects a conflicting entry because the vector value for "k1" is not strictly greater or less between **LON** and **NYC**.
 
-When it finds conflicting entries, {brandname} uses the Java `compareTo(String
-anotherString)` method to compare site names. To determine which key takes
-priority, {brandname} selects the site name that is lexicographically less
-than the other. Keys from a site named **AAA** take priority over keys from a
-site named **AAB** and so on.
+When it finds conflicting entries, by default, {brandname} uses the Java `compareTo(String
+anotherString)` method to compare cluster names.
+To determine which key takes priority, {brandname} selects the cluster name that is lexicographically less than the other.
+Keys from a cluster named **AAA** take priority over keys from a cluster named **AAB** and so on.
 
-Following the same example, to resolve the conflict for "k1", {brandname} uses
-the value for "k1" that originates from **LON**. This results in "k1=5" in both
-**LON** and **NYC** after {brandname} resolves the conflict and replicates the
-value.
+Following the same example, to resolve the conflict for "k1", {brandname} uses the value for "k1" that originates from **LON**.
+This results in "k1=5" in both
+**LON** and **NYC** after {brandname} resolves the conflict and replicates the value.
 
 [TIP]
 ====
-Prepend site names with numbers as a simple way to represent the order of
-priority for resolving conflicting entries; for example, **1LON** and **2NYC**.
+Prepend cluster names with numbers as a simple way to represent the order of priority for resolving conflicting entries; for example, **1LON** and **2NYC**.
 ====
 
 [discrete]
@@ -51,18 +43,20 @@ priority for resolving conflicting entries; for example, **1LON** and **2NYC**.
 
 {brandname} performs conflict resolution with the asynchronous backup strategy (`strategy=async`) only.
 
-You should never use the synchronous backup strategy with an Active/Active configuration.
-In this configuration concurrent writes result in deadlocks and you lose data.
-However you can use the synchronous backup strategy with an Active/Active configuration if both sites access different data sets, in which case there is no risk of deadlocks from concurrent writes.
+We do not recommend the use of synchronous backup strategy with an Active/Active configuration.
+In this configuration, concurrent writes result in deadlocks, and you may lose data consistency.
+However, you can use the synchronous backup strategy with an Active/Active configuration if both clusters access different data sets, in which case there is no risk of deadlocks from concurrent writes.
 
 [discrete]
 == Cross-site merge policies
 
-{brandname} provides an `XSiteEntryMergePolicy` SPI in addition to cross-site merge policies that configure {brandname} to do the following:
+{brandname} provides an `XSiteEntryMergePolicy` SPI.
+This SPI allows you to create custom conflict resolution logic tailored to your business needs.
+In addition, the following built-in merge policies are available:
 
-* Always remove conflicting entries.
-* Apply write operations when write/remove conflicts occur.
-* Remove entries when write/remove conflicts occur.
+* `ALWAYS_REMOVE`: Removes the entry from all clusters if a conflict occurs.
+* `PREFER_NON_NULL`: When a write (non-null) and a remove (null) conflict occurs, the write operation takes precedence.
+* `PREFER_NULL`: When a write and a remove conflict occurs, the remove operation (setting the entry to 'null') takes precedence.
 
 [role="_additional-resources"]
 .Additional resources

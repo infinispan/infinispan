@@ -20,7 +20,7 @@ include::code_examples/CrossSiteAddClusters.java[]
 Use the following methods to switch Hot Rod clients to the default cluster or to a cluster at a different site:
 
 * `RemoteCacheManager.switchToDefaultCluster()`
-* `RemoteCacheManager.switchToCluster(${site.name})`
+* `RemoteCacheManager.switchToCluster(clusterName)`
 ====
 
 [role="_additional-resources"]

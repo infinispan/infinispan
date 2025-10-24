@@ -1,5 +1,6 @@
 [id='rest_v2_cache_manager_site_status_{context}']
 = Getting status of backup locations
+
 Retrieve the status of all backup locations with `GET`
 requests.
 
@@ -15,19 +16,19 @@ GET /rest/v2/container/x-site/backups/
 include::json/xsite_backup_status.json[]
 ----
 
-.Returned status
-
+.Returned Status
 |===
 |Value |Description
 
 |`online`
-| All nodes in the local cluster have a cross-site view with the backup location.
+| All caches in the local cluster have the backup location with `online` status.
 
 |`offline`
-| No nodes in the local cluster have a cross-site view with the backup location.
+| All caches in the local cluster have the backup location with `offline` status.
 
 |`mixed`
-| Some nodes in the local cluster have a cross-site view with the backup location, other nodes in the local cluster do not have a cross-site view. The response indicates status for each node.
+| Some caches in the local cluster have the backup location with `online` status while others have the backup location with `offline` status.
+The response indicates status for each cache.
 |===
 
 [source,options="nowrap",subs=attributes+]
@@ -39,6 +40,7 @@ Returns the status for a single backup location.
 
 [id='rest_v2_cache_manager_take_offline_{context}']
 = Taking backup locations offline
+
 Take backup locations offline with the `?action=take-offline` parameter.
 
 [source,options="nowrap",subs=attributes+]
@@ -48,6 +50,7 @@ POST /rest/v2/container/x-site/backups/{siteName}?action=take-offline
 
 [id='rest_v2_cache_manager_bring_online_{context}']
 = Bringing backup locations online
+
 Bring backup locations online with the `?action=bring-online` parameter.
 
 [source,options="nowrap",subs=attributes+]
@@ -55,26 +58,9 @@ Bring backup locations online with the `?action=bring-online` parameter.
 POST /rest/v2/container/x-site/backups/{siteName}?action=bring-online
 ----
 
-[id='rest_v2_cache_manager_get_state_transfer_mode_{context}']
-= Retrieving the state transfer mode
-Check the state transfer mode with `GET` requests.
-
-[source,options="nowrap",subs=attributes+]
-----
-GET /rest/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode
-----
-
-[id='rest_v2_cache_manager_set_state_transfer_mode_{context}']
-= Setting the state transfer mode
-Configure the state transfer mode with the `?action=set` parameter.
-
-[source,options="nowrap",subs=attributes+]
-----
-POST /rest/v2/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode?action=set&mode={mode}
-----
-
 [id='rest_v2_cache_manager_start_push_{context}']
 = Starting state transfer
+
 Push state of all caches to remote sites with the `?action=start-push-state` parameter.
 
 [source,options="nowrap",subs=attributes+]
@@ -82,9 +68,9 @@ Push state of all caches to remote sites with the `?action=start-push-state` par
 POST /rest/v2/container/x-site/backups/{siteName}?action=start-push-state
 ----
 
-
 [id='rest_v2_cache_manager_cancel_push_{context}']
 = Canceling state transfer
+
 Cancel ongoing state transfer operations with the `?action=cancel-push-state` parameter.
 
 [source,options="nowrap",subs=attributes+]

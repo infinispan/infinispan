@@ -1,7 +1,6 @@
 [id='cross-site-state-transfer_{context}']
 = State transfer
-State transfer is an administrative operation that synchronizes data between
-sites.
+State transfer is an administrative operation that synchronizes data between clusters.
 
 For example, **LON** goes offline and **NYC** starts handling client requests.
 When you bring **LON** back online, the {brandname} cluster in **LON** does not
@@ -10,20 +9,19 @@ have the same data as the cluster in **NYC**.
 To ensure the data is consistent between **LON** and **NYC**, you can push
 state from **NYC** to **LON**.
 
-* State transfer is bidirectional. For example, you can push state from **NYC**
-to **LON** or from **LON** to **NYC**.
-* Pushing state to offline sites brings them back online.
-* State transfer overwrites only data that exists on both sites, the originating site and the receiving site. {brandname} does not delete data.
+* State transfer is bidirectional.
+For example, you can push state from **NYC** to **LON** or from **LON** to **NYC**.
+* Pushing state to offline clusters brings them back online.
+* State transfer overwrites only data that exists on both cluster and does not delete data.
 +
-For example, "k2" exists on **LON** and **NYC**. "k2" is removed from **NYC**
-while **LON** is offline. When you bring **LON** back online, "k2" still exists
-at that location. If you push state from **NYC** to **LON**, the transfer does
-not affect "k2" on **LON**.
+For example, "k2" exists on **LON** and **NYC**.
+"k2" is removed from **NYC** while **LON** is offline.
+When you bring **LON** back online, "k2" still exists at that location.
+If you push state from **NYC** to **LON**, the transfer does not affect "k2" on **LON**.
 
 [TIP]
 ====
-To ensure contents of the cache are identical after state transfer, remove all
-data from the cache on the receiving site before pushing state.
+To ensure the contents of the cache are identical after state transfer, remove all data from the cache on the receiving cluster before pushing state.
 
 Use the `clear()` method or the [command]`clearcache` command from the CLI.
 ====
@@ -31,11 +29,11 @@ Use the `clear()` method or the [command]`clearcache` command from the CLI.
 * State transfer does not overwrite updates to data that occur after you
 initiate the push.
 +
-For example, "k1,v1" exists on **LON** and **NYC**. **LON** goes offline so you
-push state transfer to **LON** from **NYC**, which brings **LON** back online.
+For example, "k1,v1" exists on **LON** and **NYC**.
+**LON** goes offline, so you push state transfer to **LON** from **NYC**, which brings **LON** back online.
 Before state transfer completes, a client puts "k1,v2" on **LON**.
 +
-In this case the state transfer from **NYC** does not overwrite "k1,v2" because
+In this scenario, the state transfer from **NYC** does not overwrite "k1,v2" because
 that modification happened after you initiated the push.
 
 [discrete]
@@ -51,7 +49,7 @@ For example, {brandname} simultaneously transfers state from **LON** to **NYC** 
 [NOTE]
 ====
 To avoid temporary network disconnects triggering state transfer operations, there are two conditions that backup locations must meet to go offline.
-The status of a backup location must be offline and it must not be included in the cross-site view with JGroups RELAY2.
+The status of a backup location must be offline and it must not be included in the cross-site view.
 ====
 
 The automatic state transfer is also triggered when a cache starts.
@@ -63,4 +61,4 @@ Following this, **NYC** starts a unidirectional state transfer to **LON**.
 .Additional resources
 * link:../../apidocs/org/infinispan/Cache.html#clear()[org.infinispan.Cache.clear()]
 * link:{cli_docs}[Using the {brandname} Command Line Interface]
-* link:{rest_docs}[{brandname} REST API]
+* link:{rest_docs}[Using the {brandname} REST API]

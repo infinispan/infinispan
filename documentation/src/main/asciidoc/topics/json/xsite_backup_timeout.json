@@ -1,10 +1,15 @@
 {
-  "distributed-cache": {
-    "backups": {
-      "NYC" : {
-        "backup" : {
-          "strategy" : "ASYNC",
-          "timeout" : "10000"
+  "infinispan": {
+    "cache-container": {
+      "distributed-cache": {
+        "name": "customers",
+        "backups": {
+          "NYC": {
+            "backup": {
+              "strategy": "ASYNC",
+              "timeout": "10000"
+            }
+          }
         }
       }
     }

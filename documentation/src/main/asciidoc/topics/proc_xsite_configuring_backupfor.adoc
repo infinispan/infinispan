@@ -7,7 +7,7 @@ If you want {brandname} to replicate between caches with different names, you ca
 .Procedure
 
 . Open your {brandname} configuration for editing.
-. Use `backup-for` or `backupFor` to replicate data from a remote site into a cache with a different name on the local site.
+. Use `backup-for` or `backupFor` to replicate data from another backup location into a cache with a different name on the local cluster.
 . Save and close your {brandname} configuration.
 
 [discrete]

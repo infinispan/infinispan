@@ -2,7 +2,7 @@
 = Configuring cross-site state transfer modes
 
 You can configure cross-site state transfer operations to happen automatically when {brandname} detects that backup locations come online.
-Alternatively you can use the default mode, which is to manually perform state transfer.
+Alternatively, you can use the default mode, which is to manually perform state transfer.
 
 .Prerequisites
 
@@ -16,14 +16,14 @@ Alternatively you can use the default mode, which is to manually perform state t
 +
 [source,options="nowrap",subs=attributes+]
 ----
-site state-transfer-mode get --cache=cacheName --site=NYC
+site state-transfer-mode get --cache=<cache-name-here> --site=NYC
 ----
 
 * Configure automatic state transfer operations for a cache and backup location.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-site state-transfer-mode set --cache=cacheName --site=NYC --mode=AUTO
+site state-transfer-mode set --cache=<cache-name-here> --site=NYC --mode=AUTO
 ----
 
 [TIP]

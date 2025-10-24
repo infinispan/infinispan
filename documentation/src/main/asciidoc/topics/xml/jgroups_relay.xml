@@ -1,16 +1,21 @@
 <infinispan>
-  <jgroups>
-    <stack name="xsite" extends="udp">
-      <relay.RELAY2 xmlns="urn:org:jgroups"
-                    site="LON"
-                    max_site_masters="1000"/>
-      <remote-sites default-stack="tcp">
-        <remote-site name="LON"/>
-        <remote-site name="NYC"/>
-      </remote-sites>
-    </stack>
-  </jgroups>
-  <cache-container>
-    <transport cluster="${cluster.name}" stack="xsite"/>
-  </cache-container>
+   <jgroups>
+      <stack name="bridge" extends="tcp">
+         <TCP bind_port="7900"/> <!--1-->
+         <TCPPING initial_hosts="127.0.0.1[7900]"
+                  stack.combine="REPLACE"
+                  stack.position="MPING"/> <!--2-->
+      </stack>
+      <stack name="xsite" extends="udp">
+         <relay.RELAY2 site="LON"
+                       max_site_masters="1000"/> <!--3-->
+         <remote-sites default-stack="bridge"> <!--4-->
+            <remote-site name="LON"/>
+            <remote-site name="NYC"/>
+         </remote-sites>
+      </stack>
+   </jgroups>
+   <cache-container>
+      <transport stack="xsite"/> <!--5-->
+   </cache-container>
 </infinispan>

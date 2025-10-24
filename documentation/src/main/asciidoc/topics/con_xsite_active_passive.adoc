@@ -1,13 +1,14 @@
 [id='cross-site-client-connections_{context}']
-= Client connections across sites
-Clients can write to {brandname} clusters in either an Active/Passive or
-Active/Active configuration.
+= Client connections across clusters
+
+Clients can write to {brandname} clusters using either an Active/Passive or Active/Active configuration.
+{brandname} does not provide specific configuration for each mode.
+To achieve Active/Passive, the client, application, or load balancer must be configured to select a primary cluster.
 
 [discrete]
 == Active/Passive
 
-The following diagram illustrates Active/Passive where {brandname} handles
-client requests from one site only:
+The following diagram illustrates Active/Passive where {brandname} handles client requests from one cluster only:
 
 image::xsite-active-passive.svg[]
 
@@ -17,16 +18,14 @@ In the preceding image:
 . Client writes "k1" to the cache.
 . The relay node at **LON**, "n1", sends the request to replicate "k1" to the relay node at **NYC**, "nA".
 
-With Active/Passive, **NYC** provides data redundancy. If the {brandname}
-cluster at **LON** goes offline for any reason, clients can start sending
-requests to **NYC**. When you bring **LON** back online you can synchronize
-data with **NYC** and then switch clients back to **LON**.
+With Active/Passive, **NYC** provides data redundancy.
+If the {brandname} cluster at **LON** goes offline for any reason, clients can start sending requests to **NYC**.
+When you bring **LON** back online you can synchronize data with **NYC** and then switch clients back to **LON**.
 
 [discrete]
 == Active/Active
 
-The following diagram illustrates Active/Active where {brandname} handles
-client requests at two sites:
+The following diagram illustrates Active/Active where {brandname} handles client requests at two sites:
 
 image::xsite-active-active.svg[]
 
@@ -38,11 +37,9 @@ In the preceding image:
 . Client B writes "k2" to the cache.
 . Relay nodes at **LON** and **NYC** send requests so that "k1" is replicated to **NYC** and "k2" is replicated to **LON**.
 
-With Active/Active both **NYC** and **LON** replicate data to remote caches
-while handling client requests. If either **NYC** or **LON** go offline,
-clients can start sending requests to the online site. You can then bring
-offline sites back online, push state to synchronize data, and switch clients
-as required.
+With Active/Active both **NYC** and **LON** replicate data to remote caches while handling client requests.
+If either **NYC** or **LON** go offline, clients can start sending requests to the online site.
+You can then bring offline sites back online, push state to synchronize data, and switch clients as required.
 
 [discrete]
 == Backup strategies and client connections
@@ -53,4 +50,4 @@ An asynchronous backup strategy (`strategy=async`) is recommended with Active/Ac
 ====
 
 If multiple clients attempt to write to the same entry concurrently, and the backup strategy is synchronous (`strategy=sync`), then deadlocks occur.
-However you can use the synchronous backup strategy with an Active/Passive configuration if both sites access different data sets, in which case there is no risk of deadlocks from concurrent writes.
+However, you can use the synchronous backup strategy with an Active/Passive configuration if both sites access different data sets, in which case there is no risk of deadlocks from concurrent writes.
