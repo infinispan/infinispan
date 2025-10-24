@@ -24,9 +24,9 @@ if [ "${TYPE}" != "prerelease" ]; then
 fi
 
 FQ_TAGS=""
-for REPO in "quay.io/" ""; do
+#for REPO in "quay.io/" ""; do
   for TAG in ${TAGS}; do
     FQ_TAGS+="${REPO}infinispan/server:${TAG} "
   done
-done
+#done
 echo "${FQ_TAGS::-1}"
