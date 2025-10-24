@@ -113,9 +113,15 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
          immediateError = channelFuture.cause();
       }
       if (immediateError != null) {
-         log.tracef("Connection to %s encountered immediate exception from %s", address, immediateError);
+         Throwable innerError = immediateError;
+         log.tracef("Connection to %s encountered immediate exception from %s", address, innerError);
          // Allow another attempt later
-         handleError(connectFuture, immediateError);
+         if (channel != null) {
+            // When channel is present this might be invoked while holding write lock so run error handling in event loop
+            channel.eventLoop().execute(() -> handleError(connectFuture, innerError));
+         } else {
+            handleError(connectFuture, innerError);
+         }
       }
       return connectFuture;
    }
