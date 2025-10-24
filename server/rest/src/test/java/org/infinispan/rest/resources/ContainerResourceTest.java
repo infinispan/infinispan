@@ -329,13 +329,15 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    public void testRebalancingActions() {
       assertRebalancingStatus(true);
 
-      RestResponse response = join(adminRestContainerClient.disableRebalancing());
-      ResponseAssertion.assertThat(response).isOk();
-      assertRebalancingStatus(false);
+      try (RestResponse response = join(adminRestContainerClient.disableRebalancing())) {
+         ResponseAssertion.assertThat(response).isOk();
+         assertRebalancingStatus(false);
+      }
 
-      response = join(adminRestContainerClient.enableRebalancing());
-      ResponseAssertion.assertThat(response).isOk();
-      assertRebalancingStatus(true);
+      try (RestResponse response = join(adminRestContainerClient.enableRebalancing())) {
+         ResponseAssertion.assertThat(response).isOk();
+         assertRebalancingStatus(true);
+      }
    }
 
    private void assertRebalancingStatus(boolean enabled) {
