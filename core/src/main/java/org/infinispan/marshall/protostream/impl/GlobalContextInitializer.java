@@ -124,6 +124,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.container.entries.TransientMortalCacheValue.class,
             org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry.class,
             org.infinispan.container.entries.metadata.MetadataImmortalCacheValue.class,
+            org.infinispan.container.entries.metadata.MetadataMortalCacheEntry.class,
             org.infinispan.container.entries.metadata.MetadataMortalCacheValue.class,
             org.infinispan.container.entries.metadata.MetadataTransientCacheEntry.class,
             org.infinispan.container.entries.metadata.MetadataTransientCacheValue.class,
