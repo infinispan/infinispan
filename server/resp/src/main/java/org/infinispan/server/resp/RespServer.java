@@ -3,6 +3,7 @@ package org.infinispan.server.resp;
 import static org.infinispan.commons.logging.Log.CONFIG;
 
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
@@ -82,7 +83,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    public CompletionStage<Void> initializeDefaultCache() {
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       if (!globalConfiguration.features().isAvailable(RESP_SERVER_FEATURE)) {
-         throw CONFIG.featureDisabled(RESP_SERVER_FEATURE);
+         return CompletableFuture.failedFuture(CONFIG.featureDisabled(RESP_SERVER_FEATURE));
       }
       String cacheName = configuration.defaultCacheName();
       Configuration explicitConfiguration = SecurityActions.getCacheConfiguration(cacheManager, cacheName);
@@ -94,14 +95,14 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             configuredValueType = builder.encoding().value().mediaType();
             if (globalConfiguration.isClustered() &&
                   !(builder.clustering().hash().keyPartitioner() instanceof RESPHashFunctionPartitioner)) {
-               throw CONFIG.respCacheUseDefineConsistentHash(cacheName, builder.clustering().hash().keyPartitioner().getClass().getName());
+               return CompletableFuture.failedFuture(CONFIG.respCacheUseDefineConsistentHash(cacheName, builder.clustering().hash().keyPartitioner().getClass().getName()));
             }
             MediaType keyMediaType = builder.encoding().key().mediaType();
             if (keyMediaType == null) {
                log.debugf("Setting RESP cache key media type storage to OCTET stream to avoid key encodings");
                builder.encoding().key().mediaType(RESP_KEY_MEDIA_TYPE);
             } else if (!keyMediaType.equals(RESP_KEY_MEDIA_TYPE)) {
-               throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, keyMediaType);
+               return CompletableFuture.failedFuture(CONFIG.respCacheKeyMediaTypeSupplied(cacheName, keyMediaType));
             }
 
             if (builder.transaction().transactionMode().isTransactional()
@@ -122,11 +123,11 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          explicitConfiguration = builder.build();
       } else {
          if (!RESP_KEY_MEDIA_TYPE.equals(explicitConfiguration.encoding().keyDataType().mediaType()))
-            throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType());
+            return CompletableFuture.failedFuture(CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType()));
 
          if (globalConfiguration.isClustered() &&
                !(explicitConfiguration.clustering().hash().keyPartitioner() instanceof RESPHashFunctionPartitioner)) {
-            throw CONFIG.respCacheUseDefineConsistentHash(cacheName, explicitConfiguration.clustering().hash().keyPartitioner().getClass().getName());
+            return CompletableFuture.failedFuture(CONFIG.respCacheUseDefineConsistentHash(cacheName, explicitConfiguration.clustering().hash().keyPartitioner().getClass().getName()));
          }
       }
       segmentSlots = new SegmentSlotRelation(explicitConfiguration.clustering().hash().numSegments());
