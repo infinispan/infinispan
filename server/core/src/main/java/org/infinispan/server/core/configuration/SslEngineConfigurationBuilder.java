@@ -128,15 +128,11 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
 
    @Override
    public void validate() {
-      String domain = SslConfiguration.DEFAULT_SNI_DOMAIN;
-      if(domain == null) {
-         throw log.noSniDomainConfigured();
-      }
       if (sslContextSupplier == null || sslContextSupplier.get() == null) {
          if (keyStoreFileName == null) {
             throw log.noSSLKeyManagerConfiguration();
          }
-         if (keyStoreFileName != null && keyStorePassword == null) {
+         if (keyStorePassword == null) {
             throw log.missingKeyStorePassword(keyStoreFileName);
          }
          if (trustStoreFileName != null && trustStorePassword == null) {

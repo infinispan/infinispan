@@ -23,6 +23,6 @@ public abstract class RouteDestination<T extends ProtocolServer> {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "name='" + name + "\'}";
+        return name;
     }
 }

@@ -480,9 +480,9 @@ public class Server extends BaseServerManagement implements AutoCloseable {
                   }
                   protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
                   SecurityActions.startProtocolServer(protocolServer, configuration, cacheManager);
-                  ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
+                  ProtocolServerConfiguration<?, ?> protocolConfig = protocolServer.getConfiguration();
                   if (protocolConfig.startTransport()) {
-                     log.protocolStarted(protocolServer.getName(), configuration.socketBinding(), protocolConfig.host(), protocolConfig.port());
+                     log.protocolStarted(protocolServer);
                   } else {
                      if (protocolServer instanceof HotRodServer) {
                         routes.add(new Route<>(routeSource, new HotRodServerRouteDestination(protocolServer.getName(), (HotRodServer) protocolServer)));
@@ -494,7 +494,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
                      } else if (protocolServer instanceof MemcachedServer) {
                         routes.add(new Route<>(routeSource, new MemcachedServerRouteDestination(protocolServer.getName(), (MemcachedServer) protocolServer)));
                      }
-                     log.protocolStarted(protocolServer.getName());
+                     log.protocolStarted(protocolServer);
                   }
                } catch (Throwable t) {
                   throw t instanceof RuntimeException ? (RuntimeException) t : new RuntimeException(t);
@@ -506,7 +506,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
             SinglePortEndpointRouter endpointServer = new SinglePortEndpointRouter(singlePortRouter);
             endpointServer.start(new RoutingTable(routes), cacheManager);
             protocolServers.put("endpoint-" + endpoint.socketBinding(), endpointServer);
-            log.protocolStarted(endpointServer.getName(), singlePortRouter.socketBinding(), singlePortRouter.host(), singlePortRouter.port());
+            log.protocolStarted(endpointServer);
             log.endpointUrl(
                   requireNonNullElse(cacheManager.getAddress(), "local"),
                   singlePortRouter.ssl().enabled() ? "https" : "http", singlePortRouter.host(), singlePortRouter.port()

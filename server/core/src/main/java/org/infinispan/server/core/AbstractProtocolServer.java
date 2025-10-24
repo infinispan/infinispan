@@ -314,4 +314,45 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    public ProtocolServer<?> getEnclosingProtocolServer() {
       return enclosingProtocolServer;
    }
+
+   @Override
+   public final String toString() {
+      StringBuilder sb = new StringBuilder(getName());
+      sb.append(" (");
+      if (configuration.startTransport()) {
+         sb.append(configuration.socketBinding());
+         sb.append(") listening on ");
+         sb.append(protocolType());
+         if (configuration.ssl().enabled()) {
+            sb.append('s');
+         }
+         sb.append("://");
+         sb.append(configuration.host());
+         sb.append(':');
+         sb.append(configuration.port());
+      } else {
+         sb.append("internal)");
+      }
+      sb.append(" [");
+      String details = details();
+      if (configuration.ssl().enabled()) {
+         if (configuration.ssl().requireClientAuth()) {
+            sb.append("m");
+         }
+         sb.append("TLS");
+         if (!details.isEmpty()) {
+            sb.append(" ,");
+         }
+      }
+      sb.append(details);
+      sb.append(']');
+      return sb.toString();
+   }
+
+   protected abstract String protocolType();
+
+   /**
+    * This method should return protocol-specific details, such as enabled authentication mechs
+    */
+   protected abstract String details();
 }
