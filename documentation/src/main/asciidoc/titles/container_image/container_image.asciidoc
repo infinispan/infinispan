@@ -16,10 +16,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :context: image
 
 //Title
-= Guide to Infinispan Server Container Images
+= Guide to {brandname} Server Container Image
 
-The Infinispan Server container images runs in a dedicated Java Virtual Machine (JVM) and provides client access to remote caches through Hot Rod or REST endpoints.
-Infinispan Server speeds time to deployment by separating caches from application logic and offers built-in capabilities for monitoring and administration.
+The {brandname} Server container image runs in a dedicated Java Virtual Machine (JVM) and provides client access to remote caches through Hot Rod, REST, Memcached or RESP (Redis) endpoints.
+{brandname} Server speeds time to deployment by separating caches from application logic and offers built-in capabilities for monitoring and administration.
 
 //User stories
 include::stories.adoc[]
