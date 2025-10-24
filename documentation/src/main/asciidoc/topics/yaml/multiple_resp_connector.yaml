@@ -1,0 +1,36 @@
+infinispan:
+  cacheContainer:
+    caches:
+      0:
+        distributedCache: ~
+      3:
+        distributedCache: ~
+  server:
+    interfaces:
+      - name: "public"
+        inetAddress:
+          value: "127.0.0.1"
+    socketBindings:
+      portOffset: "0"
+      defaultInterface: "public"
+      socketBinding:
+        - name: "dedicated"
+          port: "6379"
+          interface: "public"
+        - name: "default"
+          port: "11222"
+          interface: "public"
+    endpoints:
+      endpoint:
+        socketBinding: "default"
+        securityRealm: "default"
+        connectors:
+          rest-default:
+            restConnector: ~
+          resp-default:
+            respConnector:
+              cache: "0"
+          resp-dedicated:
+            respConnector:
+              cache: "3"
+              socketBinding: "dedicated"
