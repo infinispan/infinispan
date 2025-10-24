@@ -83,12 +83,10 @@ public class ClusteredRollingUpgradeIT extends InfinispanSuite {
    static {
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(ClusteredRollingUpgradeIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
-            // ClusterIT only currently passes with just 2 nodes.. some tests aren't testing serialization and other things
-            .nodeCount(2)
+            .nodeCount(ClusteredIT.SERVER_COUNT)
             .useCustomServerConfiguration("configuration/ClusteredServerTest.xml")
             .addMavenArtifacts(ClusteredIT.mavenArtifacts())
-            .addArchives(Artifacts.artifacts())
-            .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
+            .addArchives(Artifacts.artifacts());
       SERVERS = new RollingUpgradeHandlerExtension(builder);
    }
 
