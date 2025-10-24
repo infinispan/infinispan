@@ -1,5 +1,5 @@
 [id='configure_ispn_modules']
-= Configuring applications to Use {brandname} modules
+= Configuring applications to use {brandname} modules
 
 To use {brandname} libraries provided by {wildflybrandname} in your applications, add {brandname} dependency in the application's pom.xml file. 
 
@@ -11,7 +11,7 @@ To use {brandname} libraries provided by {wildflybrandname} in your applications
 include::dependencies_maven/eap_bom_dependencies.xml[]
 ----
 +
-You must define the value for `${version.infinispan.bom}`in the `<properties>` section of the pom.xml file.
+You must define the value for `${version.infinispan.bom}` in the `<properties>` section of the pom.xml file.
 
 . Declare the required {brandname} dependencies as _provided_.
 +

@@ -127,7 +127,7 @@ include::code_examples/WriteOnlyMap.java[]
 ----
 
 Multiple key/value pairs can be stored in one go using
-../../apidocs/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html#evalMany(java.util.Map,java.util.function.BiConsumer)[`evalMany`]
+link:../../apidocs/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html#evalMany(java.util.Map,java.util.function.BiConsumer)[`evalMany`]
 API:
 
 [source,java]
@@ -174,8 +174,8 @@ parameters associated with this key.
 
 == Read-Write Map API
 
-The final type of operations we have are read­write operations, and within
-this category CAS-like (Compare­And­Swap) operations can be found.
+The final type of operations we have are read-write operations, and within
+this category CAS-like (Compare-And-Swap) operations can be found.
 This type of operations require previous value associated with the key
 to be read and for locks to be acquired before executing the function.
 The vast majority of operations within
@@ -186,10 +186,10 @@ APIs fall within this category, and they can easily be implemented using the
 link:../../apidocs/org/infinispan/functional/FunctionalMap.ReadWriteMap.html[read-write map API]
 . Moreover, with
 link:../../apidocs/org/infinispan/functional/FunctionalMap.ReadWriteMap.html[read-write map API]
-, you can make CAS­like comparisons not only based on value equality
+, you can make CAS-like comparisons not only based on value equality
 but based on metadata parameter equality such as version information,
 and you can send back previous value or boolean instances to signal
-whether the CAS­like comparison succeeded.
+whether the CAS-like comparison succeeded.
 
 Implementing a write operation that returns the previous value associated
 with the cache entry is easy to achieve with the read-write map API:
@@ -234,8 +234,8 @@ and link:#write_only_entry_view[write-only entry views].
 == Metadata Parameter Handling
 link:../../apidocs/org/infinispan/functional/MetaParam.html[Metadata parameters]
 provide extra information about the cache entry, such
-as version information, lifespan, last accessed/used time...etc. Some of
-these can be provided by the user, e.g. version, lifespan...etc, but some
+as version information, lifespan, last accessed/used time, etc. Some of
+these can be provided by the user, e.g. version, lifespan, etc., but some
 others are computed internally and can only be queried, e.g. last
 accessed/used time.
 
@@ -273,7 +273,7 @@ lost:
 include::code_examples/ReadOnlyMapMetaParam.java[]
 ----
 
-When generic information is important the user can define a static helper
+When generic information is important, the user can define a static helper
 method that coerces the static class retrieval to the type requested,
 and then use that helper method in the call to `findMetaParam`:
 
@@ -295,31 +295,14 @@ done using the
 link:../../apidocs/org/infinispan/functional/FunctionalMap.html#withParams(org.infinispan.functional.Param...)[`withParams(Param<?>...)`]
 method.
 
-link:../../apidocs/org/infinispan/functional/Param.FutureMode.html[`Param.FutureMode`]
-tweaks whether a method returning a
-link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
-will span a thread to invoke the method, or instead will use the caller
-thread. By default, whenever a call is made to a method returning a
-link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
-, a separate thread will be span to execute the method asynchronously.
-However, if the caller will immediately block waiting for the
-link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[`CompletableFuture`]
-to complete, spanning a different thread is wasteful, and hence
-link:../../apidocs/org/infinispan/functional/Param.FutureMode.html#COMPLETED[`Param.FutureMode.COMPLETED`]
-can be passed as per-invocation parameter to avoid creating that extra thread. Example:
-
-[source,java]
-----
-include::code_examples/ReadOnlyMapCompleted.java[]
-----
-
-Param.PersistenceMode controls whether a write operation will be propagated
+link:../../apidocs/org/infinispan/functional/Param.PersistenceMode.html[`Param.PersistenceMode`]
+controls whether a write operation will be propagated
 to a persistence store. The default behaviour is for all write-operations
 to be propagated to the persistence store if the cache is configured with
-a persistence store. By passing PersistenceMode.SKIP as parameter,
+a persistence store. By passing link:../../apidocs/org/infinispan/functional/Param.PersistenceMode.html#SKIP[`PersistenceMode.SKIP`] as parameter,
 the write operation skips the persistence store and its effects are only
-seen in the in-memory contents of the cache. PersistenceMode.SKIP can
-be used to implement an
+seen in the in-memory contents of the cache. link:../../apidocs/org/infinispan/functional/Param.PersistenceMode.html#SKIP[`PersistenceMode.SKIP`]
+can be used to implement an
 link:../../apidocs/org/infinispan/Cache.html#evict-K-[`Cache.evict()`]
 method which removes data from memory but leaves the persistence store
 untouched:
@@ -329,17 +312,15 @@ untouched:
 include::code_examples/WriteOnlyMapSkipPersistence.java[]
 ----
 
-Note that there's no need for another PersistenceMode option to skip
+Note that there's no need for another link:../../apidocs/org/infinispan/functional/Param.PersistenceMode.html[`Param.PersistenceMode`] option to skip
 reading from the persistence store, because a write operation can skip
 reading previous value from the store by calling a write-only operation
-via the WriteOnlyMap.
+via the link:../../apidocs/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html[WriteOnlyMap].
 
-Finally, new Param implementations are normally provided by the functional
+Finally, new link:../../apidocs/org/infinispan/functional/Param.html[Param] implementations are normally provided by the functional
 map API since they tweak how the internal logic works. So, for the most part
 of users, they should limit themselves to using the Param instances exposed
-by the API. The exception to this rule would be advanced users who decide
-to add new interceptors to the internal stack. These users have the ability
-to query these parameters within the interceptors.
+by the API.
 
 [[functional_listeners]]
 == Functional Listeners
@@ -506,7 +487,7 @@ standard APIs if that's what suits your use case best.
 
 The target audience for this new API is either:
 
-* Distributed or persistent caching/in­memory­data­grid users that want
+* Distributed or persistent caching/in-memory-data-grid users that want
 to benefit from CompletableFuture and/or Traversable for async/lazy data
 grid or caching data manipulation. The clear advantage here is that threads
 do not need to be idle waiting for remote operations to complete, but
@@ -518,3 +499,5 @@ and
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`], for example, if you want to do a replace
 operation using metadata parameter equality instead of value equality, or
 if you want to retrieve metadata information from values and so on.
+* Implement more complex data-structures backed by the cache. The link:{library_docs}#multimap-cache[multimap] is an example of a data-structure backed by
+the functional map API.

@@ -8,6 +8,10 @@ With this in mind you need a robust security strategy to authenticate users and 
 But what are the costs to the performance of your {brandname} deployment?
 How should you approach these considerations during planning?
 
+[role="_additional-resources"]
+.Additional resources
+* link:{server_docs}#creating-security-realms_security-realms[Creating security realms]
+
 [discrete]
 == Authentication
 

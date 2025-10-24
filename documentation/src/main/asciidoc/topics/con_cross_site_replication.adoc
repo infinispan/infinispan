@@ -16,3 +16,7 @@ endif::community[]
 ifdef::downstream[]
 image::cross-site-replication.png[Cross-site replication with a {brandname} deployment.]
 endif::downstream[]
+
+[role="_additional-resources"]
+.Additional resources
+* link:{xsite_docs}[Cross-site replication]

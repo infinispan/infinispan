@@ -9,6 +9,7 @@ ifdef::context[:parent-context: {context}]
 * Ensure service availability and continuity.
 * Lower operational costs.
 
+include::{topics}/con_performance_metric_considerations.adoc[leveloffset=+1]
 include::{topics}/con_infinispan_deployment_models.adoc[leveloffset=+1]
 include::{topics}/con_platforms_automation_tooling.adoc[leveloffset=+2]
 include::{topics}/con_in_line_caching.adoc[leveloffset=+1]

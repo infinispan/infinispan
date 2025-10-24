@@ -13,7 +13,7 @@ include::dependencies_maven/multimap.xml[]
 
 == MultimapCache API
 
-MultimapCache API exposes several methods to interact with the Multimap Cache.
+link:../../apidocs/org/infinispan/multimap/api/embedded/MultimapCache.html[MultimapCache API] exposes several methods to interact with the Multimap Cache.
 These methods are non-blocking in most cases; see
 link:#multimap_limitations[limitations] for more information.
 
@@ -66,13 +66,13 @@ Asynchronous that returns true if this multimap contains at least one key-value 
 Asynchronous that returns the number of key-value pairs in the multimap cache. It doesn't return the distinct number of keys.
 
 .boolean supportsDuplicates()
-Asynchronous that returns true if the multimap cache supports duplicates. This means that the content of the multimap can be
-'a' -> ['1', '1', '2']. For now this method will always return false, as duplicates are not yet supported.
+Returns true if the multimap cache supports duplicates. This means that the content of the multimap can be
+'a' -> ['1', '1', '2'].
 The existence of a given value is determined by 'equals' and `hashcode' method's contract.
 
 == Creating a Multimap Cache
 
-Currently the MultimapCache is configured as a regular cache. This can be done either by code or XML configuration.
+Currently, the MultimapCache is configured as a regular cache. This can be done either by code or XML configuration.
 See how to configure a regular cache in link:{config_docs}#cache-configuration[Configuring {brandname} caches].
 
 === Embedded mode
@@ -85,7 +85,7 @@ include::code_examples/MultiMapCacheEmbedded.java[]
 [[multimap_limitations]]
 == Limitations
 
-In almost every case the Multimap Cache will behave as a regular Cache, but some limitations exist in the current version, as follows:
+In almost every case, the Multimap Cache will behave as a regular Cache, but some limitations exist in the current version, as follows:
 
 === Support for duplicates
 A multimap can be configured to store duplicate values for a single key. A duplicate is determined by the value's `equals` method.
@@ -95,10 +95,10 @@ Invoking remove on the multimap will remove all duplicates if present.
 === Eviction
 
 For now, the eviction works per key, and not per key-value pair.
-This means that whenever a key is evicted, all the values associated with the key will be evicted too.
+This means that, whenever a key is evicted, all the values associated with the key will be evicted too.
 
 === Transactions
 
-Implicit transactions are supported through the auto-commit and all the methods are non blocking.
+Implicit transactions are supported through the auto-commit and all the methods are non-blocking.
 Explicit transactions work without blocking in most of the cases.
-Methods that will block are `size`, `containsEntry` and `remove(Predicate<? super V> p)`
+Methods that will block are `size`, `containsEntry` and `remove(Predicate<? super V> p)`.

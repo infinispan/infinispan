@@ -30,6 +30,12 @@ For workloads with high rates of contention, pessimistic locking provides the be
 Transaction commits complete in a single phase because keys are already locked.
 Pessimistic locking with multiple key transactions results in {brandname} locking keys for longer periods of time, which can decrease write throughput.
 
+[WARNING]
+====
+Using locks inherently introduces the risk of deadlock and performance degradation.
+Always simulate your production workload to verify the system's behavior under load.
+====
+
 .Read isolation
 
 Isolation levels do not impact {brandname} performance considerations except for optimistic locking with `REPEATABLE_READ`.

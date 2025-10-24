@@ -6,8 +6,8 @@ public class TemperatureChangesListener {
       this.location = location;
    }
 
-   @ClientCacheEntryCreated
-   public void created(ClientCacheEntryCreatedEvent event) {
+   @ClientCacheEntryModified
+   public void updated(ClientCacheEntryModifiedEvent event) {
       if(event.getKey().equals(location)) {
          cache.getAsync(location)
                .whenComplete((temperature, ex) ->

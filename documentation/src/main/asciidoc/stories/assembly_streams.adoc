@@ -4,7 +4,7 @@
 
 Efficiently process data stored in {brandname} caches using the `Streams` API.
 
-include::{topics}/streams.adoc[leveloffset=+0]
+include::{topics}/streams.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
