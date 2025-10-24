@@ -147,7 +147,7 @@
 
       <version.quarkus>3.27.0</version.quarkus>
       <version.graalvm>25.0.1</version.graalvm>
-      <version.jandex>3.5.0</version.jandex>
+      <version.jandex>3.5.1</version.jandex>
 
       <version.opentelemetry>1.39.0</version.opentelemetry>
       <!-- used by the opentelemetry autoconfigure module as incubator runtime dependency -->
