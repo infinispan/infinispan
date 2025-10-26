@@ -44,6 +44,11 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       return TestDomainSCI.INSTANCE;
    }
 
+   @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      return super.createHotRodClientConfigurationBuilder(host, serverPort).socketTimeout(10_000);
+   }
+
    @Test
    public void testDataAsJSONFromScript() throws IOException {
       RemoteCacheManager remoteCacheManager = client(0);
