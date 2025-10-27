@@ -1,5 +1,5 @@
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder.addServers("hostA1:11222; hostA2:11222")
+clientBuilder.addServers("172.20.0.11:11222; 172.20.0.12:11222")
              .addCluster("siteB")
-               .addClusterNodes("hostB1:11222; hostB2:11223");
+               .addClusterNodes("172.21.0.11:11222; 172.21.0.12:11222");
 RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build());

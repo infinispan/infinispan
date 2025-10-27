@@ -1,0 +1,31 @@
+[id='hotrod-client-multiple-clusters_{context}']
+= Connect: multiple cluster
+A client can be configured to connect to multiple {brandname} clusters to allow failover or for any user's needs.
+The following example show a client connected to two clusters.
+
+
+.Declarative
+[source,properties,options="nowrap",subs=attributes+,role="primary"]
+----
+include::properties/hotrod-client-multi-cluster.properties[]
+----
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/HotRodClientMultiCluster.java[]
+----
+
+The following configuration sets up a cluster as default, so that clients always attempt to connect to it first.
+
+.Declarative
+[source,properties,options="nowrap",subs=attributes+,role="primary"]
+----
+include::properties/hotrod-client-multi-cluster-default.properties[]
+----
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/HotRodDefaultCluster.java[]
+----
+
+Start a server for this example with xref:server-setup/java_client_server_setup.adoc#multi[Server Setup].

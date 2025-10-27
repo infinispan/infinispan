@@ -1,0 +1,31 @@
+[id='hotrod-client-properties_{context}']
+= The hotrod-client.properties file
+Client configuration can be performed declaratively via the `hotrod-client.properties` file.
+By default, the RemoteCacheManager constructor looks for this file at startup and uses it for
+the setup. The following example shows the declarative configuration for an authenticated client.
+
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::properties/hotrod-client-auth.properties[]
+----
+
+Provided that the `hotrod-client.properties` file is on the classpath, we can use the simplest client setup to connect to the server.
+
+All the available properties are documented in the xref:properties/ref_hotrod_client_configuration_properties.adoc[Properties Reference Page].
+
+[TIP]
+====
+If the configuration properties file is not on the classpath (e.g., external configuration, remote configuration hub),
+the ConfigurationBuilder can build a configuration from a java.util.Properties instance as follows.
+[source,java]
+----
+include::code_examples/HotRodClientProperties.java[]
+----
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod Client Configuration]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[org.infinispan.client.hotrod.configuration.ConfigurationBuilder]
+* link:../../apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager-java.net.URL-[org.infinispan.client.hotrod.RemoteCacheManager]

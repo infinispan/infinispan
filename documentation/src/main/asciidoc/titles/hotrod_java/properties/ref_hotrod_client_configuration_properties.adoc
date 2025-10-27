@@ -1,0 +1,569 @@
+[id='hotrod-client-configuration-properties']
+= Hot Rod Java Client Configuration Properties Reference
+
+This document provides a comprehensive reference of all configuration properties available for the {brandname} Hot Rod Java client.
+All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `ICH` in the source code).
+
+== Connection Properties
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`uri`
+|Complete connection URI for the Hot Rod client. When specified, it takes precedence over individual connection properties.
+|String
+|none
+
+|`server_list`
+|List of Hot Rod servers in the format `host1:port1;host2:port2`. Supports both IPv4 and IPv6 addresses (IPv6 format: `[host]:port`).
+|String
+|`127.0.0.1:11222`
+
+|`connect_timeout`
+|Maximum time in milliseconds to wait for a connection to be established.
+|int
+|`2000` (2 seconds)
+
+|`socket_timeout`
+|Socket read timeout in milliseconds. Controls how long the client waits for a response from the server.
+|int
+|`2000` (2 seconds)
+
+|`tcp_no_delay`
+|Enable/disable TCP_NODELAY (Nagle's algorithm). When true, packets are sent immediately without buffering.
+|boolean
+|`true`
+
+|`tcp_keep_alive`
+|Enable/disable TCP keep-alive on client connections.
+|boolean
+|`false`
+
+|`max_retries`
+|Maximum number of times to retry a failed operation.
+|int
+|`3`
+
+|`server_failure_timeout`
+|Time in milliseconds that a server is marked as failed before the client attempts to reconnect.
+|int
+|`30000` (30 seconds)
+|===
+
+== Client Intelligence
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`client_intelligence`
+|Defines the client's awareness of the cluster topology. Valid values: `BASIC`, `TOPOLOGY_AWARE`, `HASH_DISTRIBUTION_AWARE`.
+|String (ClientIntelligence)
+|`HASH_DISTRIBUTION_AWARE`
+|===
+
+== Marshalling and Serialization
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`marshaller`
+|Fully qualified class name of the marshaller to use for serializing/deserializing objects.
+|String (class name)
+|`org.infinispan.commons.marshall.ProtoStreamMarshaller`
+
+|`context-initializers`
+|Comma-separated list of SerializationContextInitializer implementations for Protocol Buffers schema registration.
+|String (comma-separated)
+|none
+
+|`java_serial_allowlist`
+|Comma-separated list of regular expressions for classes allowed to be deserialized when using Java serialization.
+|String (comma-separated regex)
+|none
+|===
+
+== Protocol
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`protocol_version`
+|Hot Rod protocol version to use. Format: `MAJOR.MINOR` (e.g., `3.1`).
+|String
+|Latest supported version
+
+|`batch_size`
+|Batch size for bulk operations like iteration.
+|int
+|`10000`
+
+|`force_return_values`
+|Whether to return previous values on put/replace operations. Can be overridden per cache.
+|boolean
+|`false`
+|===
+
+== Request Balancing
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`request_balancing_strategy`
+|Fully qualified class name of the FailoverRequestBalancingStrategy implementation.
+|String (class name)
+|`org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy`
+
+|`hash_function_impl.2`
+|Consistent hash implementation for protocol version 2.
+|String (class name)
+|`ConsistentHashV2`
+
+|`hash_function_impl.3`
+|Consistent hash implementation for protocol version 3.
+|String (class name)
+|`SegmentConsistentHash`
+
+|`hash_function_impl.4`
+|Consistent hash implementation for protocol version 4.
+|String (class name)
+|`CRC16ConsistentHashV2`
+|===
+
+== Asynchronous Executor
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`async_executor_factory`
+|Fully qualified class name of the AsyncExecutorFactory implementation.
+|String (class name)
+|`org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory`
+
+|`default_executor_factory.pool_size`
+|Thread pool size for the default async executor.
+|int
+|`99`
+
+|`default_executor_factory.threadname_prefix`
+|Prefix for thread names in the async executor pool.
+|String
+|`HotRod-client-async-pool`
+
+|`default_executor_factory.threadname_suffix`
+|Suffix for thread names in the async executor pool.
+|String
+|empty string
+|===
+
+== Transport
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`transport_factory`
+|Fully qualified class name of the TransportFactory implementation.
+|String (class name)
+|Default implementation
+|===
+
+== DNS Resolution
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`dns_resolver_min_ttl`
+|Minimum time-to-live (in seconds) for DNS resolution cache entries.
+|int
+|`0`
+
+|`dns_resolver_max_ttl`
+|Maximum time-to-live (in seconds) for DNS resolution cache entries.
+|int
+|`Integer.MAX_VALUE`
+
+|`dns_resolver_negative_ttl`
+|Time-to-live (in seconds) for negative DNS resolution cache entries (failed lookups).
+|int
+|`0`
+|===
+
+== SSL/TLS Configuration
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`use_ssl`
+|Enable SSL/TLS encryption for client-server connections.
+|boolean
+|`false`
+
+|`key_store_file_name`
+|Path to the key store file containing the client's private key and certificate.
+|String
+|none
+
+|`key_store_type`
+|Type of the key store (e.g., `JKS`, `PKCS12`).
+|String
+|JVM default
+
+|`key_store_password`
+|Password for the key store.
+|String
+|none
+
+|`key_alias`
+|Alias of the key to use from the key store.
+|String
+|none
+
+|`trust_store_file_name`
+|Path to the trust store file containing trusted server certificates.
+|String
+|none
+
+|`trust_store_type`
+|Type of the trust store (e.g., `JKS`, `PKCS12`).
+|String
+|JVM default
+
+|`trust_store_password`
+|Password for the trust store.
+|String
+|none
+
+|`sni_host_name`
+|Server Name Indication (SNI) hostname for TLS connections.
+|String
+|none
+
+|`ssl_protocol`
+|SSL/TLS protocol version (e.g., `TLSv1.3`, `TLSv1.2`).
+|String
+|JVM default
+
+|`ssl_provider`
+|SSL provider to use (e.g., `JDK`, `OPENSSL`).
+|String
+|JVM default
+
+|`ssl_ciphers`
+|Comma-separated list of SSL cipher suites to enable.
+|String
+|JVM default
+
+|`ssl_context`
+|Pre-configured SSLContext instance (programmatic configuration only).
+|SSLContext
+|none
+
+|`ssl_hostname_validation`
+|Enable/disable hostname validation in SSL certificates.
+|boolean
+|`true`
+|===
+
+== Authentication
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`use_auth`
+|Enable authentication for client-server connections.
+|boolean
+|`false`
+
+|`sasl_mechanism`
+|SASL mechanism to use for authentication (e.g., `SCRAM-SHA-512`, `DIGEST-MD5`, `PLAIN`, `EXTERNAL`).
+|String
+|none
+
+|`auth_username`
+|Username for authentication.
+|String
+|none
+
+|`auth_password`
+|Password for authentication.
+|String
+|none
+
+|`auth_token`
+|Authentication token (alternative to username/password).
+|String
+|none
+
+|`auth_realm`
+|Authentication realm.
+|String
+|none
+
+|`auth_server_name`
+|Server name for SASL authentication.
+|String
+|none
+
+|`auth_callback_handler`
+|Fully qualified class name of the CallbackHandler implementation for custom authentication.
+|String (class name)
+|none
+
+|`auth_client_subject`
+|Pre-configured Subject for authentication (programmatic configuration only).
+|Subject
+|none
+
+|`sasl_properties.<name>`
+|SASL mechanism-specific properties. Replace `<name>` with the property name (e.g., `sasl_properties.qop`).
+|String
+|none
+|===
+
+== Statistics and Monitoring
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`statistics`
+|Enable client-side statistics collection.
+|boolean
+|`false`
+
+|`jmx`
+|Enable JMX registration of statistics MBeans.
+|boolean
+|`false`
+
+|`jmx_name`
+|JMX object name for the statistics MBean.
+|String
+|Auto-generated
+
+|`jmx_domain`
+|JMX domain for registering statistics MBeans.
+|String
+|Default domain
+|===
+
+== Tracing
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`tracing.propagation_enabled`
+|Enable OpenTelemetry trace context propagation in Hot Rod requests.
+|boolean
+|`true`
+|===
+
+== Transaction Support
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`transaction.transaction_manager_lookup`
+|Fully qualified class name of the TransactionManagerLookup implementation.
+|String (class name)
+|`org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup`
+
+|`transaction.transaction_mode`
+|Transaction mode for the cache. Valid values: `NONE`, `NON_XA`, `NON_DURABLE_XA`, `FULL_XA`.
+|String (TransactionMode)
+|`NONE`
+
+|`transaction.timeout`
+|Transaction timeout in milliseconds.
+|long
+|`60000` (60 seconds)
+|===
+
+== Connection Pool (Deprecated since 15.1)
+
+NOTE: Connection pool properties are deprecated and will be removed in a future version. The connection pool is no longer used.
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`connection_pool.max_active`
+|Maximum number of connections per server.
+|int
+|`-1` (unlimited)
+
+|`connection_pool.max_wait`
+|Maximum time to wait for a connection (milliseconds).
+|long
+|`-1` (indefinite)
+
+|`connection_pool.min_idle`
+|Minimum number of idle connections to maintain.
+|int
+|`-1`
+
+|`connection_pool.max_pending_requests`
+|Maximum number of pending requests per connection.
+|int
+|`5`
+
+|`connection_pool.min_evictable_idle_time`
+|Minimum time a connection can be idle before eviction (milliseconds).
+|long
+|`180000` (3 minutes)
+
+|`connection_pool.exhausted_action`
+|Action when pool is exhausted. Valid values: `WAIT`, `CREATE_NEW`, `EXCEPTION`.
+|String (ExhaustedAction)
+|`WAIT`
+|===
+
+== Cross-Site (XSite) Cluster Configuration
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`cluster.<cluster-name>`
+|Define a cluster by name with server addresses (e.g., `cluster.NYC=nyc1:11222;nyc2:11222`).
+|String
+|none
+
+|`cluster.<cluster-name>.intelligence`
+|Client intelligence level for the specific cluster. Same values as `client_intelligence`.
+|String (ClientIntelligence)
+|Global setting
+|===
+
+== Per-Cache Configuration
+
+Properties can be specified for individual caches using the prefix `infinispan.client.hotrod.cache.<cache-name>.` or `infinispan.client.hotrod.cache.[<cache-name>].` for cache names with special characters.
+
+[cols="1,2,1,1"]
+|===
+|Property |Description |Type |Default
+
+|`cache.<name>.configuration`
+|XML or JSON configuration string for creating the cache on the server.
+|String
+|none
+
+|`cache.<name>.configuration_uri`
+|URI pointing to a configuration file for the cache.
+|String
+|none
+
+|`cache.<name>.template_name`
+|Name of the server-side configuration template to use for creating the cache.
+|String
+|none
+
+|`cache.<name>.force_return_values`
+|Override global `force_return_values` setting for this cache.
+|boolean
+|Global setting
+
+|`cache.<name>.marshaller`
+|Marshaller class specific to this cache (overrides global marshaller).
+|String (class name)
+|Global marshaller
+
+|`cache.<name>.transaction.transaction_mode`
+|Transaction mode for this specific cache.
+|String (TransactionMode)
+|Global setting
+
+|`cache.<name>.transaction.transaction_manager_lookup`
+|Transaction manager lookup for this specific cache.
+|String (class name)
+|Global setting
+
+|`cache.<name>.near_cache.mode`
+|Near cache mode. Valid values: `DISABLED`, `INVALIDATED`.
+|String (NearCacheMode)
+|`DISABLED`
+
+|`cache.<name>.near_cache.max_entries`
+|Maximum number of entries in the near cache.
+|int
+|`-1` (unlimited)
+
+|`cache.<name>.near_cache.factory`
+|Fully qualified class name of custom NearCacheFactory implementation.
+|String (class name)
+|Default implementation
+
+|`cache.<name>.near_cache.bloom_filter`
+|Enable Bloom filter optimization for near cache invalidation.
+|boolean
+|`false`
+|===
+
+== Configuration Examples
+
+.Basic Connection
+[source,properties]
+----
+infinispan.client.hotrod.server_list=192.168.1.10:11222;192.168.1.11:11222
+infinispan.client.hotrod.client_intelligence=HASH_DISTRIBUTION_AWARE
+----
+
+.SSL/TLS Configuration
+[source,properties]
+----
+infinispan.client.hotrod.use_ssl=true
+infinispan.client.hotrod.trust_store_file_name=/path/to/truststore.jks
+infinispan.client.hotrod.trust_store_password=secret
+infinispan.client.hotrod.sni_host_name=infinispan.example.com
+----
+
+.Authentication with SCRAM-SHA-512
+[source,properties]
+----
+infinispan.client.hotrod.use_auth=true
+infinispan.client.hotrod.sasl_mechanism=SCRAM-SHA-512
+infinispan.client.hotrod.auth_username=admin
+infinispan.client.hotrod.auth_password=password
+infinispan.client.hotrod.auth_realm=default
+----
+
+.Near Cache Configuration
+[source,properties]
+----
+infinispan.client.hotrod.cache.myCache.near_cache.mode=INVALIDATED
+infinispan.client.hotrod.cache.myCache.near_cache.max_entries=1000
+infinispan.client.hotrod.cache.myCache.near_cache.bloom_filter=true
+----
+
+.Cross-Site Cluster Configuration
+[source,properties]
+----
+infinispan.client.hotrod.cluster.NYC=nyc1.example.com:11222;nyc2.example.com:11222
+infinispan.client.hotrod.cluster.NYC.intelligence=TOPOLOGY_AWARE
+infinispan.client.hotrod.cluster.LON=lon1.example.com:11222;lon2.example.com:11222
+----
+
+.Statistics and Monitoring
+[source,properties]
+----
+infinispan.client.hotrod.statistics=true
+infinispan.client.hotrod.jmx=true
+infinispan.client.hotrod.jmx_domain=org.infinispan
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod Client Configuration API]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[ConfigurationBuilder]
+* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]

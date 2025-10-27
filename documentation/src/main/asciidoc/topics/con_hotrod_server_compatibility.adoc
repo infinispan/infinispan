@@ -1,8 +1,9 @@
 [id='client-server-compatibility_{context}']
 = Hot Rod client compatibility with {brandname} Server
 
+Before diving into advanced configuration, here is a quick note on version compatibility.
 {brandname} Server allows you to connect Hot Rod clients with different versions.
-For instance during a migration or upgrade to your {brandname} cluster, the Hot Rod client version might be a lower {brandname} version than {brandname} Server.
+For instance, during a migration or upgrade to your {brandname} cluster, the Hot Rod client version might be lower than the {brandname} Server version.
 
 [TIP]
 ====
@@ -29,7 +30,7 @@ ifdef::downstream[]
 endif::downstream[]
 [TIP] 
 ====
-The client no longer supports HotRod protocol versions older than 3.0. As such you must use an older client or the `hotrod-client-legacy` module.
+The client no longer supports Hot Rod protocol versions older than 3.0. As such, you must use an older client or the `hotrod-client-legacy` module.
 ====
 Clients that use a Hot Rod protocol version that is higher than the {brandname} Server version must set the `infinispan.client.hotrod.protocol_version` property.
 

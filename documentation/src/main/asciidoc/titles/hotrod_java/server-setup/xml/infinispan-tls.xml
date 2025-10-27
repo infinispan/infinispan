@@ -1,0 +1,42 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:{schemaversion} https://infinispan.org/schemas/infinispan-config-{schemaversion}.xsd
+                            urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
+        xmlns="urn:infinispan:config:{schemaversion}"
+        xmlns:server="urn:infinispan:server:{schemaversion}">
+
+    <cache-container name="default" statistics="true" default-cache="my-cache">
+      <local-cache name="my-cache"/>
+    </cache-container>
+
+    <server xmlns="urn:infinispan:server:{schemaversion}">
+        <interfaces>
+            <interface name="public">
+                <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
+            </interface>
+        </interfaces>
+
+        <socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
+            <socket-binding name="default" port="${infinispan.bind.port:11222}"/>
+        </socket-bindings>
+
+        <security>
+            <security-realms>
+                <security-realm name="none">
+                <server-identities>
+                  <ssl>
+		    <keystore path="/user-config/server.keystore" password="changeme"/>
+		    <truststore path="/user-config/server.truststore" password="changeme"/>
+                  </ssl>
+                </server-identities>
+		</security-realm>
+            </security-realms>
+        </security>
+        <endpoints>
+		<endpoint socket-binding="default" security-realm="none" require-ssl-client-auth="true">
+			<hotrod-connector/>
+			<rest-connector/>
+		</endpoint>
+	</endpoints>
+    </server>
+</infinispan>

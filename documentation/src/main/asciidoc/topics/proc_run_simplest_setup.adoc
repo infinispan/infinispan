@@ -1,0 +1,20 @@
+[id='run-simplest-setup_{context}']
+= Connect a client: simplest case
+[NOTE]
+====
+{brandname} is a highly configurable data grid. It can be used out of the box with minimal setup or fully configured and tuned to meet the needs of different environments, performance goals, and architectures.
+This flexibility also extends to the client side, where in real use cases the client must be appropriately configured for the target cluster.
+Since this is a client manual, the approach here is somewhat reversed: for each runnable example, an appropriate server configuration is provided.
+====
+
+The following code connects a client to a local server started on the default port without authentication
+and performs a put/get operation.
+
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/HotRodClientSimplest.java[]
+----
+
+For instructions on setting up a server for this example, see xref:server-setup/java_client_server_setup.adoc#simplest[Server Setup].
+
+This simple example lacks security. In fact, to encourage the development of secure code, the {brandname} Server default configuration starts with authentication enabled.

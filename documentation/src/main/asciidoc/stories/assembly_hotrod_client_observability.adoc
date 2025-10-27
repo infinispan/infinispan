@@ -1,0 +1,10 @@
+[id='hotrod-client-observability_{context}']
+:context: hotrod-client-observability
+= Observability
+
+This chapter covers observability features including metrics, distributed tracing, and statistics that enable monitoring and troubleshooting of Hot Rod client operations in production environments.
+
+include::{topics}/proc_enabling_hotrod_client_statistics.adoc[leveloffset=+1]
+include::{topics}/proc_propagation_hotrod_client_tracing.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_hotrod_metrics.adoc[leveloffset=+1]
+

@@ -1,0 +1,11 @@
+[id='run-auth-setup_{context}']
+= Connect a client: authentication
+The following code connects with authentication and explicitly set host and port.
+
+
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/HotRodClientAuth.java[]
+----
+
+To start a server see xref:server-setup/java_client_server_setup.adoc#auth[Server Setup].

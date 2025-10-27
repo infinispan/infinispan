@@ -1,21 +1,15 @@
 [id='adding-hotrod-client-dependencies_{context}']
-= Adding Hot Rod Java Client Dependencies
-Add Hot Rod Java client dependencies to include it in your project.
+= Install Hot Rod Java client in your project
 
 .Prerequisites
 
 * Java {jdkminversion} or greater.
+* link:{server_docs}#server_requirements[{brandname} Server Requirements]
 
-.Procedure
+Add the Hot Rod Java client Maven artifact as a dependency to your project in the `pom.xml` file.
 
-* Add the `infinispan-client-hotrod` artifact as a dependency in your `pom.xml`
-as follows:
-
-[source,xml]
+[source,xml,subs=attributes+]
 ----
 include::dependencies_maven/hotrod_java_client.xml[]
 ----
 
-.Reference
-
-link:{server_docs}#server_requirements[{brandname} Server Requirements]

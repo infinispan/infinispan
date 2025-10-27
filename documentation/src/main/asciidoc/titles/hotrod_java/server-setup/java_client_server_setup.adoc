@@ -1,0 +1,107 @@
+= Server startup cookbook for the Hot Rod Java Client examples
+
+[id='simplest']
+== Simplest Client
+
+Create a config file `infinispan-simplest.xml` with the following content:
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/infinispan-simplest.xml[]
+----
+
+Then in the same folder run:
+[source,bash,options="nowrap",subs=attributes+]
+----
+docker run -v .:/user-config -p 11222:11222 infinispan/server:{schemaversion} \
+-c /user-config/infinispan-simplest.xml
+----
+
+[id='auth']
+== Authenticated Client
+
+Create a config file `infinispan-auth.xml` with the following content:
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/infinispan-auth.xml[]
+----
+
+Then in the same folder run:
+[source,bash,options="nowrap",subs=attributes+]
+----
+docker run -v .:/user-config -p 11222:11222 infinispan/server:{schemaversion} \
+-c /user-config/infinispan-simplest.xml
+----
+
+[id='multi']
+== Multiple clusters
+
+Create a config file `infinispan-auth-dist.xml` with the following content:
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/infinispan-auth-dist.xml[]
+----
+
+Now you need a `docker-compose.yml` file to start two clusters with two nodes each.
+[source,yaml,options="nowrap",subs=attributes+]
+----
+include::yml/docker-compose-multi-cluster.yml[]
+----
+
+Now in the same folder run:
+[source,bash,options="nowrap",subs=attributes+]
+----
+docker compose up -d
+----
+
+You can see the server logs and stop everything with:
+[source,bash,options="nowrap",subs=attributes+]
+----
+docker compose logs
+docker compose down -v
+----
+
+
+[id='tls']
+== TLS clusters
+
+To setup a tls cluster a set of certificates is needed so that client and server can verify each other identity.
+To create all the certs and organized them in trust and key store, run the following
+[source,bash,options="nowrap",subs=attributes+]
+----
+keytool -genkeypair -alias infinispan \
+  -keyalg RSA -keysize 2048 -keystore server.keystore \
+  -storepass changeme -keypass changeme -validity 365 \
+  -dname "CN=infinispan, OU=Test, O=MyOrg, L=City, S=State, C=US" \
+  -ext SAN=ip:192.168.1.100,ip:127.0.0.1,dns:localhost
+keytool -exportcert -alias infinispan \
+  -keystore server.keystore -storepass changeme \
+  -rfc -file infinispan.crt
+keytool -importcert -alias infinispan \
+  -file infinispan.crt -keystore client.truststore \
+  -storepass changeme -noprompt
+rm infinispan.crt
+keytool -genkeypair -alias infinispan \
+  -keyalg RSA -keysize 2048 -keystore client.keystore \
+  -storepass changeme -keypass changeme -validity 365 \
+  -dname "CN=infinispan, OU=Test, O=MyOrg, L=City, S=State, C=US" \
+  -ext SAN=ip:192.168.1.100,ip:127.0.0.1,dns:localhost
+keytool -exportcert -alias infinispan \
+  -keystore client.keystore -storepass changeme \
+  -rfc -file infinispan.crt
+keytool -importcert -alias infinispan \
+  -file infinispan.crt -keystore server.truststore \
+  -storepass changeme -noprompt
+rm infinispan.crt
+----
+
+Create a `infinispan-tls.xml` configuration file:
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/infinispan-tls.xml[]
+----
+
+[source,bash,options="nowrap",subs=attributes+]
+----
+docker run -v .:/user-config -p 11222:11222 infinispan/server:{schemaversion} \
+-c /user-config/infinispan-tls.xml
+----
