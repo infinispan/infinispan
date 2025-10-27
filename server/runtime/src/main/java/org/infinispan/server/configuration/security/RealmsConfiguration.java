@@ -30,6 +30,11 @@ public class RealmsConfiguration {
    }
 
    void init(SecurityConfiguration security, Properties properties) {
+      // First we initialize the SSL contexts of all realms if possible, as they may be required
+      for(RealmConfiguration realm : realms.values()) {
+         realm.initSSLContexts(properties);
+      }
+      // Then we fully initialize the security realm
       for(RealmConfiguration realm : realms.values()) {
          realm.init(security, properties);
       }
