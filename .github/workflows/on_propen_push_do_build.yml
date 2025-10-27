@@ -32,7 +32,7 @@ jobs:
           --non-recursive exec:exec > server-version.txt
 
       - name: Archive server version
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: server-version
           path: |
