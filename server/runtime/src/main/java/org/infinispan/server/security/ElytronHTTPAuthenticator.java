@@ -133,10 +133,11 @@ public class ElytronHTTPAuthenticator implements RestAuthenticator {
                   extractSubject(request, mechanism);
                }
             } else {
-               String mechName = challengePrefixMechanisms.get(authorizationHeader.substring(0, authorizationHeader.indexOf(' ')).toUpperCase());
+               String headerMechName = authorizationHeader.substring(0, authorizationHeader.indexOf(' ')).toUpperCase();
+               String mechName = challengePrefixMechanisms.get(headerMechName);
                HttpServerAuthenticationMechanism mechanism = factory.createMechanism(mechName);
                if (mechanism == null) {
-                  throw Server.log.unsupportedMechanism(mechName);
+                  throw Server.log.unsupportedMechanism(headerMechName);
                }
                mechanism.evaluateRequest(requestAdapter);
                extractSubject(request, mechanism);
