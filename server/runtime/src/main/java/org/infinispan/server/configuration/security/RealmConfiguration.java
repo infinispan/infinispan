@@ -60,7 +60,7 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
    RealmConfiguration(AttributeSet attributes,
                       ServerIdentitiesConfiguration serverIdentitiesConfiguration,
                       List<RealmProvider> realmConfigurations) {
-      super(Element.SECURITY_REALM, attributes, realmConfigurations.stream().map(p -> (ConfigurationElement)p).toArray(ConfigurationElement[]::new));
+      super(Element.SECURITY_REALM, attributes, realmConfigurations.stream().map(p -> (ConfigurationElement) p).toArray(ConfigurationElement[]::new));
       this.serverIdentitiesConfiguration = serverIdentitiesConfiguration;
       this.realmProviders = realmConfigurations;
    }
@@ -121,18 +121,21 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       return clientSslContext != null;
    }
 
-   void init(SecurityConfiguration security, Properties properties) {
+   void initSSLContexts(Properties properties) {
       SSLConfiguration sslConfiguration = serverIdentitiesConfiguration.sslConfiguration();
       SSLContextBuilder sslContextBuilder = sslConfiguration != null ? sslConfiguration.build(properties, features) : null;
-
-      SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
-      attributes.attribute(EVIDENCE_DECODER).apply(domainBuilder::setEvidenceDecoder);
-      domainBuilder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
 
       if (realmProviders.isEmpty() || !(realmProviders.get(0) instanceof TrustStoreRealmConfiguration)) {
          // Initialize the SSLContexts now, because they may be needed for client connections of the LDAP or Token realms
          buildSSLContexts(sslContextBuilder);
       }
+   }
+
+   void init(SecurityConfiguration security, Properties properties) {
+      SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
+      attributes.attribute(EVIDENCE_DECODER).apply(domainBuilder::setEvidenceDecoder);
+      domainBuilder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
+
       realms = new HashMap<>(realmProviders.size());
       for (RealmProvider provider : realmProviders) {
          SecurityRealm realm = provider.build(security, this, domainBuilder, properties);
@@ -148,6 +151,8 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
 
       SecurityDomain securityDomain = domainBuilder.build();
       if (features.contains(ServerSecurityRealm.Feature.TRUST)) {
+         SSLConfiguration sslConfiguration = serverIdentitiesConfiguration.sslConfiguration();
+         SSLContextBuilder sslContextBuilder = sslConfiguration != null ? sslConfiguration.build(properties, features) : null;
          sslContextBuilder.setSecurityDomain(securityDomain);
          // Initialize the SSLContexts
          buildSSLContexts(sslContextBuilder);
