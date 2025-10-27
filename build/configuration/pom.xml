@@ -184,7 +184,7 @@
       <version.maven.invoker>3.9.1</version.maven.invoker>
       <version.maven.japicmp>0.24.2</version.maven.japicmp>
       <version.maven.jar>3.4.2</version.maven.jar>
-      <version.maven-plugin-plugin>3.15.1</version.maven-plugin-plugin>
+      <version.maven-plugin-plugin>3.15.2</version.maven-plugin-plugin>
       <version.maven.project-info-reports>3.9.0</version.maven.project-info-reports>
       <version.maven.os>1.7.1</version.maven.os>
       <version.maven.release>3.1.1</version.maven.release>
