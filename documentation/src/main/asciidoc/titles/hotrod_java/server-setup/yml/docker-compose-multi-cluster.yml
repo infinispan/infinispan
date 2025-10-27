@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # Cluster 1 - Node 1
+  infinispan-cluster1-node1:
+    image: infinispan/server:{schemaversion}
+    container_name: infinispan-cluster1-node1
+    hostname: cluster1-node1
+    networks:
+      cluster1_network:
+        ipv4_address: 172.20.0.11
+    ports:
+      - "11222:11222"
+    environment:
+      - USER=username
+      - PASS=changeme
+      - JAVA_OPTIONS=-Djgroups.bind.address=NON_LOOPBACK
+    volumes:
+      - .:/user-config
+    command: >
+      -c /user-config/infinispan-auth-dist.xml
+      -b 0.0.0.0
+      --cluster-name=cluster1
+
+  # Cluster 1 - Node 2
+  infinispan-cluster1-node2:
+    image: infinispan/server:{schemaversion}
+    container_name: infinispan-cluster1-node2
+    hostname: cluster1-node2
+    networks:
+      cluster1_network:
+        ipv4_address: 172.20.0.12
+    ports:
+      - "11223:11222"
+    environment:
+      - USER=username
+      - PASS=changeme
+      - JAVA_OPTIONS=-Djgroups.bind.address=NON_LOOPBACK
+    volumes:
+      - .:/user-config
+    command: >
+      -c /user-config/infinispan-auth-dist.xml
+      -b 0.0.0.0
+      --cluster-name=cluster1
+    depends_on:
+      - infinispan-cluster1-node1
+
+  # Cluster 2 - Node 1
+  infinispan-cluster2-node1:
+    image: infinispan/server:{schemaversion}
+    container_name: infinispan-cluster2-node1
+    hostname: cluster2-node1
+    networks:
+      cluster2_network:
+        ipv4_address: 172.21.0.11
+    ports:
+      - "12222:11222"
+    environment:
+      - USER=username
+      - PASS=changeme
+      - JAVA_OPTIONS=-Djgroups.bind.address=NON_LOOPBACK
+    volumes:
+      - .:/user-config
+    command: >
+      -c /user-config/infinispan-auth-dist.xml
+      -b 0.0.0.0
+      --cluster-name=cluster2
+
+  # Cluster 2 - Node 2
+  infinispan-cluster2-node2:
+    image: infinispan/server:{schemaversion}
+    container_name: infinispan-cluster2-node2
+    hostname: cluster2-node2
+    networks:
+      cluster2_network:
+        ipv4_address: 172.21.0.12
+    ports:
+      - "12223:11222"
+    environment:
+      - USER=username
+      - PASS=changeme
+      - JAVA_OPTIONS=-Djgroups.bind.address=NON_LOOPBACK
+    volumes:
+      - .:/user-config
+    command: >
+      -c /user-config/infinispan-auth-dist.xml
+      -b 0.0.0.0
+      --cluster-name=cluster2
+    depends_on:
+      - infinispan-cluster2-node1
+
+networks:
+  cluster1_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  cluster2_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

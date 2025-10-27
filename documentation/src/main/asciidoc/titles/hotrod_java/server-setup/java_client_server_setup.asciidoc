@@ -1,0 +1,1 @@
+include::java_client_server_setup.adoc[]

@@ -5,11 +5,11 @@
 To verify certificates issued to {brandname} Server, Hot Rod clients require either the full certificate chain or a partial chain that starts with the Root CA.
 You provide server certificates to Hot Rod clients as trust stores.
 
-By default, Hot Rod clients will also perform hostname validation by matching the `dNSName` or `iPAddress` or both types contained by the server certificate's `subjectAltName` extension with the expected hostname.
+By default, Hot Rod clients perform hostname validation by matching the `dNSName` or `iPAddress` values (or both) in the server certificate's `subjectAltName` extension with the expected hostname.
 
 [TIP]
 ====
-Alternatively to providing trust stores you can use shared system certificates.
+As an alternative to providing trust stores, you can use shared system certificates.
 ====
 
 .Prerequisites
@@ -20,14 +20,13 @@ Alternatively to providing trust stores you can use shared system certificates.
 .Procedure
 
 . Add the trust store to the client configuration with the `trustStoreFileName()` and `trustStorePassword()` methods or corresponding properties.
-. If you configure client certificate authentication, do the following:
+. If you also configure client verification, do the following:
 .. Add the keystore to the client configuration with the `keyStoreFileName()` and `keyStorePassword()` methods or corresponding properties.
-.. Configure clients to use the `EXTERNAL` authentication mechanism.
 
 .ConfigurationBuilder
 [source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::code_examples/HotRodTLS.java[]
+include::code_examples/HotRodClientTLS.java[]
 ----
 
 .hotrod-client.properties
@@ -36,9 +35,7 @@ include::code_examples/HotRodTLS.java[]
 include::properties/hotrod-client-tls.properties[]
 ----
 
-.Next steps
-
-Add a client trust store to the `{server_home}/server/conf` directory and configure {brandname} Server to use it, if necessary.
+See xref:server-setup/java_client_server_setup.adoc#tls[Server Setup] to startup a server.
 
 [role="_additional-resources"]
 .Additional resources

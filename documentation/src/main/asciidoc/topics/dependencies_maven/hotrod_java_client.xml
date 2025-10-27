@@ -1,4 +1,5 @@
 <dependency>
   <groupId>org.infinispan</groupId>
   <artifactId>infinispan-client-hotrod</artifactId>
+  <version>{ispn_version}</version>
 </dependency>
