@@ -17,6 +17,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.FilteringListenable;
+import org.infinispan.security.SecureMethod;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableFunction;
 
@@ -385,6 +386,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param mappingFunction, mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
+   @SecureMethod
    default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction) {
       return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction);
    }
@@ -397,6 +399,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param mappingFunction, mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
+   @SecureMethod
    default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
       return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit);
    }
@@ -409,6 +412,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param mappingFunction, mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
+   @SecureMethod
    default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
@@ -421,6 +425,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param mappingFunction, mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
+   @SecureMethod
    default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction) {
       return computeIfAbsentAsync(key, (Function<? super K, ? extends V>) mappingFunction);
    }
@@ -433,6 +438,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param mappingFunction, mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
+   @SecureMethod
    default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction,
          long lifespan, TimeUnit lifespanUnit) {
       return computeIfAbsentAsync(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit);
@@ -446,6 +452,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param mappingFunction, mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
+   @SecureMethod
    default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction,
          long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return computeIfAbsentAsync(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
@@ -474,6 +481,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param remappingFunction, mapping function to be appliyed to the key
     * @return computed value or null if nothing is computed or computation result is null
     */
+   @SecureMethod
    default V computeIfPresent(K key,
                               SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return computeIfPresent(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
@@ -488,6 +496,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param remappingFunction, mapping function to be appliyed to the key
     * @return computed value or null if nothing is computed or computation result is null
     */
+   @SecureMethod
    default CompletableFuture<V> computeIfPresentAsync(K key,
          SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return computeIfPresentAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
@@ -516,6 +525,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param remappingFunction, mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
+   @SecureMethod
    default V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
    }
@@ -529,6 +539,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param remappingFunction, mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
+   @SecureMethod
    default V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
       return compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit);
    }
@@ -542,6 +553,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param remappingFunction, mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
+   @SecureMethod
    default V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
@@ -555,6 +567,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param remappingFunction, mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
+   @SecureMethod
    default CompletableFuture<V> computeAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return computeAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
    }
@@ -568,6 +581,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param remappingFunction, mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
+   @SecureMethod
    default CompletableFuture<V> computeAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
       return computeAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit);
    }
@@ -581,6 +595,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param remappingFunction, mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
+   @SecureMethod
    default CompletableFuture<V> computeAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return computeAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
@@ -610,6 +625,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     *                          existing value or a null value is associated with the key, to be associated with the key
     * @param remappingFunction the function to recompute a value if present
     */
+   @SecureMethod
    default V merge(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction) {
       return merge(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction);
    }
@@ -625,6 +641,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @return the merged value that was stored under key
     * @since 9.4
     */
+   @SecureMethod
    default V merge(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
       return merge(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit);
    }
@@ -643,6 +660,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @return the merged value that was stored under key
     * @since 9.4
     */
+   @SecureMethod
    default V merge(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return merge(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
@@ -656,6 +674,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @return the merged value that was stored under key
     * @since 10.0
     */
+   @SecureMethod
    default CompletableFuture<V> mergeAsync(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction) {
       return mergeAsync(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction);
    }
@@ -671,6 +690,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @return the merged value that was stored under key
     * @since 10.0
     */
+   @SecureMethod
    default CompletableFuture<V> mergeAsync(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
       return mergeAsync(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit);
    }
@@ -689,6 +709,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @return the merged value that was stored under key
     * @since 10.0
     */
+   @SecureMethod
    default CompletableFuture<V> mergeAsync(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return mergeAsync(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }

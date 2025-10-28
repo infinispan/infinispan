@@ -29,6 +29,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.security.SecureMethod;
 
 /**
  * This is a convenient base class for implementing a cache delegate. The only constructor takes a {@link Cache}
@@ -95,6 +96,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V>, Inte
       return cache.getName();
    }
 
+   @SecureMethod
    @ManagedAttribute(
          description = "Returns the cache name",
          displayName = "Cache name",
@@ -338,6 +340,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V>, Inte
     * Returns String representation of ComponentStatus enumeration in order to avoid class not found exceptions in JMX
     * tools that don't have access to infinispan classes.
     */
+   @SecureMethod
    @ManagedAttribute(
          description = "Returns the cache status",
          displayName = "Cache status",
