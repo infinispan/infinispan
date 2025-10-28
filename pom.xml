@@ -190,7 +190,7 @@
       <versionx.com.microsoft.sqlserver>12.10.2.jre11</versionx.com.microsoft.sqlserver>
       <versionx.com.mysqldatabase.mysql>8.4.0</versionx.com.mysqldatabase.mysql>
       <versionx.com.postgresqldatabase.postgresql>42.7.3</versionx.com.postgresqldatabase.postgresql>
-      <versionx.com.oracle.database.jdbc.ojdbc11>23.9.0.25.07</versionx.com.oracle.database.jdbc.ojdbc11>
+      <versionx.com.oracle.database.jdbc.ojdbc11>23.26.0.0.0</versionx.com.oracle.database.jdbc.ojdbc11>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
       <versionx.commons-io.commons-io>2.20.0</versionx.commons-io.commons-io>
