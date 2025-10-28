@@ -10,6 +10,8 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.AbstractAuthAccessLoggingTest;
 import org.infinispan.server.resp.RespServer;
@@ -43,6 +45,11 @@ public class RespAuthAccessLoggingTest extends AbstractAuthAccessLoggingTest {
       builder.host(HOST).port(RespTestingUtil.port()).defaultCacheName("default")
             .authentication().enable().authenticator(authenticator);
       server = Security.doAs(ADMIN, () -> RespTestingUtil.startServer(cacheManager, builder.build()));
+   }
+
+   @Override
+   protected void customCacheConfiguration(ConfigurationBuilder builder) {
+      builder.encoding().mediaType(MediaType.APPLICATION_OCTET_STREAM);
    }
 
    @Override
