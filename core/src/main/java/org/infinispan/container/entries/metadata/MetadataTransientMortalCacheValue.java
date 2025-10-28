@@ -49,8 +49,7 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
 
    @Override
    public InternalCacheEntry<?, ?> toInternalCacheEntry(Object key) {
-      return new MetadataTransientMortalCacheEntry((MarshallableObject<?>) key, value, internalMetadata, metadata,
-            lastUsed, created);
+      return new MetadataTransientMortalCacheEntry(key, value, internalMetadata, metadata, lastUsed, created);
    }
 
    @Override
