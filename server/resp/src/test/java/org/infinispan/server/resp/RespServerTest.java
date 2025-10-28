@@ -1,5 +1,6 @@
 package org.infinispan.server.resp;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.AssertJUnit.assertEquals;
@@ -12,6 +13,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -93,5 +95,23 @@ public class RespServerTest extends AbstractInfinispanTest {
                await(ms.initializeDefaultCache());
                assertEquals(CacheMode.DIST_SYNC, ms.getCache().getCacheConfiguration().clustering().cacheMode());
             }));
+   }
+
+   public void testInvalidConfiguration(Method m) {
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      Stoppable.useCacheManager(new DefaultCacheManager(addGlobalState(global, m).build()), cm -> {
+         ConfigurationBuilder config = new ConfigurationBuilder();
+         config.clustering().cacheMode(CacheMode.DIST_SYNC);
+         config.encoding().key().mediaType(MediaType.TEXT_PLAIN);
+         config.clustering().hash().keyPartitioner(new HashFunctionPartitioner());
+         cm.defineConfiguration("respCache", config.build());
+
+         Stoppable.useServer(new RespServer(), ms -> {
+            ms.start(new RespServerConfigurationBuilder().port(0).build(), cm);
+            assertThatThrownBy(ms::postStart)
+                  .isInstanceOf(IllegalArgumentException.class)
+                  .hasMessageContaining("key media type must be configured");
+         });
+      });
    }
 }
