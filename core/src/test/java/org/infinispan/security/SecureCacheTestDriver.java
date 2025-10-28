@@ -765,72 +765,72 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testCompute_Object_SerializableBiFunction(SecureCache<String, String> cache) {
+   public void testCompute_Object_BiFunction(SecureCache<String, String> cache) {
       cache.compute("a", (k, v) -> "yes");
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testCompute_Object_SerializableBiFunction_long_TimeUnit(SecureCache<String, String> cache) {
+   public void testCompute_Object_BiFunction_long_TimeUnit(SecureCache<String, String> cache) {
       cache.compute("a", (k, v) -> "yes", 1, TimeUnit.SECONDS);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testCompute_Object_SerializableBiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
+   public void testCompute_Object_BiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
       cache.compute("a", (k, v) -> "yes", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testCompute_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) {
+   public void testCompute_Object_BiFunction_Metadata(SecureCache<String, String> cache) {
       cache.compute("a", (k, v) -> "yes", metadata);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfPresent_Object_SerializableBiFunction(SecureCache<String, String> cache) {
+   public void testComputeIfPresent_Object_BiFunction(SecureCache<String, String> cache) {
       cache.computeIfPresent("a", (k, v) -> "yes");
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfPresent_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) {
+   public void testComputeIfPresent_Object_BiFunction_Metadata(SecureCache<String, String> cache) {
       cache.computeIfPresent("a", (k, v) -> "yes", metadata);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfAbsent_Object_SerializableFunction_Metadata(SecureCache<String, String> cache) {
+   public void testComputeIfAbsent_Object_Function_Metadata(SecureCache<String, String> cache) {
       cache.computeIfAbsent("b", k -> "no", metadata);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfAbsent_Object_SerializableFunction(SecureCache<String, String> cache) {
+   public void testComputeIfAbsent_Object_Function(SecureCache<String, String> cache) {
       cache.computeIfAbsent("b", k -> "no");
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfAbsent_Object_SerializableFunction_long_TimeUnit(SecureCache<String, String> cache) {
+   public void testComputeIfAbsent_Object_Function_long_TimeUnit(SecureCache<String, String> cache) {
       cache.computeIfAbsent("b", k -> "no", 10, TimeUnit.SECONDS, 10, TimeUnit.SECONDS);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfAbsent_Object_SerializableFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
+   public void testComputeIfAbsent_Object_Function_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
       cache.computeIfAbsent("b", k -> "no", 10, TimeUnit.SECONDS, 10, TimeUnit.SECONDS);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testMerge_Object_Object_SerializableBiFunction(SecureCache<String, String> cache) {
+   public void testMerge_Object_Object_BiFunction(SecureCache<String, String> cache) {
       cache.merge("a", "b", (k, v) -> "no");
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testMerge_Object_Object_SerializableBiFunction_long_TimeUnit(SecureCache<String, String> cache) {
+   public void testMerge_Object_Object_BiFunction_long_TimeUnit(SecureCache<String, String> cache) {
       cache.merge("a", "b", (k, v) -> "no", 1, TimeUnit.SECONDS);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testMerge_Object_Object_SerializableBiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
+   public void testMerge_Object_Object_BiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
       cache.merge("a", "b", (k, v) -> "no", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testMerge_Object_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) {
+   public void testMerge_Object_Object_BiFunction_Metadata(SecureCache<String, String> cache) {
       cache.merge("a", "b", (k, v) -> "no", metadata);
    }
 
@@ -865,82 +865,102 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfAbsentAsync_Object_SerializableFunction(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeIfAbsentAsync_Object_Function(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeIfAbsentAsync("b", k -> "no").get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfAbsentAsync_Object_SerializableFunction_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeIfAbsentAsync_Object_Function_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeIfAbsentAsync("b", k -> "no", 1, TimeUnit.SECONDS).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfAbsentAsync_Object_SerializableFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeIfAbsentAsync_Object_Function_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeIfAbsentAsync("b", k -> "no", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfAbsentAsync_Object_SerializableFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeIfAbsentAsync_Object_Function_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeIfAbsentAsync("b", k -> "no", metadata).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testMergeAsync_Object_Object_SerializableBiFunction(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testMergeAsync_Object_Object_BiFunction(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.mergeAsync("a", "b", (k, v) -> "no").get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testMergeAsync_Object_Object_SerializableBiFunction_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testMergeAsync_Object_Object_BiFunction_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.mergeAsync("a", "b", (k, v) -> "no", 1, TimeUnit.SECONDS).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testMergeAsync_Object_Object_SerializableBiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testMergeAsync_Object_Object_BiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.mergeAsync("a", "b", (k, v) -> "no", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testMergeAsync_Object_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testMergeAsync_Object_Object_BiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.mergeAsync("a", "b", (k, v) -> "no", metadata).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfPresentAsync_Object_SerializableBiFunction(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeIfPresentAsync_Object_BiFunction(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeIfPresentAsync("a", (k, v) -> "yes").get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfPresentAsync_Object_SerializableBiFunction_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeIfPresentAsync_Object_BiFunction_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeIfPresentAsync("a", (k, v) -> "yes", 1, TimeUnit.SECONDS).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfPresentAsync_Object_SerializableBiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeIfPresentAsync_Object_BiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeIfPresentAsync("a", (k, v) -> "yes", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeIfPresentAsync_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeIfPresentAsync_Object_BiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeIfPresentAsync("a", (k, v) -> "yes", metadata).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeAsync_Object_SerializableBiFunction(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeAsync_Object_BiFunction(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeAsync("a", (k, v) -> "yes").get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeAsync_Object_SerializableBiFunction_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeAsync_Object_BiFunction_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeAsync("a", (k, v) -> "yes", 1, TimeUnit.SECONDS).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeAsync_Object_SerializableBiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeAsync_Object_BiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeAsync("a", (k, v) -> "yes", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS).get();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testComputeAsync_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+   public void testComputeAsync_Object_BiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeAsync("a", (k, v) -> "yes", metadata).get();
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testReplaceAll_BiFunction(SecureCache<String, String> cache) {
+      cache.replaceAll((k, v) -> k);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfPresent_Object_BiFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
+      cache.computeIfPresent("a", (k, v) -> "b", 1, TimeUnit.SECONDS, 2, TimeUnit.SECONDS);
+   }
+
+   @TestCachePermission(AuthorizationPermission.BULK_READ)
+   public void testForEach_BiConsumer(SecureCache<String, String> cache) {
+      cache.forEach((k, v) -> {});
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfPresent_Object_BiFunction_long_TimeUnit(SecureCache<String, String> cache) {
+      cache.computeIfPresent("a", (k, v) -> "b", 1, TimeUnit.SECONDS);
    }
 }

@@ -2,6 +2,7 @@ package org.infinispan.cache.impl;
 
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.security.SecureMethod;
 
 /**
  * This interface is used to hold methods that are only available to internal implementations.
@@ -17,6 +18,7 @@ public interface InternalCache<K, V> {
     *
     * @return <code>true</code> to bypass, <code>false</code>, otherwise.
     */
+   @SecureMethod
    default boolean bypassInvocationContextFactory() {
       return false;
    }

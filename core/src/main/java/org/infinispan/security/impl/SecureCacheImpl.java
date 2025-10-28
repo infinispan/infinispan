@@ -4,10 +4,12 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -78,6 +80,36 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    public AdvancedCache<K, V> getDelegate() {
       authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
       return delegate;
+   }
+
+   @Override
+   public String getCacheAvailability() {
+      authzManager.checkPermission(subject, AuthorizationPermission.MONITOR);
+      return super.getCacheAvailability();
+   }
+
+   @Override
+   public void setCacheAvailability(String availabilityString) {
+      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
+      super.setCacheAvailability(availabilityString);
+   }
+
+   @Override
+   public Properties getConfigurationAsProperties() {
+      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
+      return super.getConfigurationAsProperties();
+   }
+
+   @Override
+   public boolean isRebalancingEnabled() {
+      authzManager.checkPermission(subject, AuthorizationPermission.MONITOR);
+      return super.isRebalancingEnabled();
+   }
+
+   @Override
+   public void setRebalancingEnabled(boolean enabled) {
+      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
+      super.setRebalancingEnabled(enabled);
    }
 
    @Override
@@ -423,6 +455,12 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    @Override
+   public void forEach(BiConsumer<? super K, ? super V> action) {
+      authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
+      super.forEach(action);
+   }
+
+   @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.computeIfPresent(key, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
@@ -649,6 +687,12 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    @Override
+   public CompletableFuture<Boolean> containsKeyAsync(K key) {
+      authzManager.checkPermission(subject, AuthorizationPermission.READ);
+      return super.containsKeyAsync(key);
+   }
+
+   @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.putIfAbsent(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
@@ -701,6 +745,12 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    public CompletableFuture<V> replaceAsync(K key, V value) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.replaceAsync(key, value);
+   }
+
+   @Override
+   public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+      authzManager.checkPermission(subject, writePermission);
+      super.replaceAll(function);
    }
 
    @Override
@@ -978,6 +1028,12 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    public CompletableFuture<V> getAsync(K key) {
       authzManager.checkPermission(subject, AuthorizationPermission.READ);
       return delegate.getAsync(key);
+   }
+
+   @Override
+   public V getOrDefault(Object key, V defaultValue) {
+      authzManager.checkPermission(subject, AuthorizationPermission.READ);
+      return super.getOrDefault(key, defaultValue);
    }
 
    @Override
