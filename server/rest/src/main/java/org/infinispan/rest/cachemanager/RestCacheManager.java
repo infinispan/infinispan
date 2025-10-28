@@ -145,11 +145,15 @@ public class RestCacheManager<V> {
    }
 
    public Collection<String> getCacheNames() {
-      return instance.getCacheNames();
+      return instance.getCacheNames().stream()
+            .filter(instance::cacheExists)
+            .toList();
    }
 
    public Collection<String> getAccessibleCacheNames() {
-      return instance.getAccessibleCacheNames();
+      return instance.getAccessibleCacheNames().stream()
+            .filter(instance::cacheExists)
+            .toList();
    }
 
    public CompletionStage<CacheEntry<Object, V>> getInternalEntry(String cacheName, Object key, MediaType keyContentType, MediaType mediaType, RestRequest request) {
