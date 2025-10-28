@@ -32,6 +32,7 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
+import org.infinispan.security.SecureMethod;
 import org.infinispan.stats.Stats;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -399,6 +400,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    /**
     * Overloaded {@link #compute(Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
     */
+   @SecureMethod
    default V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return this.compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, metadata);
    }
@@ -420,6 +422,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    /**
     * Overloaded {@link #computeIfPresent(Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
     */
+   @SecureMethod
    default V computeIfPresent(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return this.computeIfPresent(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, metadata);
    }
@@ -441,6 +444,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    /**
     * Overloaded {@link #computeIfAbsent(Object, Function, Metadata)} with {@link SerializableFunction}
     */
+   @SecureMethod
    default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, Metadata metadata) {
       return this.computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, metadata);
    }
@@ -464,6 +468,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    /**
     * Overloaded {@link #merge(Object, Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
     */
+   @SecureMethod
    default V merge(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return this.merge(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, metadata);
    }
@@ -510,6 +515,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * Overloaded {@link #computeAsync(Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
     * @since 9.4
     */
+   @SecureMethod
    default CompletableFuture<V> computeAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return this.computeAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, metadata);
    }
@@ -532,6 +538,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * Overloaded {@link #computeIfPresentAsync(Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
     * @since 9.4
     */
+   @SecureMethod
    default CompletableFuture<V> computeIfPresentAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return this.computeIfPresentAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, metadata);
    }
@@ -554,6 +561,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * Overloaded {@link #computeIfAbsentAsync(Object, Function, Metadata)} with {@link SerializableFunction}
     * @since 9.4
     */
+   @SecureMethod
    default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction, Metadata metadata) {
       return this.computeIfAbsentAsync(key, (Function<? super K, ? extends V>) mappingFunction, metadata);
    }
@@ -577,6 +585,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    /**
     * Overloaded {@link #mergeAsync(Object, Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
     */
+   @SecureMethod
    default CompletableFuture<V> mergeAsync(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return this.mergeAsync(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, metadata);
    }

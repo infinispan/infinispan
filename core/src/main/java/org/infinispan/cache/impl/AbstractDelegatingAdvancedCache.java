@@ -35,6 +35,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
+import org.infinispan.security.SecureMethod;
 import org.infinispan.stats.Stats;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -191,6 +192,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    }
 
    @Override
+   @SecureMethod
    public AdvancedCache<K, V> withFlags(Flag flag) {
       AdvancedCache<K, V> flagCache = cache.withFlags(flag);
       if (flagCache != cache) {
