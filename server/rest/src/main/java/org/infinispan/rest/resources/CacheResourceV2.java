@@ -293,6 +293,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       // Remove internal caches
       Set<String> cacheNames = new HashSet<>(subjectCacheManager.getAccessibleCacheNames());
       cacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
+      cacheNames.removeIf(n -> !cacheManager.cacheExists(n));
 
 
       Set<String> ignoredCaches = serverStateManager.getIgnoredCaches();

@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,6 +99,7 @@ import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.security.Security;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
@@ -2073,6 +2075,35 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(restClient.markTopologyStable(false))
             .isNotFound()
             .hasReturnedText("\"Cache 'it-does-not-exist' does not exist\"");
+   }
+
+   public void testNonInitializedCacheNotListed() {
+      String cacheName = "non-initialized-cache";
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         if (security) {
+            Security.doAs(ADMIN, () -> cm.defineConfiguration(cacheName, new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build()));
+         } else {
+            cm.defineConfiguration(cacheName, new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build());
+         }
+      }
+
+      List<String> names = new ArrayList<>();
+      try (RestResponse response = join(adminClient.caches())) {
+         assertThat(response).isOk();
+         List<String> caches = Json.read(response.body()).asJsonList()
+               .stream().map(Json::asString).toList();
+         assertThat(caches).doesNotContain(cacheName);
+         names.addAll(caches);
+      }
+
+      try (RestResponse response = join(adminClient.detailedCacheList())) {
+         assertThat(response).isOk();
+         List<String> caches = Json.read(response.body()).asJsonList().stream()
+               .map(j -> j.at("name").asString())
+               .toList();
+         assertThat(caches).doesNotContain(cacheName);
+         assertThat(names).containsAll(caches);
+      }
    }
 
    private void assertBadResponse(RestCacheClient client, String config) {
