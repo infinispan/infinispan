@@ -2,8 +2,8 @@ package org.infinispan.server.resp;
 
 import static org.infinispan.commons.logging.Log.CONFIG;
 
+import java.util.Objects;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
@@ -50,6 +50,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    private static final Log log = LogFactory.getLog(RespServer.class);
    public static final String RESP_SERVER_FEATURE = "resp-server";
    public static final MediaType RESP_KEY_MEDIA_TYPE = MediaType.APPLICATION_OCTET_STREAM;
+   private Configuration defaultCacheConfiguration;
    private MetadataRepository metadataRepository;
    private MediaType configuredValueType = MediaType.APPLICATION_OCTET_STREAM;
    private DefaultIterationManager iterationManager;
@@ -75,15 +76,15 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       dataStructureIterationManager.addKeyValueFilterConverterFactory(GlobMatchFilterConverterFactory.class.getName(), new GlobMatchFilterConverterFactory(true));
       metadataRepository = new MetadataRepository();
       initializeLuaTaskEngine(gcr);
+      defineCacheConfiguration();
 
       super.internalPostStart();
    }
 
-   @Override
-   public CompletionStage<Void> initializeDefaultCache() {
+   private void defineCacheConfiguration() {
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       if (!globalConfiguration.features().isAvailable(RESP_SERVER_FEATURE)) {
-         return CompletableFuture.failedFuture(CONFIG.featureDisabled(RESP_SERVER_FEATURE));
+         throw CONFIG.featureDisabled(RESP_SERVER_FEATURE);
       }
       String cacheName = configuration.defaultCacheName();
       Configuration explicitConfiguration = SecurityActions.getCacheConfiguration(cacheManager, cacheName);
@@ -95,14 +96,14 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             configuredValueType = builder.encoding().value().mediaType();
             if (globalConfiguration.isClustered() &&
                   !(builder.clustering().hash().keyPartitioner() instanceof RESPHashFunctionPartitioner)) {
-               return CompletableFuture.failedFuture(CONFIG.respCacheUseDefineConsistentHash(cacheName, builder.clustering().hash().keyPartitioner().getClass().getName()));
+               throw CONFIG.respCacheUseDefineConsistentHash(cacheName, builder.clustering().hash().keyPartitioner().getClass().getName());
             }
             MediaType keyMediaType = builder.encoding().key().mediaType();
             if (keyMediaType == null) {
                log.debugf("Setting RESP cache key media type storage to OCTET stream to avoid key encodings");
                builder.encoding().key().mediaType(RESP_KEY_MEDIA_TYPE);
             } else if (!keyMediaType.equals(RESP_KEY_MEDIA_TYPE)) {
-               return CompletableFuture.failedFuture(CONFIG.respCacheKeyMediaTypeSupplied(cacheName, keyMediaType));
+               throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, keyMediaType);
             }
 
             if (builder.transaction().transactionMode().isTransactional()
@@ -121,19 +122,29 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          }
          builder.statistics().enable().aliases("0");
          explicitConfiguration = builder.build();
+         SecurityActions.defineConfiguration(cacheManager, cacheName, explicitConfiguration);
       } else {
          if (!RESP_KEY_MEDIA_TYPE.equals(explicitConfiguration.encoding().keyDataType().mediaType()))
-            return CompletableFuture.failedFuture(CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType()));
+            throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType());
 
          if (globalConfiguration.isClustered() &&
                !(explicitConfiguration.clustering().hash().keyPartitioner() instanceof RESPHashFunctionPartitioner)) {
-            return CompletableFuture.failedFuture(CONFIG.respCacheUseDefineConsistentHash(cacheName, explicitConfiguration.clustering().hash().keyPartitioner().getClass().getName()));
+            throw CONFIG.respCacheUseDefineConsistentHash(cacheName, explicitConfiguration.clustering().hash().keyPartitioner().getClass().getName());
          }
       }
-      segmentSlots = new SegmentSlotRelation(explicitConfiguration.clustering().hash().numSegments());
-      Configuration c = explicitConfiguration;
+
+      defaultCacheConfiguration = explicitConfiguration;
+   }
+
+   @Override
+   public CompletionStage<Void> initializeDefaultCache() {
+      Objects.requireNonNull(defaultCacheConfiguration, "Cache configuration not initialized");
+      String cacheName = configuration.defaultCacheName();
+      segmentSlots = new SegmentSlotRelation(defaultCacheConfiguration.clustering().hash().numSegments());
       return getBlockingManager()
-            .runBlocking(() -> SecurityActions.getOrCreateCache(cacheManager, cacheName, c), "create-resp-cache");
+            // Ensure it invokes `.getOrCreateCache` because it starts the cache in all nodes in the cluster.
+            // Otherwise, the node would start only at the node the connection was established.
+            .runBlocking(() -> SecurityActions.getOrCreateCache(cacheManager, cacheName, defaultCacheConfiguration), "create-resp-cache");
    }
 
    @Override
