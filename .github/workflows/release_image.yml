@@ -88,6 +88,7 @@ jobs:
             SERVER_DIST=https://github.com/infinispan/infinispan/releases/download/${{ inputs.version }}/infinispan-server-${{ inputs.version }}.zip
           containerfiles: ./server/image/src/main/docker/Dockerfile
           context: ./server/image
+          image: server
           platforms: linux/amd64, linux/arm64
           tags: ${{ env.IMAGE_TAGS }}
 
@@ -96,9 +97,9 @@ jobs:
         if: ${{ inputs.push }}
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ steps.build-image.outputs.image }}
+          registry: docker.io/infinispan
+          image: server
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: docker.io
 
       - name: Print Docker Hub image url
         run: echo "Image pushed to ${{ steps.push-to-docker.outputs.registry-paths }}"
@@ -108,9 +109,9 @@ jobs:
         if: ${{ inputs.push }}
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ steps.build-image.outputs.image }}
+          registry: quay.io/infinispan
+          image: server
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: quay.io
 
       - name: Print Quay.io image url
         run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
