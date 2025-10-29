@@ -48,7 +48,7 @@ fi
 SERVER_INFO=""
 
 mkdir "$TMPDIR/$SERVER_PID"
-jstack "$SERVER_PID" > "$TMPDIR/$SERVER_PID/thread-dump"
+"$JAVA_HOME"/jstack "$SERVER_PID" > "$TMPDIR/$SERVER_PID/thread-dump"
 # Try and get the ISPN_ROOT from the command-line
 SERVER_PID_ISPN_ROOT=$(ps -o args "$SERVER_PID"|sed -n 's/.*-s\s\([^[:space:]]*\).*/\1/p')
 if [ "$SERVER_PID_ISPN_ROOT" = "" ]; then
