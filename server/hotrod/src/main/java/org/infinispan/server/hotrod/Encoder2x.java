@@ -18,15 +18,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheSet;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -34,7 +35,6 @@ import org.infinispan.commons.dataconversion.MediaTypeIds;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -57,10 +57,12 @@ import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 import org.infinispan.topology.CacheTopology;
 import org.jgroups.SuspectedException;
+import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelId;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * @author Galder Zamarreño
@@ -161,26 +163,39 @@ class Encoder2x implements VersionedEncoder {
       return buf;
    }
 
-   @Override
-   public ByteBuf bulkGetResponse(HotRodHeader header, HotRodServer server, Channel channel, int size, CacheSet<Map.Entry<byte[], byte[]>> entries) {
+   private <I> CompletionStage<ByteBuf> bulkResponse(HotRodHeader header, HotRodServer server, Channel channel, int size,
+                                                    Publisher<I> publisher, BiConsumer<I, ByteBuf> consumer) {
       ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
-      try (CloseableIterator<Map.Entry<byte[], byte[]>> iterator = entries.iterator()) {
-         int max = Integer.MAX_VALUE;
-         if (size != 0) {
-            if (log.isTraceEnabled()) log.tracef("About to write (max) %d messages to the client", size);
-            max = size;
-         }
-         int count = 0;
-         while (iterator.hasNext() && count < max) {
-            Map.Entry<byte[], byte[]> entry = iterator.next();
-            buf.writeByte(1); // Not done
-            ExtendedByteBuf.writeRangedBytes(entry.getKey(), buf);
-            ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
-            count++;
-         }
-         buf.writeByte(0); // Done
+      Flowable<I> flowable = Flowable.fromPublisher(publisher);
+      if (size != 0) {
+         if (log.isTraceEnabled()) log.tracef("About to write (max) %d messages to the client", size);
+         flowable = flowable.take(size);
+      } else {
+         flowable = flowable.take(Integer.MAX_VALUE);
       }
-      return buf;
+      return flowable.collectInto(buf, (innerB, i) -> {
+               buf.writeByte(1);
+               consumer.accept(i, buf);
+            }).doOnSuccess(innerB -> innerB.writeByte(0))
+            .toCompletionStage();
+   }
+
+   @Override
+   public CompletionStage<ByteBuf> bulkGetKeysResponse(HotRodHeader header, HotRodServer server, Channel channel, Publisher<byte[]> publisher) {
+      return bulkResponse(header, server, channel, 0, publisher, ExtendedByteBuf::writeRangedBytes);
+   }
+
+   @Override
+   public CompletionStage<ByteBuf> bulkGetResponse(HotRodHeader header, HotRodServer server, Channel channel, int size, Publisher<CacheEntry<byte[], byte[]>> publisher) {
+      int max = Integer.MAX_VALUE;
+      if (size != 0) {
+         if (log.isTraceEnabled()) log.tracef("About to write (max) %d messages to the client", size);
+         max = size;
+      }
+      return bulkResponse(header, server, channel, max, publisher, (entry, buf) -> {
+         ExtendedByteBuf.writeRangedBytes(entry.getKey(), buf);
+         ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
+      });
    }
 
    @Override
@@ -298,17 +313,6 @@ class Encoder2x implements VersionedEncoder {
          ExtendedByteBuf.writeRangedBytes(entry.getKey(), buf);
          ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
       }
-      return buf;
-   }
-
-   @Override
-   public ByteBuf bulkGetKeysResponse(HotRodHeader header, HotRodServer server, Channel channel, CloseableIterator<byte[]> iterator) {
-      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
-      while (iterator.hasNext()) {
-         buf.writeByte(1);
-         ExtendedByteBuf.writeRangedBytes(iterator.next(), buf);
-      }
-      buf.writeByte(0);
       return buf;
    }
 

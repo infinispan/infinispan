@@ -24,6 +24,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
+import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.security.actions.SecurityActions;
@@ -62,13 +63,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       // we ignore the default cache (empty) only when it doesn't have a default cache defined
       if (!header.cacheName.isEmpty() || server.hasDefaultCache()) {
          server.ensureCacheInitialized(header)
-               .whenComplete((__, t) -> {
+               .whenCompleteAsync((__, t) -> {
                   if (t != null) {
                      writeException(header, t);
                   } else {
                      pingResults(header);
                   }
-               });
+               }, channel.eventLoop());
       } else {
          pingResults(header);
       }
@@ -136,7 +137,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       if (get.isDone() && !get.isCompletedExceptionally()) {
          handleGet(header, get.join(), null, span);
       } else {
-         get.whenComplete((result, throwable) -> handleGet(header, result, throwable, span));
+         get.whenCompleteAsync((result, throwable) -> handleGet(header, result, throwable, span), channel.eventLoop());
       }
    }
 
@@ -208,7 +209,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       if (get.isDone() && !get.isCompletedExceptionally()) {
          handleGetWithMetadata(header, offset, get.join(), null);
       } else {
-         get.whenComplete((ce, throwable) -> handleGetWithMetadata(header, offset, ce, throwable));
+         get.whenCompleteAsync((ce, throwable) -> handleGetWithMetadata(header, offset, ce, throwable), channel.eventLoop());
       }
    }
 
@@ -238,7 +239,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       if (contains.isDone() && !contains.isCompletedExceptionally()) {
          handleContainsKey(header, contains.join(), null);
       } else {
-         contains.whenComplete((result, throwable) -> handleContainsKey(header, result, throwable));
+         contains.whenCompleteAsync((result, throwable) -> handleContainsKey(header, result, throwable), channel.eventLoop());
       }
    }
 
@@ -272,7 +273,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                .putAsync(key, value, metadata)
                .thenApply(CompletableFutures.toNullFunction());
       }
-      cs.whenComplete((ce, throwable) -> handlePut(header, ce, throwable, span));
+      cs.whenCompleteAsync((ce, throwable) -> handlePut(header, ce, throwable, span), channel.eventLoop());
    }
 
    private void handlePut(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable,
@@ -303,7 +304,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                                             long version, byte[] value, Metadata metadata, InfinispanSpan<ConditionalResponse> span) {
       cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntryAsync(key)
             .thenCompose(entry -> replaceIfUnmodifiedAfterGet(cache, entry, version, value, metadata))
-            .whenComplete((response, throwable) -> handleConditionalResponse(header, response, throwable, span));
+            .whenCompleteAsync((response, throwable) -> handleConditionalResponse(header, response, throwable, span), channel.eventLoop());
    }
 
    private CompletionStage<ConditionalResponse> replaceIfUnmodifiedAfterGet(AdvancedCache<byte[], byte[]> cache,
@@ -360,7 +361,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       // on whether a new version should be calculated or not.
       cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getAsync(key)
             .thenCompose(prev -> replaceAfterGet(cache, prev != null, key, value, metadata))
-            .whenComplete((cacheEntry, throwable) -> handleReplaceIfExists(header, cacheEntry, throwable, span));
+            .whenCompleteAsync((cacheEntry, throwable) -> handleReplaceIfExists(header, cacheEntry, throwable, span), channel.eventLoop());
    }
 
    private CompletionStage<CacheEntry<byte[], byte[]>> replaceAfterGet(AdvancedCache<byte[], byte[]> cache, boolean exists, byte[] key, byte[] value, Metadata metadata) {
@@ -398,7 +399,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private void putIfAbsentInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
                                     Metadata metadata, InfinispanSpan<CacheEntry<?, ?>> span) {
       cache.putIfAbsentAsyncEntry(key, value, metadata)
-            .whenComplete((prev, throwable) -> handlePutIfAbsent(header, prev, throwable, span));
+            .whenCompleteAsync((prev, throwable) -> handlePutIfAbsent(header, prev, throwable, span), channel.eventLoop());
    }
 
    private void handlePutIfAbsent(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable,
@@ -429,7 +430,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private void removeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
                                InfinispanSpan<CacheEntry<?, ?>> span) {
       cache.removeAsyncEntry(key)
-            .whenComplete((ce, throwable) -> handleRemove(header, ce, throwable, span));
+            .whenCompleteAsync((ce, throwable) -> handleRemove(header, ce, throwable, span), channel.eventLoop());
    }
 
    private void handleRemove(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable,
@@ -461,7 +462,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                                            long version, InfinispanSpan<ConditionalResponse> span) {
       cache.getCacheEntryAsync(key)
             .thenCompose(cacheEntry -> removeIfUnmodifiedAfterGet(cache, cacheEntry, version))
-            .whenComplete((response, throwable) -> handleConditionalResponse(header, response, throwable, span));
+            .whenCompleteAsync((response, throwable) -> handleConditionalResponse(header, response, throwable, span), channel.eventLoop());
    }
 
    private CompletionStage<ConditionalResponse> removeIfUnmodifiedAfterGet(AdvancedCache<byte[], byte[]> cache,
@@ -490,7 +491,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void clearInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, InfinispanSpan<Void> span) {
       cache.clearAsync()
-            .whenComplete((unused, throwable) -> handleGenericResponse(header, throwable, span));
+            .whenCompleteAsync((unused, throwable) -> handleGenericResponse(header, throwable, span), channel.eventLoop());
    }
 
    void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata.Builder metadata) {
@@ -506,7 +507,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private void putAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Map<byte[], byte[]> entries,
                                Metadata metadata, InfinispanSpan<Void> span) {
       cache.putAllAsync(entries, metadata)
-            .whenComplete((nil, throwable) -> handleGenericResponse(header, throwable, span));
+            .whenCompleteAsync((nil, throwable) -> handleGenericResponse(header, throwable, span), channel.eventLoop());
    }
 
    private void handleGenericResponse(HotRodHeader header, Throwable throwable, InfinispanSpan<Void> span) {
@@ -530,7 +531,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void getAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Set<?> keys) {
       cache.getAllAsync(keys)
-            .whenComplete((map, throwable) -> handleGetAll(header, map, throwable));
+            .whenCompleteAsync((map, throwable) -> handleGetAll(header, map, throwable), channel.eventLoop());
    }
 
    private void handleGetAll(HotRodHeader header, Map<byte[], byte[]> map, Throwable throwable) {
@@ -552,7 +553,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void sizeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, InfinispanSpan<Long> span) {
       cache.sizeAsync()
-            .whenComplete((size, throwable) -> handleSize(header, size, throwable, span));
+            .whenCompleteAsync((size, throwable) -> handleSize(header, size, throwable, span), channel.eventLoop());
    }
 
    private void handleSize(HotRodHeader header, Long size, Throwable throwable, InfinispanSpan<Long> span) {
@@ -570,34 +571,42 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void bulkGet(HotRodHeader header, Subject subject, int size) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> bulkGetInternal(header, cache, size));
-   }
-
-   private void bulkGetInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, int size) {
-      try {
-         if (log.isTraceEnabled()) {
-            log.tracef("About to create bulk response count = %d", size);
-         }
-         writeResponse(header, header.encoder().bulkGetResponse(header, server, channel, size, cache.entrySet()));
-      } catch (Throwable t) {
-         writeException(header, t);
+      if (log.isTraceEnabled()) {
+         log.tracef("About to create bulk response count = %d", size);
       }
+      // We could technically stream the results instead of writing to a ByteBuf.. but then we have to handle intermediate
+      // error that could occur..
+      header.encoder().bulkGetResponse(header, server, channel, size, cache.cachePublisher()
+                  .entryPublisher(MarshallableFunctions.identity()).publisherWithoutSegments())
+            .whenCompleteAsync((buf, t) -> {
+               if (t != null) {
+                  writeException(header, t);
+               } else {
+                  writeResponse(header, buf);
+               }
+            }, channel.eventLoop());
    }
 
    void bulkGetKeys(HotRodHeader header, Subject subject, int scope) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> bulkGetKeysInternal(header, cache, scope));
+      if (log.isTraceEnabled()) {
+         log.tracef("About to create bulk get keys response scope = %d", scope);
+      }
+      // We could technically stream the results instead of writing to a ByteBuf.. but then we have to handle intermediate
+      // error that could occur..
+      header.encoder().bulkGetKeysResponse(header, server, channel, cache.cachePublisher()
+                  .keyPublisher(MarshallableFunctions.identity()).publisherWithoutSegments())
+            .whenCompleteAsync((buf, t) -> {
+               if (t != null) {
+                  writeException(header, t);
+               } else {
+                  writeResponse(header, buf);
+               }
+            }, channel.eventLoop());
    }
 
    private void bulkGetKeysInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, int scope) {
-      try {
-         if (log.isTraceEnabled()) {
-            log.tracef("About to create bulk get keys response scope = %d", scope);
-         }
-         writeResponse(header, header.encoder().bulkGetKeysResponse(header, server, channel, cache.keySet().iterator()));
-      } catch (Throwable t) {
-         writeException(header, t);
-      }
+
    }
 
    void query(HotRodHeader header, Subject subject, byte[] queryBytes) {
@@ -633,7 +642,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          CompletionStage<Void> stage = listenerRegistry.addClientListener(channel, header, listenerId, cache,
                includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawData,
                listenerInterests, bloomFilter);
-         stage.whenComplete((ignore, cause) -> {
+         stage.whenCompleteAsync((ignore, cause) -> {
             try {
                if (cause != null) {
                   log.trace("Failed to add listener", cause);
@@ -649,7 +658,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
             } finally {
                span.complete();
             }
-         });
+         }, channel.eventLoop());
       }
    }
 
@@ -665,7 +674,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private void removeClientListenerInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
                                              byte[] listenerId, InfinispanSpan<Boolean> span) {
       server.getClientListenerRegistry().removeClientListener(listenerId, cache)
-            .whenComplete((success, throwable) -> {
+            .whenCompleteAsync((success, throwable) -> {
                try {
                   if (throwable != null) {
                      writeException(header, throwable);
@@ -680,22 +689,22 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                } finally {
                   span.complete();
                }
-            });
+            }, channel.eventLoop());
    }
 
    void iterationStart(HotRodHeader header, Subject subject, byte[] segmentMask, String filterConverterFactory,
                        List<byte[]> filterConverterParams, int batch, boolean includeMetadata) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> {
-         try {
-            IterationState iterationState = server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
-                  filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata, DeliveryGuarantee.EXACTLY_ONCE, null);
-            iterationState.getReaper().registerChannel(channel);
-            writeResponse(header, header.encoder().iterationStartResponse(header, server, channel, iterationState.getId()));
-         } catch (Throwable t) {
-            writeException(header, t);
-         }
-      });
+      CompletableFuture.supplyAsync(() -> server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
+                  filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata, DeliveryGuarantee.EXACTLY_ONCE, null), executor)
+            .whenCompleteAsync((iterationState, throwable) -> {
+               if (throwable != null) {
+                  writeException(header, throwable);
+               } else {
+                  iterationState.getReaper().registerChannel(channel);
+                  writeResponse(header, header.encoder().iterationStartResponse(header, server, channel, iterationState.getId()));
+               }
+            }, channel.eventLoop());
    }
 
    void iterationNext(HotRodHeader header, Subject subject, String iterationId) {

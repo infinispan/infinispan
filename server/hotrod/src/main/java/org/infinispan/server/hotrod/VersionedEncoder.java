@@ -3,10 +3,9 @@ package org.infinispan.server.hotrod;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.CacheSet;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.server.core.iteration.IterableIterationResult;
@@ -16,6 +15,7 @@ import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
 import org.infinispan.server.hotrod.streaming.GetStreamResponse;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
+import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -44,7 +44,7 @@ public interface VersionedEncoder {
 
    ByteBuf errorResponse(HotRodHeader header, HotRodServer server, Channel channel, String message, OperationStatus status);
 
-   ByteBuf bulkGetResponse(HotRodHeader header, HotRodServer server, Channel channel, int size, CacheSet<Map.Entry<byte[], byte[]>> entries);
+   CompletionStage<ByteBuf> bulkGetResponse(HotRodHeader header, HotRodServer server, Channel channel, int size, Publisher<CacheEntry<byte[], byte[]>> publisher);
 
    ByteBuf emptyResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status);
 
@@ -71,7 +71,7 @@ public interface VersionedEncoder {
 
    ByteBuf getAllResponse(HotRodHeader header, HotRodServer server, Channel channel, Map<byte[], byte[]> map);
 
-   ByteBuf bulkGetKeysResponse(HotRodHeader header, HotRodServer server, Channel channel, CloseableIterator<byte[]> iterator);
+   CompletionStage<ByteBuf> bulkGetKeysResponse(HotRodHeader header, HotRodServer server, Channel channel, Publisher<byte[]> publisher);
 
    ByteBuf iterationStartResponse(HotRodHeader header, HotRodServer server, Channel channel, String iterationId);
 

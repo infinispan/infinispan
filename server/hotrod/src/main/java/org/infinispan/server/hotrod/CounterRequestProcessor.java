@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.extractException;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import javax.security.auth.Subject;
@@ -46,29 +47,15 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    }
 
    void removeCounterListener(HotRodHeader header, Subject subject, String counterName, byte[] listenerId) {
-      executor.execute(() -> removeCounterListenerInternal(header, counterName, listenerId));
-   }
-
-   private void removeCounterListenerInternal(HotRodHeader header, String counterName, byte[] listenerId) {
-      try {
-         writeResponse(header, createResponseFrom(header, notificationManager()
-               .removeCounterListener(listenerId, counterName)));
-      } catch (Throwable t) {
-         writeException(header, t);
-      }
+      CompletableFuture.supplyAsync(() -> notificationManager()
+                  .removeCounterListener(listenerId, counterName), executor)
+            .whenCompleteAsync((status, throwable) -> listerOperationStatusHandler(header, status, throwable), channel.eventLoop());
    }
 
    void addCounterListener(HotRodHeader header, Subject subject, String counterName, byte[] listenerId) {
-      executor.execute(() -> addCounterListenerInternal(header, counterName, listenerId));
-   }
-
-   private void addCounterListenerInternal(HotRodHeader header, String counterName, byte[] listenerId) {
-      try {
-         writeResponse(header, createResponseFrom(header, notificationManager()
-               .addCounterListener(listenerId, header.getVersion(), counterName, channel, header.encoder())));
-      } catch (Throwable t) {
-         writeException(header, t);
-      }
+      CompletableFuture.supplyAsync(() -> notificationManager()
+                  .addCounterListener(listenerId, header.getVersion(), counterName, channel, header.encoder()), executor)
+            .whenCompleteAsync((status, throwable) -> listerOperationStatusHandler(header, status, throwable), channel.eventLoop());
    }
 
    void getCounterNames(HotRodHeader header, Subject subject) {
@@ -78,51 +65,51 @@ class CounterRequestProcessor extends BaseRequestProcessor {
 
    void counterRemove(HotRodHeader header, Subject subject, String counterName) {
       counterManager(header).removeAsync(counterName, true)
-            .whenComplete((___, throwable) -> voidResultHandler(header, throwable));
+            .whenCompleteAsync((___, throwable) -> voidResultHandler(header, throwable), channel.eventLoop());
    }
 
    void counterCompareAndSwap(HotRodHeader header, Subject subject, String counterName, long expect, long update) {
       counterManager(header).getStrongCounterAsync(counterName)
             .thenCompose(strongCounter -> strongCounter.compareAndSwap(expect, update))
-            .whenComplete((returnValue, throwable) -> longResultHandler(header, returnValue, throwable));
+            .whenCompleteAsync((returnValue, throwable) -> longResultHandler(header, returnValue, throwable), channel.eventLoop());
    }
 
    void counterGet(HotRodHeader header, Subject subject, String counterName) {
       counterManager(header).getOrCreateAsync(counterName)
             .thenCompose(InternalCounterAdmin::value)
-            .whenComplete((value, throwable) -> longResultHandler(header, value, throwable));
+            .whenCompleteAsync((value, throwable) -> longResultHandler(header, value, throwable), channel.eventLoop());
    }
 
    void counterReset(HotRodHeader header, Subject subject, String counterName) {
       counterManager(header).getOrCreateAsync(counterName)
             .thenCompose(InternalCounterAdmin::reset)
-            .whenComplete((unused, throwable) -> voidResultHandler(header, throwable));
+            .whenCompleteAsync((unused, throwable) -> voidResultHandler(header, throwable), channel.eventLoop());
    }
 
    void counterAddAndGet(HotRodHeader header, Subject subject, String counterName, long value) {
       counterManager(header).getOrCreateAsync(counterName)
             .thenAccept(counter -> {
                if (counter.isWeakCounter()) {
-                  counter.asWeakCounter().add(value).whenComplete((___, t) -> longResultHandler(header, 0L, t));
+                  counter.asWeakCounter().add(value).whenCompleteAsync((___, t) -> longResultHandler(header, 0L, t), channel.eventLoop());
                } else {
-                  counter.asStrongCounter().addAndGet(value).whenComplete((rv, t) -> longResultHandler(header, rv, t));
+                  counter.asStrongCounter().addAndGet(value).whenCompleteAsync((rv, t) -> longResultHandler(header, rv, t), channel.eventLoop());
                }
             })
-            .exceptionally(throwable -> {
+            .exceptionallyAsync(throwable -> {
                checkCounterThrowable(header, throwable);
                return null;
-            });
+            }, channel.eventLoop());
    }
 
    void counterSet(HotRodHeader header, Subject subject, String counterName, long value) {
       counterManager(header).getStrongCounterAsync(counterName)
             .thenCompose(strongCounter -> strongCounter.getAndSet(value))
-            .whenComplete((returnValue, throwable) -> longResultHandler(header, returnValue, throwable));
+            .whenCompleteAsync((returnValue, throwable) -> longResultHandler(header, returnValue, throwable), channel.eventLoop());
    }
 
    void getCounterConfiguration(HotRodHeader header, Subject subject, String counterName) {
       counterManager(header).getConfigurationAsync(counterName)
-            .whenComplete((configuration, throwable) -> handleGetCounterConfiguration(header, configuration, throwable));
+            .whenCompleteAsync((configuration, throwable) -> handleGetCounterConfiguration(header, configuration, throwable), channel.eventLoop());
    }
 
    private void handleGetCounterConfiguration(HotRodHeader header, CounterConfiguration configuration, Throwable throwable) {
@@ -136,24 +123,28 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    }
 
    void isCounterDefined(HotRodHeader header, Subject subject, String counterName) {
-      counterManager(header).isDefinedAsync(counterName).whenComplete((value, throwable) -> booleanResultHandler(header, value, throwable));
+      counterManager(header).isDefinedAsync(counterName)
+            .whenCompleteAsync((value, throwable) -> booleanResultHandler(header, value, throwable), channel.eventLoop());
    }
 
    void createCounter(HotRodHeader header, Subject subject, String counterName, CounterConfiguration configuration) {
       counterManager(header).defineCounterAsync(counterName, configuration)
-            .whenComplete((value, throwable) -> booleanResultHandler(header, value, throwable));
+            .whenCompleteAsync((value, throwable) -> booleanResultHandler(header, value, throwable), channel.eventLoop());
    }
 
    private ByteBuf createResponseFrom(HotRodHeader header, ListenerOperationStatus status) {
-      switch (status) {
-         case OK:
-            return header.encoder().emptyResponse(header, server, channel, OperationStatus.OperationNotExecuted);
-         case OK_AND_CHANNEL_IN_USE:
-            return header.encoder().emptyResponse(header, server, channel, OperationStatus.Success);
-         case COUNTER_NOT_FOUND:
-            return missingCounterResponse(header);
-         default:
-            throw new IllegalStateException();
+      return switch (status) {
+         case OK -> header.encoder().emptyResponse(header, server, channel, OperationStatus.OperationNotExecuted);
+         case OK_AND_CHANNEL_IN_USE -> header.encoder().emptyResponse(header, server, channel, OperationStatus.Success);
+         case COUNTER_NOT_FOUND -> missingCounterResponse(header);
+      };
+   }
+
+   private void listerOperationStatusHandler(HotRodHeader header, ListenerOperationStatus status, Throwable throwable) {
+      if (throwable != null) {
+         checkCounterThrowable(header, throwable);
+      } else {
+         writeResponse(header, createResponseFrom(header, status));
       }
    }
 
