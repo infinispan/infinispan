@@ -204,7 +204,7 @@
       <versionx.org.apache.commons.commons-lang3>3.19.0</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds>2.0.0.AM27</versionx.org.apache.directory.server.apacheds>
-      <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.15.1</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
+      <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.15.2</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
       <versionx.org.aspectj.aspectjweaver>1.9.24</versionx.org.aspectj.aspectjweaver>
       <versionx.org.assertj.assertj-core>3.27.6</versionx.org.assertj.assertj-core>
       <versionx.org.apache.mina.mina>2.2.4</versionx.org.apache.mina.mina>
