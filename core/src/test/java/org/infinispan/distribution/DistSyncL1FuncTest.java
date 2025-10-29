@@ -20,7 +20,9 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.testng.annotations.Test;
@@ -245,8 +247,9 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertIsInL1(nonOwnerCache, key);
 
       // Add a barrier to block the owner from receiving the get command from the non owner
-      CyclicBarrier ownerGetBarrier = new CyclicBarrier(2);
-      addBlockingInterceptor(ownerCache, ownerGetBarrier, GetCacheEntryCommand.class, L1NonTxInterceptor.class, false);
+      CheckPoint ownerCheckPoint = new CheckPoint();
+      ownerCheckPoint.triggerForever(Mocks.AFTER_RELEASE);
+      addCheckpointInterceptor(ownerCache, ownerCheckPoint, GetCacheEntryCommand.class, L1NonTxInterceptor.class, false);
 
       // Add a barrier to block the backup owner from committing the write to memory
       CyclicBarrier backupOwnerWriteBarrier = new CyclicBarrier(2);
@@ -264,6 +267,9 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          // This should come back from the backup owner, since the primary owner is blocked
          assertEquals(firstValue, nonOwnerCache.get(key));
 
+         // This just ensure the owner has hit the block for the get
+         ownerCheckPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
          assertIsInL1(nonOwnerCache, key);
 
          // Now let the backup owner put complete and send response
@@ -279,13 +285,12 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
          // Now finally let the get from the non owner to the primary owner go, which at this point will finally
          // register the requestor
-         ownerGetBarrier.await(5, TimeUnit.SECONDS);
-         ownerGetBarrier.await(5, TimeUnit.SECONDS);
+         ownerCheckPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
          // The L1 value shouldn't be present
          assertIsNotInL1(nonOwnerCache, key);
       } finally {
-         removeAllBlockingInterceptorsFromCache(ownerCache);
+         removeAllCheckPointInterceptorsFromCache(ownerCache);
          removeAllBlockingInterceptorsFromCache(backupOwnerCache);
       }
    }
