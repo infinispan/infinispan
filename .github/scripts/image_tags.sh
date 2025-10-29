@@ -25,6 +25,6 @@ fi
 
 FQ_TAGS=""
 for TAG in ${TAGS}; do
-  FQ_TAGS+="${REPO}infinispan/server:${TAG} "
+  FQ_TAGS+="${TAG} "
 done
 echo "${FQ_TAGS::-1}"
