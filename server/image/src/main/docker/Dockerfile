@@ -5,7 +5,7 @@ ARG OPENJDK_PACKAGE=""
 # Packages needed by the builder
 ARG BUILDER_PACKAGES="file unzip wget"
 # Packages to be installed in the target image
-ARG MAIN_PACKAGES="coreutils-single curl grep iproute lsof sed vim-minimal ${OPENJDK_PACKAGE}"
+ARG MAIN_PACKAGES="coreutils-single curl grep iproute lsof procps-ng sed tar vim-minimal ${OPENJDK_PACKAGE}"
 # Packages to be removed
 ARG REMOVE_PACKAGES="alsa-lib avahi-libs cups-filesystem cups-libs gawk p11-kit"
 # The path to the root filesystem in the builder
@@ -90,7 +90,12 @@ ENV JAVA_HOME=${NEWROOT}/usr/lib/jvm/default-java
 ENV JAVA_OPTS="-XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Xms64m -Xmx512m"
 # Temporarily disabled
 #RUN ${NEWROOT}/${WORKDIR}/bin/server.sh --aot || true
+ADD src/main/docker/bashrc ${NEWROOT}/${WORKDIR}/.bashrc
 RUN chown -R 65532:65532 ${NEWROOT}/${WORKDIR}
+# Backwards compatibility
+RUN mkdir -p ${NEWROOT}/opt/gossiprouter/bin
+RUN ln -s -r ${NEWROOT}/${WORKDIR}/bin/gossip-router.sh ${NEWROOT}/opt/gossiprouter/bin/launch.sh
+RUN chown -R 65532:65532 ${NEWROOT}/opt/gossiprouter
 
 # Target image
 FROM ${BASE_IMAGE}
@@ -102,11 +107,15 @@ ARG BRAND_VERSION
 # Copy from the builder image to the target
 COPY --from=builder ${NEWROOT} /
 
+# Add the user and group
+RUN echo "infinispan:x:65532:root" >> /etc/group && \
+    echo "infinispan:x:65532:65532:infinispan:/opt/infinispan:/usr/sbin/nologin" >> /etc/passwd
+
 # We run the container unprivileged, create a writable HOME
 WORKDIR ${WORKDIR}
 ENV HOME=${WORKDIR}
 ENV ISPN_HOME=/opt/infinispan
-ENV USER=default
+ENV USER=infinispan
 ENV JAVA_HOME=/usr/lib/jvm/default-java
 ENV LANG=C.UTF-8
 USER 65532
