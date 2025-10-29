@@ -49,7 +49,10 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
       Attribute<TransactionMode> transactionModeAttribute =
             getBuilder().transaction().attributes.attribute(TRANSACTION_MODE);
       if (!transactionModeAttribute.isModified()) {
+         // This update should reflect what is happening in CacheParser
          getBuilder().transaction().transactionMode(TRANSACTIONAL);
+         getBuilder().transaction().useSynchronization(true);
+         getBuilder().transaction().recovery().enabled(false);
       }
    }
 

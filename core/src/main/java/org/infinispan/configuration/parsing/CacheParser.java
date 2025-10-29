@@ -563,6 +563,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case MODE: {
+               // This should reflect what happens in the transaction builders, e.g., InvocationBatchingConfigurationBuilder.
                TransactionMode txMode = ParseUtils.parseEnum(reader, i, TransactionMode.class, value);
                builder.transaction().transactionMode(txMode.getMode());
                builder.transaction().useSynchronization(!txMode.isXAEnabled() && txMode.getMode().isTransactional());

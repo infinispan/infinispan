@@ -347,17 +347,37 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
 
    @Override
    public boolean matches(AttributeSet other) {
-      if (other.attributes.size() != attributes.size())
+      return internalMatches(other);
+   }
+
+   public boolean matches(AttributeSet other, Attribute<?> ... ignored) {
+      return internalMatches(other, ignored);
+   }
+
+   private boolean internalMatches(AttributeSet other, Attribute<?> ... ignored) {
+      if (attributes.size() != other.attributes.size())
          return false;
+
+      OUTER:
       for (Map.Entry<String, Attribute<?>> e : attributes.entrySet()) {
          String key = e.getKey();
          Attribute<?> value = e.getValue();
          if (value == null) {
-            if (!(other.attributes.containsKey(key) && other.attributes.get(key) == null))
+            if (!(other.attributes.containsKey(key) && other.attributes.get(key) == null)) {
+               for (Attribute<?> attributeIgnored : ignored) {
+                  if (key.equals(attributeIgnored.name()))
+                     continue OUTER;
+               }
                return false;
+            }
          } else {
-            if (!value.matches(other.attributes.get(key)))
+            if (!value.matches(other.attributes.get(key))) {
+               for (Attribute<?> attributeIgnored : ignored) {
+                  if (key.equals(attributeIgnored.name()))
+                     continue OUTER;
+               }
                return false;
+            }
          }
       }
       return true;
