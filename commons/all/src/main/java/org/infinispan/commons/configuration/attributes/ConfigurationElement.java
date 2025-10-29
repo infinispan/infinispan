@@ -1,5 +1,6 @@
 package org.infinispan.commons.configuration.attributes;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -77,12 +78,24 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
 
    @Override
    public boolean matches(T other) {
-      if (!attributes.matches(other.attributes)) return false;
+      return internalMatches(other);
+   }
+
+   public boolean matches(T other, ConfigurationElement<?> parent) {
+      return matches(other);
+   }
+
+   public boolean matches(T other, Attribute<?> ... ignored) {
+      return internalMatches(other, ignored);
+   }
+
+   private boolean internalMatches(T other, Attribute<?> ... ignored) {
+      if (!attributes.matches(other.attributes, ignored)) return false;
       if (children.length != other.children.length) return false;
       for (int i = 0; i < children.length; i++) {
          ConfigurationElement ours = children[i];
          ConfigurationElement theirs = other.children[i];
-         if (!ours.matches(theirs)) return false;
+         if (!ours.matches(theirs, this)) return false;
       }
       return true;
    }
@@ -227,5 +240,13 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
       public void write(ConfigurationWriter writer) {
          attribute.write(writer, attribute.name());
       }
+   }
+
+   public static Attribute<?>[] extractAttributes(AttributeSet attributes, AttributeDefinition<?> ... definitions) {
+      List<Attribute<?>> collected = new ArrayList<>();
+      for (AttributeDefinition<?> definition : definitions) {
+         collected.add(attributes.attribute(definition));
+      }
+      return collected.toArray(new Attribute<?>[0]);
    }
 }
