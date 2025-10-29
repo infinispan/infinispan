@@ -30,6 +30,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
@@ -82,6 +83,16 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
                                                         Class<? extends AsyncInterceptor> interceptorPosition,
                                                         boolean blockAfterCommand) {
       BlockingInterceptor bi = new BlockingInterceptor<>(barrier, commandClass, blockAfterCommand, false);
+      AsyncInterceptorChain interceptorChain = extractInterceptorChain(cache);
+      assertTrue(interceptorChain.addInterceptorBefore(bi, interceptorPosition));
+      return bi;
+   }
+
+   protected CheckPointInterceptor addCheckpointInterceptor(Cache<?, ?> cache, final CheckPoint checkPoint,
+                                                            Class<? extends VisitableCommand> commandClass,
+                                                            Class<? extends AsyncInterceptor> interceptorPosition,
+                                                            boolean blockAfterCommand) {
+      CheckPointInterceptor bi = new CheckPointInterceptor<>(checkPoint, testExecutor(), commandClass, blockAfterCommand, false);
       AsyncInterceptorChain interceptorChain = extractInterceptorChain(cache);
       assertTrue(interceptorChain.addInterceptorBefore(bi, interceptorPosition));
       return bi;
@@ -311,24 +322,25 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
       assertIsNotInL1(nonOwnerCache, key);
 
-      // Add a barrier to block the owner/backupowner from going further after retrieving the value before coming back into the L1
-      // interceptor
-      CyclicBarrier getBarrier = new CyclicBarrier(3);
-      addBlockingInterceptor(ownerCache, getBarrier, GetCacheEntryCommand.class,
+      // Add a checkPoint to block the owner/backupowner from going further after retrieving the value before coming
+      // back into the L1 interceptor
+      CheckPoint checkPoint = new CheckPoint();
+      checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
+      addCheckpointInterceptor(ownerCache, checkPoint, GetCacheEntryCommand.class,
             getL1InterceptorClass(), true);
-      addBlockingInterceptor(backupOwnerCache, getBarrier, GetCacheEntryCommand.class,
+      addCheckpointInterceptor(backupOwnerCache, checkPoint, GetCacheEntryCommand.class,
             getL1InterceptorClass(), true);
 
       try {
          Future<String> future = fork(() -> nonOwnerCache.get(key));
 
          // Wait until get goes remote and retrieves value before going back into L1 interceptor
-         getBarrier.await(10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 2, 10, TimeUnit.SECONDS);
 
          assertEquals(firstValue, ownerCache.put(key, secondValue));
 
          // Let the get complete finally
-         getBarrier.await(10, TimeUnit.SECONDS);
+         checkPoint.triggerForever(Mocks.AFTER_RELEASE);
 
          final String expectedValue;
          expectedValue = firstValue;
@@ -336,8 +348,8 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
          assertIsNotInL1(nonOwnerCache, key);
       } finally {
-         removeAllBlockingInterceptorsFromCache(ownerCache);
-         removeAllBlockingInterceptorsFromCache(backupOwnerCache);
+         removeAllCheckPointInterceptorsFromCache(ownerCache);
+         removeAllCheckPointInterceptorsFromCache(backupOwnerCache);
       }
    }
 

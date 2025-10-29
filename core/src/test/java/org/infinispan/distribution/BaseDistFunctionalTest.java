@@ -333,6 +333,16 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       return TestingUtil.getTransactionManager(cache);
    }
 
+   protected static void removeAllCheckPointInterceptorsFromCache(Cache<?, ?> cache) {
+      AsyncInterceptorChain chain = TestingUtil.extractInterceptorChain(cache);
+      CheckPointInterceptor<?> checkPointInterceptor = chain.findInterceptorExtending(CheckPointInterceptor.class);
+      while (checkPointInterceptor != null) {
+         checkPointInterceptor.suspend();
+         chain.removeInterceptor(checkPointInterceptor.getClass());
+         checkPointInterceptor = chain.findInterceptorExtending(CheckPointInterceptor.class);
+      }
+   }
+
    protected static void removeAllBlockingInterceptorsFromCache(Cache<?, ?> cache) {
       AsyncInterceptorChain chain = TestingUtil.extractInterceptorChain(cache);
       BlockingInterceptor<?> blockingInterceptor = chain.findInterceptorExtending(BlockingInterceptor.class);
