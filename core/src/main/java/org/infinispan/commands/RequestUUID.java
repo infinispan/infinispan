@@ -143,7 +143,9 @@ public final class RequestUUID {
 
    @Override
    public int hashCode() {
-      return Objects.hash(nodeUUID, requestId);
+      int result = nodeUUID.hashCode();
+      result = 31 * result + Long.hashCode(requestId);
+      return result;
    }
 
    @Override
