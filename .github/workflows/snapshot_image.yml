@@ -49,7 +49,7 @@ jobs:
             BRAND_VERSION=${{ inputs.runId }}
             BRAND_NAME=Infinispan
             JDK_DIST=src/main/docker/adoptium
-            SERVER_DIST=./${{ steps.extract_artifact.outputs.serverzip }}
+            SERVER_DIST=${{ github.workspace }}/${{ steps.extract_artifact.outputs.serverzip }}
           containerfiles: ./${{ steps.extract_artifact.outputs.srcroot }}/server/image/src/main/docker/Dockerfile
           context: ./${{ steps.extract_artifact.outputs.srcroot }}/server/image
           image: server
