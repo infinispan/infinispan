@@ -109,6 +109,10 @@ ENV ISPN_HOME=/opt/infinispan
 ENV USER=default
 ENV JAVA_HOME=/usr/lib/jvm/default-java
 ENV LANG=C.UTF-8
+# Create symlinks for backwards compatibility with the Operator
+RUN mkdir -p /opt/gossiprouter/bin && \
+    ln -s -r bin/gossip-router.sh /opt/gossiprouter/bin/launch.sh && \
+    ln -s -r bin/common.sh /opt/gossiprouter/bin/common.sh
 USER 65532
 EXPOSE 11222 11221 11223 2157 46655 57800 7800 7900 8080 8443
 ENTRYPOINT [ "/opt/infinispan/bin/launch.sh" ]
