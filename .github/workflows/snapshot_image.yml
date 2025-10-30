@@ -46,10 +46,10 @@ jobs:
         uses: redhat-actions/buildah-build@v2
         with:
           build-args: |
-            BRAND_VERSION=${{ inputs.version }}
+            BRAND_VERSION=${{ inputs.runId }}
             BRAND_NAME=Infinispan
             JDK_DIST=src/main/docker/adoptium
-            SERVER_DIST=${{ steps.extract_artifact.outputs.serverzip }}
+            SERVER_DIST=./${{ steps.extract_artifact.outputs.serverzip }}
           containerfiles: ./${{ steps.extract_artifact.outputs.srcroot }}/server/image/src/main/docker/Dockerfile
           context: ./${{ steps.extract_artifact.outputs.srcroot }}/server/image
           image: server
