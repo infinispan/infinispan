@@ -36,12 +36,11 @@ jobs:
 
       - name: Extract artifact
         id: extract_artifact
-        run: |
-          pwd
-          ls -al
+        run: |          
           unzip -q infinispan-*-src.zip
-          echo "srcroot=$(find . -maxdepth 1 -type d -name '*src')" >> $GITHUB_OUTPUT
-          echo "serverzip=$(find . -maxdepth 1 -type f -name 'infinispan-server*')" >> $GITHUB_OUTPUT
+          SRCROOT=$(find . -maxdepth 1 -type d -name '*src')
+          echo "srcroot=$SRCROOT" >> $GITHUB_OUTPUT
+          mv infinispan-server-*.zip "$SRCROOT"/server/image/infinispan-server.zip
 
       - name: Build image
         id: build-image
@@ -51,7 +50,7 @@ jobs:
             BRAND_VERSION=${{ inputs.runId }}
             BRAND_NAME=Infinispan
             JDK_DIST=src/main/docker/adoptium
-            SERVER_DIST=${{ github.workspace }}/${{ steps.extract_artifact.outputs.serverzip }}
+            SERVER_DIST=infinispan-server.zip
           containerfiles: ./${{ steps.extract_artifact.outputs.srcroot }}/server/image/src/main/docker/Dockerfile
           context: ./${{ steps.extract_artifact.outputs.srcroot }}/server/image
           image: server
