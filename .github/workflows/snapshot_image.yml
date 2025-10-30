@@ -1,0 +1,75 @@
+name: Snapshot Images
+
+on:
+  workflow_call:
+    inputs:
+      runId:
+        description: 'A workflow runId'
+        required: true
+        type: string
+      tag:
+        description: 'A tag to add to the snapshot image'
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      runId:
+        description: 'A workflow runId'
+        required: true
+        type: string
+      tag:
+        description: 'A tag to add to the snapshot image'
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4.1.7
+        with:
+          run-id: '${{ inputs.runId }}'
+          name: infinispan-dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract artifact
+        id: extract_artifact
+        run: |
+          unzip -q infinispan-*-src.zip
+          echo "srcroot=$(find . -maxdepth 1 -type d -name '*src')" >> $GITHUB_OUTPUT
+          echo "serverzip=$(find . -maxdepth 1 -type f -name 'infinispan-server*')" >> $GITHUB_OUTPUT
+
+      - name: Build image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          build-args: |
+            BRAND_VERSION=${{ inputs.version }}
+            BRAND_NAME=Infinispan
+            JDK_DIST=src/main/docker/adoptium
+            SERVER_DIST=${{ steps.extract_artifact.outputs.serverzip }}
+          containerfiles: ./server/image/src/main/docker/Dockerfile
+          context: ./${{ steps.extract_artifact.outputs.srcroot }}/server/image
+          image: server
+          platforms: linux/amd64
+          tags: ${{ inputs.tag }}
+
+      - name: Log in to Quay.io
+        uses: redhat-actions/podman-login@v1
+        with:
+          username:  ${{ secrets.QUAY_USERNAME_TEST }}
+          password: ${{ secrets.QUAY_TOKEN_TEST }}
+          registry: quay.io
+
+      - name: Push to Quay.io
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: quay.io/infinispan-test
+          image: server
+          tags: ${{ steps.build-image.outputs.tags }}
+
+      - name: Print Quay.io image url
+        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
