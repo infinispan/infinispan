@@ -1,0 +1,71 @@
+[id='schemas-hotrod_{context}']
+= Hotrod Java Client management API
+The `RemoteSchemasAdmin` interface provides methods to manage Protostream schemas in a
+remote {brandname} server.
+It allows you to create, update, retrieve, and delete schemas, as well as check for validation errors.
+This API is marked as `@Experimental` and may change in future releases.
+
+== Overview
+Schemas define how objects are serialized and deserialized using Protostream.
+With `RemoteSchemasAdmin`, you can perform schema operations programmatically
+through the Hot Rod client.
+
+== Key Operations
+* *Get a schema*
+Retrieve a schema by name.
+- `get(String schemaName)`
+- `getAsync(String schemaName)`
+
+* *Retrieve schema errors*
+Check if a schema has validation or parsing errors.
+- `retrieveError(String schemaName)`
+- `retrieveAllSchemaErrors()`
+
+* *Create a schema*
+Add a new schema from a `Schema` object or `FileDescriptorSource`.
+- `create(Schema schema)`
+- `create(FileDescriptorSource fileDescriptorSource)`
+
+* *Update a schema*
+Update an existing schema safely or force the update.
+- `update(Schema schema, boolean force)`
+- `update(FileDescriptorSource fileDescriptorSource)`
+
+* *Create or update a schema*
+Create the schema if it does not exist, or update it if it does.
+- `createOrUpdate(Schema schema, boolean force)`
+- `createOrUpdate(FileDescriptorSource fileDescriptorSource)`
+
+* *Delete a schema*
+Remove a schema by name, with optional force to bypass cache dependencies.
+If a cache uses one of the schema messages for indexing, the remove
+operation fails unless force is set to `true`.
+- `remove(String schemaName, boolean force)`
+
+* *Check schema existence*
+Verify if a schema is already registered.
+- `exists(String schemaName)`
+
+== Async Support
+
+All operations have asynchronous variants that return `CompletionStage<T>`
+for non-blocking execution.
+
+== Result Objects
+
+* `SchemaOpResult` — Holds the operation result type (`CREATED`, `UPDATED`, `DELETED`, `NONE`, `ERROR`) and any validation errors.
+* `SchemaErrors` — Contains multiple schema errors mapped by schema name.
+
+
+.Schema management API example
+[source,java]
+----
+include::code_examples/SchemasAdminRemote.java[]
+----
+
+[NOTE]
+====
+* Schema updates are version-safe unless forced.
+* For large deployments, use asynchronous methods to avoid blocking client threads.
+* Forced operations (force=true) should be used cautiously to prevent errors.
+====

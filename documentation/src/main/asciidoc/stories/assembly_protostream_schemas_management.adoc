@@ -1,0 +1,17 @@
+[id='protostream-schemas-management']
+:context: protostream-schemas-management
+= Managing schemas in {brandname}
+This documentation explains how to create, register, and manage Protostream schemas
+in {brandname}.
+Schemas are registered in the {brandname} server and/or client so that ProtoStream
+knows how to interpret data in the caches.
+
+// Let's see here
+include::{topics}/proc_schemas_hotrod.adoc[leveloffset=+1]
+include::{topics}/proc_schemas_console.adoc[leveloffset=+1]
+include::{topics}/ref_rest_protobuf.adoc[leveloffset=+2]
+
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

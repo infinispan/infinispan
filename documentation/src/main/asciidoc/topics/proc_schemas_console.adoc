@@ -1,0 +1,7 @@
+[id='schemas-console_{context}']
+= Schema Management in the Console
+From the {brandname} web console, you can list, create, update,
+and manage schemas, and reindex the related caches. The web interface
+is simple and easy to use.
+
+image::schemas_admin_console.png[align="center", title="Schemas management interface"]
