@@ -10,6 +10,16 @@ on:
       version:
         description: "Release version"
         required: true
+      type:
+        type: choice
+        description: The type of release
+        required: true
+        default: "default"
+        options:
+          - default
+          - latest
+          - prerelease
+
 
 jobs:
   published:
@@ -80,13 +90,12 @@ jobs:
 
   images:
     needs: published
-    uses: infinispan/infinispan-images/.github/workflows/release.yml@main
+    uses: ./.github/workflows/release_image.yml
     secrets: inherit
     with:
-      branch: main
-      repository: infinispan/infinispan-images
-      ispnVersion: ${{ github.event.inputs.version }}
-      latest: false
+      branch: ${{ inputs.branch }}
+      version: ${{ inputs.version }}
+      type: ${{ inputs.type }}
 
   operator:
     needs: images

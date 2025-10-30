@@ -3,6 +3,10 @@ name: Snapshot Images
 on:
   workflow_call:
     inputs:
+      name:
+        description: 'The name of the image'
+        required: true
+        type: string
       runId:
         description: 'A workflow runId'
         required: true
@@ -13,6 +17,10 @@ on:
         type: string
   workflow_dispatch:
     inputs:
+      name:
+        description: 'The name of the image'
+        default: 'server'
+        type: string
       runId:
         description: 'A workflow runId'
         required: true
@@ -38,22 +46,23 @@ jobs:
         id: extract_artifact
         run: |
           unzip -q infinispan-*-src.zip
-          echo "srcroot=$(find . -maxdepth 1 -type d -name '*src')" >> $GITHUB_OUTPUT
-          echo "serverzip=$(find . -maxdepth 1 -type f -name 'infinispan-server*')" >> $GITHUB_OUTPUT
+          SRCROOT=$(find . -maxdepth 1 -type d -name '*src')
+          echo "srcroot=$SRCROOT" >> $GITHUB_OUTPUT
+          mv infinispan-server-*.zip "$SRCROOT"/server/image/infinispan-server.zip
 
       - name: Build image
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
           build-args: |
-            BRAND_VERSION=${{ inputs.version }}
+            BRAND_VERSION=${{ inputs.runId }}
             BRAND_NAME=Infinispan
             JDK_DIST=src/main/docker/adoptium
-            SERVER_DIST=${{ steps.extract_artifact.outputs.serverzip }}
-          containerfiles: ./server/image/src/main/docker/Dockerfile
+            SERVER_DIST=infinispan-server.zip
+          containerfiles: ./${{ steps.extract_artifact.outputs.srcroot }}/server/image/src/main/docker/Dockerfile
           context: ./${{ steps.extract_artifact.outputs.srcroot }}/server/image
-          image: server
-          platforms: linux/amd64
+          image: ${{ inputs.name }}
+          platforms: linux/amd64, linux/arm64
           tags: ${{ inputs.tag }}
 
       - name: Log in to Quay.io
