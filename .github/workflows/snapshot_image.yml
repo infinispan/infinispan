@@ -37,6 +37,8 @@ jobs:
       - name: Extract artifact
         id: extract_artifact
         run: |
+          pwd
+          ls -al
           unzip -q infinispan-*-src.zip
           echo "srcroot=$(find . -maxdepth 1 -type d -name '*src')" >> $GITHUB_OUTPUT
           echo "serverzip=$(find . -maxdepth 1 -type f -name 'infinispan-server*')" >> $GITHUB_OUTPUT
