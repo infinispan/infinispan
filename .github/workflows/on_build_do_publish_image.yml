@@ -65,7 +65,7 @@ jobs:
   publish-image:
     needs:
       - get-info
-    if: ${{ needs.get-info.outputs.publish-image == 'true' && !(github.event.workflow_run.head_branch == '15.2.x' || github.event.workflow_run.head_branch == '15.0.x) }}
+    if: ${{ needs.get-info.outputs.publish-image == 'true' && !(github.event.workflow_run.head_branch == '15.2.x' || github.event.workflow_run.head_branch == '15.0.x') }}
     uses: ./.github/workflows/snapshot_image.yml
     with:
       runId: ${{ github.event.workflow_run.id }}
@@ -98,7 +98,7 @@ jobs:
   publish-image-legacy:
     needs:
       - get-info
-    if: ${{ needs.get-info.outputs.publish-image == 'true' && (github.event.workflow_run.head_branch == '15.2.x' || github.event.workflow_run.head_branch == '15.0.x) }}
+    if: ${{ needs.get-info.outputs.publish-image == 'true' && (github.event.workflow_run.head_branch == '15.2.x' || github.event.workflow_run.head_branch == '15.0.x') }}
     uses: infinispan/infinispan-images/.github/workflows/publish_image.yml@main
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
