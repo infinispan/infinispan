@@ -50,6 +50,11 @@ jobs:
           echo "srcroot=$SRCROOT" >> $GITHUB_OUTPUT
           mv infinispan-server-*.zip "$SRCROOT"/server/image/infinispan-server.zip
 
+      - name: Install qemu
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+
       - name: Build image
         id: build-image
         uses: redhat-actions/buildah-build@v2
