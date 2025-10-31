@@ -4,8 +4,9 @@ MAIN_CLASS=org.jgroups.tests.Probe
 ARGUMENTS=
 PROCESS_NAME=${infinispan.brand.short-name}-probe
 
-PROGNAME=$(basename "$0")
-DIRNAME=$(dirname "$0")
+REALPATH=$(readlink -f "$0")
+PROGNAME=$(basename "$REALPATH")
+DIRNAME=$(dirname "$REALPATH")
 
 . "$DIRNAME/common.sh"
 
