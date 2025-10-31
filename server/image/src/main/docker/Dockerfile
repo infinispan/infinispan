@@ -91,11 +91,11 @@ ENV JAVA_OPTS="-XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true -Djava.net.p
 # Temporarily disabled
 #RUN ${NEWROOT}/${WORKDIR}/bin/server.sh --aot || true
 ADD src/main/docker/bashrc ${NEWROOT}/${WORKDIR}/.bashrc
-RUN chown -R 65532:65532 ${NEWROOT}/${WORKDIR}
+RUN chown -R 65532:0 ${NEWROOT}/${WORKDIR}
 # Backwards compatibility
 RUN mkdir -p ${NEWROOT}/opt/gossiprouter/bin
 RUN ln -s -r ${NEWROOT}/${WORKDIR}/bin/gossip-router.sh ${NEWROOT}/opt/gossiprouter/bin/launch.sh
-RUN chown -R 65532:65532 ${NEWROOT}/opt/gossiprouter
+RUN chown -R 65532:0 ${NEWROOT}/opt/gossiprouter
 
 # Target image
 FROM ${BASE_IMAGE}
@@ -108,8 +108,8 @@ ARG BRAND_VERSION
 COPY --from=builder ${NEWROOT} /
 
 # Add the user and group
-RUN echo "infinispan:x:65532:root" >> /etc/group && \
-    echo "infinispan:x:65532:65532:infinispan:/opt/infinispan:/usr/sbin/nologin" >> /etc/passwd
+RUN echo "infinispan:x:0:root" >> /etc/group && \
+    echo "infinispan:x:65532:0:infinispan:/opt/infinispan:/usr/sbin/nologin" >> /etc/passwd
 
 # We run the container unprivileged, create a writable HOME
 WORKDIR ${WORKDIR}
