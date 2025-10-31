@@ -23,55 +23,30 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
+      image: ${{ steps.infinispan.outputs.image }}
       version: ${{ steps.infinispan.outputs.version }}
 
     steps:
-      - if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.ref_name }}
-          repository: infinispan/infinispan-images
-
-      - if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.base_ref }}
-          repository: infinispan/infinispan-images
-
       - uses: actions/checkout@v5
-        with:
-          path: server
 
       - name: Setup Java
-        uses: ./server/.github/actions/setup-java
-
-      - name: Build Infinispan
-        id: infinispan
-        working-directory: server
-        run:  |
-          ./mvnw install -DskipTests -am -pl server/runtime
-          SERVER_VERSION=$(./mvnw -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-          OPERAND_VERSION=$(echo ${SERVER_VERSION} | cut -d '-' -f 1)
-          echo "version=${OPERAND_VERSION}" >> ${GITHUB_OUTPUT}
-          cd server/runtime/target
-          zip -r ${GITHUB_WORKSPACE}/server.zip infinispan-server-${SERVER_VERSION}
-
-      - name: Install CEKit
-        uses: cekit/actions-setup-cekit@v1.1.7
-
-      - name: Create Dockerfile
-        run: |
-          SERVER_OVERRIDE="{\"artifacts\":[{\"name\":\"server\",\"path\":\"${GITHUB_WORKSPACE}/server.zip\"}]}"
-          cekit -v --descriptor server-openjdk.yaml build --overrides '{'version': '${{ github.sha }}'}' --overrides ${SERVER_OVERRIDE} --dry-run docker
+        uses: ./.github/actions/setup-java
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build Image
+        id: infinispan
         run: |
-          cat target/image/Dockerfile
-          docker buildx build --load -t localhost:5001/server:${{ github.sha }} target/image
-          docker save localhost:5001/server:${{ github.sha }} > /tmp/operand-image.tar
+          SERVER_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          OPERAND_VERSION=$(echo ${SERVER_VERSION} | cut -d '-' -f 1)
+          IMAGE="localhost:5001/server:${SERVER_VERSION}"
+
+          ./mvnw install -DskipTests -am -pl server/runtime,server/image -Pimage -Dimage.name=${IMAGE}
+          docker save ${IMAGE} > /tmp/operand-image.tar
+
+          echo "image=${IMAGE}" >> ${GITHUB_OUTPUT}
+          echo "version=${OPERAND_VERSION}" >> ${GITHUB_OUTPUT}
 
       - name: Upload
         uses: actions/upload-artifact@v5
@@ -83,7 +58,7 @@ jobs:
     needs: image
     uses: infinispan/infinispan-operator/.github/workflows/test_upgrades.yml@main
     with:
-      operand: localhost:5001/server:${{ github.sha }}
+      operand: ${{ needs.image.outputs.image }}
       operandArtifact: operand-image
       operandVersion: ${{ needs.image.outputs.version }}
       ref: main

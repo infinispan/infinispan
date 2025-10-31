@@ -19,6 +19,7 @@
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
       <defaultTestGroup/>
       <defaultExcludedTestGroup/>
+      <image.name>infinispan/server:${project.version}</image.name>
       <image.platforms>linux/amd64,linux/arm64</image.platforms>
       <server.output.dir>../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.output.dir>
       <jdk.dist>https://api.adoptium.net/v3/binary/latest/25/ga/linux/${arch}/jdk/hotspot/normal/eclipse</jdk.dist>
@@ -67,7 +68,7 @@
                      <images>
                         <image>
                            <alias>infinispan</alias>
-                           <name>infinispan/server:${project.version}</name>
+                           <name>${image.name}</name>
                            <build>
                               <args>
                                  <BRAND_NAME>${infinispan.brand.name}</BRAND_NAME>
