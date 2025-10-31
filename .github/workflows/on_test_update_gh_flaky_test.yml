@@ -24,7 +24,7 @@ jobs:
 # zip file with flaky test reports and file
 # containing PR target branch
         - name: Download a Build Artifact
-          uses: actions/download-artifact@v6
+          uses: actions/download-artifact@v6.0.0
           id: download-artifact
           with:
              name: flaky-test-report
