@@ -1750,6 +1750,15 @@
           "optional" : true
         } ]
       }, {
+        "name" : "XSiteLocalEventCommand",
+        "type_id" : 1256,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "events",
+          "type" : "XSiteEvent",
+          "is_repeated" : true
+        } ]
+      }, {
         "name" : "ReduceReducerFinalizer",
         "type_id" : 1319,
         "fields" : [ {
@@ -4763,6 +4772,15 @@
           "optional" : true
         } ]
       }, {
+        "name" : "CollectorReducerSupplier",
+        "type_id" : 1336,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "collectorSupplier",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
         "name" : "SuccessfulCollectionResponse",
         "type_id" : 34,
         "fields" : [ {
@@ -6474,6 +6492,15 @@
           "optional" : true
         } ]
       }, {
+        "name" : "CollectorFinalizerSupplier",
+        "type_id" : 1335,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "collectorSupplier",
+          "type" : "MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
         "name" : "MarshallableDeque",
         "type_id" : 18,
         "fields" : [ {
@@ -6665,6 +6692,35 @@
             "name" : "iracMetadataMap",
             "type" : "org.infinispan.persistence.core.IracMetadata"
           }
+        } ]
+      }, {
+        "name" : "MetadataMortalCacheEntry",
+        "type_id" : 1123,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "metadata",
+          "type" : "MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true
         } ]
       }, {
         "name" : "SuccessfulMortalCacheValueResponse",
