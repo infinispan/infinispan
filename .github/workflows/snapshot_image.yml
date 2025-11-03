@@ -73,8 +73,8 @@ jobs:
       - name: Log in to Quay.io
         uses: redhat-actions/podman-login@v1
         with:
-          username: ${{ secrets.QUAY_USERNAME }}
-          password: ${{ secrets.QUAY_TOKEN }}
+          username: ${{ secrets.QUAY_USERNAME_TEST }}
+          password: ${{ secrets.QUAY_TOKEN_TEST }}
           registry: quay.io
 
       - name: Push to Quay.io
