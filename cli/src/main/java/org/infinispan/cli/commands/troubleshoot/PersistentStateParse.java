@@ -38,12 +38,14 @@ import org.infinispan.globalstate.impl.GlobalStateHandler;
  *
  * <p>
  * The operations are:
+ * </p>
  * <ul>
  *    <li>Default: This command list all existing scopes in the file system. Usually, there is a scope per cache.</li>
  *    <li><b>show [name]</b>: Shows the data stored in the given scope.</li>
  *    <li><b>delete [name]</b>: Deletes the data stored in the given scope. This operation is dangerous.</li>
  * </ul>
  *
+ * <p>
  * All commands accept the path to directory utilized in the server's global-state configuration.
  * </p>
  *

@@ -212,7 +212,7 @@ public interface RemoteSchemasAdmin {
      *
      * @param schemaName schema name
      * @return {@link SchemaOpResultType#DELETED} if deleted, {@link SchemaOpResultType#NONE} if not found
-     * @throws {@link org.infinispan.api.exception.InfinispanException} if deletion is blocked by cache dependencies
+     * @throws org.infinispan.api.exception.InfinispanException if deletion is blocked by cache dependencies
      */
     default SchemaOpResult remove(String schemaName) {
        return remove(schemaName, false);
@@ -227,7 +227,7 @@ public interface RemoteSchemasAdmin {
      * @param schemaName schema name
      * @param force      if true, bypasses dependency checks
      * @return {@link SchemaOpResultType#DELETED} if deleted, {@link SchemaOpResultType#NONE} if not found
-     * @throws {@link org.infinispan.api.exception.InfinispanException} if not forced and schema is in use
+     * @throws org.infinispan.api.exception.InfinispanException if not forced and schema is in use
      */
     default SchemaOpResult remove(String schemaName, boolean force) {
        return removeAsync(schemaName, force).toCompletableFuture().join();
