@@ -40,7 +40,7 @@
 
    <properties>
       <versionx.org.infinispan.infinispan-console>16.0.4.Final</versionx.org.infinispan.infinispan-console>
-      <version.protostream>6.0.0.Dev14</version.protostream>
+      <version.protostream>6.0.1</version.protostream>
 
       <!-- Maven plugins -->
       <version.maven.gpg>3.2.8</version.maven.gpg>
