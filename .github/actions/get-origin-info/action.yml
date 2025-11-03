@@ -35,7 +35,7 @@ runs:
        script: |
           const { HEAD_SHA, HEAD_BRANCH, EVENT } = process.env
           headBranch = HEAD_BRANCH
-          imageTag = HEAD_BRANCH
+          imageTag = HEAD_BRANCH.replace("/", "-")
           const owner = context.repo.owner
           const repo = context.repo.repo
           const pullRequests = await github.paginate(
