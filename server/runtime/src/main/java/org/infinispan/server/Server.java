@@ -42,8 +42,6 @@ import org.infinispan.commons.io.FileWatcher;
 import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.time.DefaultTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
@@ -208,7 +206,6 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    private static final int SHUTDOWN_DELAY_SECONDS = 3;
 
    private final ClassLoader classLoader;
-   private final TimeService timeService;
    private final File serverHome;
    private final File serverRoot;
    private final File serverConf;
@@ -261,7 +258,6 @@ public class Server extends BaseServerManagement implements AutoCloseable {
 
    private Server(File serverRoot, Properties properties) {
       this.classLoader = Thread.currentThread().getContextClassLoader();
-      this.timeService = DefaultTimeService.INSTANCE;
       this.serverHome = new File(properties.getProperty(INFINISPAN_SERVER_HOME_PATH, ""));
       this.serverRoot = serverRoot;
       this.properties = properties;

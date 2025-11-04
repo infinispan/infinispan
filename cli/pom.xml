@@ -136,9 +136,10 @@
             <artifactId>maven-jar-plugin</artifactId>
             <configuration>
                <archive>
-                  <manifestEntries>
-                     <Main-Class>${cli.main.class}</Main-Class>
-                  </manifestEntries>
+                  <manifest>
+                     <addClasspath>true</addClasspath>
+                     <mainClass>${cli.main.class}</mainClass>
+                  </manifest>
                </archive>
             </configuration>
          </plugin>
