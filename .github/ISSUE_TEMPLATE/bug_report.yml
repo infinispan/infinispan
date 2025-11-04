@@ -53,28 +53,4 @@ body:
     id: environment
     attributes:
       value: |
-        ## Environment
-  - type: input
-    id: uname
-    attributes:
-      label: Output of `uname -a` or `ver`
-  - type: input
-    id: java_version
-    attributes:
-      label:  Output of `java -version`
-  - type: input
-    id: infinispan_version
-    attributes:
-      label:  Infinispan version or git rev
-  - type: input
-    id: build_tool
-    attributes:
-      label:  Build tool (ie. output of `mvnw --version` or `gradlew --version`)
-  - type: textarea
-    id: additional_info
-    attributes:
-      label: Additional information
-      description: >
-        If you have any additional information for us, use the field below.
-        Please note, you can attach screenshots or screen recordings here, by
-        dragging and dropping files in the field below.
+        ## Environment (Version, JDK, OS, ...)
