@@ -1,6 +1,5 @@
 #!/bin/sh
 
-MAIN_CLASS=org.infinispan.server.Bootstrap
 ARGUMENTS=
 PROCESS_NAME=${infinispan.brand.short-name}-server
 
@@ -11,14 +10,13 @@ DIRNAME=$(dirname "$REALPATH")
 . "$DIRNAME/common.sh"
 
 while true; do
-   USER_CLASSPATH=$(find "$ISPN_ROOT_DIR"/lib -name '*.jar' -print0|tr '\0' :)
    # Execute the JVM in the background
    eval "$JAVA" $JAVA_OPTS \
       -Dvisualvm.display.name="$PROCESS_NAME" \
       -Djava.util.logging.manager=org.infinispan.server.loader.LogManager \
       -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
-      -classpath "$ISPN_HOME"/boot/*:"$ISPN_HOME"/lib/*:"$USER_CLASSPATH" \
-      "$MAIN_CLASS" "$ARGUMENTS" "&"
+      -jar "$ISPN_HOME"/lib/infinispan-server-runtime-*.jar \
+      "$ARGUMENTS" "&"
    ISPN_PID=$!
    # Trap common signals and relay them to the server process
    trap "kill -HUP  $ISPN_PID" HUP

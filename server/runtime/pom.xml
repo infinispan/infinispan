@@ -67,8 +67,8 @@
                <artifactId>*</artifactId>
             </exclusion>
             <exclusion>
-              <groupId>io.smallrye.reactive</groupId>
-              <artifactId>mutiny</artifactId>
+               <groupId>io.smallrye.reactive</groupId>
+               <artifactId>mutiny</artifactId>
             </exclusion>
          </exclusions>
       </dependency>
@@ -366,29 +366,14 @@
          </plugin>
          <plugin>
             <artifactId>maven-jar-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>default-jar</id>
-                  <configuration>
-                     <excludes>
-                        <exclude>org/infinispan/server/loader/**</exclude>
-                     </excludes>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>loader</id>
-                  <phase>prepare-package</phase>
-                  <goals>
-                     <goal>jar</goal>
-                  </goals>
-                  <configuration>
-                     <classifier>loader</classifier>
-                     <includes>
-                        <include>org/infinispan/server/loader/*</include>
-                     </includes>
-                  </configuration>
-               </execution>
-            </executions>
+            <configuration>
+               <archive>
+                  <manifest>
+                     <addClasspath>true</addClasspath>
+                     <mainClass>org.infinispan.server.Bootstrap</mainClass>
+                  </manifest>
+               </archive>
+            </configuration>
          </plugin>
          <plugin>
             <groupId>org.infinispan.protostream</groupId>

@@ -2,6 +2,7 @@ package org.infinispan.server;
 
 import static org.infinispan.server.Server.DEFAULT_SERVER_CONFIG;
 import static org.infinispan.server.Server.INFINISPAN_SERVER_CONFIG_PATH;
+import static org.infinispan.server.loader.Loader.classLoaderFromPath;
 import static org.infinispan.server.logging.Messages.MSG;
 
 import java.io.File;
@@ -25,6 +26,7 @@ import java.util.logging.Logger;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.commons.util.Version;
+import org.infinispan.server.loader.Loader;
 import org.infinispan.server.tool.Main;
 
 import reactor.blockhound.BlockHound;
@@ -184,7 +186,7 @@ public class Bootstrap extends Main {
          stdErr.printf("Cannot read %s", loggingFile);
          return;
       }
-
+      configureClasspath();
       configureLogging();
       logJVMInformation();
 
@@ -198,6 +200,19 @@ public class Bootstrap extends Main {
          server.setExitHandler(exitHandler);
          server.run().join();
       }
+   }
+
+   private void configureClasspath() {
+      ClassLoader serverClassLoader = null;
+      String lib = properties.getProperty(Loader.INFINISPAN_SERVER_LIB_PATH);
+      if (lib != null) {
+         for (String item : lib.split(File.pathSeparator)) {
+            serverClassLoader = classLoaderFromPath(Paths.get(item), serverClassLoader);
+         }
+      } else {
+         serverClassLoader = classLoaderFromPath(serverRoot.toPath().resolve("lib"), serverClassLoader);
+      }
+      Thread.currentThread().setContextClassLoader(serverClassLoader);
    }
 
    // This method is here solely for replacement with Quarkus, do not remove or rename without updating Infinispan Quarkus
