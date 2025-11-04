@@ -1,6 +1,7 @@
 name: Housekeeping
 description: A generalized task or cleanup not associated with a bug report or enhancement
 labels: ["area/housekeeping"]
+type: task
 body:
   - type: textarea
     id: description
