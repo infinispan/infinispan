@@ -2,6 +2,7 @@ package org.infinispan.commons.test;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +11,6 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
@@ -141,25 +141,70 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
     * generate the XML report given what we know from all the test results
     */
    private void generateReport() {
+      Map<String, Map<String, List<PolarionJUnitTest>>> testsByClassAndInstance;
       synchronized (m_allTests) {
-         // Get elapsed time for testsuite element
-         long elapsedTime = m_allTests.values().stream().mapToLong(PolarionJUnitTest::elapsedTime).sum();
-         long testCount = m_allTests.values().size();
+         // Group tests by class name and then by instance parameters
+         testsByClassAndInstance = new TreeMap<>();
+         for (Map.Entry<String, PolarionJUnitTest> entry : m_allTests.entrySet()) {
+            String key = entry.getKey();
+            PolarionJUnitTest test = entry.getValue();
 
-         String outputDir = String.format("%s/surefire-reports", System.getProperty("build.directory"));
-         Map<String, List<PolarionJUnitTest>> testsByClass = m_allTests.values().stream().collect(Collectors.groupingBy(p -> p.clazz));
-         for (Map.Entry<String, List<PolarionJUnitTest>> entry : testsByClass.entrySet()) {
-            File outputFile = new File(outputDir, String.format("TEST-%s.xml", entry.getKey()));
-            try (PolarionJUnitXMLWriter writer = new PolarionJUnitXMLWriter(outputFile)){
-               writer.start(entry.getKey(), testCount, m_numSkipped.get(), m_numFailed.get(), elapsedTime, true);
-               for (PolarionJUnitTest testCase : entry.getValue())
-                  writer.writeTestCase(testCase);
-            } catch (Exception e) {
-               System.err.printf("Error writing test report '%s'\n", outputFile.getName());
-               e.printStackTrace(System.err);
-            }
+            // Extract instance identifier from the key (format: "instanceName.testName")
+            // For factory tests, instanceName contains parameters like "TableJdbcStoreFunctionalTest[H2, transactionalCache=true, ...]"
+            String instanceKey = key.substring(0, key.lastIndexOf('.'));
+
+            testsByClassAndInstance
+                  .computeIfAbsent(test.clazz, k -> new TreeMap<>())
+                  .computeIfAbsent(instanceKey, k -> new ArrayList<>())
+                  .add(test);
          }
       }
+
+      String outputDir = String.format("%s/surefire-reports", System.getProperty("build.directory"));
+      for (Map.Entry<String, Map<String, List<PolarionJUnitTest>>> classEntry : testsByClassAndInstance.entrySet()) {
+         String className = classEntry.getKey();
+         Map<String, List<PolarionJUnitTest>> instanceMap = classEntry.getValue();
+
+         // Use index to differentiate multiple instances of the same class
+         int instanceIndex = 0;
+         for (Map.Entry<String, List<PolarionJUnitTest>> instanceEntry : instanceMap.entrySet()) {
+            List<PolarionJUnitTest> instanceTests = instanceEntry.getValue();
+
+            // Calculate statistics per instance
+            long instanceTestCount = instanceTests.size();
+            long instanceElapsedTime = instanceTests.stream().mapToLong(PolarionJUnitTest::elapsedTime).sum();
+            long instanceSkippedCount = instanceTests.stream().filter(t -> t.status == PolarionJUnitTest.Status.SKIPPED).count();
+            long instanceFailedCount = instanceTests.stream().filter(t -> t.status == PolarionJUnitTest.Status.FAILURE || t.status == PolarionJUnitTest.Status.ERROR).count();
+
+            // Generate unique filename based on class and instance index
+            String fileName = generateUniqueFileName(className, instanceIndex, instanceMap.size());
+            File outputFile = new File(outputDir, fileName);
+
+            try (PolarionJUnitXMLWriter writer = new PolarionJUnitXMLWriter(outputFile)){
+               writer.start(className, instanceTestCount, instanceSkippedCount, instanceFailedCount, instanceElapsedTime, true);
+               for (PolarionJUnitTest testCase : instanceTests)
+                  writer.writeTestCase(testCase);
+            } catch (Exception e) {
+               System.err.printf("Error writing test report '%s'%n", outputFile.getName());
+               e.printStackTrace(System.err);
+            }
+
+            instanceIndex++;
+         }
+      }
+   }
+
+   /**
+    * Generate a unique filename for the test report based on class name and instance index
+    */
+   private String generateUniqueFileName(String className, int instanceIndex, int totalInstances) {
+      // If there's only one instance, use the simple format without index
+      if (totalInstances == 1) {
+         return String.format("TEST-%s.xml", className);
+      }
+
+      // For multiple instances, append the index
+      return String.format("TEST-%s-%d.xml", className, instanceIndex);
    }
 
    private String testName(ITestResult res) {
@@ -233,8 +278,8 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       if (m_allTests.containsKey(key)) {
          meta = m_allTests.get(key);
          if (duplicateTest(tr, meta)) {
-            System.err.println("[" + this.getClass().getSimpleName() + "] Test case '" + key
-                  + "' already exists in the results");
+            System.err.printf("[%s] Test case '%s' already exists in the results%n",
+                  this.getClass().getSimpleName(), key);
             tr.setStatus(ITestResult.FAILURE);
             tr.setThrowable(new IllegalStateException("Duplicate test: " + key));
          }
