@@ -1,7 +1,18 @@
 #!/bin/bash
 set -e
 # A script to track flaky tests in Github
-# Requires xmlstarlet and jq to be installed
+#
+# PREREQUISITES:
+#   - xmlstarlet: XML parsing utility for extracting test information from XML files
+#   - jq: JSON processing utility for parsing GitHub CLI responses
+#   - gh: GitHub CLI (must be authenticated)
+#
+# REQUIRED ENVIRONMENT VARIABLES:
+#   GH_JOB_URL         : URL of the GitHub Actions job that triggered this script
+#   FLAKY_TEST_GLOB    : Glob pattern to match test result XML files (e.g., "**/TEST-*.xml")
+#   TARGET_BRANCH      : Branch name where the flaky test occurred
+#   GITHUB_REPOSITORY  : Repository in format 'owner/repo' (e.g., 'infinispan/infinispan')
+#
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source "${SCRIPT_DIR}/common.sh"
 
@@ -14,7 +25,7 @@ for TEST in "${TESTS[@]}"; do
   TEST_CLASS_NAMES=$(xmlstarlet sel -t --value-of '/testsuite/testcase/@classname'  ${TEST})
   declare -i i
   for TEST_CLASS in $TEST_CLASS_NAMES; do
-    # just get the first one for now
+    # just get the first testcase for now
     i=1
     TEST_NAME=$(xmlstarlet sel --template --value-of '/testsuite/testcase['$i']/@name' ${TEST})
     # Removing (Flaky Test) text
@@ -52,7 +63,12 @@ for TEST in "${TESTS[@]}"; do
       BODY=$(printf "### Target Branch: %s\n### Github Job:%s\n%s" "${TARGET_BRANCH}" "${GH_JOB_URL}" "${STACK_TRACE}")
     if [ ${TOTAL_ISSUES} == 0 ]; then
       echo "Existing issue not found, creating a new one"
-      gh issue create --title "${SUMMARY}" --body "${BODY}" --label "kind/flaky test"
+      # Create issue and capture the full URL (default output is the URL)
+      ISSUE_URL=$(gh issue create --title "${SUMMARY}" --body "${BODY}" --label "kind/flaky test")
+      # Extract issue number from URL (e.g., https://github.com/owner/repo/issues/123 -> 123)
+      ISSUE_NUMBER=$(echo "${ISSUE_URL}" | grep -oE '[0-9]+$')
+      # Set the issue type to Bug via API
+      gh api -X PATCH "/repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" --field type=Bug
     else
       export ISSUE_KEY=$(echo "${ISSUES}" | jq  '.[0].number')
       # Re-open the issue if it was previously resolved
