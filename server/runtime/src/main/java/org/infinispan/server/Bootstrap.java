@@ -248,8 +248,7 @@ public class Bootstrap extends Main {
    @Override
    public void version(PrintStream out) {
       out.printf("%s Server %s (%s)%n", Version.getBrandName(), Version.getVersion(), Version.getCodename());
-      out.println("Copyright (C) Red Hat Inc. and/or its affiliates and other contributors");
-      out.println("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0");
+      out.println("License Apache License, v. 2.0. https://www.apache.org/licenses/LICENSE-2.0");
    }
 
    private void logJVMInformation() {
@@ -266,9 +265,11 @@ public class Bootstrap extends Main {
       logger.info("Memory max = " + ByteQuantity.Unit.MiB.toString(runtime.maxMemory()));
       if (logger.isLoggable(Level.FINE)) {
          StringBuilder sb = new StringBuilder("Classpath JARs:" + System.lineSeparator());
-         URLClassLoader cl = (URLClassLoader) this.getClass().getClassLoader();
-         for (URL url : cl.getURLs()) {
-            sb.append("    ").append(url).append(System.lineSeparator());
+         ClassLoader cl = this.getClass().getClassLoader();
+         if (cl instanceof URLClassLoader ucl) {
+            for (URL url : ucl.getURLs()) {
+               sb.append("    ").append(url).append(System.lineSeparator());
+            }
          }
          logger.fine(sb.toString());
          sb = new StringBuilder("System properties:" + System.lineSeparator());
