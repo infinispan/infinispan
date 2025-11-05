@@ -1,5 +1,50 @@
 {
   "definitions" : [ {
+    "protopath" : "org:/:infinispan:/:query:/:objectfilter:/:global.objectfilter.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "StatementType",
+        "type_id" : 4218,
+        "enum_fields" : [ {
+          "name" : "SELECT"
+        }, {
+          "name" : "DELETE",
+          "integer" : 1
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "FilterResultImpl",
+        "type_id" : 4217,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "projection",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "instance",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "sortProjection",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "global.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.objectfilter"
+      }
+    }
+  }, {
     "protopath" : "org:/:infinispan:/:query:/:core:/:global.query.core.proto",
     "def" : {
       "enums" : [ {
@@ -638,51 +683,6 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.query"
-      }
-    }
-  }, {
-    "protopath" : "org:/:infinispan:/:query:/:objectfilter:/:global.objectfilter.proto",
-    "def" : {
-      "enums" : [ {
-        "name" : "StatementType",
-        "type_id" : 4218,
-        "enum_fields" : [ {
-          "name" : "SELECT"
-        }, {
-          "name" : "DELETE",
-          "integer" : 1
-        } ]
-      } ],
-      "messages" : [ {
-        "name" : "FilterResultImpl",
-        "type_id" : 4217,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "key",
-          "type" : "org.infinispan.global.core.MarshallableObject",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "projection",
-          "type" : "org.infinispan.global.core.MarshallableArray",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "instance",
-          "type" : "org.infinispan.global.core.MarshallableObject",
-          "optional" : true
-        }, {
-          "id" : 4,
-          "name" : "sortProjection",
-          "type" : "org.infinispan.global.core.MarshallableArray",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "global.core.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.global.objectfilter"
       }
     }
   } ]
