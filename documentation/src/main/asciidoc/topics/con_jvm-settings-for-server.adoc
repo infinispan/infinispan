@@ -6,11 +6,12 @@
 [id="jvm-settings-for-server_{context}"]
 = JVM settings for {BrandName}
 
-You can define Java Virtual Machine (JVM) settings for {BrandName} either by editing the `server.conf` configuration file, or by setting the `JAVA_OPTS` environment variable .
+You can define Java Virtual Machine (JVM) settings for {BrandName} either by editing the `server.conf` configuration file, or by setting the `JAVA_OPTS` and `JAVA_OPTIONS` environment variables. Set the `JAVA_OPTIONS` variable if you just want to append JVM settings to those that are automatically set by the
+`server.conf` file. Set the `JAVA_OPTS` variable if you want to completely override the JVM settings.
 
 [IMPORTANT]
 ====
-If you are running {BrandName} in a container do not set `Xmx` or `Xms`  because the values are automatically calculated from the container settings to be 50% of the container size.
+If you are running {BrandName} in a container do not set `Xmx` or `Xms`  because the values are automatically calculated from the container settings to be 70% of the container size.
 ====
 
 [discrete]
@@ -19,8 +20,11 @@ If you are running {BrandName} in a container do not set `Xmx` or `Xms`  because
 You can edit the required values in the `server.conf` configuration file. For example, to set the options to pass to the JVM, edit the following lines:
 
 ----
-JAVA_OPTS="-Xms64m -Xmx512m -XX:MetaspaceSize=64M -Djava.net.preferIPv4Stack=true"
-JAVA_OPTS="$JAVA_OPTS -Djava.awt.headless=true" 
+if [ "x$JAVA_OPTS" = "x" ]; then
+   JAVA_OPTS="..."
+else
+   echo "JAVA_OPTS already set in environment; overriding default settings with values: $JAVA_OPTS"
+fi
 ----
 
 You can uncomment the existing example settings as well. For example, to configure Java Platform Debugger Architecture (JPDA) settings for remote socket debugging, update the file as follows:
