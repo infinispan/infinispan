@@ -1,0 +1,68 @@
+name: Branch
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: "The name of the branch to create (usually [0-9]+.[0-9]+.x)"
+        required: true
+        type: string
+      nextVersion:
+        description: "Next version (usually [0-9]+.[0-9]+.0-SNAPSHOT)"
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "The name of the branch to create (usually [0-9]+.[0-9]+.x)"
+        required: true
+      nextVersion:
+        description: "Next version (usually [0-9]+.[0-9]+.0-SNAPSHOT)"
+        required: true
+
+jobs:
+  branch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate
+        shell: bash
+        run: |
+          if [[ "${{ inputs.branch }}" =~ ^[1-9][0-9]+\.[0-9]+\.x$ ]]; then
+            echo "✅ Validation successful: branch = ${{ inputs.branch }}"
+          else
+            echo "❌ Validation failed: branch = ${{ inputs.branch }} should match ^[1-9][0-9]+\.[0-9]+\.x$"
+            exit 1
+          fi
+          if [[ "${{ inputs.nextVersion }}" =~ ^[1-9][0-9]+\.[0-9]+\.0-SNAPSHOT$ ]]; then
+            echo "✅ Validation successful: nextVersion = ${{ inputs.nextVersion }}"
+          else
+            echo "❌ Validation failed: nextVersion = ${{ inputs.nextVersion }} should match ^[1-9][0-9]+\.[0-9]+\.0-SNAPSHOT$"
+            exit 1
+          fi
+
+      - name: Install xsltproc
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xsltproc
+
+      - name: Checkout Source
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+      - name: Configure Git User
+        run: |
+          git config user.email "infinispan@infinispan.org"
+          git config user.name "Infinispan"
+
+      - name: Branch
+        run: |
+          git branch ${{ inputs.branch }}
+          ./bin/reversion.sh --new-version ${{ inputs.nextVersion }}
+          git commit --no-verify -a -m "Next version ${{ inputs.nextVersion }}"
+
+      - name: Push changes
+        run: |
+          git push origin main ${{ inputs.branch }}

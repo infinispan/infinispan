@@ -103,4 +103,32 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+   <build>
+      <testResources>
+         <!-- Make sure the filtering is disabled for binary data, otherwise the files get "corrupted" -->
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>false</filtering>
+            <excludes>
+               <exclude>**/*.xml</exclude>
+               <exclude>**/*.yaml</exclude>
+               <exclude>**/*.json</exclude>
+               <exclude>**/*.properties</exclude>
+               <exclude>**/*.MF</exclude>
+            </excludes>
+         </testResource>
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*.xml</include>
+               <include>**/*.yaml</include>
+               <include>**/*.json</include>
+               <include>**/*.properties</include>
+               <include>**/*.MF</include>
+            </includes>
+         </testResource>
+      </testResources>
+   </build>
 </project>
