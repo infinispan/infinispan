@@ -90,10 +90,8 @@ public class LicenseTest {
 
    private static String removeOsName(String jarFile) {
       return jarFile
-            .replace("epoll-linux-x86_64", "epoll")
-            .replace("epoll-linux-aarch_64", "epoll")
-            .replace("io_uring-linux-x86_64", "io_uring")
-            .replace("io_uring-linux-aarch_64", "io_uring")
+            .replace("-linux-x86_64", "")
+            .replace("-linux-aarch_64", "")
             .replace("-natives-desktop", "");
    }
 
