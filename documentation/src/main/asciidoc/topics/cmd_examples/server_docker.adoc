@@ -1,1 +1,1 @@
-docker run -p 11222:11222 infinispan/server
+docker run -p 11222:11222 --name infinispan infinispan/server

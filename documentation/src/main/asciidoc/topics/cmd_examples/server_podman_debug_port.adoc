@@ -1,0 +1,1 @@
+podman run -e DEBUG_PORT="*:8787" -p 8787:8787 infinispan/server

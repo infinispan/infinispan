@@ -1,0 +1,1 @@
+podman run -e DEBUG=true infinispan/<image-name>

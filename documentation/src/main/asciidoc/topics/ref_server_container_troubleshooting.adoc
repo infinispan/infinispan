@@ -1,0 +1,67 @@
+== Image Configuration
+The image scripts that are used to configure and launch the executables can be debugged by setting the environment variable `DEBUG=TRUE` as follows:
+
+.Docker
+[source,bash,options="nowrap",subs=attributes+,role="primary"]
+----
+include::cmd_examples/server_docker_debug.adoc[]
+----
+
+.Podman
+[source,bash,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::cmd_examples/server_podman_debug.adoc[]
+----
+
+
+== {brandname} Server
+It's also possible to debug the {brandname} Server in the image by setting the `DEBUG_PORT` environment variable as follows:
+
+.Docker
+[source,bash,options="nowrap",subs=attributes+,role="primary"]
+----
+include::cmd_examples/server_docker_debug_port.adoc[]
+----
+
+.Podman
+[source,bash,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::cmd_examples/server_podman_debug_port.adoc[]
+----
+
+
+== Image Tools
+In order to keep the image size as small as possible, we include a minimal set of tools and utilities to help debug issues with the container.
+
+
+|===
+|Task |Command
+
+|Text editor
+|`vi`
+
+|Get the PID of the Java process
+|`ps -fC java`
+
+|Get socket/file information
+|`lsof`
+
+|List all open files excluding network sockets
+|`lsof \| grep -v 'IP\|IPv4\|IPv6\|TCP\|UDP\|sock\|FIFO\|STRM\|unix'`
+
+|List all TCP sockets
+|`lsof -i TCP`
+
+|List all UDP sockets
+|`lsof -i UDP`
+
+|Network configuration
+|`ip`
+
+|Show unicast routes
+|`ip route`
+
+|Show multicast routes
+|`ip maddress`
+
+|===

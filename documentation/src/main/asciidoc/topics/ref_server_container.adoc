@@ -1,5 +1,4 @@
-[id='server-container-requirements_{context}']
-= {brandname} Server container image
+= {brandname} Server Container Image
 
 {brandname} Server as a container image requires a container manager, such as link:https://docker.com[Docker] or link:https://podman.io[Podman].
 
@@ -16,23 +15,165 @@ The {brandname} Server container image is available at the following registries:
 
 |Quay.io
 |https://quay.io/repository/infinispan/server
-
 |===
 
 == Container execution
 
-Start an instance of {brandname} Server by executing the following command:
+Start an instance of Infinispan Server by executing the following command:
 
 .Docker
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[source,bash,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::cmd_examples/server_docker.adoc[]
 ----
 
 .Podman
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+[source,bash,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::cmd_examples/server_podman.adoc[]
 ----
 
-For more detailed information about the {brandname} Server container image, refer to the link:{container_image_docs}/container_image.html[Container Image guide].
+> When utilising podman it is necessary for the `--net=host` to be passed when not executing as `sudo`.
+
+By default, the image has authentication enabled on all exposed endpoints. When executing the above command the image automatically generates a username/password pair with the `admin` role, prints the values to stdout and then starts the Infinispan server with the authenticated endpoints exposed on port `11222`. Therefore, it's necessary to utilise the printed credentials when accessing the exposed endpoints via clients.
+
+It is also possible to provide an administrator username/password combination via environment variables:
+
+.Docker
+[source,bash,options="nowrap",subs=attributes+,role="primary"]
+----
+include::cmd_examples/server_docker_user.adoc[]
+----
+
+.Podman
+[source,bash,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::cmd_examples/server_podman_user.adoc[]
+----
+
+> We recommend utilising the auto-generated credentials or USER & PASS env variables for initial development only. Providing authentication and authorization configuration via an [Identities Batch file](#identities-batch) allows for much greater control.
+
+== Hot Rod Clients
+When connecting a Hot Rod client to the image, the following SASL properties must be configured on your client (with the username and password properties changed as required):
+
+[source,properties,options="nowrap",subs=attributes+]
+----
+infinispan.client.hotrod.auth_username=admin
+infinispan.client.hotrod.auth_password=changme
+infinispan.client.hotrod.sasl_mechanism=DIGEST-MD5
+----
+
+== Identities Batch
+User identities and roles can be defined by providing a cli batch file via the `IDENTITIES_BATCH` env variable.
+All the cli commands defined in this file are executed before the server is started, therefore it iss only possible to execute offline commands otherwise the container will fail. For example, including `create cache ...` in the batch would fail as it requires a connection to an Infinispan server.
+
+{brandname} provides implicit roles for some users.
+
+[TIP] Check Infinispan https://infinispan.org/docs/stable/titles/configuring/configuring.html#default-user-roles_security-authorization[documentation]
+to know more about implicit roles and authorization
+
+Below is an example Identities batch CLI file `identities.batch`, that defines four users and their role:
+
+[source,bash,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/server_container_identities_batch.adoc[]
+----
+
+To run the image using a local `identities.batch`, execute:
+
+.Docker
+[source,bash,options="nowrap",subs=attributes+,role="primary"]
+----
+include::cmd_examples/server_docker_identities_batch.adoc[]
+----
+
+.Podman
+[source,bash,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::cmd_examples/server_podman_identities_batch.adoc[]
+----
+
+
+== Server Configuration
+The Infinispan image passes all container arguments to the created server, therefore it is possible to configure the server in the same manner as a non-containerised deployment.
+
+Below shows how a https://docs.docker.com/storage/volumes/[docker volume] can be created and mounted in order to run the Infinispan image with the local configuration file `my-infinispan-config.xml` located in the users current working directory.
+
+.Docker
+[source,bash,options="nowrap",subs=attributes+,role="primary"]
+----
+include::cmd_examples/server_docker_configuration.adoc[]
+----
+
+.Podman
+[source,bash,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::cmd_examples/server_podman_configuration.adoc[]
+----
+
+=== Kubernetes/OpenShift Clustering
+When running in a managed environment such as Kubernetes, it is not possible to utilise multicasting for initial node discovery, therefore we must utilise the JGroups http://jgroups.org/manual4/index.html#_dns_ping[DNS_PING] protocol to discover cluster members. To enable this, we must provide the `jgroups.dnsPing.query` property and configure the `kubernetes` stack.
+
+To utilise the tcp stack with DNS_PING, execute the following config:
+
+.Docker
+[source,bash,options="nowrap",subs=attributes+,role="primary"]
+----
+include::cmd_examples/server_docker_kube_clustering.adoc[]
+----
+
+.Podman
+[source,bash,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::cmd_examples/server_podman_kube_clustering.adoc[]
+----
+
+
+=== Java Properties
+It is possible to provide additional Java properties and JVM options to the server images via the `JAVA_OPTIONS` env variable.
+For example, to quickly configure CORS without providing a server.yaml file, do the following:
+
+.Docker
+[source,bash,options="nowrap",subs=attributes+,role="primary"]
+----
+include::cmd_examples/server_docker_jvm_properties.adoc[]
+----
+
+.Podman
+[source,bash,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::cmd_examples/server_podman_jvm_properties.adoc[]
+----
+
+NOTE: Using `JAVA_OPTIONS` will append the options to those determined by the server launch script, such as those that configure
+the JVM memory sizing. You can completely override these options by setting the `JAVA_OPTS` env variable.
+
+=== Deploying artifacts to the server lib directory
+Deploy artifacts to the server lib directory using the `SERVER_LIBS` env variable.
+For example, to add the PostgreSQL JDBC driver to the server:
+
+.Docker
+[source,bash,options="nowrap",subs=attributes+,role="primary"]
+----
+include::cmd_examples/server_docker_artifacts.adoc[]
+----
+
+.Podman
+[source,bash,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::cmd_examples/server_podman_artifacts.adoc[]
+----
+
+
+The `SERVER_LIBS` variable supports multiple, space-separated artifacts represented as URLs or as Maven coordinates. Archive artifacts in `.tar`, `.tar.gz` or `.zip` formats will be extracted. Refer to the https://infinispan.org/docs/stable/titles/cli/cli.html#install1[CLI] `install` command help to learn about all possible arguments and options.
+
+
+== Kubernetes
+
+=== Liveness and Readiness Probes
+It is recommended to utilise Infinispan's REST endpoint in order to determine if the server is ready/live. To do this, you can utilise the Kubernetes https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/[httpGet probes] as follows:
+
+[source,yaml,options="nowrap",subs=attributes+]
+----
+include::yaml/server_container_liveness_probes.yaml[]
+----
