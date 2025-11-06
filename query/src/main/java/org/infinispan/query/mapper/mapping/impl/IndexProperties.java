@@ -3,6 +3,8 @@ package org.infinispan.query.mapper.mapping.impl;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.lucene.util.Version;
+import org.hibernate.search.backend.lucene.cfg.LuceneBackendSettings;
 import org.hibernate.search.engine.cfg.ConfigurationPropertySource;
 import org.hibernate.search.engine.cfg.EngineSettings;
 import org.hibernate.search.engine.cfg.spi.AllAwareConfigurationPropertySource;
@@ -45,5 +47,6 @@ public class IndexProperties {
    private void defaultProperties() {
       backendProperties.put("type", "lucene");
       backendProperties.put("analysis.configurer", new DefaultAnalysisConfigurer());
+      backendProperties.put(LuceneBackendSettings.LUCENE_VERSION, Version.LATEST.toString());
    }
 }
