@@ -1,0 +1,1 @@
+podman run -e JAVA_OPTIONS="-Dinfinispan.cors.enableAll=https://host.domain:port" --net=host --name infinispan infinispan/server

@@ -1,0 +1,1 @@
+docker run -e SERVER_LIBS="org.postgresql:postgresql:42.3.1" --name infinispan infinispan/server

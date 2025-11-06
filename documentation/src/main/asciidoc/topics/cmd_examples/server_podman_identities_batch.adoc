@@ -1,0 +1,1 @@
+podman run -v $(pwd):/user-config -e IDENTITIES_BATCH="/user-config/identities.batch" -p 11222:11222 --net=host --name infinispan infinispan/server

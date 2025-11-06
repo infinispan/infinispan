@@ -1,0 +1,1 @@
+podman run -v $(pwd):/user-config --name infinispan infinispan/server --bind-address=0.0.0.0  -Dinfinispan.cluster.stack=kubernetes -Djgroups.dns.query="infinispan-dns-ping.myproject.svc.cluster.local"

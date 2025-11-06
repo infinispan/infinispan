@@ -1,0 +1,4 @@
+user create "Alan Shearer" -p "striker9" -g admin
+user create "observer" -p "secret1"
+user create "deployer" -p "secret2"
+user create "Rigoberta Baldini" -p "secret3" -g monitor

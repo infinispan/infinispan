@@ -1,1 +1,1 @@
-podman run --net=host -p 11222:11222 infinispan/server
+podman run -p 11222:11222 --net=host --name infinispan infinispan/server
