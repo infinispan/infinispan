@@ -31,6 +31,7 @@ public class JsonScriptTest extends MultiHotRodServersTest {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(MediaType.APPLICATION_JSON);
       createHotRodServers(CLUSTER_SIZE, cfgBuilder);
       waitForClusterToForm();
+      waitForClusterToForm(SCRIPT_CACHE_NAME);
    }
 
    @Override

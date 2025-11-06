@@ -54,6 +54,8 @@ public class ExecTest extends MultiHotRodServersTest {
       createHotRodServers(NUM_SERVERS, new ConfigurationBuilder());
       defineInAll(REPL_CACHE, CacheMode.REPL_SYNC);
       defineInAll(DIST_CACHE, CacheMode.DIST_SYNC);
+      waitForClusterToForm();
+      waitForClusterToForm(SCRIPT_CACHE_NAME);
    }
 
    @Override

@@ -37,6 +37,7 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       cfgBuilder.encoding().value().mediaType(APPLICATION_PROTOSTREAM_TYPE);
       createHotRodServers(CLUSTER_SIZE, cfgBuilder);
       waitForClusterToForm();
+      waitForClusterToForm(SCRIPT_CACHE_NAME);
    }
 
    @Override
