@@ -15,12 +15,6 @@
          <fileset refid="maven.project.dependencies"/>
          <chainedmapper>
             <flattenmapper/>
-            <!-- hack to rewrite the netty os-arch classifier -->
-            <compositemapper>
-               <regexpmapper from="netty-transport-native-epoll-(.*)-linux-(.*)\.jar" to="netty-transport-native-epoll-linux-\2-\1.jar"/>
-               <regexpmapper from="netty-incubator-transport-native-io_uring-(.*)-linux-(.*)\.jar" to="netty-incubator-transport-native-io_uring-linux-\2-\1.jar"/>
-               <regexpmapper from="^(?!.*x86_64[.]jar$$).*$$" to="\0"/>
-            </compositemapper>
          </chainedmapper>
       </copy>
       <delete dir="${output.dir}/lib">
