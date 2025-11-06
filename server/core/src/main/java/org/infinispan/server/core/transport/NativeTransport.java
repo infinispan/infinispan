@@ -22,8 +22,23 @@ public final class NativeTransport {
    private static final boolean IOURING_DISABLED = System.getProperty(USE_IOURING_PROPERTY, "true").equalsIgnoreCase("false");
 
    // Has to be after other static variables to ensure they are initialized
-   public static final boolean USE_NATIVE_EPOLL = useNativeEpoll();
-   public static final boolean USE_NATIVE_IOURING = useNativeIOUring();
+   private static final Type TYPE = transportType();
+
+   enum Type {
+      EPOLL,
+      IOURING,
+      NIO
+   }
+
+   private static Type transportType() {
+      if (useNativeEpoll()) {
+         return Type.EPOLL;
+      } else if (useNativeIOUring()) {
+         return Type.IOURING;
+      } else {
+         return Type.NIO;
+      }
+   }
 
    private static boolean useNativeEpoll() {
       try {
@@ -62,27 +77,27 @@ public final class NativeTransport {
    }
 
    public static Class<? extends ServerSocketChannel> serverSocketChannelClass() {
-      if (USE_NATIVE_EPOLL) {
-         SERVER.usingTransport("Epoll");
-         return EpollServerSocketChannel.class;
-      } else if (USE_NATIVE_IOURING) {
-         SERVER.usingTransport("IOUring");
-         return IOURingNativeTransport.serverSocketChannelClass();
-      } else {
-         SERVER.usingTransport("NIO");
-         return NioServerSocketChannel.class;
+      switch (TYPE) {
+         case EPOLL -> {
+            SERVER.usingTransport("Epoll");
+            return EpollServerSocketChannel.class;
+         }
+         case IOURING ->  {
+            SERVER.usingTransport("IOURING");
+            return IOURingNativeTransport.serverSocketChannelClass();
+         }
+         default ->  {
+            SERVER.usingTransport("NIO");
+            return NioServerSocketChannel.class;
+         }
       }
    }
 
    public static MultithreadEventLoopGroup createEventLoopGroup(int maxExecutors, ThreadFactory threadFactory) {
-      if (USE_NATIVE_EPOLL) {
-         // new MultiThreadIoEventLoopGroup(maxExecutors, executorService, EpollIoHandler.newFactory());
-         return new EpollEventLoopGroup(maxExecutors, threadFactory);
-      } else if (USE_NATIVE_IOURING) {
-         return IOURingNativeTransport.createEventLoopGroup(maxExecutors, threadFactory);
-      } else {
-         // new MultiThreadIoEventLoopGroup(maxExecutors, executorService, NioIoHandler.newFactory(SelectorProvider.provider()));
-         return new NioEventLoopGroup(maxExecutors, threadFactory);
-      }
+      return switch (TYPE) {
+         case EPOLL -> new EpollEventLoopGroup(maxExecutors, threadFactory);
+         case IOURING -> IOURingNativeTransport.createEventLoopGroup(maxExecutors, threadFactory);
+         default -> new NioEventLoopGroup(maxExecutors, threadFactory);
+      };
    }
 }
