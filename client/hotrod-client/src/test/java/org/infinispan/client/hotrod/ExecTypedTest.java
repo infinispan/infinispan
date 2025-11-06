@@ -39,6 +39,8 @@ public class ExecTypedTest extends MultiHotRodServersTest {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
       defineInAll(NAME, builder);
+      waitForClusterToForm();
+      waitForClusterToForm(SCRIPT_CACHE_NAME);
       execClient = createExecClient();
       clients.add(execClient);
       addScriptClient = createAddScriptClient();
