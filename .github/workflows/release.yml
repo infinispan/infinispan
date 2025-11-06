@@ -113,7 +113,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - uses: gerdemann/http-status-code@1.1.1
+      - uses: GOSCHEN/http-status-code@v1.1.0
         with:
           url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ inputs.version }}/infinispan-distribution-${{ inputs.version }}.pom
           code: 200
