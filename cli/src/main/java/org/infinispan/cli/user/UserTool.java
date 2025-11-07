@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.commons.util.Util;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.password.Password;
@@ -255,7 +256,7 @@ public class UserTool {
 
    public String describeUser(String username) {
       if (users.containsKey(username)) {
-         String[] userGroups = groups.containsKey(username) ? groups.getProperty(username).trim().split("\\s*,\\s*") : new String[]{};
+         String[] userGroups = groups.containsKey(username) ? groups.getProperty(username).trim().split("\\s*,\\s*") : Util.EMPTY_STRING_ARRAY;
          return MSG.userDescribe(username, realm, userGroups);
       } else {
          throw MSG.userToolNoSuchUser(username);

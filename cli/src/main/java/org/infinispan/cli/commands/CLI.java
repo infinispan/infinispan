@@ -11,6 +11,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.UnrecoverableKeyException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -30,6 +31,7 @@ import org.aesh.command.impl.registry.AeshCommandRegistryBuilder;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.option.Option;
 import org.aesh.command.option.OptionGroup;
+import org.aesh.command.option.OptionList;
 import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.registry.CommandRegistryException;
 import org.aesh.command.settings.SettingsBuilder;
@@ -167,8 +169,8 @@ public class CLI extends CliCommand {
    @Option(hasValue = false, description = "Whether to trust all server certificates", name = "trustall")
    boolean trustAll;
 
-   @Option(completer = FileOptionCompleter.class, shortName = 'f', description = "File for batch mode")
-   String file;
+   @OptionList(completer = FileOptionCompleter.class, shortName = 'f', description = "File for batch mode (can be specified more than once)")
+   List<String> file;
 
    @Option(shortName = 'c', description = "A connection URL. Use '-' to connect to http://localhost:11222")
    String connect;
@@ -198,8 +200,7 @@ public class CLI extends CliCommand {
       }
       if (version) {
          invocation.printf("%s CLI %s\n", org.infinispan.commons.util.Version.getBrandName(), org.infinispan.commons.util.Version.getBrandVersion());
-         invocation.printf("Copyright (C) Red Hat Inc. and/or its affiliates and other contributors\n");
-         invocation.printf("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0\n");
+         invocation.printf("License Apache License, v. 2.0. https://www.apache.org/licenses/LICENSE-2.0\n");
          return CommandResult.SUCCESS;
       }
 
@@ -236,7 +237,7 @@ public class CLI extends CliCommand {
          return batch(file, invocation.getShell());
       } else {
          if (context.getProperty(Context.Property.AUTOEXEC) != null) {
-            batch(context.getProperty(Context.Property.AUTOEXEC), invocation.getShell());
+            batch(List.of(context.getProperty(Context.Property.AUTOEXEC)), invocation.getShell());
          }
          return interactive(invocation.getShell());
       }
@@ -275,7 +276,7 @@ public class CLI extends CliCommand {
       }
    }
 
-   private CommandResult batch(String inputFile, Shell shell) {
+   private CommandResult batch(List<String> inputFiles, Shell shell) {
       CommandRegistry commandRegistry = initializeCommands(Batch.class);
 
       AeshCommandRuntimeBuilder runtimeBuilder = AeshCommandRuntimeBuilder.builder();
@@ -290,8 +291,13 @@ public class CLI extends CliCommand {
       runtimeBuilder.shell(shell);
 
       CliRuntimeRunner cliRunner = new CliRuntimeRunner("batch", runtimeBuilder.build());
+      String[] args = new String[inputFiles.size() + 1];
+      args[0] = "run";
+      for (int i = 0; i < inputFiles.size(); i++) {
+         args[i + 1] = inputFiles.get(i);
+      }
       int exitCode = cliRunner
-            .args(new String[]{"run", inputFile})
+            .args(args)
             .execute();
       context.disconnect();
       return CommandResult.valueOf(exitCode);
@@ -393,11 +399,11 @@ public class CLI extends CliCommand {
       }
    }
 
-   public static int main(Shell shell, String[] args, Properties properties) {
-      return main(shell, args, properties, isKubernetesMode());
+   public static int main(Shell shell, Properties properties, String... args) {
+      return main(shell, args == null ? Util.EMPTY_STRING_ARRAY : args, properties, isKubernetesMode());
    }
 
-   public static void main(String[] args) throws IOException {
+   public static void main(String... args) throws IOException {
       System.setProperty("log4j2.disable.jmx", "true");
       System.setProperty("log4j.configurationFactory", "org.infinispan.commons.logging.log4j.XmlConfigurationFactory");
       Shell shell = null;
@@ -409,7 +415,7 @@ public class CLI extends CliCommand {
       if (shell == null) {
          shell = new CliShell();
       }
-      System.exit(main(shell, args, System.getProperties()));
+      System.exit(main(shell, System.getProperties(), args));
    }
 
    public static Path getServerHome(Resource server) {
