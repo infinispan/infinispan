@@ -121,6 +121,20 @@ Specifies the user's password.
 *-r, --realm*='realm'::
 Specifies the realm name.
 
+*--random*::
+Whether the username and/or password should be randomly generated.
+
+*--random-character-class*::
+The character class to use when generating random identifiers. One of:
+* `[:alpha:]` all letters
+* `[:alnum:]` all letters and digits
+* `[:digit:]` all digits
+* `[:graph:]` all printable characters, not including spaces
+* `[:lower:]` al lower case letters
+* `[:punct:]` all punctuation characters
+* `[:upper:]` all upper case letters
+* `[:xdigit:]` all hexadecimal digits
+
 *--plain-text*::
 Whether passwords should be stored in plain-text (not recommended).
 

@@ -66,7 +66,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
       }
 
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
@@ -80,7 +80,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
    @Override
    protected void assertSourceConnected(String cacheName) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
@@ -92,7 +92,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
    @Override
    protected void assertSourceDisconnected(String cacheName) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
@@ -104,7 +104,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
    @Override
    protected void doRollingUpgrade(String cacheName, RestClient client) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
@@ -115,7 +115,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
    @Override
    protected void disconnectSource(String cacheName, RestClient client) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();

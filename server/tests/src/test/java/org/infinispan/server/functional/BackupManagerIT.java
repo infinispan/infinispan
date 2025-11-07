@@ -390,7 +390,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    private AeshTestConnection cli(Cluster cluster) {
       AeshTestConnection t = new AeshTestConnection();
-      CLI.main(new AeshDelegatingShell(t), new String[]{}, new Properties());
+      CLI.main(new AeshDelegatingShell(t), new Properties());
       String host = cluster.driver.getServerAddress(0).getHostAddress();
       int port = cluster.driver.getServerSocket(0, 11222).getPort();
       t.send(format("connect %s:%d", host, port));

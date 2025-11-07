@@ -93,7 +93,7 @@ public class ManagedConnectionOperations {
    @ArgumentsSource(Common.DatabaseProvider.class)
    public void testDataSourceCLI(Database database) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, new Properties());
+         CLI.main(new AeshDelegatingShell(terminal), new Properties());
          terminal.send("connect " + SERVERS.getServerAddress(0).getHostAddress() + ":11222");
          terminal.assertContains("//containers/default]>");
          terminal.clear();

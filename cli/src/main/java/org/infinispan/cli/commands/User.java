@@ -16,6 +16,7 @@ import org.infinispan.cli.commands.rest.Roles;
 import org.infinispan.cli.completers.EncryptionAlgorithmCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.user.UserTool;
+import org.infinispan.cli.util.Utils;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.kohsuke.MetaInfServices;
 
@@ -45,10 +46,10 @@ public class User extends CliCommand {
    @CommandDefinition(name = "create", description = "Creates a user", aliases = "add")
    public static class Create extends CliCommand {
 
-      @Argument(description = "The username for the user")
+      @Argument(description = "The username for the user. If unspecified, and random is not set, the ISPN_USERNAME environment variable will be used.")
       String username;
 
-      @Option(description = "The password for the user", shortName = 'p')
+      @Option(description = "The password for the user. If unspecified, and random is not set, the ISPN_PASSWORD environment variable will be used.", shortName = 'p')
       String password;
 
       @Option(description = "The realm ", defaultValue = UserTool.DEFAULT_REALM_NAME, shortName = 'r')
@@ -72,6 +73,18 @@ public class User extends CliCommand {
       @Option(description = "The server root", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
 
+      @Option(description = "Generate username and/or password if unspecified", hasValue = false)
+      boolean random;
+
+      @Option(description = "Echoes generated identifiers", hasValue = false)
+      boolean echo;
+
+      @Option(description = "The character class to use when generating random identifiers. Defaults to [:alnum:]", name="random-character-class", defaultValue = "[:alnum:]")
+      String randomCharacterClass;
+
+      @Option(description = "The length of randomly generated identifiers. Defaults to 8", name="random-length", defaultValue = "8")
+      int randomLength;
+
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
       protected boolean help;
 
@@ -85,15 +98,34 @@ public class User extends CliCommand {
          UserTool userTool = new UserTool(serverRoot, usersFile, groupsFile);
          try {
             while (username == null || username.isEmpty()) {
-               username = invocation.getShell().readLine(MSG.userToolUsername());
+               if (random) {
+                  username = Utils.randomString(randomCharacterClass, randomLength);
+                  if (echo) {
+                     invocation.println(MSG.generatedUser(username));
+                  }
+               } else {
+                  username = System.getenv("ISPN_USERNAME");
+                  if (username == null || username.isEmpty()) {
+                     username = invocation.getShell().readLine(MSG.userToolUsername());
+                  }
+               }
             }
          } catch (InterruptedException e) {
             return CommandResult.FAILURE;
          }
-
          if (password == null) { // Get the password interactively
             try {
-               password = invocation.getPasswordInteractively(MSG.userToolPassword(), MSG.userToolPasswordConfirm());
+               if (random) {
+                  password = Utils.randomString(randomCharacterClass, randomLength);
+                  if (echo) {
+                     invocation.println(MSG.generatedPassword(password));
+                  }
+               } else {
+                  password = System.getenv("ISPN_PASSWORD");
+                  if (password == null || password.isEmpty()) {
+                     password = invocation.getPasswordInteractively(MSG.userToolPassword(), MSG.userToolPasswordConfirm());
+                  }
+               }
             } catch (InterruptedException e) {
                return CommandResult.FAILURE;
             }

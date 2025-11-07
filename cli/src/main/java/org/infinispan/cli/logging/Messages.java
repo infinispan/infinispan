@@ -261,4 +261,10 @@ public interface Messages {
 
    @Message("The store migrator requires configuration properties to be set")
    IllegalArgumentException missingStoreMigratorProperties();
+
+   @Message("Generated User: %s")
+   String generatedUser(String username);
+
+   @Message("Generated Password: %s")
+   String generatedPassword(String password);
 }

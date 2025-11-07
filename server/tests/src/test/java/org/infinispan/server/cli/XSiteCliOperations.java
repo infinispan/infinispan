@@ -211,7 +211,7 @@ public class XSiteCliOperations {
 
    private void doWithTerminal(Consumer<AeshTestConnection> consumer) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          consumer.accept(terminal);
       }
    }

@@ -1023,7 +1023,7 @@ public final class Util {
       } else if (klass == String.class) {
          return value;
       } else if (klass == String[].class) {
-         return value.isEmpty() ? new String[]{} : value.split(" ");
+         return value.isEmpty() ? Util.EMPTY_STRING_ARRAY : value.split(" ");
       } else if (klass == Set.class) {
          return value.isEmpty() ? new HashSet<>() : new HashSet<>(Arrays.asList(value.split(" ")));
       } else if (klass == List.class) {
