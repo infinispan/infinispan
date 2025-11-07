@@ -77,7 +77,7 @@ execute_cli() {
   if [[ -f "${ISPN_HOME}/cli" ]]; then
     "${ISPN_HOME}/cli" "$@"
   else
-    JAVA_OPTS="${JAVA_OPTS} ${CLI_JAVA_OPTIONS}" "${ISPN_HOME}/bin/cli.sh" "$@"
+    "${ISPN_HOME}/bin/cli.sh" "$@"
   fi
   return $?
 }
