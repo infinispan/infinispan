@@ -1,11 +1,8 @@
 package org.infinispan.container.impl;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
 import java.util.PrimitiveIterator;
 import java.util.Spliterator;
@@ -17,11 +14,12 @@ import java.util.function.IntConsumer;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.ConcatIterator;
 import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -109,6 +107,43 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    }
 
    @Override
+   public int size() {
+      if (hasExpirable()) {
+         return super.size();
+      }
+      int size = 0;
+      for (int i = 0; i < maps.length(); ++i) {
+         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.get(i);
+         if (map != null) {
+            size += map.size();
+            if (size < 0) {
+               return Integer.MAX_VALUE;
+            }
+         }
+      }
+      return size;
+   }
+
+   @Override
+   public int size(IntSet segments) {
+      if (hasExpirable()) {
+         return super.size(segments);
+      }
+      int size = 0;
+      for (PrimitiveIterator.OfInt segmentIter = segments.iterator(); segmentIter.hasNext(); ) {
+         int segment = segmentIter.nextInt();
+         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.get(segment);
+         if (map != null) {
+            size += map.size();
+            if (size < 0) {
+               return Integer.MAX_VALUE;
+            }
+         }
+      }
+      return size;
+   }
+
+   @Override
    public Iterator<InternalCacheEntry<K, V>> iterator(IntSet segments) {
       return new EntryIterator(iteratorIncludingExpired(segments));
    }
@@ -130,27 +165,21 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
 
    @Override
    public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired(IntSet segments) {
-      // TODO: explore creating streaming approach to not create this list?
-      List<Collection<InternalCacheEntry<K, V>>> valueIterables = new ArrayList<>(segments.size());
-      segments.forEach((int s) -> {
-         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.get(s);
-         if (map != null) {
-            valueIterables.add(map.values());
-         }
-      });
-      return new ConcatIterator<>(valueIterables);
+      return segments.stream()
+            .flatMap(segment -> {
+               PeekableTouchableMap<K, V> ptm = maps.get(segment);
+               return ptm == null ? Stream.empty() : ptm.values().stream();
+            }).iterator();
    }
 
    @Override
    public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired() {
-      List<Collection<InternalCacheEntry<K, V>>> valueIterables = new ArrayList<>(maps.length() + 1);
-      for (int i = 0; i < maps.length(); ++i) {
-         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.get(i);
-         if (map != null) {
-            valueIterables.add(map.values());
-         }
-      }
-      return new ConcatIterator<>(valueIterables);
+      return IntStream.range(0, maps.length())
+            .boxed()
+            .flatMap(segment -> {
+               PeekableTouchableMap<K, V> ptm = maps.get(segment);
+               return ptm == null ? Stream.empty() : ptm.values().stream();
+            }).iterator();
    }
 
    @Override

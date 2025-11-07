@@ -22,8 +22,8 @@ public class WrappedByteArraySizeCalculator<K, V> extends AbstractEntrySizeCalcu
       long size = 0;
       Object keyToUse;
       Object valueToUse;
-      if (key instanceof WrappedByteArray) {
-         keyToUse = ((WrappedByteArray) key).getBytes();
+      if (key instanceof WrappedBytes) {
+         keyToUse = ((WrappedBytes) key).getBytes();
          // WBA object, the class pointer and the pointer to the byte[]
          size += roundUpToNearest8(OBJECT_SIZE + POINTER_SIZE * 2);
       } else {

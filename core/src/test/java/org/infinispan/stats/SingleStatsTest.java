@@ -79,6 +79,10 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       refreshStats();
    }
 
+   protected boolean shouldSegmentStore() {
+      return false;
+   }
+
    protected void configure(ConfigurationBuilder cfg) {
       long size = EVICTION_MAX_ENTRIES;
       MemoryConfigurationBuilder memoryConfigurationBuilder = cfg.memory();
@@ -111,6 +115,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
             .persistence()
             .passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .segmented(shouldSegmentStore())
             .purgeOnStartup(true);
    }
 

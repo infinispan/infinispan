@@ -324,6 +324,24 @@
           <xs:documentation>Defines the global state persistence configuration. If this element is not present, global state persistence will be disabled.</xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:element name="eviction-containers" minOccurs="0">
+        <xs:complexType>
+          <xs:choice maxOccurs="unbounded">
+            <xs:element name="max-count-container">
+              <xs:complexType>
+                <xs:attribute name="name" type="xs:string" use="required"/>
+                <xs:attribute name="count" type="xs:integer" use="required"/>
+              </xs:complexType>
+            </xs:element>
+            <xs:element name="max-size-container">
+              <xs:complexType>
+                <xs:attribute name="name" type="xs:string" use="required"/>
+                <xs:attribute name="size" type="xs:string" use="required"/>
+              </xs:complexType>
+            </xs:element>
+          </xs:choice>
+        </xs:complexType>
+      </xs:element>
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element name="local-cache" type="tns:local-cache">
           <xs:annotation>
@@ -1661,6 +1679,14 @@
       <xs:annotation>
         <xs:documentation>
           Defines the type of memory that the data container uses as storage.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="eviction-container" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          Defines the eviction container this cache should use for storage. This attribute cannot be used with any
+          other setting and assumes REMOVE for when-full.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

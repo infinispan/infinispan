@@ -1,4 +1,4 @@
-package org.infinispan.util;
+package org.infinispan.commons.util;
 
 import java.util.AbstractCollection;
 import java.util.Collection;
@@ -8,20 +8,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.infinispan.commons.util.IteratorMapper;
-import org.infinispan.commons.util.SpliteratorMapper;
-
 /**
  * A collection that maps another one to a new one of a possibly different type.  Note this collection is read only
- * and doesn't accept write operations.
+ * and doesn't accept write operations except iterator removal and clear as they don't pertain to the values.
  * <p>
  * Some operations such as {@link Collection#contains(Object)} and {@link Collection#containsAll(Collection)} may be
- * more expensive than normal since they cannot utilize lookups into the original collection.
+ * more expensive then normal since they cannot utilize lookups into the original collection.
  * @author wburns
- * @since 9.0
- * @deprecated since 16.1, please use {@link org.infinispan.commons.util.CollectionMapper} instead
+ * @since 16.0
  */
-@Deprecated
 public class CollectionMapper<E, R> extends AbstractCollection<R> {
    protected final Collection<E> realCollection;
    protected final Function<? super E, ? extends R> mapper;
@@ -43,12 +38,7 @@ public class CollectionMapper<E, R> extends AbstractCollection<R> {
 
    @Override
    public Iterator<R> iterator() {
-      return new IteratorMapper<E, R>(realCollection.iterator(), mapper) {
-         @Override
-         public void remove() {
-            throw new UnsupportedOperationException("remove");
-         }
-      };
+      return new IteratorMapper<>(realCollection.iterator(), mapper);
    }
 
    @Override
@@ -69,6 +59,11 @@ public class CollectionMapper<E, R> extends AbstractCollection<R> {
    @Override
    public void forEach(Consumer<? super R> action) {
       realCollection.forEach(c -> action.accept(mapper.apply(c)));
+   }
+
+   @Override
+   public void clear() {
+      realCollection.clear();
    }
 
    // Write operations are not supported!
@@ -94,11 +89,6 @@ public class CollectionMapper<E, R> extends AbstractCollection<R> {
 
    @Override
    public boolean retainAll(Collection<?> c) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void clear() {
       throw new UnsupportedOperationException();
    }
 }

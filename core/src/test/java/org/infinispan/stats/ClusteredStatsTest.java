@@ -37,6 +37,11 @@ public class ClusteredStatsTest extends SingleStatsTest {
    }
 
    @Override
+   protected boolean shouldSegmentStore() {
+      return true;
+   }
+
+   @Override
    protected void createCacheManagers() throws Throwable {
       GlobalConfigurationBuilder global = defaultGlobalConfigurationBuilder();
       global.metrics().accurateSize(accurateSize);
