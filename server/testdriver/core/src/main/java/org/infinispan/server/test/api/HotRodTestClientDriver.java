@@ -126,13 +126,22 @@ public class HotRodTestClientDriver extends AbstractTestClientDriver<HotRodTestC
     */
    @Override
    public <K, V> RemoteCache<K, V> create(int index) {
+      return create(index, testClient.getMethodName(qualifiers));
+   }
+
+   @Override
+   public <K, V> RemoteCache<K, V> create(String name) {
+      return create(-1, name);
+   }
+
+   @Override
+   public <K, V> RemoteCache<K, V> create(int index, String name) {
       RemoteCacheManager remoteCacheManager;
       if (index >= 0) {
          remoteCacheManager = createRemoteCacheManager(index);
       } else {
          remoteCacheManager = createRemoteCacheManager();
       }
-      String name = testClient.getMethodName(qualifiers);
       RemoteCache<K, V> remoteCache;
       if (serverConfiguration != null) {
          remoteCache = remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);

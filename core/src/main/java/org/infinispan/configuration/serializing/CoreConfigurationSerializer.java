@@ -254,6 +254,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writeTracing(writer, globalConfiguration);
          writeJMX(writer, globalConfiguration);
          writeGlobalState(writer, globalConfiguration);
+         writeEvictionContainers(writer, globalConfiguration);
          writeExtraConfiguration(writer, globalConfiguration.modules(), ParserScope.CACHE_CONTAINER);
       }
       writer.writeStartMap(Element.CACHES);
@@ -263,6 +264,28 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       }
       writer.writeEndMap(); // CACHES
       writer.writeEndElement(); // CACHE-CONTAINER
+   }
+
+   private void writeEvictionContainers(ConfigurationWriter writer, GlobalConfiguration globalConfiguration) {
+      Map<String, org.infinispan.configuration.global.ContainerMemoryConfiguration> containers = globalConfiguration.getMemoryContainer();
+      if (!containers.isEmpty()) {
+         writer.writeStartElement(Element.EVICTION_CONTAINERS);
+         for (Entry<String, org.infinispan.configuration.global.ContainerMemoryConfiguration> entry : containers.entrySet()) {
+            org.infinispan.configuration.global.ContainerMemoryConfiguration container = entry.getValue();
+            if (container.maxCount() > 0) {
+               writer.writeStartElement(Element.MAX_COUNT_CONTAINER);
+               writer.writeAttribute(Attribute.NAME, entry.getKey());
+               writer.writeAttribute(Attribute.COUNT, Long.toString(container.maxCount()));
+               writer.writeEndElement();
+            } else if (container.maxSize() != null) {
+               writer.writeStartElement(Element.MAX_SIZE_CONTAINER);
+               writer.writeAttribute(Attribute.NAME, entry.getKey());
+               writer.writeAttribute(Attribute.SIZE, container.maxSize());
+               writer.writeEndElement();
+            }
+         }
+         writer.writeEndElement();
+      }
    }
 
    public void writeCache(ConfigurationWriter writer, String name, Configuration config) {
@@ -658,6 +681,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             attributes.write(writer, MemoryConfiguration.MAX_SIZE, Attribute.MAX_SIZE);
          }
          attributes.write(writer, MemoryConfiguration.WHEN_FULL, Attribute.WHEN_FULL);
+         attributes.write(writer, MemoryConfiguration.EVICTION_CONTAINER, Attribute.EVICTION_CONTAINER);
          writer.writeEndElement();
       }
    }

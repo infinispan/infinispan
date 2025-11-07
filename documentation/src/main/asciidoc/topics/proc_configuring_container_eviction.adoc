@@ -1,0 +1,49 @@
+[id='configuring-container-eviction_{context}']
+= Configuring container eviction
+
+Configure container eviction to set a limit for the memory usage of the entire container (node), rather than for individual caches.
+{brandname} supports both size-based (`max-size-container`) and count-based (`max-count-container`) eviction containers. You can also define multiple eviction containers as needed.
+This simplifies configuration as you only need to know the limit for the node.
+Note that this setting is not cluster-wide; it applies only to the local node.
+
+.Drawbacks of shared eviction
+All caches using the shared eviction container share the same eviction policy.
+This means that data from one cache can evict data from another cache, which might not be desirable.
+If you need strict control over the memory usage of a specific cache, use per-cache eviction instead.
+Runtime updates of the shared eviction container are not yet supported, but should be coming soon.
+
+.Memory overhead
+A cache that uses a shared eviction container incurs a minor memory overhead.
+Each entry is stored with a wrapper that contains the cache name and the actual value.
+This adds two additional pointers (affected by compressed oops) and an object header per entry.
+
+.Performance considerations
+Shared eviction container performance is generally comparable to per-cache eviction:
+
+*   **Single key operations:** Same performance as a `HashMap`.
+*   **Clearing the cache or removing segments:** Slower than per-cache eviction.
+    The system must iterate through the shared container to find and remove entries belonging to the specific cache or segment.
+    However, this overhead is typically negligible compared to the network overhead of state transfer or rebalancing.
+
+.Procedure
+
+*   Define an eviction container in the `cache-container` configuration.
+*   Reference the eviction container in your cache configuration.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/eviction_container.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/eviction_container.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+]
+----
+include::yaml/eviction_container.yaml[]
+----

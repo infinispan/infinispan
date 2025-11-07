@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -101,6 +102,14 @@ public interface GlobalConfigurationChildBuilder {
     * {@link EmbeddedCacheManager#getCache()}. Not
     */
    GlobalConfigurationBuilder defaultCacheName(String defaultCacheName);
+
+   /**
+    *
+    * @param namedMemoryConfig
+    * @param consumer
+    * @return
+    */
+   GlobalConfigurationBuilder containerMemoryConfiguration(String namedMemoryConfig, Consumer<? super ContainerMemoryConfigurationBuilder> consumer);
 
    /**
     * Builds a {@link GlobalConfiguration} object using the settings applied to this builder

@@ -1,0 +1,13 @@
+<cache-container>
+   <eviction-containers>
+      <max-count-container name="my-container" count="1000"/>
+   </eviction-containers>
+   ...
+   <distributed-cache name="distributed-shared-eviction">
+      <memory eviction-container="my-container"/>
+   </distributed-cache>
+
+   <replicated-cache name="replicated-shared-eviction">
+      <memory eviction-container="my-container"/>
+   </replicated-cache>
+</cache-container>

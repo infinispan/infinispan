@@ -57,7 +57,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
          @Override
          void onEntryChosenForEviction(K key, InternalCacheEntry<K, V> value) {
             super.onEntryChosenForEviction(key, value);
-            computeEntryRemoved(key, value);
+            computeEntryRemoved(getSegmentForKey(key), key, value);
          }
       };
       evictionCache = applyListener(caffeine, evictionListener).build();
@@ -78,10 +78,6 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
    }
 
    @Override
-   protected void computeEntryWritten(K key, InternalCacheEntry<K, V> value) {
-      computeEntryWritten(getSegmentForKey(key), key, value);
-   }
-
    protected void computeEntryWritten(int segment, K key, InternalCacheEntry<K, V> value) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> map = BoundedSegmentedDataContainer.super.getMapForSegment(segment);
       if (map != null) {
@@ -90,10 +86,6 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
    }
 
    @Override
-   protected void computeEntryRemoved(K key, InternalCacheEntry<K, V> value) {
-      computeEntryRemoved(getSegmentForKey(key), key, value);
-   }
-
    protected void computeEntryRemoved(int segment, K key, InternalCacheEntry<K, V> value) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> map = BoundedSegmentedDataContainer.super.getMapForSegment(segment);
       if (map != null) {
@@ -146,7 +138,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
 
    @Override
    public void clear(IntSet segments) {
-      clear(segments, false);
+      clearSegments(segments);
       segments.forEach((IntConsumer) this::clearMapIfPresent);
    }
 
@@ -220,13 +212,12 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
     * provided segments when keepSegments is <code>true</code> or it will remove only the provided segments when
     * keepSegments is <code>false</code>.
     * @param segments the segments to either remove or keep
-    * @param keepSegments whether segments are kept or removed
     */
-   private void clear(IntSet segments, boolean keepSegments) {
+   private void clearSegments(IntSet segments) {
       for (Iterator<K> keyIterator = entries.keySet().iterator(); keyIterator.hasNext(); ) {
          K key = keyIterator.next();
          int keySegment = getSegmentForKey(key);
-         if (keepSegments != segments.contains(keySegment)) {
+         if (segments.contains(keySegment)) {
             keyIterator.remove();
          }
       }
@@ -237,7 +228,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
       // Call super remove segments so the maps are removed more efficiently
       super.removeSegments(segments);
       // Finally remove the entries from bounded cache
-      clear(segments, false);
+      clearSegments(segments);
    }
 
    private Policy.Eviction<K, InternalCacheEntry<K, V>> eviction() {

@@ -19,7 +19,11 @@ public interface HotRodClientDriver<T extends HotRodClientDriver<T>> extends Com
 
    <K, V> RemoteCache<K, V> create();
 
+   <K, V> RemoteCache<K, V> create(String name);
+
    <K, V> RemoteCache<K, V> create(int index);
+
+   <K, V> RemoteCache<K, V> create(int index, String name);
 
    RemoteCacheManager createRemoteCacheManager();
 

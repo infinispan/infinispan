@@ -3,6 +3,7 @@ package org.infinispan.factories;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.container.impl.SharedContainerMaps;
 import org.infinispan.container.versioning.RankCalculator;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
@@ -54,7 +55,7 @@ import org.infinispan.xsite.events.XSiteEventsManagerImpl;
       GlobalStateManager.class, GlobalConfigurationManager.class,
       SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class,
       RankCalculator.class, EventLoggerNotifier.class, PrincipalRoleMapper.class, RolePermissionMapper.class,
-      XSiteCacheMapper.class, XSiteEventsManager.class
+      XSiteCacheMapper.class, XSiteEventsManager.class, SharedContainerMaps.class
 })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -107,6 +108,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return globalConfiguration.isClustered() ?
                new XSiteEventsManagerImpl() :
                NoOpXSiteEventsManager.INSTANCE;
+      } else if (componentName.equals(SharedContainerMaps.class.getName())) {
+         return new SharedContainerMaps();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
