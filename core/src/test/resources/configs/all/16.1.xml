@@ -129,6 +129,10 @@
          <temporary-location path="tmpPath" relative-to="jboss.server.temp.dir" />
          <overlay-configuration-storage />
       </global-state>
+      <eviction-containers>
+         <max-count-container name="max-count" count="4181"/>
+         <max-size-container name="max-size" size="23MB"/>
+      </eviction-containers>
       <local-cache name="local" statistics="true" aliases="0 abc">
          <encoding>
             <key media-type="application/x-java-object"/>
@@ -364,6 +368,9 @@
          <expiration interval="11000"/>
       </local-cache>
 
+      <invalidation-cache name="shared-container-invalidation">
+         <memory eviction-container="max-size"/>
+      </invalidation-cache>
       <invalidation-cache-configuration name="invalidation-template" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
@@ -391,6 +398,9 @@
             <value media-type="application/x-java-object"/>
          </encoding>
          <locking acquire-timeout="32000"/>
+      </replicated-cache>
+      <replicated-cache name="shared-container-replicated">
+          <memory eviction-container="max-count"/>
       </replicated-cache>
 
       <distributed-cache-configuration name="dist-template" l1-lifespan="1200000" owners="4"

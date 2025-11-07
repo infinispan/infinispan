@@ -1,0 +1,28 @@
+{
+  "infinispan": {
+    "cacheContainer": {
+      "evictionContainers": {
+        "maxCountContainer": [
+          {
+            "name": "my-container",
+            "count": 1000
+          }
+        ]
+      },
+      "distributedCache": {
+        "distributed-shared-eviction": {
+          "memory": {
+            "evictionContainer": "my-container"
+          }
+        }
+      },
+      "replicatedCache": {
+        "replicated-shared-eviction": {
+          "memory": {
+            "evictionContainer": "my-container"
+          }
+        }
+      }
+    }
+  }
+}

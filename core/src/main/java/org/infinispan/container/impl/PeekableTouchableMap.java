@@ -21,7 +21,14 @@ public interface PeekableTouchableMap<K, V> extends ConcurrentMap<K, InternalCac
     * @param currentTimeMillis the recency timestamp to set
     * @return whether the entry was touched or not
     */
-   boolean touchKey(Object key, long currentTimeMillis);
+   default boolean touchKey(Object key, long currentTimeMillis) {
+      InternalCacheEntry<K, V> ice = peek(key);
+      if (ice != null) {
+         ice.touch(currentTimeMillis);
+         return true;
+      }
+      return false;
+   }
 
    /**
     * Touches all entries in the map setting the recency timestamps for both expiration eviction appropriately.

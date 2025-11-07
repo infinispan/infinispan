@@ -8,6 +8,7 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.CollectionMapper;
 import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.SpliteratorMapper;

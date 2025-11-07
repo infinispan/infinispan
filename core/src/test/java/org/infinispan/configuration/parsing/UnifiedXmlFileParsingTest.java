@@ -42,6 +42,7 @@ import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.TracingConfiguration;
+import org.infinispan.configuration.global.ContainerMemoryConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.global.JGroupsConfiguration;
@@ -114,6 +115,23 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_161(16, 1) {
+         @Override
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
+            Configuration replConfig = getConfiguration(holder, "shared-container-replicated");
+            assertThat(replConfig.memory().evictionContainer()).isEqualTo("max-count");
+
+            Configuration invalConfig = getConfiguration(holder, "shared-container-invalidation");
+            assertThat(invalConfig.memory().evictionContainer()).isEqualTo("max-size");
+
+            GlobalConfiguration config = getGlobalConfiguration(holder);
+            ContainerMemoryConfiguration maxCount = config.getMemoryContainer().get("max-count");
+            assertThat(maxCount.maxCount()).isEqualTo(4181);
+
+            ContainerMemoryConfiguration maxSize = config.getMemoryContainer().get("max-size");
+            assertThat(maxSize.maxSize()).isEqualTo("23MB");
+         }
+      },
       INFINISPAN_151(15, 1) {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {

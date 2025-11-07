@@ -78,7 +78,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     * @return count of the number of entries in the container excluding expired entries
-        * Default method invokes the {@link #iterator()} method and just counts entries.
+    * Default method invokes the {@link #iterator()} method and just counts entries.
     */
    default int size() {
       int size = 0;

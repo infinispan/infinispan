@@ -231,7 +231,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          // - we don't need an orderer as it is handled in OrderedClusteringDependentLogic
          // - we don't need eviction manager either as it is handled in NotifyHelper
          evictionStageRef.set(handleEviction(entry, null, passivator.running(), null, this, nonBlockingExecutor, null));
-         computeEntryRemoved(o, entry);
+         computeEntryRemoved(segment, o, entry);
          entryRemoved(entry);
          return null;
       });
@@ -251,11 +251,11 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          if (newEntry == oldEntry) {
             return oldEntry;
          } else if (newEntry == null) {
-            computeEntryRemoved(k, oldEntry);
+            computeEntryRemoved(segment, k, oldEntry);
             entryRemoved(oldEntry);
             return null;
          }
-         computeEntryWritten(k, newEntry);
+         computeEntryWritten(segment, k, newEntry);
          entryAdded(newEntry);
          if (log.isTraceEnabled())
             log.tracef("Store %s in container", newEntry);
@@ -281,20 +281,21 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    /**
     * This method is invoked every time an entry is written inside a compute block
+    * @param segment the segment for the key
     * @param key key passed to compute method
     * @param value the new value
     */
-   protected void computeEntryWritten(K key, InternalCacheEntry<K, V> value) {
+   protected void computeEntryWritten(int segment, K key, InternalCacheEntry<K, V> value) {
       // Do nothing by default
    }
 
    /**
     * This method is invoked every time an entry is removed inside a compute block
-    *
+    * @param segment the segment for the key
     * @param key key passed to compute method
     * @param value the old value
     */
-   protected void computeEntryRemoved(K key, InternalCacheEntry<K, V> value) {
+   protected void computeEntryRemoved(int segment, K key, InternalCacheEntry<K, V> value) {
       // Do nothing by default
    }
 

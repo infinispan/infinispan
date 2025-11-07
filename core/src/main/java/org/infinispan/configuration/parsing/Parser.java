@@ -759,12 +759,68 @@ public class Parser extends CacheParser {
                parseGlobalState(reader, holder);
                break;
             }
+            case EVICTION_CONTAINERS: {
+               parseEvictionContainers(reader, holder);
+               break;
+            }
             default: {
                reader.handleAny(holder);
             }
          }
       }
       holder.popScope();
+   }
+
+   private void parseEvictionContainers(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      while (reader.inTag(Element.EVICTION_CONTAINERS)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case MAX_COUNT_CONTAINER: {
+               String name = null;
+               long count = -1;
+               for (int i = 0; i < reader.getAttributeCount(); i++) {
+                  Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+                  switch (attribute) {
+                     case NAME:
+                        name = reader.getAttributeValue(i);
+                        break;
+                     case COUNT:
+                        count = Long.parseLong(reader.getAttributeValue(i));
+                        break;
+                     default:
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                  }
+               }
+               long countToUse = count;
+               holder.getGlobalConfigurationBuilder().containerMemoryConfiguration(name, b -> b.maxCount(countToUse));
+               break;
+            }
+            case MAX_SIZE_CONTAINER: {
+               String name = null;
+               String size = null;
+               for (int i = 0; i < reader.getAttributeCount(); i++) {
+                  Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+                  switch (attribute) {
+                     case NAME:
+                        name = reader.getAttributeValue(i);
+                        break;
+                     case SIZE:
+                        size = reader.getAttributeValue(i);
+                        break;
+                     default:
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                  }
+               }
+               String sizeToUse = size;
+               holder.getGlobalConfigurationBuilder().containerMemoryConfiguration(name, b -> b.maxSize(sizeToUse));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+         ParseUtils.requireNoContent(reader);
+      }
    }
 
    private void parseCaches(ConfigurationReader reader, ConfigurationBuilderHolder holder) {

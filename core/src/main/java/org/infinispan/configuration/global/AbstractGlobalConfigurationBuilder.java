@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.infinispan.commons.configuration.Builder;
 
@@ -111,6 +112,11 @@ public abstract class AbstractGlobalConfigurationBuilder implements GlobalConfig
    @Override
    public GlobalConfigurationBuilder defaultCacheName(String defaultCacheName) {
       return globalConfig.defaultCacheName(defaultCacheName);
+   }
+
+   @Override
+   public GlobalConfigurationBuilder containerMemoryConfiguration(String namedMemoryConfig, Consumer<? super ContainerMemoryConfigurationBuilder> consumer) {
+      return globalConfig.containerMemoryConfiguration(namedMemoryConfig, consumer);
    }
 
    @Override

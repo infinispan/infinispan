@@ -29,16 +29,6 @@ public class PeekableTouchableContainerMap<K, V> extends AbstractDelegatingConcu
    }
 
    @Override
-   public boolean touchKey(Object key, long currentTimeMillis) {
-      InternalCacheEntry<K, V> ice = peek(key);
-      if (ice != null) {
-         ice.touch(currentTimeMillis);
-         return true;
-      }
-      return false;
-   }
-
-   @Override
    public void touchAll(long currentTimeMillis) {
       for (InternalCacheEntry<K, V> ice : map.values()) {
          ice.touch(currentTimeMillis);

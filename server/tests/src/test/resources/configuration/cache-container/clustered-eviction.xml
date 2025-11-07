@@ -1,0 +1,15 @@
+<cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="urn:infinispan:config:16.1 https://infinispan.org/schemas/infinispan-config-fragment-16.1.xsd"
+                 xmlns="urn:infinispan:config:16.1"
+                 name="default" statistics="true">
+   <eviction-containers>
+      <max-size-container name="size-container" size="2KB"/>
+      <max-count-container name="count-container" count="10"/>
+   </eviction-containers>
+   <serialization>
+      <allow-list>
+         <regex>.*</regex>
+      </allow-list>
+   </serialization>
+   <metrics gauges="true" histograms="true" accurate-size="true" legacy="false" />
+</cache-container>

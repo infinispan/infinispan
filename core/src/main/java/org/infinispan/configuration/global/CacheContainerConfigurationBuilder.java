@@ -11,7 +11,11 @@ import static org.infinispan.configuration.global.CacheContainerConfiguration.ZE
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
@@ -31,6 +35,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    private final SerializationConfigurationBuilder serialization;
    private final ShutdownConfigurationBuilder shutdown;
    private final ThreadsConfigurationBuilder threads;
+   private final Map<String, ContainerMemoryConfigurationBuilder> containerMaps;
 
    CacheContainerConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
@@ -44,6 +49,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       this.security = new GlobalSecurityConfigurationBuilder(globalConfig);
       this.serialization = new SerializationConfigurationBuilder(globalConfig);
       this.shutdown = new ShutdownConfigurationBuilder(globalConfig);
+      this.containerMaps = new HashMap<>();
    }
 
    @Override
@@ -149,6 +155,18 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       return shutdown;
    }
 
+   @Override
+   public GlobalConfigurationBuilder containerMemoryConfiguration(String namedMemoryConfig, Consumer<? super ContainerMemoryConfigurationBuilder> consumer) {
+      containerMaps.compute(namedMemoryConfig, (___, config) -> {
+         if (config == null) {
+            config = new ContainerMemoryConfigurationBuilder(getGlobalConfig());
+         }
+         consumer.accept(config);
+         return config;
+      });
+      return getGlobalConfig();
+   }
+
    public CacheContainerConfigurationBuilder defaultCache(String defaultCacheName) {
       attributes.attribute(DEFAULT_CACHE).set(defaultCacheName);
       return this;
@@ -245,7 +263,8 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
             threads.create(),
             tracing.create(),
             transport.create(),
-            getGlobalConfig().getFeatures()
+            getGlobalConfig().getFeatures(),
+            containerMaps.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().create()))
             );
    }
 

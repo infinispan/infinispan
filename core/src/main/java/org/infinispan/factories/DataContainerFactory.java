@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.BoundedSegmentedDataContainer;
@@ -13,6 +14,8 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.L1SegmentedDataContainer;
 import org.infinispan.container.impl.PeekableTouchableContainerMap;
 import org.infinispan.container.impl.PeekableTouchableMap;
+import org.infinispan.container.impl.SharedCaffeineMap;
+import org.infinispan.container.impl.SharedContainerMaps;
 import org.infinispan.container.offheap.BoundedOffHeapDataContainer;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.OffHeapDataContainer;
@@ -21,6 +24,7 @@ import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.container.offheap.SegmentedBoundedOffHeapDataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.annotations.Inject;
 
 /**
  * Constructs the data container
@@ -32,23 +36,34 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 @DefaultFactoryFor(classes = InternalDataContainer.class)
 public class DataContainerFactory extends AbstractNamedCacheComponentFactory implements
       AutoInstantiableFactory {
+   @Inject SharedContainerMaps sharedContainerMaps;
 
    @Override
    public Object construct(String componentName) {
       ClusteringConfiguration clusteringConfiguration = configuration.clustering();
 
-      boolean shouldSegment = clusteringConfiguration.cacheMode().needsStateTransfer();
+      boolean shouldSegment = Configurations.needSegments(configuration);
       int level = configuration.locking().concurrencyLevel();
 
       MemoryConfiguration memoryConfiguration = configuration.memory();
       boolean offHeap = memoryConfiguration.isOffHeap();
+
+      String containerMapName = memoryConfiguration.evictionContainer();
+      int segments = shouldSegment ? clusteringConfiguration.hash().numSegments() : 1;
+      if (containerMapName != null) {
+         String cacheName = componentRegistry.getCacheName();
+         SharedCaffeineMap<?, ?> sharedCaffeineMap = sharedContainerMaps.getMap(containerMapName);
+         if (sharedCaffeineMap == null) {
+            throw new IllegalStateException("Shared container not available: " + containerMapName);
+         }
+         return sharedCaffeineMap.newContainer(cacheName, basicComponentRegistry, segments);
+      }
 
       EvictionStrategy strategy = memoryConfiguration.whenFull();
       //handle case when < 0 value signifies unbounded container or when we are not removal based
       if (strategy.isExceptionBased() || !strategy.isEnabled()) {
          if (offHeap) {
             if (shouldSegment) {
-               int segments = clusteringConfiguration.hash().numSegments();
                Supplier<PeekableTouchableMap<WrappedBytes, WrappedBytes>> mapSupplier =
                      this::createAndStartOffHeapConcurrentMap;
                if (clusteringConfiguration.l1().enabled()) {
@@ -61,7 +76,6 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          } else if (shouldSegment) {
             Supplier<PeekableTouchableMap<Object, Object>> mapSupplier =
                   PeekableTouchableContainerMap::new;
-            int segments = clusteringConfiguration.hash().numSegments();
             if (clusteringConfiguration.l1().enabled()) {
                return new L1SegmentedDataContainer<>(mapSupplier, segments);
             }
@@ -77,18 +91,14 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
       DataContainer<?, ?> dataContainer;
       if (offHeap) {
          if (shouldSegment) {
-            int segments = clusteringConfiguration.hash().numSegments();
-            dataContainer = new SegmentedBoundedOffHeapDataContainer(segments, thresholdSize,
-                  memoryConfiguration.maxSize() != null);
+            dataContainer = new SegmentedBoundedOffHeapDataContainer(segments, thresholdSize, sizeInBytes);
          } else {
-            dataContainer = new BoundedOffHeapDataContainer(thresholdSize, memoryConfiguration.maxSize() != null);
+            dataContainer = new BoundedOffHeapDataContainer(thresholdSize, sizeInBytes);
          }
       } else if (shouldSegment) {
-         int segments = clusteringConfiguration.hash().numSegments();
-         dataContainer = new BoundedSegmentedDataContainer<>(segments, thresholdSize,
-               memoryConfiguration.maxSize() != null);
+         dataContainer = new BoundedSegmentedDataContainer<>(segments, thresholdSize, sizeInBytes);
       } else {
-         dataContainer = DefaultDataContainer.boundedDataContainer(level, thresholdSize, memoryConfiguration.maxSize() != null);
+         dataContainer = DefaultDataContainer.boundedDataContainer(level, thresholdSize, sizeInBytes);
       }
       if (sizeInBytes) {
          memoryConfiguration.attributes().attribute(MemoryConfiguration.MAX_SIZE)

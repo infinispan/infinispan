@@ -1,12 +1,14 @@
 package org.infinispan.factories;
 
 
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -14,25 +16,42 @@ import org.infinispan.container.impl.BoundedSegmentedDataContainer;
 import org.infinispan.container.impl.DefaultDataContainer;
 import org.infinispan.container.impl.DefaultSegmentedDataContainer;
 import org.infinispan.container.impl.L1SegmentedDataContainer;
+import org.infinispan.container.impl.SharedBoundedContainer;
+import org.infinispan.container.impl.SharedCaffeineMap;
+import org.infinispan.container.impl.SharedContainerMaps;
 import org.infinispan.container.offheap.BoundedOffHeapDataContainer;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.OffHeapDataContainer;
 import org.infinispan.container.offheap.SegmentedBoundedOffHeapDataContainer;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(testName = "factories.DataContainerFactoryTest", groups = "functional")
 public class DataContainerFactoryTest extends AbstractInfinispanTest {
    private static final String COMPONENT_NAME = "";
+   private static final String CACHE_NAME = DataContainerFactoryTest.class.getName() + "-cache";
 
    private DataContainerFactory dataContainerFactory;
 
    @BeforeMethod
    public void before() {
       dataContainerFactory = new DataContainerFactory();
+      dataContainerFactory.componentRegistry = Mockito.mock(ComponentRegistry.class);
+      Mockito.when(dataContainerFactory.componentRegistry.getCacheName()).thenReturn(CACHE_NAME);
+      dataContainerFactory.basicComponentRegistry = Mockito.mock(BasicComponentRegistry.class);
+      Mockito.doAnswer(i -> {
+         SharedBoundedContainer<?, ?> sbc = i.getArgument(0);
+         TestingUtil.inject(sbc, Mockito.mock(Configuration.class, RETURNS_DEEP_STUBS));
+         return null;
+      }).when(dataContainerFactory.basicComponentRegistry).wireDependencies(Mockito.any(SharedBoundedContainer.class), Mockito.anyBoolean());
       dataContainerFactory.globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
+
+      dataContainerFactory.sharedContainerMaps = new SharedContainerMaps();
    }
 
    @Test
@@ -128,5 +147,28 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
 
       Object component = dataContainerFactory.construct(COMPONENT_NAME);
       assertEquals(SegmentedBoundedOffHeapDataContainer.class, component.getClass());
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testEvictionShareContainerNotPresent() {
+      String containerName = "container";
+      dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
+            .memory().evictionContainer(containerName)
+            .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
+
+      dataContainerFactory.construct(COMPONENT_NAME);
+   }
+
+   @Test
+   public void testEvictionShareContainerPresent() {
+      String containerName = "container";
+      dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
+            .memory().evictionContainer(containerName)
+            .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
+
+      dataContainerFactory.sharedContainerMaps.getMaps().put(containerName, new SharedCaffeineMap<>(13, false));
+
+      Object component = dataContainerFactory.construct(COMPONENT_NAME);
+      assertEquals(SharedBoundedContainer.class, component.getClass());
    }
 }

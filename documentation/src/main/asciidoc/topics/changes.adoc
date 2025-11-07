@@ -26,6 +26,31 @@ We strongly recommend updating your queries and/or dashboards to the new metric'
 Legacy metrics names have been disabled. To restore this behavior, set `infinispan/cache-container/metrics/legacy`
 attribute to `true`.
 
+=== Eviction Containers
+
+Infinispan 16.1 introduces the ability to configure *eviction containers* at the cache-container level.
+This simplifies eviction configuration for individual nodes by allowing multiple caches to share a single, node-wide eviction policy.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<cache-container>
+   <eviction-containers>
+      <max-size-container name="my-node-eviction" size="1GB"/>
+   </eviction-containers>
+   ...
+   <distributed-cache name="distributed-shared-eviction">
+      <memory eviction-container="my-node-eviction"/>
+   </distributed-cache>
+
+   <replicated-cache name="replicated-shared-eviction">
+      <memory eviction-container="my-node-eviction"/>
+   </replicated-cache>
+</cache-container>
+----
+
+This approach means that all caches utilizing the shared container will share the same eviction limit.
+If a particular cache requires more granular control over its memory usage, it should be configured with its own dedicated eviction policy.
+
 == Upgrading from 15.2 to 16.0
 
 === Marshalling Changes

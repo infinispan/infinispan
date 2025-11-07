@@ -2,6 +2,8 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.util.Map;
+
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -50,6 +52,7 @@ class CacheContainerConfiguration {
    private final ThreadsConfiguration threads;
    private final GlobalTracingConfiguration tracing;
    private final TransportConfiguration transport;
+   private final Map<String, ContainerMemoryConfiguration> memoryContainers;
 
 
    CacheContainerConfiguration(AttributeSet attributes,
@@ -62,7 +65,7 @@ class CacheContainerConfiguration {
                                ThreadsConfiguration threads,
                                GlobalTracingConfiguration tracing,
                                TransportConfiguration transport,
-                               Features features) {
+                               Features features, Map<String, ContainerMemoryConfiguration> memoryContainers) {
       this.attributes = attributes.checkProtection();
       this.defaultCache = attributes.attribute(DEFAULT_CACHE);
       this.name = attributes.attribute(NAME);
@@ -78,6 +81,7 @@ class CacheContainerConfiguration {
       this.threads = threads;
       this.transport = transport;
       this.zeroCapacityAvailable = features.isAvailable(ZERO_CAPACITY_NODE_FEATURE);
+      this.memoryContainers = memoryContainers;
    }
 
    public AttributeSet attributes() {
@@ -174,6 +178,10 @@ class CacheContainerConfiguration {
 
    public ThreadPoolConfiguration blockingThreadPool() {
       return threads.blockingThreadPool();
+   }
+
+   public Map<String, ContainerMemoryConfiguration> containerMemoryConfiguration() {
+      return memoryContainers;
    }
 
    @Override
