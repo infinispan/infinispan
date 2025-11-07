@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.InjectiveFunction;
+import org.infinispan.commons.util.SetMapper;
 
 /**
  * CacheStream that allows for mapping the filtered keys to different keys. Note that the function provided

@@ -6,7 +6,9 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.SetMapper;
 import org.infinispan.commons.util.SpliteratorMapper;
 
 /**
@@ -15,11 +17,17 @@ import org.infinispan.commons.util.SpliteratorMapper;
  * which can be a lot faster when checking single values and can also prevent out of memory issues.
  * @author wburns
  * @since 9.0
+ * @deprecated since 16.1 This class is not used any longer and is scheduled for removal
  */
+@Deprecated
 public class CacheSetMapper<E, R> extends SetMapper<E, R> implements CacheSet<R> {
    protected final CacheSet<E> realSet;
 
    public CacheSetMapper(CacheSet<E> realSet, Function<? super E, ? extends R> mapper) {
+      this(realSet, (InjectiveFunction<? super E, ? extends R>) mapper);
+   }
+
+   public CacheSetMapper(CacheSet<E> realSet, InjectiveFunction<? super E, ? extends R> mapper) {
       super(realSet, mapper);
       this.realSet = realSet;
    }

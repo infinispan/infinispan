@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 
 /**
@@ -103,6 +104,21 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       return maxCount() > 0;
    }
 
+   /**
+    * Sets the container storage to use with this cache for shared eviction. Note that all other arguments
+    * to the {@link MemoryConfigurationBuilder} will be ignored
+    * @param storageName the name of the container storage to use, validated at cache creation time
+    * @return this
+    */
+   public MemoryConfigurationBuilder containerStorage(String storageName) {
+      attributes.attribute(MemoryConfiguration.CONTAINER_STORAGE).set(storageName);
+      return this;
+   }
+
+   public String containerStorage() {
+      return attributes.attribute(MemoryConfiguration.CONTAINER_STORAGE).get();
+   }
+
    private void checkBinaryRequirement() {
       if (!storage().canStoreReferences()) {
          if (getBuilder().clustering().hash().groups().isEnabled()) {
@@ -120,6 +136,14 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    public void validate() {
       if (isSizeBounded() && isCountBounded()) {
          throw CONFIG.cannotProvideBothSizeAndCount();
+      }
+      if (containerStorage() != null) {
+         if (isCountBounded() || isCountBounded()) {
+            throw CONFIG.memorySharedConfigHasEviction();
+         }
+         if (storage() == StorageType.OFF_HEAP) {
+            throw CONFIG.memorySharedConfigHasOffHeap();
+         }
       }
       EvictionStrategy strategy = whenFull();
       if (strategy.isEnabled()) {
@@ -145,6 +169,17 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
          }
       }
       checkBinaryRequirement();
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      super.validate(globalConfig);
+      String containerStorage = containerStorage();
+      if (containerStorage != null) {
+         if (!globalConfig.getMemoryContainer().containsKey(containerStorage)) {
+            throw CONFIG.memorySharedContainerNotExist(containerStorage);
+         }
+      }
    }
 
    @Override
