@@ -1,4 +1,4 @@
-package org.infinispan.test.hibernate.cache.v62.functional.cluster;
+package org.infinispan.test.hibernate.cache.v66.functional.cluster;
 
 import java.util.Map;
 import java.util.Properties;
