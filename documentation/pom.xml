@@ -24,7 +24,7 @@
         <maven.min.version>3.8</maven.min.version>
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
-        <asciidoctorj.version>3.0.0</asciidoctorj.version>
+        <asciidoctorj.version>3.0.1</asciidoctorj.version>
         <asciidoctor.maven.plugin.version>3.2.0</asciidoctor.maven.plugin.version>
         <asciidoctorj.pdf.version>2.3.23</asciidoctorj.pdf.version>
         <jruby.version>9.4.14.0</jruby.version>
