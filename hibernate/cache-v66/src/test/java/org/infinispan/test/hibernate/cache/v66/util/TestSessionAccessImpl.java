@@ -1,4 +1,4 @@
-package org.infinispan.test.hibernate.cache.v62.util;
+package org.infinispan.test.hibernate.cache.v66.util;
 
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;

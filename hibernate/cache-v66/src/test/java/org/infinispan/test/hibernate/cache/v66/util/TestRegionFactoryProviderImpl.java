@@ -1,4 +1,4 @@
-package org.infinispan.test.hibernate.cache.v62.util;
+package org.infinispan.test.hibernate.cache.v66.util;
 
 import java.util.Properties;
 
@@ -8,7 +8,7 @@ import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.v6.InfinispanRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
-import org.infinispan.test.hibernate.cache.v62.functional.cluster.ClusterAwareRegionFactory;
+import org.infinispan.test.hibernate.cache.v66.functional.cluster.ClusterAwareRegionFactory;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices(TestRegionFactoryProvider.class)
