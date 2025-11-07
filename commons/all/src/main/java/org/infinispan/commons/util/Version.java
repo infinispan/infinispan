@@ -67,7 +67,7 @@ public class Version {
       codename = properties.getProperty(INFINISPAN_CODENAME, "N/A");
       schemaVersion = properties.getProperty(INFINISPAN_CORE_SCHEMA_VERSION, "0.0");
       String[] parts = getParts(version);
-      versionId = readVersionBytes(parts[0], parts[1], parts[2], parts[3]);
+      versionId = readVersionBytes(parts[0], parts[1], parts[2], parts.length == 4 ? parts[3] : "");
       versionShort = getVersionShort(version);
       String modulePrefix = properties.getProperty(INFINISPAN_MODULE_SLOT_PREFIX, "ispn");
       String moduleVersion = properties.getProperty(INFINISPAN_MODULE_SLOT_VERSION, parts[0] + "." + parts[1]);
