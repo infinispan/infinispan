@@ -61,7 +61,7 @@ public class CliIT {
    @Test
    public void testCliInteractive() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
 
          terminal.send("echo Hi");
          terminal.assertEquals("[disconnected]> echo Hi" + Config.getLineSeparator() + "Hi" + Config.getLineSeparator() + "[disconnected]> ");
@@ -177,7 +177,7 @@ public class CliIT {
    public void testCliBatch() {
       System.setProperty("serverAddress", hostAddress());
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{"-f", getCliResource("batch.cli").getPath()}, properties);
+      CLI.main(shell, properties, "-f", getCliResource("batch.cli").getPath());
       shell.assertContains("Hi CLI running on " + System.getProperty("os.arch"));
       shell.assertContains("batch1");
    }
@@ -186,7 +186,7 @@ public class CliIT {
    public void testCliBatchError() {
       System.setProperty("serverAddress", hostAddress());
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{"-f", getCliResource("batch-error.cli").getPath()}, properties);
+      CLI.main(shell, properties, "-f", getCliResource("batch-error.cli").getPath());
       shell.assertContains("Hi CLI running on " + System.getProperty("os.arch"));
       shell.assertContains("batch-error.cli, line 2");
    }
@@ -194,7 +194,7 @@ public class CliIT {
    @Test
    public void testCliBatchPreconnect() {
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{"-c", connectionUrl(), "-f", getCliResource("batch-preconnect.cli").getPath()}, properties);
+      CLI.main(shell, properties, "-c", connectionUrl(), "-f", getCliResource("batch-preconnect.cli").getPath());
       shell.assertContains("Hi CLI");
       shell.assertContains("batch2");
    }
@@ -202,7 +202,7 @@ public class CliIT {
    @Test
    public void testCliTasks() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{"-c", connectionUrl()}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties, "-c", connectionUrl());
          connect(terminal);
 
          terminal.send("cd tasks");
@@ -222,7 +222,7 @@ public class CliIT {
    @Test
    public void testCliCredentials() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          String keyStore = Paths.get(System.getProperty("build.directory", ""), "key.store").toAbsolutePath().toString();
 
          terminal.send("credentials add --path=" + keyStore + " --password=secret --credential=credential password");
@@ -237,7 +237,7 @@ public class CliIT {
    @Test
    public void testCliAuthorization() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          connect(terminal);
          terminal.send("user roles ls");
          terminal.assertContains("\"admin\"");
@@ -279,7 +279,7 @@ public class CliIT {
    @Test
    public void testCliUploadProtobufSchemas() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
 
          // connect
          connect(terminal);
@@ -306,7 +306,7 @@ public class CliIT {
    @Test
    public void testCliHttpBenchmark() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
 
          // no cache
          terminal.send("benchmark " + connectionUrl());
@@ -317,7 +317,7 @@ public class CliIT {
    @Test
    public void testCliConfigPersistence() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
 
          terminal.send("config set autoconnect-url " + connectionUrl());
          terminal.clear();
@@ -326,7 +326,7 @@ public class CliIT {
       }
       // Close and recreate the CLI so that auto-connection kicks in
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          terminal.assertContains("//containers/default]>");
          terminal.send("config set autoconnect-url");
       }
@@ -335,7 +335,7 @@ public class CliIT {
    @Test
    public void testCliCacheAvailability() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
 
          var cacheName = "qcache";
          connect(terminal);
@@ -354,7 +354,7 @@ public class CliIT {
    @Test
    public void testCliAlternateContext() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          terminal.send("connect --context-path=/relax " + connectionUrl(TestUser.ADMIN, 11225));
          terminal.assertContains("//containers/default]>");
          terminal.clear();

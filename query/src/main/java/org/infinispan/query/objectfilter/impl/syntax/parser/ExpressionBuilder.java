@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.query.objectfilter.impl.logging.Log;
 import org.infinispan.query.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.query.objectfilter.impl.ql.QueryRendererDelegate;
@@ -95,7 +96,7 @@ final class ExpressionBuilder<TypeMetadata> {
    }
 
    public void addNestedComparison(PropertyPath<?> propertyPath, ComparisonExpr.Type comparisonType, Object value, String joinAlias, PropertyPath<TypeDescriptor<TypeMetadata>> embeddedPath) {
-      if (!propertyHelper.isNestedIndexStructure(entityType, embeddedPath.getNodeNamesWithoutAlias().toArray(new String[]{}))) {
+      if (!propertyHelper.isNestedIndexStructure(entityType, embeddedPath.getNodeNamesWithoutAlias().toArray(Util.EMPTY_STRING_ARRAY))) {
          log.warn("NestedExpr currently only supported on NESTED embedded fields. Falling back to ComparisonExpr");
          addComparison(propertyPath, comparisonType, value);
          return;

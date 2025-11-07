@@ -23,6 +23,8 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.infinispan.cli.commands.CLI;
+import org.infinispan.cli.impl.CliShell;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.commons.util.Version;
@@ -39,6 +41,7 @@ public class Bootstrap extends Main {
    private final ExitHandler exitHandler;
    private final List<Path> configurationFiles = new ArrayList<>(3);
    private Path loggingFile;
+   private final List<String> batch = new ArrayList<>(3);
 
    static {
       staticInitializer();
@@ -161,6 +164,9 @@ public class Bootstrap extends Main {
                throw new IllegalArgumentException(e);
             }
             break;
+         case "--pre-start-batch":
+            batch.add(parameter);
+            break;
          default:
             throw new IllegalArgumentException(command);
       }
@@ -186,8 +192,10 @@ public class Bootstrap extends Main {
          stdErr.printf("Cannot read %s", loggingFile);
          return;
       }
-      configureClasspath();
+
       configureLogging();
+      runBatch();
+      configureClasspath();
       logJVMInformation();
 
       Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
@@ -199,6 +207,19 @@ public class Bootstrap extends Main {
       try (Server server = new Server(serverRoot, configurationFiles, properties)) {
          server.setExitHandler(exitHandler);
          server.run().join();
+      }
+   }
+
+   private void runBatch() {
+      if (!batch.isEmpty()) {
+         try {
+            Logger logger = Logger.getLogger("BOOT");
+            logger.info("Running batch files: " + batch);
+            CLI.main(new CliShell(), properties, "--file", String.join(",", batch));
+         } catch (Throwable t) {
+            // Fail fast
+            throw new RuntimeException(t);
+         }
       }
    }
 
@@ -243,6 +264,7 @@ public class Bootstrap extends Main {
       out.printf("  --aot                         %s%n", MSG.serverHelpAOT());
       out.printf("  --debug <port>                %s%n", MSG.serverHelpDebug());
       out.printf("  --jmx <port>                  %s%n", MSG.serverHelpJMX());
+      out.printf("  --pre-start-batch=<file>      %s%n", MSG.serverHelpPreStartBatch());
    }
 
    @Override

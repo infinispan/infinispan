@@ -42,7 +42,7 @@ public class PersistentStateParseTest {
       Path p = createPersistentState(name.getMethodName(), persistentStateName);
 
       AeshTestShell shell = new AeshTestShell();
-      int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString()}, properties);
+      int exit = CLI.main(shell, properties, "troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString());
       assertEquals(0, exit);
       shell.assertContains(persistentStateName);
    }
@@ -58,7 +58,7 @@ public class PersistentStateParseTest {
       Path p = createPersistentState(name.getMethodName(), persistentStateName);
 
       AeshTestShell shell = new AeshTestShell();
-      int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--show", persistentStateName}, properties);
+      int exit = CLI.main(shell, properties, "troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--show", persistentStateName);
       assertEquals(0, exit);
       shell.assertContains("key=key; value=content");
    }
@@ -77,7 +77,7 @@ public class PersistentStateParseTest {
       assertTrue(p.toFile().exists());
 
       AeshTestShell shell = new AeshTestShell();
-      int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--delete", persistentStateName}, properties);
+      int exit = CLI.main(shell, properties, "troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--delete", persistentStateName);
       assertEquals(0, exit);
       shell.assertContains("key=key; value=content");
 
@@ -102,7 +102,7 @@ public class PersistentStateParseTest {
       assertTrue(lock.tryLock());
       try {
          AeshTestShell shell = new AeshTestShell();
-         int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--delete", persistentStateName}, properties);
+         int exit = CLI.main(shell, properties, "troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--delete", persistentStateName);
          assertEquals(0, exit);
       } finally {
          lock.unlock();

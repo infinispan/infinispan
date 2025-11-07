@@ -25,6 +25,7 @@ import java.util.Set;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Util;
 import org.junit.Test;
 
 public class AttributeTest {
@@ -240,14 +241,14 @@ public class AttributeTest {
       bigIntegerAttr.fromString("100");
       assertEquals(BigInteger.valueOf(100), bigIntegerAttr.get());
 
-      AttributeDefinition<String[]> stringArrayDef = AttributeDefinition.builder("stringArray", new String[]{}).build();
+      AttributeDefinition<String[]> stringArrayDef = AttributeDefinition.builder("stringArray", Util.EMPTY_STRING_ARRAY).build();
       Attribute<String[]> stringArray = new Attribute<>(stringArrayDef);
       stringArray.fromString("a b c");
       assertArrayEquals(new String[]{"a", "b", "c"}, stringArray.get());
       stringArray.fromString("d");
       assertArrayEquals(new String[]{"d"}, stringArray.get());
       stringArray.fromString("");
-      assertArrayEquals(new String[]{}, stringArray.get());
+      assertArrayEquals(Util.EMPTY_STRING_ARRAY, stringArray.get());
 
       AttributeDefinition<List<String>> listAttrDef = AttributeDefinition.builder("list", Collections.emptyList(), (Class<List<String>>) (Class<?>) List.class).build();
       Attribute<List<String>> listAttr = new Attribute<>(listAttrDef);
