@@ -1,65 +1,5 @@
 {
   "definitions" : [ {
-    "protopath" : "org:/:infinispan:/:server:/:persistence.event_logger.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "ServerEventImpl",
-        "type_id" : 5200,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "when",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 2,
-          "name" : "level",
-          "type" : "org.infinispan.persistence.core.EventLogLevel",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "category",
-          "type" : "org.infinispan.persistence.core.EventLogCategory",
-          "optional" : true
-        }, {
-          "id" : 4,
-          "name" : "message",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 5,
-          "name" : "detail",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 6,
-          "name" : "who",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 7,
-          "name" : "context",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 8,
-          "name" : "scope",
-          "type" : "string",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "persistence.core.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.event_logger"
-      }
-    }
-  }, {
     "protopath" : "org:/:infinispan:/:server:/:global.server.runtime.proto",
     "def" : {
       "enums" : [ {
@@ -155,6 +95,66 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.server.runtime"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:server:/:persistence.event_logger.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "ServerEventImpl",
+        "type_id" : 5200,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "when",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "level",
+          "type" : "org.infinispan.persistence.core.EventLogLevel",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "category",
+          "type" : "org.infinispan.persistence.core.EventLogCategory",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "message",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "detail",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "who",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "context",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "scope",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.event_logger"
       }
     }
   } ]

@@ -1,548 +1,5 @@
 {
   "definitions" : [ {
-    "protopath" : "org:/:infinispan:/:persistence.core.proto",
-    "def" : {
-      "enums" : [ {
-        "name" : "EventLogLevel",
-        "type_id" : 1001,
-        "enum_fields" : [ {
-          "name" : "INFO"
-        }, {
-          "name" : "WARN",
-          "integer" : 1
-        }, {
-          "name" : "ERROR",
-          "integer" : 2
-        }, {
-          "name" : "FATAL",
-          "integer" : 3
-        } ]
-      }, {
-        "name" : "EventLogCategory",
-        "type_id" : 1000,
-        "enum_fields" : [ {
-          "name" : "LIFECYCLE"
-        }, {
-          "name" : "CLUSTER",
-          "integer" : 1
-        }, {
-          "name" : "SECURITY",
-          "integer" : 2
-        }, {
-          "name" : "TASKS",
-          "integer" : 3
-        } ]
-      }, {
-        "name" : "AuthorizationPermission",
-        "type_id" : 1012,
-        "enum_fields" : [ {
-          "name" : "NONE"
-        }, {
-          "name" : "LIFECYCLE_PERMISSION",
-          "integer" : 1
-        }, {
-          "name" : "READ",
-          "integer" : 2
-        }, {
-          "name" : "WRITE",
-          "integer" : 4
-        }, {
-          "name" : "EXEC",
-          "integer" : 8
-        }, {
-          "name" : "LISTEN",
-          "integer" : 16
-        }, {
-          "name" : "BULK_READ",
-          "integer" : 32
-        }, {
-          "name" : "ALL_READ",
-          "integer" : 34
-        }, {
-          "name" : "BULK_WRITE",
-          "integer" : 64
-        }, {
-          "name" : "ALL_WRITE",
-          "integer" : 68
-        }, {
-          "name" : "ADMIN",
-          "integer" : 128
-        }, {
-          "name" : "CREATE",
-          "integer" : 256
-        }, {
-          "name" : "MONITOR",
-          "integer" : 512
-        }, {
-          "name" : "ALL",
-          "integer" : 2147483647
-        } ]
-      } ],
-      "messages" : [ {
-        "name" : "MetaParamsInternalMetadata",
-        "type_id" : 1003,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "numericVersion",
-          "type" : "NumericVersion",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "clusteredVersion",
-          "type" : "SimpleClusteredVersion",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "created",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 4,
-          "name" : "lastUsed",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 5,
-          "name" : "lifespan",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 6,
-          "name" : "maxIdle",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 7,
-          "name" : "counterConfiguration",
-          "type" : "org.infinispan.persistence.commons.CounterConfiguration",
-          "optional" : true
-        }, {
-          "id" : 8,
-          "name" : "updateCreationTimestamp",
-          "type" : "bool",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "true"
-          } ]
-        } ]
-      }, {
-        "name" : "RemoteMetadata",
-        "type_id" : 1004,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "address",
-          "type" : "Address",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "version",
-          "type" : "SimpleClusteredVersion",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "TopologyIracVersion",
-        "type_id" : 1007,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "topologyId",
-          "type" : "uint32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 2,
-          "name" : "version",
-          "type" : "uint64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        } ]
-      }, {
-        "name" : "IracEntryVersion",
-        "type_id" : 1006,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "entries",
-          "type" : "IracEntryVersion.MapEntry",
-          "is_repeated" : true
-        } ],
-        "messages" : [ {
-          "name" : "MapEntry",
-          "type_id" : 1008,
-          "fields" : [ {
-            "id" : 1,
-            "name" : "site",
-            "type" : "string",
-            "optional" : true
-          }, {
-            "id" : 2,
-            "name" : "version",
-            "type" : "TopologyIracVersion",
-            "optional" : true
-          } ]
-        } ]
-      }, {
-        "name" : "MarshalledValueImpl",
-        "type_id" : 1002,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "value",
-          "type" : "bytes",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "metadata",
-          "type" : "bytes",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "created",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 4,
-          "name" : "lastUsed",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 5,
-          "name" : "internalMetadata",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "PrivateMetadata",
-        "type_id" : 13,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "iracMetadata",
-          "type" : "IracMetadata",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "numericVersion",
-          "type" : "NumericVersion",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "clusteredVersion",
-          "type" : "SimpleClusteredVersion",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "NodeVersion",
-        "type_id" : 14,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "major",
-          "type" : "int32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 2,
-          "name" : "minor",
-          "type" : "int32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 3,
-          "name" : "patch",
-          "type" : "int32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        } ]
-      }, {
-        "name" : "Address",
-        "type_id" : 10,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "mostSignificantBits",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 2,
-          "name" : "leastSignificantBits",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 3,
-          "name" : "version",
-          "type" : "NodeVersion",
-          "optional" : true
-        }, {
-          "id" : 4,
-          "name" : "siteId",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 5,
-          "name" : "rackId",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 6,
-          "name" : "machineId",
-          "type" : "string",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "ByteString",
-        "type_id" : 3,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "bytes",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "IracMetadata",
-        "type_id" : 1009,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "site",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "version",
-          "type" : "IracEntryVersion",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "EmbeddedMetadata",
-        "type_id" : 4,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "numericVersion",
-          "type" : "NumericVersion",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "clusteredVersion",
-          "type" : "SimpleClusteredVersion",
-          "optional" : true
-        } ],
-        "messages" : [ {
-          "name" : "EmbeddedExpirableMetadata",
-          "type_id" : 5,
-          "fields" : [ {
-            "id" : 1,
-            "name" : "numericVersion",
-            "type" : "NumericVersion",
-            "optional" : true
-          }, {
-            "id" : 2,
-            "name" : "clusteredVersion",
-            "type" : "SimpleClusteredVersion",
-            "optional" : true
-          }, {
-            "id" : 3,
-            "name" : "lifespan",
-            "type" : "int64",
-            "optional" : true,
-            "options" : [ {
-              "name" : "default",
-              "value" : "-1"
-            } ]
-          }, {
-            "id" : 4,
-            "name" : "maxIdle",
-            "type" : "int64",
-            "optional" : true,
-            "options" : [ {
-              "name" : "default",
-              "value" : "-1"
-            } ]
-          } ]
-        }, {
-          "name" : "EmbeddedMaxIdleExpirableMetadata",
-          "type_id" : 7,
-          "fields" : [ {
-            "id" : 1,
-            "name" : "numericVersion",
-            "type" : "NumericVersion",
-            "optional" : true
-          }, {
-            "id" : 2,
-            "name" : "clusteredVersion",
-            "type" : "SimpleClusteredVersion",
-            "optional" : true
-          }, {
-            "id" : 3,
-            "name" : "maxIdle",
-            "type" : "int64",
-            "optional" : true,
-            "options" : [ {
-              "name" : "default",
-              "value" : "-1"
-            } ]
-          } ]
-        }, {
-          "name" : "EmbeddedLifespanExpirableMetadata",
-          "type_id" : 6,
-          "fields" : [ {
-            "id" : 1,
-            "name" : "numericVersion",
-            "type" : "NumericVersion",
-            "optional" : true
-          }, {
-            "id" : 2,
-            "name" : "clusteredVersion",
-            "type" : "SimpleClusteredVersion",
-            "optional" : true
-          }, {
-            "id" : 3,
-            "name" : "lifespan",
-            "type" : "int64",
-            "optional" : true,
-            "options" : [ {
-              "name" : "default",
-              "value" : "-1"
-            } ]
-          } ]
-        } ]
-      }, {
-        "name" : "SimpleClusteredVersion",
-        "type_id" : 9,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "topologyId",
-          "type" : "int32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 2,
-          "name" : "version",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        } ]
-      }, {
-        "name" : "Subject",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "principals",
-          "type" : "string",
-          "is_repeated" : true
-        } ]
-      }, {
-        "name" : "NumericVersion",
-        "type_id" : 8,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "version",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        } ]
-      }, {
-        "name" : "RoleSet",
-        "type_id" : 1010,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "roles",
-          "type" : "string",
-          "is_repeated" : true
-        } ]
-      }, {
-        "name" : "CacheRoleImpl",
-        "type_id" : 1011,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "name",
-          "type" : "string"
-        }, {
-          "id" : 2,
-          "name" : "inheritable",
-          "type" : "bool"
-        }, {
-          "id" : 3,
-          "name" : "permissions",
-          "type" : "AuthorizationPermission",
-          "is_repeated" : true
-        }, {
-          "id" : 4,
-          "name" : "description",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 5,
-          "name" : "implicit",
-          "type" : "bool"
-        } ]
-      }, {
-        "name" : "MarshallableUserObject",
-        "type_id" : 2,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "bytes",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "persistence.counters-api.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.core"
-      }
-    }
-  }, {
     "protopath" : "org:/:infinispan:/:global.core.proto",
     "def" : {
       "enums" : [ {
@@ -1612,7 +1069,7 @@
           "optional" : true
         } ],
         "reserved_ids" : [ 2, 3 ],
-        "reserved_names" : [ "encoderId", "wrapperId" ]
+        "reserved_names" : [ "wrapperId", "encoderId" ]
       }, {
         "name" : "RebalanceStatusRequestCommand",
         "type_id" : 1159,
@@ -6979,6 +6436,549 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.core"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:persistence.core.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "EventLogLevel",
+        "type_id" : 1001,
+        "enum_fields" : [ {
+          "name" : "INFO"
+        }, {
+          "name" : "WARN",
+          "integer" : 1
+        }, {
+          "name" : "ERROR",
+          "integer" : 2
+        }, {
+          "name" : "FATAL",
+          "integer" : 3
+        } ]
+      }, {
+        "name" : "EventLogCategory",
+        "type_id" : 1000,
+        "enum_fields" : [ {
+          "name" : "LIFECYCLE"
+        }, {
+          "name" : "CLUSTER",
+          "integer" : 1
+        }, {
+          "name" : "SECURITY",
+          "integer" : 2
+        }, {
+          "name" : "TASKS",
+          "integer" : 3
+        } ]
+      }, {
+        "name" : "AuthorizationPermission",
+        "type_id" : 1012,
+        "enum_fields" : [ {
+          "name" : "NONE"
+        }, {
+          "name" : "LIFECYCLE_PERMISSION",
+          "integer" : 1
+        }, {
+          "name" : "READ",
+          "integer" : 2
+        }, {
+          "name" : "WRITE",
+          "integer" : 4
+        }, {
+          "name" : "EXEC",
+          "integer" : 8
+        }, {
+          "name" : "LISTEN",
+          "integer" : 16
+        }, {
+          "name" : "BULK_READ",
+          "integer" : 32
+        }, {
+          "name" : "ALL_READ",
+          "integer" : 34
+        }, {
+          "name" : "BULK_WRITE",
+          "integer" : 64
+        }, {
+          "name" : "ALL_WRITE",
+          "integer" : 68
+        }, {
+          "name" : "ADMIN",
+          "integer" : 128
+        }, {
+          "name" : "CREATE",
+          "integer" : 256
+        }, {
+          "name" : "MONITOR",
+          "integer" : 512
+        }, {
+          "name" : "ALL",
+          "integer" : 2147483647
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "MetaParamsInternalMetadata",
+        "type_id" : 1003,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "numericVersion",
+          "type" : "NumericVersion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "clusteredVersion",
+          "type" : "SimpleClusteredVersion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "lifespan",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 6,
+          "name" : "maxIdle",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 7,
+          "name" : "counterConfiguration",
+          "type" : "org.infinispan.persistence.commons.CounterConfiguration",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "updateCreationTimestamp",
+          "type" : "bool",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "true"
+          } ]
+        } ]
+      }, {
+        "name" : "RemoteMetadata",
+        "type_id" : 1004,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "address",
+          "type" : "Address",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "version",
+          "type" : "SimpleClusteredVersion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TopologyIracVersion",
+        "type_id" : 1007,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "topologyId",
+          "type" : "uint32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "version",
+          "type" : "uint64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      }, {
+        "name" : "IracEntryVersion",
+        "type_id" : 1006,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "entries",
+          "type" : "IracEntryVersion.MapEntry",
+          "is_repeated" : true
+        } ],
+        "messages" : [ {
+          "name" : "MapEntry",
+          "type_id" : 1008,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "site",
+            "type" : "string",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "version",
+            "type" : "TopologyIracVersion",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "MarshalledValueImpl",
+        "type_id" : 1002,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "metadata",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "internalMetadata",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PrivateMetadata",
+        "type_id" : 13,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "iracMetadata",
+          "type" : "IracMetadata",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "numericVersion",
+          "type" : "NumericVersion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "clusteredVersion",
+          "type" : "SimpleClusteredVersion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "NodeVersion",
+        "type_id" : 14,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "major",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "minor",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "patch",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      }, {
+        "name" : "Address",
+        "type_id" : 10,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "mostSignificantBits",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "leastSignificantBits",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "version",
+          "type" : "NodeVersion",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "siteId",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "rackId",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "machineId",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ByteString",
+        "type_id" : 3,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bytes",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IracMetadata",
+        "type_id" : 1009,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "site",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "version",
+          "type" : "IracEntryVersion",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "EmbeddedMetadata",
+        "type_id" : 4,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "numericVersion",
+          "type" : "NumericVersion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "clusteredVersion",
+          "type" : "SimpleClusteredVersion",
+          "optional" : true
+        } ],
+        "messages" : [ {
+          "name" : "EmbeddedExpirableMetadata",
+          "type_id" : 5,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "numericVersion",
+            "type" : "NumericVersion",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "clusteredVersion",
+            "type" : "SimpleClusteredVersion",
+            "optional" : true
+          }, {
+            "id" : 3,
+            "name" : "lifespan",
+            "type" : "int64",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "-1"
+            } ]
+          }, {
+            "id" : 4,
+            "name" : "maxIdle",
+            "type" : "int64",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "-1"
+            } ]
+          } ]
+        }, {
+          "name" : "EmbeddedMaxIdleExpirableMetadata",
+          "type_id" : 7,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "numericVersion",
+            "type" : "NumericVersion",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "clusteredVersion",
+            "type" : "SimpleClusteredVersion",
+            "optional" : true
+          }, {
+            "id" : 3,
+            "name" : "maxIdle",
+            "type" : "int64",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "-1"
+            } ]
+          } ]
+        }, {
+          "name" : "EmbeddedLifespanExpirableMetadata",
+          "type_id" : 6,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "numericVersion",
+            "type" : "NumericVersion",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "clusteredVersion",
+            "type" : "SimpleClusteredVersion",
+            "optional" : true
+          }, {
+            "id" : 3,
+            "name" : "lifespan",
+            "type" : "int64",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "-1"
+            } ]
+          } ]
+        } ]
+      }, {
+        "name" : "SimpleClusteredVersion",
+        "type_id" : 9,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "version",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        } ]
+      }, {
+        "name" : "Subject",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "principals",
+          "type" : "string",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "NumericVersion",
+        "type_id" : 8,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "version",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        } ]
+      }, {
+        "name" : "RoleSet",
+        "type_id" : 1010,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "roles",
+          "type" : "string",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "CacheRoleImpl",
+        "type_id" : 1011,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "name",
+          "type" : "string"
+        }, {
+          "id" : 2,
+          "name" : "inheritable",
+          "type" : "bool"
+        }, {
+          "id" : 3,
+          "name" : "permissions",
+          "type" : "AuthorizationPermission",
+          "is_repeated" : true
+        }, {
+          "id" : 4,
+          "name" : "description",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "implicit",
+          "type" : "bool"
+        } ]
+      }, {
+        "name" : "MarshallableUserObject",
+        "type_id" : 2,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bytes",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.counters-api.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.core"
       }
     }
   } ]
