@@ -118,7 +118,7 @@ jobs:
           url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ inputs.version }}/infinispan-distribution-${{ inputs.version }}.pom
           code: 200
           timeout: 10800000
-          interval: 10000
+          interval: 1200
 
   native-cli:
     needs: published
