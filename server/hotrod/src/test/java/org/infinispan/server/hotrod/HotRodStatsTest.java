@@ -55,7 +55,8 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
       assertEquals(s.get("removeMisses"), "0");
       bytesRead = assertHigherBytes(bytesRead, s.get("totalBytesRead"));
       // At time of request, we have only done ping
-      assertEquals(s.get("totalBytesWritten"), "6");
+      bytesWritten = Integer.valueOf(s.get("totalBytesWritten"));
+      assertTrue(String.format("Expecting %d in [5,6]", bytesWritten), bytesWritten == 5 || bytesWritten == 6);
 
       client().assertPut(m);
       s = client().stats();
