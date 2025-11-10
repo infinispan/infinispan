@@ -46,7 +46,7 @@
 
       <dependency>
          <groupId>org.hibernate.search</groupId>
-         <artifactId>hibernate-search-backend-lucene</artifactId>
+         <artifactId>${hibernate.search.backend.artifactId}</artifactId>
       </dependency>
 
       <dependency>

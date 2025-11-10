@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
@@ -120,7 +121,7 @@
       <version.junit>4.13.2</version.junit>
       <version.junit5>5.14.1</version.junit5>
       <version.log4j>2.25.2</version.log4j>
-      <version.lucene>9.12.1</version.lucene>
+      <!-- version.lucene is defined in the lucene profiles below -->
       <version.metainf-services>1.11</version.metainf-services>
       <version.micrometer>1.16.0</version.micrometer>
       <version.mockito>5.20.0</version.mockito>
@@ -256,4 +257,24 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>lucene9</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <properties>
+            <version.lucene>9.12.3</version.lucene>
+            <hibernate.search.backend.artifactId>hibernate-search-backend-lucene</hibernate.search.backend.artifactId>
+         </properties>
+      </profile>
+      <profile>
+         <id>lucene10</id>
+         <properties>
+            <version.lucene>10.2.2</version.lucene>
+            <hibernate.search.backend.artifactId>hibernate-search-backend-lucene-next</hibernate.search.backend.artifactId>
+         </properties>
+      </profile>
+   </profiles>
 </project>
