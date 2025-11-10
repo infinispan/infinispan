@@ -20,8 +20,8 @@ import java.util.concurrent.ConcurrentMap;
 
 import javax.management.ObjectName;
 
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.util.Version;
 import org.hibernate.search.backend.lucene.work.spi.LuceneWorkExecutorProvider;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -89,7 +89,7 @@ import org.infinispan.util.logging.Log;
 public class LifecycleManager implements ModuleLifecycle {
 
    /**
-    * Optional integer system property that sets value of {@link BooleanQuery#setMaxClauseCount}.
+    * Optional integer system property that sets value of {@link IndexSearcher#setMaxClauseCount}.
     */
    public static final String MAX_BOOLEAN_CLAUSES_SYS_PROP = "infinispan.query.lucene.max-boolean-clauses";
 
@@ -439,6 +439,7 @@ public class LifecycleManager implements ModuleLifecycle {
       ctxRegistry.addContextInitializer(PERSISTENCE, new PersistenceContextInitializerImpl());
       ctxRegistry.addContextInitializer(GLOBAL, new org.infinispan.query.core.impl.GlobalContextInitializerImpl());
       ctxRegistry.addContextInitializer(GLOBAL, new GlobalContextInitializerImpl());
+      CONTAINER.luceneBackendVersion(Version.LATEST.toString());
    }
 
    @Override

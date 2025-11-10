@@ -253,6 +253,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Hibernate Search updates are not keeping up. Look into increasing index writer queue and/or thread pool sizes.", id = 14067)
    CacheBackpressureFullException hibernateSearchBackpressure();
 
+   @LogMessage(level = INFO)
+   @Message(value = "Lucene version: %s", id = 14068)
+   void luceneBackendVersion(String version);
+
    @Message(id = 14501, value = "Exception while retrieving the type model for '%1$s'.")
    SearchException errorRetrievingTypeModel(@FormatWith(ClassFormatter.class) Class<?> clazz, @Cause Exception cause);
 
