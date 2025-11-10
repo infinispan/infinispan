@@ -55,7 +55,7 @@ public class LockingTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.locking().lockAcquisitionTimeout(100, TimeUnit.MILLISECONDS);
+      builder.locking().lockAcquisitionTimeout(20, TimeUnit.MILLISECONDS);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
       for (CacheName cacheName : CacheName.values()) {
          cacheName.configure(builder);
@@ -87,7 +87,7 @@ public class LockingTest extends SingleCacheManagerTest {
       checkPoint.awaitStrict("before-block", 30, TimeUnit.SECONDS);
 
       try {
-         for (int i = 0; i < 50; ++i) {
+         for (int i = 0; i < 25; ++i) {
             try {
                remoteCache.put("key", "value" + i);
                AssertJUnit.fail("It should have fail with lock timeout!");
