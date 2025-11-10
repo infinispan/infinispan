@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.IsolationLevel;
@@ -25,7 +26,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -151,7 +151,7 @@ public class EntryFactoryImpl implements EntryFactory {
             log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
       } else {
          // Not in the context yet.
-         InternalCacheEntry ice = getFromContainer(key, segment);
+         InternalCacheEntry ice = peekFromContainer(key, segment);
          if (isOwner) {
             if (ice == null) {
                addWriteEntryToContext(ctx, NullCacheEntry.getInstance(), key, isRead);
@@ -203,7 +203,7 @@ public class EntryFactoryImpl implements EntryFactory {
             log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
       } else if (isOwner) {
          // Not in the context yet.
-         CacheEntry cacheEntry = getFromContainer(key, segment);
+         CacheEntry cacheEntry = peekFromContainer(key, segment);
          if (cacheEntry == null) {
             cacheEntry = NullCacheEntry.getInstance();
          }
@@ -282,9 +282,17 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    private InternalCacheEntry getFromContainer(Object key, int segment) {
-      InternalCacheEntry ice = container.peek(segment, key);
+      InternalCacheEntry ice = container.get(segment, key);
       if (log.isTraceEnabled()) {
          log.tracef("Retrieved from container %s", ice);
+      }
+      return ice;
+   }
+
+   private InternalCacheEntry peekFromContainer(Object key, int segment) {
+      InternalCacheEntry ice = container.peek(segment, key);
+      if (log.isTraceEnabled()) {
+         log.tracef("Peeked from container %s", ice);
       }
       return ice;
    }

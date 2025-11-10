@@ -73,7 +73,7 @@ public class InvalidationNearCacheConcurrencyTest extends SingleHotRodServerTest
       // Block on the checkpoint when it is requesting segment 2 from node 2 (need both as different methods are invoked
       // if the invocation is parallel)
       InternalDataContainer<?, ?> realContainer = Mocks.blockingMock(checkPoint, InternalDataContainer.class, cache,
-            (stub, m) -> stub.when(m).peek(Mockito.anyInt(), Mockito.any()));
+            (stub, m) -> stub.when(m).get(Mockito.anyInt(), Mockito.any()));
 
       Future<Void> future = fork(() -> assertEquals("foo", remoteCache.get(1)));
 

@@ -33,6 +33,15 @@ import io.reactivex.rxjava3.core.Flowable;
 public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
 
    /**
+    * Retrieves from the underlying container, same as {@link #peek(int, Object)} but also updates any reference
+    * for eviction. Note this also doesn't affect expiration in any manner either.
+    * @param segment segment for the key
+    * @param k key under which entry is stored
+    * @return entry, if it exists, or null if not
+    */
+   InternalCacheEntry<K, V> get(int segment, Object k);
+
+   /**
     * Same as {@link DataContainer#peek(Object)} except that the segment of the key can provided to lookup entries
     * without calculating the segment for the given key
     * @param segment segment for the key
