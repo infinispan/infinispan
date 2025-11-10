@@ -51,13 +51,16 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
    }
 
    protected void executeSimpleQuery(Cache<String, Person> cache) {
-      Query<?> cacheQuery = createCacheQuery(Person.class, cache, "blurb", "playing");
-      List<?> found = cacheQuery.execute().list();
-      int elems = found.size();
-      assertEquals(1, elems);
-      Object val = found.get(0);
       Person expectedPerson = persons[0];
-      assertEquals(expectedPerson, val);
+      // Use eventually to wait for index to be updated after state transfer
+      eventually(() -> {
+         Query<?> cacheQuery = createCacheQuery(Person.class, cache, "blurb", "playing");
+         List<?> found = cacheQuery.execute().list();
+         if (found.size() != 1) {
+            return false;
+         }
+         return expectedPerson.equals(found.get(0));
+      });
    }
 
    protected void loadCacheEntries(Cache<String, Person> cache) {
