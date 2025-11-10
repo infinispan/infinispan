@@ -82,6 +82,28 @@
                </execution>
             </executions>
          </plugin>
+         <!-- Collect XSDs -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                     <target>
+                        <copy todir="${project.build.directory}/xsd" flatten="true">
+                           <fileset dir="${infinispan.root}">
+                              <include name="**/target/classes/schema/*.xsd"/>
+                           </fileset>
+                        </copy>
+                     </target>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
          <!-- Collect licenses -->
          <plugin>
             <groupId>org.wildfly.maven.plugins</groupId>
@@ -118,6 +140,7 @@
                   <configuration>
                      <descriptors>
                         <descriptor>src/main/assemblies/src.xml</descriptor>
+                        <descriptor>src/main/assemblies/xsd.xml</descriptor>
                      </descriptors>
                      <finalName>${infinispan.brand.prefix}-${infinispan.brand.version}</finalName>
                   </configuration>
