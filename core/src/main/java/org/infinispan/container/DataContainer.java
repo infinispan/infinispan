@@ -31,6 +31,15 @@ import org.infinispan.metadata.Metadata;
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> {
+
+   /**
+    * Retrieves a cache entry. This will update or reorder internal constructs if necessary such as
+    * eviction.
+    * @param k key under which entry is stored
+    * @return entry, if it exists, or null if not
+    */
+   InternalCacheEntry<K, V> get(Object k);
+
    /**
     * Retrieves a cache entry. This method does not update or reorder any of the internal constructs.
     * I.e., expiration does not happen, and in the case of the LRU container, the entry is not

@@ -85,6 +85,20 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    protected abstract int getSegmentForKey(Object key);
 
    @Override
+   public InternalCacheEntry<K, V> get(int segment, Object k) {
+      PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
+      if (entries != null) {
+         return entries.get(k);
+      }
+      return null;
+   }
+
+   @Override
+   public InternalCacheEntry<K, V> get(Object k) {
+      return get(getSegmentForKey(k), k);
+   }
+
+   @Override
    public InternalCacheEntry<K, V> peek(int segment, Object k) {
       PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries != null) {

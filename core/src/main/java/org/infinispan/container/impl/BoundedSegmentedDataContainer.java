@@ -127,6 +127,11 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
    }
 
    @Override
+   public InternalCacheEntry<K, V> get(Object k) {
+      return get(-1, k);
+   }
+
+   @Override
    public InternalCacheEntry<K, V> peek(Object k) {
       return peek(-1, k);
    }

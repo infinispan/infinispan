@@ -230,7 +230,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
    }
 
    private InternalCacheEntry<K, V> internalGet(Object k) {
-      InternalCacheEntry<K, V> e = getDataContainer().peek(k);
+      InternalCacheEntry<K, V> e = getDataContainer().get(k);
       if (e != null && e.canExpire()) {
          long currentTimeMillis = timeService.wallClockTime();
          InternalExpirationManager<K, V> iem = (InternalExpirationManager<K, V>) getExpirationManager();

@@ -43,6 +43,11 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
    }
 
    @Override
+   public InternalCacheEntry<WrappedBytes, WrappedBytes> get(Object k) {
+      return super.get(0, k);
+   }
+
+   @Override
    public InternalCacheEntry<WrappedBytes, WrappedBytes> peek(Object k) {
       return super.peek(0, k);
    }
@@ -70,6 +75,11 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
    @Override
    public boolean containsKey(int segment, Object k) {
       return super.containsKey(0, k);
+   }
+
+   @Override
+   public InternalCacheEntry<WrappedBytes, WrappedBytes> get(int segment, Object k) {
+      return super.get(0, k);
    }
 
    @Override
