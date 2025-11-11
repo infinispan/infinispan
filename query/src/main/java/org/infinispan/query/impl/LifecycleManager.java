@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.management.ObjectName;
 
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.IndexSearcher;
 import org.hibernate.search.backend.lucene.work.spi.LuceneWorkExecutorProvider;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -448,10 +449,10 @@ public class LifecycleManager implements ModuleLifecycle {
    private void setMaxBooleanClauses() {
       Integer maxClauseCount = Integer.getInteger(MAX_BOOLEAN_CLAUSES_SYS_PROP);
       if (maxClauseCount != null) {
-         int currentMaxClauseCount = BooleanQuery.getMaxClauseCount();
+         int currentMaxClauseCount = IndexSearcher.getMaxClauseCount();
          if (maxClauseCount > currentMaxClauseCount) {
             CONTAINER.settingBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount);
-            BooleanQuery.setMaxClauseCount(maxClauseCount);
+            IndexSearcher.setMaxClauseCount(maxClauseCount);
          } else {
             CONTAINER.ignoringBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount, currentMaxClauseCount);
          }
