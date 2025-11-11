@@ -284,4 +284,12 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Malformed entry in user properties file at line %d", id = 80076)
    IllegalStateException malformedUserProperties(int line);
+
+   @LogMessage(level = Logger.Level.ERROR)
+   @Message(value = "Failed to start protocol server: %s ", id = 80077)
+   void protocolFailedToStart(String name, @Cause Throwable t);
+
+   @LogMessage(level = Logger.Level.ERROR)
+   @Message(value = "Failed to stop protocol server: %s ", id = 80078)
+   void protocolFailedToStop(String name, @Cause Throwable t);
 }
