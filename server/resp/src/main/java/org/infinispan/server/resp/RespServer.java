@@ -8,8 +8,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -26,9 +24,12 @@ import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.resp.commands.cluster.SegmentSlotRelation;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
+import org.infinispan.server.resp.exception.RespCommandException;
 import org.infinispan.server.resp.filter.ComposedFilterConverterFactory;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 import org.infinispan.server.resp.filter.RespTypeFilterConverterFactory;
+import org.infinispan.server.resp.logging.Log;
+import org.infinispan.server.resp.logging.Messages;
 import org.infinispan.server.resp.meta.MetadataRepository;
 import org.infinispan.server.resp.scripting.LuaTaskEngine;
 import org.infinispan.tasks.manager.TaskManager;
@@ -47,7 +48,7 @@ import io.netty.channel.group.ChannelMatcher;
  * @since 14.0
  */
 public class RespServer extends AbstractProtocolServer<RespServerConfiguration> {
-   private static final Log log = LogFactory.getLog(RespServer.class);
+   private static final Log log = Log.getLog(RespServer.class);
    public static final String RESP_SERVER_FEATURE = "resp-server";
    public static final MediaType RESP_KEY_MEDIA_TYPE = MediaType.APPLICATION_OCTET_STREAM;
    private MetadataRepository metadataRepository;
@@ -141,11 +142,15 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
 
    // To be replaced for svm
    private void initializeLuaTaskEngine(GlobalComponentRegistry gcr) {
-      // Register the task engine with the task manager
-      ScriptingManager scriptingManager = gcr.getComponent(ScriptingManager.class);
-      luaTaskEngine = new LuaTaskEngine(scriptingManager);
-      TaskManager taskManager = gcr.getComponent(TaskManager.class);
-      taskManager.registerTaskEngine(luaTaskEngine);
+      try {
+         // Register the task engine with the task manager
+         ScriptingManager scriptingManager = gcr.getComponent(ScriptingManager.class);
+         luaTaskEngine = new LuaTaskEngine(scriptingManager);
+         TaskManager taskManager = gcr.getComponent(TaskManager.class);
+         taskManager.registerTaskEngine(luaTaskEngine);
+      } catch (Exception | LinkageError e) {
+         log.failedToLoadScriptEngine(e);
+      }
    }
 
    @Override
@@ -170,6 +175,8 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    }
 
    public LuaTaskEngine luaEngine() {
+      if (luaTaskEngine == null)
+         throw new RespCommandException(Messages.MESSAGES.scriptEngineDisabled());
       return luaTaskEngine;
    }
 
