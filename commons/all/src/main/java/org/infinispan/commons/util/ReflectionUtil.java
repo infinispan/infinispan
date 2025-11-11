@@ -3,6 +3,9 @@ package org.infinispan.commons.util;
 import static org.infinispan.commons.logging.Log.CONTAINER;
 
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -360,5 +363,19 @@ public class ReflectionUtil {
       } catch (IllegalAccessException e) {
          throw new RuntimeException(e);
       }
+   }
+
+   public static MethodHandle getterOf(MethodHandles.Lookup lookup, Class<?> klass, String name, Class<?> type) {
+      MethodHandle handle;
+      try {
+         handle = lookup.findVirtual(klass, name, MethodType.methodType(type));
+      } catch (NoSuchMethodException | IllegalAccessException e) {
+         try {
+            handle = lookup.findGetter(klass, name, type);
+         } catch (NoSuchFieldException | IllegalAccessException e1) {
+            throw new RuntimeException(e1);
+         }
+      }
+      return handle;
    }
 }

@@ -21,7 +21,11 @@ public class LuceneTopDocsAdapter {
 
    @ProtoField(1)
    long getTotalHits(TopDocs topDocs) {
-      return topDocs.totalHits.value;
+      try {
+         return (long) LuceneTotalHitsAdapter.valueHandle.invoke(topDocs.totalHits);
+      } catch (Throwable e) {
+         throw new RuntimeException(e);
+      }
    }
 
    @ProtoField(2)
