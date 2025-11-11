@@ -66,7 +66,7 @@ public class JsonArrinsertFunction
                 ArrayNode node = jpCtx.read(asText);
                 if (node.get(0).isArray()) {
                     ArrayNode destNode = (ArrayNode) node.get(0);
-                    int index = this.index > 0 ? this.index : destNode.size() + this.index;
+                    int index = this.index >= 0 ? this.index : destNode.size() + this.index;
                     ArrayNode newArray = insertAll(destNode, srcNodes, index);
                     if (JSONUtil.isRoot(asText.getBytes(StandardCharsets.UTF_8))) {
                         // Updating the root node by replacing the cache entry

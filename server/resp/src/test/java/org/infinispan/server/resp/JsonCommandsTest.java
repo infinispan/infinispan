@@ -1759,6 +1759,24 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testJSONARRINSERTAtIndexZero() {
+      JsonPath jp = new JsonPath(".");
+      String key = k();
+
+      // JSON.SET test . [1]
+      redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("[1]"));
+
+      // JSON.ARRINSERT test . 0 -1
+      JsonValue valueMinus1 = defaultJsonParser.fromObject(-1);
+      List<Long> res2 = redis.jsonArrinsert(key, jp, 0, valueMinus1);
+      assertThat(res2).containsExactly(2L);
+
+      // JSON.GET test .
+      List<JsonValue> result = redis.jsonGet(key, jp);
+      assertThat(result.get(0).toString()).isEqualTo("[-1,1]");
+   }
+
+   @Test
    void testJSONMSET() {
       String key1 = k(1);
       String key2 = k(2);
