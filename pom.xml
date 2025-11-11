@@ -85,6 +85,7 @@
       <module>tasks/api</module>
       <module>tasks/manager</module>
       <module>tasks/scripting</module>
+      <module>tasks/js-scripting</module>
       <module>cdi</module>
       <module>cdi/common</module>
       <module>cdi/embedded</module>
@@ -226,6 +227,7 @@
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
       <versionx.org.postgresql>42.7.8</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>1.21.3</versionx.org.testcontainers.testcontainers>
+      <versionx.io.roastedroot.quickjs4j>0.0.12</versionx.io.roastedroot.quickjs4j>
       <!-- Test dependency. Only update if testcontainer dependency > 1.17.6 with newer docker-java version is available in GraalVM metadata repository -->
       <versionx.com.github.docker-java>3.3.5</versionx.com.github.docker-java>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
@@ -2187,6 +2189,11 @@
                         <groupId>org.jboss.logging</groupId>
                         <artifactId>jboss-logging-processor</artifactId>
                         <version>${version.jboss.logging.processor}</version>
+                     </annotationProcessorPath>
+                     <annotationProcessorPath>
+                        <groupId>io.roastedroot</groupId>
+                        <artifactId>quickjs4j-processor</artifactId>
+                        <version>${versionx.io.roastedroot.quickjs4j}</version>
                      </annotationProcessorPath>
                   </annotationProcessorPaths>
                </configuration>
