@@ -45,7 +45,6 @@ import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -514,24 +513,23 @@ public class Server extends BaseServerManagement implements AutoCloseable {
                return;
             }
 
-            serverStateManager.start();
-
             try {
+               serverStateManager.start();
                backupManager.init();
-            } catch (IOException e) {
-               throw CompletableFutures.asCompletionException(e);
-            }
 
-            // Change status
-            SecurityActions.postStartProtocolServer(protocolServers.values());
-            log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), uptime());
-            this.status = ComponentStatus.RUNNING;
-            if (Boolean.getBoolean("infinispan.shutdown.immediately")) {
-               r.complete(ExitStatus.SERVER_SHUTDOWN);
+               // Change status
+               SecurityActions.postStartProtocolServer(protocolServers.values());
+               log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), uptime());
+               this.status = ComponentStatus.RUNNING;
+               if (Boolean.getBoolean("infinispan.shutdown.immediately")) {
+                  r.complete(ExitStatus.SERVER_SHUTDOWN);
+               }
+            } catch (Throwable t2) {
+               r.completeExceptionally(t2);
             }
          });
-      } catch (Exception e) {
-         r.completeExceptionally(e);
+      } catch (Throwable t) {
+         r.completeExceptionally(t);
       }
       return exit;
    }

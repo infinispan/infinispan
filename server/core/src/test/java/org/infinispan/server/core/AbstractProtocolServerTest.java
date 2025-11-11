@@ -1,8 +1,11 @@
 package org.infinispan.server.core;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.configuration.MockServerConfiguration;
 import org.infinispan.server.core.configuration.MockServerConfigurationBuilder;
+import org.infinispan.server.core.test.Stoppable;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
@@ -51,11 +54,8 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
 
    private void expectIllegalArgument(MockServerConfigurationBuilder builder, MockProtocolServer server) {
       try {
-//         Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager()) { cm =>
-//            server.start(builder.build(), cm)
-//         }
-      } catch (IllegalArgumentException e) {
-//         case i: IllegalArgumentException => // expected
+         assertThatThrownBy(() -> Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager(), cm -> server.start(builder.build(), cm)))
+               .isInstanceOf(IllegalArgumentException.class);
       } finally {
          server.stop();
       }
