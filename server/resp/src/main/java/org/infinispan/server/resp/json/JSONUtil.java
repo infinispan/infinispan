@@ -1,6 +1,8 @@
 package org.infinispan.server.resp.json;
 
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.Configuration;
@@ -16,7 +18,8 @@ public class JSONUtil {
    // path.
    // SET operation requires two different config:
    // - definite path needs DEFAULT_PATH_LEAF_TO_NULL otherwise can't add leaf node
-   // - undefinite path doesn't need, because it doesn't add node if missing, it just
+   // - undefinite path doesn't need, because it doesn't add node if missing, it
+   // just
    // update existing node
    public static final Configuration configForDefiniteSet = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS)
          .options(Option.DEFAULT_PATH_LEAF_TO_NULL)
@@ -33,7 +36,7 @@ public class JSONUtil {
    public static final Configuration configForGet = Configuration.builder().options(Option.ALWAYS_RETURN_LIST)
          .options(Option.SUPPRESS_EXCEPTIONS).jsonProvider(new InfinispanJacksonJsonNodeProvider())
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider()).build();
-   public static ParseContext parserForGet = JsonPath.using(configForGet);
+   public static final ParseContext parserForGet = JsonPath.using(configForGet);
 
    // Modifier operations need ALWAYS_RETURN_LIST and AS_PATH_LIST
    public static final Configuration configForMod = Configuration.builder().options(Option.AS_PATH_LIST)
@@ -56,33 +59,65 @@ public class JSONUtil {
    }
 
    /**
-    * Returns a jsonpath version of path
+    * Returns a jsonpath version of path with Redis regex patterns converted to
+    * Jayway format.
     *
-    * @return path itself if path is already in Jsonpath format or the jsonpath equivalent in a new
-    *         byte[]
+    * This method performs two conversions in order: 1. Legacy path format
+    * conversion (e.g., ".foo"
+    * → "$.foo") 2. Redis regex format conversion on the result (e.g., =~ "pattern"
+    * → =~ /pattern/)
+    *
+    * @param path
+    *             the path as a String
+    * @return path converted to Jayway-compatible JSONPath format
+    */
+   public static String toJsonPath(String path) {
+      // Step 1: Handle legacy path format conversion (. → $)
+      String step1Result;
+      if (!isJsonPath(path)) {
+         if (path.startsWith(".")) {
+            if (path.length() == 1) {
+               // For '.' return json root '$'
+               step1Result = "$";
+            } else {
+               // Just prepend $ to the beginning
+               step1Result = "$" + path;
+            }
+         } else {
+            // prepend $. to the beginning
+            // Using "$." so wrong legacy path like "" and " " will fail
+            step1Result = "$." + path;
+         }
+      } else {
+         step1Result = path;
+      }
+
+      // Step 2: Convert Redis regex format to Jayway format
+      return convertRedisFilterToJayway(step1Result);
+   }
+
+   /**
+    * Returns a jsonpath version of path with Redis regex patterns converted to
+    * Jayway format.
+    *
+    * This is a convenience method that converts byte[] to String, performs the
+    * conversions, and
+    * returns the result as byte[].
+    *
+    * @param path
+    *             the path as byte[]
+    * @return path converted to Jayway-compatible JSONPath format as byte[]
     */
    public static byte[] toJsonPath(byte[] path) {
-      if (!isJsonPath(path)) {
-         if (path.length >= 1 && path[0] == '.') {
-            if (path.length == 1) {
-               // For '.' return json root '$'
-               return JSON_ROOT;
-            }
-            // Just append $ to the beginning
-            byte[] result = new byte[(path.length + 1)];
-            result[0] = JSON_ROOT_BYTE;
-            System.arraycopy(path, 0, result, 1, path.length);
-            return result;
-         }
-         // append $. to the beginning
-         // Using "$." so wrong legacy path like "" and " " will fail
-         byte[] result = new byte[(path.length + 2)];
-         result[0] = JSON_ROOT_BYTE;
-         result[1] = '.';
-         System.arraycopy(path, 0, result, 2, path.length);
-         return result;
+      // Special case optimization: single '.' becomes '$' without String conversion
+      if (path != null && path.length == 1 && path[0] == '.') {
+         return JSON_ROOT;
       }
-      return path;
+
+      // Convert to String, apply conversions, convert back
+      String pathStr = new String(path, StandardCharsets.UTF_8);
+      String converted = toJsonPath(pathStr);
+      return converted.equals(pathStr) ? path : converted.getBytes(StandardCharsets.UTF_8);
    }
 
    public static boolean isJsonPath(byte[] path) {
@@ -96,44 +131,109 @@ public class JSONUtil {
 
    // Invalid values for Redis. Expecially '\0xa' breaks RESP, seen as end of data
    public static boolean isValueInvalid(byte[] value) {
-      if (value.length == 0) return true;
+      if (value.length == 0)
+         return true;
       if (value.length == 1) {
-          return isSingleCharInvalid(value[0]);
+         return isSingleCharInvalid(value[0]);
       }
       if (value.length == 2) {
-          return isDoubleCharInvalid(value);
+         return isDoubleCharInvalid(value);
       }
       return false;
-  }
+   }
 
-  private static boolean isSingleCharInvalid(byte value) {
+   private static boolean isSingleCharInvalid(byte value) {
       switch (value) {
-          case ' ':
-          case '{':
-          case '}':
-          case '[':
-          case ']':
-          case '\\':
-          case '\'':
-          case 0:
-          case 0x0a:
-          case 0x0c:
-              return true;
-          default:
-              return false;
+         case ' ':
+         case '{':
+         case '}':
+         case '[':
+         case ']':
+         case '\\':
+         case '\'':
+         case 0:
+         case 0x0a:
+         case 0x0c:
+            return true;
+         default:
+            return false;
       }
-  }
+   }
 
-  private static boolean isDoubleCharInvalid(byte[] value) {
+   private static boolean isDoubleCharInvalid(byte[] value) {
       if (value[0] == '\\' && (value[1] == '\\' || value[1] == '"' || value[1] == '[')) {
-          return true;
+         return true;
       }
       if (value[0] == '{' && value[1] == ']') {
-          return true;
+         return true;
       }
       if (value[0] == '[' && value[1] == '}') {
-          return true;
+         return true;
       }
       return false;
-  }
+   }
+
+   // --- Base regex converter (from before) ---
+   private static String toJaywayRegex(String redisRegex) {
+      if (redisRegex == null || redisRegex.isBlank()) {
+         throw new IllegalArgumentException("Regex cannot be null or empty");
+      }
+
+      // Trim quotes if present
+      String pattern = redisRegex.trim();
+      boolean isQuoted = pattern.startsWith("\"") && pattern.endsWith("\"");
+      if (isQuoted && pattern.length() >= 2) {
+         pattern = pattern.substring(1, pattern.length() - 1);
+      }
+
+      boolean startsWithAnchor = pattern.startsWith("^");
+      boolean endsWithAnchor = pattern.endsWith("$");
+      boolean hasLeadingWildcard = pattern.startsWith(".*");
+      boolean hasTrailingWildcard = pattern.endsWith(".*");
+
+      if (isQuoted) {
+         // Add missing wildcards only if needed
+         if (!startsWithAnchor && !hasLeadingWildcard) {
+            pattern = ".*" + pattern;
+         }
+         if (!endsWithAnchor && !hasTrailingWildcard) {
+            pattern = pattern + ".*";
+         }
+         // Wrap in delimiters
+         return "/" + pattern + "/";
+      }
+      return pattern;
+   }
+
+   // --- Filter-level converter ---
+   /**
+    * Converts any RedisJSON-style =~ "regex" fragments into Jayway =~ /regex/
+    * format. Keeps the
+    * rest of the JSONPath filter untouched.
+    *
+    * Example: $[?(@.name =~ ".*foo" && @.type =~ "(?i)^bar$")] to $[?(@.name =~
+    * /.*foo.*\/
+    * && @.type=~/(?i)^bar$/)]
+    */
+
+   public static String convertRedisFilterToJayway(String redisFilter) {
+      if (redisFilter == null || redisFilter.isBlank()) {
+         throw new IllegalArgumentException("Filter cannot be null or empty");
+      }
+
+      // Match patterns like =~ "something"
+      Pattern p = Pattern.compile("=~\\s*\"([^\"]+)\"");
+      Matcher m = p.matcher(redisFilter);
+
+      StringBuilder sb = new StringBuilder();
+      while (m.find()) {
+         String redisRegex = "\"" + m.group(1) + "\"";
+         String jaywayRegex = toJaywayRegex(redisRegex);
+         m.appendReplacement(sb, "=~ " + jaywayRegex);
+      }
+      m.appendTail(sb);
+
+      return sb.toString();
+   }
+
 }

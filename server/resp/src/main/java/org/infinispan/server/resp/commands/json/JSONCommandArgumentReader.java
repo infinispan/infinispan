@@ -40,7 +40,7 @@ public final class JSONCommandArgumentReader {
     public static CommandArgs readCommandArgs(List<byte[]> arguments,  byte[] key , int pos) {
         byte[] path = arguments.size() > pos ? arguments.get(pos) : DEFAULT_COMMAND_PATH;
         final byte[] jsonPath = JSONUtil.toJsonPath(path);
-        boolean isLegacy = path != jsonPath;
+        boolean isLegacy = !JSONUtil.isJsonPath(path);
         boolean isRoot = path.length == 1 && (path[0] == JSON_ROOT[0] || path[0] == DEFAULT_COMMAND_PATH[0]);
         return new CommandArgs(key, path, jsonPath, isLegacy, isRoot);
     }
