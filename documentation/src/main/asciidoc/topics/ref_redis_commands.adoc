@@ -30,6 +30,8 @@ The {brandname} RESP endpoint implements the following Redis commands:
 
 * link:https://redis.io/commands/config[CONFIG]
 
+* link:https://redis.io/commands/copy[COPY]
+
 * link:https://redis.io/docs/latest/commands/cluster-keyslot/[CLUSTER KEYSLOT]
 
 * link:https://redis.io/commands/cluster-nodes/[CLUSTER NODES]
