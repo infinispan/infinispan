@@ -4,13 +4,17 @@ import static io.lettuce.core.LMPopArgs.Builder.left;
 import static io.lettuce.core.LMPopArgs.Builder.right;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 import java.util.List;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.security.Security;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.CopyArgs;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LPosArgs;
@@ -453,5 +457,120 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
                       .add("left")
                       .add("count")
                       .add(1));
+   }
+
+   public void testCopyList() {
+      redis.rpush("copy-list-src", "a", "b", "c");
+
+      assertThat(redis.copy("copy-list-src", "copy-list-dst")).isTrue();
+      assertThat(redis.lrange("copy-list-dst", 0, -1)).containsExactly("a", "b", "c");
+   }
+
+   public void testCopyListNotPresent() {
+      assertThat(redis.copy("copy-list-missing", "copy-list-dst")).isFalse();
+   }
+
+   public void testCopyListToExistingKeyWithoutReplace() {
+      redis.rpush("copy-list-src-nr", "a", "b");
+      redis.rpush("copy-list-dst-nr", "x", "y");
+
+      assertThat(redis.copy("copy-list-src-nr", "copy-list-dst-nr")).isFalse();
+      assertThat(redis.lrange("copy-list-dst-nr", 0, -1)).containsExactly("x", "y");
+   }
+
+   public void testCopyListToExistingKeyWithReplace() {
+      redis.rpush("copy-list-src-r", "a", "b");
+      redis.rpush("copy-list-dst-r", "x", "y", "z");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-list-src-r", "copy-list-dst-r", copyArgs)).isTrue();
+      assertThat(redis.lrange("copy-list-dst-r", 0, -1)).containsExactly("a", "b");
+   }
+
+   public void testCopyListWithReplaceToNonExistingKey() {
+      redis.rpush("copy-list-src-rne", "a", "b");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-list-src-rne", "copy-list-dst-rne", copyArgs)).isTrue();
+      assertThat(redis.lrange("copy-list-dst-rne", 0, -1)).containsExactly("a", "b");
+   }
+
+   public void testCopyListToNewDB() {
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      if (isAuthorizationEnabled()) {
+         Security.doAs(ADMIN, () -> {
+            manager(0).createCache("1", builder.build());
+         });
+      } else {
+         manager(0).createCache("1", builder.build());
+      }
+
+      redis.rpush("copy-list-db-src", "a", "b", "c");
+
+      var copyArgs = new CopyArgs().destinationDb(1);
+      assertThat(redis.copy("copy-list-db-src", "copy-list-db-dst", copyArgs)).isTrue();
+      assertThat(redis.lrange("copy-list-db-dst", 0, -1)).isEmpty();
+
+      redis.select(1);
+      assertThat(redis.lrange("copy-list-db-dst", 0, -1)).containsExactly("a", "b", "c");
+      redis.select(0);
+   }
+
+   public void testCopyListToNewDBWithReplace() {
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      redis.rpush("copy-list-dbr-src", "a", "b");
+
+      redis.select(1);
+      redis.rpush("copy-list-dbr-dst", "x");
+      redis.select(0);
+
+      var copyArgs = new CopyArgs().destinationDb(1).replace(true);
+      assertThat(redis.copy("copy-list-dbr-src", "copy-list-dbr-dst", copyArgs)).isTrue();
+
+      redis.select(1);
+      assertThat(redis.lrange("copy-list-dbr-dst", 0, -1)).containsExactly("a", "b");
+      redis.select(0);
+   }
+
+   public void testCopyListDataIndependence() {
+      redis.rpush("copy-list-ind-src", "a", "b", "c");
+
+      assertThat(redis.copy("copy-list-ind-src", "copy-list-ind-dst")).isTrue();
+
+      // Modifying original does not affect copy
+      redis.rpush("copy-list-ind-src", "d");
+      assertThat(redis.lrange("copy-list-ind-dst", 0, -1)).containsExactly("a", "b", "c");
+
+      // Deleting original does not affect copy
+      redis.del("copy-list-ind-src");
+      assertThat(redis.lrange("copy-list-ind-dst", 0, -1)).containsExactly("a", "b", "c");
+   }
+
+   public void testCopyListSameKey() {
+      redis.rpush("copy-list-same", "a", "b");
+
+      assertThat(redis.copy("copy-list-same", "copy-list-same")).isFalse();
+      assertThat(redis.lrange("copy-list-same", 0, -1)).containsExactly("a", "b");
+   }
+
+   public void testCopyListToExistingStringWithoutReplace() {
+      redis.rpush("copy-cross-list-src", "a", "b");
+      redis.set("copy-cross-list-dst", "existing");
+
+      assertThat(redis.copy("copy-cross-list-src", "copy-cross-list-dst")).isFalse();
+      assertThat(redis.get("copy-cross-list-dst")).isEqualTo("existing");
+   }
+
+   public void testCopyListToExistingStringWithReplace() {
+      redis.rpush("copy-cross-list-r-src", "a", "b", "c");
+      redis.set("copy-cross-list-r-dst", "existing");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-cross-list-r-src", "copy-cross-list-r-dst", copyArgs)).isTrue();
+      assertThat(redis.lrange("copy-cross-list-r-dst", 0, -1)).containsExactly("a", "b", "c");
    }
 }

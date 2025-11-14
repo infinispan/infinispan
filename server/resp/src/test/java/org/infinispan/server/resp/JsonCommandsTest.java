@@ -2,6 +2,7 @@ package org.infinispan.server.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
@@ -11,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.security.Security;
 import org.infinispan.server.resp.json.InfinispanJsonNodeFactory;
 import org.infinispan.server.resp.json.JSONUtil;
 import org.testng.annotations.BeforeMethod;
@@ -21,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.lettuce.core.CopyArgs;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
@@ -2205,6 +2209,124 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(88L);
       assertThatThrownBy(() -> jsonDebug("BADCOMMAND", key, "$")).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR unknown subcommand - try `JSON.DEBUG HELP`");
+   }
+
+   @Test
+   public void testCOPYJsonNXValues() {
+      String key = k();
+      String newKey = "copied";
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("{\"key\":\"value\"}");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+
+      Boolean returnValue = redis.copy(key, newKey);
+      assertThat(returnValue.booleanValue()).isTrue();
+      var result = redis.jsonGet(newKey, jp);
+      assertThat(compareJSONGet(result, jv)).isEqualTo(true);
+   }
+
+   @Test
+   public void testCOPYJsonNXValuesToNXKeyWithReplace() {
+      String key = k();
+      String newKey = "copied";
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("{\"key\":\"value\"}");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+
+      var copyArgs = new CopyArgs().replace(true);
+      Boolean returnValue = redis.copy(key, newKey, copyArgs);
+      assertThat(returnValue.booleanValue()).isTrue();
+      var result = redis.jsonGet(newKey, jp);
+      assertThat(compareJSONGet(result, jv)).isEqualTo(true);
+   }
+
+   @Test
+   public void testCOPYJsonXXValuesWithoutReplace() {
+      String key = k();
+      String replacableKey = "replaced";
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("{\"key\":\"value\"}");
+      JsonValue jvRepl = defaultJsonParser.createJsonValue("{\"key1\":\"value1\"}");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      assertThat(redis.jsonSet(replacableKey, jp, jvRepl)).isEqualTo("OK");
+
+      Boolean returnValue = redis.copy(key, replacableKey);
+      assertThat(returnValue.booleanValue()).isFalse();
+      var result = redis.jsonGet(replacableKey, jp);
+      assertThat(compareJSONGet(result, jvRepl)).isEqualTo(true);
+   }
+
+   @Test
+   public void testCOPYJsonXXValuesWithReplace() {
+      String key = k();
+      String replacableKey = "replaced";
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("{\"key\":\"value\"}");
+      JsonValue jvRepl = defaultJsonParser.createJsonValue("{\"key1\":\"value1\"}");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      assertThat(redis.jsonSet(replacableKey, jp, jvRepl)).isEqualTo("OK");
+
+      var copyArgs = new CopyArgs().replace(true);
+      Boolean returnValue = redis.copy(key, replacableKey, copyArgs);
+      assertThat(returnValue.booleanValue()).isTrue();
+      var result = redis.jsonGet(replacableKey, jp);
+      assertThat(compareJSONGet(result, jv)).isEqualTo(true);
+   }
+
+   @Test
+   public void testCOPYJsonNXValuesToOtherDB() {
+      String key = k();
+      String newKey = "copied";
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("{\"key\":\"value\"}");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+
+      //Creating new DB
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      //Creating the new DB
+      if (isAuthorizationEnabled()) {
+         Security.doAs(ADMIN, () -> {
+            manager(0).createCache("1", builder.build());
+         });
+      } else {
+         manager(0).createCache("1", builder.build());
+      }
+
+      var copyArgs = new CopyArgs().destinationDb(1);
+      Boolean returnValue = redis.copy(key, newKey, copyArgs);
+      assertThat(returnValue.booleanValue()).isTrue();
+
+      redis.select(1);
+      var result = redis.jsonGet(newKey, jp);
+      assertThat(compareJSONGet(result, jv)).isEqualTo(true);
+      redis.select(0);
+   }
+
+   @Test
+   public void testCOPYJsonXXValuesWithReplaceToOtherDB() {
+      String key = k();
+      String replacableKey = "replaced";
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("{\"key\":\"value\"}");
+      JsonValue jvRepl = defaultJsonParser.createJsonValue("{\"key1\":\"value1\"}");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+
+      //Creating other key in Other DB
+      redis.select(1);
+      assertThat(redis.jsonSet(replacableKey, jp, jvRepl)).isEqualTo("OK");
+      redis.select(0);
+
+      var copyArgs = new CopyArgs().replace(true).destinationDb(1);
+      Boolean returnValue = redis.copy(key, replacableKey, copyArgs);
+      assertThat(returnValue.booleanValue()).isTrue();
+
+      //Verify that the value is replaced
+      redis.select(1);
+      var result = redis.jsonGet(replacableKey, jp);
+      assertThat(compareJSONGet(result, jv)).isEqualTo(true);
+      redis.select(0);
    }
 
    private Long jsonDebugLegacy(String subCommand, String key, String path) {
