@@ -16,7 +16,6 @@ import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.util.function.SerializableFunction;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 
@@ -75,7 +74,7 @@ public class JsonSetFunction
          return RespConstants.OK;
       }
       try {
-         var rootObjectNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc.value());
+         var rootObjectNode = JSONUtil.objectMapper.readTree(doc.value());
          var jpCtx = JSONUtil.parserForSet.parse(rootObjectNode);
          var pathStr = new String(jsonPath, StandardCharsets.UTF_8);
          JsonNode node = jpCtx.read(pathStr);
