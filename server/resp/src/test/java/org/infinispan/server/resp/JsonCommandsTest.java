@@ -388,6 +388,82 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testJSONSETArrayElement() {
+      String key = "doc";
+      JsonPath jp = new JsonPath("$");
+      // JSON.SET doc $ '[-3, -2, -1, 0, 1, 2, 3]'
+      JsonValue jv = defaultJsonParser.createJsonValue("[-3, -2, -1, 0, 1, 2, 3]");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      var result = redis.jsonGet(key, jp);
+      assertThat(compareJSONGet(result, jv)).isEqualTo(true);
+
+      // JSON.SET doc $[0] -5
+      JsonPath jpIndex = new JsonPath("$[0]");
+      JsonValue jvNew = defaultJsonParser.createJsonValue("-5");
+      assertThat(redis.jsonSet(key, jpIndex, jvNew)).isEqualTo("OK");
+
+      // Verify the result
+      result = redis.jsonGet(key, jp);
+      JsonValue expectedResult = defaultJsonParser.createJsonValue("[-5, -2, -1, 0, 1, 2, 3]");
+      assertThat(compareJSONGet(result, expectedResult)).isEqualTo(true);
+
+      // Test setting element in empty array
+      String key2 = k(1);
+      JsonValue emptyArray = defaultJsonParser.createJsonValue("[]");
+      assertThat(redis.jsonSet(key2, jp, emptyArray)).isEqualTo("OK");
+
+      // Test setting element using negative index
+      String key3 = k(2);
+      JsonValue arrayWithElements = defaultJsonParser.createJsonValue("[1, 2, 3, 4, 5]");
+      assertThat(redis.jsonSet(key3, jp, arrayWithElements)).isEqualTo("OK");
+
+      // JSON.SET doc $[-1] 99 - set last element
+      JsonPath jpNegativeIndex = new JsonPath("$[-1]");
+      JsonValue jvNewValue = defaultJsonParser.createJsonValue("99");
+      assertThat(redis.jsonSet(key3, jpNegativeIndex, jvNewValue)).isEqualTo("OK");
+
+      // Verify the last element was changed
+      var resultNegative = redis.jsonGet(key3, jp);
+      JsonValue expectedNegative = defaultJsonParser.createJsonValue("[1, 2, 3, 4, 99]");
+      assertThat(compareJSONGet(resultNegative, expectedNegative)).isEqualTo(true);
+   }
+
+   @Test
+   public void testJSONSETNonNumericNumbers() {
+      CustomStringCommands command = CustomStringCommands.instance(redisConnection);
+      String key = "doc";
+
+      // JSON.SET doc $ '[1, 2, 3]'
+      assertThat(command.jsonSet(key, "$", "[1,2,3]")).isEqualTo("OK");
+
+      // JSON.SET doc $[0] Infinity
+      assertThat(command.jsonSet(key, "$[0]", "Infinity")).isEqualTo("OK");
+
+      // Verify Infinity was set
+      String result = command.jsonGet(key, "$");
+      assertThat(result).contains("Infinity");
+      assertThat(result).contains("2");
+      assertThat(result).contains("3");
+
+      // JSON.SET doc $[1] -Infinity
+      assertThat(command.jsonSet(key, "$[1]", "-Infinity")).isEqualTo("OK");
+
+      // Verify -Infinity was set
+      result = command.jsonGet(key, "$");
+      assertThat(result).contains("Infinity");
+      assertThat(result).contains("-Infinity");
+
+      // JSON.SET doc $[2] NaN
+      assertThat(command.jsonSet(key, "$[2]", "NaN")).isEqualTo("OK");
+
+      // Verify NaN was set
+      result = command.jsonGet(key, "$");
+      assertThat(result).contains("Infinity");
+      assertThat(result).contains("-Infinity");
+      assertThat(result).contains("NaN");
+   }
+
+   @Test
    public void testJSONGET() {
       JsonPath jp = new JsonPath("$");
       JsonValue jv = defaultJsonParser.createJsonValue("""
@@ -792,6 +868,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             new CommandArgs<>(codec).addKey("notExistingKey"))).isNull();
    }
 
+   @Test
    public void testJSONDEL() {
       String key = k();
       JsonPath jp = new JsonPath("$");
@@ -830,6 +907,13 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.jsonDel(key, jp)).isEqualTo(1);
       List<JsonValue> jsonGetResult = redis.jsonGet(key);
       assertThat(jsonGetResult).hasSize(1);
+      // Deleting array element using negative index
+      jp = new JsonPath("$.grades[-1]");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(1);
+      jsonGetResult = redis.jsonGet(key);
+      assertThat(jsonGetResult).hasSize(1);
+      // Verify the array now has one less element
+      assertThat(jsonGetResult.get(0).toString()).doesNotContain("90");
       // Deleting non existing array element
       jp = new JsonPath("$.grades[3]");
       assertThat(redis.jsonDel(key, jp)).isEqualTo(0);
