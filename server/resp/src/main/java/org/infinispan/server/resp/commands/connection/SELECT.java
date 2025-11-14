@@ -4,15 +4,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.operation.SwitchDbOperation;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -33,10 +31,7 @@ public class SELECT extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       String db = new String(arguments.get(0), StandardCharsets.US_ASCII);
       try {
-         Cache<byte[], byte[]> cache = handler.respServer().getCacheManager().getCache(db);
-         ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
-         handler.setCache(cache.getAdvancedCache().withSubject(metadata.subject()).withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
-         metadata.cache(cache.getName());
+         SwitchDbOperation.switchDB(handler, db, ctx);
          handler.writer().ok();
       } catch (CacheException e) {
          handler.writer().customError("DB index is out of range");

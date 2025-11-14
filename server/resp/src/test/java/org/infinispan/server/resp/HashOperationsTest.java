@@ -2,13 +2,17 @@ package org.infinispan.server.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.security.Security;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.CopyArgs;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
 import io.lettuce.core.RedisCommandExecutionException;
@@ -346,5 +350,149 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.hsetnx("key", "propK", "propV")).isTrue();
       assertThat(redis.hsetnx("key", "propK", "value")).isFalse();
       assertThat(redis.hget("key", "propK")).isEqualTo("propV");
+   }
+
+   public void testCopyHash() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Map<String, String> map = Map.of("f1", "v1", "f2", "v2", "f3", "v3");
+      redis.hset("copy-src", map);
+
+      assertThat(redis.copy("copy-src", "copy-dst")).isTrue();
+      assertThat(redis.hgetall("copy-dst")).containsAllEntriesOf(map);
+   }
+
+   public void testCopyHashNotPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.copy("copy-missing-hash", "copy-dst")).isFalse();
+   }
+
+   public void testCopyHashToExistingKeyWithoutReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Map<String, String> srcMap = Map.of("f1", "v1", "f2", "v2");
+      Map<String, String> dstMap = Map.of("f3", "v3", "f4", "v4");
+      redis.hset("copy-src-nr", srcMap);
+      redis.hset("copy-dst-nr", dstMap);
+
+      assertThat(redis.copy("copy-src-nr", "copy-dst-nr")).isFalse();
+      assertThat(redis.hgetall("copy-dst-nr")).containsAllEntriesOf(dstMap);
+   }
+
+   public void testCopyHashToExistingKeyWithReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Map<String, String> srcMap = Map.of("f1", "v1", "f2", "v2");
+      Map<String, String> dstMap = Map.of("f3", "v3", "f4", "v4");
+      redis.hset("copy-src-r", srcMap);
+      redis.hset("copy-dst-r", dstMap);
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-src-r", "copy-dst-r", copyArgs)).isTrue();
+      Map<String, String> result = redis.hgetall("copy-dst-r");
+      assertThat(result).containsAllEntriesOf(srcMap);
+      assertThat(result).doesNotContainKeys("f3", "f4");
+   }
+
+   public void testCopyHashWithReplaceToNonExistingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Map<String, String> map = Map.of("f1", "v1", "f2", "v2");
+      redis.hset("copy-src-rne", map);
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-src-rne", "copy-dst-rne", copyArgs)).isTrue();
+      assertThat(redis.hgetall("copy-dst-rne")).containsAllEntriesOf(map);
+   }
+
+   public void testCopyHashToNewDB() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      if (isAuthorizationEnabled()) {
+         Security.doAs(ADMIN, () -> {
+            manager(0).createCache("1", builder.build());
+         });
+      } else {
+         manager(0).createCache("1", builder.build());
+      }
+
+      Map<String, String> map = Map.of("f1", "v1", "f2", "v2");
+      redis.hset("copy-hash-db-src", map);
+
+      var copyArgs = new CopyArgs().destinationDb(1);
+      assertThat(redis.copy("copy-hash-db-src", "copy-hash-db-dst", copyArgs)).isTrue();
+      assertThat(redis.hgetall("copy-hash-db-dst")).isEmpty();
+
+      redis.select(1);
+      assertThat(redis.hgetall("copy-hash-db-dst")).containsAllEntriesOf(map);
+      redis.select(0);
+   }
+
+   public void testCopyHashToNewDBWithReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      Map<String, String> srcMap = Map.of("f1", "v1", "f2", "v2");
+      Map<String, String> dstMap = Map.of("f3", "v3");
+      redis.hset("copy-hash-dbr-src", srcMap);
+
+      redis.select(1);
+      redis.hset("copy-hash-dbr-dst", dstMap);
+      redis.select(0);
+
+      var copyArgs = new CopyArgs().destinationDb(1).replace(true);
+      assertThat(redis.copy("copy-hash-dbr-src", "copy-hash-dbr-dst", copyArgs)).isTrue();
+
+      redis.select(1);
+      Map<String, String> result = redis.hgetall("copy-hash-dbr-dst");
+      assertThat(result).containsAllEntriesOf(srcMap);
+      assertThat(result).doesNotContainKeys("f3");
+      redis.select(0);
+   }
+
+   public void testCopyHashDataIndependence() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.hset("copy-hash-ind-src", Map.of("f1", "v1", "f2", "v2"));
+
+      assertThat(redis.copy("copy-hash-ind-src", "copy-hash-ind-dst")).isTrue();
+
+      // Modifying original does not affect copy
+      redis.hset("copy-hash-ind-src", "f1", "modified");
+      assertThat(redis.hget("copy-hash-ind-dst", "f1")).isEqualTo("v1");
+
+      // Adding to original does not affect copy
+      redis.hset("copy-hash-ind-src", "f3", "v3");
+      assertThat(redis.hgetall("copy-hash-ind-dst")).hasSize(2);
+
+      // Deleting original does not affect copy
+      redis.del("copy-hash-ind-src");
+      assertThat(redis.hgetall("copy-hash-ind-dst")).containsEntry("f1", "v1").containsEntry("f2", "v2");
+   }
+
+   public void testCopyHashSameKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.hset("copy-hash-same", Map.of("f1", "v1"));
+
+      assertThat(redis.copy("copy-hash-same", "copy-hash-same")).isFalse();
+      assertThat(redis.hgetall("copy-hash-same")).containsEntry("f1", "v1");
+   }
+
+   public void testCopyHashToExistingStringWithoutReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.hset("copy-cross-hash-src", Map.of("f1", "v1"));
+      redis.set("copy-cross-hash-dst", "existing");
+
+      assertThat(redis.copy("copy-cross-hash-src", "copy-cross-hash-dst")).isFalse();
+      assertThat(redis.get("copy-cross-hash-dst")).isEqualTo("existing");
+   }
+
+   public void testCopyHashToExistingStringWithReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.hset("copy-cross-hash-r-src", Map.of("f1", "v1", "f2", "v2"));
+      redis.set("copy-cross-hash-r-dst", "existing");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-cross-hash-r-src", "copy-cross-hash-r-dst", copyArgs)).isTrue();
+      assertThat(redis.hgetall("copy-cross-hash-r-dst")).containsEntry("f1", "v1").containsEntry("f2", "v2");
    }
 }

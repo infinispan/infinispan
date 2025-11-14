@@ -2,13 +2,17 @@ package org.infinispan.server.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.security.Security;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.CopyArgs;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ValueScanCursor;
@@ -668,5 +672,131 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.exists(dest)).isEqualTo(0L);
       redis.del(key);
 
+   }
+
+   public void testCopySet() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("copy-set-src", "a", "b", "c");
+
+      assertThat(redis.copy("copy-set-src", "copy-set-dst")).isTrue();
+      assertThat(redis.smembers("copy-set-dst")).containsExactlyInAnyOrder("a", "b", "c");
+   }
+
+   public void testCopySetNotPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.copy("copy-set-missing", "copy-set-dst")).isFalse();
+   }
+
+   public void testCopySetToExistingKeyWithoutReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("copy-set-src-nr", "a", "b");
+      redis.sadd("copy-set-dst-nr", "x", "y");
+
+      assertThat(redis.copy("copy-set-src-nr", "copy-set-dst-nr")).isFalse();
+      assertThat(redis.smembers("copy-set-dst-nr")).containsExactlyInAnyOrder("x", "y");
+   }
+
+   public void testCopySetToExistingKeyWithReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("copy-set-src-r", "a", "b");
+      redis.sadd("copy-set-dst-r", "x", "y", "z");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-set-src-r", "copy-set-dst-r", copyArgs)).isTrue();
+      assertThat(redis.smembers("copy-set-dst-r")).containsExactlyInAnyOrder("a", "b");
+   }
+
+   public void testCopySetWithReplaceToNonExistingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("copy-set-src-rne", "a", "b");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-set-src-rne", "copy-set-dst-rne", copyArgs)).isTrue();
+      assertThat(redis.smembers("copy-set-dst-rne")).containsExactlyInAnyOrder("a", "b");
+   }
+
+   public void testCopySetToNewDB() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      if (isAuthorizationEnabled()) {
+         Security.doAs(ADMIN, () -> {
+            manager(0).createCache("1", builder.build());
+         });
+      } else {
+         manager(0).createCache("1", builder.build());
+      }
+
+      redis.sadd("copy-set-db-src", "a", "b", "c");
+
+      var copyArgs = new CopyArgs().destinationDb(1);
+      assertThat(redis.copy("copy-set-db-src", "copy-set-db-dst", copyArgs)).isTrue();
+      assertThat(redis.smembers("copy-set-db-dst")).isEmpty();
+
+      redis.select(1);
+      assertThat(redis.smembers("copy-set-db-dst")).containsExactlyInAnyOrder("a", "b", "c");
+      redis.select(0);
+   }
+
+   public void testCopySetToNewDBWithReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      redis.sadd("copy-set-dbr-src", "a", "b");
+
+      redis.select(1);
+      redis.sadd("copy-set-dbr-dst", "x");
+      redis.select(0);
+
+      var copyArgs = new CopyArgs().destinationDb(1).replace(true);
+      assertThat(redis.copy("copy-set-dbr-src", "copy-set-dbr-dst", copyArgs)).isTrue();
+
+      redis.select(1);
+      assertThat(redis.smembers("copy-set-dbr-dst")).containsExactlyInAnyOrder("a", "b");
+      redis.select(0);
+   }
+
+   public void testCopySetDataIndependence() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("copy-set-ind-src", "a", "b", "c");
+
+      assertThat(redis.copy("copy-set-ind-src", "copy-set-ind-dst")).isTrue();
+
+      // Modifying original does not affect copy
+      redis.sadd("copy-set-ind-src", "d");
+      assertThat(redis.smembers("copy-set-ind-dst")).containsExactlyInAnyOrder("a", "b", "c");
+
+      // Deleting original does not affect copy
+      redis.del("copy-set-ind-src");
+      assertThat(redis.smembers("copy-set-ind-dst")).containsExactlyInAnyOrder("a", "b", "c");
+   }
+
+   public void testCopySetSameKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("copy-set-same", "a", "b");
+
+      assertThat(redis.copy("copy-set-same", "copy-set-same")).isFalse();
+      assertThat(redis.smembers("copy-set-same")).containsExactlyInAnyOrder("a", "b");
+   }
+
+   public void testCopySetToExistingStringWithoutReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("copy-cross-set-src", "a", "b");
+      redis.set("copy-cross-set-dst", "existing");
+
+      assertThat(redis.copy("copy-cross-set-src", "copy-cross-set-dst")).isFalse();
+      assertThat(redis.get("copy-cross-set-dst")).isEqualTo("existing");
+   }
+
+   public void testCopySetToExistingStringWithReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("copy-cross-set-r-src", "a", "b", "c");
+      redis.set("copy-cross-set-r-dst", "existing");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-cross-set-r-src", "copy-cross-set-r-dst", copyArgs)).isTrue();
+      assertThat(redis.smembers("copy-cross-set-r-dst")).containsExactlyInAnyOrder("a", "b", "c");
    }
 }
