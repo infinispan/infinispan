@@ -12,15 +12,19 @@ import static io.lettuce.core.ZAggregateArgs.Builder.sum;
 import static io.lettuce.core.ZAggregateArgs.Builder.weights;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
 import java.util.List;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.security.Security;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.CopyArgs;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
@@ -1935,5 +1939,135 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
                   just(Double.NEGATIVE_INFINITY, "anna"),
                   just(Double.POSITIVE_INFINITY, "galder")
             );
+   }
+
+   public void testCopyZset() {
+      redis.zadd("copy-zset-src", just(1.0, "a"), just(2.0, "b"), just(3.0, "c"));
+
+      assertThat(redis.copy("copy-zset-src", "copy-zset-dst")).isTrue();
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-dst", Range.unbounded()))
+            .containsExactly(just(1.0, "a"), just(2.0, "b"), just(3.0, "c"));
+   }
+
+   public void testCopyZsetNotPresent() {
+      assertThat(redis.copy("copy-zset-missing", "copy-zset-dst")).isFalse();
+   }
+
+   public void testCopyZsetToExistingKeyWithoutReplace() {
+      redis.zadd("copy-zset-src-nr", just(1.0, "a"), just(2.0, "b"));
+      redis.zadd("copy-zset-dst-nr", just(5.0, "x"), just(6.0, "y"));
+
+      assertThat(redis.copy("copy-zset-src-nr", "copy-zset-dst-nr")).isFalse();
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-dst-nr", Range.unbounded()))
+            .containsExactly(just(5.0, "x"), just(6.0, "y"));
+   }
+
+   public void testCopyZsetToExistingKeyWithReplace() {
+      redis.zadd("copy-zset-src-r", just(1.0, "a"), just(2.0, "b"));
+      redis.zadd("copy-zset-dst-r", just(5.0, "x"), just(6.0, "y"), just(7.0, "z"));
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-zset-src-r", "copy-zset-dst-r", copyArgs)).isTrue();
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-dst-r", Range.unbounded()))
+            .containsExactly(just(1.0, "a"), just(2.0, "b"));
+   }
+
+   public void testCopyZsetWithReplaceToNonExistingKey() {
+      redis.zadd("copy-zset-src-rne", just(1.0, "a"), just(2.0, "b"));
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-zset-src-rne", "copy-zset-dst-rne", copyArgs)).isTrue();
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-dst-rne", Range.unbounded()))
+            .containsExactly(just(1.0, "a"), just(2.0, "b"));
+   }
+
+   public void testCopyZsetToNewDB() {
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      if (isAuthorizationEnabled()) {
+         Security.doAs(ADMIN, () -> {
+            manager(0).createCache("1", builder.build());
+         });
+      } else {
+         manager(0).createCache("1", builder.build());
+      }
+
+      redis.zadd("copy-zset-db-src", just(1.0, "a"), just(2.0, "b"), just(3.0, "c"));
+
+      var copyArgs = new CopyArgs().destinationDb(1);
+      assertThat(redis.copy("copy-zset-db-src", "copy-zset-db-dst", copyArgs)).isTrue();
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-db-dst", Range.unbounded())).isEmpty();
+
+      redis.select(1);
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-db-dst", Range.unbounded()))
+            .containsExactly(just(1.0, "a"), just(2.0, "b"), just(3.0, "c"));
+      redis.select(0);
+   }
+
+   public void testCopyZsetToNewDBWithReplace() {
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      redis.zadd("copy-zset-dbr-src", just(1.0, "a"), just(2.0, "b"));
+
+      redis.select(1);
+      redis.zadd("copy-zset-dbr-dst", just(5.0, "x"));
+      redis.select(0);
+
+      var copyArgs = new CopyArgs().destinationDb(1).replace(true);
+      assertThat(redis.copy("copy-zset-dbr-src", "copy-zset-dbr-dst", copyArgs)).isTrue();
+
+      redis.select(1);
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-dbr-dst", Range.unbounded()))
+            .containsExactly(just(1.0, "a"), just(2.0, "b"));
+      redis.select(0);
+   }
+
+   public void testCopyZsetDataIndependence() {
+      redis.zadd("copy-zset-ind-src", just(1.0, "a"), just(2.0, "b"), just(3.0, "c"));
+
+      assertThat(redis.copy("copy-zset-ind-src", "copy-zset-ind-dst")).isTrue();
+
+      // Modifying original does not affect copy
+      redis.zadd("copy-zset-ind-src", just(4.0, "d"));
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-ind-dst", Range.unbounded()))
+            .containsExactly(just(1.0, "a"), just(2.0, "b"), just(3.0, "c"));
+
+      // Changing score in original does not affect copy
+      redis.zadd("copy-zset-ind-src", just(10.0, "a"));
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-ind-dst", Range.unbounded()))
+            .containsExactly(just(1.0, "a"), just(2.0, "b"), just(3.0, "c"));
+
+      // Deleting original does not affect copy
+      redis.del("copy-zset-ind-src");
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-ind-dst", Range.unbounded()))
+            .containsExactly(just(1.0, "a"), just(2.0, "b"), just(3.0, "c"));
+   }
+
+   public void testCopyZsetSameKey() {
+      redis.zadd("copy-zset-same", just(1.0, "a"), just(2.0, "b"));
+
+      assertThat(redis.copy("copy-zset-same", "copy-zset-same")).isFalse();
+      assertThat(redis.zrangebyscoreWithScores("copy-zset-same", Range.unbounded()))
+            .containsExactly(just(1.0, "a"), just(2.0, "b"));
+   }
+
+   public void testCopyZsetToExistingStringWithoutReplace() {
+      redis.zadd("copy-cross-zset-src", just(1.0, "a"), just(2.0, "b"));
+      redis.set("copy-cross-zset-dst", "existing");
+
+      assertThat(redis.copy("copy-cross-zset-src", "copy-cross-zset-dst")).isFalse();
+      assertThat(redis.get("copy-cross-zset-dst")).isEqualTo("existing");
+   }
+
+   public void testCopyZsetToExistingStringWithReplace() {
+      redis.zadd("copy-cross-zset-r-src", just(1.0, "a"), just(2.0, "b"));
+      redis.set("copy-cross-zset-r-dst", "existing");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-cross-zset-r-src", "copy-cross-zset-r-dst", copyArgs)).isTrue();
+      assertThat(redis.zrangebyscoreWithScores("copy-cross-zset-r-dst", Range.unbounded()))
+            .containsExactly(just(1.0, "a"), just(2.0, "b"));
    }
 }
