@@ -48,8 +48,13 @@ public class JSONARRPOP extends RespCommand implements Resp3Command {
                 return;
             }
             if (!c.isEmpty()) {
-                writer.string(c.get(c.size() - 1));
-                return;
+                // Find and write the last non-null element
+                for (int i = c.size() - 1; i >= 0; i--) {
+                    if (c.get(i) != null) {
+                        writer.string(c.get(i));
+                        return;
+                    }
+                }
             }
             writer.error("-ERR Path '" + RespUtil.utf8(path) + "' does not exist or not an array");
         };
