@@ -201,7 +201,7 @@
       <versionx.net.spy.spymemcached>2.12.3</versionx.net.spy.spymemcached>
       <versionx.org.antlr.antlr-runtime>3.5.3</versionx.org.antlr.antlr-runtime>
       <versionx.org.apache.avro.avro>1.12.1</versionx.org.apache.avro.avro>
-      <versionx.org.apache.commons.commons-lang3>3.19.0</versionx.org.apache.commons.commons-lang3>
+      <versionx.org.apache.commons.commons-lang3>3.20.0</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds>2.0.0.AM27</versionx.org.apache.directory.server.apacheds>
       <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.15.2</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
