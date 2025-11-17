@@ -1356,6 +1356,19 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(result.toString()).isEqualTo("[4]");
       result = redis.jsonArrpop(key, jp , 0);
       assertThat(result.toString()).isEqualTo("[1]");
+
+      // Test pop on non-array element (JSONPath - should return array with null)
+      redis.jsonSet(key, jpRoot, jv);
+      JsonPath jpNonArray = new JsonPath("$.foo");
+      result = redis.jsonArrpop(key, jpNonArray, 0);
+      assertThat(result).hasSize(1);
+      assertThat(result.toString()).isEqualTo("[null]");
+
+      // Test pop on non-array element (legacy path - should also throw exception)
+      JsonPath jpLegacyNonArray = new JsonPath(".foo");
+      assertThatThrownBy(() -> redis.jsonArrpop(key, jpLegacyNonArray, 0))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Path '$.foo' does not exist or not an array");
    }
 
    @Test
