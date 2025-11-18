@@ -10,7 +10,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
-import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
+import org.infinispan.server.core.security.simple.SimpleAuthenticator;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -46,7 +46,7 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
 
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
-      SimpleSaslAuthenticator ssa = new SimpleSaslAuthenticator();
+      SimpleAuthenticator ssa = new SimpleAuthenticator();
       ssa.addUser("admin", "realm", "password".toCharArray(), "admin");
       serverBuilder.authentication()
             .enable()

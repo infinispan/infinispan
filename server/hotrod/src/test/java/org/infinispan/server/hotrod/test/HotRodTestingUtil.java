@@ -5,6 +5,7 @@ import static org.infinispan.server.hotrod.OperationStatus.KeyDoesNotExist;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
@@ -265,7 +266,7 @@ public class HotRodTestingUtil {
 
    public static boolean assertKeyDoesNotExist(TestGetResponse resp) {
       OperationStatus status = resp.getStatus();
-      assertTrue("Status should have been 'KeyDoesNotExist' but instead was: " + status, status == KeyDoesNotExist);
+      assertSame("Status should have been 'KeyDoesNotExist' but instead was: " + status, KeyDoesNotExist, status);
       assertEquals(resp.data, Optional.empty());
       return status == KeyDoesNotExist;
    }
@@ -273,14 +274,11 @@ public class HotRodTestingUtil {
    public static void assertTopologyReceived(AbstractTestTopologyAwareResponse resp, List<HotRodServer> servers,
                                              int expectedTopologyId) {
       assertEquals(resp.topologyId, expectedTopologyId);
-      if (resp instanceof TestHashDistAware10Response) {
-         TestHashDistAware10Response h10 = (TestHashDistAware10Response) resp;
+      if (resp instanceof TestHashDistAware10Response h10) {
          assertEquals(new HashSet<>(h10.members), servers.stream().map(HotRodServer::getAddress).collect(Collectors.toSet()));
-      } else if (resp instanceof TestHashDistAware11Response) {
-         TestHashDistAware11Response h11 = (TestHashDistAware11Response) resp;
+      } else if (resp instanceof TestHashDistAware11Response h11) {
          assertEquals(new HashSet<>(h11.members), servers.stream().map(HotRodServer::getAddress).collect(Collectors.toSet()));
-      } else if (resp instanceof TestTopologyAwareResponse) {
-         TestTopologyAwareResponse t = (TestTopologyAwareResponse) resp;
+      } else if (resp instanceof TestTopologyAwareResponse t) {
          assertEquals(new HashSet<>(t.members), servers.stream().map(HotRodServer::getAddress).collect(Collectors.toSet()));
       } else {
          throw new IllegalArgumentException("Unsupported response!");
@@ -294,7 +292,7 @@ public class HotRodTestingUtil {
       assertEquals(hashTopologyResp.members.size(), servers.size());
       Set<ServerAddress> serverAddresses = servers.stream().map(HotRodServer::getAddress).collect(Collectors.toSet());
       hashTopologyResp.members.forEach(member -> assertTrue(serverAddresses.contains(member)));
-      assertEquals(hashTopologyResp.hashFunction, 3);
+      assertEquals(3, hashTopologyResp.hashFunction);
       // Assert segments
       Cache cache = servers.get(0).getCacheManager().getCache(cacheName);
       LocalizedCacheTopology cacheTopology = cache.getAdvancedCache().getDistributionManager().getCacheTopology();

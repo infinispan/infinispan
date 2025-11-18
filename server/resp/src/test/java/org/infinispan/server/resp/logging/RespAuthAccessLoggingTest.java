@@ -1,73 +1,115 @@
 package org.infinispan.server.resp.logging;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.HOST;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.test.skip.StringLogAppender;
-import org.infinispan.server.resp.SingleNodeRespBaseTest;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+
+import org.infinispan.security.Security;
+import org.infinispan.server.core.AbstractAuthAccessLoggingTest;
+import org.infinispan.server.resp.RespServer;
+import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.resp.test.RespTestingUtil;
-import org.testng.annotations.AfterClass;
+import org.infinispan.server.resp.test.SimpleRespAuthenticator;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TimeoutOptions;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.protocol.ProtocolVersion;
 
 @Test(groups = "functional", testName = "server.resp.logging.AuthAccessLoggingTest")
-public class RespAuthAccessLoggingTest extends SingleNodeRespBaseTest {
-
-   {
-      withAuthorization();
-   }
-
-   private StringLogAppender logAppender;
-   private String testShortName;
+public class RespAuthAccessLoggingTest extends AbstractAuthAccessLoggingTest {
+   private RespServer server;
 
    @Override
-   protected void afterSetupFinished() {
-      testShortName = TestResourceTracker.getCurrentTestShortName();
-
-      logAppender = new StringLogAppender(RespAccessLogger.log.getName(),
-            Level.TRACE,
-            t -> t.getName().startsWith("non-blocking-thread-" + testShortName),
-            PatternLayout.newBuilder().withPattern(RespAccessLoggingTest.LOG_FORMAT).build());
-      logAppender.install();
+   protected void setup() throws Exception {
+      super.setup();
       assertThat(RespAccessLogger.isEnabled()).isTrue();
-      super.afterSetupFinished();
+      SimpleRespAuthenticator authenticator = new SimpleRespAuthenticator();
+      authenticator.addUser("writer", "writer");
+      authenticator.addUser("reader", "reader");
+      RespServerConfigurationBuilder builder = new RespServerConfigurationBuilder();
+      builder.host(HOST).port(RespTestingUtil.port()).defaultCacheName("default")
+            .authentication().enable().authenticator(authenticator);
+      server = Security.doAs(ADMIN, () -> RespTestingUtil.startServer(cacheManager, builder.build()));
    }
 
-   @AfterClass(alwaysRun = true)
    @Override
-   protected void destroy() {
-      logAppender.uninstall();
-      super.destroy();
+   protected void teardown() {
+      server.stop();
+      super.teardown();
+   }
+
+   @Override
+   protected String logCategory() {
+      return RespAccessLogger.log.getName();
    }
 
    @Test
-   public void testAuthInAccessLogging() {
-      // Super already has a connection with an authenticated client.
-      // Now, create a client without the auth configuration.
-      try (RedisClient unauthorized = RespTestingUtil.createClient(timeout, server.getPort())) {
-         assertThatThrownBy(() -> unauthorized.connect().sync())
-               .isInstanceOf(RedisConnectionException.class)
-               .cause()
-               .hasMessageStartingWith("NOAUTH HELLO must be called with the client already authenticated");
+   public void testRespAccessLogging() {
+      for (Map.Entry<String, String> user : USERS.entrySet()) {
+         try (RedisClient client = createRespClient(user.getKey(), user.getValue())) {
+            try (StatefulRedisConnection<String, String> connection = client.connect()) {
+               RedisCommands<String, String> commands = connection.sync();
+               try {
+                  commands.set(k(0, user.getKey()), v());
+               } catch (RedisCommandExecutionException e) {
+                  if (!e.getMessage().startsWith("WRONGPASS")) {
+                     throw e;
+                  }
+               }
+               try {
+                  commands.get(k(0, user.getKey()));
+               } catch (RedisCommandExecutionException e) {
+                  if (!e.getMessage().startsWith("WRONGPASS")) {
+                     throw e;
+                  }
+               }
+            } catch (RedisConnectionException e) {
+               // ignore
+            }
+         }
       }
 
-      server.getTransport().stop();
+      assertEquals(12, logAppender.size());
 
-      assertThat(logAppender.getLog(0))
-            .matches("^127\\.0\\.0\\.1 ALL_user \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"HELLO /\\[] RESP\" OK \\d+ \\d+ \\d+$");
-      assertThat(logAppender.getLog(1))
-            .matches("^127\\.0\\.0\\.1 ALL_user \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"CLIENT /\\[] RESP\" OK \\d+ \\d+ \\d+$");
-      assertThat(logAppender.getLog(2))
-            .matches("^127\\.0\\.0\\.1 ALL_user \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"CLIENT /\\[] RESP\" OK \\d+ \\d+ \\d+$");
+      assertThat(parseAccessLog(0)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "\"" + Messages.MESSAGES.noAuthHello() + "\"", "WHO", "-"));
+      assertThat(parseAccessLog(1)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "OK", "WHO", "writer"));
+      assertThat(parseAccessLog(2)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "writer"));
+      assertThat(parseAccessLog(3)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "writer"));
+      assertThat(parseAccessLog(4)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "SET", "STATUS", "OK", "WHO", "writer"));
+      assertThat(parseAccessLog(5)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "GET", "STATUS", "OK", "WHO", "writer"));
+      assertThat(parseAccessLog(6)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "OK", "WHO", "reader"));
+      assertThat(parseAccessLog(7)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "reader"));
+      assertThat(parseAccessLog(8)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "reader"));
+      assertThat(parseAccessLog(9)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "SET", "STATUS", "\"ISPN000287: Unauthorized access: subject 'Subject with principal(s): [SimpleUserPrincipal [name=reader]]' lacks 'WRITE' permission\"", "WHO", "reader"));
+      assertThat(parseAccessLog(10)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "GET", "STATUS", "OK", "WHO", "reader"));
+      assertThat(parseAccessLog(11)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "\"Unknown user\"", "WHO", "-"));
+   }
 
-      // The last entry is the failed authentication.
-      // It doesn't have a user information.
-      assertThat(logAppender.getLog(3))
-            .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"HELLO /\\[] RESP\" NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time \\d+ \\d+ \\d+$");
+   private RedisClient createRespClient(String username, String password) {
+      RedisURI.Builder builder = RedisURI.Builder
+            .redis(server.getHost(), server.getPort())
+            .withTimeout(Duration.ofMillis(15_000));
+      if (!username.isEmpty()) {
+         builder.withAuthentication(username, password);
+      }
+      RedisClient client = RedisClient.create(builder.build());
+      client.setOptions(ClientOptions.builder()
+            .protocolVersion(ProtocolVersion.RESP3)
+            .timeoutOptions(TimeoutOptions.enabled(Duration.of(15_000, ChronoUnit.MILLIS)))
+            .build());
+      return client;
    }
 }

@@ -1,85 +1,98 @@
 package org.infinispan.server.memcached.logging;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBuilder;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.test.skip.StringLogAppender;
+import javax.security.sasl.Sasl;
+
+import org.infinispan.security.Security;
+import org.infinispan.server.core.AbstractAuthAccessLoggingTest;
+import org.infinispan.server.core.security.simple.SimpleAuthenticator;
+import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedProtocol;
-import org.infinispan.server.memcached.test.MemcachedSingleNodeTest;
+import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
 import net.spy.memcached.ClientMode;
 import net.spy.memcached.ConnectionFactoryBuilder;
+import net.spy.memcached.FailureMode;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.auth.AuthDescriptor;
-import net.spy.memcached.internal.CheckedOperationTimeoutException;
 
-public abstract class MemcachedBaseAuthAccessLoggingTest extends MemcachedSingleNodeTest {
+public abstract class MemcachedBaseAuthAccessLoggingTest extends AbstractAuthAccessLoggingTest {
 
-   private StringLogAppender logAppender;
-   private String testShortName;
+   private MemcachedServer server;
+
+   @Override
+   protected String logCategory() {
+      return MemcachedAccessLogging.log.getName();
+   }
 
    @Override
    protected void setup() throws Exception {
-      testShortName = TestResourceTracker.getCurrentTestShortName();
-
-      logAppender = new StringLogAppender(MemcachedAccessLogging.log.getName(),
-            Level.TRACE,
-            t -> t.getName().startsWith("non-blocking-thread-" + testShortName),
-            PatternLayout.newBuilder().withPattern(MemcachedAccessLoggingTest.LOG_FORMAT).build());
-      logAppender.install();
-      assertTrue(MemcachedAccessLogging.isEnabled());
       super.setup();
+      assertTrue(MemcachedAccessLogging.isEnabled());
+
+      SimpleAuthenticator sap = new SimpleAuthenticator();
+      sap.addUser("writer", REALM, "writer".toCharArray());
+      sap.addUser("reader", REALM, "reader".toCharArray());
+
+      MemcachedServerConfigurationBuilder builder = serverBuilder().protocol(getProtocol()).defaultCacheName("default");
+      builder.authentication().enable()
+            .sasl().addAllowedMech("CRAM-MD5").authenticator(sap)
+            .serverName("localhost").addMechProperty(Sasl.POLICY_NOANONYMOUS, "true");
+      builder.authentication().text().authenticator(sap);
+      server = new MemcachedServer();
+      Security.doAs(ADMIN, () -> {
+         server.start(builder.build(), cacheManager);
+         server.postStart();
+      });
    }
 
    @Override
    protected void teardown() {
-      logAppender.uninstall();
+      server.stop();
       super.teardown();
    }
 
-   @Override
-   protected final boolean withAuthentication() {
-      return true;
-   }
+   protected abstract MemcachedProtocol getProtocol();
 
-   protected abstract List<String> regexes();
-
-   private MemcachedClient createUnauthenticatedClient() throws IOException {
-      MemcachedProtocol protocol = getProtocol();
-      ConnectionFactoryBuilder.Protocol p = protocol == MemcachedProtocol.BINARY ? ConnectionFactoryBuilder.Protocol.BINARY : ConnectionFactoryBuilder.Protocol.TEXT;
-      ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder().setProtocol(p).setOpTimeout(10_000L);
-      builder.setClientMode(ClientMode.Static);
-
-      if (p == ConnectionFactoryBuilder.Protocol.BINARY) {
-         builder.setAuthDescriptor(AuthDescriptor.typical(testShortName, testShortName));
-      }
-
-      return new MemcachedClient(builder.build(), Collections.singletonList(new InetSocketAddress("127.0.0.1", server.getPort())));
-   }
+   protected abstract void verifyLogs();
 
    @Test
    public void testAuthAccessLogging() throws Exception {
-      client.set("k", 0, "v").get(5, TimeUnit.SECONDS);
-      MemcachedClient unauthenticated = createUnauthenticatedClient();
-      assertThatThrownBy(() -> unauthenticated.set("k", 0, "value").get(500, TimeUnit.MILLISECONDS))
-            .isInstanceOf(CheckedOperationTimeoutException.class);
-      server.getTransport().stop();
-
-      List<String> patterns = regexes();
-      for (int i = 0; i < patterns.size(); i++) {
-         String match = patterns.get(i);
-         assertThat(logAppender.getLog(i)).matches(match);
+      for (Map.Entry<String, String> user : USERS.entrySet()) {
+         MemcachedClient client = createClient(user.getKey(), user.getValue());
+         try {
+            client.set(k(0, user.getKey()), 0, v()).get();
+         } catch (Exception e) {
+            // Shutdown and recreate client
+            client.shutdown();
+            client = createClient(user.getKey(), user.getValue());
+         }
+         try {
+            client.get(k(0, user.getKey()));
+         } catch (Exception e) {}
+         client.shutdown();
       }
+      verifyLogs();
+   }
+
+   private MemcachedClient createClient(String username, String password) throws IOException {
+      MemcachedProtocol protocol = getProtocol();
+      ConnectionFactoryBuilder.Protocol p = protocol == MemcachedProtocol.BINARY ? ConnectionFactoryBuilder.Protocol.BINARY : ConnectionFactoryBuilder.Protocol.TEXT;
+      ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder().setProtocol(p).setOpTimeout(10_000L);
+      builder.setClientMode(ClientMode.Static).setFailureMode(FailureMode.Cancel);
+      if (!username.isEmpty()) {
+         builder.setAuthDescriptor(AuthDescriptor.typical(username, password));
+      }
+      return new MemcachedClient(builder.build(), Collections.singletonList(new InetSocketAddress(server.getHost(), server.getPort())));
    }
 }

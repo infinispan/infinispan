@@ -31,7 +31,7 @@ public class NativeTransportTest extends AbstractInfinispanTest {
                new String[]{"io.netty.channel.epoll.Epoll"}, this.getClass().getClassLoader()
          );
          Class.forName(NATIVE_TRANSPORT_CLASS, true, classLoader);
-         String firstLine = logAppender.getLog(0);
+         String firstLine = logAppender.get(0);
          assertTrue(firstLine, firstLine.contains("io.netty.channel.epoll.Epoll"));
       } finally {
          logAppender.uninstall();
