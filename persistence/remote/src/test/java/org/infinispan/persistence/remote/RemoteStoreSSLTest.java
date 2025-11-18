@@ -20,7 +20,7 @@ import org.infinispan.persistence.BaseNonBlockingStoreTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.SecurityConfigurationBuilder;
 import org.infinispan.persistence.spi.NonBlockingStore;
-import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
+import org.infinispan.server.core.security.simple.SimpleAuthenticator;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -54,7 +54,7 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
          serverCache = serverCacheManager.getCache(REMOTE_CACHE);
          TestingUtil.replaceComponent(serverCacheManager, TimeService.class, timeService, true);
 
-         SimpleSaslAuthenticator ssa = new SimpleSaslAuthenticator();
+         SimpleAuthenticator ssa = new SimpleAuthenticator();
          HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
          serverBuilder
                .ssl()

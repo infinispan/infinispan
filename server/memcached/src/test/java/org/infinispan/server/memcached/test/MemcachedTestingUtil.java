@@ -15,7 +15,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.SslContextFactory;
-import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
+import org.infinispan.server.core.security.simple.SimpleAuthenticator;
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
 import org.infinispan.server.core.test.transport.TestHandlersChannelInitializer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
@@ -88,7 +88,7 @@ public class MemcachedTestingUtil {
    }
 
    public static MemcachedServerConfigurationBuilder enableAuthentication(MemcachedServerConfigurationBuilder builder) {
-      SimpleSaslAuthenticator ssap = new SimpleSaslAuthenticator();
+      SimpleAuthenticator ssap = new SimpleAuthenticator();
       ssap.addUser(USERNAME, REALM, PASSWORD.toCharArray());
       builder.authentication().enable().sasl().addAllowedMech("CRAM-MD5").authenticator(ssap)
             .serverName("localhost").addMechProperty(Sasl.POLICY_NOANONYMOUS, "true");
