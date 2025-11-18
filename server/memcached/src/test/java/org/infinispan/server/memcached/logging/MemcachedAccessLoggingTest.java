@@ -42,7 +42,7 @@ public class MemcachedAccessLoggingTest extends MemcachedSingleNodeTest {
 
       server.getTransport().stop();
 
-      String logline = logAppender.getLog(0);
+      String logline = logAppender.get(0);
       assertTrue(logline, logline.matches(
             "^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"set /key MCTXT\" OK \\d+ \\d+ \\d+$"));
    }

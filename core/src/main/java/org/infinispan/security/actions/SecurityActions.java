@@ -116,7 +116,7 @@ public class SecurityActions {
       return doPrivileged(action);
    }
 
-   public static Configuration getCacheConfiguration(final AdvancedCache<?, ?> cache) {
+   public static Configuration getCacheConfiguration(final Cache<?, ?> cache) {
       return doPrivileged(cache::getCacheConfiguration);
    }
 

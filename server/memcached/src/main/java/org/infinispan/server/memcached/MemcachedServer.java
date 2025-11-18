@@ -161,7 +161,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
          if (!cacheManager.isRunning(configuration.defaultCacheName()))
             throw new IllegalStateException("Memcached is not initialized");
          memcachedCache = cacheManager.getCache(configuration.defaultCacheName());
-         if (memcachedCache.getCacheConfiguration().statistics().enabled()) {
+         if (SecurityActions.getCacheConfiguration(memcachedCache).statistics().enabled()) {
             statistics = new MemcachedStats();
          }
       }

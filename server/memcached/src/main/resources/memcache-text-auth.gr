@@ -75,5 +75,5 @@ parameters switch command_name
 // Operations
    : { set }? key flags exptime vsize eol value eol { if (out.add(auth(getHeader(), value))) { state = 0; return false; } }
 // Unknown
-   | { throw new IllegalArgumentException("Unknown command " + command_name); }
+   | { throw new SecurityException("Forbidden"); }
    ;
