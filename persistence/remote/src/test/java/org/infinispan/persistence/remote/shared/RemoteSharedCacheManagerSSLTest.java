@@ -13,7 +13,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.RemoteStoreFunctionalTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.global.RemoteContainersConfigurationBuilder;
-import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
+import org.infinispan.server.core.security.simple.SimpleAuthenticator;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -34,7 +34,7 @@ public class RemoteSharedCacheManagerSSLTest extends RemoteStoreFunctionalTest {
    protected void setupBefore() {
       localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
 
-      SimpleSaslAuthenticator ssa = new SimpleSaslAuthenticator();
+      SimpleAuthenticator ssa = new SimpleAuthenticator();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
       serverBuilder
             .ssl()

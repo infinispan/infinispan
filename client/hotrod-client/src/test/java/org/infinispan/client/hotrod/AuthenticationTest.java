@@ -15,7 +15,7 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
+import org.infinispan.server.core.security.simple.SimpleAuthenticator;
 import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
@@ -67,8 +67,8 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
    }
 
    @Override
-   protected SimpleSaslAuthenticator createAuthenticationProvider() {
-      SimpleSaslAuthenticator sap = new SimpleSaslAuthenticator();
+   protected SimpleAuthenticator createAuthenticationProvider() {
+      SimpleAuthenticator sap = new SimpleAuthenticator();
       sap.addUser("user", "realm", "password".toCharArray());
       return sap;
    }
