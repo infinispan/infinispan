@@ -22,7 +22,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -38,6 +37,7 @@ import org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType;
 import org.infinispan.multimap.impl.function.sortedset.SortedSetRandomFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * Multimap with Sorted Map Implementation methods
@@ -62,7 +62,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<K, SortedSetBucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.entryFactory = ComponentRegistry.of(cache).getInternalEntryFactory().running();
+      this.entryFactory = SecurityActions.getCacheComponentRegistry(this.cache).getInternalEntryFactory().running();
    }
 
    /**
