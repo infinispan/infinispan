@@ -1,5 +1,7 @@
 package org.infinispan.multimap.impl;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +13,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -21,8 +22,7 @@ import org.infinispan.multimap.impl.function.set.SMIsMember;
 import org.infinispan.multimap.impl.function.set.SPopFunction;
 import org.infinispan.multimap.impl.function.set.SRemoveFunction;
 import org.infinispan.multimap.impl.function.set.SSetFunction;
-
-import static java.util.Objects.requireNonNull;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * SetCache with Set methods implementation
@@ -41,7 +41,7 @@ public class EmbeddedSetCache<K, V> {
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<K, SetBucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.entryFactory = ComponentRegistry.of(this.cache).getInternalEntryFactory().running();
+      this.entryFactory = SecurityActions.getCacheComponentRegistry(this.cache).getInternalEntryFactory().running();
    }
 
    /**

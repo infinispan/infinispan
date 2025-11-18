@@ -11,7 +11,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -26,6 +25,7 @@ import org.infinispan.multimap.impl.function.list.RotateFunction;
 import org.infinispan.multimap.impl.function.list.SetFunction;
 import org.infinispan.multimap.impl.function.list.SubListFunction;
 import org.infinispan.multimap.impl.function.list.TrimFunction;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * Multimap with Linked List Implementation methods
@@ -46,7 +46,7 @@ public class EmbeddedMultimapListCache<K, V> {
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<K, ListBucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.entryFactory = ComponentRegistry.of(this.cache).getInternalEntryFactory().running();
+      this.entryFactory = SecurityActions.getCacheComponentRegistry(this.cache).getInternalEntryFactory().running();
    }
 
    /**

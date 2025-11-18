@@ -16,6 +16,7 @@ import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Param;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * Functional map implementation.
@@ -46,6 +47,7 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    }
 
    private static <K, V> long getFlagsBitSet(Cache<K, V> cache) {
+      cache = SecurityActions.getUnwrappedCache(cache);
       long flagsBitSet = 0;
       for (; ; ) {
          if (cache instanceof DecoratedCache) {
@@ -67,6 +69,7 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
 
    // Finds the first decorated cache if there are delegates surrounding it otherwise null
    private DecoratedCache<K, V> findDecoratedCache(Cache<K, V> cache) {
+      cache = SecurityActions.getUnwrappedCache(cache);
       if (cache instanceof AbstractDelegatingCache) {
          if (cache instanceof DecoratedCache) {
             return ((DecoratedCache<K, V>) cache);
@@ -79,7 +82,7 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    private FunctionalMapImpl(Params params, AdvancedCache<K, V> cache) {
       this.params = params;
       this.cache = cache;
-      ComponentRegistry componentRegistry = ComponentRegistry.of(cache);
+      ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache);
       chain = componentRegistry.getComponent(AsyncInterceptorChain.class);
       invCtxFactory = componentRegistry.getComponent(InvocationContextFactory.class);
       DecoratedCache<K, V> decoratedCache = findDecoratedCache(cache);

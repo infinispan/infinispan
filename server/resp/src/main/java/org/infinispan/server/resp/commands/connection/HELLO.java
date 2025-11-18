@@ -16,6 +16,7 @@ import org.infinispan.server.resp.RespVersion;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.AuthResp3Command;
 import org.infinispan.server.resp.exception.RespCommandException;
+import org.infinispan.server.resp.logging.Messages;
 import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.server.resp.serialization.SerializationHint;
@@ -52,7 +53,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       try {
          handler.writer().version(RespVersion.of(ArgumentUtils.toInt(arguments.get(0))));
       } catch (IllegalArgumentException e) {
-         handler.writer().error("-NOPROTO sorry this protocol version is not supported");
+         handler.writer().error(Messages.MESSAGES.unsupportedProtocol());
          return handler.myStage();
       }
       if (arguments.size() == 4) {
@@ -63,7 +64,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
          // In case authentication is enabled, HELLO must provide the additional arguments to perform the authentication.
          // A similar behavior of running with `--requirepass <password>`.
          if (!handler.isAuthorized()) {
-            return CompletableFuture.failedFuture(new RespCommandException("NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time"));
+            return CompletableFuture.failedFuture(new RespCommandException(Messages.MESSAGES.noAuthHello()));
          } else {
             helloResponse(handler, ctx);
          }

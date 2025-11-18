@@ -8,10 +8,10 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * A cache implementation for JSON data, providing various methods for interacting with and
@@ -38,7 +38,7 @@ public class EmbeddedJsonCache {
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<byte[], JsonBucket> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.entryFactory = ComponentRegistry.of(this.cache).getInternalEntryFactory().running();
+      this.entryFactory = SecurityActions.getCacheComponentRegistry(this.cache).getInternalEntryFactory().running();
    }
 
    /**
