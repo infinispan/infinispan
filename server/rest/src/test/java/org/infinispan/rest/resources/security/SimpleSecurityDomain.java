@@ -23,9 +23,9 @@ public class SimpleSecurityDomain implements SecurityDomain {
 
    @Override
    public Subject authenticate(String username, String password) throws SecurityException {
-      if (username.equals(password)) {
+      if (username.equals(password) && subjects.containsKey(username)) {
          return subjects.get(username);
       }
-      return null;
+      throw new SecurityException("Invalid username or password");
    }
 }

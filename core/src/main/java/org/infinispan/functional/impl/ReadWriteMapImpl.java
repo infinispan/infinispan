@@ -19,6 +19,7 @@ import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.Listeners.ReadWriteListeners;
 import org.infinispan.functional.Param;
 import org.infinispan.functional.Traversable;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -40,7 +41,7 @@ public class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
    }
 
    private static <K, V> ReadWriteMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
-      if (functionalMap.cache().getCacheConfiguration().simpleCache()) {
+      if (SecurityActions.getCacheConfiguration(functionalMap.cache().getAdvancedCache()).simpleCache()) {
          return new SimpleReadWriteMapImpl<>(params, functionalMap);
       }
       return new ReadWriteMapImpl<>(params, functionalMap);

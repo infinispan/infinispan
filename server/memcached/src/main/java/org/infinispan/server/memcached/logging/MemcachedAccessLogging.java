@@ -28,11 +28,11 @@ public final class MemcachedAccessLogging {
    }
 
    public static void logException(ChannelFuture future, Header header, String exception, int responseBytes) {
-      logAfterComplete(future, header, responseBytes, exception);
+      logAfterComplete(future, header, responseBytes, "\"" + exception + "\"");
    }
 
    private static void logAfterComplete(ChannelFuture future, Header header, int responseBytes, String status) {
-      String remoteAddress = ((InetSocketAddress)future.channel().remoteAddress()).getHostString();
+      String remoteAddress = ((InetSocketAddress) future.channel().remoteAddress()).getHostString();
       if (future.isDone()) {
          logAfterComplete(remoteAddress, header, responseBytes, status);
          return;

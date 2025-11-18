@@ -31,11 +31,11 @@ public class HotRodAccessLogging {
    }
 
    public void logException(ChannelFuture future, AccessLoggingHeader header, String exception, int responseBytes) {
-      logAfterComplete(future, header, responseBytes, exception);
+      logAfterComplete(future, header, responseBytes, "\"" + exception + "\"");
    }
 
    private void logAfterComplete(ChannelFuture future, AccessLoggingHeader header, int responseBytes, String status) {
-      String remoteAddress = ((InetSocketAddress)future.channel().remoteAddress()).getHostString();
+      String remoteAddress = ((InetSocketAddress) future.channel().remoteAddress()).getHostString();
       future.addListener(f -> {
          // Duration
          long duration;

@@ -17,6 +17,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.core.security.sasl.SaslAuthenticator;
 import org.infinispan.server.core.security.sasl.SubjectSaslServer;
 import org.infinispan.server.core.transport.SaslQopHandler;
+import org.infinispan.server.memcached.MemcachedInboundAdapter;
 import org.infinispan.server.memcached.MemcachedResponse;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.MemcachedStatus;
@@ -41,7 +42,7 @@ abstract class BinaryAuthDecoder extends BinaryDecoder {
                   saslServer = SaslAuthenticator.createSaslServer(server.getConfiguration().authentication().sasl(), ctx.channel(), new String(mech, StandardCharsets.US_ASCII), MEMCACHED_SASL_PROTOCOL);
                   return doSasl(header, data);
                } catch (Throwable t) {
-                  return CompletableFuture.failedFuture(new SecurityException(t));
+                  return CompletableFuture.failedFuture(new SecurityException(t.getMessage()));
                }
             }, "memcached-sasl-auth")
             .thenCompose(c -> c);
@@ -77,12 +78,16 @@ abstract class BinaryAuthDecoder extends BinaryDecoder {
 
          // Send the final server challenge
          return CompletableFuture.supplyAsync(() -> {
-            ctx.pipeline().replace("decoder", "decoder", new BinaryOpDecoderImpl(server, subject));
+            BinaryOpDecoderImpl decoder = new BinaryOpDecoderImpl(server, subject);
+            MemcachedInboundAdapter inbound = ctx.pipeline().get(MemcachedInboundAdapter.class);
+            decoder.registerExceptionHandler(inbound::handleExceptionally);
+            ctx.pipeline().replace("decoder", "decoder", decoder);
+
             disposeSaslServer();
             return allocator -> response(header, MemcachedStatus.NO_ERROR, serverChallenge == null ? Util.EMPTY_BYTE_ARRAY : serverChallenge);
          }, ctx.channel().eventLoop());
       } catch (Throwable t) {
-         return CompletableFuture.failedFuture(new SecurityException(t));
+         return CompletableFuture.failedFuture(new SecurityException(t.getMessage()));
       }
    }
 
