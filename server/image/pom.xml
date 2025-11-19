@@ -26,6 +26,14 @@
       <server.dist>target/${infinispan.brand.prefix}-server-${infinispan.brand.version}.zip</server.dist>
    </properties>
 
+   <dependencies>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-runtime</artifactId>
+         <optional>true</optional>
+      </dependency>
+   </dependencies>
+
    <build>
       <plugins>
          <plugin>
