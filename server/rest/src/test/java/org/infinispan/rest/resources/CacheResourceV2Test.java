@@ -116,7 +116,7 @@ import io.reactivex.rxjava3.core.Flowable;
 public class CacheResourceV2Test extends AbstractRestResourceTest {
    // Wild guess: a non-empty index (populated with addData) should be more than this many bytes
    private static final long MIN_NON_EMPTY_INDEX_SIZE = 1000L;
-   private static final String PERSISTENT_LOCATION = tmpDirectory(CacheResourceV2Test.class.getName());
+   protected String PERSISTENT_LOCATION = tmpDirectory(CacheResourceV2Test.class.getName());
 
    private static final String PROTO_SCHEMA =
          """
@@ -136,6 +136,123 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    public static final String ACCEPT = "Accept";
 
    protected CacheMode cacheMode;
+
+   // Endpoint map for V2 REST API - can be overridden by V3 tests
+   protected Map<String, String> endpoints = Map.ofEntries(
+         // Cache collection operations
+         Map.entry("cacheList", "/v2/caches"),
+         Map.entry("detailedCacheList", "/v2/caches?action=detailed"),
+         Map.entry("roleAccessibleCaches", "/v2/caches?action=role-accessible&role={role}"),
+
+         // Cache lifecycle operations
+         Map.entry("cacheCreate", "/v2/caches/{cacheName}"),
+         Map.entry("cacheUpdate", "/v2/caches/{cacheName}"),
+         Map.entry("cacheDelete", "/v2/caches/{cacheName}"),
+         Map.entry("cacheExists", "/v2/caches/{cacheName}"),
+
+         // Cache configuration operations
+         Map.entry("cacheConfig", "/v2/caches/{cacheName}?action=config"),
+         Map.entry("cacheConfigAttributes", "/v2/caches/{cacheName}?action=config&attribute=*"),
+         Map.entry("cacheConfigAttribute", "/v2/caches/{cacheName}?action=config&attribute={attribute}"),
+         Map.entry("cacheConfigAttributeUpdate", "/v2/caches/{cacheName}?action=config&attribute={attribute}"),
+
+         // Cache entry operations
+         Map.entry("cacheEntryGet", "/v2/caches/{cacheName}/{key}"),
+         Map.entry("cacheEntryPut", "/v2/caches/{cacheName}/{key}"),
+         Map.entry("cacheEntryPost", "/v2/caches/{cacheName}/{key}"),
+         Map.entry("cacheEntryHead", "/v2/caches/{cacheName}/{key}"),
+         Map.entry("cacheEntryDelete", "/v2/caches/{cacheName}/{key}"),
+
+         // Cache statistics operations
+         Map.entry("cacheStats", "/v2/caches/{cacheName}?action=stats"),
+         Map.entry("cacheStatsReset", "/v2/caches/{cacheName}?action=stats-reset"),
+         Map.entry("cacheDistribution", "/v2/caches/{cacheName}?action=distribution"),
+         Map.entry("keyDistribution", "/v2/caches/{cacheName}/{key}?action=distribution"),
+
+         // Cache data operations
+         Map.entry("cacheClear", "/v2/caches/{cacheName}?action=clear"),
+         Map.entry("cacheSize", "/v2/caches/{cacheName}?action=size"),
+         Map.entry("cacheKeys", "/v2/caches/{cacheName}?action=keys"),
+         Map.entry("cacheEntries", "/v2/caches/{cacheName}?action=entries"),
+
+         // Cache health and availability
+         Map.entry("cacheHealth", "/v2/caches/{cacheName}?action=health"),
+         Map.entry("cacheAvailabilityGet", "/v2/caches/{cacheName}?action=availability"),
+         Map.entry("cacheAvailabilitySet", "/v2/caches/{cacheName}?action=availability&value={value}"),
+
+         // Cache rebalancing operations
+         Map.entry("rebalancingEnable", "/v2/caches/{cacheName}?action=rebalancing-enable"),
+         Map.entry("rebalancingDisable", "/v2/caches/{cacheName}?action=rebalancing-disable"),
+
+         // Cache details and metadata
+         Map.entry("cacheDetails", "/v2/caches/{cacheName}?action=details"),
+         Map.entry("cacheAssignAlias", "/v2/caches/{cacheName}?action=alias&alias={alias}"),
+
+         // Search operations
+         Map.entry("cacheQuery", "/v2/caches/{cacheName}?action=search"),
+         Map.entry("cacheDeleteByQuery", "/v2/caches/{cacheName}?action=deleteByQuery"),
+         Map.entry("cacheIndexMetamodel", "/v2/caches/{cacheName}?action=index-metamodel"),
+         Map.entry("cacheSearchStats", "/v2/caches/{cacheName}?action=search-stats"),
+         Map.entry("cacheSearchStatsClear", "/v2/caches/{cacheName}?action=search-stats-clear"),
+
+         // Rolling upgrade operations
+         Map.entry("rollingUpgradeSourceConnect", "/v2/caches/{cacheName}/rolling-upgrade/source-connection"),
+         Map.entry("rollingUpgradeSourceGet", "/v2/caches/{cacheName}/rolling-upgrade/source-connection"),
+         Map.entry("rollingUpgradeSourceDelete", "/v2/caches/{cacheName}/rolling-upgrade/source-connection"),
+         Map.entry("rollingUpgradeSourceExists", "/v2/caches/{cacheName}/rolling-upgrade/source-connection"),
+         Map.entry("rollingUpgradeSyncData", "/v2/caches/{cacheName}?action=sync-data"),
+
+         // Cache listeners
+         Map.entry("cacheListen", "/v2/caches/{cacheName}?action=listen"),
+
+         // Cache reinitialize
+         Map.entry("cacheReinitialize", "/v2/caches/{cacheName}?action=reinitialize"),
+
+         // Configuration conversion and comparison
+         Map.entry("configConvert", "/v2/caches?action=convert"),
+         Map.entry("configCompare", "/v2/caches?action=compare"),
+
+         // Schema operations
+         Map.entry("schemaPut", "/v2/schemas/{schemaName}"),
+         Map.entry("schemaList", "/v2/schemas"),
+
+         // Container operations
+         Map.entry("containerHealth", "/v2/container/health")
+   );
+
+   /**
+    * Resolves an endpoint URL from the endpoints map with parameter substitution.
+    *
+    * @param endpointKey the key in the endpoints map
+    * @param params variable arguments for parameter substitution in pairs (paramName, paramValue)
+    * @return the resolved endpoint URL
+    */
+   protected String endpoint(String endpointKey, String... params) {
+      String url = endpoints.get(endpointKey);
+      if (url == null) {
+         throw new IllegalArgumentException("Unknown endpoint key: " + endpointKey);
+      }
+
+      // Replace placeholders with actual values
+      for (int i = 0; i < params.length; i += 2) {
+         String placeholder = "{" + params[i] + "}";
+         String value = params[i + 1];
+         url = url.replace(placeholder, value);
+      }
+
+      return "/rest" + url;
+   }
+
+   /**
+    * Returns the appropriate query parameter separator for the given endpoint.
+    * Returns "?" if the endpoint has no query parameters yet, "&" otherwise.
+    *
+    * @param endpointUrl the endpoint URL
+    * @return "?" or "&"
+    */
+   protected String queryParamSeparator(String endpointUrl) {
+      return endpointUrl.contains("?") ? "&" : "?";
+   }
 
    @Override
    protected String parameters() {
@@ -181,25 +298,32 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       return builder;
    }
 
+   /**
+    * Creates a new test instance. Override this in subclasses to return the correct type.
+    */
+   protected CacheResourceV2Test createTestInstance() {
+      return new CacheResourceV2Test();
+   }
+
    @Override
    public Object[] factory() {
       return new Object[]{
-            new CacheResourceV2Test().withSecurity(false).protocol(HTTP_11).ssl(false).browser(false),
-            new CacheResourceV2Test().withSecurity(false).protocol(HTTP_11).ssl(false).browser(true),
-            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(false).browser(false),
-            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(false).browser(true),
-            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_11).ssl(true).browser(false),
-            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_11).ssl(true).browser(true),
-            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(true).browser(false),
-            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(true).browser(true),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(false).protocol(HTTP_11).ssl(false).browser(false),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(false).protocol(HTTP_11).ssl(false).browser(true),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(false).browser(false),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(false).browser(true),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_11).ssl(true).browser(false),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_11).ssl(true).browser(true),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(true).browser(false),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(true).browser(true),
+            createTestInstance().withSecurity(false).protocol(HTTP_11).ssl(false).browser(false),
+            createTestInstance().withSecurity(false).protocol(HTTP_11).ssl(false).browser(true),
+            createTestInstance().withSecurity(true).protocol(HTTP_20).ssl(false).browser(false),
+            createTestInstance().withSecurity(true).protocol(HTTP_20).ssl(false).browser(true),
+            createTestInstance().withSecurity(true).protocol(HTTP_11).ssl(true).browser(false),
+            createTestInstance().withSecurity(true).protocol(HTTP_11).ssl(true).browser(true),
+            createTestInstance().withSecurity(true).protocol(HTTP_20).ssl(true).browser(false),
+            createTestInstance().withSecurity(true).protocol(HTTP_20).ssl(true).browser(true),
+            createTestInstance().withCacheMode(CacheMode.DIST_SYNC).withSecurity(false).protocol(HTTP_11).ssl(false).browser(false),
+            createTestInstance().withCacheMode(CacheMode.DIST_SYNC).withSecurity(false).protocol(HTTP_11).ssl(false).browser(true),
+            createTestInstance().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(false).browser(false),
+            createTestInstance().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(false).browser(true),
+            createTestInstance().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_11).ssl(true).browser(false),
+            createTestInstance().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_11).ssl(true).browser(true),
+            createTestInstance().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(true).browser(false),
+            createTestInstance().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(true).browser(true),
       };
    }
 
@@ -1469,11 +1593,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                   </%s>""", root, root
       );
 
-      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Map.of(ACCEPT, APPLICATION_JSON_TYPE), RestEntity.create(APPLICATION_XML, xml));
+      CompletionStage<RestResponse> response = rawClient.post(endpoint("configConvert"), Map.of(ACCEPT, APPLICATION_JSON_TYPE), RestEntity.create(APPLICATION_XML, xml));
       assertThat(response).isOk();
       checkJSON(response, "cacheName", root);
 
-      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_YAML_TYPE), RestEntity.create(APPLICATION_XML, xml));
+      response = rawClient.post(endpoint("configConvert"), Collections.singletonMap(ACCEPT, APPLICATION_YAML_TYPE), RestEntity.create(APPLICATION_XML, xml));
       assertThat(response).isOk();
       checkYaml(response, "cacheName", root);
    }
@@ -1502,11 +1626,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
             }
             """, root);
 
-      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_XML_TYPE), RestEntity.create(APPLICATION_JSON, json));
+      CompletionStage<RestResponse> response = rawClient.post(endpoint("configConvert"), Collections.singletonMap(ACCEPT, APPLICATION_XML_TYPE), RestEntity.create(APPLICATION_JSON, json));
       assertThat(response).isOk();
       checkXML(response, root);
 
-      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_YAML_TYPE), RestEntity.create(APPLICATION_JSON, json));
+      response = rawClient.post(endpoint("configConvert"), Collections.singletonMap(ACCEPT, APPLICATION_YAML_TYPE), RestEntity.create(APPLICATION_JSON, json));
       assertThat(response).isOk();
       checkYaml(response, "", root);
    }
@@ -1531,11 +1655,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                 fileStore: ~
             """, root);
 
-      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_XML_TYPE), RestEntity.create(APPLICATION_YAML, yaml));
+      CompletionStage<RestResponse> response = rawClient.post(endpoint("configConvert"), Collections.singletonMap(ACCEPT, APPLICATION_XML_TYPE), RestEntity.create(APPLICATION_YAML, yaml));
       assertThat(response).isOk();
       checkXML(response, root);
 
-      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_JSON_TYPE), RestEntity.create(APPLICATION_YAML, yaml));
+      response = rawClient.post(endpoint("configConvert"), Collections.singletonMap(ACCEPT, APPLICATION_JSON_TYPE), RestEntity.create(APPLICATION_YAML, yaml));
       assertThat(response).isOk();
       checkJSON(response, "", root);
    }
@@ -1707,7 +1831,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       // Test with POST
       RestRawClient rawClient = adminClient.raw();
       RestEntity restEntity = RestEntity.create("{\"query\": \"DELETE FROM Another WHERE value = 9\"}");
-      response = join(rawClient.post("/rest/v2/caches/indexedCache?action=deleteByQuery", restEntity));
+      response = join(rawClient.post(endpoint("cacheDeleteByQuery", "cacheName", "indexedCache"), restEntity));
       assertThat(response).isOk();
       response = join(cacheClient.size());
       assertThat(response).hasReturnedText("0");
@@ -1883,7 +2007,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testCacheListener() throws InterruptedException, IOException {
       SSEListener sseListener = new SSEListener();
-      Closeable listen = client.raw().listen("/rest/v2/caches/default?action=listen", Collections.singletonMap(ACCEPT, TEXT_PLAIN_TYPE), sseListener);
+      Closeable listen = client.raw().listen(endpoint("cacheListen", "cacheName", "default"), Collections.singletonMap(ACCEPT, TEXT_PLAIN_TYPE), sseListener);
       assertTrue(sseListener.await(10, TimeUnit.SECONDS));
       putTextEntryInCache("default", "AKey", "AValue");
       sseListener.expectEvent("cache-entry-created", "AKey");
@@ -1958,30 +2082,31 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       multiPart.addPart("one", xml);
       multiPart.addPart("two", json20);
 
-      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=compare", multiPart);
+      CompletionStage<RestResponse> response = rawClient.post(endpoint("configCompare"), multiPart);
       assertThat(response).isOk();
 
       multiPart = RestEntity.multiPart();
       multiPart.addPart("one", xml);
       multiPart.addPart("two", json30);
 
-      response = rawClient.post("/rest/v2/caches?action=compare", multiPart);
+      response = rawClient.post(endpoint("configCompare"), multiPart);
       assertThat(response).isConflicted();
 
-      response = rawClient.post("/rest/v2/caches?action=compare&ignoreMutable=true", multiPart);
+      String compareUrl = endpoint("configCompare");
+      response = rawClient.post(compareUrl + queryParamSeparator(compareUrl) + "ignoreMutable=true", multiPart);
       assertThat(response).isOk();
 
       multiPart = RestEntity.multiPart();
       multiPart.addPart("one", xml);
       multiPart.addPart("two", jsonrepl);
 
-      response = rawClient.post("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), multiPart);
+      response = rawClient.post(compareUrl + queryParamSeparator(compareUrl) + "ignoreMutable=true", Collections.emptyMap(), multiPart);
       assertThat(response).isConflicted();
 
       multiPart = RestEntity.multiPart();
       multiPart.addPart("one", "{\"local-cache\":{\"statistics\":true,\"encoding\":{\"key\": {\"media-type\":\"text/plain\"} ,\"value\":{\"media-type\":\"text/plain\"}},\"memory\":{\"max-count\":\"50\"}}}");
       multiPart.addPart("two", "{\"local-cache\":{\"statistics\":true,\"encoding\":{\"key\":{\"media-type\":\"application/x-protostream\"},\"value\":{\"media-type\":\"application/x-protostream\"}},\"memory\":{\"max-count\":\"50\"}}}");
-      response = rawClient.post("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), multiPart);
+      response = rawClient.post(compareUrl + queryParamSeparator(compareUrl) + "ignoreMutable=true", Collections.emptyMap(), multiPart);
       assertThat(response).isConflicted();
       assertEquals("ISPN000963: Invalid configuration in 'local-cache'\n" +
                   "    ISPN000961: Incompatible attribute 'local-cache.encoding.key.media-type' existing value='text/plain', new value='application/x-protostream'\n" +
@@ -1993,7 +2118,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    public void testForbiddenMethod() {
       RestRawClient rawClient = client.raw();
 
-      CompletionStage<RestResponse> response = rawClient.execute("NOT-EXIST", "/rest/v2/caches");
+      CompletionStage<RestResponse> response = rawClient.execute("NOT-EXIST", endpoint("cacheList"));
       assertThat(response).isForbidden();
    }
 
