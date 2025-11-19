@@ -143,7 +143,11 @@ public class ScriptingTest extends AbstractScriptingTest {
 
    public void testScriptCallFromJavascript() throws Exception {
       String result = CompletionStages.join(scriptingManager.runScript("testInnerScriptCall.js",
-            new TaskContext().cache(cacheManager.getCache(CACHE_NAME)).addParameter("a", "ahoj")));
+            new TaskContext().cache(cacheManager.getCache(CACHE_NAME))
+                    .addParameter("a", "ahoj")
+                    .addParameter("testExecWithoutProp", scriptingManager.getScript("testExecWithoutProp.js"))
+                    .addParameter("test", scriptingManager.getScript("test.js"))
+      ));
 
       assertEquals("script1:additionFromJavascript", result);
       assertEquals("ahoj", cacheManager.getCache(CACHE_NAME).get("a"));
