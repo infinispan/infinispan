@@ -327,7 +327,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       };
    }
 
-   private ConfigurationBuilder getIndexedPersistedCache() {
+   protected ConfigurationBuilder getIndexedPersistedCache() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.statistics().enable();
       builder.indexing().enable()
@@ -335,8 +335,16 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
             .addIndexedEntity("Entity")
             .addIndexedEntity("Another")
             .statistics().enable()
-            .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
+            .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName(getIndexedCacheStoreName());
       return builder;
+   }
+
+   /**
+    * Returns the store name for the indexed cache.
+    * V2 uses "store", V3 uses "storeV3" to avoid persistence conflicts when running in parallel.
+    */
+   protected String getIndexedCacheStoreName() {
+      return "store";
    }
 
    @Override

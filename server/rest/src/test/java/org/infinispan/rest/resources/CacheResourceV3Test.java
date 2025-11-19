@@ -43,6 +43,11 @@ public class CacheResourceV3Test extends CacheResourceV2Test {
       return super.factory();
    }
 
+   @Override
+   protected String getIndexedCacheStoreName() {
+      return "storeV3";
+   }
+
    // Override the endpoint map with V3 paths
    {
       endpoints = Map.ofEntries(
