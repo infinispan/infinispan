@@ -2,8 +2,10 @@ package org.infinispan.scripting.impl;
 
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -11,8 +13,10 @@ import java.util.concurrent.CompletionStage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.roastedroot.quickjs4j.core.BasicScriptCache;
 import io.roastedroot.quickjs4j.core.Engine;
 import io.roastedroot.quickjs4j.core.Runner;
+import io.roastedroot.quickjs4j.core.ScriptCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -64,7 +68,11 @@ public class ScriptingManagerImpl implements ScriptingManager {
    // @Inject
    ObjectMapper objectMapper = new ObjectMapper();
 
-   private Runner runner; // TODO: just a static one?
+   private final ScriptCache scriptEngineCache = new BasicScriptCache();
+   private final List<String> supportedLanguages = List.of(
+           "js",
+           "javascript"
+   );
    private Cache<String, String> scriptCache;
    private ScriptConversions scriptConversions;
 
@@ -73,16 +81,6 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    @Start
    public void start() {
-      ScriptingJavaApi javaApi = new ScriptingJavaApi(cacheManager);
-      Engine engine = Engine.builder()
-              .addBuiltins(ScriptingJavaApi_Builtins.toBuiltins(javaApi))
-              .addInvokables(JsApi_Invokables.toInvokables())
-              .build();
-
-      this.runner = Runner.builder()
-              .withEngine(engine)
-              .build();
-
       taskManager.registerTaskEngine(new ScriptingTaskEngine(this));
       scriptConversions = new ScriptConversions(encoderRegistry);
    }
@@ -169,6 +167,13 @@ public class ScriptingManagerImpl implements ScriptingManager {
       Objects.requireNonNull(name, "name");
       Objects.requireNonNull(context, "context");
       ScriptMetadata metadata = getScriptMetadata(name);
+
+      Optional<String> language = metadata.language();
+      // If a language was explicitly specified, and we cannot find an engine, fail now.
+      if (!language.isPresent() && !supportedLanguages.contains(language.get())) {
+         throw log.noScriptEngineForScript(metadata.name());
+      }
+
       if (authorizer != null) {
          AuthorizationManager authorizationManager = context.getCache().isPresent() ?
                SecurityActions.getCacheAuthorizationManager(context.getCache().get().getAdvancedCache()) : null;
@@ -257,10 +262,21 @@ public class ScriptingManagerImpl implements ScriptingManager {
       try {
          String script = getScriptCache().get(metadata.name());
 
+         ScriptingJavaApi javaApi = new ScriptingJavaApi(cacheManager, args.getCache());
+         Engine engine = Engine.builder()
+                 .addBuiltins(ScriptingJavaApi_Builtins.toBuiltins(javaApi))
+                 .addInvokables(JsApi_Invokables.toInvokables())
+                 .withCache(scriptEngineCache)
+                 .build();
+
+         Runner runner = Runner.builder()
+                 .withEngine(engine)
+                 .build();
+
          ScriptingJavaApi.JsApi jsApi = JsApi_Invokables.create(script, runner);
 
          // TODO: verify null and optional handling in parameters in the Engine itself!
-         return (T) jsApi.process(args.getUserInput(), args.getCache());
+         return (T) jsApi.process(args.getUserInput());
 //         if (compiled != null) {
 //            return (T) compiled.eval(bindings);
 //         } else {

@@ -11,24 +11,35 @@ import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.manager.EmbeddedCacheManager;
 
+import java.util.Objects;
+
 @Builtins("from_java")
 public class ScriptingJavaApi {
     @Invokables("from_js")
     interface JsApi {
         @GuestFunction
-        Object process(JsonNode userInput, @HostRefParam Cache cache);
+        Object process(JsonNode userInput);
     }
 
     private final EmbeddedCacheManager cacheManager;
+    private final Cache defaultCache;
 
-    ScriptingJavaApi(EmbeddedCacheManager cacheManager) {
+    ScriptingJavaApi(EmbeddedCacheManager cacheManager, Cache defaultCache) {
         this.cacheManager = cacheManager;
+        this.defaultCache = defaultCache;
     }
 
     @HostFunction("get_cache")
     @ReturnsHostRef
     public Cache getCache(String name) {
         return cacheManager.getCache(name);
+    }
+
+    @HostFunction("get_default_cache")
+    @ReturnsHostRef
+    public Cache getDefaultCache() {
+        Objects.requireNonNull(defaultCache);
+        return defaultCache;
     }
 
     // implementations of the functionality of: DataTypedCacheManager
