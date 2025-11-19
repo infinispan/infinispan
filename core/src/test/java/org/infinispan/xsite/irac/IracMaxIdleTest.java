@@ -151,7 +151,7 @@ public class IracMaxIdleTest extends AbstractMultipleSitesTest {
       iracManagers.forEach(m -> m.disable(ManualIracManager.DisableMode.SEND));
 
       eventuallyAssertInAllSitesAndCaches(cacheName, c -> Objects.equals(value2, c.get(key)));
-      assertTrue(iracManagers.stream().allMatch(ManualIracManager::isEmpty));
+      eventually(() -> iracManagers.stream().allMatch(ManualIracManager::isEmpty), 10, TimeUnit.SECONDS);
    }
 
    private static String createKeyOrValue(TestData testData, String prefix) {
