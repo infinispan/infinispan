@@ -21,6 +21,7 @@
       <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
       <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
       <org.infinispan.test.server.container.ulimit>4096,65539</org.infinispan.test.server.container.ulimit>
+      <org.infinispan.test.server.container.baseImageName/>
       <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
       <log4j.configurationFile>${project.build.testOutputDirectory}/configuration/log4j2.xml</log4j.configurationFile>
       <infinispan.server.log.path>${project.build.directory}</infinispan.server.log.path>
@@ -209,7 +210,7 @@
                   <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
                   <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                   <infinispan.server.log.path>${infinispan.server.log.path}</infinispan.server.log.path>
-
+                  <org.infinispan.test.server.container.baseImageName>${org.infinispan.test.server.container.baseImageName}</org.infinispan.test.server.container.baseImageName>
                   <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
@@ -306,6 +307,15 @@
                </plugin>
             </plugins>
          </build>
+      </profile>
+      <profile>
+         <id>image</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <org.infinispan.test.server.container.baseImageName>infinispan/server:${project.version}</org.infinispan.test.server.container.baseImageName>
+         </properties>
       </profile>
       <profile>
          <id>insights</id>
