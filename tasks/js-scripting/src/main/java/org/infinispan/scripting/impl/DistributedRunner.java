@@ -3,6 +3,7 @@ package org.infinispan.scripting.impl;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -54,8 +55,25 @@ public class DistributedRunner implements ScriptRunner {
    private Map<String, Object> extractContextParams(ScriptMetadata metadata, CacheScriptArguments arguments) {
       Map<String, Object> params = new HashMap<>();
       JsonNode json = arguments.getUserInput();
-      json.fieldNames().forEachRemaining(paramName -> params.put(paramName, json.get(paramName)));
+      json.fieldNames().forEachRemaining(paramName -> params.put(paramName, toJava(json.get(paramName))));
       return params;
+   }
+
+   public static Object toJava(JsonNode node) {
+      if (node.isObject()) {
+         Map<String, Object> map = new LinkedHashMap<>();
+         node.fieldNames().forEachRemaining(paramName -> map.put(paramName, toJava(node.get(paramName))));
+         return map;
+      }
+      if (node.isArray()) {
+         List<Object> list = new ArrayList<>();
+         node.forEach(item -> list.add(toJava(item)));
+         return list;
+      }
+      if (node.isNumber()) return node.numberValue();
+      if (node.isBoolean()) return node.booleanValue();
+      if (node.isNull()) return null;
+      return node.asText();
    }
 
 }

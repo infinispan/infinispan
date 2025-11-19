@@ -81,6 +81,10 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
       });
    }
 
+   private String addressToString(Address address) {
+      return Address.nodeUUIDToString(address.getNodeUUID());
+   }
+
    @Test(dataProvider = "cacheModeProvider")
    public void testDistExecScriptWithCache(final CacheMode cacheMode) {
       withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
@@ -92,10 +96,10 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             loadScript(scriptingManager, "/distExec1.js");
             waitForNoRebalance(cache1, cache2);
 
-            CompletionStage<ArrayList<Address>> resultsFuture = scriptingManager.runScript("distExec1.js", new TaskContext().cache(cache1));
-            ArrayList<Address> results = CompletionStages.join(resultsFuture);
+            CompletionStage<ArrayList<String>> resultsFuture = scriptingManager.runScript("distExec1.js", new TaskContext().cache(cache1));
+            ArrayList<String> results = CompletionStages.join(resultsFuture);
             assertEquals(2, results.size());
-            assertThat(results).containsExactlyInAnyOrder(cms[0].getAddress(), cms[1].getAddress());
+            assertThat(results).containsExactlyInAnyOrder(addressToString(cms[0].getAddress()), addressToString(cms[1].getAddress()));
          }
       });
    }
@@ -117,12 +121,12 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             loadScript(scriptingManager, "/distExec.js");
             waitForNoRebalance(cache1, cache2);
 
-            CompletionStage<ArrayList<Address>> resultsFuture = scriptingManager.runScript("distExec.js",
+            CompletionStage<ArrayList<String>> resultsFuture = scriptingManager.runScript("distExec.js",
                   new TaskContext().cache(cache1).addParameter("a", "value"));
 
-            ArrayList<Address> results = CompletionStages.join(resultsFuture);
+            ArrayList<String> results = CompletionStages.join(resultsFuture);
             assertEquals(2, results.size());
-            assertThat(results).containsExactlyInAnyOrder(cms[0].getAddress(), cms[1].getAddress());
+            assertThat(results).containsExactlyInAnyOrder(addressToString(cms[0].getAddress()), addressToString(cms[1].getAddress()));
 
             assertEquals("value", cache1.get("a"));
             assertEquals("value", cache2.get("a"));

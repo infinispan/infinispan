@@ -5,10 +5,10 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.infinispan.Cache;
-import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -38,6 +38,9 @@ class DistributedScript<T> implements Function<EmbeddedCacheManager, T> {
 
    private final Map<String, ?> ctxParams;
 
+   // TODO: this smells bugs - remove it possibly in a subsequent iteration
+   ObjectMapper objectMapper = new ObjectMapper();
+
    DistributedScript(String cacheName, ScriptMetadata metadata, Map<String, ?> ctxParams) {
       this.cacheName = cacheName;
       this.metadata = metadata;
@@ -62,20 +65,14 @@ class DistributedScript<T> implements Function<EmbeddedCacheManager, T> {
       DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(scriptMediaType, embeddedCacheManager, null);
       Cache cache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
 
-      ctxParams.forEach((k, v) -> cache.put(k, v));
-
       // verify application of user local bindings
       // TODO populate systemBindings ? is it even used? consider removing
       JsonNode systemBindings = JsonNodeFactory.instance.objectNode();
 
       // no user bindings? how to propagate those? or is it not necessary?
-      JsonNode userBindings = JsonNodeFactory.instance.objectNode();
-//      context.getParameters()
-//              .ifPresent(p -> {
-//                 Map<String, ?> params = scriptConversions.convertParameters(context);
-//                 params.entrySet().forEach(param ->
-//                         userBindings.put(param.getKey(), objectMapper.valueToTree(param.getValue())));
-//              });
+      ObjectNode userBindings = JsonNodeFactory.instance.objectNode();
+      ctxParams.entrySet().forEach(param ->
+              userBindings.put(param.getKey(), objectMapper.valueToTree(param.getValue())));
 
       CacheScriptArguments args = new CacheScriptArguments(
               systemBindings,

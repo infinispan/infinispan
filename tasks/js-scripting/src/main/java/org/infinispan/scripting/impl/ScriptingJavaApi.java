@@ -59,8 +59,9 @@ public class ScriptingJavaApi {
         cache.put(key, value);
     }
 
+    // TODO: simplified, do we need the full address data structure?
     @HostFunction("address")
-    public Address address() {
-        return cacheManager.getAddress();
+    public String address() {
+        return Address.nodeUUIDToString(cacheManager.getAddress().getNodeUUID());
     }
 }
