@@ -13,6 +13,7 @@ import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.EmbeddedInfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -31,6 +32,7 @@ public class AuthenticationTLSReloadIT {
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/AuthenticationServerTLSReloadTest.xml")
+               .runMode(ServerRunMode.EMBEDDED)
                .addListener(new InfinispanServerListener() {
                   @Override
                   public void before(InfinispanServerDriver driver) {

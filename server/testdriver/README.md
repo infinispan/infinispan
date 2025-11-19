@@ -107,7 +107,7 @@ to pause a node and subsequently resume it.
 The following is a list of properties which affect the build:
 
 * `infinispan.cluster.stack` the name of the JGroups stack. Defaults to `test-tcp`.
-* `org.infinispan.test.server.container.baseImageName` the base image to use for the server. Defaults to `jboss/base-jdk:11`.
+* `org.infinispan.test.server.container.baseImageName` the base image to use for the server. Defaults to `eclipse-temurin:25-ubi10-minimal`.
 * `org.infinispan.test.server.container.usePrebuiltServer` whether to use a prebuilt server from the supplied image above.
 * `org.infinispan.test.server.container.preserveImage` whether to preserve the created image after the test has run.
 * `org.infinispan.test.server.container.timeoutSeconds` the amount of time in seconds to wait for a server start/stop operation when using the `CONTAINER` driver.

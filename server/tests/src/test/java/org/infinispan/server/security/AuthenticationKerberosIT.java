@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.Krb5ConfPropertyExtension;
 import org.infinispan.server.test.core.LdapServerListener;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -44,10 +45,11 @@ public class AuthenticationKerberosIT {
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/AuthenticationKerberosTest.xml")
-                                    .numServers(1)
-                                    .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
-                                    .addListener(new LdapServerListener(true))
-                                    .build();
+               .runMode(ServerRunMode.EMBEDDED)
+               .numServers(1)
+               .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
+               .addListener(new LdapServerListener(true))
+               .build();
 
    static class ArgsProvider implements ArgumentsProvider {
       @Override

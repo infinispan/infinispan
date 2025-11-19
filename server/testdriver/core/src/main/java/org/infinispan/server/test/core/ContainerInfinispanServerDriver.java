@@ -90,7 +90,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final String JACOCO_COVERAGE_CONTAINER_PATH = INFINISPAN_SERVER_HOME + "/bin/jacoco.exec";
    public static final String JACOCO_COVERAGE_HOST_PATH = "target/";
-   public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi9/openjdk-21-runtime";
+   public static final String JDK_BASE_IMAGE_NAME = "eclipse-temurin:25-ubi10-minimal";
    private static final String[] IMAGE_DEPENDENCIES = {
          "file",
          "gzip",
@@ -269,7 +269,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       String versionToUse = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_VERSION, Version.getMajorMinor());
       final String imageName;
       String baseImageName = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME);
-      if (baseImageName == null) {
+      if (baseImageName == null || baseImageName.isEmpty()) {
          String serverOutputDir = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR);
          if (serverOutputDir == null) {
             // We try to use the latest public image for this major.minor version

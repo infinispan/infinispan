@@ -3,6 +3,7 @@ package org.infinispan.server.security;
 import java.nio.file.Path;
 
 import org.infinispan.server.test.core.KeyCloakServerExtension;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -18,6 +19,7 @@ public class AuthenticationKeyCloakSSLIT extends AbstractAuthenticationKeyCloak 
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/AuthenticationKeyCloakSSLTest.xml")
+               .runMode(ServerRunMode.EMBEDDED)
                .build();
 
    @RegisterExtension

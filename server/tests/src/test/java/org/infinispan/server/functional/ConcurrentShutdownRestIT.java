@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
@@ -22,8 +23,9 @@ public class ConcurrentShutdownRestIT {
    @RegisterExtension
    public static final InfinispanServerExtension SERVER =
          InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
-                                    .numServers(2)
-                                    .build();
+               .runMode(ServerRunMode.EMBEDDED)
+               .numServers(2)
+               .build();
 
    @Test
    public void testShutDown() {
