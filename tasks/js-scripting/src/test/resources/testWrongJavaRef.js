@@ -1,4 +1,7 @@
 // mode=local,language=javascript,parameters=[a]
-var cache = cacheManager.getNonExistentMethod();
-cache.put("a", a);
-cache.get("a");
+
+function process(args) {
+    const cache = cacheManager.getNonExistentMethod();
+    cacheManager.put(cache, "a", args.a);
+    return cacheManager.get(cache, "a");
+}

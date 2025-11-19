@@ -1,2 +1,5 @@
 // mode=local,language=javascript
-throw new Error('Failed on purpose');
+
+function process(args) {
+    throw 'Failed on purpose';
+}

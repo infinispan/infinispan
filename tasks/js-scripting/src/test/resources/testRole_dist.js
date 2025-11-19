@@ -1,3 +1,7 @@
 // mode=distributed,language=javascript,parameters=[a],role=runner
-cache.put("a", a);
-cacheManager.getAddress()
+
+function process(args) {
+    const cache = cacheManager.getDefaultCache();
+    cacheManager.put(cache, "a", args.a);
+    return cacheManager.address();
+}

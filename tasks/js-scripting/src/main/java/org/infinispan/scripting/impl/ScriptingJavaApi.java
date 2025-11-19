@@ -14,7 +14,7 @@ import org.infinispan.remoting.transport.Address;
 
 import java.util.Objects;
 
-@Builtins("from_java")
+@Builtins("cacheManager")
 public class ScriptingJavaApi {
     @Invokables("from_js")
     interface JsApi {
@@ -30,13 +30,13 @@ public class ScriptingJavaApi {
         this.defaultCache = defaultCache;
     }
 
-    @HostFunction("get_cache")
+    @HostFunction("getCache")
     @ReturnsHostRef
     public Cache getCache(String name) {
         return cacheManager.getCache(name);
     }
 
-    @HostFunction("get_default_cache")
+    @HostFunction("getDefaultCache")
     @ReturnsHostRef
     public Cache getDefaultCache() {
         Objects.requireNonNull(defaultCache);
@@ -44,7 +44,7 @@ public class ScriptingJavaApi {
     }
 
     // implementations of the functionality of: DataTypedCacheManager
-    @HostFunction("entry_set")
+    @HostFunction("entrySet")
     public CacheSet getEntrySet(@HostRefParam Cache cache) {
         return cache.entrySet();
     }

@@ -1,7 +1,7 @@
 // mode=local,language=javascript
 
-function process(user_input, cache) {
-    const cacheEntries = from_java.entry_set(from_java.get_default_cache());
+function process(args) {
+    const cacheEntries = cacheManager.entrySet(cacheManager.getDefaultCache());
 
     return cacheEntries
       .map(e => Object.values(e)[0])

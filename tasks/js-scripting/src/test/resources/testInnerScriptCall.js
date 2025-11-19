@@ -1,14 +1,14 @@
 //mode=local,language=javascript,parameters=[a, testExecWithoutProp, test]
 
-function process(user_input) {
-    const cache = from_java.get_default_cache();
-    from_java.put(cache, "processValue", "script1");
+function process(args) {
+    const cache = cacheManager.getDefaultCache();
+    cacheManager.put(cache, "processValue", "script1");
 
-    const processTestExecWithoutProp = eval(`(()=>{${user_input.testExecWithoutProp};return process})()`);
+    const processTestExecWithoutProp = eval(`(()=>{${args.testExecWithoutProp};return process})()`);
     processTestExecWithoutProp({});
 
-    const processTest = eval(`(()=>{${user_input.test};return process})()`);
-    processTest(user_input);
+    const processTest = eval(`(()=>{${args.test};return process})()`);
+    processTest(args);
 
-    return from_java.get(cache, "processValue");
+    return cacheManager.get(cache, "processValue");
 }
