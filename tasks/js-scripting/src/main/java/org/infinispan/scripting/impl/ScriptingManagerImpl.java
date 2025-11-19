@@ -216,10 +216,9 @@ public class ScriptingManagerImpl implements ScriptingManager {
 //         systemBindings.put(SystemBindings.MARSHALLER.toString(), marshaller);
 //      });
 //
-      // TODO populate systemBindings
+      // TODO populate systemBindings ? is it even used? consider removing
       JsonNode systemBindings = objectMapper.createObjectNode();
 
-      // TODO: improve me!
       ObjectNode userBindings = objectMapper.createObjectNode();
       context.getParameters()
               .ifPresent(p -> {

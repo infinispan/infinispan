@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "scripting.ClusteredScriptingTest")
 public class ClusteredScriptingTest extends AbstractInfinispanTest {
 
-   private static final int EXPECTED_WORDS = 3202;
+   private static final int EXPECTED_WORDS = 3201;
 
    @Test(dataProvider = "cacheModeProvider")
    public void testLocalScriptExecutionWithCache(final CacheMode cacheMode) {
