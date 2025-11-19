@@ -10,6 +10,7 @@ import io.roastedroot.quickjs4j.annotations.ReturnsHostRef;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 
 import java.util.Objects;
 
@@ -56,5 +57,10 @@ public class ScriptingJavaApi {
     @HostFunction("put")
     public void put(@HostRefParam Cache cache, String key, Object value) {
         cache.put(key, value);
+    }
+
+    @HostFunction("address")
+    public Address address() {
+        return cacheManager.getAddress();
     }
 }

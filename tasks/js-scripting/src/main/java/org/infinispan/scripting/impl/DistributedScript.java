@@ -4,7 +4,13 @@ import java.util.Map;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.infinispan.Cache;
+import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -52,22 +58,33 @@ class DistributedScript<T> implements Function<EmbeddedCacheManager, T> {
    public T apply(EmbeddedCacheManager embeddedCacheManager) {
       ScriptingManagerImpl scriptManager = (ScriptingManagerImpl) SecurityActions.getGlobalComponentRegistry(embeddedCacheManager).getComponent(ScriptingManager.class);
 
-// TODO: this should go in Builtins
-// verify the functionality!
-//      Bindings bindings = new SimpleBindings();
-//
-//      MediaType scriptMediaType = metadata.dataType();
-//      DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(scriptMediaType, embeddedCacheManager, null);
-//      bindings.put("cacheManager", dataTypedCacheManager);
-//      AdvancedCache<?, ?> cache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
-//      bindings.put("cache", cache.withMediaType(scriptMediaType, scriptMediaType));
-//      ctxParams.forEach(bindings::put);
+      MediaType scriptMediaType = metadata.dataType();
+      DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(scriptMediaType, embeddedCacheManager, null);
+      Cache cache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
+
+      ctxParams.forEach((k, v) -> cache.put(k, v));
 
       // verify application of user local bindings
+      // TODO populate systemBindings ? is it even used? consider removing
+      JsonNode systemBindings = JsonNodeFactory.instance.objectNode();
+
+      // no user bindings? how to propagate those? or is it not necessary?
+      JsonNode userBindings = JsonNodeFactory.instance.objectNode();
+//      context.getParameters()
+//              .ifPresent(p -> {
+//                 Map<String, ?> params = scriptConversions.convertParameters(context);
+//                 params.entrySet().forEach(param ->
+//                         userBindings.put(param.getKey(), objectMapper.valueToTree(param.getValue())));
+//              });
+
+      CacheScriptArguments args = new CacheScriptArguments(
+              systemBindings,
+              userBindings,
+              cache,
+              dataTypedCacheManager);
 
       try {
-         // TODO: FIXME the null
-         return CompletionStages.join(scriptManager.execute(metadata, null));
+         return CompletionStages.join(scriptManager.execute(metadata, args));
       } catch (CompletionException e) {
          throw new CacheException(e.getCause());
       }

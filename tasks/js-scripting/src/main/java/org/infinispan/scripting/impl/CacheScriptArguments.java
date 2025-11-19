@@ -2,6 +2,7 @@ package org.infinispan.scripting.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.infinispan.Cache;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * CacheScriptBindings.
@@ -13,11 +14,13 @@ public class CacheScriptArguments {
    private final JsonNode systemInput;
    private final JsonNode userInput;
    private final Cache<?, ?> cache;
+   private final EmbeddedCacheManager cacheManager;
 
-   public CacheScriptArguments(JsonNode systemInput, JsonNode userInput, Cache<?, ?> cache) {
+   public CacheScriptArguments(JsonNode systemInput, JsonNode userInput, Cache<?, ?> cache, EmbeddedCacheManager cacheManager) {
       this.systemInput = systemInput;
       this.userInput = userInput;
       this.cache = cache;
+      this.cacheManager = cacheManager;
    }
 
    public JsonNode getSystemInput() {
@@ -30,6 +33,10 @@ public class CacheScriptArguments {
 
    public Cache<?, ?> getCache() {
       return cache;
+   }
+
+   public EmbeddedCacheManager getCacheManager() {
+      return cacheManager;
    }
 
    //   @Override

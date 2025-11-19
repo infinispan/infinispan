@@ -1,2 +1,5 @@
 //mode=distributed,language=javascript
-cache.getCacheManager().getAddress()
+
+function process(user_input) {
+    return from_java.address();
+}

@@ -227,11 +227,28 @@ public class ScriptingManagerImpl implements ScriptingManager {
                        userBindings.put(param.getKey(), objectMapper.valueToTree(param.getValue())));
             });
 
+      Cache cache = null;
+      // TODO: review and fix if it can be null
+      Cache fallbackCache = new SimpleCacheImpl<>("default");
+      if (!requestMediaType.equals(MediaType.MATCH_ALL)) {
+         if (context.getCache().isPresent()) {
+            cache = context.getCache().get().getAdvancedCache().withMediaType(scriptMediaType, scriptMediaType);
+         } else {
+            cache = fallbackCache;
+         }
+      } else {
+         if (context.getCache().isPresent()) {
+            cache = context.getCache().get();
+         } else {
+            cache = fallbackCache;
+         }
+      }
+
       CacheScriptArguments bindings = new CacheScriptArguments(
               systemBindings,
               userBindings,
-              // TODO: review handling of nulls and optionals in params
-              context.getCache().orElse(new SimpleCacheImpl<>("default")));
+              cache,
+              null);
 
       ScriptRunner runner = metadata.mode().getRunner();
 
@@ -261,7 +278,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       try {
          String script = getScriptCache().get(metadata.name());
 
-         ScriptingJavaApi javaApi = new ScriptingJavaApi(cacheManager, args.getCache());
+         ScriptingJavaApi javaApi = new ScriptingJavaApi((args.getCacheManager() == null) ? cacheManager : args.getCacheManager(), args.getCache());
          Engine engine = Engine.builder()
                  .addBuiltins(ScriptingJavaApi_Builtins.toBuiltins(javaApi))
                  .addInvokables(JsApi_Invokables.toInvokables())

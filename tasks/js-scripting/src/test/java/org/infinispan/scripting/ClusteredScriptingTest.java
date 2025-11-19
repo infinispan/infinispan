@@ -159,12 +159,12 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             Map<String, Long> resultsFuture = CompletionStages.join(scriptingManager.runScript(
                     "wordCountStream.js", new TaskContext().cache(cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL))));
             assertEquals(EXPECTED_WORDS, resultsFuture.size());
-            assertEquals(resultsFuture.get("macbeth"), Long.valueOf(287));
+            assertEquals(Integer.valueOf(287), resultsFuture.get("macbeth"));
 
             resultsFuture = CompletionStages.join(scriptingManager.runScript(
                     "wordCountStream.js", new TaskContext().cache(cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL))));
             assertEquals(EXPECTED_WORDS, resultsFuture.size());
-            assertEquals(resultsFuture.get("macbeth"), Long.valueOf(287));
+            assertEquals(Integer.valueOf(287), resultsFuture.get("macbeth"));
          }
       });
    }
