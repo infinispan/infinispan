@@ -31,6 +31,7 @@ public final class ScriptingInterceptor extends BaseCustomAsyncInterceptor {
       String name = (String) command.getKey();
       String script = (String) command.getValue();
       ScriptMetadata metadata = extractMetadata(name, script, command.getMetadata());
+      command.setMetadata(metadata);
       return invokeNext(ctx, command);
       // TODO: understand if this is required?
       // return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script, metadata).thenAccept(command::setMetadata));
@@ -53,6 +54,7 @@ public final class ScriptingInterceptor extends BaseCustomAsyncInterceptor {
       String name = (String) command.getKey();
       String script = (String) command.getNewValue();
       ScriptMetadata metadata = extractMetadata(name, script, command.getMetadata());
+      command.setMetadata(metadata);
       return invokeNext(ctx, command);
 //      return asyncInvokeNext(ctx, command, command::setMetadata);
 //               scriptingManager.compileScript(name, script, metadata).thenAccept(command::setMetadata));
