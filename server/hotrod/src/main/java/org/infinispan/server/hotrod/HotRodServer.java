@@ -29,7 +29,6 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.NonBlockingResource;
 import org.infinispan.commons.internal.InternalCacheNames;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.time.TimeService;
@@ -109,7 +108,7 @@ import io.netty.util.concurrent.DefaultThreadFactory;
  * @since 4.1
  */
 public class HotRodServer extends AbstractProtocolServer<HotRodServerConfiguration> {
-   static final Log log = LogFactory.getLog(HotRodServer.class, Log.class);
+   static final Log log = Log.getLog(HotRodServer.class);
 
    private static final long MILLISECONDS_IN_30_DAYS = TimeUnit.DAYS.toMillis(30);
 

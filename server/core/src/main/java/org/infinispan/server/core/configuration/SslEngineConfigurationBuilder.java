@@ -8,7 +8,6 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.InstanceSupplier;
 import org.infinispan.server.core.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  *
@@ -18,7 +17,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.3
  */
 public class SslEngineConfigurationBuilder implements SslConfigurationChildBuilder {
-   private static final Log log = LogFactory.getLog(SslEngineConfigurationBuilder.class, Log.class);
+   private static final Log log = Log.getLog(SslEngineConfigurationBuilder.class);
    private final SslConfigurationBuilder parentSslConfigurationBuilder;
    private String keyStoreFileName;
    private char[] keyStorePassword;

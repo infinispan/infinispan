@@ -54,7 +54,6 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;
@@ -76,7 +75,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  */
 @ConfiguredBy(RemoteStoreConfiguration.class)
 public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
-   private static final Log log = LogFactory.getLog(RemoteStore.class, Log.class);
+   private static final Log log = Log.getLog(RemoteStore.class);
    public static final String MIGRATION = "migration";
 
    private RemoteStoreConfiguration configuration;

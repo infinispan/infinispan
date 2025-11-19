@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.rest.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.handler.codec.http.cors.CorsConfig;
 import io.netty.handler.codec.http.cors.CorsConfigBuilder;
@@ -25,7 +24,7 @@ import io.netty.handler.codec.http.cors.CorsConfigBuilder;
  * @since 11.0
  */
 class CorsUtil {
-   static final Log LOG = LogFactory.getLog(CorsUtil.class, Log.class);
+   static final Log LOG = Log.getLog(CorsUtil.class);
    static final String[] SCHEMES = new String[]{"http", "https"};
    static final String ENABLE_ALL_FOR_ORIGIN_PROPERTY = "infinispan.server.rest.cors-allow";
 

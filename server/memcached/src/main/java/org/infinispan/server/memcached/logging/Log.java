@@ -23,6 +23,10 @@ import org.jboss.logging.annotations.ValidIdRange;
 public interface Log extends BasicLogger {
    Log SERVER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, "org.infinispan.SERVER");
 
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
 //   @LogMessage(level = ERROR)
 //   @Message(value = "Exception reported", id = 5003)
 //   void exceptionReported(@Cause Throwable t);

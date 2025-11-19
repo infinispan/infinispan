@@ -120,7 +120,6 @@ import org.infinispan.tasks.manager.TaskManager;
 import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.function.SerializableFunction;
-import org.infinispan.util.logging.LogFactory;
 import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -144,7 +143,7 @@ import org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider;
  * @since 10.0
  */
 public class Server extends BaseServerManagement implements AutoCloseable {
-   public static final Log log = LogFactory.getLog("SERVER", Log.class);
+   public static final Log log = Log.SERVER;
 
    // Properties
    public static final String INFINISPAN_BIND_ADDRESS = "infinispan.bind.address";

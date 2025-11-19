@@ -40,7 +40,7 @@ import jakarta.transaction.Transaction;
  */
 public class SyncModeTransactionTable extends AbstractTransactionTable {
 
-   private static final Log log = LogFactory.getLog(SyncModeTransactionTable.class, Log.class);
+   private static final Log log = LogFactory.getLog(SyncModeTransactionTable.class);
    private final Map<Transaction, SynchronizationAdapter> registeredTransactions = new ConcurrentHashMap<>();
    private final UUID uuid = Util.threadLocalRandomUUID();
    private final Consumer<Transaction> cleanup = registeredTransactions::remove;

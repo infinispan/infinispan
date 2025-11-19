@@ -16,7 +16,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.handler.codec.http.cors.CorsConfig;
 
@@ -29,7 +28,7 @@ import io.netty.handler.codec.http.cors.CorsConfig;
 public class RestServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<RestServerConfiguration, RestServerConfigurationBuilder, RestAuthenticationConfiguration> implements
       Builder<RestServerConfiguration> {
 
-   static final Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
+   static final Log logger = Log.getLog(RestServerConfigurationBuilder.class);
 
    private final RestAuthenticationConfigurationBuilder authentication;
    private final CorsConfigurationBuilder cors;

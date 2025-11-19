@@ -10,7 +10,6 @@ import org.infinispan.server.core.transport.CacheInitializeInboundAdapter;
 import org.infinispan.server.resp.logging.AccessLoggerManager;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.logging.RespAccessLogger;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -19,9 +18,9 @@ import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.TooLongFrameException;
 
 public class RespHandler extends ChannelInboundHandlerAdapter {
-   protected static final Log log = LogFactory.getLog(RespHandler.class, Log.class);
+   protected static final Log log = Log.getLog(RespHandler.class);
    protected static final org.infinispan.server.core.logging.Log coreLog =
-         LogFactory.getLog(RespHandler.class, org.infinispan.server.core.logging.Log.class);
+         org.infinispan.server.core.logging.Log.getLog(RespHandler.class);
    protected static final int MINIMUM_BUFFER_SIZE;
 
    private final RespServer respServer;

@@ -2,7 +2,6 @@ package org.infinispan.lock;
 
 import static java.util.Objects.requireNonNull;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.lock.api.ClusteredLockManager;
 import org.infinispan.lock.logging.Log;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -16,7 +15,7 @@ import org.infinispan.security.actions.SecurityActions;
  */
 public final class EmbeddedClusteredLockManagerFactory {
 
-   private static final Log log = LogFactory.getLog(EmbeddedClusteredLockManagerFactory.class, Log.class);
+   private static final Log log = Log.getLog(EmbeddedClusteredLockManagerFactory.class);
 
    private EmbeddedClusteredLockManagerFactory() {
    }

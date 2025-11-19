@@ -28,7 +28,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class StorageConfigurationManager {
-   private static final Log LOG = LogFactory.getLog(StorageConfigurationManager.class, Log.class);
+   private static final Log LOG = LogFactory.getLog(StorageConfigurationManager.class);
 
    private Wrapper keyWrapper;
    private Wrapper valueWrapper;

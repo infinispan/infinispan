@@ -15,9 +15,4 @@ public class LogFactory {
    public static Log getLog(Class<?> clazz) {
       return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
    }
-
-   public static <T> T getLog(Class<?> clazz, Class<T> logClass) {
-      return Logger.getMessageLogger(MethodHandles.lookup(), logClass, clazz.getName());
-   }
-
 }

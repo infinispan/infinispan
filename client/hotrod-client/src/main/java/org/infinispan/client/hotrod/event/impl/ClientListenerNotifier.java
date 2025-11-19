@@ -32,7 +32,7 @@ import org.infinispan.commons.util.Util;
  */
 // Note: this class was moved to impl package as it was not meant to be public
 public class ClientListenerNotifier {
-   private static final Log log = LogFactory.getLog(ClientListenerNotifier.class, Log.class);
+   private static final Log log = LogFactory.getLog(ClientListenerNotifier.class);
    public static final AtomicInteger counter = new AtomicInteger(0);
 
    // Time for trying to reconnect listeners when all connections are down.

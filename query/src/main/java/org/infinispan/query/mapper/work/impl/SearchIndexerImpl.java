@@ -22,7 +22,6 @@ import org.infinispan.query.mapper.session.impl.InfinispanIndexedTypeContext;
 import org.infinispan.query.mapper.session.impl.InfinispanTypeContextProvider;
 import org.infinispan.query.mapper.work.SearchIndexer;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -34,7 +33,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  * @author Fabio Massimo Ercoli
  */
 public class SearchIndexerImpl implements SearchIndexer {
-   private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
+   private static final Log log = Log.getLog(QueryInterceptor.class);
 
    private final PojoIndexer delegate;
    private final EntityConverter entityConverter;

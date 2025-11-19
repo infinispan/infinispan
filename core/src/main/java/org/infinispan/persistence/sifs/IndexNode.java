@@ -19,7 +19,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.Util;
 import org.infinispan.reactive.FlowableCreate;
-import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
@@ -45,7 +44,7 @@ import io.reactivex.rxjava3.core.FlowableEmitter;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 class IndexNode {
-   private static final Log log = LogFactory.getLog(IndexNode.class, Log.class);
+   private static final Log log = Log.getLog(IndexNode.class);
 
    private static final byte HAS_LEAVES = 1;
    private static final byte HAS_NODES = 2;

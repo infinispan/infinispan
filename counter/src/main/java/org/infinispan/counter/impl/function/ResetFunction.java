@@ -2,7 +2,6 @@ package org.infinispan.counter.impl.function;
 
 import static org.infinispan.counter.impl.entries.CounterValue.newCounterValue;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
@@ -21,7 +20,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.COUNTER_FUNCTION_RESET)
 public class ResetFunction<K extends CounterKey> extends BaseFunction<K, Void> {
 
-   private static final Log log = LogFactory.getLog(ResetFunction.class, Log.class);
+   private static final Log log = Log.getLog(ResetFunction.class);
 
    private static final ResetFunction INSTANCE = new ResetFunction();
 

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.insights.logging.Log;
 import org.infinispan.util.concurrent.BlockingManager;
 
@@ -23,7 +22,7 @@ import com.redhat.insights.logging.InsightsLogger;
  */
 public class InfinispanInsightsScheduler implements InsightsScheduler {
 
-   private static final Log log = LogFactory.getLog(InfinispanInsightsScheduler.class, Log.class);
+   private static final Log log = Log.getLog(InfinispanInsightsScheduler.class);
 
    private final InsightsLogger logger;
    private final InsightsConfiguration configuration;

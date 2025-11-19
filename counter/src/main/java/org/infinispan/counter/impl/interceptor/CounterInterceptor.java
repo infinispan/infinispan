@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.EnumSet;
 
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -30,7 +29,7 @@ import org.infinispan.metadata.Metadata;
  */
 public class CounterInterceptor extends BaseCustomAsyncInterceptor {
 
-   private static final Log log = LogFactory.getLog(CounterInterceptor.class, Log.class);
+   private static final Log log = Log.getLog(CounterInterceptor.class);
    private static final Collection<Flag> FLAGS_TO_SKIP_PERSISTENCE = EnumSet
          .of(Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE);
 

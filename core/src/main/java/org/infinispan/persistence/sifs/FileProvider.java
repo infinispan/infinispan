@@ -27,7 +27,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.ProgressTracker;
 import org.infinispan.persistence.sifs.pmem.PmemUtilWrapper;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Provides resource management for files - only limited amount of files may be opened in one moment, and opened file
@@ -36,8 +35,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class FileProvider {
-   private static final org.infinispan.persistence.sifs.Log log =
-         LogFactory.getLog(FileProvider.class, org.infinispan.persistence.sifs.Log.class);
+   private static final org.infinispan.persistence.sifs.Log log = org.infinispan.persistence.sifs.Log.getLog(FileProvider.class);
 
    private static final String REGEX_FORMAT = "^%s[0-9]+$";
    private static final boolean ATTEMPT_PMEM;

@@ -14,10 +14,9 @@ import java.util.regex.Pattern;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.scripting.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 public class ScriptMetadataParser {
-   private static final Log log = LogFactory.getLog(ScriptMetadataParser.class, Log.class);
+   private static final Log log = Log.getLog(ScriptMetadataParser.class);
    private static final String DEFAULT_SCRIPT_EXTENSION = "js";
    private static final Pattern METADATA_COMMENT = Pattern.compile("^(?:#|//|;;)\\s*(.+)");
    private static final Pattern METADATA_KV = Pattern

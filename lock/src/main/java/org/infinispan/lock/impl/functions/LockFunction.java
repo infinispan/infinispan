@@ -2,7 +2,6 @@ package org.infinispan.lock.impl.functions;
 
 import java.util.function.Function;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.lock.impl.entries.ClusteredLockKey;
@@ -24,7 +23,7 @@ import org.infinispan.remoting.transport.Address;
 @ProtoTypeId(ProtoStreamTypeIds.CLUSTERED_LOCK_FUNCTION_LOCK)
 public class LockFunction implements Function<EntryView.ReadWriteEntryView<ClusteredLockKey, ClusteredLockValue>, Boolean> {
 
-   private static final Log log = LogFactory.getLog(LockFunction.class, Log.class);
+   private static final Log log = Log.getLog(LockFunction.class);
 
    private final String requestId;
    private final Address requestor;

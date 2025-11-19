@@ -31,6 +31,10 @@ import org.jboss.logging.annotations.ValidIdRange;
 public interface Log extends BasicLogger {
    Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, "org.infinispan.CONFIG");
 
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
    @LogMessage(level = ERROR)
    @Message(value = "Error detecting crashed member", id = 6002)
    void errorDetectingCrashedMember(@Cause Throwable t);

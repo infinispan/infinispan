@@ -17,14 +17,13 @@ import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.factories.threads.NonBlockingThreadPoolExecutorFactory;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NonRecursiveEventLoopGroup;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.EventLoopGroup;
 
 @DefaultFactoryFor(classes = EventLoopGroup.class)
 public class NettyEventLoopFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
-   private static final Log log = LogFactory.getLog(NettyEventLoopFactory.class, Log.class);
+   private static final Log log = Log.getLog(NettyEventLoopFactory.class);
 
    @Override
    public Object construct(String componentName) {

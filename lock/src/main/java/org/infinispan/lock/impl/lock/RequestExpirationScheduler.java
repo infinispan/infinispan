@@ -1,6 +1,5 @@
 package org.infinispan.lock.impl.lock;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -8,7 +7,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.lock.logging.Log;
 
 /**
@@ -19,7 +17,7 @@ import org.infinispan.lock.logging.Log;
  */
 public class RequestExpirationScheduler {
 
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(RequestExpirationScheduler.class);
 
    private final ScheduledExecutorService scheduledExecutorService;
    private final ConcurrentMap<String, ScheduledRequest> scheduledRequests = new ConcurrentHashMap<>();

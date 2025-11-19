@@ -2,7 +2,6 @@ package org.infinispan.server.core.query.impl;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.server.core.query.impl.logging.Log;
 import org.infinispan.security.AuthorizationManager;
@@ -20,7 +19,7 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices
 public final class QueryFacadeImpl implements QueryFacade {
 
-   private static final Log log = LogFactory.getLog(QueryFacadeImpl.class, Log.class);
+   private static final Log log = Log.getLog(QueryFacadeImpl.class);
 
    @Override
    public byte[] query(AdvancedCache<?, ?> cache, byte[] query) {

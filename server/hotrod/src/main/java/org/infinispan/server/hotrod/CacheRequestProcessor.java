@@ -15,7 +15,6 @@ import java.util.concurrent.Executor;
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.MurmurHash3BloomFilter;
@@ -45,7 +44,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 class CacheRequestProcessor extends BaseRequestProcessor {
-   private static final Log log = LogFactory.getLog(CacheRequestProcessor.class, Log.class);
+   private static final Log log = Log.getLog(CacheRequestProcessor.class);
 
    private final ClientListenerRegistry listenerRegistry;
    private final InfinispanTelemetry telemetryService;

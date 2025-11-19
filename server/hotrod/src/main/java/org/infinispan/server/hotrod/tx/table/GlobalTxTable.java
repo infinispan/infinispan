@@ -46,7 +46,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
@@ -75,7 +74,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
 
    //TODO think about the possibility of using JGroups RAFT instead of replicated cache?
 
-   private static final Log log = LogFactory.getLog(GlobalTxTable.class, Log.class);
+   private static final Log log = Log.getLog(GlobalTxTable.class);
 
    private final Cache<CacheXid, TxState> storage;
    private final FunctionalMap.ReadWriteMap<CacheXid, TxState> rwMap;

@@ -11,7 +11,6 @@ import java.util.Map.Entry;
 
 import org.infinispan.cdi.common.util.Reflections;
 import org.infinispan.cdi.common.util.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 import jakarta.enterprise.inject.spi.Annotated;
 import jakarta.enterprise.inject.spi.AnnotatedConstructor;
@@ -31,7 +30,7 @@ import jakarta.enterprise.inject.spi.AnnotatedType;
  */
 public class AnnotatedTypeBuilder<X> {
 
-   private static final Log log = LogFactory.getLog(AnnotatedTypeBuilder.class, Log.class);
+   private static final Log log = Log.getLog(AnnotatedTypeBuilder.class);
 
    private Class<X> javaClass;
    private final AnnotationBuilder typeAnnotations;

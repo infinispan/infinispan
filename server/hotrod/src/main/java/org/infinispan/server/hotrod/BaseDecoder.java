@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ServerConstants;
@@ -23,7 +22,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
 
 abstract class BaseDecoder extends ByteToMessageDecoder {
-   protected static final Log log = LogFactory.getLog(BaseDecoder.class, Log.class);
+   protected static final Log log = Log.getLog(BaseDecoder.class);
 
    protected final EmbeddedCacheManager cacheManager;
    protected final Executor executor;

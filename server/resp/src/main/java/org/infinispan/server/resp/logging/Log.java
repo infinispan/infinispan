@@ -27,6 +27,10 @@ public interface Log extends BasicLogger {
    Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, "org.infinispan.CONFIG");
    Log SERVER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, "org.infinispan.SERVER");
 
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
 //   @Message(value = "Cache '%s' has expiration enabled which violates the RESP protocol.", id = 13001)
 //   CacheConfigurationException invalidExpiration(String cacheName);
 

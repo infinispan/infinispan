@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.server.hotrod.logging.Log;
@@ -26,7 +25,7 @@ import org.infinispan.server.hotrod.tx.ControlByte;
  */
 public class RemoteTransaction {
 
-   private static final Log log = LogFactory.getLog(RemoteTransaction.class, Log.class);
+   private static final Log log = Log.getLog(RemoteTransaction.class);
    private static final int FORMAT = -1234;
    private static final AtomicInteger ID_GENERATOR = new AtomicInteger(0);
    private final HotRodClient client;

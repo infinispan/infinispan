@@ -16,10 +16,6 @@ public class LogFactory {
       return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
    }
 
-   public static <T> T getLog(Class<?> clazz, Class<T> logClass) {
-      return Logger.getMessageLogger(MethodHandles.lookup(), logClass, clazz.getName());
-   }
-
    public static Log getLog(String category) {
       return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, Log.LOG_ROOT + category);
    }

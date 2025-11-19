@@ -3,7 +3,6 @@ package org.infinispan.jcache;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -14,8 +13,7 @@ import org.infinispan.jcache.logging.Log;
  */
 public class Expiration {
 
-   private static final Log log =
-         LogFactory.getLog(Expiration.class, Log.class);
+   private static final Log log = Log.getLog(Expiration.class);
 
    // Suppresses default constructor, ensuring non-instantiability.
    private Expiration(){

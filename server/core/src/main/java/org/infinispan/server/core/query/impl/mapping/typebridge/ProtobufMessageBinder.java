@@ -11,17 +11,13 @@ import org.hibernate.search.engine.backend.document.model.dsl.IndexSchemaObjectF
 import org.hibernate.search.engine.backend.types.ObjectStructure;
 import org.hibernate.search.mapper.pojo.bridge.binding.TypeBindingContext;
 import org.hibernate.search.mapper.pojo.bridge.mapping.programmatic.TypeBinder;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.server.core.query.impl.logging.Log;
 import org.infinispan.server.core.query.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.server.core.query.impl.mapping.reference.IndexReferenceHolder;
 import org.infinispan.server.core.query.impl.mapping.reference.MessageReferenceProvider;
 import org.infinispan.server.core.query.impl.mapping.type.ProtobufKeyValuePair;
 
 public class ProtobufMessageBinder implements TypeBinder {
-
-   private static final Log log = LogFactory.getLog(ProtobufMessageBinder.class, Log.class);
 
    private final GlobalReferenceHolder globalReferenceHolder;
    private final String rootMessageName;

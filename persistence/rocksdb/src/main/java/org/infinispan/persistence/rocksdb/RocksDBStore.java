@@ -4,7 +4,6 @@ import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -57,7 +56,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.rocksdb.BuiltinComparator;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -79,7 +77,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 @ConfiguredBy(RocksDBStoreConfiguration.class)
 public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(RocksDBStore.class);
 
    private static final byte[] BEGIN_KEY = createAndFillArray(1, (byte) 0x00);
    private static final byte[] END_KEY = createAndFillArray(128, (byte) 0xff);

@@ -8,7 +8,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.mapper.mapping.SearchMapping;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Handle batch updates to an index.
@@ -18,7 +17,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class IndexUpdater {
 
-   private static final Log LOG = LogFactory.getLog(IndexUpdater.class, Log.class);
+   private static final Log LOG = Log.getLog(IndexUpdater.class);
 
    private static final Collection<Class<?>> PROTO_CLASSES = Set.of(new Class[]{byte[].class});
 

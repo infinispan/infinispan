@@ -1,6 +1,7 @@
 package org.infinispan.persistence.sifs;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.concurrent.FileSystemLock;
@@ -16,6 +17,9 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 29001, max = 29500)
 public interface Log extends BasicLogger {
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
 
    @Message(value = "Max size of index node (%d) is limited to 32767 bytes.", id = 29001)
    CacheConfigurationException maxNodeSizeLimitedToShort(int maxNodeSize);

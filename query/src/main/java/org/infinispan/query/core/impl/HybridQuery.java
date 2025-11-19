@@ -15,7 +15,6 @@ import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A non-indexed query performed on top of the results returned by another query (usually a Lucene based query). This
@@ -27,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
-   private static final Log LOG = LogFactory.getLog(HybridQuery.class, Log.class);
+   private static final Log LOG = Log.getLog(HybridQuery.class);
 
    // An object filter is used to further filter the baseQuery
    protected final ObjectFilter objectFilter;

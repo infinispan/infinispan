@@ -12,7 +12,6 @@ import javax.security.auth.Subject;
 import javax.security.sasl.Sasl;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.SslContextFactory;
@@ -43,7 +42,7 @@ import net.spy.memcached.auth.AuthDescriptor;
  * @since 4.1
  */
 public class MemcachedTestingUtil {
-   private static final Log log = LogFactory.getLog(MemcachedTestingUtil.class, Log.class);
+   private static final Log log = Log.getLog(MemcachedTestingUtil.class);
 
    private static final String host = "127.0.0.1";
    private static final String USERNAME = "user";

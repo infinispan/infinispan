@@ -5,7 +5,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterEvent;
@@ -33,7 +32,7 @@ import io.netty.channel.Channel;
  */
 class ClientNotificationManager {
 
-   private static final Log log = LogFactory.getLog(ClientNotificationManager.class, Log.class);
+   private static final Log log = Log.getLog(ClientNotificationManager.class);
 
    private final Map<String, Handle<Listener>> counterListener;
    private final CounterManager counterManager;

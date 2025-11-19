@@ -28,7 +28,7 @@ import static org.infinispan.client.hotrod.Flag.FORCE_RETURN_VALUE;
 import static org.infinispan.client.hotrod.impl.RemoteCacheManagerAdminImpl.string;
 
 public class RemoteSchemasAdminImpl implements RemoteSchemasAdmin {
-    public static final Log log = LogFactory.getLog(RemoteSchemasAdminImpl.class, Log.class);
+    public static final Log log = LogFactory.getLog(RemoteSchemasAdminImpl.class);
 
     private final ManagerOperationsFactory operationsFactory;
     private final OperationDispatcher operationDispatcher;

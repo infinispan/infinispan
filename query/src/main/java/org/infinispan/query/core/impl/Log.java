@@ -40,6 +40,9 @@ public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
    Log CONTAINER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONTAINER");
 
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
 
    @LogMessage(level = ERROR)
    @Message(value = "Could not locate key class %s", id = 14001)

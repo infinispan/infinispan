@@ -5,7 +5,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 
 public class TelemetryServiceFactory {
 
-   private static final Log log = LogFactory.getLog(TelemetryService.class, Log.class);
+   private static final Log log = LogFactory.getLog(TelemetryService.class);
 
    public static final TelemetryService INSTANCE;
 

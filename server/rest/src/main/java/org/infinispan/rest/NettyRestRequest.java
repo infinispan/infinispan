@@ -24,7 +24,6 @@ import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.operations.exceptions.InvalidFlagException;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -37,7 +36,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
  */
 public class NettyRestRequest implements RestRequest {
 
-   private static final Log logger = LogFactory.getLog(NettyRestRequest.class, Log.class);
+   private static final Log logger = Log.getLog(NettyRestRequest.class);
 
    private static final MediaType DEFAULT_KEY_CONTENT_TYPE = MediaType.fromString("text/plain; charset=utf-8");
 

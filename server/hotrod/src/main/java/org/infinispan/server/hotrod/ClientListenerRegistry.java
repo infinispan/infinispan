@@ -22,7 +22,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.BloomFilter;
@@ -67,7 +66,7 @@ class ClientListenerRegistry {
       this.nonBlockingExecutor = nonBlockingExecutor;
    }
 
-   private static final Log log = LogFactory.getLog(ClientListenerRegistry.class, Log.class);
+   private static final Log log = Log.getLog(ClientListenerRegistry.class);
 
    private final ConcurrentMap<WrappedByteArray, Object> eventSenders = new ConcurrentHashMap<>();
    private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);

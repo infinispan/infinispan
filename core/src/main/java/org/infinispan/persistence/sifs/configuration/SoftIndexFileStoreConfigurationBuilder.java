@@ -14,13 +14,12 @@ import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.sifs.Log;
 import org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<SoftIndexFileStoreConfiguration, SoftIndexFileStoreConfigurationBuilder> {
-   private static final Log log = LogFactory.getLog(SoftIndexFileStoreConfigurationBuilder.class, Log.class);
+   private static final Log log = Log.getLog(SoftIndexFileStoreConfigurationBuilder.class);
 
    protected final IndexConfigurationBuilder index = new IndexConfigurationBuilder();
    protected final DataConfigurationBuilder data = new DataConfigurationBuilder();

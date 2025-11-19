@@ -30,7 +30,6 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Infinispan's implementation of {@link javax.cache.CacheManager}.
@@ -53,7 +52,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.3
  */
 public class JCacheManager extends AbstractJCacheManager {
-   private static final Log log = LogFactory.getLog(JCacheManager.class, Log.class);
+   private static final Log log = Log.getLog(JCacheManager.class);
    public static final String CACHE_CONFIGURATION_FUNCTION = org.infinispan.configuration.cache.Configuration.class.getName() + "-Function";
    public static final String GLOBAL_CONFIGURATION_CONSUMER = GlobalConfigurationBuilder.class.getName() + "-Consumer";
 

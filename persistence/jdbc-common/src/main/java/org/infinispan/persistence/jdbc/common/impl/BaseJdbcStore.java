@@ -22,7 +22,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -30,7 +29,7 @@ import io.reactivex.rxjava3.internal.functions.Functions;
 import jakarta.transaction.Transaction;
 
 public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfiguration> implements NonBlockingStore<K, V> {
-   protected static final Log log = LogFactory.getLog(BaseJdbcStore.class, Log.class);
+   protected static final Log log = Log.getLog(BaseJdbcStore.class);
 
    protected ConnectionFactory connectionFactory;
    protected BlockingManager blockingManager;

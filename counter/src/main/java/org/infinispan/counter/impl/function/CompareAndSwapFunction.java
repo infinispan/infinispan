@@ -1,6 +1,5 @@
 package org.infinispan.counter.impl.function;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.impl.entries.CounterKey;
@@ -27,7 +26,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.COUNTER_FUNCTION_CAS)
 public class CompareAndSwapFunction<K extends CounterKey> extends BaseFunction<K, Object> {
 
-   private static final Log log = LogFactory.getLog(CompareAndSwapFunction.class, Log.class);
+   private static final Log log = Log.getLog(CompareAndSwapFunction.class);
 
    @ProtoField(1)
    final long expect;

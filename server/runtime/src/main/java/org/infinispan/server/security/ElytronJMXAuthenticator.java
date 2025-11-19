@@ -18,7 +18,6 @@ import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.loader.ServerLoginModule;
 import org.infinispan.server.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
@@ -27,7 +26,7 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
  * @since 14.0
  **/
 public class ElytronJMXAuthenticator implements BiPredicate<CallbackHandler, Subject> {
-   private static final Log log = LogFactory.getLog(ElytronJMXAuthenticator.class, Log.class);
+   private static final Log log = Log.getLog(ElytronJMXAuthenticator.class);
    private final SecurityDomain securityDomain;
    private final Authorizer authorizer;
 

@@ -7,11 +7,10 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.impl.AbstractDelegatingEmbeddedCacheManager;
 import org.infinispan.scripting.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 public final class DataTypedCacheManager extends AbstractDelegatingEmbeddedCacheManager {
 
-   private static final Log log = LogFactory.getLog(DataTypedCacheManager.class, Log.class);
+   private static final Log log = Log.getLog(DataTypedCacheManager.class);
 
    private final MediaType scriptMediaType;
    private final Subject subject;

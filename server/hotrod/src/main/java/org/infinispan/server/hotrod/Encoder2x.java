@@ -32,7 +32,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.MediaTypeIds;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
@@ -68,7 +67,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * @author Galder Zamarreño
  */
 class Encoder2x implements VersionedEncoder {
-   private static final Log log = LogFactory.getLog(Encoder2x.class, Log.class);
+   private static final Log log = Log.getLog(Encoder2x.class);
    private static final int topologyCheckInterval = Integer.getInteger("infinispan.server.topology-check-interval", 5_000);
 
    private static final Encoder2x INSTANCE = new Encoder2x();

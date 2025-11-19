@@ -2,13 +2,12 @@ package org.infinispan.server.core.transport;
 
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
 public class CacheInitializeInboundAdapter extends ChannelInboundHandlerAdapter {
-   private static final Log log = LogFactory.getLog(CacheInitializeInboundAdapter.class, Log.class);
+   private static final Log log = Log.getLog(CacheInitializeInboundAdapter.class);
    public static final Object CACHE_INITIALIZE_EVENT = new Object();
 
    private final AbstractProtocolServer<?> server;

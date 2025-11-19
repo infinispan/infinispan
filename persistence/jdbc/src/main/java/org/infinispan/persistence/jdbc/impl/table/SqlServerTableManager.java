@@ -4,7 +4,6 @@ import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactor
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Ryan Emerson
@@ -12,7 +11,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 class SqlServerTableManager extends AbstractTableManager {
 
-   private static final Log log = LogFactory.getLog(MyTableOperations.class, Log.class);
+   private static final Log log = Log.getLog(MyTableOperations.class);
 
    SqlServerTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, DbMetaData metaData, String cacheName) {
       super(ctx, connectionFactory, config, metaData, cacheName, log);

@@ -7,7 +7,6 @@ import javax.cache.CacheManager;
 import javax.cache.configuration.OptionalFeature;
 import javax.cache.spi.CachingProvider;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.AbstractJCachingProvider;
 import org.infinispan.jcache.logging.Log;
 import org.kohsuke.MetaInfServices;
@@ -18,7 +17,7 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(CachingProvider.class)
 @SuppressWarnings("unused")
 public class JCachingProvider extends AbstractJCachingProvider {
-   private static final Log log = LogFactory.getLog(JCachingProvider.class, Log.class);
+   private static final Log log = Log.getLog(JCachingProvider.class);
 
    private static final URI DEFAULT_URI = URI.create(JCachingProvider.class.getName());
 

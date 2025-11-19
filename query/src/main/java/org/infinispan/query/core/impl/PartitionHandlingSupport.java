@@ -4,14 +4,13 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @since 9.4
  */
 public final class PartitionHandlingSupport {
 
-   private static final Log log = LogFactory.getLog(PartitionHandlingSupport.class, Log.class);
+   private static final Log log = Log.getLog(PartitionHandlingSupport.class);
 
    private final boolean isClustered;
    private final PartitionHandling partitionHandling;

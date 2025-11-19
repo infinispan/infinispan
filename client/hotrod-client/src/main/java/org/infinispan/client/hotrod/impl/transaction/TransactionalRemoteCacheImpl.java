@@ -40,7 +40,7 @@ import jakarta.transaction.TransactionManager;
  */
 public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
 
-   private static final Log log = LogFactory.getLog(TransactionalRemoteCacheImpl.class, Log.class);
+   private static final Log log = LogFactory.getLog(TransactionalRemoteCacheImpl.class);
 
    private final boolean forceReturnValue;
    private final boolean recoveryEnabled;

@@ -79,7 +79,7 @@ import io.reactivex.rxjava3.internal.functions.Functions;
  * that its response can be processed.
  */
 public class OperationDispatcher {
-   private static final Log log = LogFactory.getLog(OperationDispatcher.class, Log.class);
+   private static final Log log = LogFactory.getLog(OperationDispatcher.class);
    public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
 
    private final StampedLock lock = new StampedLock();

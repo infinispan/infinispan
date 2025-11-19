@@ -18,7 +18,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.GlobalContextInitializer;
 import org.infinispan.commons.api.BasicCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -29,7 +28,7 @@ import org.infinispan.jcache.logging.Log;
 import org.infinispan.protostream.SerializationContext;
 
 public class JCacheManager extends AbstractJCacheManager {
-   private static final Log log = LogFactory.getLog(JCacheManager.class, Log.class);
+   private static final Log log = Log.getLog(JCacheManager.class);
 
    private final RemoteCacheManager cm;
 

@@ -41,7 +41,7 @@ import jakarta.transaction.Transaction;
  */
 public class XaModeTransactionTable extends AbstractTransactionTable {
 
-   private static final Log log = LogFactory.getLog(XaModeTransactionTable.class, Log.class);
+   private static final Log log = LogFactory.getLog(XaModeTransactionTable.class);
 
    private final Map<Transaction, XaAdapter> registeredTransactions = new ConcurrentHashMap<>();
    private final RecoveryManager recoveryManager = new RecoveryManager();

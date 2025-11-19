@@ -5,6 +5,7 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.Closeable;
+import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.Collection;
 
@@ -13,6 +14,7 @@ import javax.cache.configuration.Configuration;
 import javax.cache.processor.EntryProcessorException;
 
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -43,6 +45,10 @@ public interface Log extends BasicLogger {
          // skip the class-name
          return getLocalizedMessage();
       }
+   }
+
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
    }
 
    @Message(value = "Allocation stack trace:", id = 19001)

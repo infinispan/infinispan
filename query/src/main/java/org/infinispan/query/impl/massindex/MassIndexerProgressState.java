@@ -5,11 +5,10 @@ import java.util.concurrent.CompletableFuture;
 import org.hibernate.search.util.common.impl.Futures;
 import org.infinispan.commons.util.ProgressTracker;
 import org.infinispan.query.core.impl.Log;
-import org.infinispan.util.logging.LogFactory;
 
 class MassIndexerProgressState {
 
-   private static final Log LOG = LogFactory.getLog(IndexUpdater.class, Log.class);
+   private static final Log LOG = Log.getLog(IndexUpdater.class);
 
    private final MassIndexerProgressNotifier notifier;
    private final ProgressTracker progressTracker;

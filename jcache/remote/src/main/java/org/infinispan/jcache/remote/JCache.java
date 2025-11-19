@@ -20,7 +20,6 @@ import javax.cache.processor.EntryProcessorException;
 import javax.management.MBeanServer;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.jcache.AbstractJCache;
@@ -31,8 +30,7 @@ import org.infinispan.jcache.MutableJCacheEntry;
 import org.infinispan.jcache.logging.Log;
 
 public class JCache<K, V> extends AbstractJCache<K, V> {
-   private static final Log log =
-         LogFactory.getLog(JCache.class, Log.class);
+   private static final Log log = Log.getLog(JCache.class);
 
    private volatile boolean isClosed = false;
 

@@ -40,7 +40,7 @@ import io.netty.channel.Channel;
  * @since 9.2
  */
 public class NotificationManager {
-   private static final Log log = LogFactory.getLog(NotificationManager.class, Log.class);
+   private static final Log log = LogFactory.getLog(NotificationManager.class);
    private static final CompletableFuture<Short> NO_ERROR_FUTURE = CompletableFuture.completedFuture((short) HotRodConstants.NO_ERROR_STATUS);
 
    private final byte[] listenerId;

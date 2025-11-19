@@ -56,14 +56,13 @@ import org.infinispan.telemetry.impl.CacheSpanAttribute;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.function.SerializableFunction;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Manages caches instances used during rest requests.
  */
 public class RestCacheManager<V> {
 
-   protected static final Log logger = LogFactory.getLog(RestCacheManager.class, Log.class);
+   protected static final Log logger = Log.getLog(RestCacheManager.class);
 
    private final EmbeddedCacheManager instance;
    private final InternalCacheRegistry icr;

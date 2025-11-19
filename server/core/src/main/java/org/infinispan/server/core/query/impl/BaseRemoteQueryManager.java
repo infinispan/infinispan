@@ -6,7 +6,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.query.BaseQuery;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
@@ -25,7 +24,7 @@ import org.infinispan.server.core.query.impl.logging.Log;
 @Scope(Scopes.NAMED_CACHE)
 abstract class BaseRemoteQueryManager implements RemoteQueryManager {
 
-   private static final Log log = LogFactory.getLog(BaseRemoteQueryManager.class, Log.class);
+   private static final Log log = Log.getLog(BaseRemoteQueryManager.class);
 
    final AdvancedCache<?, ?> cache;
    private final QuerySerializers querySerializers;

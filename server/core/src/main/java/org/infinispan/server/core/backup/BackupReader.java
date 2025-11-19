@@ -20,7 +20,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.zip.ZipFile;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -42,7 +41,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
  */
 class BackupReader {
 
-   private static final Log log = LogFactory.getLog(BackupReader.class, Log.class);
+   private static final Log log = Log.getLog(BackupReader.class);
 
    private final BlockingManager blockingManager;
    private final Map<String, DefaultCacheManager> cacheManagers;

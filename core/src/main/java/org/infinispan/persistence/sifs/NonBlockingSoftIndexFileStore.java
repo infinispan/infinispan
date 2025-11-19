@@ -5,7 +5,6 @@ import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -54,7 +53,6 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -136,7 +134,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  */
 @ConfiguredBy(SoftIndexFileStoreConfigurationBuilder.class)
 public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, V> {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(NonBlockingSoftIndexFileStore.class);
 
    public static final String PREFIX_10_1 = "";
    public static final String PREFIX_11_0 = "ispn.";

@@ -1,10 +1,8 @@
 package org.infinispan.server.router.configuration.builder;
 
-import java.lang.invoke.MethodHandles;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.configuration.RouterConfiguration;
 import org.infinispan.server.router.logging.Log;
@@ -19,7 +17,7 @@ import org.infinispan.server.router.routes.RouteSource;
  */
 public class RoutingBuilder implements ConfigurationBuilderParent {
 
-    protected static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+    protected static final Log logger = Log.getLog(RoutingBuilder.class);
 
     private final ConfigurationBuilderParent parent;
     private final Set<Route<? extends RouteSource, ? extends RouteDestination>> routes = new HashSet<>();

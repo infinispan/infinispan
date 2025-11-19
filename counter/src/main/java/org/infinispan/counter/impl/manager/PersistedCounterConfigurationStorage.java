@@ -25,7 +25,6 @@ import org.infinispan.counter.configuration.CounterConfigurationSerializer;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A persistent implementation of {@link CounterConfigurationStorage}.
@@ -39,7 +38,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.GLOBAL)
 public class PersistedCounterConfigurationStorage implements CounterConfigurationStorage {
 
-   private static final Log log = LogFactory.getLog(PersistedCounterConfigurationStorage.class, Log.class);
+   private static final Log log = Log.getLog(PersistedCounterConfigurationStorage.class);
    private final Map<String, CounterConfiguration> storage;
    private final CounterConfigurationSerializer serializer;
    private final CounterConfigurationParser parser;

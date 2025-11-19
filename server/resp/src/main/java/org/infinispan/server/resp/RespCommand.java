@@ -15,13 +15,12 @@ import org.infinispan.server.resp.commands.BaseResp3Command;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.server.resp.serialization.bytebuf.ByteBufferUtils;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 public abstract class RespCommand implements BaseResp3Command {
-   protected static final Log log = LogFactory.getLog(RespCommand.class, Log.class);
+   protected static final Log log = Log.getLog(RespCommand.class);
    private final String name;
    private final int arity;
    private final int firstKeyPos;

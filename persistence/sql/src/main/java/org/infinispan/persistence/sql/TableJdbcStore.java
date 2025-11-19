@@ -1,6 +1,5 @@
 package org.infinispan.persistence.sql;
 
-import java.lang.invoke.MethodHandles;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -18,11 +17,10 @@ import org.infinispan.persistence.jdbc.common.TableOperations;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.sql.configuration.TableJdbcStoreConfiguration;
-import org.infinispan.util.logging.LogFactory;
 
 @ConfiguredBy(TableJdbcStoreConfiguration.class)
 public class TableJdbcStore<K, V> extends AbstractSchemaJdbcStore<K, V, TableJdbcStoreConfiguration> {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(TableJdbcStore.class);
 
    @Override
    protected TableOperations<K, V> actualCreateTableOperations(ProtoSchemaOptions<K, V, TableJdbcStoreConfiguration> schemaOptions) {

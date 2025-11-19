@@ -15,7 +15,6 @@ import org.infinispan.cdi.remote.logging.RemoteLog;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.commons.logging.LogFactory;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.spi.CreationalContext;
@@ -36,7 +35,7 @@ import jakarta.enterprise.util.AnnotationLiteral;
 
 public class InfinispanExtensionRemote implements Extension {
 
-    private static final RemoteLog LOGGER = LogFactory.getLog(InfinispanExtensionRemote.class, RemoteLog.class);
+    private static final RemoteLog LOGGER = RemoteLog.getLog(InfinispanExtensionRemote.class);
 
     private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;
 

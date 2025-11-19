@@ -2,7 +2,6 @@ package org.infinispan.persistence.jdbc.common.sql;
 
 import static org.infinispan.persistence.jdbc.common.logging.Log.PERSISTENCE;
 
-import java.lang.invoke.MethodHandles;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,14 +24,13 @@ import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.commons.util.concurrent.CompletionStages;
-import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 
 public abstract class BaseTableOperations<K, V> implements TableOperations<K, V> {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(BaseTableOperations.class);
 
    protected final AbstractJdbcStoreConfiguration<?> configuration;
 

@@ -13,7 +13,6 @@ import java.io.RandomAccessFile;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
 import org.infinispan.rest.stream.CacheChunkedStream;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -113,7 +112,7 @@ public enum ResponseWriter {
       }
    }
 
-   static final Log logger = LogFactory.getLog(ResponseWriter.class, Log.class);
+   static final Log logger = Log.getLog(ResponseWriter.class);
    final RestAccessLoggingHandler accessLog = new RestAccessLoggingHandler();
 
    abstract void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response);

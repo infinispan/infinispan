@@ -24,7 +24,6 @@ import org.hibernate.search.util.common.impl.ReflectionHelper;
 import org.hibernate.search.util.common.reflect.spi.ValueHandleFactory;
 import org.hibernate.search.util.common.reflect.spi.ValueReadHandle;
 import org.infinispan.query.core.impl.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A very simple introspector roughly following Java Beans conventions.
@@ -34,7 +33,7 @@ import org.infinispan.util.logging.LogFactory;
 public class InfinispanBootstrapIntrospector extends AbstractPojoModelsBootstrapIntrospector
       implements PojoBootstrapIntrospector {
 
-   private static final Log log = LogFactory.getLog(InfinispanBootstrapIntrospector.class, Log.class);
+   private static final Log log = Log.getLog(InfinispanBootstrapIntrospector.class);
 
    private final PojoModelsGenericContextHelper genericContextHelper;
 

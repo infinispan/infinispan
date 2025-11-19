@@ -6,7 +6,6 @@ import org.infinispan.api.annotations.indexing.model.Values;
 import org.infinispan.api.annotations.indexing.option.Structure;
 import org.infinispan.api.annotations.indexing.option.TermVector;
 import org.infinispan.api.annotations.indexing.option.VectorSimilarity;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.server.core.query.impl.indexing.FieldMapping;
@@ -15,7 +14,7 @@ import org.infinispan.server.core.query.impl.logging.Log;
 
 public final class InfinispanMetadataCreator {
 
-   private static final Log log = LogFactory.getLog(InfinispanMetadataCreator.class, Log.class);
+   private static final Log log = Log.getLog(InfinispanMetadataCreator.class);
 
    public static FieldMapping fieldMapping(FieldDescriptor fieldDescriptor, Map<String, AnnotationElement.Annotation> annotations) {
       AnnotationElement.Annotation fieldAnnotation = annotations.get(InfinispanAnnotations.BASIC_ANNOTATION);

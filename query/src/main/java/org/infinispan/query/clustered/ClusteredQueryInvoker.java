@@ -21,7 +21,6 @@ import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Invoke a ClusteredQueryCommand on the cluster, including on own node.
@@ -32,7 +31,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 final class ClusteredQueryInvoker {
 
-   private static final Log log = LogFactory.getLog(ClusteredQueryInvoker.class, Log.class);
+   private static final Log log = Log.getLog(ClusteredQueryInvoker.class);
 
    private final RpcManager rpcManager;
    private final LocalQueryStatistics queryStatistics;

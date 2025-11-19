@@ -47,7 +47,6 @@ import javax.security.sasl.SaslException;
 
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.io.SignedNumeric;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.tx.XidImpl;
@@ -103,7 +102,7 @@ import io.netty.util.concurrent.Future;
 public class HotRodClient implements Closeable {
    public static final int DEFAULT_TIMEOUT_SECONDS = 60;
 
-   private static final Log log = LogFactory.getLog(HotRodClient.class, Log.class);
+   private static final Log log = Log.getLog(HotRodClient.class);
    static final AtomicLong idCounter = new AtomicLong();
 
    final String host;
@@ -582,7 +581,7 @@ class ClientChannelInitializer implements NettyInitializer {
 class Encoder extends MessageToByteEncoder<Object> {
    private final byte protocolVersion;
 
-   private static final Log log = LogFactory.getLog(Encoder.class, Log.class);
+   private static final Log log = Log.getLog(Encoder.class);
 
    Encoder(byte protocolVersion) {
       this.protocolVersion = protocolVersion;
@@ -766,7 +765,7 @@ class Encoder extends MessageToByteEncoder<Object> {
 class Decoder extends ReplayingDecoder<Void> {
    private final HotRodClient client;
 
-   private static final Log log = LogFactory.getLog(Decoder.class, Log.class);
+   private static final Log log = Log.getLog(Decoder.class);
 
    Decoder(HotRodClient client) {
       this.client = client;
@@ -1160,7 +1159,7 @@ class Decoder extends ReplayingDecoder<Void> {
 }
 
 class ClientHandler extends ChannelInboundHandlerAdapter {
-   private static final Log log = LogFactory.getLog(ClientHandler.class, Log.class);
+   private static final Log log = Log.getLog(ClientHandler.class);
    private volatile boolean closed;
    final int rspTimeoutSeconds;
 

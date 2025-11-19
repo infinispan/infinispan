@@ -15,14 +15,13 @@ import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Ryan Emerson
  */
 class OracleTableManager extends AbstractTableManager {
 
-   private static final Log log = LogFactory.getLog(OracleTableManager.class, Log.class);
+   private static final Log log = Log.getLog(OracleTableManager.class);
 
    private static final String TIMESTAMP_INDEX_PREFIX = "IDX";
    private static final String SEGMENT_INDEX_PREFIX = "SDX";

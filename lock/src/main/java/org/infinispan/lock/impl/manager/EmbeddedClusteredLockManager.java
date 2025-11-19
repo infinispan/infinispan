@@ -7,7 +7,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -40,7 +39,7 @@ import org.infinispan.util.ByteString;
 @MBean(objectName = EmbeddedClusteredLockManager.OBJECT_NAME, description = "Component to manage clustered locks")
 public class EmbeddedClusteredLockManager implements ClusteredLockManager, Lifecycle {
    public static final String OBJECT_NAME = "ClusteredLockManager";
-   private static final Log log = LogFactory.getLog(EmbeddedClusteredLockManager.class, Log.class);
+   private static final Log log = Log.getLog(EmbeddedClusteredLockManager.class);
    public static final String FORCE_RELEASE = "forceRelease";
    public static final String REMOVE = "remove";
    public static final String IS_DEFINED = "isDefined";

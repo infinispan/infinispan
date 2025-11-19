@@ -32,7 +32,6 @@ import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * An extension of IndexedQueryImpl used for distributed queries.
@@ -42,7 +41,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
-   private static final Log log = LogFactory.getLog(DistributedIndexedQueryImpl.class, Log.class);
+   private static final Log log = Log.getLog(DistributedIndexedQueryImpl.class);
 
    private final ClusteredQueryInvoker invoker;
    private final Integer knn;

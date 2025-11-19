@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestAuthenticationConfiguration;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -51,7 +50,7 @@ import io.netty.handler.codec.http.cors.CorsConfig;
  */
 public class RestServer extends AbstractProtocolServer<RestServerConfiguration> {
 
-   private static final Log log = LogFactory.getLog(RestServer.class, Log.class);
+   private static final Log log = Log.getLog(RestServer.class);
    private static final int CROSS_ORIGIN_ALT_PORT = 9000;
 
    private RestDispatcher restDispatcher;

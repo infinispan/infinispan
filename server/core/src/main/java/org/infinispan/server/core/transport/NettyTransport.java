@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -55,7 +54,7 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
 @Scope(Scopes.SERVER)
 public class NettyTransport implements Transport {
 
-   private static final Log log = LogFactory.getLog(NettyTransport.class, Log.class);
+   private static final Log log = Log.getLog(NettyTransport.class);
    private static final boolean isLog4jAvailable = isIsLog4jAvailable();
    private final DefaultThreadFactory masterThreadFactory;
    private final DefaultThreadFactory ioThreadFactory;

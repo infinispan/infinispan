@@ -35,7 +35,7 @@ import com.thoughtworks.xstream.security.NoTypePermission;
  */
 public class XMLTranscoder extends OneToManyTranscoder {
 
-   private static final Log logger = LogFactory.getLog(XMLTranscoder.class, Log.class);
+   private static final Log logger = LogFactory.getLog(XMLTranscoder.class);
    private final ClassLoader classLoader;
    private final ClassAllowList allowList;
 

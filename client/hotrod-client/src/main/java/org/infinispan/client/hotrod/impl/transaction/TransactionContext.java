@@ -43,7 +43,7 @@ import jakarta.transaction.Transaction;
  */
 public class TransactionContext<K, V> {
 
-   private static final Log log = LogFactory.getLog(TransactionContext.class, Log.class);
+   private static final Log log = LogFactory.getLog(TransactionContext.class);
 
    private final Map<WrappedKey<K>, TransactionEntry<K, V>> entries;
    private final Function<K, byte[]> keyMarshaller;

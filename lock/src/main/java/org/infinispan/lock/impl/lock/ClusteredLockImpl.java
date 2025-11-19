@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
@@ -55,7 +54,7 @@ import org.infinispan.remoting.transport.Address;
  * @since 9.2
  */
 public class ClusteredLockImpl implements ClusteredLock {
-   private static final Log log = LogFactory.getLog(ClusteredLockImpl.class, Log.class);
+   private static final Log log = Log.getLog(ClusteredLockImpl.class);
 
    private final String name;
    private final ClusteredLockKey lockKey;

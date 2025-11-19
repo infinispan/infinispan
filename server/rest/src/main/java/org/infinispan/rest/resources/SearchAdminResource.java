@@ -37,7 +37,6 @@ import org.infinispan.rest.logging.Log;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -46,7 +45,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  */
 public class SearchAdminResource implements ResourceHandler {
 
-   private static final Log LOG = LogFactory.getLog(SearchAdminResource.class, Log.class);
+   private static final Log LOG = Log.getLog(SearchAdminResource.class);
 
    private final InvocationHelper invocationHelper;
 

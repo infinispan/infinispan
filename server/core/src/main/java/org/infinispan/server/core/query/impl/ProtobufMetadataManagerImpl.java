@@ -16,7 +16,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.internal.InternalCacheNames;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.UserContextInitializerImpl;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
@@ -69,7 +68,7 @@ import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 @Scope(Scopes.GLOBAL)
 public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManager {
 
-   private static final Log log = LogFactory.getLog(ProtobufMetadataManagerImpl.class, Log.class);
+   private static final Log log = Log.getLog(ProtobufMetadataManagerImpl.class);
 
    private SerializationContext serCtx;
 

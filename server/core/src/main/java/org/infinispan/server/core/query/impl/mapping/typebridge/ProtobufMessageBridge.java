@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.hibernate.search.engine.backend.document.DocumentElement;
 import org.hibernate.search.mapper.pojo.bridge.TypeBridge;
 import org.hibernate.search.mapper.pojo.bridge.runtime.TypeBridgeWriteContext;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.server.core.query.impl.indexing.IndexingTagHandler;
@@ -14,7 +13,7 @@ import org.infinispan.server.core.query.impl.mapping.reference.IndexReferenceHol
 
 public class ProtobufMessageBridge implements TypeBridge<byte[]> {
 
-   private static final Log log = LogFactory.getLog(ProtobufKeyValueBridge.class, Log.class);
+   private static final Log log = Log.getLog(ProtobufKeyValueBridge.class);
 
    private final IndexReferenceHolder indexReferenceHolder;
    private final Descriptor descriptor;

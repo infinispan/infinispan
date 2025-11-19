@@ -2,7 +2,6 @@ package org.infinispan.tasks.manager.impl;
 
 import static org.infinispan.tasks.manager.logging.Messages.MESSAGES;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,7 +30,6 @@ import org.infinispan.tasks.manager.logging.Log;
 import org.infinispan.tasks.manager.spi.NonBlockingTaskEngine;
 import org.infinispan.tasks.manager.spi.TaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
@@ -47,7 +45,7 @@ import io.reactivex.rxjava3.core.Maybe;
  */
 @Scope(Scopes.GLOBAL)
 public class TaskManagerImpl implements TaskManager {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(TaskManagerImpl.class);
 
    @Inject EmbeddedCacheManager cacheManager;
    @Inject TimeService timeService;

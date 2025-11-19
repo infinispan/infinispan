@@ -29,7 +29,7 @@ import org.infinispan.protostream.SerializationContext;
  */
 public final class MarshallerUtil {
 
-   private static final Log log = LogFactory.getLog(MarshallerUtil.class, Log.class);
+   private static final Log log = LogFactory.getLog(MarshallerUtil.class);
 
    private MarshallerUtil() {
    }

@@ -23,7 +23,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.BaseCacheStream;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.time.TimeServiceTicker;
 import org.infinispan.commons.util.IntSets;
@@ -122,7 +121,7 @@ class DefaultIterationState implements IterationState, Closeable {
 
 public class DefaultIterationManager implements IterationManager {
 
-   private static final Log log = LogFactory.getLog(DefaultIterationManager.class, Log.class);
+   private static final Log log = Log.getLog(DefaultIterationManager.class);
 
    private final com.github.benmanes.caffeine.cache.Cache<String, DefaultIterationState> iterationStateMap;
    private static final AtomicLong globalIterationId = new AtomicLong(0);

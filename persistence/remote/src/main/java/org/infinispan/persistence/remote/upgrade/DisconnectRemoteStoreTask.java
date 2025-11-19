@@ -13,7 +13,6 @@ import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Cluster task to remove the remote store from a set a caches
@@ -23,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
 @ProtoTypeId(ProtoStreamTypeIds.REMOTE_STORE_DISCONNECT)
 public class DisconnectRemoteStoreTask implements Function<EmbeddedCacheManager, Void> {
 
-   private static final Log log = LogFactory.getLog(DisconnectRemoteStoreTask.class, Log.class);
+   private static final Log log = Log.getLog(DisconnectRemoteStoreTask.class);
 
    @ProtoField(1)
    final String cacheName;

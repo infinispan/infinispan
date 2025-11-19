@@ -6,7 +6,6 @@ import org.hibernate.search.engine.backend.document.DocumentElement;
 import org.hibernate.search.engine.backend.document.IndexObjectFieldReference;
 import org.hibernate.search.mapper.pojo.bridge.TypeBridge;
 import org.hibernate.search.mapper.pojo.bridge.runtime.TypeBridgeWriteContext;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.server.core.query.impl.indexing.IndexingTagHandler;
@@ -16,7 +15,7 @@ import org.infinispan.server.core.query.impl.mapping.type.ProtobufKeyValuePair;
 
 public class ProtobufKeyValueBridge implements TypeBridge<ProtobufKeyValuePair> {
 
-   private static final Log log = LogFactory.getLog(ProtobufKeyValueBridge.class, Log.class);
+   private static final Log log = Log.getLog(ProtobufKeyValueBridge.class);
 
    private final IndexReferenceHolder indexReferenceHolder;
    private final String keyPropertyName;

@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.descriptors.AnnotationElement;
@@ -33,7 +32,7 @@ import org.infinispan.query.mapper.mapping.impl.DefaultAnalysisConfigurer;
  */
 public final class Search5MetadataCreator implements AnnotationMetadataCreator<IndexingMetadata, Descriptor> {
 
-   private static final Log log = LogFactory.getLog(Search5MetadataCreator.class, Log.class);
+   private static final Log log = Log.getLog(Search5MetadataCreator.class);
 
    @Override
    public IndexingMetadata create(Descriptor descriptor, AnnotationElement.Annotation annotation) {

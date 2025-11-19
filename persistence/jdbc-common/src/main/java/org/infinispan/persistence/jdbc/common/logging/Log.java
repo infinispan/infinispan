@@ -33,6 +33,10 @@ public interface Log extends BasicLogger {
    Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "CONFIG");
    Log PERSISTENCE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "PERSISTENCE");
 
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
    @LogMessage(level = ERROR)
    @Message(value = "Failed clearing cache store", id = 8001)
    void failedClearingJdbcCacheStore(@Cause Throwable t);

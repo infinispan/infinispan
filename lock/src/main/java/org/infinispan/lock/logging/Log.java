@@ -2,8 +2,11 @@ package org.infinispan.lock.logging;
 
 import static org.jboss.logging.Logger.Level.INFO;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.lock.exception.ClusteredLockException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -17,6 +20,10 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 16001, max = 17000)
 public interface Log extends BasicLogger {
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
    String LOCK_DELETE_MSG = "The lock was deleted.";
    String UNLOCK_FAILED_MSG = "LOCK[%s] Unlock failed from node %s";
 

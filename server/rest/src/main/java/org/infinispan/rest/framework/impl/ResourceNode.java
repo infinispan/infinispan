@@ -14,7 +14,6 @@ import org.infinispan.rest.framework.LookupResult;
 import org.infinispan.rest.framework.LookupResult.Status;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Tree structure where leaf is associated with one or more {@link Invocation}.
@@ -23,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 class ResourceNode {
 
-   private static final Log logger = LogFactory.getLog(ResourceNode.class, Log.class);
+   private static final Log logger = Log.getLog(ResourceNode.class);
    public static final StringPathItem WILDCARD_PATH = new StringPathItem("*");
 
    private final PathItem pathItem;

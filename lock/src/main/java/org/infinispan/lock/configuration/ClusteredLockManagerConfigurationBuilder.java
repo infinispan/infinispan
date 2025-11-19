@@ -9,9 +9,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.lock.logging.Log;
 
 /**
  * The {@link org.infinispan.lock.api.ClusteredLockManager} configuration builder.
@@ -25,7 +23,6 @@ public class ClusteredLockManagerConfigurationBuilder implements Builder<Cluster
 
    private static final ClusteredLockManagerConfiguration DEFAULT = new ClusteredLockManagerConfigurationBuilder(null).create();
 
-   private static final Log log = LogFactory.getLog(ClusteredLockManagerConfigurationBuilder.class, Log.class);
    private final AttributeSet attributes = ClusteredLockManagerConfiguration.attributeDefinitionSet();
    private final List<ClusteredLockConfigurationBuilder> locksConfig = new ArrayList<>();
 
