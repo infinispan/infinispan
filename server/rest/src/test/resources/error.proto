@@ -2,5 +2,5 @@ package org.infinispan.rest.search.error;
 
 messoge Error {
 
-    string street = -1;
+   string street = -1;
 }

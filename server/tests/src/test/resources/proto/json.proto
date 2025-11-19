@@ -1,5 +1,5 @@
 package proto;
 
 message JSON {
-  optional string key = 1;
+   optional string key = 1;
 }

@@ -5,15 +5,15 @@ package org.infinispan.rest.search.entity;
  */
 message Address {
 
-  /**
-   * @Text(projectable = true)
-   */
-  required string street = 1;
+   /**
+    * @Text(projectable = true)
+    */
+   required string street = 1;
 
-  /**
-   * @Basic(projectable = true)
-   */
-  required string postCode = 2;
+   /**
+    * @Basic(projectable = true)
+    */
+   required string postCode = 2;
 }
 
 /**
@@ -21,10 +21,10 @@ message Address {
  */
 message PhoneNumber {
 
-  /**
-   * @Basic(projectable = true)
-   */
-  required string number = 1;
+   /**
+    * @Basic(projectable = true)
+    */
+   required string number = 1;
 }
 
 /**
@@ -32,48 +32,48 @@ message PhoneNumber {
  */
 message Person {
 
-  /**
+   /**
+    * @Basic(projectable = true)
+    */
+   optional int32 id = 1;
+
+   /**
+    * @Basic(projectable = true, sortable = true)
+    */
+   required string name = 2;
+
+   /**
+    * @Basic(projectable = true)
+    */
+   required string surname = 3;
+
+   enum Gender {
+      MALE = 0;
+      FEMALE = 1;
+   }
+
+   /**
+    * @Basic(projectable = true)
+    */
+   optional Gender gender = 4;
+
+   /**
+    * @Embedded
+    */
+   optional Address address = 5;
+
+   /**
+    * @Embedded
+    */
+   repeated PhoneNumber phoneNumbers = 6;
+
+   /**
+    * @Basic(projectable = true)
+    */
+   optional uint32 age = 7;
+
+   /**
    * @Basic(projectable = true)
    */
-  optional int32 id = 1;
-
-  /**
-   * @Basic(projectable = true, sortable = true)
-   */
-  required string name = 2;
-
-  /**
-   * @Basic(projectable = true)
-   */
-  required string surname = 3;
-
-  enum Gender {
-    MALE = 0;
-    FEMALE = 1;
-  }
-
-  /**
-   * @Basic(projectable = true)
-   */
-  optional Gender gender = 4;
-
-  /**
-   * @Embedded
-   */
-  optional Address address = 5;
-
-  /**
-   * @Embedded
-   */
-  repeated PhoneNumber phoneNumbers = 6;
-
-  /**
-   * @Basic(projectable = true)
-   */
-  optional uint32 age = 7;
-
-  /**
-  * @Basic(projectable = true)
-  */
-  optional string newField = 8;
+   optional string newField = 8;
 }

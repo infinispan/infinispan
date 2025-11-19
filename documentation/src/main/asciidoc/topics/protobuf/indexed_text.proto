@@ -1,4 +1,4 @@
 /**
   * @Text(projectable = true)
   */
-required string street = 1;
+   required string street = 1;
