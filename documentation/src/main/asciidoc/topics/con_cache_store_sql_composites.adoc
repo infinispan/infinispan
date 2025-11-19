@@ -27,7 +27,7 @@ For the value, {brandname} requires a Protobuf schema that maps the `title` colu
 
 [source,protobuf,options="nowrap",subs=attributes+]
 ----
-include::protobuf/books_composite_values.protobuf[]
+include::protobuf/books_composite_values.proto[]
 ----
 
 [discrete]
@@ -44,7 +44,7 @@ For both the key and the value, {brandname} requires a Protobuf schema that maps
 
 [source,protobuf,options="nowrap",subs=attributes+]
 ----
-include::protobuf/books_composite_keys_values.protobuf[]
+include::protobuf/books_composite_keys_values.proto[]
 ----
 
 [role="_additional-resources"]

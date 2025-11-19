@@ -76,5 +76,5 @@ For example, the following schema uses the `@Text` annotation:
 +
 [source,java,options="nowrap",subs=attributes+]
 ----
-include::protobuf/indexed_text.protobuf[]
+include::protobuf/indexed_text.proto[]
 ----
