@@ -11,6 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @since 7.2
  */
 public class CacheScriptArguments {
+   // TODO: remove me?
    private final JsonNode systemInput;
    private final JsonNode userInput;
    private final Cache<?, ?> cache;
