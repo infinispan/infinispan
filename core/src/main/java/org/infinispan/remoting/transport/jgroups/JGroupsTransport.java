@@ -498,11 +498,11 @@ public class JGroupsTransport implements Transport {
       TransportConfiguration transportCfg = configuration.transport();
       if (RaftUtil.isRaftAvailable()) {
          if (transportCfg.nodeName() == null || transportCfg.nodeName().isEmpty()) {
-            log.raftProtocolUnavailable("transport.node-name is not set.");
+            log.debugf("RAFT protocol is not available. Reason: transport.node-name is not configured.");
             return;
          }
          if (transportCfg.raftMembers().isEmpty()) {
-            log.raftProtocolUnavailable("transport.raft-members is not set.");
+            log.debugf("RAFT protocol is not available. Reason: transport.raft-members is not configured.");
             return;
          }
          // HACK!
