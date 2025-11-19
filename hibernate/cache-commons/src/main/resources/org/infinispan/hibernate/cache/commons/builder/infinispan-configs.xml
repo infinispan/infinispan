@@ -5,7 +5,7 @@
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
    <jgroups>
-      <stack-file name="hibernate-jgroups" path="${hibernate.cache.infinispan.jgroups_cfg:default-configs/default-jgroups-tcp.xml}"/>
+      <stack-file name="hibernate-jgroups" path="${hibernate.cache.infinispan.jgroups_cfg:org/infinispan/configuration/default-jgroups-tcp.xml}"/>
    </jgroups>
 
    <cache-container name="SampleCacheManager" statistics="false" default-cache="the-default-cache" shutdown-hook="DEFAULT">
