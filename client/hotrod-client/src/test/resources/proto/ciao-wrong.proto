@@ -7,12 +7,12 @@ package org.infinispan;
  */
 message author {
 
-  /**
-   * @Text(sortable = true)
-   */
-  required string name = 1;
+   /**
+    * @Text(sortable = true)
+    */
+   required string name = 1;
 
-  reserved "age";
-  reserved 2;
+   reserved "age";
+   reserved 2;
 
 }

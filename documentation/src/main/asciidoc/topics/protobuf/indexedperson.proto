@@ -3,16 +3,16 @@ package org.infinispan.example;
 /* @Indexed */
 message Person {
 
-    /* @Basic */
-    optional int32 id = 1;
+   /* @Basic */
+   optional int32 id = 1;
 
-    /* @Keyword(projectable = true) */
-    required string name = 2;
+   /* @Keyword(projectable = true) */
+   required string name = 2;
 
-    /* @Keyword(projectable = true) */
-    required string surname = 3;
+   /* @Keyword(projectable = true) */
+   required string surname = 3;
 
-    /* @Basic(projectable = true, sortable = true) */
-    optional int32 age = 6;
+   /* @Basic(projectable = true, sortable = true) */
+   optional int32 age = 6;
 
 }

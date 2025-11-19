@@ -3,19 +3,19 @@ package book_sample;
 /* @Indexed */
 message Book {
 
-    /* @Text(projectable = true) */
-    optional string title = 1;
+   /* @Text(projectable = true) */
+   optional string title = 1;
 
-    /* @Text(projectable = true) */
-    optional string description = 2;
+   /* @Text(projectable = true) */
+   optional string description = 2;
 
-    // no native Date type available in Protobuf
-    optional int32 publicationYear = 3;
+   // no native Date type available in Protobuf
+   optional int32 publicationYear = 3;
 
-    repeated Author authors = 4;
+   repeated Author authors = 4;
 }
 
 message Author {
-    optional string name = 1;
-    optional string surname = 2;
+   optional string name = 1;
+   optional string surname = 2;
 }
