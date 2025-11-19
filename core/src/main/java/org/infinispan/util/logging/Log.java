@@ -2288,9 +2288,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    void errorCreatingForkChannel(String name, @Cause Throwable throwable);
 
-   @Message(value = "RAFT protocol is not available. Reason: %s", id = 671)
-   @LogMessage(level = WARN)
-   void raftProtocolUnavailable(String reason);
+//   @Message(value = "RAFT protocol is not available. Reason: %s", id = 671)
+//   @LogMessage(level = WARN)
+//   void raftProtocolUnavailable(String reason);
 
    @Message(value = "RAFT protocol is available.", id = 672)
    @LogMessage(level = INFO)
