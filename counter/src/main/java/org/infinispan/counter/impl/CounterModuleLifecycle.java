@@ -32,7 +32,6 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * It registers a {@link EmbeddedCounterManager} to each {@link EmbeddedCacheManager} started and starts the cache on
@@ -45,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
 public class CounterModuleLifecycle implements ModuleLifecycle {
 
    public static final String COUNTER_CACHE_NAME = "org.infinispan.COUNTER";
-   private static final Log log = LogFactory.getLog(CounterModuleLifecycle.class, Log.class);
+   private static final Log log = Log.getLog(CounterModuleLifecycle.class);
 
    private static Configuration createCounterCacheConfiguration(CounterManagerConfiguration config) {
       ConfigurationBuilder builder = new ConfigurationBuilder();

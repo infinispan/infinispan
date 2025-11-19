@@ -1,6 +1,5 @@
 package org.infinispan.server.core.admin;
 
-import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,7 +13,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Common base for admin server tasks
@@ -24,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 
 public abstract class AdminServerTask<T> implements Task {
-   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   protected static final Log log = Log.getLog(AdminServerTask.class);
 
    @Override
    public final String getName() {

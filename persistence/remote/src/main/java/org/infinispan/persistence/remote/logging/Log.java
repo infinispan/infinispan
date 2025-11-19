@@ -26,6 +26,10 @@ import org.jboss.logging.annotations.ValidIdRange;
 public interface Log extends BasicLogger {
    Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONFIG");
 
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
    @Message(value = "Cannot enable HotRod wrapping if a marshaller and/or an entryWrapper have already been set", id = 10005)
    CacheConfigurationException cannotEnableHotRodWrapping();
 

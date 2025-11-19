@@ -93,7 +93,7 @@ import io.reactivex.rxjava3.core.Single;
  */
 public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements InternalRemoteCache<K, V> {
 
-   private static final Log log = LogFactory.getLog(RemoteCacheImpl.class, Log.class);
+   private static final Log log = LogFactory.getLog(RemoteCacheImpl.class);
 
    protected final String name;
    protected final byte[] nameBytes;

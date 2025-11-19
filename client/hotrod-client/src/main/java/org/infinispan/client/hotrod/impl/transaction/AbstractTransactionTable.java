@@ -25,7 +25,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  */
 abstract class AbstractTransactionTable implements TransactionTable {
 
-   private static final Log log = LogFactory.getLog(AbstractTransactionTable.class, Log.class);
+   private static final Log log = LogFactory.getLog(AbstractTransactionTable.class);
 
    private final long timeout;
    private volatile ManagerOperationsFactory operationFactory;

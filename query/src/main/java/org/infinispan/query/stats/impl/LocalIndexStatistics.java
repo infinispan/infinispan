@@ -29,7 +29,6 @@ import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.mapper.scope.SearchScope;
 import org.infinispan.query.mapper.session.SearchSession;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A {@link IndexStatistics} for an indexed Cache.
@@ -39,7 +38,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class LocalIndexStatistics implements IndexStatistics {
 
-   private static final Log log = LogFactory.getLog(LocalIndexStatistics.class, Log.class);
+   private static final Log log = Log.getLog(LocalIndexStatistics.class);
 
    @Inject
    SearchMapping searchMapping;

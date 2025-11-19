@@ -5,7 +5,6 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -31,7 +30,7 @@ import javax.security.auth.Subject;
  * @since 14.0
  */
 public class RespTestingUtil {
-   private static final Log log = LogFactory.getLog(RespTestingUtil.class, Log.class);
+   private static final Log log = Log.getLog(RespTestingUtil.class);
 
    public static final Subject ADMIN;
    public static final String USERNAME = "default";

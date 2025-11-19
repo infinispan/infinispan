@@ -32,7 +32,6 @@ import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.commons.util.concurrent.CompletionStages;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A base class to complete a transaction (commit or rollback).
@@ -54,7 +53,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 abstract class BaseCompleteTransactionOperation<C1 extends TransactionBoundaryCommand, C2 extends CacheRpcCommand> implements CacheNameCollector, Runnable {
 
-   private static final Log log = LogFactory.getLog(BaseCompleteTransactionOperation.class, Log.class);
+   private static final Log log = Log.getLog(BaseCompleteTransactionOperation.class);
 
    final XidImpl xid;
    final GlobalTxTable globalTxTable;

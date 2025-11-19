@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -24,7 +23,7 @@ import org.infinispan.util.concurrent.BlockingManager;
  */
 public class ContainerResourceFactory {
 
-   private static final Log log = LogFactory.getLog(ContainerResourceFactory.class, Log.class);
+   private static final Log log = Log.getLog(ContainerResourceFactory.class);
 
    public static Collection<ContainerResource> getResources(BackupManager.Resources params, BlockingManager blockingManager,
                                                             EmbeddedCacheManager cm, GlobalComponentRegistry gcr, ParserRegistry parserRegistry,

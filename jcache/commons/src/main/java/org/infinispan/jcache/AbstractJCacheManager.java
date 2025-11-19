@@ -17,7 +17,6 @@ import javax.cache.configuration.Configuration;
 import javax.cache.spi.CachingProvider;
 
 import org.infinispan.commons.api.BasicCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -27,7 +26,7 @@ import org.infinispan.jcache.logging.Log;
  * @author Galder Zamarreño
  */
 public abstract class AbstractJCacheManager implements CacheManager {
-   private static final Log log = LogFactory.getLog(AbstractJCacheManager.class, Log.class);
+   private static final Log log = Log.getLog(AbstractJCacheManager.class);
 
    private final URI uri;
    private final CachingProvider provider;

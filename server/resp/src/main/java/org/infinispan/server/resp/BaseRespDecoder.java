@@ -5,14 +5,13 @@ import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.server.resp.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
 public abstract class BaseRespDecoder extends ByteToMessageDecoder {
-   protected static final Log log = LogFactory.getLog(BaseRespDecoder.class, Log.class);
+   protected static final Log log = Log.getLog(BaseRespDecoder.class);
    protected final Intrinsics.Resp2LongProcessor longProcessor = new Intrinsics.Resp2LongProcessor();
    protected final int maxContentLength;
    // And this is the ByteBuf pos before decode is performed

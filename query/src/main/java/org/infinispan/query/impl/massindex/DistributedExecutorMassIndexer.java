@@ -24,7 +24,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.util.function.TriConsumer;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author gustavonalle
@@ -35,7 +34,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class DistributedExecutorMassIndexer implements Indexer {
 
-   private static final Log LOG = LogFactory.getLog(DistributedExecutorMassIndexer.class, Log.class);
+   private static final Log LOG = Log.getLog(DistributedExecutorMassIndexer.class);
 
    private final AdvancedCache<?, ?> cache;
    private final IndexUpdater indexUpdater;

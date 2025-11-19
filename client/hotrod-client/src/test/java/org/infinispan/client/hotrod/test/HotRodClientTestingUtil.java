@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.marshall.Marshaller;
@@ -33,7 +34,6 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.AssertJUnit;
 
 import javax.management.ObjectName;
@@ -62,7 +62,7 @@ import static org.testng.AssertJUnit.fail;
  */
 public class HotRodClientTestingUtil {
 
-   private static final Log log = LogFactory.getLog(HotRodClientTestingUtil.class, Log.class);
+   private static final Log log = LogFactory.getLog(HotRodClientTestingUtil.class);
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, HotRodServerConfigurationBuilder builder) {
       return startHotRodServer(cacheManager, findFreePort(), builder);
    }

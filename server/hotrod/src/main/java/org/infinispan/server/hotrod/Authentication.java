@@ -7,7 +7,6 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.core.configuration.SaslAuthenticationConfiguration;
 import org.infinispan.server.core.security.sasl.SaslAuthenticator;
 import org.infinispan.server.core.security.sasl.SubjectSaslServer;
@@ -27,7 +26,7 @@ import io.netty.channel.ChannelFuture;
  * @since 9.0
  */
 public class Authentication extends BaseRequestProcessor {
-   private static final Log log = LogFactory.getLog(Authentication.class, Log.class);
+   private static final Log log = Log.getLog(Authentication.class);
    private static final Subject ANONYMOUS = new Subject();
 
    public static final String HOTROD_SASL_PROTOCOL = "hotrod";

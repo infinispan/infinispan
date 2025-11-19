@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.time.TimeServiceTicker;
 import org.infinispan.commons.util.ByRef;
@@ -19,7 +18,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 public class StreamingManager {
-   private static final Log log = LogFactory.getLog(StreamingManager.class, Log.class);
+   private static final Log log = Log.getLog(StreamingManager.class);
    private static final AtomicInteger globalIterationId = new AtomicInteger();
 
    private final Map<Integer, StreamingState> iterationStateMap;

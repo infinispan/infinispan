@@ -1,6 +1,5 @@
 package org.infinispan.counter.impl.function;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
@@ -20,7 +19,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.COUNTER_FUNCTION_ADD)
 public final class AddFunction<K extends CounterKey> extends BaseFunction<K, CounterValue> {
 
-   private static final Log log = LogFactory.getLog(AddFunction.class, Log.class);
+   private static final Log log = Log.getLog(AddFunction.class);
 
    @ProtoField(1)
    final long delta;

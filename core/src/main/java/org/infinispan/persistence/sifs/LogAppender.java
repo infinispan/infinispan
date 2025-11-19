@@ -1,6 +1,5 @@
 package org.infinispan.persistence.sifs;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -15,7 +14,6 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.concurrent.NonBlockingManager;
-import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
@@ -23,7 +21,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class LogAppender implements Consumer<LogAppender.WriteOperation> {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(LogAppender.class);
 
    private final NonBlockingManager nonBlockingManager;
    private final Index index;

@@ -56,7 +56,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
  */
 public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<Configuration> {
 
-   private static final Log log = LogFactory.getLog(ConfigurationBuilder.class, Log.class);
+   private static final Log log = LogFactory.getLog(ConfigurationBuilder.class);
 
    // Match IPv4 (host:port) or IPv6 ([host]:port) addresses
    private static final Pattern ADDRESS_PATTERN = Pattern

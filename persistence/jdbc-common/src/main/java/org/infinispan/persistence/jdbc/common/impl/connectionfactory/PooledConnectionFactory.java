@@ -12,7 +12,6 @@ import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFact
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.logging.LogFactory;
 
 import io.agroal.api.AgroalDataSource;
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
@@ -31,7 +30,7 @@ import io.agroal.api.security.SimplePassword;
 public class PooledConnectionFactory extends ConnectionFactory {
 
    private static final String PROPERTIES_PREFIX = "org.infinispan.agroal.";
-   private static final Log log = LogFactory.getLog(PooledConnectionFactory.class, Log.class);
+   private static final Log log = Log.getLog(PooledConnectionFactory.class);
 
    private AgroalDataSource dataSource;
 

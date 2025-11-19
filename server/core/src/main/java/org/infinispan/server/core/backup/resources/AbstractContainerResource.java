@@ -3,7 +3,6 @@ package org.infinispan.server.core.backup.resources;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -13,7 +12,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.server.core.BackupManager;
@@ -23,7 +21,7 @@ import org.infinispan.util.concurrent.BlockingManager;
 
 abstract class AbstractContainerResource implements ContainerResource {
 
-   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   protected static final Log log = Log.getLog(AbstractContainerResource.class);
 
    protected final BackupManager.Resources.Type type;
    protected final BackupManager.Resources params;

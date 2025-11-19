@@ -41,7 +41,6 @@ import org.infinispan.security.impl.Authorizer;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.manager.TaskManager;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 
 
 /**
@@ -52,7 +51,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.GLOBAL)
 public class ScriptingManagerImpl implements ScriptingManager {
-   private static final Log log = LogFactory.getLog(ScriptingManagerImpl.class, Log.class);
+   private static final Log log = Log.getLog(ScriptingManagerImpl.class);
    private static final ThreadLocal<Integer> RUNNING_IN_SCRIPT = ThreadLocal.withInitial(() -> 0);
 
    @Inject

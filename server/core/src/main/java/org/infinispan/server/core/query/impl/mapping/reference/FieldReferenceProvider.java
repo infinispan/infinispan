@@ -21,7 +21,6 @@ import org.hibernate.search.engine.backend.types.dsl.ScaledNumberIndexFieldTypeO
 import org.hibernate.search.engine.backend.types.dsl.StandardIndexFieldTypeOptionsStep;
 import org.hibernate.search.engine.backend.types.dsl.StringIndexFieldTypeOptionsStep;
 import org.hibernate.search.engine.backend.types.dsl.VectorFieldTypeOptionsStep;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
@@ -30,7 +29,7 @@ import org.infinispan.server.core.query.impl.logging.Log;
 
 public class FieldReferenceProvider {
 
-   private static final Log log = LogFactory.getLog(FieldReferenceProvider.class, Log.class);
+   private static final Log log = Log.getLog(FieldReferenceProvider.class);
 
    public static final String INFINISPAN_COMMON_TYPES_GROUP = "org.infinispan.protostream.commons.";
 

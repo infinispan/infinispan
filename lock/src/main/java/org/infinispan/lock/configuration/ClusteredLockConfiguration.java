@@ -2,7 +2,6 @@ package org.infinispan.lock.configuration;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.lock.logging.Log;
 
 /**
@@ -13,7 +12,7 @@ import org.infinispan.lock.logging.Log;
  */
 public class ClusteredLockConfiguration {
 
-   private static final Log log = LogFactory.getLog(ClusteredLockConfiguration.class, Log.class);
+   private static final Log log = Log.getLog(ClusteredLockConfiguration.class);
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class)
          .validator(value -> {
             if (value == null) {

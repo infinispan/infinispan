@@ -1,7 +1,10 @@
 package org.infinispan.scripting.logging;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.commons.CacheException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
@@ -16,6 +19,10 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 27501, max = 28000)
 public interface Log extends BasicLogger {
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
 //   @LogMessage(level = ERROR)
 //   @Message(value = "Could not register interpreter MBean", id = 27501)
 //   void jmxRegistrationFailed();

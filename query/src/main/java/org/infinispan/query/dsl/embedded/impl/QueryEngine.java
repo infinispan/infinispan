@@ -55,7 +55,6 @@ import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.objectfilter.impl.syntax.parser.RowPropertyHelper;
 import org.infinispan.util.function.SerializableFunction;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Adds indexing capability to the light (index-less) QueryEngine from query-core module.
@@ -65,7 +64,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.QueryEngine<TypeMetadata> {
 
-   private static final Log log = LogFactory.getLog(QueryEngine.class, Log.class);
+   private static final Log log = Log.getLog(QueryEngine.class);
 
    private static final int MAX_EXPANSION_COFACTORS = 16;
 

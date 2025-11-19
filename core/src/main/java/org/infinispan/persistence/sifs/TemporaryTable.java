@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.IntConsumer;
 
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -18,7 +17,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class TemporaryTable {
-   private static final Log log = LogFactory.getLog(TemporaryTable.class, Log.class);
+   private static final Log log = Log.getLog(TemporaryTable.class);
    private final AtomicReferenceArray<ConcurrentMap<Object, Entry>> table;
 
    public TemporaryTable(int numSegments) {

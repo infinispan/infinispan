@@ -2,7 +2,6 @@ package org.infinispan.counter.impl.function;
 
 import java.io.Serializable;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
@@ -21,7 +20,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.COUNTER_FUNCTION_SET)
 public final class SetFunction<K extends CounterKey> extends BaseFunction<K, Object> implements Serializable {
-   private static final Log log = LogFactory.getLog(SetFunction.class, Log.class);
+   private static final Log log = Log.getLog(SetFunction.class);
 
    @ProtoField(1)
    final long value;

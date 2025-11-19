@@ -9,12 +9,11 @@ import javax.security.auth.Subject;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.Channel;
 
 class MultimapRequestProcessor extends BaseRequestProcessor {
-   private static final Log log = LogFactory.getLog(MultimapRequestProcessor.class, Log.class);
+   private static final Log log = Log.getLog(MultimapRequestProcessor.class);
 
    MultimapRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -23,7 +22,7 @@ import org.infinispan.server.hotrod.logging.Log;
 class CrashedMemberDetectorListener {
    private final Cache<Address, ServerAddress> addressCache;
 
-   private static final Log log = LogFactory.getLog(CrashedMemberDetectorListener.class, Log.class);
+   private static final Log log = Log.getLog(CrashedMemberDetectorListener.class);
 
    CrashedMemberDetectorListener(Cache<Address, ServerAddress> cache, HotRodServer server) {
       // Let all nodes remove the address from their own cache locally.

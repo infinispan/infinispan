@@ -2,7 +2,6 @@ package org.infinispan.rest.operations.mediatypes;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.rest.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Represents Charset.
@@ -22,7 +21,7 @@ public class Charset {
 
    private static final String CHARSET_HEADER = "charset=";
 
-   protected static final Log logger = LogFactory.getLog(Charset.class, Log.class);
+   protected static final Log logger = Log.getLog(Charset.class);
 
    private final java.nio.charset.Charset javaCharset;
    private final String charset;

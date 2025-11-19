@@ -30,7 +30,6 @@ import org.infinispan.cdi.common.util.DefaultLiteral;
 import org.infinispan.cdi.common.util.Reflections;
 import org.infinispan.cdi.embedded.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.cdi.embedded.util.logging.EmbeddedLog;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -47,7 +46,7 @@ public class InfinispanExtensionEmbedded implements Extension {
 
    private static final String CACHE_NAME = "CDIExtensionDefaultCacheManager";
 
-   private static final EmbeddedLog LOGGER = LogFactory.getLog(InfinispanExtensionEmbedded.class, EmbeddedLog.class);
+   private static final EmbeddedLog LOGGER = EmbeddedLog.getLog(InfinispanExtensionEmbedded.class);
 
    private final Set<ConfigurationHolder> configurations;
 

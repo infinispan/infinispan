@@ -25,6 +25,10 @@ import org.jboss.logging.annotations.ValidIdRange;
 public interface Log extends BasicLogger {
     Log SERVER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "SERVER");
 
+    static Log getLog(Class<?> clazz) {
+        return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+    }
+
     @Message(value = "Could not find matching route", id = 15002)
     IllegalArgumentException noRouteFound();
 

@@ -28,7 +28,6 @@ import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * It commits a transaction in all involved caches.
@@ -38,7 +37,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class CommitTransactionOperation extends BaseCompleteTransactionOperation<TransactionBoundaryCommand, ForwardCommitCommand> {
 
-   private static final Log log = LogFactory.getLog(CommitTransactionOperation.class, Log.class);
+   private static final Log log = Log.getLog(CommitTransactionOperation.class);
 
    //TODO check if this class can implement the BiFunction interface!
    private final BiFunction<?, Throwable, Void> handler = (ignored, throwable) -> {

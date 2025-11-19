@@ -64,7 +64,6 @@ import org.infinispan.query.mapper.work.SearchIndexer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
-import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -82,7 +81,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * @since 4.0
  */
 public final class QueryInterceptor extends DDAsyncInterceptor {
-   private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
+   private static final Log log = Log.getLog(QueryInterceptor.class);
 
    static final Object UNKNOWN = new Object() {
       @Override

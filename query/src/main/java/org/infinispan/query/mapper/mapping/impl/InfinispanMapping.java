@@ -40,12 +40,11 @@ import org.infinispan.query.mapper.session.impl.InfinispanSearchSessionMappingCo
 import org.infinispan.query.mapper.work.SearchIndexer;
 import org.infinispan.query.mapper.work.impl.SearchIndexerImpl;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 
 public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapping>
       implements SearchMapping, InfinispanSearchSessionMappingContext, EntityReferenceFactory {
 
-   private static final Log log = LogFactory.getLog(InfinispanMapping.class, Log.class);
+   private static final Log log = Log.getLog(InfinispanMapping.class);
 
    private final InfinispanTypeContextContainer typeContextContainer;
    private final EntityLoaderFactory<?> entityLoader;

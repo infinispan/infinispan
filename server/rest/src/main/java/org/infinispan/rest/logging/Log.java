@@ -36,6 +36,10 @@ import org.jboss.logging.annotations.ValidIdRange;
 public interface Log extends BasicLogger {
    Log REST = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "REST");
 
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
 //   @Message(value = "Error transcoding content", id = 495)
 //   EncodingException errorTranscoding(@Cause Throwable cause);
 

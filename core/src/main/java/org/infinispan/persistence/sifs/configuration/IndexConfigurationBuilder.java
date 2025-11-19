@@ -10,14 +10,13 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.persistence.sifs.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @since 10.0
  */
 public class IndexConfigurationBuilder implements Builder<IndexConfiguration> {
 
-   private static final Log log = LogFactory.getLog(IndexConfigurationBuilder.class, Log.class);
+   private static final Log log = Log.getLog(IndexConfigurationBuilder.class);
 
    private final AttributeSet attributes;
 

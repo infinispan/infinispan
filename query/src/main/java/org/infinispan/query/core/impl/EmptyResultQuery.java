@@ -11,7 +11,6 @@ import org.infinispan.commons.api.query.HitCount;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A query that does not return any results because the query filter is a boolean contradiction.
@@ -21,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
 
-   private static final Log LOG = LogFactory.getLog(EmptyResultQuery.class, Log.class);
+   private static final Log LOG = Log.getLog(EmptyResultQuery.class);
 
    public EmptyResultQuery(AdvancedCache<?, ?> cache, String queryString,
                            IckleParsingResult.StatementType statementType,

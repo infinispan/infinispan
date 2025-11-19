@@ -9,7 +9,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.api.Experimental;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.factories.annotations.Inject;
@@ -29,7 +28,7 @@ import org.infinispan.tasks.query.RemoteQueryAccess;
 @Experimental
 public class RemoteQueryAccessEngine implements RemoteQueryAccess {
 
-   private static final Log log = LogFactory.getLog(RemoteQueryAccessEngine.class, Log.class);
+   private static final Log log = Log.getLog(RemoteQueryAccessEngine.class);
 
    @Inject
    RemoteQueryManager remoteQueryManager;

@@ -22,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TwoStepTranscoder extends AbstractTranscoder {
 
-   private static final Log logger = LogFactory.getLog(TwoStepTranscoder.class, Log.class);
+   private static final Log logger = LogFactory.getLog(TwoStepTranscoder.class);
    private final Transcoder transcoder1;
    private final Transcoder transcoder2;
    private final HashSet<MediaType> supportedMediaTypes;

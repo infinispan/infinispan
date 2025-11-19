@@ -12,13 +12,12 @@ import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
 import org.infinispan.tasks.TaskInstantiationMode;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
 public class ServerTaskWrapper<T> implements Task, Function<TaskContext, T> {
-   private static final Log log = LogFactory.getLog(ServerTaskWrapper.class, Log.class);
+   private static final Log log = Log.getLog(ServerTaskWrapper.class);
    private final ServerTask<T> task;
 
    public ServerTaskWrapper(ServerTask<T> task) {

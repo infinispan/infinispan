@@ -3,7 +3,6 @@ package org.infinispan.lock.impl;
 import java.util.EnumSet;
 
 import org.infinispan.CoreModule;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -33,7 +32,7 @@ import org.infinispan.transaction.TransactionMode;
  */
 @InfinispanModule(name = "clustered-lock", requiredModules = "core")
 public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
-   private static final Log log = LogFactory.getLog(ClusteredLockModuleLifecycle.class, Log.class);
+   private static final Log log = Log.getLog(ClusteredLockModuleLifecycle.class);
 
    public static final String CLUSTERED_LOCK_CACHE_NAME = "org.infinispan.LOCKS";
 

@@ -64,7 +64,6 @@ import org.infinispan.jcache.logging.Log;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Infinispan's implementation of {@link javax.cache.Cache} interface.
@@ -75,8 +74,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class JCache<K, V> extends AbstractJCache<K, V> {
 
-   private static final Log log =
-         LogFactory.getLog(JCache.class, Log.class);
+   private static final Log log = Log.getLog(JCache.class);
 
    private final AdvancedCache<K, V> cache;
    private final AdvancedCache<K, V> skipCacheLoadAndStatsCache;

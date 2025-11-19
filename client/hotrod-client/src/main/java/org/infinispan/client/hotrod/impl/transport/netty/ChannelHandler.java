@@ -42,7 +42,7 @@ import io.netty.resolver.dns.RoundRobinDnsAddressResolverGroup;
 import io.reactivex.rxjava3.core.Flowable;
 
 public class ChannelHandler {
-   private static final Log log = LogFactory.getLog(ChannelHandler.class, Log.class);
+   private static final Log log = LogFactory.getLog(ChannelHandler.class);
    private final ConcurrentMap<SocketAddress, OperationChannel> channels = new ConcurrentHashMap<>();
    private final Function<SocketAddress, OperationChannel> newOpChannel = this::newOperationChannel;
 

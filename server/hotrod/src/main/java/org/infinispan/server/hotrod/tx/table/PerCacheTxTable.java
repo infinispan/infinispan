@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod.tx.table;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
@@ -22,7 +21,7 @@ import jakarta.transaction.Transaction;
 //TODO merge with org.infinispan.server.hotrod.tx.table.GlobalTxTable
 public class PerCacheTxTable {
 
-   private static final Log log = LogFactory.getLog(PerCacheTxTable.class, Log.class);
+   private static final Log log = Log.getLog(PerCacheTxTable.class);
    private final Map<XidImpl, EmbeddedTransaction> localTxTable = new ConcurrentHashMap<>();
 
    /**

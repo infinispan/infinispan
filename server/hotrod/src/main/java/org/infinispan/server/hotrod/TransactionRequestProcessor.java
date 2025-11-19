@@ -23,13 +23,12 @@ import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 class TransactionRequestProcessor extends CacheRequestProcessor {
-   private static final Log log = LogFactory.getLog(TransactionRequestProcessor.class, Log.class);
+   private static final Log log = Log.getLog(TransactionRequestProcessor.class);
 
    TransactionRequestProcessor(Channel channel, Executor executor, HotRodServer server, InfinispanTelemetry telemetryService) {
       super(channel, executor, server, telemetryService);

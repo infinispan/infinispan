@@ -15,7 +15,7 @@ import org.infinispan.commons.marshall.Marshaller;
  */
 public final class MarshallerRegistry {
 
-   public static final Log log = LogFactory.getLog(MarshallerRegistry.class, Log.class);
+   public static final Log log = LogFactory.getLog(MarshallerRegistry.class);
 
    private final Map<MediaType, Marshaller> marshallerByMediaType = new ConcurrentHashMap<>();
 

@@ -33,7 +33,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * It manages all the caches events and handles them. Also, it handles the user-specific {@link CounterListener}.
@@ -54,7 +53,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.GLOBAL)
 public class CounterManagerNotificationManager {
 
-   private static final Log log = LogFactory.getLog(CounterManagerNotificationManager.class, Log.class);
+   private static final Log log = Log.getLog(CounterManagerNotificationManager.class);
    private final Map<ByteString, Holder> counters;
    private final CounterValueListener valueListener;
    private final TopologyListener topologyListener;

@@ -35,7 +35,6 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.util.concurrent.NonBlockingManager;
-import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.functions.Action;
@@ -53,7 +52,7 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 class Index {
-   private static final Log log = LogFactory.getLog(Index.class, Log.class);
+   private static final Log log = Log.getLog(Index.class);
    // PRE ISPN 14.0.22 GRACEFULLY VALUE = 0x512ACEF1;
    private static final int GRACEFULLY = 0x512ACEF2;
    private static final int DIRTY = 0xD112770C;

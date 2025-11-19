@@ -13,7 +13,6 @@ import org.hibernate.search.engine.common.spi.SearchIntegration;
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.protostream.SerializationContext;
@@ -37,7 +36,7 @@ import org.infinispan.query.mapper.work.SearchIndexer;
  */
 public class LazySearchMapping implements SearchMapping {
 
-   private static final Log log = LogFactory.getLog(LazySearchMapping.class, Log.class);
+   private static final Log log = Log.getLog(LazySearchMapping.class);
 
    private final Cache<?, ?> cache;
    private final ProtobufMetadataManagerImpl protobufMetadataManager;

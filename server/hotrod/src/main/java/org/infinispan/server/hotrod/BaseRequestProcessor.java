@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
@@ -24,7 +23,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
 
 public class BaseRequestProcessor {
-   private static final Log log = LogFactory.getLog(BaseRequestProcessor.class, Log.class);
+   private static final Log log = Log.getLog(BaseRequestProcessor.class);
 
    protected final Channel channel;
    protected final Executor executor;

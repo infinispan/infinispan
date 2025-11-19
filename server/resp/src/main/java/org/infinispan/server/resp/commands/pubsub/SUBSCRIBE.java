@@ -1,11 +1,9 @@
 package org.infinispan.server.resp.commands.pubsub;
 
-import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -32,7 +30,7 @@ import io.netty.util.CharsetUtil;
  * @since 14.0
  */
 public class SUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp3Command {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(SUBSCRIBE.class);
 
    public SUBSCRIBE() {
       super(-2, 0, 0, 0, AclCategory.PUBSUB.mask() | AclCategory.SLOW.mask());

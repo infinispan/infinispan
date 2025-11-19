@@ -10,7 +10,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.objectfilter.impl.aggregation.FieldAccumulator;
-import org.infinispan.util.logging.LogFactory;
 
 import com.google.errorprone.annotations.ThreadSafe;
 
@@ -35,7 +34,7 @@ public final class QueryCache {
       Q create(String queryString, List<FieldAccumulator> accumulators);
    }
 
-   private static final Log log = LogFactory.getLog(QueryCache.class, Log.class);
+   private static final Log log = Log.getLog(QueryCache.class);
 
    /**
     * Users can define a cache configuration with this name if they need to fine tune query caching. If they do not do

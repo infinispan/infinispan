@@ -27,6 +27,10 @@ import org.jboss.logging.annotations.ValidIdRange;
 public interface Log extends BasicLogger {
    Log CONTAINER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONTAINER");
 
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
    /*@Message(value = "Unknown field %s in type %s", id = 28001)
    IllegalArgumentException unknownField(String fieldName, String fullyQualifiedTypeName);
 

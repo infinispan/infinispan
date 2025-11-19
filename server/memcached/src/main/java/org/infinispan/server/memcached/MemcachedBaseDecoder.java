@@ -34,7 +34,6 @@ import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.memcached.logging.Header;
 import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
 import org.infinispan.stats.Stats;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -48,7 +47,7 @@ import io.netty.util.concurrent.GenericFutureListener;
  **/
 public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
    protected static final Subject ANONYMOUS = new Subject();
-   protected static final Log log = LogFactory.getLog(MemcachedBaseDecoder.class, Log.class);
+   protected static final Log log = Log.getLog(MemcachedBaseDecoder.class);
    protected final MemcachedServer server;
    protected MemcachedStats statistics;
    protected boolean statsEnabled;

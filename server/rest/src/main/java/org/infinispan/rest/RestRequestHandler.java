@@ -32,7 +32,6 @@ import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.topology.MissingMembersException;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -53,7 +52,7 @@ import io.netty.handler.codec.http.HttpUtil;
  */
 public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
-   protected static final Log logger = LogFactory.getLog(RestRequestHandler.class, Log.class);
+   protected static final Log logger = Log.getLog(RestRequestHandler.class);
    private final RestAccessLoggingHandler restAccessLoggingHandler = new RestAccessLoggingHandler();
    protected final RestServer restServer;
    protected final RestServerConfiguration configuration;

@@ -13,7 +13,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
@@ -42,7 +41,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 @MBean(objectName = EmbeddedCounterManager.OBJECT_NAME, description = "Component to manage counters")
 public class EmbeddedCounterManager implements CounterManager {
    public static final String OBJECT_NAME = "CounterManager";
-   private static final Log log = LogFactory.getLog(EmbeddedCounterManager.class, Log.class);
+   private static final Log log = Log.getLog(EmbeddedCounterManager.class);
 
    private final Map<String, CompletableFuture<InternalCounterAdmin>> counters;
    private volatile boolean stopped = true;

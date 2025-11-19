@@ -1,6 +1,5 @@
 package org.infinispan.query.backend;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
@@ -13,7 +12,6 @@ import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.query.core.impl.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * SegmentListener will detect segments that were lost for this node due to topology changes so they can be removed
@@ -25,7 +23,7 @@ import org.infinispan.util.logging.LogFactory;
 @SuppressWarnings("unused")
 final class SegmentListener {
 
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(SegmentListener.class);
 
    private final Consumer<IntSet> segmentDeleted;
    private final Address address;

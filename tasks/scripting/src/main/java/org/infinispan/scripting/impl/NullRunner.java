@@ -1,10 +1,8 @@
 package org.infinispan.scripting.impl;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.scripting.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * NullRunner.
@@ -13,7 +11,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.2
  */
 public class NullRunner implements ScriptRunner {
-   static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   static final Log log = Log.getLog(NullRunner.class);
    public static final NullRunner INSTANCE = new NullRunner();
 
    private NullRunner() {

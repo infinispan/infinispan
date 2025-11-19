@@ -1,6 +1,9 @@
 package org.infinispan.tasks.manager.logging;
 
+import java.lang.invoke.MethodHandles;
+
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
@@ -15,6 +18,10 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 27001, max = 27500)
 public interface Log extends BasicLogger {
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
    /*@Message(value = "Task Engine '%s' has already been registered", id = 27001)
    IllegalStateException duplicateTaskEngineRegistration(String taskEngineName);*/
 

@@ -32,13 +32,12 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.util.function.TriConsumer;
-import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
 public class HotRodTargetMigrator implements TargetMigrator {
 
-   private static final Log log = LogFactory.getLog(HotRodTargetMigrator.class, Log.class);
+   private static final Log log = Log.getLog(HotRodTargetMigrator.class);
 
    public HotRodTargetMigrator() {
    }

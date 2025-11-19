@@ -1,10 +1,8 @@
 package org.infinispan.server.resp.commands.string;
 
-import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.core.logging.Log;
@@ -24,7 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 14.0
  */
 public class MSET extends RespCommand implements Resp3Command {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(MSET.class);
 
    public MSET() {
       super(-3, 1, -1, 2, AclCategory.WRITE.mask() | AclCategory.STRING.mask() | AclCategory.SLOW.mask());

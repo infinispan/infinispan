@@ -15,7 +15,7 @@ import sun.misc.Unsafe;
  * @since 9.0
  */
 public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
-   private static final Log log = LogFactory.getLog(UnpooledOffHeapMemoryAllocator.class, Log.class);
+   private static final Log log = LogFactory.getLog(UnpooledOffHeapMemoryAllocator.class);
    private static final OffHeapMemory MEMORY = org.infinispan.commons.jdkspecific.OffHeapMemory.getInstance();
    private final LongAdder amountAllocated = new LongAdder();
 

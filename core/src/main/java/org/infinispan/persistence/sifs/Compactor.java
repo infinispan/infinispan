@@ -27,7 +27,6 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.NonBlockingManager;
-import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Scheduler;
@@ -43,7 +42,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 class Compactor {
-   private static final Log log = LogFactory.getLog(Compactor.class, Log.class);
+   private static final Log log = Log.getLog(Compactor.class);
 
    private final NonBlockingManager nonBlockingManager;
    private final ConcurrentMap<Integer, Stats> fileStats = new ConcurrentHashMap<>();

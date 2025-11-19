@@ -5,7 +5,6 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.server.memcached.logging.Log;
 import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
 import org.infinispan.commons.util.concurrent.CompletionStages;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
@@ -22,7 +21,7 @@ public class MemcachedInboundAdapter extends ChannelInboundHandlerAdapter {
    static final AttributeKey<ByteBufPool> ALLOCATOR_KEY = AttributeKey.valueOf("allocator");
    protected static final int MINIMUM_BUFFER_SIZE;
 
-   protected static final Log log = LogFactory.getLog(MemcachedInboundAdapter.class, Log.class);
+   protected static final Log log = Log.getLog(MemcachedInboundAdapter.class);
 
    private final MemcachedBaseDecoder decoder;
 

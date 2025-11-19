@@ -34,7 +34,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  */
 public final class TopologyInfo {
 
-   private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
+   private static final Log log = LogFactory.getLog(TopologyInfo.class);
    private static final String DEFAULT_CACHE_NAME = "<default>";
 
    private final Supplier<FailoverRequestBalancingStrategy> balancerFactory;

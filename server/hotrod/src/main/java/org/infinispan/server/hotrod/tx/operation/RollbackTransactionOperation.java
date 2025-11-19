@@ -26,7 +26,6 @@ import org.infinispan.server.hotrod.tx.table.Status;
 import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * It rollbacks a transaction in all involved caches.
@@ -36,7 +35,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class RollbackTransactionOperation extends BaseCompleteTransactionOperation<RollbackCommand, ForwardRollbackCommand> {
 
-   private static final Log log = LogFactory.getLog(RollbackTransactionOperation.class, Log.class);
+   private static final Log log = Log.getLog(RollbackTransactionOperation.class);
 
    //TODO check if this class can implement the BiFunction interface!
    private final BiFunction<?, Throwable, Void> handler = (ignored, throwable) -> {

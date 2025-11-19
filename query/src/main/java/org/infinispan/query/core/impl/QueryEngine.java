@@ -44,7 +44,6 @@ import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.objectfilter.impl.syntax.parser.RowPropertyHelper;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Builds Query object implementations based on an Ickle query string.
@@ -54,7 +53,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class QueryEngine<TypeMetadata> {
 
-   private static final Log log = LogFactory.getLog(QueryEngine.class, Log.class);
+   private static final Log log = Log.getLog(QueryEngine.class);
 
    protected final AdvancedCache<?, ?> cache;
 

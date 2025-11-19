@@ -14,7 +14,6 @@ import org.infinispan.persistence.jdbc.common.configuration.ManagedConnectionFac
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Connection factory that can be used when on managed environments, like application servers. It knows how to look into
@@ -29,7 +28,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ManagedConnectionFactory extends ConnectionFactory {
 
-   private static final Log log = LogFactory.getLog(ManagedConnectionFactory.class, Log.class);
+   private static final Log log = Log.getLog(ManagedConnectionFactory.class);
 
    private ManagedConnectionFactoryConfiguration managedConfiguration;
    private volatile DataSource dataSource;

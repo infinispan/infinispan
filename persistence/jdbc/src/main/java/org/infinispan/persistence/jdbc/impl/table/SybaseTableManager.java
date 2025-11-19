@@ -11,13 +11,12 @@ import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Ryan Emerson
  */
 class SybaseTableManager extends AbstractTableManager {
-   private static final Log log = LogFactory.getLog(SybaseTableManager.class, Log.class);
+   private static final Log log = Log.getLog(SybaseTableManager.class);
 
    SybaseTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, DbMetaData metaData, String cacheName) {
       super(ctx, connectionFactory, config, metaData, cacheName, log);

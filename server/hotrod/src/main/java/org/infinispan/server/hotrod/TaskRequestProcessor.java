@@ -6,7 +6,6 @@ import java.util.concurrent.Executor;
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.logging.Log;
@@ -16,7 +15,7 @@ import org.infinispan.tasks.manager.TaskManager;
 import io.netty.channel.Channel;
 
 public class TaskRequestProcessor extends BaseRequestProcessor {
-   private static final Log log = LogFactory.getLog(TaskRequestProcessor.class, Log.class);
+   private static final Log log = Log.getLog(TaskRequestProcessor.class);
 
    private final HotRodServer server;
    private final TaskManager taskManager;

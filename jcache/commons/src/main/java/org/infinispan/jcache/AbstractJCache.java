@@ -32,13 +32,11 @@ import javax.management.MBeanServer;
 
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.api.BasicCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.jcache.logging.Log;
 
 public abstract class AbstractJCache<K, V> implements Cache<K, V> {
-   private static final Log log =
-         LogFactory.getLog(AbstractJCache.class, Log.class);
+   private static final Log log = Log.getLog(AbstractJCache.class);
 
    protected final MutableConfiguration<K, V> configuration;
    protected final ExpiryPolicy expiryPolicy;

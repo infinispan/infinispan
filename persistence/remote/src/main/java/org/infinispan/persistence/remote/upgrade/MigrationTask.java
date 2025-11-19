@@ -48,12 +48,11 @@ import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.util.logging.LogFactory;
 
 @ProtoTypeId(ProtoStreamTypeIds.REMOTE_STORE_MIGRATION_TASK)
 public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
 
-   private static final Log log = LogFactory.getLog(MigrationTask.class, Log.class);
+   private static final Log log = Log.getLog(MigrationTask.class);
 
    private static final String THREAD_NAME = "RollingUpgrade-MigrationTask";
 

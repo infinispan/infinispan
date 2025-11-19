@@ -5,7 +5,6 @@ import java.util.Map;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.lock.logging.Log;
 
 /**
@@ -18,7 +17,7 @@ import org.infinispan.lock.logging.Log;
 @BuiltBy(ClusteredLockManagerConfigurationBuilder.class)
 public class ClusteredLockManagerConfiguration {
 
-   private static final Log log = LogFactory.getLog(ClusteredLockManagerConfiguration.class, Log.class);
+   private static final Log log = Log.getLog(ClusteredLockManagerConfiguration.class);
    static final AttributeDefinition<Reliability> RELIABILITY = AttributeDefinition
          .builder(Attribute.RELIABILITY, Reliability.CONSISTENT)
          .validator(value -> {

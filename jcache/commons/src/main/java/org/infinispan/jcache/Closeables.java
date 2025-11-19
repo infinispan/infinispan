@@ -1,6 +1,5 @@
 package org.infinispan.jcache;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.logging.Log;
 
 import java.io.Closeable;
@@ -8,7 +7,7 @@ import java.util.Set;
 
 class Closeables {
 
-   private static final Log log = LogFactory.getLog(Closeables.class, Log.class);
+   private static final Log log = Log.getLog(Closeables.class);
 
    private Closeables() {
    }

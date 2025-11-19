@@ -32,7 +32,6 @@ import org.infinispan.rest.logging.Log;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.backup.BackupManagerResources;
 import org.infinispan.util.function.TriConsumer;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
@@ -48,7 +47,7 @@ import io.netty.handler.codec.http.multipart.HttpPostMultipartRequestDecoder;
  */
 class BackupManagerResource {
 
-   private static final Log LOG = LogFactory.getLog(BackupManagerResource.class, Log.class);
+   private static final Log LOG = Log.getLog(BackupManagerResource.class);
 
    private static final String DIR_KEY = "directory";
    private static final String LOCATION_KEY = "location";

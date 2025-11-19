@@ -1,6 +1,5 @@
 package org.infinispan.server.resp.commands.list.blocking;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
@@ -43,7 +41,7 @@ import io.netty.channel.ChannelHandlerContext;
  * @see <a href="https://redis.io/commands/blpop/">BLPOP</a>
  */
 public abstract class AbstractBlockingPop extends RespCommand implements Resp3Command {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(AbstractBlockingPop.class);
 
    public AbstractBlockingPop(int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
       super(arity, firstKeyPos, lastKeyPos, steps, aclMask);

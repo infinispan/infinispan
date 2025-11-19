@@ -5,14 +5,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.query.core.impl.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
  */
 public class MassIndexerProgressMonitor {
 
-   private static final Log log = LogFactory.getLog(MassIndexerProgressMonitor.class, Log.class);
+   private static final Log log = Log.getLog(MassIndexerProgressMonitor.class);
 
    private final AtomicLong documentsDoneCounter = new AtomicLong();
    private volatile long startTime;

@@ -1,10 +1,8 @@
 package org.infinispan.server.core.transport;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -25,7 +23,7 @@ import io.netty.util.concurrent.Future;
  */
 @Scope(Scopes.GLOBAL)
 public class NonRecursiveEventLoopGroup extends DelegatingEventLoopGroup {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = Log.getLog(NonRecursiveEventLoopGroup.class);
    private final MultithreadEventLoopGroup eventLoopGroup;
 
    public NonRecursiveEventLoopGroup(MultithreadEventLoopGroup eventLoopGroup) {

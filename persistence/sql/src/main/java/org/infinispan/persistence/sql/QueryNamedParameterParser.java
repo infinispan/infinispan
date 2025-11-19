@@ -4,10 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.persistence.jdbc.common.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 public class QueryNamedParameterParser {
-   private static final Log log = LogFactory.getLog(QueryNamedParameterParser.class, Log.class);
+   private static final Log log = Log.getLog(QueryNamedParameterParser.class);
 
    /**
     * Set of characters that qualify as comment or quotes starting characters.

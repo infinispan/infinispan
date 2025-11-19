@@ -34,7 +34,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.internal.InternalCacheNames;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -67,7 +66,7 @@ import org.infinispan.util.KeyValuePair;
  */
 public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInterceptor {
 
-   private static final Log log = LogFactory.getLog(ProtobufMetadataManagerInterceptor.class, Log.class);
+   private static final Log log = Log.getLog(ProtobufMetadataManagerInterceptor.class);
 
    private static final Metadata DEFAULT_METADATA = new EmbeddedMetadata.Builder().build();
 

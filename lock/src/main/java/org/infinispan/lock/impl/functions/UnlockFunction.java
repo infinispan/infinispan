@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.lock.impl.entries.ClusteredLockKey;
@@ -34,7 +33,7 @@ import org.infinispan.remoting.transport.Address;
 @ProtoTypeId(ProtoStreamTypeIds.CLUSTERED_LOCK_FUNCTION_UNLOCK)
 public class UnlockFunction implements Function<EntryView.ReadWriteEntryView<ClusteredLockKey, ClusteredLockValue>, Boolean> {
 
-   private static final Log log = LogFactory.getLog(UnlockFunction.class, Log.class);
+   private static final Log log = Log.getLog(UnlockFunction.class);
 
    private final String requestId;
    private final Set<Address> requesters;

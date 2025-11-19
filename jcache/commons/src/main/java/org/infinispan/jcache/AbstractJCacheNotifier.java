@@ -25,7 +25,6 @@ import javax.cache.event.CacheEntryRemovedListener;
 import javax.cache.event.CacheEntryUpdatedListener;
 import javax.cache.event.EventType;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -38,8 +37,7 @@ import org.infinispan.jcache.logging.Log;
  */
 public abstract class AbstractJCacheNotifier<K, V> implements Closeable {
 
-   private static final Log log =
-         LogFactory.getLog(AbstractJCacheNotifier.class, Log.class);
+   private static final Log log = Log.getLog(AbstractJCacheNotifier.class);
 
    // Traversals are a not more common than mutations when it comes to
    // keeping track of registered listeners, so use copy-on-write lists.

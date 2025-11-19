@@ -25,7 +25,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -67,7 +66,7 @@ public class HotRodTestingUtil {
    private HotRodTestingUtil() {
    }
 
-   private static final Log log = LogFactory.getLog(HotRodTestingUtil.class, Log.class);
+   private static final Log log = Log.getLog(HotRodTestingUtil.class);
    private static final UniquePortThreadLocal uptl = new UniquePortThreadLocal();
 
    public static String host() {

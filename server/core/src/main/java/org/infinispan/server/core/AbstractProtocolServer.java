@@ -9,7 +9,6 @@ import java.util.concurrent.ExecutorService;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -34,7 +33,7 @@ import org.infinispan.util.concurrent.BlockingManager;
  */
 public abstract class AbstractProtocolServer<C extends ProtocolServerConfiguration> implements ProtocolServer<C> {
 
-   private static final Log log = LogFactory.getLog(AbstractProtocolServer.class, Log.class);
+   private static final Log log = Log.getLog(AbstractProtocolServer.class);
 
    private final String protocolName;
 

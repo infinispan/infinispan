@@ -13,14 +13,13 @@ import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactor
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Ryan Emerson
  */
 public class TableManagerFactory {
 
-   private static final Log log = LogFactory.getLog(TableManagerFactory.class, Log.class);
+   private static final Log log = Log.getLog(TableManagerFactory.class);
    public static final String UPSERT_DISABLED = "infinispan.jdbc.upsert.disabled";
    public static final String INDEXING_DISABLED = "infinispan.jdbc.indexing.disabled";
 

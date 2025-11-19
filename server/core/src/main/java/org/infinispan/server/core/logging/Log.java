@@ -43,6 +43,10 @@ public interface Log extends BasicLogger {
    Log SECURITY = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "SECURITY");
    Log SERVER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "SERVER");
 
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
    @LogMessage(level = ERROR)
    @Message(value = "Exception reported", id = 5003)
    void exceptionReported(@Cause Throwable t);

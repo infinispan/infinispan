@@ -3,7 +3,6 @@ package org.infinispan.lock.configuration;
 import static org.infinispan.lock.configuration.ClusteredLockConfigurationParser.NAMESPACE;
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
@@ -27,7 +26,7 @@ public class ClusteredLockConfigurationParser implements ConfigurationParser {
 
    static final String NAMESPACE = Parser.NAMESPACE + "clustered-locks:";
 
-   private static final Log log = LogFactory.getLog(ClusteredLockConfigurationParser.class, Log.class);
+   private static final Log log = Log.getLog(ClusteredLockConfigurationParser.class);
 
    @Override
    public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {

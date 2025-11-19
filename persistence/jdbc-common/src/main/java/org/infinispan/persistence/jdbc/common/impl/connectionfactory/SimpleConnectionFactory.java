@@ -12,7 +12,6 @@ import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryCon
 import org.infinispan.persistence.jdbc.common.configuration.SimpleConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Connection factory implementation that will create database connection on a per invocation basis. Not recommended in
@@ -22,7 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class SimpleConnectionFactory extends ConnectionFactory {
 
-   private static final Log log = LogFactory.getLog(SimpleConnectionFactory.class, Log.class);
+   private static final Log log = Log.getLog(SimpleConnectionFactory.class);
 
    private String connectionUrl;
    private String userName;

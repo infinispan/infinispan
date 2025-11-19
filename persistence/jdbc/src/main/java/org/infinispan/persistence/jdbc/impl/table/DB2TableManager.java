@@ -16,14 +16,13 @@ import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Ryan Emerson
  */
 class DB2TableManager<K, V> extends AbstractTableManager<K, V> {
 
-   private static final Log log = LogFactory.getLog(DB2TableManager.class, Log.class);
+   private static final Log log = Log.getLog(DB2TableManager.class);
 
    DB2TableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config,
          DbMetaData metaData, String cacheName) {

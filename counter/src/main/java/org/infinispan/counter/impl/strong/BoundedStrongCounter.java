@@ -6,7 +6,6 @@ import static org.infinispan.counter.exception.CounterOutOfBoundsException.UPPER
 import java.util.concurrent.CompletionException;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
@@ -26,7 +25,7 @@ import org.infinispan.counter.logging.Log;
  */
 public class BoundedStrongCounter extends AbstractStrongCounter {
 
-   private static final Log log = LogFactory.getLog(BoundedStrongCounter.class, Log.class);
+   private static final Log log = Log.getLog(BoundedStrongCounter.class);
 
    public BoundedStrongCounter(String counterName, AdvancedCache<StrongCounterKey, CounterValue> cache,
                                CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {

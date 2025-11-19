@@ -4,14 +4,13 @@ import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactor
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Ryan Emerson
  */
 class SQLiteTableManager extends AbstractTableManager {
 
-   private static final Log log = LogFactory.getLog(SQLiteTableManager.class, Log.class);
+   private static final Log log = Log.getLog(SQLiteTableManager.class);
 
    SQLiteTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, DbMetaData metaData, String cacheName) {
       super(ctx, connectionFactory, config, metaData, cacheName, log);

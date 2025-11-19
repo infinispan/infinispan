@@ -27,7 +27,7 @@ import org.infinispan.commons.util.Util;
  */
 public final class DataFormat {
 
-   private static final Log log = LogFactory.getLog(DataFormat.class, Log.class);
+   private static final Log log = LogFactory.getLog(DataFormat.class);
 
    private final BufferSizePredictor keySizePredictor = new AdaptiveBufferSizePredictor();
    private final BufferSizePredictor valueSizePredictor = new AdaptiveBufferSizePredictor();

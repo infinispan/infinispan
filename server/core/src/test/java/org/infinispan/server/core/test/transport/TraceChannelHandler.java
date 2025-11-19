@@ -20,7 +20,7 @@ import io.netty.channel.ChannelPromise;
  * @since 11
  */
 public class TraceChannelHandler extends ChannelDuplexHandler {
-   private static final Log log = LogFactory.getLog(TraceChannelHandler.class, Log.class);
+   private static final Log log = LogFactory.getLog(TraceChannelHandler.class);
 
    @Override
    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress,

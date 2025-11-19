@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.telemetry.InfinispanSpanContext;
@@ -18,7 +17,7 @@ import org.infinispan.telemetry.InfinispanSpanContext;
  * @since 9.0
  */
 public class HotRodHeader implements InfinispanSpanContext {
-   private static final Log log = LogFactory.getLog(HotRodHeader.class, Log.class);
+   private static final Log log = Log.getLog(HotRodHeader.class);
 
    HotRodOperation op;
    byte version;

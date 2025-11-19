@@ -9,7 +9,6 @@ import java.util.WeakHashMap;
 import javax.cache.CacheManager;
 import javax.cache.spi.CachingProvider;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -20,7 +19,7 @@ import org.infinispan.jcache.logging.Log;
  */
 public abstract class AbstractJCachingProvider implements CachingProvider {
 
-   private static final Log log = LogFactory.getLog(AbstractJCachingProvider.class, Log.class);
+   private static final Log log = Log.getLog(AbstractJCachingProvider.class);
 
    /**
     * Keeps track of cache managers. Each cache manager has to be tracked

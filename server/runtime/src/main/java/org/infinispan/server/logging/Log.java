@@ -1,6 +1,7 @@
 package org.infinispan.server.logging;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -27,6 +28,12 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 80000, max = 81000)
 public interface Log extends BasicLogger {
+   Log SERVER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "SERVER");
+
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
    @LogMessage(level = Logger.Level.INFO)
    @Message(value = "%s Server %s starting", id = 80000)
    void serverStarting(String name, String version);

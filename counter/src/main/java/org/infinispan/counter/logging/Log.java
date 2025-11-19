@@ -25,6 +25,10 @@ public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
    Log CONTAINER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONTAINER");
 
+   static Log getLog(Class<?> clazz) {
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
+   }
+
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)
    CounterOutOfBoundsException counterOurOfBounds(String bound);
 

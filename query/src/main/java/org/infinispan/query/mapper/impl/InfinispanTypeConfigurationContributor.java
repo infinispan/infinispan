@@ -11,11 +11,10 @@ import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingConfigurationCont
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
 import org.infinispan.query.core.impl.Log;
-import org.infinispan.util.logging.LogFactory;
 
 class InfinispanTypeConfigurationContributor implements PojoMappingConfigurationContributor {
 
-   private static final Log log = LogFactory.getLog(InfinispanTypeConfigurationContributor.class, Log.class);
+   private static final Log log = Log.getLog(InfinispanTypeConfigurationContributor.class);
 
    private final PojoBootstrapIntrospector introspector;
 

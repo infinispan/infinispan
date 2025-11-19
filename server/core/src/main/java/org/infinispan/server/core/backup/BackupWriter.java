@@ -39,7 +39,6 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.commons.util.concurrent.CompletionStages;
-import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogger;
 
@@ -51,7 +50,7 @@ import org.infinispan.util.logging.events.EventLogger;
  */
 class BackupWriter {
 
-   private static final Log log = LogFactory.getLog(BackupWriter.class, Log.class);
+   private static final Log log = Log.getLog(BackupWriter.class);
 
    private final String name;
    private final EventLogger eventLogger;

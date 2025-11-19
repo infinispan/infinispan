@@ -15,7 +15,6 @@ import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryCon
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.logging.LogFactory;
 
 import jakarta.enterprise.inject.spi.CDI;
 
@@ -24,7 +23,7 @@ import jakarta.enterprise.inject.spi.CDI;
  */
 public class CDIConnectionFactory extends ConnectionFactory {
 
-   private static final Log log = LogFactory.getLog(CDIConnectionFactory.class, Log.class);
+   private static final Log log = Log.getLog(CDIConnectionFactory.class);
 
    private CDIConnectionFactoryConfiguration managedConfiguration;
    private volatile DataSource dataSource;

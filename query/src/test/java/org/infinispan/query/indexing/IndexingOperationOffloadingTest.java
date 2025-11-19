@@ -19,13 +19,12 @@ import org.infinispan.query.model.TypeB;
 import org.infinispan.query.model.TypeC;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.indexing.IndexingOperationOffloadingTest")
 public class IndexingOperationOffloadingTest extends SingleCacheManagerTest {
 
-   private static final Log log = LogFactory.getLog(IndexingOperationOffloadingTest.class, Log.class);
+   private static final Log log = Log.getLog(IndexingOperationOffloadingTest.class);
 
    private static final String CACHE_NAME = "types";
 

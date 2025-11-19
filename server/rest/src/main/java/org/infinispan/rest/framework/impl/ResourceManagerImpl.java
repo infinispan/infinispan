@@ -11,7 +11,6 @@ import org.infinispan.rest.framework.RegistrationException;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.ResourceManager;
 import org.infinispan.rest.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.handler.codec.http.QueryStringDecoder;
 
@@ -20,7 +19,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
  */
 public class ResourceManagerImpl implements ResourceManager {
 
-   private static final Log logger = LogFactory.getLog(ResourceManagerImpl.class, Log.class);
+   private static final Log logger = Log.getLog(ResourceManagerImpl.class);
    private static final StringPathItem ROOT = new StringPathItem("/");
 
    private final ResourceNode resourceTree;

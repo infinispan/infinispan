@@ -51,7 +51,7 @@ import io.netty.buffer.ByteBuf;
  * @since 10.0
  */
 public class Codec30 implements Codec {
-   static final Log log = LogFactory.getLog(Codec.class, Log.class);
+   static final Log log = LogFactory.getLog(Codec.class);
 
    public static final String EMPTY_VALUE_CONVERTER = "org.infinispan.server.hotrod.HotRodServer$ToEmptyBytesKeyValueFilterConverter";
    @Override

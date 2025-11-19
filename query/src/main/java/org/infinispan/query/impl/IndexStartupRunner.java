@@ -9,11 +9,10 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.mapper.mapping.SearchMapping;
-import org.infinispan.util.logging.LogFactory;
 
 public final class IndexStartupRunner {
 
-   private static final Log log = LogFactory.getLog(IndexStartupRunner.class, Log.class);
+   private static final Log log = Log.getLog(IndexStartupRunner.class);
 
    public static void run(SearchMapping mapping, Indexer indexer, Configuration configuration) {
       IndexStartupMode startupMode = computeFinalMode(configuration);

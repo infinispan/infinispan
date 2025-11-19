@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.infinispan.cdi.common.util.Reflections;
 import org.infinispan.cdi.common.util.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 /**
  * Helper class used to build annotation stores
@@ -18,7 +17,7 @@ import org.infinispan.commons.logging.LogFactory;
  */
 public class AnnotationBuilder {
 
-   private static final Log log = LogFactory.getLog(AnnotationBuilder.class, Log.class);
+   private static final Log log = Log.getLog(AnnotationBuilder.class);
 
    private final Map<Class<? extends Annotation>, Annotation> annotationMap;
    private final Set<Annotation> annotationSet;

@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.cdi.common.util.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Default;
@@ -29,7 +28,7 @@ import jakarta.enterprise.inject.spi.InjectionPoint;
  */
 public abstract class AbstractImmutableBean<T> implements Bean<T> {
 
-    private static final Log log = LogFactory.getLog(AbstractImmutableBean.class, Log.class);
+    private static final Log log = Log.getLog(AbstractImmutableBean.class);
 
     private final Class<?> beanClass;
     private final String name;
