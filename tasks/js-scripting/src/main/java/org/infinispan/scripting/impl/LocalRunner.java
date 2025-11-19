@@ -14,7 +14,7 @@ public class LocalRunner implements ScriptRunner {
    private LocalRunner() { }
 
    @Override
-   public <T> CompletionStage<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings bindings) {
-      return scriptManager.execute(metadata, bindings.getUserBindings());
+   public <T> CompletionStage<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptArguments bindings) {
+      return scriptManager.execute(metadata, bindings);
    }
 }

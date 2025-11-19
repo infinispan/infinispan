@@ -1,11 +1,15 @@
 // mode=local,language=javascript
-var Function = Java.type("java.util.function.Function")
-var Collectors = Java.type("java.util.stream.Collectors")
-var Arrays = Java.type("org.infinispan.scripting.utils.JSArrays")
-cache
-    .entrySet().stream()
-    .map(function(e) e.getValue())
-    .map(function(v) v.toLowerCase())
-    .map(function(v) v.split(/[\W]+/))
-    .flatMap(function(f) Arrays.stream(f))
-    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+function process(user_input, system_input, cache) {
+    const cacheEntries = from_java.entry_set(cache);
+
+    return cacheEntries
+      .map(e => Object.values(e)[0])
+      .map(v => String(v).toLowerCase())
+      .map(v => v.split(/\W+/).filter(w => w.length > 0))
+      .reduce((allWords, arr) => allWords.concat(arr), [])
+      .reduce((acc, word) => {
+        acc[word] = (acc[word] || 0) + 1;
+        return acc;
+      }, {});
+}

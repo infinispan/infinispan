@@ -63,7 +63,10 @@ class DistributedScript<T> implements Function<EmbeddedCacheManager, T> {
 //      bindings.put("cache", cache.withMediaType(scriptMediaType, scriptMediaType));
 //      ctxParams.forEach(bindings::put);
 
+      // verify application of user local bindings
+
       try {
+         // TODO: FIXME the null
          return CompletionStages.join(scriptManager.execute(metadata, null));
       } catch (CompletionException e) {
          throw new CacheException(e.getCause());

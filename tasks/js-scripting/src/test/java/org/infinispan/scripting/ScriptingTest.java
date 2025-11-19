@@ -76,7 +76,9 @@ public class ScriptingTest extends AbstractScriptingTest {
    }
 
    public void testSimpleScriptReplacementWithNew() throws ExecutionException, InterruptedException, IOException {
-      String result = CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")));
+      // Bheavioral change, the script engine is now stateless
+      TaskContext context = new TaskContext().addParameter("a", "a");
+      String result = CompletionStages.join(scriptingManager.runScript("test.js", context));
       assertEquals("a", result);
 
       //Replacing the existing script with new one.
@@ -84,9 +86,9 @@ public class ScriptingTest extends AbstractScriptingTest {
       String script = loadFileAsString(is);
 
       scriptingManager.addScript("test.js", script);
-      // TODO: verify how the original TaskContext is getting propagated!
+      // TODO: the original Script Engine was stateful, this is now stateless
       // result = CompletionStages.join(scriptingManager.runScript("test.js"));
-      result = CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")));
+      result = CompletionStages.join(scriptingManager.runScript("test.js", context));
       assertEquals("a:modified", result);
 
       //Rolling back the replacement.
@@ -199,14 +201,19 @@ public class ScriptingTest extends AbstractScriptingTest {
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Compiler error for script.*")
-   public void testJsCompilationError() throws Exception {
+   public void testJsCompilationError() throws Throwable {
       InputStream is = this.getClass().getResourceAsStream("/testJsCompilationError.js");
       String script = loadFileAsString(is);
 
+      // Script is now compiled on first execution not when adding it
       scriptingManager.addScript("testJsCompilationError.js", script);
 
-      String result = CompletionStages.join(scriptingManager.runScript("testJsCompilationError.js"));
-      assertEquals("a", result);
+      try {
+         String result = CompletionStages.join(scriptingManager.runScript("testJsCompilationError.js"));
+         assertEquals("a", result);
+      } catch (CompletionException e) {
+         throw e.getCause();
+      }
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*No script named.*")
@@ -234,8 +241,8 @@ public class ScriptingTest extends AbstractScriptingTest {
       loadData(cache, "/macbeth.txt");
 
       scriptingManager.addScript("wordCountStream.js", script);
-      Map<String, Long> result = CompletionStages.join(scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache)));
-      assertEquals(3202, result.size());
-      assertEquals(Long.valueOf(287), result.get("macbeth"));
+      Map<String, Integer> result = CompletionStages.join(scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache)));
+      assertEquals(3201, result.size());
+      assertEquals(Integer.valueOf(287), result.get("macbeth"));
    }
 }

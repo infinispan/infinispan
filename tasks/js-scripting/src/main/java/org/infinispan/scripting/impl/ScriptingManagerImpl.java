@@ -2,7 +2,6 @@ package org.infinispan.scripting.impl;
 
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -73,7 +72,6 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    @Start
    public void start() {
-      ClassLoader classLoader = globalConfiguration.classLoader();
       ScriptingJavaApi javaApi = new ScriptingJavaApi(cacheManager);
       Engine engine = Engine.builder()
               .addBuiltins(ScriptingJavaApi_Builtins.toBuiltins(javaApi))
@@ -224,7 +222,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
                        userBindings.put(param.getKey(), objectMapper.valueToTree(param.getValue())));
             });
 
-      CacheScriptBindings bindings = new CacheScriptBindings(
+      CacheScriptArguments bindings = new CacheScriptArguments(
               systemBindings,
               userBindings,
               context.getCache().orElse(null));
@@ -243,14 +241,14 @@ public class ScriptingManagerImpl implements ScriptingManager {
       return (ScriptMetadata) scriptEntry.getMetadata();
    }
 
-   <T> CompletionStage<T> execute(ScriptMetadata metadata, JsonNode userInput) {
+   <T> CompletionStage<T> execute(ScriptMetadata metadata, CacheScriptArguments args) {
       if (RUNNING_IN_SCRIPT.get() > 0) {
-         return CompletableFuture.completedFuture(executeDirectly(metadata, userInput));
+         return CompletableFuture.completedFuture(executeDirectly(metadata, args));
       }
-      return blockingManager.supplyBlocking(() -> executeDirectly(metadata, userInput), "ScriptingManagerImpl - execute");
+      return blockingManager.supplyBlocking(() -> executeDirectly(metadata, args), "ScriptingManagerImpl - execute");
    }
 
-   private <T> T executeDirectly(ScriptMetadata metadata, JsonNode userInput) {
+   private <T> T executeDirectly(ScriptMetadata metadata, CacheScriptArguments args) {
       var initial = RUNNING_IN_SCRIPT.get();
       RUNNING_IN_SCRIPT.set(initial + 1);
       // CompiledScript compiled = compiledScripts.get(metadata.name());
@@ -259,8 +257,20 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
          ScriptingJavaApi.JsApi jsApi = JsApi_Invokables.create(script, runner);
 
-         var result = jsApi.process(userInput);
-         return (T) result;
+         // TODO: a better design for nulls handling?
+         if (args.getSystemInput() != null) {
+            if (args.getCache() != null) {
+               return (T) jsApi.process(args.getUserInput(), args.getSystemInput(), args.getCache());
+            } else {
+               return (T) jsApi.process(args.getUserInput());
+            }
+         } else {
+            if (args.getCache() != null) {
+               return (T) jsApi.process(args.getUserInput(), args.getCache());
+            } else {
+               return (T) jsApi.process(args.getUserInput());
+            }
+         }
 //         if (compiled != null) {
 //            return (T) compiled.eval(bindings);
 //         } else {
@@ -270,6 +280,12 @@ public class ScriptingManagerImpl implements ScriptingManager {
 //         }
 //      } catch (ScriptException e) {
 //         throw log.scriptExecutionError(e);
+      } catch (IllegalArgumentException iae) {
+         if (iae.getMessage().contains("Failed to compile")) {
+            throw log.scriptCompilationException(iae, metadata.name());
+         } else {
+            throw log.scriptExecutionError(iae);
+         }
       } finally {
          RUNNING_IN_SCRIPT.set(initial);
       }

@@ -3,33 +3,29 @@ package org.infinispan.scripting.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.infinispan.Cache;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * CacheScriptBindings.
  *
  * @author Tristan Tarrant
  * @since 7.2
  */
-public class CacheScriptBindings {
-   private final JsonNode systemBindings;
-   private final JsonNode userBindings;
+public class CacheScriptArguments {
+   private final JsonNode systemInput;
+   private final JsonNode userInput;
    private final Cache<?, ?> cache;
 
-   public CacheScriptBindings(JsonNode systemBindings, JsonNode userBindings, Cache<?, ?> cache) {
-      this.systemBindings = systemBindings;
-      this.userBindings = userBindings;
+   public CacheScriptArguments(JsonNode systemInput, JsonNode userInput, Cache<?, ?> cache) {
+      this.systemInput = systemInput;
+      this.userInput = userInput;
       this.cache = cache;
    }
 
-   public JsonNode getSystemBindings() {
-      return systemBindings;
+   public JsonNode getSystemInput() {
+      return systemInput;
    }
 
-   public JsonNode getUserBindings() {
-      return userBindings;
+   public JsonNode getUserInput() {
+      return userInput;
    }
 
    public Cache<?, ?> getCache() {

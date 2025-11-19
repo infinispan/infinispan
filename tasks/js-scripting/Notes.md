@@ -14,3 +14,12 @@ are not going to work
 initial plan:
 - use Builtins to craft the "default Java API" for JS
 - pass the "more dynamic" objects through arguments
+
+user_input and system_input -> passing positional arguments to the function is not viable as they are stored in a map
+better to assume a flat object
+
+- JS engine is now stateless instead of stateful
+- entry_set is passed as a materialized array of values, do we need it lazy?
+- re-evaluate system-input -> is it covered by the ScriptingAPI already?
+- names "from_java" should be changed
+- check user-input -> can become parameters and check functionality with the comments

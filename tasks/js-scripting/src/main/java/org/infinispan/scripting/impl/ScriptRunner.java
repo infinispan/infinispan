@@ -9,5 +9,5 @@ import java.util.concurrent.CompletionStage;
  * @since 7.2
  */
 public interface ScriptRunner {
-   <T> CompletionStage<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings binding);
+   <T> CompletionStage<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptArguments binding);
 }

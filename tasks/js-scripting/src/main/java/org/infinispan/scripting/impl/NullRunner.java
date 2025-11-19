@@ -20,7 +20,7 @@ public class NullRunner implements ScriptRunner {
    }
 
    @Override
-   public <T> CompletableFuture<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings binding) {
+   public <T> CompletableFuture<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptArguments binding) {
       throw log.cannotInvokeScriptDirectly(metadata.name(), metadata.mode().toString());
    }
 
