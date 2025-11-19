@@ -284,7 +284,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .create();
    }
 
-   private CompletionStage<RestResponse> getCaches(RestRequest request) {
+   protected CompletionStage<RestResponse> getCaches(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 

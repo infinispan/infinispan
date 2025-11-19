@@ -274,4 +274,20 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>nashorn-tests</id>
+         <activation>
+            <jdk>[16,)</jdk>
+         </activation>
+         <dependencies>
+            <dependency>
+               <groupId>org.openjdk.nashorn</groupId>
+               <artifactId>nashorn-core</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
+      </profile>
+   </profiles>
 </project>

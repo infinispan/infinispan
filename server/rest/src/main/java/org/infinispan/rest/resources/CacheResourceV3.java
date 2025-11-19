@@ -56,6 +56,44 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder("cache", "Cache API")
+            // Collection-level operations
+            .invocation().methods(GET).path("/v3/caches").name("List available caches")
+               .operationId("CacheList")
+               .response(OK, "Cache list as a JSON array", APPLICATION_JSON, new Schema(String[].class))
+               .response(OK, "Cache list as HTML", TEXT_HTML)
+               .handleWith(this::getCacheNames)
+
+            // Meta operations on caches (using /v3/meta/caches namespace to avoid conflicts with cache names)
+            .invocation().methods(GET).path("/v3/meta/caches/_detailed").name("List available caches with details")
+               .operationId("DetailedCacheList")
+               .response(OK, "Detailed cache list with metadata", APPLICATION_JSON)
+               .handleWith(this::getCaches)
+            .invocation().methods(GET).path("/v3/meta/caches/_role-accessible")
+               .operationId("RoleAccessibleCaches")
+               .name("List caches accessible by a specific role")
+               .permission(AuthorizationPermission.ADMIN)
+               .auditContext(AuditContext.CACHE)
+               .parameter("role", ParameterIn.QUERY, true, Schema.STRING, "The role name")
+               .response(OK, "Caches accessible by the role, separated into secured and non-secured", APPLICATION_JSON)
+               .response(BAD_REQUEST, "Role parameter is missing", TEXT_PLAIN, Schema.STRING)
+               .response(NOT_FOUND, "Role not found", TEXT_PLAIN, Schema.STRING)
+               .handleWith(this::getCacheNamesPerRole)
+
+            // Utility operations (not cache-specific)
+            .invocation().methods(POST).path("/v3/_cache-config-convert")
+               .operationId("convertCacheConfig")
+               .name("Convert cache configurations between formats")
+               .request("Cache configuration", true, Map.of(
+                     APPLICATION_XML, Schema.STRING,
+                     APPLICATION_JSON, Schema.STRING,
+                     APPLICATION_YAML, Schema.STRING
+               ))
+               .handleWith(this::convert)
+            .invocation().methods(POST).path("/v3/_cache-config-compare")
+               .operationId("compareCacheConfig")
+               .name("Compare cache configurations")
+               .handleWith(this::compare)
+
             // Key related operations
             .invocation().methods(PUT, POST).path("/v3/caches/{cacheName}/entries/{cacheKey}")
                .name("Put/update an entry in a cache")
@@ -157,13 +195,6 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .response(OK, "The cache distribution", APPLICATION_JSON)
                .response(NOT_FOUND, CACHE_NOT_FOUND_RESPONSE, TEXT_PLAIN, Schema.STRING)
                .handleWith(this::getCacheDistribution)
-
-            // List
-            .invocation().methods(GET).path("/v3/caches").name("List available caches")
-               .operationId("CacheList")
-               .response(OK, "Cache list as a JSON array", APPLICATION_JSON, new Schema(String[].class))
-               .response(OK, "Cache list as HTML", TEXT_HTML)
-               .handleWith(this::getCacheNames)
 
             // Health
             .invocation().methods(GET).path("/v3/caches/{cacheName}/_health")
@@ -276,21 +307,14 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .request("The query request object", true, Map.of(APPLICATION_JSON, new Schema(JsonQueryRequest.class)))
                .response(OK, "The results of the query", APPLICATION_JSON, new Schema(JsonQueryResponse.class))
                .handleWith(queryAction::search)
-
-            // Misc
-            .invocation().methods(POST).path("/v3/_cache-config-convert")
-               .operationId("convertCacheConfig")
-               .name("Convert cache configurations between formats")
-               .request("Cache configuration", true, Map.of(
-                     APPLICATION_XML, Schema.STRING,
-                     APPLICATION_JSON, Schema.STRING,
-                     APPLICATION_YAML, Schema.STRING
-               ))
-               .handleWith(this::convert)
-            .invocation().methods(POST).path("/v3/_cache-config-compare")
-               .operationId("compareCacheConfig")
-               .name("Compare cache configurations")
-               .handleWith(this::compare)
+            .invocation().methods(DELETE, POST).path("/v3/caches/{cacheName}/_delete-by-query")
+               .operationId("deleteByQuery")
+               .name("Delete entries from a cache matching an Ickle query")
+               .permission(AuthorizationPermission.BULK_WRITE)
+               .request("The query request object", true, Map.of(APPLICATION_JSON, new Schema(JsonQueryRequest.class)))
+               .response(OK, "The number of deleted entries", APPLICATION_JSON, Schema.LONG)
+               .response(NOT_FOUND, CACHE_NOT_FOUND_RESPONSE, TEXT_PLAIN, Schema.STRING)
+               .handleWith(queryAction::deleteByQuery)
 
             // All details
             .invocation().methods(GET).path("/v3/caches/{cacheName}/details")
