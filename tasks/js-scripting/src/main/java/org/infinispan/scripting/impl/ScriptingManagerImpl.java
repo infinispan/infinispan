@@ -170,7 +170,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
       Optional<String> language = metadata.language();
       // If a language was explicitly specified, and we cannot find an engine, fail now.
-      if (!language.isPresent() && !supportedLanguages.contains(language.get())) {
+      if (language.isPresent() && !supportedLanguages.contains(language.get())) {
          throw log.noScriptEngineForScript(metadata.name());
       }
 
@@ -292,6 +292,8 @@ public class ScriptingManagerImpl implements ScriptingManager {
          } else {
             throw log.scriptExecutionError(iae);
          }
+      } catch (RuntimeException re) {
+         throw log.scriptExecutionError(re);
       } finally {
          RUNNING_IN_SCRIPT.set(initial);
       }
