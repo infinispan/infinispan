@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.roastedroot.quickjs4j.core.Engine;
 import io.roastedroot.quickjs4j.core.Runner;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
@@ -225,7 +226,8 @@ public class ScriptingManagerImpl implements ScriptingManager {
       CacheScriptArguments bindings = new CacheScriptArguments(
               systemBindings,
               userBindings,
-              context.getCache().orElse(null));
+              // TODO: review handling of nulls and optionals in params
+              context.getCache().orElse(new SimpleCacheImpl<>("default")));
 
       ScriptRunner runner = metadata.mode().getRunner();
 
@@ -257,20 +259,8 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
          ScriptingJavaApi.JsApi jsApi = JsApi_Invokables.create(script, runner);
 
-         // TODO: a better design for nulls handling?
-         if (args.getSystemInput() != null) {
-            if (args.getCache() != null) {
-               return (T) jsApi.process(args.getUserInput(), args.getSystemInput(), args.getCache());
-            } else {
-               return (T) jsApi.process(args.getUserInput());
-            }
-         } else {
-            if (args.getCache() != null) {
-               return (T) jsApi.process(args.getUserInput(), args.getCache());
-            } else {
-               return (T) jsApi.process(args.getUserInput());
-            }
-         }
+         // TODO: verify null and optional handling in parameters in the Engine itself!
+         return (T) jsApi.process(args.getUserInput(), args.getCache());
 //         if (compiled != null) {
 //            return (T) compiled.eval(bindings);
 //         } else {

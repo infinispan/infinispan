@@ -16,14 +16,7 @@ public class ScriptingJavaApi {
     @Invokables("from_js")
     interface JsApi {
         @GuestFunction
-        Object process(JsonNode userInput, JsonNode systemInput, @HostRefParam Cache cache);
-
-        // TODO: temporary to deal with nulls? find a better way?
-        @GuestFunction
         Object process(JsonNode userInput, @HostRefParam Cache cache);
-
-        @GuestFunction
-        Object process(JsonNode userInput);
     }
 
     private final EmbeddedCacheManager cacheManager;

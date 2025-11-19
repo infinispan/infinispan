@@ -1,6 +1,6 @@
 // mode=local,language=javascript
 
-function process(user_input, system_input, cache) {
+function process(user_input, cache) {
     const cacheEntries = from_java.entry_set(cache);
 
     return cacheEntries

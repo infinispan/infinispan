@@ -15,6 +15,8 @@ initial plan:
 - use Builtins to craft the "default Java API" for JS
 - pass the "more dynamic" objects through arguments
 
+- re-enable commit hook at the end
+
 user_input and system_input -> passing positional arguments to the function is not viable as they are stored in a map
 better to assume a flat object
 
