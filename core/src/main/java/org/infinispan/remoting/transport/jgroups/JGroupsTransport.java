@@ -806,7 +806,7 @@ public class JGroupsTransport implements Transport {
          }
       }
 
-      // Targets leaving may finish some requests and potentially potentially block for a long time.
+      // Targets leaving may finish some requests and potentially block for a long time.
       // We don't want to block view handling, so we unblock the commands on a separate thread.
       nonBlockingExecutor.execute(() -> {
          if (requests != null) {
