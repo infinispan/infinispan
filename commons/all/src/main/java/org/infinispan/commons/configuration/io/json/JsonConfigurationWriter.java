@@ -178,7 +178,16 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
 
    @Override
    public void writeCharacters(String chars) {
-      //json.peek().add(chars);
+      Tag tag = tagStack.peek();
+      Json parent = json.peek();
+      if (openTag && parent.isObject()) {
+         json.pop();
+         parent = json.peek();
+         parent.set(tag.name(), chars);
+         json.push(parent);
+      } else {
+         throw new IllegalStateException();
+      }
    }
 
    @Override

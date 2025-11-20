@@ -499,11 +499,97 @@ A `204 (No Content)` response indicates that the restore metadata is deleted.
 A `202 (Accepted)` response indicates that the restore operation is in progress and will be deleted when the operation
 completes.
 
+[id='rest_v2_container_listen']
+= Listening to container events
+
+Receive events from the container using https://html.spec.whatwg.org/multipage/server-sent-events.html[Server-Sent Events].
+The `event` value will be one of:
+
+* `create-cache`, `remove-cache`, `update-cache`: a cache was created, removed or its configuration updated
+* `create-template`, `remove-template`, `update-template`: a template was created, removed or updated
+* `create-schema`, `remove-schema`, `update-schema`: a schema was created, removed or updated
+* `lifecycle-event`: container lifecycle events, such as nodes joining and leaving the cluster
+
+The `data` value will contain information about the event:
+
+* `create-cache`, `update-cache`, `create-template`, `remove-template`: the declarative configuration of the entity that has been created in the format negotiated by the `Accept` header.
+[source,options="nowrap",subs=attributes+]
+----
+event: create-cache
+data: infinispan:
+data:   cacheContainer:
+data:     myCache:
+data:       replicatedCache:
+data:         mode: "SYNC"
+----
+* `create-schema`, `update-schema`: a response structured in the negotiated media type. The following example uses `application/json`:
+[source,options="nowrap",subs=attributes+]
+----
+event: create-schema
+data: {"schema":{"name":"address.proto","errors":"","proto":"message Address {
+data:     string street = 1;
+data: }
+data: "}}
+----
+* `remove-cache`, `remove-template`, `remove-schema`: the name of the removed entity.
+[source,options="nowrap",subs=attributes+]
+----
+event: remove-cache
+data: myCache
+----
+* `lifecycle-event`: the event payload
+[source,options="nowrap",subs=attributes+]
+----
+event: lifecycle-event
+data: log:
+data:   category: "CLUSTER"
+data:   content:
+data:     level: "INFO"
+data:     message: "Some message"
+data:     detail: "A more detailed message"
+data:   meta:
+data:     instant: "2025-11-21T11:25:33.554122447Z"
+data:     context: "myCache"
+data:     scope: ~
+data:     who: ~
+----
+
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/container?action=listen
+----
+
+.Headers
+
+|===
+|Header |Required or Optional |Parameter
+
+|`Accept`
+|OPTIONAL
+|Sets the required format to return content. Supported formats are `application/yaml`, `application/json` and `application/xml`. The default is `application/yaml`. See link:#rest_accept[Accept] for more information.
+|===
+
+.Request parameters
+
+|===
+|Parameter |Required or Optional |Description
+
+|`includeCurrentState`
+|OPTIONAL
+|If `true`, the results include the state of the existing configuration in addition to the changes. If set to `false`, the request returns only the changes. The default value is `false`.
+
+|`pretty`
+|OPTIONAL
+|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
+
+|===
+
+
 [id='rest_v2_container_configuration_listen']
 = Listening to container configuration events
 Receive events about configuration changes using https://html.spec.whatwg.org/multipage/server-sent-events.html[Server-Sent Events].
-The `event` value will be one of `create-cache`, `remove-cache`, `update-cache`, `create-template`, `remove-template` or `update-template`.
-The `data` value will contain the declarative configuration of the entity that has been created. Remove events will only contain the name of the removed entity.
+This endpoint returns only the `cache`, `template` and `schema` events which are also returned by <<rest_v2_container_listen>>.
 
 [source,options="nowrap",subs=attributes+]
 ----
@@ -535,41 +621,3 @@ GET /rest/v2/container/config?action=listen
 
 |===
 
-[id='rest_v2_container_listen']
-= Listening to container events
-
-Receive events from the container using https://html.spec.whatwg.org/multipage/server-sent-events.html[Server-Sent Events].
-The emitted events come from logged information, so each event contains an identifier associated with the message.
-The `event` value will be `lifecycle-event`. The `data` has the logged information, which includes the `message`,
-`category`, `level`, `timestamp`, `owner`, `context`, and `scope`, some of which may be empty.
-Currently, we expose only `LIFECYCLE` events.
-
-[source,options="nowrap",subs=attributes+]
-----
-GET /rest/v2/container?action=listen
-----
-
-.Headers
-
-|===
-|Header |Required or Optional |Parameter
-
-|`Accept`
-|OPTIONAL
-|Sets the required format to return content. Supported formats are `application/yaml`, `application/json` and `application/xml`. The default is `application/yaml`. See link:#rest_accept[Accept] for more information.
-|===
-
-.Request parameters
-
-|===
-|Parameter |Required or Optional |Description
-
-|`includeCurrentState`
-|OPTIONAL
-|If `true`, the results include the state of the existing configuration in addition to the changes. If set to `false`, the request returns only the changes. The default value is `false`.
-
-|`pretty`
-|OPTIONAL
-|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
-
-|===
