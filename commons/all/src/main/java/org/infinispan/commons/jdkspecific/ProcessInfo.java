@@ -16,7 +16,7 @@ public class ProcessInfo {
    private ProcessInfo(ProcessHandle handle) {
       name = handle.info().command().orElse("-");
       pid = handle.pid();
-      ppid = handle.parent().map(ProcessHandle::pid).orElse(-1l);
+      ppid = handle.parent().map(ProcessHandle::pid).orElse(-1L);
       arguments = Arrays.asList(handle.info().arguments().orElse(new String[]{}));
    }
 

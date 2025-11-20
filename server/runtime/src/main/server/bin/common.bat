@@ -26,12 +26,21 @@ if "x%JAVA_HOME%" == "x" (
    set "JAVA=%JAVA_HOME%\bin\java"
 )
 
+FOR /F "tokens=3" %%V IN ('java -version 2^>^&1 ^| findstr /i "version"') DO (
+   SET "VERSION=%%V"
+)
+set "VERSION=%VERSION:"=,%"
+FOR /F "delims=., tokens=1" %%a in ("%VERSION%") do (
+   set "JAVA_VERSION=%%a"
+)
+
 set "JAVA_OPTS="
 
-set "CLASSPATH="
-
-for  /f "delims=" %%j in ('dir /b /s "%ISPN_HOME%\boot\*.jar"') do (
-   set "CLASSPATH=%CLASSPATH%;%%~j"
+IF %JAVA_VERSION% GEQ 24 (
+    set "JAVA_OPTS=--enable-native-access=ALL-UNNAMED %JAVA_OPTS%"
+)
+IF %JAVA_VERSION% GEQ 25 (
+   set "JAVA_OPTS=-XX:+UseCompactObjectHeaders %JAVA_OPTS%"
 )
 
 set DEBUG_MODE=false
@@ -61,7 +70,7 @@ shift
 goto ARGS_LOOP_START
 
 :ARGS_LOOP_END
-set "JAVA_OPTS=--add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED %JAVA_OPTS% %JAVA_OPTS_EXTRA%"
+set "JAVA_OPTS=--add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED %JAVA_OPTS% %JAVA_OPTS_EXTRA%"
 rem Set debug settings if not already set
 if "%DEBUG_MODE%" == "true" (
    echo "%JAVA_OPTS%" | findstr /I "\-agentlib:jdwp" > nul
