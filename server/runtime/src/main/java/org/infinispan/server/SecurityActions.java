@@ -74,9 +74,7 @@ final class SecurityActions {
    }
 
    static void shutdownAllCaches(DefaultCacheManager manager) {
-      Runnable action = () -> {
-         manager.shutdownAllCaches();
-      };
+      Runnable action = manager::shutdownAllCaches;
       doPrivileged(action);
    }
 
@@ -95,6 +93,6 @@ final class SecurityActions {
    }
 
    static ClusterExecutor getClusterExecutor(EmbeddedCacheManager cacheManager) {
-      return doPrivileged(() -> cacheManager.executor());
+      return doPrivileged(cacheManager::executor);
    }
 }

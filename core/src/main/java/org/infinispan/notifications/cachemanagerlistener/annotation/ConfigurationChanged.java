@@ -7,12 +7,11 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation should be used on methods that need to be notified when a configuration is changed.
-  * Methods annotated with this annotation should accept a single parameter, a {@link
+ * Methods annotated with this annotation should accept a single parameter, a {@link
  * org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent} otherwise a {@link
  * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your listener.
-  * Any exceptions thrown by the listener will abort the call. Any other listeners not yet called will not be called,
+ * Any exceptions thrown by the listener will abort the call. Any other listeners not yet called will not be called,
  * and any transactions in progress will be rolled back.
- *
  *
  * @author Tristan Tarrant
  * @see org.infinispan.notifications.Listener
