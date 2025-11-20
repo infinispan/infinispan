@@ -1,6 +1,6 @@
 ### How to test?
 
-By default the tests will run against H2 and SQLITE with the command
+By default, the tests will run against H2 and SQLITE with the command
 
 `mvn clean test`
 

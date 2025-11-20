@@ -113,13 +113,6 @@
                         <artifactId>quarkus-maven-plugin</artifactId>
                         <version>${version.quarkus}</version>
                     </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>distribution</id>
-            <build>
-                <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
