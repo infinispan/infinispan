@@ -1,5 +1,7 @@
 package org.infinispan.server.logging;
 
+import java.lang.invoke.MethodHandles;
+
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
 
@@ -8,7 +10,7 @@ import org.jboss.logging.annotations.MessageBundle;
  */
 @MessageBundle(projectCode = "ISPN")
 public interface Messages {
-   Messages MSG = org.jboss.logging.Messages.getBundle(Messages.class);
+   Messages MSG = org.jboss.logging.Messages.getBundle(MethodHandles.lookup(), Messages.class);
 
    @Message(value = "Unrecognized command-line argument `%s`.", id = 90001)
    String unknownArgument(String argument);

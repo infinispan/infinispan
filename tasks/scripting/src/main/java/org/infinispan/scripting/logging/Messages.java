@@ -1,5 +1,7 @@
 package org.infinispan.scripting.logging;
 
+import java.lang.invoke.MethodHandles;
+
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
 
@@ -12,7 +14,7 @@ import org.jboss.logging.annotations.MessageBundle;
  */
 @MessageBundle(projectCode = "ISPN")
 public interface Messages {
-   Messages MSG = org.jboss.logging.Messages.getBundle(Messages.class);
+   Messages MSG = org.jboss.logging.Messages.getBundle(MethodHandles.lookup(), Messages.class);
 
    @Message(value = "Executed script  '%s' on cache '%s'", id = 21500)
    String executedScript(String scriptName, String cacheName);

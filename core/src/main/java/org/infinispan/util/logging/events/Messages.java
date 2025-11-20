@@ -2,6 +2,7 @@ package org.infinispan.util.logging.events;
 
 import static org.jboss.logging.Messages.getBundle;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -18,7 +19,7 @@ import org.jboss.logging.annotations.MessageBundle;
  */
 @MessageBundle(projectCode = "ISPN")
 public interface Messages {
-   Messages MESSAGES = getBundle(Messages.class);
+   Messages MESSAGES = getBundle(MethodHandles.lookup(), Messages.class);
 
    @Message(value = "[Context=%s]")
    String eventLogContext(String ctx);

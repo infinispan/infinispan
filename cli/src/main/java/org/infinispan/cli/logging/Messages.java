@@ -1,6 +1,7 @@
 package org.infinispan.cli.logging;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.net.ConnectException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
@@ -24,7 +25,7 @@ import org.jboss.logging.annotations.MessageBundle;
  */
 @MessageBundle(projectCode = "ISPN")
 public interface Messages {
-   Messages MSG = org.jboss.logging.Messages.getBundle(Messages.class);
+   Messages MSG = org.jboss.logging.Messages.getBundle(MethodHandles.lookup(), Messages.class);
    Logger CLI = Logger.getLogger("CLI");
 
    @Message(value = "Username: ")
