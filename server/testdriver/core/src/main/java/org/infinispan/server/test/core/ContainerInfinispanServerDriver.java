@@ -62,6 +62,8 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.server.Server;
+import org.infinispan.testcontainers.CountdownLatchLoggingConsumer;
+import org.infinispan.testcontainers.InfinispanGenericContainer;
 import org.infinispan.util.logging.LogFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.OutputFrame;

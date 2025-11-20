@@ -35,7 +35,7 @@ Add the following dependency to your `pom.xml` file:
 ----
 <dependency>
     <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-server-testdriver-core</artifactId>
+    <artifactId>testcontainers-infinispan</artifactId>
     <version>{{latest_version}}</version>
     <scope>test</scope>
 </dependency>
