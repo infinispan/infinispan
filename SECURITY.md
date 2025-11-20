@@ -12,17 +12,17 @@ Please report any security issues you find in Infinispan to:
 ### Why follow this process
 
 Due to the sensitive nature of security bugs, the disclosure process is more constrained than a regular bug.
-We appreciate you following these industry accepted guidelines, which gives time for a proper fix and limit the time window of attack.
+We appreciate you following these industry accepted guidelines, which gives time for a proper fix and limit the time
+window of attack.
 
 ## Supported Versions
 
 The following table shows which versions are supported for vulnerability updates.
 
 | Version | Supported          |
-| ------- | ------------------ |
+|---------|--------------------|
+| 16      | :white_check_mark: |    
 | 15.2.x  | :white_check_mark: |
-| 15.1.x  | :x: |
+| 15.1.x  | :x:                |
 | 15.0.x  | :white_check_mark: |
-| 14.0.x  | :white_check_mark: |
-| < 14.0  | :x:                |
-
+| < 15.0  | :x:                |
