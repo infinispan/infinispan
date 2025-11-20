@@ -2,12 +2,14 @@ package org.infinispan.server.core.logging;
 
 import static org.jboss.logging.Messages.getBundle;
 
+import java.lang.invoke.MethodHandles;
+
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
 
 @MessageBundle(projectCode = "ISPN")
 public interface Messages {
-   Messages MESSAGES = getBundle(Messages.class);
+   Messages MESSAGES = getBundle(MethodHandles.lookup(), Messages.class);
 
    @Message(value = "Backup '%s' Created")
    String backupCreated(String name);

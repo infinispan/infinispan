@@ -106,7 +106,7 @@ public interface Log extends BasicLogger {
    Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONFIG");
    Log CLUSTER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CLUSTER");
    Log CONTAINER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONTAINER");
-   Log PERSISTENCE = Logger.getMessageLogger(Log.class, PERSISTENCE_STRING);
+   Log PERSISTENCE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, PERSISTENCE_STRING);
    Log SECURITY = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "SECURITY");
    Log XSITE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "XSITE");
 

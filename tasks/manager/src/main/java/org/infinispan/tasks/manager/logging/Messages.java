@@ -2,6 +2,8 @@ package org.infinispan.tasks.manager.logging;
 
 import static org.jboss.logging.Messages.getBundle;
 
+import java.lang.invoke.MethodHandles;
+
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
 
@@ -13,7 +15,7 @@ import org.jboss.logging.annotations.MessageBundle;
  */
 @MessageBundle(projectCode = "ISPN")
 public interface Messages {
-    Messages MESSAGES = getBundle(Messages.class);
+    Messages MESSAGES = getBundle(MethodHandles.lookup(), Messages.class);
 
     @Message(value = "Task %s completed successfully", id = 101000)
     String taskSuccess(String name);
