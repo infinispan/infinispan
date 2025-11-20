@@ -4,9 +4,12 @@ import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstant
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTO_KEY_SUFFIX;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -47,6 +50,8 @@ import org.infinispan.interceptors.SyncInvocationStage;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
@@ -79,6 +84,8 @@ public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInt
    private KeyPartitioner keyPartitioner;
 
    private SerializationContextRegistry serializationContextRegistry;
+
+   private CacheManagerNotifier cacheManagerNotifier;
 
    /**
     * A no-op callback.
@@ -127,7 +134,7 @@ public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInt
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
          final Map<Object, Object> map = command.getMap();
-         FileDescriptorSource source = new FileDescriptorSource().withProgressCallback(EMPTY_CALLBACK);
+         FileDescriptorSource source = new FileDescriptorSource();
          for (Object key : map.keySet()) {
             var protoKey = validateKey(key);
             if (isErrorKeySuffix(protoKey)) {
@@ -137,7 +144,7 @@ public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInt
             log.debugf("Registering proto file '%s': %s", protoKey, value);
             source.addProtoFile(protoKey, value);
          }
-         registerFileDescriptorSource(source, source.getFiles().keySet().toString());
+         registerFileDescriptorSource(source);
          return null;
       }
 
@@ -164,26 +171,27 @@ public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInt
             return;
          }
          validateKeySuffix(protoKey);
-         registerProtoFile(protoKey, validateValue(value), EMPTY_CALLBACK);
+         registerProtoFile(protoKey, validateValue(value));
       }
    };
 
-   private void registerProtoFile(String name, String content, FileDescriptorSource.ProgressCallback callback) {
+   private ProgressCallback registerProtoFile(String name, String content) {
       log.debugf("Registering proto file '%s': %s", name, content);
       FileDescriptorSource source = new FileDescriptorSource()
-            .withProgressCallback(callback)
             .addProtoFile(name, content);
-      registerFileDescriptorSource(source, source.getFiles().keySet().toString());
+      return registerFileDescriptorSource(source);
    }
 
    @Inject
    public void init(CommandsFactory commandsFactory, ComponentRef<AsyncInterceptorChain> invoker, KeyPartitioner keyPartitioner,
-                    ProtobufMetadataManager protobufMetadataManager, SerializationContextRegistry serializationContextRegistry) {
+                    ProtobufMetadataManager protobufMetadataManager, SerializationContextRegistry serializationContextRegistry,
+                    CacheManagerNotifier cacheManagerNotifier) {
       this.commandsFactory = commandsFactory;
       this.invoker = invoker;
       this.keyPartitioner = keyPartitioner;
       this.serializationContext = ((ProtobufMetadataManagerImpl) protobufMetadataManager).getSerializationContext();
       this.serializationContextRegistry = serializationContextRegistry;
+      this.cacheManagerNotifier = cacheManagerNotifier;
    }
 
    @Override
@@ -230,7 +238,7 @@ public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInt
          var value = validateValue(cmd.getValue());
 
          if (cmd.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-            registerProtoFile(key, value, EMPTY_CALLBACK);
+            registerProtoFile(key, value);
             return makeStage(rv);
          }
          return handleLocalProtoFileRegister(ctx, key, value, copyFlags(cmd));
@@ -285,22 +293,39 @@ public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInt
          log.debugf("Registering proto file '%s': %s", protoKey, value);
          source.addProtoFile(protoKey, value);
       }
-      var callback = new ProgressCallback();
-      source.withProgressCallback(callback);
-      registerFileDescriptorSource(source, source.getFiles().keySet().toString());
-      List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(callback);
-      return updateSchemaErrorsIterator(ctx, copyFlags(cmd), errorUpdates.iterator());
+      ProgressCallback callback = registerFileDescriptorSource(source);
+      return updateSchemaErrorsIterator(ctx, copyFlags(cmd), computeErrorUpdates(callback).iterator());
    }
 
-   private void registerFileDescriptorSource(FileDescriptorSource source, String fileNameString) {
+   private void notifySchemaUpdates(FileDescriptorSource source, Set<String> updates, Map<String, DescriptorParserException> errorFiles) {
+      for (Map.Entry<String, String> file : source.getFiles().entrySet()) {
+         cacheManagerNotifier.notifyConfigurationChanged(
+               updates.contains(file.getKey()) ? ConfigurationChangedEvent.EventType.UPDATE : ConfigurationChangedEvent.EventType.CREATE,
+               ConfigurationChangedEvent.SCHEMA,
+               file.getKey(),
+               Map.of(
+                     "file", file.getValue(),
+                     "errors", Objects.requireNonNullElse(errorFiles.get(file.getKey()), "")
+               )
+         );
+      }
+   }
+
+   private ProgressCallback registerFileDescriptorSource(FileDescriptorSource source) {
       try {
+         ProgressCallback callback = new ProgressCallback();
+         source.withProgressCallback(callback);
+         Set<String> updates = new HashSet<>(serializationContext.getFileDescriptors().keySet());
+         updates.retainAll(source.getFiles().keySet());
          // Register protoFiles with remote-query context
          serializationContext.registerProtoFiles(source);
-
          // Register schema with user context to allow transcoding
          serializationContextRegistry.addProtoFile(SerializationContextRegistry.MarshallerType.USER, source);
+         // Notify any listeners
+         notifySchemaUpdates(source, updates, callback.getErrorFiles());
+         return callback;
       } catch (DescriptorParserException e) {
-         throw log.failedToParseProtoFile(fileNameString, e);
+         throw log.failedToParseProtoFile(source.getFiles().keySet().toString(), e);
       }
    }
 
@@ -333,6 +358,7 @@ public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInt
       if (serializationContextRegistry.getUserCtx().getFileDescriptors().containsKey(key)) {
          serializationContextRegistry.removeProtoFile(SerializationContextRegistry.MarshallerType.USER, key);
       }
+      cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, ConfigurationChangedEvent.SCHEMA, key, Collections.emptyMap());
    }
 
    private List<KeyValuePair<String, String>> computeErrorUpdatesAfterRemove(String key) {
@@ -372,7 +398,7 @@ public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInt
          writeCommand = commandsFactory.buildRemoveCommand(errorsKey, null, segment, flagsBitSet);
       } else {
          PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(errorsKey, errorsValue, segment,
-                                                                          DEFAULT_METADATA, flagsBitSet);
+               DEFAULT_METADATA, flagsBitSet);
          put.setPutIfAbsent(true);
          writeCommand = put;
       }
@@ -433,7 +459,7 @@ public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInt
          if (ctx.isOriginLocal()) {
             return handleLocalProtoFileRegister(ctx, key, value, 0);
          }
-         registerProtoFile(key, value, EMPTY_CALLBACK);
+         registerProtoFile(key, value);
       }
       return rv;
    }
@@ -488,10 +514,8 @@ public final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInt
    }
 
    private InvocationStage handleLocalProtoFileRegister(InvocationContext ctx, String key, String value, long flags) {
-      ProgressCallback progressCallback = new ProgressCallback();
-      registerProtoFile(key, value, progressCallback);
-      List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
-      return updateSchemaErrorsIterator(ctx, flags, errorUpdates.iterator());
+      ProgressCallback callback = registerProtoFile(key, value);
+      return updateSchemaErrorsIterator(ctx, flags, computeErrorUpdates(callback).iterator());
    }
 
    private LockControlCommand buildLockCommand(long flags) {

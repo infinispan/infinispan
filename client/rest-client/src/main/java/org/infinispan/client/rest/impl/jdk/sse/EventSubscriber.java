@@ -37,9 +37,9 @@ public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
    public void onNext(String line) {
       if (line.isEmpty()) {
          Map<String, String> map = lines.stream()
-            .map(l -> l.split(":", 2))
-            .filter(pair -> !pair[0].isEmpty())
-            .collect(toMap(pair -> pair[0], pair -> pair[1].trim(), String::concat));
+               .map(l -> l.split(":", 2))
+               .filter(pair -> !pair[0].isEmpty())
+               .collect(toMap(pair -> pair[0], pair -> pair[1].substring(1), (s1, s2) -> s1 + "\n" + s2));
          listener.onMessage(map.get("id"), map.get("event"), map.get("data"));
          lines.clear();
       } else {

@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachemanagerlistener;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.notifications.Listenable;
@@ -31,12 +32,13 @@ public interface CacheManagerNotifier extends Listenable {
    /**
     * Notifies all registered listeners of a configurationChange event.
     *
-    * @param eventType  the type of event (CREATE or REMOVE)
-    * @param entityType the type of configuration that has changed (e.g. cache, counter, ...)
-    * @param entityName the name of the configuration item that has been changed
+    * @param eventType   the type of event (CREATE or REMOVE)
+    * @param entityType  the type of configuration that has changed (e.g. cache, counter, ...)
+    * @param entityName  the name of the configuration item that has been changed
+    * @param entityValue the value of the configuration item as a map
     * @return a {@link CompletionStage} which completes when the notification has been sent.
     */
-   CompletionStage<Void> notifyConfigurationChanged(ConfigurationChangedEvent.EventType eventType, String entityType, String entityName);
+   CompletionStage<Void> notifyConfigurationChanged(ConfigurationChangedEvent.EventType eventType, String entityType, String entityName, Map<String, Object> entityValue);
 
    /**
     * Returns whether there is at least one listener registered for the given annotation

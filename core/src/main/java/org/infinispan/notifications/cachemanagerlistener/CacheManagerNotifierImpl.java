@@ -28,6 +28,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.SitesViewChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.impl.ConfigurationChangedEventImpl;
 import org.infinispan.notifications.cachemanagerlistener.event.impl.EventImpl;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.notifications.impl.ListenerInvocation;
@@ -145,13 +146,9 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
    }
 
    @Override
-   public CompletionStage<Void> notifyConfigurationChanged(ConfigurationChangedEvent.EventType eventType, String entityType, String entityName) {
+   public CompletionStage<Void> notifyConfigurationChanged(ConfigurationChangedEvent.EventType eventType, String entityType, String entityName, Map<String, Object> entityValue) {
       if (!configurationChangedListeners.isEmpty()) {
-         EventImpl e = new EventImpl();
-         e.setConfigurationEventType(eventType);
-         e.setConfigurationEntityType(entityType);
-         e.setConfigurationEntityName(entityName);
-         e.setType(Event.Type.CONFIGURATION_CHANGED);
+         ConfigurationChangedEvent e = new ConfigurationChangedEventImpl(cacheManager, eventType, entityType, entityName, entityValue);
          return invokeListeners(e, configurationChangedListeners);
       }
       return CompletableFutures.completedNull();
