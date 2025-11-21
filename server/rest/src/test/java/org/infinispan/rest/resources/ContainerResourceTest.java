@@ -316,6 +316,23 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
          // Assert that deletions create an event
          assertThat(client.cache("listen1").delete()).isOk();
          sseListener.expectEvent("remove-cache", "listen1");
+
+         // Create a schema
+         assertThat(client.schemas().put("address.proto", """
+               message Address {
+                   string street = 1;
+               }
+               """)).isOk();
+         sseListener.expectEvent("create-schema", "name: address.proto");
+         assertThat(client.schemas().put("address.proto", """
+               message Address {
+                   string street = 1;
+                   string city = 2;
+               }
+               """)).isOk();
+         sseListener.expectEvent("update-schema", "name: address.proto");
+         assertThat(client.schemas().delete("address.proto")).isOk();
+         sseListener.expectEvent("remove-schema", "address.proto");
       }
    }
 

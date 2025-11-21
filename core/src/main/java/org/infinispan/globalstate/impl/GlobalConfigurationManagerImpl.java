@@ -301,7 +301,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    CompletionStage<Void> createTemplateLocally(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       log.debugf("Creating template %s from global state", name);
       return localConfigurationManager.createTemplate(name, configuration, flags)
-            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "template", name))
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, ConfigurationChangedEvent.TEMPLATE, name, null))
             .toCompletableFuture();
    }
 
@@ -313,7 +313,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    CompletionStage<Void> createCacheLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       log.debugf("Creating cache %s from global state", name);
       return localConfigurationManager.createCache(name, template, configuration, flags)
-            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "cache", name))
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, ConfigurationChangedEvent.CACHE, name, null))
             .toCompletableFuture();
    }
 
@@ -327,7 +327,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       log.debugf("Updating configuration %s from global state", name);
       Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
       return localConfigurationManager.updateConfiguration(name, configuration, state.getFlags())
-            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.UPDATE, "cache", name));
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.UPDATE, ConfigurationChangedEvent.CACHE, name, null));
    }
 
    private Configuration buildConfiguration(String name, String configStr, boolean template) {
@@ -359,10 +359,10 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    CompletionStage<Void> removeCacheLocally(String name) {
-      return localConfigurationManager.removeCache(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class)).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "cache", name));
+      return localConfigurationManager.removeCache(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class)).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "cache", name, null));
    }
 
    CompletionStage<Void> removeTemplateLocally(String name) {
-      return localConfigurationManager.removeTemplate(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class)).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "template", name));
+      return localConfigurationManager.removeTemplate(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class)).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "template", name, null));
    }
 }

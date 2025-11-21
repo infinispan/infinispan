@@ -576,7 +576,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          queryReq.set("max_results", maxResults);
          return client.raw().post(path, RestEntity.create(APPLICATION_JSON, queryReq.toString()));
       }
-      String queryReq = path + "&query=" + URLEncoder.encode(q, "UTF-8") +
+      String queryReq = path + "&query=" + URLEncoder.encode(q, StandardCharsets.UTF_8) +
             "&offset=" + offset +
             "&max_results=" + maxResults;
       return client.raw().get(queryReq);
