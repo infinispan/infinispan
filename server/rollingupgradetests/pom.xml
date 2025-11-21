@@ -22,6 +22,7 @@
       <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
       <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
       <org.infinispan.test.server.container.ulimit>4096,65539</org.infinispan.test.server.container.ulimit>
+      <org.infinispan.test.server.container.baseImageName/>
       <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
       <log4j.configurationFile>${project.build.testOutputDirectory}/configuration/log4j2.xml</log4j.configurationFile>
       <infinispan.server.log.path>${project.build.directory}</infinispan.server.log.path>
@@ -252,4 +253,15 @@
          </plugin>
       </plugins>
    </build>
+   <profiles>
+      <profile>
+         <id>image</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <org.infinispan.test.server.container.baseImageName>infinispan/server:${project.version}</org.infinispan.test.server.container.baseImageName>
+         </properties>
+      </profile>
+   </profiles>
 </project>
