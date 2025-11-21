@@ -1,0 +1,29 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 3
+indent_style = space
+insert_final_newline = false
+max_line_length = 120
+tab_width = 3
+
+[{*.ad,*.adoc,*.asciidoc,.asciidoctorconfig}]
+indent_size = 4
+tab_width = 4
+
+[{*.bash,*.sh,*.zsh}]
+indent_size = 2
+tab_width = 2
+
+[{*.har,*.jsb2,*.jsb3,*.json,*.jsonc,*.postman_collection,*.postman_collection.json,*.postman_environment,*.postman_environment.json,.babelrc,.eslintrc,.prettierrc,.stylelintrc,.ws-context,brakeman.ignore,jest.config}]
+indent_size = 2
+tab_width = 4
+
+[{*.markdown,*.md}]
+indent_size = 4
+tab_width = 4
+
+[{*.yaml,*.yml,pubspec.lock}]
+indent_size = 2

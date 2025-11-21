@@ -1,5 +1,5 @@
 message SlowChild {
-    optional string id = 1;
+   optional string id = 1;
 }
 
 /**
@@ -7,10 +7,10 @@ message SlowChild {
  */
 message FastChild {
 
-    /**
-      * @Basic(projectable = true)
-      */
-    optional string id = 1;
+   /**
+     * @Basic(projectable = true)
+     */
+   optional string id = 1;
 }
 
 /**
@@ -18,7 +18,7 @@ message FastChild {
  */
 message FieldLessChild {
 
-    optional string id = 1;
+   optional string id = 1;
 }
 
 /**
@@ -26,34 +26,34 @@ message FieldLessChild {
  */
 message Parent {
 
-    optional string id = 1;
+   optional string id = 1;
 
-    /**
-     * @Basic(projectable = true)
-     */
-    optional string name = 2;
+   /**
+    * @Basic(projectable = true)
+    */
+   optional string name = 2;
 
-    repeated SlowChild slowChildren = 3;
+   repeated SlowChild slowChildren = 3;
 
-    /**
-     * @Embedded
-     */
-    repeated FastChild fastChildren = 4;
-
-    /**
+   /**
     * @Embedded
     */
-    repeated FieldLessChild fieldLessChildren = 5;
+   repeated FastChild fastChildren = 4;
 
-    message NotIndexedWithFieldChild {
+   /**
+   * @Embedded
+   */
+   repeated FieldLessChild fieldLessChildren = 5;
+
+   message NotIndexedWithFieldChild {
       /**
         * @Basic(projectable = true)
         */
       optional string id = 1;
-    }
+   }
 
-    /**
-      * @Embedded
-      */
-    optional NotIndexedWithFieldChild notIndexedWithFieldChild = 6;
+   /**
+     * @Embedded
+     */
+   optional NotIndexedWithFieldChild notIndexedWithFieldChild = 6;
 }

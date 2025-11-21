@@ -1,9 +1,9 @@
 /* @Indexed */
 message TestEntity {
 
-    /* @Keyword(projectable = true) */
-    optional string id = 1;
+   /* @Keyword(projectable = true) */
+   optional string id = 1;
 
-    /* @Text(projectable = true, analyzer = "simple") */
-    optional string name = 2;
+   /* @Text(projectable = true, analyzer = "simple") */
+   optional string name = 2;
 }
