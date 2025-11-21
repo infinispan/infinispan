@@ -19,7 +19,7 @@ public class CustomStoreConfiguration extends AbstractStoreConfiguration {
    }
 
    public CustomStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
-      super(attributes, async);
+      super(Element.CUSTOM_STORE, attributes, async);
       // TODO Auto-generated constructor stub
    }
 }
