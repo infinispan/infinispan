@@ -24,6 +24,7 @@ import javax.management.ServiceNotFoundException;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
@@ -99,7 +100,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    public void testInvokeJmxOperationNotExposed() {
       Exceptions.expectException(MBeanException.class, ServiceNotFoundException.class,
-            () -> mBeanServerLookup.getMBeanServer().invoke(name, "stop", new Object[]{}, new String[]{}));
+            () -> mBeanServerLookup.getMBeanServer().invoke(name, "stop", Util.EMPTY_OBJECT_ARRAY, Util.EMPTY_STRING_ARRAY));
    }
 
    public void testSameDomain() {
