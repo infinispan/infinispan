@@ -12,7 +12,7 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Add release labels on merge
         run: |
           .github/scripts/pr-label-issues.sh "${{ github.event.pull_request.number }}" "$GITHUB_REPOSITORY" "$GITHUB_BASE_REF" >> "$GITHUB_STEP_SUMMARY"
