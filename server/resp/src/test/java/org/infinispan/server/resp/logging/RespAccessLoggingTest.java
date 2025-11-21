@@ -43,7 +43,7 @@ public class RespAccessLoggingTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   public void testAccessLogg() {
+   public void testAccessLog() {
       int size = 10;
       // This will send the HELLO command.
       // Based on the response, Lettuce will send two CLIENT SETINFO requests.
@@ -69,36 +69,36 @@ public class RespAccessLoggingTest extends SingleNodeRespBaseTest {
 
       server.getTransport().stop();
 
-      assertThat(logAppender.getLog(0))
+      assertThat(logAppender.get(0))
             .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"HELLO /\\[] RESP\" OK \\d+ \\d+ \\d+$");
 
-      assertThat(logAppender.getLog(1))
+      assertThat(logAppender.get(1))
             .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"CLIENT /\\[] RESP\" OK \\d+ \\d+ \\d+$");
-      assertThat(logAppender.getLog(2))
+      assertThat(logAppender.get(2))
             .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"CLIENT /\\[] RESP\" OK \\d+ \\d+ \\d+$");
 
       size += 2;
       int i = 3;
 
       for (; i <= size; i ++) {
-         String logLine = logAppender.getLog(i);
+         String logLine = logAppender.get(i);
          assertThat(logLine)
                .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"SET /\\[\\[B0x\\w+] RESP\" OK \\d+ \\d+ \\d+$");
       }
 
-      assertThat(logAppender.getLog(size + 1))
+      assertThat(logAppender.get(size + 1))
             // INFO writes more than 4K data to the buffer
             .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"INFO /\\[] RESP\" OK \\d+ 4\\d{3} \\d+$");
 
-      assertThat(logAppender.getLog(size + 2))
+      assertThat(logAppender.get(size + 2))
             // We invoke MGET with 3 keys.
             .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"MGET /\\[?(\\[B0x\\w+[,\\]]){3} RESP\" OK \\d+ \\d+ \\d+$");
 
-      assertThat(logAppender.getLog(size + 3))
+      assertThat(logAppender.get(size + 3))
             // We invoke MSET with 3 keys.
             .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"MSET /\\[?(\\[B0x\\w+[,\\]]){3} RESP\" OK \\d+ \\d+ \\d+$");
 
-      assertThat(logAppender.getLog(size + 4))
+      assertThat(logAppender.get(size + 4))
             // We invoke an unknown command.
             .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"UNKNOWN_COMMAND /\\[] RESP\" OK \\d+ \\d+ \\d+$");
    }

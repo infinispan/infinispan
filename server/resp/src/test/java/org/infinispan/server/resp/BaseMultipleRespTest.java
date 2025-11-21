@@ -35,7 +35,7 @@ public abstract class BaseMultipleRespTest extends MultipleCacheManagersTest {
    protected RespServer server2;
    protected StatefulRedisConnection<String, String> redisConnection1;
    protected StatefulRedisConnection<String, String> redisConnection2;
-   protected static final int timeout = 60;
+   public static final int TIMEOUT = 60;
 
    @Override
    protected void createCacheManagers() {

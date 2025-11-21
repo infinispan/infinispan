@@ -4,7 +4,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
+import org.infinispan.server.core.security.simple.SimpleAuthenticator;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
@@ -16,7 +16,7 @@ public class SecureServerFailureRetryTest extends ServerFailureRetryTest {
    @Override
    protected HotRodServer createStartHotRodServer(EmbeddedCacheManager manager) {
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
-      SimpleSaslAuthenticator sap = new SimpleSaslAuthenticator();
+      SimpleAuthenticator sap = new SimpleAuthenticator();
       sap.addUser("user", "realm", "password".toCharArray(), null);
       serverBuilder.authentication()
          .enable()

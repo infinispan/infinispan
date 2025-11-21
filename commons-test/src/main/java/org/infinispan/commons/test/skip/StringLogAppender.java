@@ -2,6 +2,7 @@ package org.infinispan.commons.test.skip;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -22,7 +23,7 @@ import org.apache.logging.log4j.core.config.Property;
  * @author Tristan Tarrant
  * @since 9.2
  */
-public class StringLogAppender extends AbstractAppender {
+public class StringLogAppender extends AbstractAppender implements Iterable<String> {
 
    private final String category;
    private final Level level;
@@ -44,7 +45,7 @@ public class StringLogAppender extends AbstractAppender {
       config.addAppender(this);
       AppenderRef ref = AppenderRef.createAppenderRef(this.getName(), level, null);
       AppenderRef[] refs = new AppenderRef[]{ref};
-      LoggerConfig loggerConfig = LoggerConfig.createLogger(true, level, category, null, refs, null, config, null);
+      LoggerConfig loggerConfig = LoggerConfig.newBuilder().withAdditivity(true).withLevel(level).withLoggerName(category).withRefs(refs).withConfig(config).build();
       loggerConfig.addAppender(this, null, null);
       config.addLogger(category, loggerConfig);
       loggerContext.updateLoggers();
@@ -63,15 +64,24 @@ public class StringLogAppender extends AbstractAppender {
       }
    }
 
-   public String getLog(int index) {
+   public int size() {
+      return logs.size();
+   }
+
+   public String get(int index) {
       if (index < 0) {
          throw new IllegalArgumentException("Index must not be negative.");
       }
       int size = logs.size();
       if (index >= size) {
          throw new IllegalArgumentException("Index " + index + " is out of bounds. "
-                                                  + (size == 0 ? "No logs recorded yet." : "Accepted values are: [0 .. " + (size - 1) + "]"));
+               + (size == 0 ? "No logs recorded yet." : "Accepted values are: [0 .. " + (size - 1) + "]"));
       }
       return logs.get(index);
+   }
+
+   @Override
+   public Iterator<String> iterator() {
+      return logs.iterator();
    }
 }

@@ -67,7 +67,7 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
 
       restServer.stop();
 
-      String logline = logAppender.getLog(0);
+      String logline = logAppender.get(0);
 
       String regex = String.format("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d+] \"PUT /rest/v2/caches/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+ %s/\\p{Graph}+$", System.getProperty("infinispan.brand.name"));
       assertTrue(logline, logline.matches(regex));

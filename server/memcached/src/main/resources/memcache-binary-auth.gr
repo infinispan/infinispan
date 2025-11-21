@@ -23,7 +23,6 @@ init {
    }
 }
 
-
 beforedecode {
    // We cannot read more than one command at a time
    if (!ctx.channel().config().isAutoRead()) {
@@ -42,6 +41,7 @@ exceptionally {
       return;
    }
    log.trace("Parsing error", t);
+   exceptionCaught(mc_header, t);
 }
 
 deadend {
@@ -99,5 +99,5 @@ parameters switch op
    | { SASL_STEP }? key value { if (out.add(saslStep(header, key, value))) { state=0; return false;} }
    | { CONFIG_GET }? key { if (out.add(config(header, key))) { state=0; return false;} }
 // Unknown
-   | { throw new IllegalArgumentException("Unknown operation " + op); }
+   | { throw new SecurityException("Forbidden"); }
    ;

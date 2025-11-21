@@ -90,10 +90,7 @@ import io.netty.util.concurrent.Future;
 
 /**
  * A very simple Hot Rod client for testing purposes. It's a quick and dirty client implementation. As a result, it
- * might not be very readable, particularly for readers not used to scala.
- * <p>
- * Reasons why this should not really be a trait: Storing var instances in a trait cause issues with TestNG, see:
- * http://thread.gmane.org/gmane.comp.lang.scala.user/24317
+ * might not be very readable
  *
  * @author Galder Zamarreño
  * @author Tristan Tarrant
@@ -453,12 +450,12 @@ public class HotRodClient implements Closeable {
       return execute(op);
    }
 
-   public TestAuthResponse auth(SaslClient sc) throws SaslException {
+   public TestResponse auth(SaslClient sc) throws SaslException {
       byte[] saslResponse = sc.hasInitialResponse() ? sc.evaluateChallenge(Util.EMPTY_BYTE_ARRAY) : Util.EMPTY_BYTE_ARRAY;
       AuthOp op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, sc.getMechanismName(), saslResponse);
-      TestAuthResponse response = execute(op);
-      while (!sc.isComplete() || !response.complete) {
-         saslResponse = sc.evaluateChallenge(response.challenge);
+      TestResponse response = execute(op);
+      while (!sc.isComplete() || (response instanceof TestAuthResponse && !((TestAuthResponse) response).complete)) {
+         saslResponse = sc.evaluateChallenge(((TestAuthResponse) response).challenge);
          op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, "", saslResponse);
          response = execute(op);
       }

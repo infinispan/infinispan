@@ -24,7 +24,7 @@ public class RespAccessLogger {
    }
 
    static void failure(ChannelFuture future, AccessData data, Throwable throwable) {
-      log(future, data, throwable.getMessage());
+      log(future, data, "\"" + throwable.getMessage() + "\"");
    }
 
    private static void log(ChannelFuture future, AccessData data, String status) {

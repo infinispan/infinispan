@@ -74,7 +74,7 @@ public class Authentication extends BaseRequestProcessor {
          int responseBytes = buf.readableBytes();
          ChannelFuture future = channel.writeAndFlush(buf);
          if (header instanceof AccessLoggingHeader) {
-            server.accessLogging().logException(future, (AccessLoggingHeader) header, cause.toString(), responseBytes);
+            server.accessLogging().logException(future, (AccessLoggingHeader) header, cause.getMessage(), responseBytes);
          }
       } else {
          executor.execute(() -> {

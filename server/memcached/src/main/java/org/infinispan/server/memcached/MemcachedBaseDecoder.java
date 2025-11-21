@@ -28,6 +28,7 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.CacheInitializeInboundAdapter;
 import org.infinispan.server.core.transport.NettyTransport;
@@ -99,8 +100,7 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
 
    private void initializeHandler() {
       AdvancedCache<byte[], byte[]> c = createCache(server);
-      this.cache = c.withSubject(subject);
-      ComponentRegistry registry = ComponentRegistry.of(cache);
+      ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(c);
       VersionGenerator versionGenerator = registry.getComponent(VersionGenerator.class);
       if (versionGenerator == null) {
          versionGenerator = new NumericVersionGenerator();
@@ -110,6 +110,7 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
       this.timeService = registry.getTimeService();
       this.statistics = server.getStatistics();
       this.statsEnabled = statistics != null;
+      this.cache = c.withSubject(subject);
    }
 
    protected abstract AdvancedCache<byte[], byte[]> createCache(MemcachedServer server);

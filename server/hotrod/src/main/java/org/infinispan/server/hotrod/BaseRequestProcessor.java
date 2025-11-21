@@ -118,7 +118,7 @@ public class BaseRequestProcessor {
       if (header instanceof AccessLoggingHeader) {
          // Keep header with ERROR to flush to client, but revert to original operation when writing to access log.
          header.op = op;
-         accessLogging.logException(future, (AccessLoggingHeader) header, cause.toString(), responseBytes);
+         accessLogging.logException(future, (AccessLoggingHeader) header, cause.getMessage(), responseBytes);
       }
    }
 
