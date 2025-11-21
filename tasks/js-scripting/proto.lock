@@ -1,0 +1,104 @@
+{
+  "definitions" : [ {
+    "protopath" : "org:/:infinispan:/:scripting:/:global.scripting.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "DistributedScript",
+        "type_id" : 4805,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "metadata",
+          "type" : "org.infinispan.persistence.scripting.ScriptMetadata",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "ctxParams",
+          "type" : "org.infinispan.global.core.MarshallableMap",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "global.core.proto"
+      }, {
+        "path" : "persistence.scripting.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.scripting"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:scripting:/:persistence.scripting.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "ExecutionMode",
+        "type_id" : 4800,
+        "enum_fields" : [ {
+          "name" : "LOCAL"
+        }, {
+          "name" : "DISTRIBUTED",
+          "integer" : 1
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "ScriptMetadata",
+        "type_id" : 4801,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "name",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "mode",
+          "type" : "ExecutionMode",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "extension",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "parameters",
+          "type" : "string",
+          "is_repeated" : true
+        }, {
+          "id" : 5,
+          "name" : "dataType",
+          "type" : "org.infinispan.persistence.commons.MediaType",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "language",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "role",
+          "type" : "string",
+          "optional" : true
+        } ],
+        "maps" : [ {
+          "key_type" : "string",
+          "field" : {
+            "id" : 8,
+            "name" : "properties",
+            "type" : "string"
+          }
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.commons.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.scripting"
+      }
+    }
+  } ]
+}
