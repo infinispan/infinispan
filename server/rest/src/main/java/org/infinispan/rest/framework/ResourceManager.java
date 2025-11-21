@@ -15,4 +15,5 @@ public interface ResourceManager {
       return lookupResource(method, path, null);
    }
 
+   InvocationRegistry registry();
 }

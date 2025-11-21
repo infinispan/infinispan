@@ -63,7 +63,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
 
    private RestResponse call(String path, String ifModifiedSince) {
       Map<String, String> allHeaders = new HashMap<>(NO_COMPRESSION);
-      allHeaders.put(IF_MODIFIED_SINCE.getValue(), ifModifiedSince);
+      allHeaders.put(IF_MODIFIED_SINCE.toString(), ifModifiedSince);
       allHeaders.putAll(NO_COMPRESSION);
       return join(client.raw().get(path, allHeaders));
    }

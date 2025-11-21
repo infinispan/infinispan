@@ -23,6 +23,8 @@ import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
+import org.infinispan.client.openapi.ApiException;
+import org.infinispan.client.openapi.OpenAPIClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.CommonsTestingUtil;
@@ -32,6 +34,7 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.JmxTestClient;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
+import org.infinispan.server.test.api.OpenAPITestClientDriver;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 
@@ -50,6 +53,7 @@ public class TestClient {
    protected List<AutoCloseable> resources;
    protected Map<String, RemoteCacheManager> hotrodCacheMap;
    protected Map<String, RestClient> restCacheMap;
+   protected Map<String, OpenAPIClient> openAPICacheMap;
    private String methodName;
 
    public TestClient(TestServer testServer) {
@@ -69,6 +73,10 @@ public class TestClient {
       restCacheMap.put(name, restClient);
    }
 
+   public void registerOpenAPICache(String name, OpenAPIClient openAPIClient) {
+      openAPICacheMap.put(name, openAPIClient);
+   }
+
    public InfinispanServerDriver getServerDriver() {
       if (!testServer.isDriverInitialized()) {
          throw new IllegalStateException("Operation not supported before test starts");
@@ -82,6 +90,10 @@ public class TestClient {
 
    public RestTestClientDriver rest() {
       return new RestTestClientDriver(testServer, this);
+   }
+
+   public OpenAPITestClientDriver openapi() {
+      return new OpenAPITestClientDriver(testServer, this);
    }
 
    public RespTestClientDriver resp() {
@@ -118,6 +130,16 @@ public class TestClient {
       if (restCacheMap != null) {
          restCacheMap.forEach( (n, rc) -> rc.cache(n).delete());
          restCacheMap.clear();
+      }
+      if (openAPICacheMap != null) {
+         openAPICacheMap.forEach((n, oc) -> {
+            try {
+               oc.cache().deleteCache(n);
+            } catch (ApiException e) {
+               throw new RuntimeException(e);
+            }
+         });
+         openAPICacheMap.clear();
       }
       if (resources != null) {
          ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -164,7 +186,7 @@ public class TestClient {
 
    public MemcachedClient getMemcachedClient(ConnectionFactoryBuilder builder) {
       TestServer.CloseableMemcachedClient memcachedClient = testServer.newMemcachedClient(builder);
-      return registerResource(memcachedClient).getClient();
+      return registerResource(memcachedClient).client();
    }
 
    public String getMethodName() {
