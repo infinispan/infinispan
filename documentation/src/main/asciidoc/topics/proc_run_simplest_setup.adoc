@@ -10,7 +10,7 @@ Since this is a client manual, the approach here is somewhat reversed: for each 
 The following code connects a client to a local server started on the default port without authentication
 and performs a put/get operation.
 
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodClientSimplest.java[]
 ----

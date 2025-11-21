@@ -3,4 +3,4 @@
 = Troubleshooting {brandname} container images
 
 //Overview
-include::{topics}/ref_server_container_troubleshooting.adoc[leveloffset=+1]
+include::{topics}/ref_server_container_troubleshooting.adoc[leveloffset=0]

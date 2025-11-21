@@ -1,6 +1,48 @@
 [id='resp-endpoint']
 :context: resp-endpoint
 
+= {brandname} RESP endpoint
+
+The RESP endpoint is enabled by default on the single-port endpoint. Redis client connections will automatically be detected and routed to the internal connector.
+The RESP endpoint works with:
+
+* Standalone {brandname} Server deployments, exactly like standalone Redis, where each server instance runs independently of each other.
+* Clustered {brandname} Server deployments, where server instances replicate or distribute data between each other. Clustered deployments provides clients with failover capabilities.
+
+.Prerequisites
+
+* Install {brandname} Server.
+
+.Procedure
+
+. link:{server_docs}#creating-users_server-getting-started[Create a user]
+
+.Verification
+
+When you start {brandname} Server check for the following log message:
+
+[source,options="nowrap"]
+----
+[org.infinispan.SERVER] ISPN080018: Started connector Resp (internal)
+----
+
+You can now connect to the RESP endpoint with a Redis client.
+For example, with the Redis CLI you can do the following to add an entry to the cache:
+
+[source,options="nowrap"]
+----
+redis-cli -p 11222 --user username --pass password
+----
+
+[source,options="nowrap"]
+----
+127.0.0.1:11222> SET k v
+OK
+127.0.0.1:11222> GET k
+"v"
+127.0.0.1:11222> quit
+----
+
 include::{topics}/proc_server_configuring_resp.adoc[leveloffset=+1]
 include::{topics}/proc_server_resp_databases.adoc[leveloffset=+1]
 include::{topics}/proc_server_resp_differences.adoc[leveloffset=+1]

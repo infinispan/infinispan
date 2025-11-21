@@ -3,7 +3,7 @@
 The following code connects with authentication and explicitly set host and port.
 
 
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodClientAuth.java[]
 ----

@@ -1,47 +1,6 @@
 [id='enabling-resp-endpoint_{context}']
-= {brandname} RESP endpoint
 
-The RESP endpoint is enabled by default on the single-port endpoint. Redis client connections will automatically be detected and routed to the internal connector.
-The RESP endpoint works with:
-
-* Standalone {brandname} Server deployments, exactly like standalone Redis, where each server instance runs independently of each other.
-* Clustered {brandname} Server deployments, where server instances replicate or distribute data between each other. Clustered deployments provides clients with failover capabilities.
-
-.Prerequisites
-
-* Install {brandname} Server.
-
-.Procedure
-
-. link:{server_docs}#creating-users_server-getting-started[Create a user]
-
-.Verification
-
-When you start {brandname} Server check for the following log message:
-
-[source,options="nowrap"]
-----
-[org.infinispan.SERVER] ISPN080018: Started connector Resp (internal)
-----
-
-You can now connect to the RESP endpoint with a Redis client.
-For example, with the Redis CLI you can do the following to add an entry to the cache:
-
-[source,options="nowrap"]
-----
-redis-cli -p 11222 --user username --pass password
-----
-
-[source,options="nowrap"]
-----
-127.0.0.1:11222> SET k v
-OK
-127.0.0.1:11222> GET k
-"v"
-127.0.0.1:11222> quit
-----
-
-== Configuring caches for the RESP endpoint
+= Configuring caches for the RESP endpoint
 
 The RESP endpoint automatically configures and starts a `respCache` cache. This cache has the following configuration:
 
@@ -50,7 +9,7 @@ The RESP endpoint automatically configures and starts a `respCache` cache. This 
 * `RESPHashFunctionPartitioner` hash partitioner, which supports the CRC16 hashing used by Redis clients
 
 [discrete]
-=== Explicit configuration for cache
+== Explicit configuration for cache
 
 It is possible to supply a custom configuration for the cache, as long as it does not violate the requirements of the RESP connector, in which case the server will raise an exception and will not start.
 Main constraints are:
@@ -84,7 +43,7 @@ Configure your cache value encoding with Protobuf encoding if you want to view c
 ====
 
 [discrete]
-=== Explicit RESP endpoint configuration
+== Explicit RESP endpoint configuration
 
 If the implicit configuration used by the single-port endpoint does not fit your needs, explicit configuration is available.
 
@@ -107,7 +66,7 @@ include::yaml/resp_connector.yaml[]
 ----
 
 [discrete]
-=== Clustered configuration
+== Clustered configuration
 
 {brandname} is a horizontally scalable Resp-compatible server with high availability capabilities.
 {brandname} provides clustering mechanisms with automatic failover detection and membership discovery by default.
