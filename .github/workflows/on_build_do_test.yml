@@ -32,7 +32,9 @@ jobs:
       steps:
          - uses: actions/checkout@v6
            with:
-             sparse-checkout: ".github"
+             sparse-checkout: |
+               .github/
+             sparse-checkout-cone-mode: false
              fetch-depth: 1
 
          - id: workflow-run-info
@@ -53,7 +55,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          sparse-checkout: ".github"
+          sparse-checkout: |
+             .github/
+          sparse-checkout-cone-mode: false
           fetch-depth: 1
 
       - uses: graalvm/setup-graalvm@v1
@@ -81,7 +85,7 @@ jobs:
       - name: Extract Infinispan Source
         run: |
           mkdir test_dir && cd test_dir
-          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
+          unzip -q ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
       - uses: actions/create-github-app-token@v2
@@ -289,12 +293,12 @@ jobs:
       - name: Extract Infinispan Server
         run: |
           cd /tmp
-          unzip ${GITHUB_WORKSPACE}/infinispan-server-${{ steps.dis.outputs.server-version }}.zip
+          unzip -q ${GITHUB_WORKSPACE}/infinispan-server-${{ steps.dis.outputs.server-version }}.zip
 
       - name: Extract Infinispan Source
         run: |
           mkdir test_dir && cd test_dir
-          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
+          unzip -q ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
       - uses: actions/create-github-app-token@v2
@@ -334,7 +338,7 @@ jobs:
             # Fallback to the archive (much slower)
             wget https://archive.apache.org/dist/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.zip
           fi
-          unzip apache-tomcat-${TOMCAT_VERSION}.zip
+          unzip -q apache-tomcat-${TOMCAT_VERSION}.zip
           # Set CATALINA_HOME for subsequent steps
           echo "CATALINA_HOME=${GITHUB_WORKSPACE}/apache-tomcat-${TOMCAT_VERSION}" >> $GITHUB_ENV
 
@@ -455,14 +459,14 @@ jobs:
         # language=bash
         run: |
           cd /tmp
-          unzip ${GITHUB_WORKSPACE}/infinispan-server-${{ steps.dis.outputs.server-version }}.zip
+          unzip -q ${GITHUB_WORKSPACE}/infinispan-server-${{ steps.dis.outputs.server-version }}.zip
 
       - name: Extract Infinispan Source
         shell: bash
         # language=bash
         run: |
           mkdir test_dir && cd test_dir
-          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
+          unzip -q ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
           cp -r infinispan infinispan-rolling-upgrade
 
