@@ -65,7 +65,19 @@ final class SecurityActions {
 
    static void postStartProtocolServer(Collection<ProtocolServer> servers) {
       doPrivileged(() -> {
-         servers.forEach(ProtocolServer::postStart);
+         for (ProtocolServer<?> server : servers) {
+            try {
+               server.postStart();
+            } catch (Throwable t) {
+               Server.log.protocolFailedToStart(server.getName(), t);
+
+               try {
+                  server.stop();
+               } catch (Throwable t2) {
+                  Server.log.protocolFailedToStop(server.getName(), t2);
+               }
+            }
+         }
       });
    }
 
