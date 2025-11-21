@@ -26,18 +26,18 @@ jobs:
 
     steps:
       - if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.ref_name }}
           repository: ${{ github.repository_owner }}/infinispan-images
 
       - if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.base_ref }}
           repository: ${{ github.repository_owner }}/infinispan-images
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           path: server
 
