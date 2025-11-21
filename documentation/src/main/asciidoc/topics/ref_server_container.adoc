@@ -69,8 +69,11 @@ All the cli commands defined in this file are executed before the server is star
 
 {brandname} provides implicit roles for some users.
 
-[TIP] Check Infinispan https://infinispan.org/docs/stable/titles/configuring/configuring.html#default-user-roles_security-authorization[documentation]
+[TIP]
+====
+Check Infinispan https://infinispan.org/docs/stable/titles/configuring/configuring.html#default-user-roles_security-authorization[documentation]
 to know more about implicit roles and authorization
+====
 
 Below is an example Identities batch CLI file `identities.batch`, that defines four users and their role:
 

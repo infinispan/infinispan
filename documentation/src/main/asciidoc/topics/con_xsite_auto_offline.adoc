@@ -70,7 +70,7 @@ One to two minutes is generally a suitable wait time before automatically taking
 If the wait period is too short, backup locations might go offline too soon.
 You then need to bring the clusters back online and perform state transfer operations to ensure data synchronization.
 
-[INFO]
+[NOTE]
 ====
 If both `after-failures` and `min-wait` are configured, both conditions must be met.
 ====
