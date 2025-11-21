@@ -18,3 +18,6 @@ include::{topics}/proc_configuring_hotrod_nearcaching.adoc[leveloffset=+2]
 include::{topics}/proc_forcing_return_values.adoc[leveloffset=+1]
 include::{topics}/proc_creating_caches_hotrod.adoc[leveloffset=+1]
 
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]
