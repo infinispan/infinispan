@@ -19,7 +19,7 @@ jobs:
           echo "ISPN_SERVER_VER=$VERSION" >> $GITHUB_ENV
 
       - name: Checkout 14.0.x branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: 14.0.x
 
