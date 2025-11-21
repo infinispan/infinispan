@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "rest.RestAccessLoggingTest")
 public class RestAccessLoggingTest extends SingleCacheManagerTest {
-   private static final String LOG_FORMAT = "%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] \"%X{method} %m %X{protocol}\" %X{status} %X{requestSize} %X{responseSize} %X{duration} %X{h:User-Agent}";
+   static final String LOG_FORMAT = "%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] \"%X{method} %m %X{protocol}\" %X{status} %X{requestSize} %X{responseSize} %X{duration} %X{h:User-Agent}";
    private StringLogAppender logAppender;
    private String testShortName;
    private RestServerHelper restServer;
@@ -70,7 +70,6 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
       String logline = logAppender.getLog(0);
 
       String regex = String.format("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d+] \"PUT /rest/v2/caches/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+ %s/\\p{Graph}+$", System.getProperty("infinispan.brand.name"));
-      System.out.println(regex);
       assertTrue(logline, logline.matches(regex));
    }
 }

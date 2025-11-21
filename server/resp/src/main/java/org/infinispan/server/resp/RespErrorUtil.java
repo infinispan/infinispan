@@ -4,7 +4,10 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
+import javax.security.sasl.SaslException;
+
 import org.infinispan.commons.CacheException;
+import org.infinispan.server.resp.exception.RespCommandException;
 import org.infinispan.server.resp.serialization.Resp3Response;
 
 public final class RespErrorUtil {
@@ -101,6 +104,10 @@ public final class RespErrorUtil {
          ex = ex.getCause();
       }
 
+      if (ex instanceof RespCommandException rce) {
+         return bbp -> Resp3Response.error(String.format("-%s", rce.getMessage()), bbp);
+      }
+
       if (ex instanceof ClassCastException) {
          return RespErrorUtil::wrongType;
       }
@@ -117,6 +124,10 @@ public final class RespErrorUtil {
 
       if (ex instanceof NumberFormatException) {
          return RespErrorUtil::valueNotInteger;
+      }
+
+      if (ex instanceof SecurityException || ex instanceof SaslException) {
+         return RespErrorUtil::unauthorized;
       }
 
       return null;
