@@ -1055,6 +1055,11 @@
             <type>test-jar</type>
          </dependency>
          <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>testcontainers-infinispan</artifactId>
+             <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-testdriver-core</artifactId>
             <version>${version.infinispan}</version>

@@ -22,7 +22,7 @@
       <!-- Build dependencies. -->
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-commons</artifactId>
+         <artifactId>testcontainers-infinispan</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -34,20 +34,16 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>org.testcontainers</groupId>
-         <artifactId>testcontainers</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.testcontainers</groupId>
-         <artifactId>jdbc</artifactId>
-      </dependency>
-      <dependency>
          <groupId>org.jboss.shrinkwrap</groupId>
          <artifactId>shrinkwrap-impl-base</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>memcached-client</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-client-hotrod</artifactId>
       </dependency>
       <dependency>
          <groupId>io.vertx</groupId>

@@ -1,6 +1,6 @@
 try (InfinispanContainer container = new InfinispanContainer()) {
    container.start();
-   try (RemoteCacheManager cacheManager = container.getRemoteCacheManager()) {
+   try (RemoteCacheManager cacheManager = new RemoteCacheManager(container.getConnectionURI()))) {
       // Use the RemoteCacheManager
    }
 }
