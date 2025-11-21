@@ -156,7 +156,7 @@
 
       <version.smallrye-mutiny>2.9.5</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->
-      <version.spring>6.2.13</version.spring>
+      <version.spring>6.2.14</version.spring>
       <version.spring.boot>3.5.8</version.spring.boot>
       <version.spring.session>3.5.3</version.spring.session>
 
