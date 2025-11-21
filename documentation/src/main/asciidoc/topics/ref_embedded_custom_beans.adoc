@@ -6,8 +6,19 @@ You can customize the Cache Manager with the following configuration beans:
 * `InfinispanGlobalConfigurer`
 * `InfinispanCacheConfigurer`
 * `Configuration`
-* `InfinispanConfigurationCustomizer`
+* `InfinispanConfigurationCustomizer` deprecated in Spring Boot 3, removed in Spring Boot 4
 * `InfinispanGlobalConfigurationCustomizer`
+
+[IMPORTANT]
+====
+In Spring Boot 4, we removed the default cache `default` that could be
+customized with the `InfinispanConfigurationCustomizer`.
+Use `InfinispanCacheConfigurer` instead and define `default`.
+[source,java,options="nowrap"]
+----
+include::code_examples/InfinispanCacheConfigurerDefault.java[]
+----
+====
 
 [NOTE]
 ====
