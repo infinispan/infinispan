@@ -5,8 +5,8 @@
     <artifactId>\${artifactId}</artifactId>
     <packaging>jar</packaging>
     <version>\${version}</version>
-    <name>Server Task</name>
-    <description>Archetype project for building Server Task for use within Infinispan</description>
+    <name>Custom Module</name>
+    <description>Archetype project for building Custom Module for use within Infinispan</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,11 +37,6 @@
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-component-processor</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.kohsuke.metainf-services</groupId>
-            <artifactId>metainf-services</artifactId>
-            <version>${versionx.org.kohsuke.metainf-services.metainf-services}</version>
         </dependency>
     </dependencies>
 
@@ -81,6 +76,12 @@
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                     <encoding>UTF-8</encoding>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.infinispan</groupId>
+                            <artifactId>infinispan-component-processor</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
         </plugins>
