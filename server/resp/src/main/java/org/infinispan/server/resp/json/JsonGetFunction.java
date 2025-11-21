@@ -81,7 +81,7 @@ public class JsonGetFunction
          // Convert to jsonpath and set legacy=false if any path is a jsonpath
          List<byte[]> jsonPaths = paths.stream().map((p) -> {
             var jp = JSONUtil.toJsonPath(p);
-            isLegacy &= (jp != p);
+            isLegacy = isLegacy && !JSONUtil.isJsonPath(p);
             return jp;
          }).toList();
 
