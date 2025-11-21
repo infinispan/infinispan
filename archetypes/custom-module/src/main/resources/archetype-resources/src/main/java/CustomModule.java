@@ -1,6 +1,8 @@
 package ${package};
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -16,6 +18,14 @@ public class CustomModule implements ModuleLifecycle {
          // Print out welcome message from CustomModuleConfiguration. If the message attribute hasn't been overridden in
          // the config, then the default message is printed
          System.out.println("Custom Module Message: " + config.message());
+      } else {
+         System.out.println("Custom Module namespace was not configured");
       }
+   }
+
+   @Override
+   public void cacheStarted(ComponentRegistry cr, String cacheName) {
+      System.out.println("Cache " + cacheName + " started!");
+      cr.getComponent(Cache.class).addListener(new CustomListener());
    }
 }
