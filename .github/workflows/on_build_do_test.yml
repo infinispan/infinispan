@@ -32,7 +32,9 @@ jobs:
       steps:
          - uses: actions/checkout@v6
            with:
-             sparse-checkout: ".github"
+             sparse-checkout: |
+               .github/
+             sparse-checkout-cone-mode: false
              fetch-depth: 1
 
          - id: workflow-run-info
@@ -53,7 +55,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          sparse-checkout: ".github"
+          sparse-checkout: |
+             .github/
+          sparse-checkout-cone-mode: false
           fetch-depth: 1
 
       - uses: graalvm/setup-graalvm@v1
@@ -81,7 +85,7 @@ jobs:
       - name: Extract Infinispan Source
         run: |
           mkdir test_dir && cd test_dir
-          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
+          unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
       - uses: actions/create-github-app-token@v2
@@ -105,7 +109,7 @@ jobs:
             -f "output[title]=Waiting for report result..." \
             --method POST \
             --jq '.id')
-          echo "id=$CHECK_RUN" >> $GITHUB_OUTPUT
+          echo "id=$CHECK_RUN" >> "$GITHUB_OUTPUT"
           echo "$CHECK_RUN" > check-run-id.txt
 
       - name: Upload Check Run ID
@@ -122,27 +126,27 @@ jobs:
         run: |
             cd test_dir/infinispan
             ./mvnw verify -V -B -e -DrerunFailingTestsCount=2 \
-            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage $HIBERNATE_MATRIX \
+            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage "$HIBERNATE_MATRIX" \
             -Dgithub.action=true &
             MVN_PID=$!
             # Wait up to 4 hours (14400 seconds)
             SECONDS=0
-            while kill -0 $MVN_PID 2>/dev/null; do
-              if [ $SECONDS -ge 14400 ]; then
+            while kill -0 "$MVN_PID" 2>/dev/null; do
+              if [ "$SECONDS" -ge 14400 ]; then
                 echo "Timeout reached. Dumping Java threads..."
                 # Find all Java processes and dump threads
                 for pid in $(pgrep java); do
                   echo "Dumping threads for Java process $pid"
                   echo "Dumps will also be available in the jstack-report artifact"
-                  jstack -l $pid | tee jstack-$pid.txt || echo "jstack failed for $pid"
+                  jstack -l "$pid" | tee "jstack-$pid.txt" || echo "jstack failed for $pid"
                 done
                 # Kill the mvn process
-                kill -9 $MVN_PID
+                kill -9 "$MVN_PID"
                 exit 1
               fi
               sleep 30
             done
-            wait $MVN_PID
+            wait "$MVN_PID"
 
       # Renewing token since it last for 1 hour and cannot be extended
       # see for more info https://github.com/actions/create-github-app-token/issues/128
@@ -173,8 +177,8 @@ jobs:
           PR_NUMBER: ${{ needs.get-info.outputs.pull-request-number }}
           COMMIT_SHA: ${{ needs.get-info.outputs.source-head-sha }}
         run: |
-           echo -n $COMMIT_SHA > github-sha.txt
-           echo -n $PR_NUMBER > pr-number.txt
+           echo -n "$COMMIT_SHA" > github-sha.txt
+           echo -n "$PR_NUMBER" > pr-number.txt
 
       - name: Upload surefire test report
         if: (success() || failure())
@@ -225,9 +229,9 @@ jobs:
           EVENT_NAME: ${{ needs.get-info.outputs.source-event }}
           EVENT_NUMBER: ${{ github.event.workflow_run.id }}
         run: |
-          echo -n $TARGET_BRANCH > target-branch.txt
-          echo -n $EVENT_NAME > event-name.txt
-          echo -n $EVENT_NUMBER > event-number.txt
+          echo -n "$TARGET_BRANCH" > target-branch.txt
+          echo -n "$EVENT_NAME" > event-name.txt
+          echo -n "$EVENT_NUMBER" > event-number.txt
 
       - name: Upload flaky test report
         if: (success() || failure()) && steps.check_flaky_report.outputs.files_exists == 'true'
@@ -289,12 +293,12 @@ jobs:
       - name: Extract Infinispan Server
         run: |
           cd /tmp
-          unzip ${GITHUB_WORKSPACE}/infinispan-server-${{ steps.dis.outputs.server-version }}.zip
+          unzip -q "${GITHUB_WORKSPACE}/infinispan-server-${{ steps.dis.outputs.server-version }}.zip"
 
       - name: Extract Infinispan Source
         run: |
           mkdir test_dir && cd test_dir
-          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
+          unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
       - uses: actions/create-github-app-token@v2
@@ -318,7 +322,7 @@ jobs:
             -f "output[title]=Waiting for report result..." \
             --method POST \
             --jq '.id')
-          echo "id=$CHECK_RUN" >> $GITHUB_OUTPUT
+          echo "id=$CHECK_RUN" >> "$GITHUB_OUTPUT"
           echo "$CHECK_RUN" > check-run-id-${{ matrix.targets }}.txt
 
       - name: Upload Check Run ID
@@ -330,13 +334,13 @@ jobs:
       - name: Download and unzip Apache Tomcat ${{ env.TOMCAT_VERSION }}
         if: ${{ matrix.targets == 'tomcat' }}
         run: |
-          if ! wget https://dlcdn.apache.org/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.zip; then
+          if ! wget "https://dlcdn.apache.org/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.zip"; then
             # Fallback to the archive (much slower)
-            wget https://archive.apache.org/dist/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.zip
+            wget "https://archive.apache.org/dist/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.zip"
           fi
-          unzip apache-tomcat-${TOMCAT_VERSION}.zip
+          unzip -q "apache-tomcat-${TOMCAT_VERSION}.zip"
           # Set CATALINA_HOME for subsequent steps
-          echo "CATALINA_HOME=${GITHUB_WORKSPACE}/apache-tomcat-${TOMCAT_VERSION}" >> $GITHUB_ENV
+          echo "CATALINA_HOME=${GITHUB_WORKSPACE}/apache-tomcat-${TOMCAT_VERSION}" >> "$GITHUB_ENV"
 
       - name: Test Tomcat
         if: ${{ matrix.targets == 'tomcat' }}
@@ -345,7 +349,7 @@ jobs:
           ./mvnw verify -pl server/runtime,\
           integrationtests/server-integration/server-integration-commons,\
           integrationtests/server-integration/third-party-server/ \
-          -DcatalinaHome=${CATALINA_HOME} -Dinfinispan.server.integration.launch=tomcat
+          -DcatalinaHome="${CATALINA_HOME}" -Dinfinispan.server.integration.launch=tomcat
 
 
       - name: Test
@@ -455,14 +459,14 @@ jobs:
         # language=bash
         run: |
           cd /tmp
-          unzip ${GITHUB_WORKSPACE}/infinispan-server-${{ steps.dis.outputs.server-version }}.zip
+          unzip -q "${GITHUB_WORKSPACE}/infinispan-server-${{ steps.dis.outputs.server-version }}.zip"
 
       - name: Extract Infinispan Source
         shell: bash
         # language=bash
         run: |
           mkdir test_dir && cd test_dir
-          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
+          unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
           cp -r infinispan infinispan-rolling-upgrade
 
@@ -484,7 +488,7 @@ jobs:
           .github/scripts/merge-jacoco-files.sh "$GITHUB_WORKSPACE/test_dir/infinispan/" "${GITHUB_WORKSPACE}/jacoco-files-*"
           #Read and store value of PR from the File
           PR_NUMBER=$(cat "$GITHUB_WORKSPACE/jacoco-files-main/pr-number.txt")
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
 
       - name: Coverage report generation
         id: generate_coverage

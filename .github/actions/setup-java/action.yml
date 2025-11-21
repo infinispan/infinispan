@@ -10,7 +10,7 @@ inputs:
     description: "Whether to 'store' or 'load' setup Java environment"
     required: false
   run-id:
-    descrption: "Run id to retrieve the java setup artifact"
+    description: "Run id to retrieve the java setup artifact"
   version:
     description: "Java version to setup"
     required: false
