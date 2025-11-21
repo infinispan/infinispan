@@ -1,0 +1,15 @@
+[id='mcp_server']
+:context: mcp
+= Model Context Protocol Endpoint
+
+{brandname} server's REST connector exposes an endpoint which implements a Model Context Protocol server compliant with
+the link:https://modelcontextprotocol.io/specification/2025-03-26[2025-03-26 Specification] using
+the link:https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http[Streamable HTTP transport].
+The MCP endpoint is enabled by default on REST connector.
+
+include::{topics}/con_mcp_tools.adoc[leveloffset=+1]
+include::{topics}/con_mcp_resourcetemplates.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]
