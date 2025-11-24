@@ -143,10 +143,6 @@ public class InfinispanGenericContainer {
       return this.genericContainer.getMappedPort(port);
    }
 
-   public void withLogConsumer(CountdownLatchLoggingConsumer latch) {
-      genericContainer.withLogConsumer(latch);
-   }
-
    private DockerClient dockerClient() {
       return DockerClientFactory.instance().client();
    }
