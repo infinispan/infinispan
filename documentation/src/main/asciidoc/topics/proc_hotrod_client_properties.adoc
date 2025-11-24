@@ -5,7 +5,7 @@ By default, the RemoteCacheManager constructor looks for this file at startup an
 the setup. The following example shows the declarative configuration for an authenticated client.
 
 .hotrod-client.properties
-[source,options="nowrap",subs=attributes+,role="secondary"]
+[source,options="nowrap",subs=attributes+]
 ----
 include::properties/hotrod-client-auth.properties[]
 ----

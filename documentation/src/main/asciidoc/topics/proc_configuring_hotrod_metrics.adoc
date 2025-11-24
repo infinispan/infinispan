@@ -12,7 +12,7 @@ You can configure generic implementation of Hot Rod client metrics or the provid
 * Configure a generic implementation.
 +
 .ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodMetrics.java[]
 ----
@@ -23,7 +23,7 @@ include::code_examples/HotRodMetrics.java[]
 This implementation has some configuration options used by Micrometer.
 +
 .ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodMicrometerMetrics.java[]
 ----
