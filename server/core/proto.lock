@@ -1,5 +1,84 @@
 {
   "definitions" : [ {
+    "protopath" : "org:/:infinispan:/:server:/:core:/:persistence.server.core.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "CounterBackupEntry",
+        "type_id" : 5402,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "name",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "configuration",
+          "type" : "org.infinispan.persistence.commons.CounterConfiguration",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "value",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        } ]
+      }, {
+        "name" : "CacheBackupEntry",
+        "type_id" : 5401,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "metadata",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "internalMetadata",
+          "type" : "org.infinispan.persistence.core.PrivateMetadata",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "created",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 6,
+          "name" : "lastUsed",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.counters-api.proto"
+      }, {
+        "path" : "persistence.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.server.core"
+      }
+    }
+  }, {
     "protopath" : "org:/:infinispan:/:server:/:core:/:query:/:persistence.remote_query.proto",
     "def" : {
       "enums" : [ ],
@@ -127,85 +206,6 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.remote.query.server"
-      }
-    }
-  }, {
-    "protopath" : "org:/:infinispan:/:server:/:core:/:persistence.server.core.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "CounterBackupEntry",
-        "type_id" : 5402,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "name",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "configuration",
-          "type" : "org.infinispan.persistence.commons.CounterConfiguration",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "value",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        } ]
-      }, {
-        "name" : "CacheBackupEntry",
-        "type_id" : 5401,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "key",
-          "type" : "bytes",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "value",
-          "type" : "bytes",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "metadata",
-          "type" : "bytes",
-          "optional" : true
-        }, {
-          "id" : 4,
-          "name" : "internalMetadata",
-          "type" : "org.infinispan.persistence.core.PrivateMetadata",
-          "optional" : true
-        }, {
-          "id" : 5,
-          "name" : "created",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        }, {
-          "id" : 6,
-          "name" : "lastUsed",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "-1"
-          } ]
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "persistence.counters-api.proto"
-      }, {
-        "path" : "persistence.core.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.server.core"
       }
     }
   } ]
