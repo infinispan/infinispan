@@ -2939,6 +2939,11 @@
                            <artifactId>infinispan-tasks-api</artifactId>
                            <version>${infinispan.old.version}</version>
                         </dependency>
+                        <dependency>
+                            <groupId>org.infinispan</groupId>
+                            <artifactId>testcontainers-infinispan</artifactId>
+                            <version>${infinispan.old.version}</version>
+                        </dependency>
                      </oldVersions>
                      <newVersions>
                         <dependency>
@@ -3015,6 +3020,11 @@
                            <groupId>org.infinispan</groupId>
                            <artifactId>infinispan-tasks-api</artifactId>
                            <version>${project.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.infinispan</groupId>
+                            <artifactId>testcontainers-infinispan</artifactId>
+                            <version>${project.version}</version>
                         </dependency>
                      </newVersions>
                      <parameter>

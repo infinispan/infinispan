@@ -1,4 +1,4 @@
-package org.infinispan.testcontainers;
+package org.infinispan.server.test.core;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -8,9 +8,6 @@ import java.util.regex.Pattern;
 import org.testcontainers.containers.output.BaseConsumer;
 import org.testcontainers.containers.output.OutputFrame;
 
-/**
- * @since 16.0
- **/
 public class CountdownLatchLoggingConsumer extends BaseConsumer<CountdownLatchLoggingConsumer> {
 
    private final CountDownLatch latch;

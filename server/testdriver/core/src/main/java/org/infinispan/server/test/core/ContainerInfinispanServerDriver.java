@@ -62,7 +62,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.server.Server;
-import org.infinispan.testcontainers.CountdownLatchLoggingConsumer;
 import org.infinispan.testcontainers.InfinispanGenericContainer;
 import org.infinispan.util.logging.LogFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -543,7 +542,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       if (container != null) {
          log.infof("Stopping container %s", containerAndSite);
          CountdownLatchLoggingConsumer latch = new CountdownLatchLoggingConsumer(1, SHUTDOWN_MESSAGE_REGEX);
-         container.withLogConsumer(latch);
+         container.getGenericContainer().withLogConsumer(latch);
          container.stop();
          if (isCoverage() && !container.isKilled()) {
             //Getting Jacoco Coverage Report after stopping the container
