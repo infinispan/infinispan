@@ -185,8 +185,6 @@ NOTE: This command is non atomic
 * link:https://redis.io/commands/json.objlen[JSON.OBJLEN]
 
 * link:https://redis.io/commands/json.set[JSON.SET]
-+
-NOTE: The current implementation allows adding an element at the end of an array, even an empty one, while Redis returns an error.
 
 * link:https://redis.io/commands/json.strappend[JSON.STRAPPEND]
 

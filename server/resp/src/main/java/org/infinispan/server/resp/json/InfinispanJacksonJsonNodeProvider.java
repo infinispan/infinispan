@@ -1,5 +1,6 @@
 package org.infinispan.server.resp.json;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -42,7 +43,22 @@ public class InfinispanJacksonJsonNodeProvider extends JacksonJsonNodeJsonProvid
       } else {
          ArrayNode arrayNode = this.toJsonArray(array);
          int effectiveIndex = index >= 0 ? index : arrayNode.size() + index;
-         super.setArrayIndex(array, effectiveIndex, newValue);
+         if (array instanceof InfinispanJacksonArrayNode) {
+            if (effectiveIndex >= arrayNode.size() || effectiveIndex < 0) {
+               throw new UnsupportedOperationException("array index out of range");
+            }
+            arrayNode.set(effectiveIndex, this.createJsonElement(newValue));
+         } else {
+            super.setArrayIndex(array, effectiveIndex, newValue);
+         }
+      }
+   }
+
+   private JsonNode createJsonElement(Object o) {
+      if (o != null) {
+         return o instanceof JsonNode ? (JsonNode) o : this.objectMapper.valueToTree(o);
+      } else {
+         return null;
       }
    }
 
