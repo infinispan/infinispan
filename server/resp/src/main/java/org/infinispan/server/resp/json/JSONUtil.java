@@ -18,7 +18,7 @@ public class JSONUtil {
 
    public static final ObjectMapper objectMapper = JsonMapper.builder()
          .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
-         .build();
+         .build().setNodeFactory(new InfinispanJsonNodeFactory());
 
    // Shared provider instances - all use the same configured objectMapper
    private static final com.jayway.jsonpath.spi.mapper.JacksonMappingProvider mappingProvider =

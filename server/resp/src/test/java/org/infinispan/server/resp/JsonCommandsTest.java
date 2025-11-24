@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.infinispan.server.resp.json.InfinispanJsonNodeFactory;
 import org.infinispan.server.resp.json.JSONUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -50,7 +51,8 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
     * @since 15.2
     */
    private RedisCommands<String, String> redis;
-   private DefaultJsonParser defaultJsonParser = new DefaultJsonParser();
+   private ObjectMapper mapper = new ObjectMapper().setNodeFactory(new InfinispanJsonNodeFactory());
+   private DefaultJsonParser defaultJsonParser = new DefaultJsonParser(mapper);
 
    @BeforeMethod
    public void initConnection() {
@@ -312,15 +314,17 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       jp = new JsonPath("$.foo");
       jv = defaultJsonParser.createJsonValue("[0]");
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
-      jp = new JsonPath("$.foo[1]");
-      // Appending a value at the end of an array is allowed
-      jv = defaultJsonParser.createJsonValue("[1]");
-      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
-      // Appending a value "beyond" the end of an array raises exception
-      JsonPath jp1 = new JsonPath("$.foo[3]");
-      JsonValue jv1 = defaultJsonParser.createJsonValue("3");
+      JsonPath jp1 = new JsonPath("$.foo[1]");
+      // Appending a value at the end of an array NOT is allowed
+      JsonValue jv1 = defaultJsonParser.createJsonValue("[1]");
       assertThatThrownBy(() -> {
          redis.jsonSet(key, jp1, jv1);
+      }).isInstanceOf(RedisCommandExecutionException.class).hasMessageStartingWith("ERR ");
+      // Appending a value "beyond" the end of an array raises exception
+      JsonPath jp2 = new JsonPath("$.foo[3]");
+      JsonValue jv2 = defaultJsonParser.createJsonValue("3");
+      assertThatThrownBy(() -> {
+         redis.jsonSet(key, jp2, jv2);
       }).isInstanceOf(RedisCommandExecutionException.class).hasMessageStartingWith("ERR ");
    }
 
@@ -1996,7 +2000,6 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
    // Lettuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
-      ObjectMapper mapper = new ObjectMapper();
       JsonNode expectedObjectNode, resultNode;
       if (paths.length == 0) {
          paths = new JsonPath[] { new JsonPath("$") };
@@ -2097,7 +2100,6 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    }
 
    private boolean compareJSONSet(JsonValue newRoot, JsonValue oldRoot, String path, JsonValue node) {
-      ObjectMapper mapper = new ObjectMapper();
       try {
          // Unwrap objects if in an array
          var newRootNode = mapper.readTree(newRoot.toString());
