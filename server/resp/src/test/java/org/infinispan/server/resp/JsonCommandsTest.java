@@ -1894,6 +1894,22 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       // var result = redis.jsonMGet(jpRoot, "not-a-json", key1, key2);
    }
 
+   @Test
+   public void testJSONMGETSingleKey() {
+      // Test for issue #16223: JSON.MGET should accept single key
+      String key1 = k();
+      JsonPath jpRoot = new JsonPath("$");
+      JsonValue jv1 = defaultJsonParser.createJsonValue("""
+            {"a":1, "b": 2, "nested": {"a": 3}, "c": null}
+            """);
+      redis.jsonSet(key1, jpRoot, jv1);
+
+      // Test with single key and JSONPath
+      List<JsonValue> result = redis.jsonMGet(new JsonPath("$..a"), key1);
+      assertThat(result).hasSize(1);
+      assertThat(result.get(0).toString()).isEqualTo("[1,3]");
+   }
+
    // Lettuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();

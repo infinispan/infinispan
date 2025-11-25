@@ -32,10 +32,6 @@ public class JSONMGET extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      if (arguments.size() < 3) {
-         handler.writer().wrongArgumentNumber(this);
-         return handler.myStage();
-      }
       List<byte[]> keys = arguments.subList(0, arguments.size() - 1);
       // Getting path as list to match get() signature
       List<byte[]> paths = arguments.subList(arguments.size() - 1, arguments.size());
