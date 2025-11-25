@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xs:schema elementFormDefault="qualified"
-           version="1.1" targetNamespace="urn:infinispan:config:16.0"
-           xmlns:tns="urn:infinispan:config:16.0"
+           version="1.1" targetNamespace="urn:infinispan:config:16.1"
+           xmlns:tns="urn:infinispan:config:16.1"
            xmlns:jgroups="urn:org:jgroups"
            xmlns:xs="http://www.w3.org/2001/XMLSchema">
 

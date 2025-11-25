@@ -1,7 +1,7 @@
 <jgroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="urn:infinispan:config:16.0 https://infinispan.org/schemas/infinispan-config-fragment-16.0.xsd"
-         xmlns="urn:infinispan:config:16.0"
-         xmlns:ispn="urn:infinispan:config:16.0">
+         xsi:schemaLocation="urn:infinispan:config:16.1 https://infinispan.org/schemas/infinispan-config-fragment-16.1.xsd"
+         xmlns="urn:infinispan:config:16.1"
+         xmlns:ispn="urn:infinispan:config:16.1">
    <stack name="test-tcp" extends="tcp">
       <MERGE3 min_interval="1s" max_interval="5s" ispn:stack.combine="REPLACE"/>
       <FD_SOCK2 connect_timeout="3000"/>

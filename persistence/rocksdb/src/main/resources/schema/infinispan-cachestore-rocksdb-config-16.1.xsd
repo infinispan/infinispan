@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xs:schema attributeFormDefault="unqualified"
-   elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:store:rocksdb:16.0"
-   xmlns:tns="urn:infinispan:config:store:rocksdb:16.0" xmlns:config="urn:infinispan:config:16.0"
+   elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:store:rocksdb:16.1"
+   xmlns:tns="urn:infinispan:config:store:rocksdb:16.1" xmlns:config="urn:infinispan:config:16.1"
    xmlns:xs="http://www.w3.org/2001/XMLSchema">
-   <xs:import namespace="urn:infinispan:config:16.0"
-              schemaLocation="https://infinispan.org/schemas/infinispan-config-16.0.xsd" />
+   <xs:import namespace="urn:infinispan:config:16.1"
+              schemaLocation="https://infinispan.org/schemas/infinispan-config-16.1.xsd" />
 
   <xs:element name="rocksdb-store" type="tns:rocksdb-store"/>
 

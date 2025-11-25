@@ -1,4 +1,4 @@
 <endpoint xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="urn:infinispan:server:16.0 https://infinispan.org/schemas/infinispan-server-16.0.xsd"
-           xmlns="urn:infinispan:server:16.0"
+           xsi:schemaLocation="urn:infinispan:server:16.1 https://infinispan.org/schemas/infinispan-server-16.1.xsd"
+           xmlns="urn:infinispan:server:16.1"
            socket-binding="default" security-realm="default"/>
