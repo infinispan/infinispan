@@ -51,6 +51,22 @@ public class GlobalMarshaller extends AbstractInternalProtoStreamMarshaller {
    }
 
    public boolean isMarshallableWithoutWrapping(Object o) {
+      if (isProtostreamNativeType(o))
+         return true;
+
+      if (!skipUserMarshaller && o instanceof Iterable<?> iterable) {
+         // Custom user marshaller configured so we need to make sure that nested classes in objects are also marshallable
+         // with ProtoStream
+         // When https://github.com/infinispan/protostream/issues/588 has been fixed, it should be possible to remove
+         // this code and remove the SetAdapter and ListAdapter from the GLOBAL SerializationContext in the
+         // SerializationContextRegistry when a custom user marshaller is configured.
+         var it = iterable.iterator();
+         return !it.hasNext() || isMarshallableWithoutWrapping(it.next());
+      }
+      return super.isMarshallableWithProtoStream(o);
+   }
+
+   private boolean isProtostreamNativeType(Object o) {
       return o instanceof String ||
             o instanceof Long ||
             o instanceof Integer ||
@@ -62,8 +78,7 @@ public class GlobalMarshaller extends AbstractInternalProtoStreamMarshaller {
             o instanceof Short ||
             o instanceof Character ||
             o instanceof java.util.Date ||
-            o instanceof java.time.Instant ||
-            super.isMarshallableWithProtoStream(o);
+            o instanceof java.time.Instant;
    }
 
    @Override
