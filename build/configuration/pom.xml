@@ -84,7 +84,7 @@
       <version.glassfish.jaxb>4.0.6</version.glassfish.jaxb>
       <version.groovy>2.4.21</version.groovy>
       <version.hamcrest>2.2</version.hamcrest>
-      <version.hibernate.core>6.6.36.Final</version.hibernate.core>
+      <version.hibernate.core>6.6.37.Final</version.hibernate.core>
       <version.hibernate.search>8.1.2.Final</version.hibernate.search>
       <version.hibernate.models>1.0.1</version.hibernate.models>
       <version.infinispan>16.0.3-SNAPSHOT</version.infinispan>
