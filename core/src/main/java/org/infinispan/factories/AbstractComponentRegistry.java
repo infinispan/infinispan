@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -19,6 +21,8 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ModuleRepository;
 import org.infinispan.util.logging.Log;
+
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * A registry where components which have been created are stored.  Components are stored as singletons, registered
@@ -48,8 +52,13 @@ import org.infinispan.util.logging.Log;
 @Deprecated(forRemoval=true, since = "9.4")
 public abstract class AbstractComponentRegistry implements Lifecycle {
 
+   protected final ReentrantLock lock = new  ReentrantLock();
+   protected final Condition condition = lock.newCondition();
+
    final ModuleRepository moduleRepository;
    final BasicComponentRegistry basicComponentRegistry;
+
+   @GuardedBy("lock")
    protected volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
 
    AbstractComponentRegistry(ModuleRepository moduleRepository,
@@ -221,19 +230,20 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
     */
    @Override
    public void start() {
-      synchronized (this) {
-         try {
-            while (state == ComponentStatus.INITIALIZING) {
-               wait();
-            }
-            if (state != ComponentStatus.INSTANTIATED) {
-               return;
-            }
-
-            state = ComponentStatus.INITIALIZING;
-         } catch (InterruptedException e) {
-            throw new CacheException("Interrupted waiting for the component registry to start");
+      lock.lock();
+      try {
+         while (state == ComponentStatus.INITIALIZING) {
+            condition.await();
          }
+         if (state != ComponentStatus.INSTANTIATED) {
+            return;
+         }
+
+         state = ComponentStatus.INITIALIZING;
+      } catch (InterruptedException e) {
+         throw new CacheException("Interrupted waiting for the component registry to start");
+      } finally {
+         lock.unlock();
       }
 
       try {
@@ -257,17 +267,25 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       }
    }
 
-   private synchronized void updateStatusRunning() {
-      if (state == ComponentStatus.INITIALIZING) {
-         state = ComponentStatus.RUNNING;
-         notifyAll();
+   private void updateStatusRunning() {
+      lock.lock();
+      try {
+         if (state == ComponentStatus.INITIALIZING) {
+            state = ComponentStatus.RUNNING;
+            condition.signalAll();
+         }
+      } finally {
+         lock.unlock();
       }
    }
 
    public void componentFailed(Throwable t) {
-      synchronized (this) {
+      lock.lock();
+      try {
          state = ComponentStatus.FAILED;
-         notifyAll();
+         condition.signalAll();
+      } finally {
+         lock.unlock();
       }
 
       Log.CONFIG.startFailure(getName(), t);
@@ -298,21 +316,22 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       // Trying to stop() from FAILED is valid, but may not work
       boolean failed;
 
-      synchronized (this) {
-         try {
-            while (state == ComponentStatus.STOPPING) {
-               wait();
-            }
-            if (!state.stopAllowed()) {
-               getLog().debugf("Ignoring call to stop() as current state is %s", state);
-               return;
-            }
-
-            failed = state == ComponentStatus.FAILED;
-            state = ComponentStatus.STOPPING;
-         } catch (InterruptedException e) {
-            throw new CacheException("Interrupted waiting for the component registry to stop");
+      lock.lock();
+      try {
+         while (state == ComponentStatus.STOPPING) {
+            condition.await();
          }
+         if (!state.stopAllowed()) {
+            getLog().debugf("Ignoring call to stop() as current state is %s", state);
+            return;
+         }
+
+         failed = state == ComponentStatus.FAILED;
+         state = ComponentStatus.STOPPING;
+      } catch (InterruptedException e) {
+         throw new CacheException("Interrupted waiting for the component registry to stop");
+      } finally {
+         lock.unlock();
       }
 
       preStop();
@@ -328,9 +347,12 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
             handleLifecycleTransitionFailure(t);
          }
       } finally {
-         synchronized (this) {
+         lock.lock();
+         try {
             state = ComponentStatus.TERMINATED;
-            notifyAll();
+            condition.signalAll();
+         } finally {
+            lock.unlock();
          }
       }
    }

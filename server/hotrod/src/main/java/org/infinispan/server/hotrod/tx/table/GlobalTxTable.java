@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod.tx.table;
 
+import static org.infinispan.server.hotrod.LifecycleCallbacks.GLOBAL_TX_TABLE_CACHE_NAME;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -10,7 +12,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -32,6 +39,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
@@ -46,11 +54,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
-
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.RollbackException;
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * It is a transaction log that registers all the transaction decisions before changing the cache.
@@ -76,37 +79,39 @@ public class GlobalTxTable implements Runnable, Lifecycle {
 
    private static final Log log = Log.getLog(GlobalTxTable.class);
 
-   private final Cache<CacheXid, TxState> storage;
-   private final FunctionalMap.ReadWriteMap<CacheXid, TxState> rwMap;
-   private final GlobalComponentRegistry gcr;
-   @GuardedBy("this")
-   private ScheduledFuture<?> scheduledFuture;
+   @Inject
+   EmbeddedCacheManager cacheManager;
+
+   @Inject
+   GlobalComponentRegistry gcr;
+
+   private Cache<CacheXid, TxState> storage;
+   private FunctionalMap.ReadWriteMap<CacheXid, TxState> rwMap;
 
    @Inject TimeService timeService;
    @Inject BlockingManager blockingManager;
    @Inject @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
    ScheduledExecutorService scheduledExecutor;
 
-   public GlobalTxTable(Cache<CacheXid, TxState> storage, GlobalComponentRegistry gcr) {
-      this.storage = storage;
-      this.rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(storage.getAdvancedCache()));
-      this.gcr = gcr;
-   }
+   private ScheduledFuture<?> scheduledFuture;
+   private final AtomicBoolean scheduled = new AtomicBoolean();
 
    @Start
-   public synchronized void start() {
-      //TODO where to configure it?
-      //TODO can we avoid to start it here? and only when HT tx is used?
-      if (scheduledFuture == null) {
-         scheduledFuture = scheduledExecutor.scheduleWithFixedDelay(this, 60000, 60000, TimeUnit.MILLISECONDS);
-      }
+   public void start() {
+      storage = cacheManager.getCache(GLOBAL_TX_TABLE_CACHE_NAME);
+      rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(storage.getAdvancedCache()));
    }
 
    @Stop
-   public synchronized void stop() {
-      if (scheduledFuture != null) {
+   public void stop() {
+      if (scheduled.get()) {
          scheduledFuture.cancel(true);
-         scheduledFuture = null;
+      }
+   }
+
+   public void ensureScheduled() {
+      if (scheduled.compareAndSet(false, true)) {
+         scheduledFuture = scheduledExecutor.scheduleWithFixedDelay(this, 60000, 60000, TimeUnit.MILLISECONDS);
       }
    }
 
