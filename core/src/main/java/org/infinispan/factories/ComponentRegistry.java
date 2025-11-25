@@ -17,7 +17,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.container.versioning.NumericVersionGenerator;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
@@ -232,11 +231,14 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    protected CompletionStage<Void> delayStart() {
       if (icr == null || icr.wired().isInternalCache(cacheName)) return null;
 
-      synchronized (this) {
+      lock.lock();
+      try {
          LocalTopologyManager ltm;
          if (state == ComponentStatus.INITIALIZING && (ltm = globalComponents.getLocalTopologyManager()) != null) {
             return ltm.stableTopologyCompletion(cacheName);
          }
+      } finally {
+         lock.unlock();
       }
 
       return null;
@@ -446,12 +448,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public final ComponentRef<TransactionTable> getTransactionTableRef() {
       return transactionTable;
-   }
-
-
-   public final synchronized void registerVersionGenerator(NumericVersionGenerator newVersionGenerator) {
-      registerComponent(newVersionGenerator, VersionGenerator.class);
-      versionGenerator = basicComponentRegistry.getComponent(VersionGenerator.class);
    }
 
    public ComponentRef<AdvancedCache> getCache() {

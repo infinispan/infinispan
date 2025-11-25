@@ -168,9 +168,14 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   protected synchronized void removeShutdownHook() {
-      // if this is called from a source other than the shutdown hook, de-register the shutdown hook.
-      if (!invokedFromShutdownHook && shutdownHook != null) Runtime.getRuntime().removeShutdownHook(shutdownHook);
+   protected void removeShutdownHook() {
+      lock.lock();
+      try {
+         // if this is called from a source other than the shutdown hook, de-register the shutdown hook.
+         if (!invokedFromShutdownHook && shutdownHook != null) Runtime.getRuntime().removeShutdownHook(shutdownHook);
+      } finally {
+         lock.unlock();
+      }
    }
 
    @Override
@@ -198,26 +203,31 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   protected synchronized void addShutdownHook() {
-      ShutdownHookBehavior shutdownHookBehavior = globalConfiguration.shutdown().hookBehavior();
-      boolean registerShutdownHook = (shutdownHookBehavior == ShutdownHookBehavior.DEFAULT && !isMBeanServerRunning())
-            || shutdownHookBehavior == ShutdownHookBehavior.REGISTER;
+   protected void addShutdownHook() {
+      lock.lock();
+      try {
+         ShutdownHookBehavior shutdownHookBehavior = globalConfiguration.shutdown().hookBehavior();
+         boolean registerShutdownHook = (shutdownHookBehavior == ShutdownHookBehavior.DEFAULT && !isMBeanServerRunning())
+               || shutdownHookBehavior == ShutdownHookBehavior.REGISTER;
 
-      if (registerShutdownHook) {
-         log.tracef("Registering a shutdown hook.  Configured behavior = %s", shutdownHookBehavior);
-         shutdownHook = new Thread(() -> {
-            try {
-               invokedFromShutdownHook = true;
-               cacheManager.stop();
-            } finally {
-               invokedFromShutdownHook = false;
-            }
-         });
+         if (registerShutdownHook) {
+            log.tracef("Registering a shutdown hook.  Configured behavior = %s", shutdownHookBehavior);
+            shutdownHook = new Thread(() -> {
+               try {
+                  invokedFromShutdownHook = true;
+                  cacheManager.stop();
+               } finally {
+                  invokedFromShutdownHook = false;
+               }
+            });
 
-         Runtime.getRuntime().addShutdownHook(shutdownHook);
-      } else {
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
+         } else {
 
-         log.tracef("Not registering a shutdown hook.  Configured behavior = %s", shutdownHookBehavior);
+            log.tracef("Not registering a shutdown hook.  Configured behavior = %s", shutdownHookBehavior);
+         }
+      } finally {
+         lock.unlock();
       }
    }
 
@@ -235,17 +245,32 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return namedComponents.get(name);
    }
 
-   public final synchronized void registerNamedComponentRegistry(ComponentRegistry componentRegistry, String name) {
-      namedComponents.put(ByteString.fromString(name), componentRegistry);
+   public final void registerNamedComponentRegistry(ComponentRegistry componentRegistry, String name) {
+      lock.lock();
+      try {
+         namedComponents.put(ByteString.fromString(name), componentRegistry);
+      } finally {
+        lock.unlock();
+      }
    }
 
-   public final synchronized void unregisterNamedComponentRegistry(String name) {
-      namedComponents.remove(ByteString.fromString(name));
+   public final void unregisterNamedComponentRegistry(String name) {
+      lock.lock();
+      try {
+         namedComponents.remove(ByteString.fromString(name));
+      } finally {
+         lock.unlock();
+      }
    }
 
-   public final synchronized void rewireNamedRegistries() {
-      for (ComponentRegistry cr : namedComponents.values())
-         cr.rewire();
+   public final void rewireNamedRegistries() {
+      lock.lock();
+      try {
+         for (ComponentRegistry cr : namedComponents.values())
+            cr.rewire();
+      } finally {
+         lock.unlock();
+      }
    }
 
    @Override
@@ -358,8 +383,13 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    /**
     * Removes a cache with the given name, returning true if the cache was removed.
     */
-   public synchronized boolean removeCache(String cacheName) {
-      return createdCaches.remove(cacheName);
+   public boolean removeCache(String cacheName) {
+      lock.lock();
+      try {
+         return createdCaches.remove(cacheName);
+      } finally {
+         lock.unlock();
+      }
    }
 
    public EmbeddedCacheManager getCacheManager() {
