@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.json;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,12 @@ public class JSONMGET extends RespCommand implements Resp3Command {
 
    private static byte[] handleWrongTypeError(Throwable ex) {
       if (RespUtil.isWrongTypeError(ex)) {
+         return null;
+      }
+      // Handle non-existing path error - should return null instead of error
+      if (ex.getCause() instanceof NoSuchElementException &&
+          ex.getCause().getMessage() != null &&
+          ex.getCause().getMessage().contains("does not exist")) {
          return null;
       }
       throw CompletableFutures.asCompletionException(ex);
