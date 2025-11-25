@@ -1910,6 +1910,32 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(result.get(0).toString()).isEqualTo("[1,3]");
    }
 
+   public void testJSONMGETNonExistingPath() {
+      String key1 = k();
+      String key2 = k(1);
+      JsonPath jpRoot = new JsonPath("$");
+      JsonValue jv1 = defaultJsonParser.createJsonValue("""
+            {"a":1, "b": 2, "nested": {"a": 3}, "c": null}
+            """);
+      JsonValue jv2 = defaultJsonParser.createJsonValue("""
+            {"a":4, "b": 5, "nested": {"a": 6}, "c": null}
+            """);
+      redis.jsonSet(key1, jpRoot, jv1);
+      redis.jsonSet(key2, jpRoot, jv2);
+
+      // Test with JSONPath syntax ($.path) - should return empty arrays
+      List<JsonValue> result = redis.jsonMGet(new JsonPath("$.42isnotapath"), key1, key2);
+      assertThat(result).hasSize(2);
+      assertThat(result.get(0).toString()).isEqualTo("[]");
+      assertThat(result.get(1).toString()).isEqualTo("[]");
+
+      // Test with legacy path syntax (.path) - should return null for both keys
+      result = redis.jsonMGet(new JsonPath(".42isnotapath"), key1, key2);
+      assertThat(result).hasSize(2);
+      assertThat(result.get(0).isNull()).isTrue();
+      assertThat(result.get(1).isNull()).isTrue();
+   }
+
    // Lettuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();

@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -92,7 +93,7 @@ public class JsonGetFunction
             // If legacy return just the first one
             if (isLegacy) {
                if (nodeList.size()==0) {
-                  throw new RuntimeException("Path '"+pathStr+"' does not exist");
+                  throw new NoSuchElementException("Path '"+pathStr+"' does not exist");
                }
                byte[] resp = mapper.writer(rpp).writeValueAsBytes(nodeList.get(0));
                return resp;
@@ -114,7 +115,7 @@ public class JsonGetFunction
             // If legacy return just the first one
             if (isLegacy) {
                if (nodeList.size()==0) {
-                  throw new RuntimeException("Path '"+jsonPathStr+"' does not exist");
+                  throw new NoSuchElementException("Path '"+jsonPathStr+"' does not exist");
                }
                result.set(pathStr, mapper.valueToTree(nodeList.get(0)));
             } else {
