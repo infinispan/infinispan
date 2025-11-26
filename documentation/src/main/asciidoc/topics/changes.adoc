@@ -15,6 +15,11 @@ By default, when `infinispan/cache-container/metrics/names-as-tags=false`, the c
 For simplification, the default value changed to `true`.
 We strongly recommend updating your queries and/or dashboards to the new metric's name format, as this option will be removed in a future version.
 
+==== Legacy metrics
+
+Legacy metrics names have been disabled. To restore this behavior, set `infinispan/cache-container/metrics/legacy`
+attribute to `true`.
+
 == Upgrading from 15.2 to 16.0
 
 === Marshalling Changes
