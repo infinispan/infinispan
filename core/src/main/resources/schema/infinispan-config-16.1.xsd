@@ -790,7 +790,7 @@
     <xs:attribute name="gauges" type="xs:boolean" default="${GlobalMetrics.gauges}">
       <xs:annotation>
         <xs:documentation>
-          Exports gauge metrics. Gauges are enabled by default but you must
+          Exports gauge metrics. Gauges are enabled by default, but you must
           enable statistics so that they are exported.
         </xs:documentation>
       </xs:annotation>
