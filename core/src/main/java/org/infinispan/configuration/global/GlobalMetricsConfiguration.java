@@ -21,7 +21,7 @@ public class GlobalMetricsConfiguration {
    @Deprecated(forRemoval = true, since = "16.0")
    public static final AttributeDefinition<Boolean> JVM = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.JVM, false).build();
    @Deprecated(forRemoval = true, since = "16.0")
-   public static final AttributeDefinition<Boolean> LEGACY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LEGACY, true).build();
+   public static final AttributeDefinition<Boolean> LEGACY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LEGACY, false).build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GlobalMetricsConfiguration.class, GAUGES, HISTOGRAMS, PREFIX, NAMES_AS_TAGS, ACCURATE_SIZE, JVM, LEGACY);
