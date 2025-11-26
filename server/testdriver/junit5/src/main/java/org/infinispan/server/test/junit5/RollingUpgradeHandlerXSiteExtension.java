@@ -10,6 +10,7 @@ import org.infinispan.server.test.core.rollingupgrade.CombinedInfinispanServerDr
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfiguration;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
+import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeVersion;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeXSiteHandler;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -18,7 +19,8 @@ public class RollingUpgradeHandlerXSiteExtension extends InfinispanXSiteServerEx
    private RollingUpgradeXSiteHandler handler;
 
    private RollingUpgradeHandlerXSiteExtension(Class<?> caller, Map<String, InfinispanServerExtensionBuilder> sites,
-                                              String fromVersion, String toVersion, Consumer<RollingUpgradeConfigurationBuilder> decorator) {
+                                               RollingUpgradeVersion fromVersion, RollingUpgradeVersion toVersion,
+                                               Consumer<RollingUpgradeConfigurationBuilder> decorator) {
       super(new ArrayList<>());
       this.sites = sites.entrySet().stream()
             .collect(Collectors.toMap(
@@ -31,12 +33,13 @@ public class RollingUpgradeHandlerXSiteExtension extends InfinispanXSiteServerEx
    }
 
    public static RollingUpgradeHandlerXSiteExtension from(Class<?> caller, InfinispanXSiteServerExtensionBuilder builder,
-                                                          String fromVersion, String toVersion) {
+                                                          RollingUpgradeVersion fromVersion, RollingUpgradeVersion toVersion) {
       return from(caller, builder, fromVersion, toVersion, ignore -> {});
    }
 
    public static RollingUpgradeHandlerXSiteExtension from(Class<?> caller, InfinispanXSiteServerExtensionBuilder builder,
-                                                          String fromVersion, String toVersion, Consumer<RollingUpgradeConfigurationBuilder> decorator) {
+                                                          RollingUpgradeVersion fromVersion, RollingUpgradeVersion toVersion,
+                                                          Consumer<RollingUpgradeConfigurationBuilder> decorator) {
       return new RollingUpgradeHandlerXSiteExtension(caller, builder.siteConfigurations(), fromVersion, toVersion, decorator);
    }
 

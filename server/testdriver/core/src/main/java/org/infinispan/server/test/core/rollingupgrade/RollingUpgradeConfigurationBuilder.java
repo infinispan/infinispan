@@ -21,8 +21,8 @@ import org.infinispan.server.test.core.InfinispanServerListener;
 import org.jboss.shrinkwrap.api.Archive;
 
 public class RollingUpgradeConfigurationBuilder {
-   private final String fromVersion;
-   private final String toVersion;
+   private final RollingUpgradeVersion fromVersion;
+   private final RollingUpgradeVersion toVersion;
    private final String name;
 
    private int nodeCount = 3;
@@ -78,7 +78,7 @@ public class RollingUpgradeConfigurationBuilder {
       };
    }
 
-   public RollingUpgradeConfigurationBuilder(String name, String fromVersion, String toVersion) {
+   public RollingUpgradeConfigurationBuilder(String name, RollingUpgradeVersion fromVersion, RollingUpgradeVersion toVersion) {
       this.fromVersion = Objects.requireNonNull(fromVersion);
       this.toVersion = Objects.requireNonNull(toVersion);
       this.name = name;
