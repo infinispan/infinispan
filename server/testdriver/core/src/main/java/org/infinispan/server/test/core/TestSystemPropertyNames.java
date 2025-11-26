@@ -116,6 +116,7 @@ public class TestSystemPropertyNames {
     * Specifies the version to start the containers during the rolling upgrade procedure.
     */
    public static final String INFINISPAN_ROLLING_UPGRADE_FROM_VERSION = INFINISPAN_ROLLING_UPGRADE_TEST + "from";
+   public static final String INFINISPAN_ROLLING_UPGRADE_FROM_VERSION_MAVEN = INFINISPAN_ROLLING_UPGRADE_TEST + "from.maven";
 
    /**
     * Specifies the target version to perform the rolling upgrades.

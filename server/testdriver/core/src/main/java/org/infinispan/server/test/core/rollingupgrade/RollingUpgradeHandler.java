@@ -1,17 +1,16 @@
 package org.infinispan.server.test.core.rollingupgrade;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -21,8 +20,6 @@ import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.maven.MavenArtifact;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.Server;
@@ -34,12 +31,9 @@ import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerConfigBuilder;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
-import org.infinispan.server.test.core.Unzip;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.RedisClusterClient;
@@ -51,7 +45,7 @@ public class RollingUpgradeHandler {
                                  ContainerInfinispanServerDriver containerInfinispanServerDriver) {
    }
 
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final RollingUpgradeConfiguration configuration;
 
@@ -61,8 +55,8 @@ public class RollingUpgradeHandler {
    // Holds a value of how many nodes are left to upgrade
    private int nodeLeft;
 
-   private final String versionFrom;
-   private final String versionTo;
+   private final RollingUpgradeVersion versionFrom;
+   private final RollingUpgradeVersion versionTo;
 
    private String toImageCreated;
    private String fromImageCreated;
@@ -239,29 +233,24 @@ public class RollingUpgradeHandler {
       try {
          log.debugf("Starting %d nodes to version %s in cluster %s", handler.nodeCount, handler.versionFrom, handler.clusterName);
          final Archive<?>[] artifacts;
-         try {
-            if (configuration.customArtifacts().length > 0) {
-               // If possible, use the "fromVersion" artifacts
-               MavenArtifact mavenArtifacts = new MavenArtifact("org.infinispan", "infinispan-server-tests", configuration.fromVersion(), "artifacts");
-               Path artifactsZip = mavenArtifacts.resolveArtifact("zip");
-               if (artifactsZip == null) {
-                  artifacts = configuration.customArtifacts();
-                  log.warnf("Could not download custom artifacts for version %s using %s. Failures may happen", configuration.fromVersion(), mavenArtifacts);
-               } else {
-                  artifacts = Unzip.unzip(artifactsZip, Paths.get(CommonsTestingUtil.tmpDirectory(), configuration.fromVersion()))
-                        .stream().map(p -> ShrinkWrap.createFromZipFile(JavaArchive.class, p.toFile()))
-                        .toArray(i -> new Archive<?>[i]);
-                  log.infof("Custom artifacts for version %s using %s", configuration.fromVersion(), mavenArtifacts);
-               }
-            } else {
-               artifacts = configuration.customArtifacts();
-            }
-         } catch (IOException e) {
-            throw new UncheckedIOException(e);
+         if (configuration.customArtifacts().length > 0) {
+            // If possible, use the "fromVersion" artifacts
+            artifacts = Optional.ofNullable(VersionInterop.loadVersionedArtifacts(handler.versionFrom.version()))
+                  .orElseGet(configuration::customArtifacts);
+         } else {
+            artifacts = configuration.customArtifacts();
+         }
+
+         String fullConfigurationPath;
+         Path versionedConfigurationPath = VersionInterop.loadVersionedConfigurations(handler.versionFrom.version());
+         if (versionedConfigurationPath == null) {
+            fullConfigurationPath = configuration.serverConfigurationFile();
+         } else {
+            fullConfigurationPath = versionedConfigurationPath + "/" + configuration.serverConfigurationFile();
          }
 
          handler.fromDriver = handler.startNode(VersionType.FROM, configuration.nodeCount(), configuration.nodeCount(),
-               configuration.jgroupsProtocol(), null, configuration.serverConfigurationFile(),
+               configuration.jgroupsProtocol(), null, fullConfigurationPath,
                configuration.defaultServerConfigurationFile(), artifacts,
                configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
          handler.currentState = STATE.OLD_RUNNING;
@@ -366,11 +355,11 @@ public class RollingUpgradeHandler {
 
    public void close() {
       if (fromDriver != null) {
-         fromDriver.containerInfinispanServerDriver.stop(configuration.fromVersion());
+         fromDriver.containerInfinispanServerDriver.stop(configuration.fromVersion().imageLabel());
          fromDriver = null;
       }
       if (toDriver != null) {
-         toDriver.containerInfinispanServerDriver.stop(configuration.toVersion());
+         toDriver.containerInfinispanServerDriver.stop(configuration.toVersion().imageLabel());
          toDriver = null;
       }
 
@@ -450,7 +439,9 @@ public class RollingUpgradeHandler {
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true");
       }
 
-      String versionToUse = versionType == VersionType.TO ? configuration.toVersion() : configuration.fromVersion();
+      String versionToUse = versionType == VersionType.TO
+            ? configuration.toVersion().imageLabel()
+            : configuration.fromVersion().imageLabel();
       String name = (siteName != null ? siteName : "") + clusterName + "-";
 
       if (versionToUse.startsWith("image://")) {
