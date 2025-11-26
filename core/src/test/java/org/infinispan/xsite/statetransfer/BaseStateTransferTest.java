@@ -1,6 +1,7 @@
 package org.infinispan.xsite.statetransfer;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapComponent;
@@ -20,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -36,6 +37,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.test.ExceptionRunnable;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -43,6 +45,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.ControlledTransport;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.XSiteAdminOperations;
@@ -66,8 +69,8 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
    private static final String VALUE = "value";
 
    BaseStateTransferTest() {
-      this.cleanup = CleanupPhase.AFTER_METHOD;
-      this.cacheMode = CacheMode.DIST_SYNC;
+      cleanup = CleanupPhase.AFTER_METHOD;
+      cacheMode = CacheMode.DIST_SYNC;
    }
 
    @Test(groups = "xsite")
@@ -79,7 +82,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
    }
 
    @Test(groups = "xsite", enabled = false, description = "Disabled as part of https://github.com/infinispan/infinispan/issues/14618")
-   public void testCancelStateTransfer(Method method) throws InterruptedException {
+   public void testCancelStateTransfer(Method method) {
       takeSiteOffline();
       assertOffline();
       assertNoStateTransferInReceivingSite(null);
@@ -90,7 +93,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       // We add keys until we have more than one chunk on the LON coordinator.
       LocalizedCacheTopology topology = cache(LON, 0).getAdvancedCache().getDistributionManager().getCacheTopology();
       Address coordLON = cache(LON, 0).getCacheManager().getAddress();
-      Set<Object> keysOnCoordinator = new HashSet<>();
+      Set<Object> keysOnCoordinator = new HashSet<>(chunkSize());
       int i = 0;
       while (keysOnCoordinator.size() < chunkSize()) {
          Object key = k(method, i);
@@ -169,7 +172,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       assertNoStateTransferInSendingSite();
 
       //NYC is offline... lets put some initial data in
-      //we have 2 nodes in each site and the primary owner sends the state. Lets try to have more key than the chunk
+      //we have 2 nodes in each site and the primary owner sends the state. Let's try to have more key than the chunk
       //size in order to each site to send more than one chunk.
       final int amountOfData = chunkSize() * 4;
       for (int i = 0; i < amountOfData; ++i) {
@@ -297,7 +300,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
    }
 
    private void testStateTransferWithConcurrentOperation(final Operation operation, final boolean performBeforeState,
-         final Method method) throws Exception {
+                                                         final Method method) throws Exception {
       assertNotNull(operation);
       assertTrue(operation.replicates());
       takeSiteOffline();
@@ -313,12 +316,13 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       final BackupListener listener = new BackupListener() {
          @Override
-         public void beforeCommand(VisitableCommand command) throws Exception {
+         public CompletionStage<Void> beforeCommand(VisitableCommand command) {
             checkPoint.trigger("before-update");
             if (!performBeforeState && isUpdatingKeyWithValue(command, key, operation.finalValue())) {
                //we need to wait for the state transfer before perform the command
-               checkPoint.awaitStrict("update-key", 30, TimeUnit.SECONDS);
+               return checkPoint.awaitStrictAsync("update-key", 30, TimeUnit.SECONDS, testExecutor());
             }
+            return CompletableFutures.completedNull();
          }
 
          @Override
@@ -330,15 +334,16 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
 
          @Override
-         public void beforeState(List<XSiteState> chunk) throws Exception {
+         public CompletionStage<Void> beforeState(List<XSiteState> chunk) {
             checkPoint.trigger("before-state");
             //wait until the command is received with the new value. so we make sure that the command saw the old value
             //and will commit a new value
-            checkPoint.awaitStrict("before-update", 30, TimeUnit.SECONDS);
+            var cf = checkPoint.awaitStrictAsync("before-update", 30, TimeUnit.SECONDS, testExecutor());
             if (performBeforeState && containsKey(chunk, key)) {
                //command before state... we need to wait
-               checkPoint.awaitStrict("apply-state", 30, TimeUnit.SECONDS);
+               return cf.thenCompose(unused -> checkPoint.awaitStrictAsync("apply-state", 30, TimeUnit.SECONDS, testExecutor()));
             }
+            return CompletableFutures.completedNull();
          }
 
          @Override
@@ -431,8 +436,9 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       final BackupListener listener = new BackupListener() {
          @Override
-         public void beforeCommand(VisitableCommand command) {
+         public CompletionStage<Void> beforeCommand(VisitableCommand command) {
             commandReceived.set(true);
+            return CompletableFutures.completedNull();
          }
 
          @Override
@@ -441,9 +447,9 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
 
          @Override
-         public void beforeState(List<XSiteState> chunk) throws Exception {
+         public CompletionStage<Void> beforeState(List<XSiteState> chunk) {
             checkPoint.trigger("before-state");
-            checkPoint.awaitStrict("before-update", 30, TimeUnit.SECONDS);
+            return checkPoint.awaitStrictAsync("before-update", 30, TimeUnit.SECONDS, testExecutor());
          }
       };
 
@@ -474,7 +480,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       assertInSite(LON, cache -> assertEquals(operation.finalValue(), cache.get(key)));
    }
 
-   private boolean isUpdatingKeyWithValue(VisitableCommand command, Object key, Object value) {
+   private static boolean isUpdatingKeyWithValue(VisitableCommand command, Object key, Object value) {
       if (command instanceof PutKeyValueCommand) {
          return key.equals(((PutKeyValueCommand) command).getKey()) &&
                value.equals(((PutKeyValueCommand) command).getValue());
@@ -495,7 +501,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       return false;
    }
 
-   private boolean containsKey(List<XSiteState> states, Object key) {
+   private static boolean containsKey(List<XSiteState> states, Object key) {
       if (states == null || states.isEmpty() || key == null) {
          return false;
       }
@@ -713,7 +719,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
          @Override
          public <K> Future<?> perform(Cache<K, Object> cache, K key) {
-            Map<K, Object> map = new HashMap<>();
+            Map<K, Object> map = new HashMap<>(1);
             map.put(key, finalValue());
             return cache.putAllAsync(map);
          }
@@ -750,29 +756,25 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
    private static class XSiteStateProviderControl extends XSiteProviderDelegator {
 
       private final CheckPoint checkPoint;
+      private final Executor executor;
 
-      private XSiteStateProviderControl(XSiteStateProvider xSiteStateProvider) {
+      private XSiteStateProviderControl(XSiteStateProvider xSiteStateProvider, Executor executor) {
          super(xSiteStateProvider);
+         this.executor = executor;
          checkPoint = new CheckPoint();
       }
 
       @Override
       public void startStateTransfer(String siteName, Address requestor, int minTopologyId) {
          checkPoint.trigger("before-start");
-         try {
-            checkPoint.awaitStrict("await-start", 30, TimeUnit.SECONDS);
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-         } catch (TimeoutException e) {
-            throw new RuntimeException(e);
-         }
-         super.startStateTransfer(siteName, requestor, minTopologyId);
+         checkPoint.awaitStrictAsync("await-start", 30, TimeUnit.SECONDS, executor)
+               .thenRun(() -> super.startStateTransfer(siteName, requestor, minTopologyId));
       }
 
       static XSiteStateProviderControl replaceInCache(Cache<?, ?> cache) {
          XSiteStateProvider current = extractComponent(cache, XSiteStateProvider.class);
-         XSiteStateProviderControl control = new XSiteStateProviderControl(current);
+         var executor = extractGlobalComponent(cache.getCacheManager(), BlockingManager.class).asExecutor("checkpoint");
+         XSiteStateProviderControl control = new XSiteStateProviderControl(current, executor);
          replaceComponent(cache, XSiteStateProvider.class, control, true);
          return control;
       }
@@ -788,16 +790,18 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
    private abstract static class BackupListener {
 
-      void beforeCommand(VisitableCommand command) throws Exception {
+      CompletionStage<Void> beforeCommand(VisitableCommand command) {
          //no-op by default
+         return CompletableFutures.completedNull();
       }
 
       void afterCommand(VisitableCommand command) {
          //no-op by default
       }
 
-      void beforeState(List<XSiteState> chunk) throws Exception {
+      CompletionStage<Void> beforeState(List<XSiteState> chunk) {
          //no-op by default
+         return CompletableFutures.completedNull();
       }
 
       void afterState(List<XSiteState> chunk) {
@@ -816,22 +820,16 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       @Override
       public <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command) {
-         try {
-            listener.beforeCommand(command);
-         } catch (Exception e) {
-            return CompletableFuture.failedFuture(e);
-         }
-         return super.<O>handleRemoteCommand(command).whenComplete((v, t) -> listener.afterCommand(command));
+         return listener.beforeCommand(command)
+               .thenCompose(ignored -> super.<O>handleRemoteCommand(command))
+               .whenComplete((v, t) -> listener.afterCommand(command));
       }
 
       @Override
       public CompletionStage<Void> handleStateTransferState(List<XSiteState> chunk, long timeoutMs) {
-         try {
-            listener.beforeState(chunk);
-         } catch (Exception e) {
-            return CompletableFuture.failedFuture(e);
-         }
-         return super.handleStateTransferState(chunk, timeoutMs).whenComplete((v, t) -> listener.afterState(chunk));
+         return listener.beforeState(chunk)
+               .thenCompose(unused -> super.handleStateTransferState(chunk, timeoutMs))
+               .whenComplete((v, t) -> listener.afterState(chunk));
       }
    }
 }
