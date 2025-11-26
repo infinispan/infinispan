@@ -48,7 +48,7 @@
       <infinispan.olm.name>infinispan</infinispan.olm.name>
       <infinispan.gpg.key>9E31AB27445478DB</infinispan.gpg.key>
       <!-- This should be updated to a stable version from the previous release -->
-      <infinispan.old.version>16.0.2</infinispan.old.version>
+      <infinispan.old.version>16.0.3</infinispan.old.version>
 
       <wildfly.brand.name>WildFly</wildfly.brand.name>
       <wildfly.brand.prefix>wildfly</wildfly.brand.prefix>

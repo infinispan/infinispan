@@ -270,6 +270,7 @@
                   <configuration>
                      <descriptors>
                         <descriptor>src/assemblies/artifacts.xml</descriptor>
+                        <descriptor>src/assemblies/configurations.xml</descriptor>
                      </descriptors>
                      <attach>true</attach>
                   </configuration>
