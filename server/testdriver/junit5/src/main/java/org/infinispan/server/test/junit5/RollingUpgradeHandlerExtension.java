@@ -16,6 +16,7 @@ import org.infinispan.server.test.core.TestServer;
 import org.infinispan.server.test.core.rollingupgrade.CombinedInfinispanServerDriver;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
+import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeVersion;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -32,15 +33,15 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
       this.configurationBuilder = configurationBuilder;
    }
 
-   public static RollingUpgradeHandlerExtension from(Class<?> caller, InfinispanServerExtensionBuilder iseb, String fromVersion, String toVersion) {
+   public static RollingUpgradeHandlerExtension from(Class<?> caller, InfinispanServerExtensionBuilder iseb, RollingUpgradeVersion fromVersion, RollingUpgradeVersion toVersion) {
       return new RollingUpgradeHandlerExtension(convertBuilder(caller, iseb, fromVersion, toVersion));
    }
 
-   public static RollingUpgradeConfigurationBuilder convertBuilder(Class<?> caller, InfinispanServerExtensionBuilder iseb, String fromVersion, String toVersion) {
+   public static RollingUpgradeConfigurationBuilder convertBuilder(Class<?> caller, InfinispanServerExtensionBuilder iseb, RollingUpgradeVersion fromVersion, RollingUpgradeVersion toVersion) {
       return convertBuilder(caller.getName(), iseb, fromVersion, toVersion);
    }
 
-   public static RollingUpgradeConfigurationBuilder convertBuilder(String name, InfinispanServerExtensionBuilder iseb, String fromVersion, String toVersion) {
+   public static RollingUpgradeConfigurationBuilder convertBuilder(String name, InfinispanServerExtensionBuilder iseb, RollingUpgradeVersion fromVersion, RollingUpgradeVersion toVersion) {
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(name, fromVersion, toVersion);
       InfinispanServerTestConfiguration configuration = iseb.createServerTestConfiguration();
 

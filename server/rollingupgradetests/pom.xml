@@ -211,6 +211,7 @@
                <disableXmlReport>false</disableXmlReport>
                <useFile>false</useFile>
                <systemPropertyVariables>
+                  <infinispan.old.version>${infinispan.old.version}</infinispan.old.version>
                   <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
