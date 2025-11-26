@@ -2,57 +2,42 @@ name: Automated Backporting
 
 on:
   pull_request_target:
-    types:
-      - closed
-    branches:
-      - main
+    types: [closed]
+    branches: [main]
 
 jobs:
-  create_backport:
-    if: github.event.pull_request.merged == true
+  find_targets:
+    if: github.event.pull_request.merged == true && github.event.pull_request.labels
     runs-on: ubuntu-latest
+    outputs:
+      backport_branches: ${{ steps.prepare_labels.outputs.backport_branches }}
     steps:
-      - if: contains(github.event.pull_request.labels.*.name, 'backport/13.0.x')
-        name: 13.0.x Backport
-        uses: kiegroup/git-backporting@v4.8.6
-        with:
-          target-branch: 13.0.x
-          pull-request: ${{ github.event.pull_request.url }}
-          auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
-          no-squash: true
+      - name: Prepare backport branches list
+        id: prepare_labels
+        run: |
+          labels_json='${{ toJSON(github.event.pull_request.labels) }}'
+          backport_branches=$(echo "$labels_json" | jq -r '[.[] | select(.name | startswith("backport/")) | .name | sub("^backport/"; "")]')
+          {
+            echo 'backport_branches<<EOF'
+            echo "$backport_branches"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
-      - if: always() && contains(github.event.pull_request.labels.*.name, 'backport/14.0.x')
-        name: 14.0.x Backport
-        uses: kiegroup/git-backporting@v4.8.6
-        with:
-          target-branch: 14.0.x
-          pull-request: ${{ github.event.pull_request.url }}
-          auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
-          no-squash: true
+  create_backports:
+    needs: find_targets
+    if: needs.find_targets.outputs.backport_branches != '[]'
+    runs-on: ubuntu-latest
 
-      - if: always() && contains(github.event.pull_request.labels.*.name, 'backport/15.0.x')
-        name: 15.0.x Backport
-        uses: kiegroup/git-backporting@v4.8.6
-        with:
-          target-branch: 15.0.x
-          pull-request: ${{ github.event.pull_request.url }}
-          auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
-          no-squash: true
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJSON(needs.find_targets.outputs.backport_branches) }}
 
-      - if: always() && contains(github.event.pull_request.labels.*.name, 'backport/15.1.x')
-        name: 15.1.x Backport
+    steps:
+      - name: Backport
         uses: kiegroup/git-backporting@v4.8.6
         with:
-          target-branch: 15.1.x
-          pull-request: ${{ github.event.pull_request.url }}
-          auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
-          no-squash: true
-
-      - if: always() && contains(github.event.pull_request.labels.*.name, 'backport/15.2.x')
-        name: 15.2.x Backport
-        uses: kiegroup/git-backporting@v4.8.6
-        with:
-          target-branch: 15.2.x
+          target-branch: ${{ matrix.branch }}
           pull-request: ${{ github.event.pull_request.url }}
           auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           no-squash: true
