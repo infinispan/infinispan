@@ -5,7 +5,7 @@ on:
     types: [closed]
     branches: [main]
 
-## A comment
+## An updated comment
 jobs:
   find_targets:
     if: github.event.pull_request.merged == true && github.event.pull_request.labels
