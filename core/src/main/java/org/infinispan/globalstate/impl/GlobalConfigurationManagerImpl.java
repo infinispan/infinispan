@@ -40,8 +40,11 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Implementation of {@link GlobalConfigurationManager}
@@ -125,42 +128,61 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       Map<String, Configuration> persistedTemplates = localConfigurationManager.loadAllTemplates();
       Map<String, Configuration> persistedCaches = localConfigurationManager.loadAllCaches();
 
-      getStateCache().forEach((key, v) -> {
-         String scope = key.getScope();
-         if (isKnownScope(scope)) {
-            String name = key.getName();
-            CacheState state = (CacheState) v;
-            boolean cacheScope = CACHE_SCOPE.equals(scope);
-            Map<String, Configuration> map = cacheScope ? persistedCaches : persistedTemplates;
-            ensureClusterCompatibility(name, state, map);
-            CompletionStage<Void> future = cacheScope ? createCacheLocally(name, state) : createTemplateLocally(name, state);
-            CompletionStages.join(future);
-         }
-      });
+      var scheduler = Schedulers.from(new WithinThreadExecutor());
+      var parallelism = Runtime.getRuntime().availableProcessors(); // number of caches to start concurrently
+      var cachesFromCluster = CompletionStages.performConcurrently(getStateCache().entrySet(),
+            parallelism,
+            scheduler,
+            entry -> {
+               var key = entry.getKey();
+               var scope = key.getScope();
+               if (!isKnownScope(scope)) {
+                  return CompletableFutures.completedNull();
+               }
+               String name = key.getName();
+               CacheState state = (CacheState) entry.getValue();
+               boolean cacheScope = CACHE_SCOPE.equals(scope);
+               Map<String, Configuration> map = cacheScope ? persistedCaches : persistedTemplates;
+               ensureClusterCompatibility(name, state, map);
+               return cacheScope ? createCacheLocally(name, state) : createTemplateLocally(name, state);
+            });
+      CompletionStages.join(cachesFromCluster);
 
       EnumSet<CacheContainerAdmin.AdminFlag> adminFlags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
 
       // Create the templates
-      persistedTemplates.forEach((name, configuration) -> {
-         ensurePersistenceCompatibility(name, configuration);
-         // The template was permanent, it still needs to be
-         CompletionStages.join(getOrCreateTemplate(name, configuration, adminFlags));
-      });
+      var templatesFromConfiguration = CompletionStages.performConcurrently(persistedTemplates.entrySet(),
+            parallelism,
+            scheduler,
+            entry -> {
+               var name = entry.getKey();
+               var configuration = entry.getValue();
+               ensurePersistenceCompatibility(name, configuration);
+               // The template was permanent, it still needs to be
+               return getOrCreateTemplate(name, configuration, adminFlags);
+            });
+      CompletionStages.join(templatesFromConfiguration);
 
       // Create the caches
-      persistedCaches.forEach((name, configuration) -> {
-         ensurePersistenceCompatibility(name, configuration);
-         // The cache configuration was permanent, it still needs to be
-         CompletionStages.join(createCacheInternal(name, null, configuration, adminFlags)
-               .thenCompose(r -> {
-                  if (r instanceof CacheState) {
-                     Configuration remoteConf = buildConfiguration(name, ((CacheState) r).getConfiguration(), false);
-                     ensurePersistenceCompatibility(name, configuration, remoteConf);
-                     return createCacheLocally(name, (CacheState) r);
-                  }
-                  return CompletableFutures.completedNull();
-               }));
-      });
+      var cachesFromConfiguration = CompletionStages.performConcurrently(persistedCaches.entrySet(),
+            parallelism,
+            scheduler,
+            entry -> {
+               var name = entry.getKey();
+               var configuration = entry.getValue();
+               ensurePersistenceCompatibility(name, configuration);
+               // The cache configuration was permanent, it still needs to be
+               return createCacheInternal(name, null, configuration, adminFlags)
+                     .thenCompose(r -> {
+                        if (r instanceof CacheState) {
+                           Configuration remoteConf = buildConfiguration(name, ((CacheState) r).getConfiguration(), false);
+                           ensurePersistenceCompatibility(name, configuration, remoteConf);
+                           return createCacheLocally(name, (CacheState) r);
+                        }
+                        return CompletableFutures.completedNull();
+                     });
+            });
+      CompletionStages.join(cachesFromConfiguration);
    }
 
    private void ensureClusterCompatibility(String name, CacheState state, Map<String, Configuration> configs) {
