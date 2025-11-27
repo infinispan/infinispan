@@ -18,7 +18,9 @@ jobs:
         run: |
           labels_json='${{ toJSON(github.event.pull_request.labels) }}'
           backport_branches=$(echo "$labels_json" | jq -r '[.[] | select(.name | startswith("backport/")) | .name | sub("^backport/"; "")]')
-          echo "backport_branches=$backport_branches" >> $GITHUB_OUTPUT
+          echo 'backport_branches<<EOF' >> $GITHUB_OUTPUT
+          echo $backport_branches >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
 
   create_backports:
     needs: find_targets
