@@ -72,9 +72,9 @@ echo "$PROPERTIES"
 
 GREP="grep"
 
-# tell linux glibc how many memory pools can be created that are used by malloc
-MALLOC_ARENA_MAX="${MALLOC_ARENA_MAX:-1}"
-export MALLOC_ARENA_MAX
+if [ -n "$GLIBC_TUNABLES" ] && ldd --version 2>&1 | grep -qE "(GLIBC|libc)"; then
+  export GLIBC_TUNABLES
+fi
 
 # OS specific support (must be 'true' or 'false').
 cygwin=false;
@@ -87,7 +87,6 @@ case "$(uname)" in
     CYGWIN*)
         cygwin=true
         ;;
-
     Darwin*)
         darwin=true
         ;;
@@ -358,6 +357,10 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
             # Remove the gc.log file from the -version check
             rm -f "$ISPN_LOG_DIR/gc.log" >/dev/null 2>&1
         fi
+    fi
+
+    if [ "$HEAP_DUMP" = "true" ]; then
+      PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$ISPN_LOG_DIR -XX:ErrorFile=$ISPN_LOG_DIR/hs_err_pid_%p.log -XX:ReplayDataFile=$ISPN_LOG_DIR/replay_pid%p.log"
     fi
 
     JAVA_OPTS="$PREPEND_JAVA_OPTS $JAVA_OPTS"
