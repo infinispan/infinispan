@@ -4,14 +4,14 @@
 :_mod-docs-content-type: CONCEPT
 
 [id="jvm-settings-for-server_{context}"]
-= JVM settings for {BrandName}
+= JVM settings for {brandname}
 
-You can define Java Virtual Machine (JVM) settings for {BrandName} either by editing the `server.conf` configuration file, or by setting the `JAVA_OPTS` and `JAVA_OPTIONS` environment variables. Set the `JAVA_OPTIONS` variable if you just want to append JVM settings to those that are automatically set by the
+You can define Java Virtual Machine (JVM) settings for {brandname} either by editing the `server.conf` configuration file, or by setting the `JAVA_OPTS` and `JAVA_OPTIONS` environment variables. Set the `JAVA_OPTIONS` variable if you just want to append JVM settings to those that are automatically set by the
 `server.conf` file. Set the `JAVA_OPTS` variable if you want to completely override the JVM settings.
 
 [IMPORTANT]
 ====
-If you are running {BrandName} in a container do not set `Xmx` or `Xms`  because the values are automatically calculated from the container settings to be 70% of the container size.
+If you are running {brandname} in a container do not set `Xmx` or `Xms`  because the values are automatically calculated from the container settings to be 70% of the container size.
 ====
 
 [discrete]
@@ -20,7 +20,7 @@ If you are running {BrandName} in a container do not set `Xmx` or `Xms`  because
 You can edit the required values in the `server.conf` configuration file. For example, to set the options to pass to the JVM, edit the following lines:
 
 ----
-if [ "x$JAVA_OPTS" = "x" ]; then
+if [ "$JAVA_OPTS" = "" ]; then
    JAVA_OPTS="..."
 else
    echo "JAVA_OPTS already set in environment; overriding default settings with values: $JAVA_OPTS"
@@ -46,11 +46,57 @@ JAVA_OPTS="$JAVA_OPTS <key_1>=<value_1>, ..., <key_N>=<value_N> "
 You can override the settings in `server.conf` configuration file by setting the `JAVA_OPTS` environment variable. For example:
 
 .Linux
+[source,shell,options="nowrap",subs=attributes+,role="primary"]
 ----
 export JAVA_OPTS="-Xmx1024M"
 ----
 
-.Microsoft Windows
+.Windows
+[source,shell,options="nowrap",subs=attributes+,role="secondary"]
 ----
 set JAVA_OPTS="-Xmx1024M"
 ----
+
+
+== Garbage Collection Logging
+
+{brandname} automatically enables garbage collection logs to the `$ISPN_HOME/server/log` directory.
+Disable the logs by setting the `GC_LOG` environment variable to `false` before launching the server.
+
+.Linux
+[source,shell,options="nowrap",subs=attributes+,role="primary"]
+----
+export GC_LOG="false"
+----
+
+.Windows
+[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+----
+set "GC_LOG=false"
+----
+
+== Heap Dump on OutOfMemoryError
+
+{brandname} enables automatic heap dumps on `OutOfMemoryError` to the `$ISPN_HOME/server/log` directory.
+Heap dumps are useful for troubleshooting memory issues. You can use tools such as `jhat` (included in the JDK),
+https://visualvm.github.io/[VisualVM] or https://eclipse.dev/mat/[Eclipse Memory Analyzer] to inspect heap dumps.
+Disable heap dumps by setting the `HEAP_DUMP` environment variable to `false` before launching the server.
+
+.Linux
+[source,shell,options="nowrap",subs=attributes+,role="primary"]
+----
+export HEAP_DUMP="false"
+----
+
+.Windows
+[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+----
+set "HEAP_DUMP=false"
+----
+
+[WARNING]
+====
+Heap dumps are snapshots of the in-memory data you have stored in {brandname} caches and may therefore contain
+sensitive data. Consider sanitizing the heap dumps before sharing them with third parties by using a tool such as
+the https://github.com/paypal/heap-dump-tool[Heap Dump Tool].
+====
