@@ -129,16 +129,18 @@ do
    git add "$POM"
 done < <(find . -name 'pom.xml' -type f -print0)
 
-sed -i "s/<version.infinispan>$VERSION<\/version.infinispan>/<version.infinispan>$NEWVERSION<\/version.infinispan>/g" build/configuration/pom.xml
-sed -i "s/<infinispan.codename>.*<\/infinispan.codename>/<infinispan.codename>N\/A<\/infinispan.codename>/g" build/configuration/pom.xml
-
-
 OLDSCHEMAMAJOR=$(echo "$VERSION"|cut -d. -f1)
 OLDSCHEMAMINOR=$(echo "$VERSION"|cut -d. -f2)
 OLDSCHEMAVERSION=$(echo "$VERSION"|cut -d. -f1,2)
+OLDVERSION=$(echo "$VERSION"|cut -d. -f1,2,3)
 NEWSCHEMAMAJOR=$(echo "$NEWVERSION"|cut -d. -f1)
 NEWSCHEMAMINOR=$(echo "$NEWVERSION"|cut -d. -f2)
 NEWSCHEMAVERSION=$(echo "$NEWVERSION"|cut -d. -f1,2)
+
+sed -i "s/<version.infinispan>$VERSION<\/version.infinispan>/<version.infinispan>$NEWVERSION<\/version.infinispan>/g" build/configuration/pom.xml
+sed -i "s/<infinispan.codename>.*<\/infinispan.codename>/<infinispan.codename>N\/A<\/infinispan.codename>/g" build/configuration/pom.xml
+sed -i "s/<infinispan.base.version>.*<\/infinispan.base.version>/<infinispan.base.version>$NEWMAJOR.$NEWMINOR</infinispan.base.version>/g" build/configuration/pom.xml
+sed -i "s/<infinispan.old.version>.*<\/infinispan.old.version>/<infinispan.old.version>$OLDVERSION</infinispan.old.version>/g" build/configuration/pom.xml
 
 if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true ] ;  then
     echo "Current schema: $OLDSCHEMAVERSION"
