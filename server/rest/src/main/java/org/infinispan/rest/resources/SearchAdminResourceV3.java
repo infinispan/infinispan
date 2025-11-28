@@ -1,9 +1,11 @@
 package org.infinispan.rest.resources;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 
@@ -37,7 +39,8 @@ public class SearchAdminResourceV3 extends SearchAdminResource implements Resour
                .operationId("IndexMetamodel")
                .name("Retrieve the metamodel of the index")
                .response(OK, "Index metamodel", APPLICATION_JSON)
-               .response(NOT_FOUND, "Cache not found or not indexed")
+               .response(NOT_FOUND, "Cache not found", TEXT_PLAIN, Schema.STRING)
+               .response(BAD_REQUEST, "Cache is not indexed", TEXT_PLAIN, Schema.STRING)
                .handleWith(this::indexMetamodel)
 
             // Search statistics
@@ -46,7 +49,8 @@ public class SearchAdminResourceV3 extends SearchAdminResource implements Resour
                .name("Retrieve search statistics")
                .parameter("scope", ParameterIn.QUERY, false, Schema.STRING, "Statistics scope: 'local' (default) or 'cluster'")
                .response(OK, "Search statistics", APPLICATION_JSON)
-               .response(NOT_FOUND, "Cache not found or statistics not enabled")
+               .response(NOT_FOUND, "Cache not found or statistics not enabled", TEXT_PLAIN, Schema.STRING)
+               .response(BAD_REQUEST, "Cache is not indexed", TEXT_PLAIN, Schema.STRING)
                .handleWith(this::searchStats)
 
             .invocation().methods(POST).path("/v3/caches/{cacheName}/_search-stats-clear")
@@ -54,7 +58,8 @@ public class SearchAdminResourceV3 extends SearchAdminResource implements Resour
                .name("Clear search statistics")
                .parameter("scope", ParameterIn.QUERY, false, Schema.STRING, "Statistics scope: 'local' (default) or 'cluster'")
                .response(NO_CONTENT, "Search statistics cleared")
-               .response(NOT_FOUND, "Cache not found or statistics not enabled")
+               .response(NOT_FOUND, "Cache not found or statistics not enabled", TEXT_PLAIN, Schema.STRING)
+               .response(BAD_REQUEST, "Cache is not indexed or cluster scope is not supported", TEXT_PLAIN, Schema.STRING)
                .handleWith(this::clearSearchStats)
 
             // Reindex operations
@@ -64,7 +69,8 @@ public class SearchAdminResourceV3 extends SearchAdminResource implements Resour
                .parameter("local", ParameterIn.QUERY, false, Schema.BOOLEAN, "Whether to run reindex locally only. Default: false")
                .parameter("mode", ParameterIn.QUERY, false, Schema.STRING, "Execution mode: 'sync' (default) or 'async'")
                .response(NO_CONTENT, "Reindex operation completed or started")
-               .response(NOT_FOUND, "Cache not found or not indexed")
+               .response(NOT_FOUND, "Cache not found", TEXT_PLAIN, Schema.STRING)
+               .response(BAD_REQUEST, "Cache is not indexed", TEXT_PLAIN, Schema.STRING)
                .handleWith(this::reindex)
 
             .invocation().methods(POST).path("/v3/caches/{cacheName}/_index-clear")
@@ -72,14 +78,16 @@ public class SearchAdminResourceV3 extends SearchAdminResource implements Resour
                .name("Clear all indexes for the cache")
                .parameter("mode", ParameterIn.QUERY, false, Schema.STRING, "Execution mode: 'sync' (default) or 'async'")
                .response(NO_CONTENT, "Index clear operation completed or started")
-               .response(NOT_FOUND, "Cache not found or not indexed")
+               .response(NOT_FOUND, "Cache not found", TEXT_PLAIN, Schema.STRING)
+               .response(BAD_REQUEST, "Cache is not indexed", TEXT_PLAIN, Schema.STRING)
                .handleWith(this::clearIndexes)
 
             .invocation().methods(POST).path("/v3/caches/{cacheName}/_index-schema-update")
                .operationId("updateIndexSchema")
                .name("Update the index schema")
                .response(NO_CONTENT, "Index schema updated")
-               .response(NOT_FOUND, "Cache not found or not indexed")
+               .response(NOT_FOUND, "Cache not found", TEXT_PLAIN, Schema.STRING)
+               .response(BAD_REQUEST, "Cache is not indexed", TEXT_PLAIN, Schema.STRING)
                .handleWith(this::updateSchema)
 
             .create();
