@@ -69,7 +69,7 @@ public class SearchAdminResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> searchStats(RestRequest request) {
+   protected CompletionStage<RestResponse> searchStats(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       String cacheName = request.variables().get("cacheName");
@@ -93,7 +93,7 @@ public class SearchAdminResource implements ResourceHandler {
       }
    }
 
-   private CompletionStage<RestResponse> clearSearchStats(RestRequest request) {
+   protected CompletionStage<RestResponse> clearSearchStats(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       String cacheName = request.variables().get("cacheName");
@@ -119,16 +119,16 @@ public class SearchAdminResource implements ResourceHandler {
       }
    }
 
-   private CompletionStage<RestResponse> reindex(RestRequest request) {
+   protected CompletionStage<RestResponse> reindex(RestRequest request) {
       boolean local = Boolean.parseBoolean(request.getParameter("local"));
       return runIndexer(request, s -> local ? s.runLocal() : s.run(), true);
    }
 
-   private CompletionStage<RestResponse> clearIndexes(RestRequest request) {
+   protected CompletionStage<RestResponse> clearIndexes(RestRequest request) {
       return runIndexer(request, Indexer::remove, false);
    }
 
-   private CompletionStage<RestResponse> updateSchema(RestRequest request) {
+   protected CompletionStage<RestResponse> updateSchema(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       AdvancedCache<?, ?> cache = lookupIndexedCache(request, responseBuilder);
@@ -147,7 +147,7 @@ public class SearchAdminResource implements ResourceHandler {
       return CompletableFuture.completedFuture(responseBuilder.build());
    }
 
-   private CompletionStage<RestResponse> indexMetamodel(RestRequest request) {
+   protected CompletionStage<RestResponse> indexMetamodel(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
       AdvancedCache<?, ?> cache = lookupIndexedCache(request, responseBuilder);
