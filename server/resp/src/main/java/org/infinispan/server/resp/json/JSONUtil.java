@@ -210,10 +210,6 @@ public class JSONUtil {
     * Converts any RedisJSON-style =~ "regex" fragments into Jayway =~ /regex/
     * format. Keeps the
     * rest of the JSONPath filter untouched.
-    *
-    * Example: $[?(@.name =~ ".*foo" && @.type =~ "(?i)^bar$")] to $[?(@.name =~
-    * /.*foo.*\/
-    * && @.type=~/(?i)^bar$/)]
     */
 
    public static String convertRedisFilterToJayway(String redisFilter) {
