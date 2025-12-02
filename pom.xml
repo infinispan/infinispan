@@ -232,7 +232,7 @@
       <versionx.org.twdata.maven.mojo-executor>2.4.1</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.common.wildfly-common>1.7.0.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.4.2.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
-      <versionx.org.xerial>3.51.0.0</versionx.org.xerial>
+      <versionx.org.xerial>3.51.1.0</versionx.org.xerial>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
    </properties>
 
