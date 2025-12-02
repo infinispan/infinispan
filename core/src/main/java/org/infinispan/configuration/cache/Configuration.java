@@ -316,7 +316,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    @Override
    public String toStringConfiguration(String name, MediaType mediaType, boolean clearTextSecrets) {
       StringBuilderWriter sw = new StringBuilderWriter();
-      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).clearTextSecrets(clearTextSecrets).prettyPrint(false).build()) {
+      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).clearTextSecrets(clearTextSecrets).prettyPrint(false).namespaceAware(false).build()) {
          ParserRegistry reg = new ParserRegistry();
          reg.serialize(writer, name, this);
       }

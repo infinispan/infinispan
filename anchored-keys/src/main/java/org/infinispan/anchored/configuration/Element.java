@@ -30,6 +30,11 @@ public enum Element {
       return name;
    }
 
+   @Override
+   public String toString() {
+      return name;
+   }
+
    private static final Map<String, Element> MAP;
 
    static {

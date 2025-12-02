@@ -186,7 +186,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
          List<String> exclusions = exclude != null ? Arrays.asList(exclude) : Collections.emptyList();
          for (Attribute<?> attribute : before.attributes()) {
             if (!exclusions.contains(attribute.name())) {
-               assertEquals("Configuration " + name, attribute, after.attribute(attribute.name()));
+               assertEquals("Configuration " + before.getName() + "." + name, attribute, after.attribute(attribute.name()));
             }
          }
       }

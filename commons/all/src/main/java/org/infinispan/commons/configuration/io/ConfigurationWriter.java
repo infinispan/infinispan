@@ -21,6 +21,8 @@ public interface ConfigurationWriter extends AutoCloseable {
       private MediaType type = MediaType.APPLICATION_XML;
       private boolean prettyPrint = false;
       private boolean clearTextSecrets = false;
+      private boolean namespaceAware = true;
+      private int indent = 2;
 
       private Builder(OutputStream os) {
          this(new OutputStreamWriter(os));
@@ -35,6 +37,11 @@ public interface ConfigurationWriter extends AutoCloseable {
          return this;
       }
 
+      public ConfigurationWriter.Builder indent(int indent) {
+         this.indent = indent;
+         return this;
+      }
+
       public ConfigurationWriter.Builder prettyPrint(boolean prettyPrint) {
          this.prettyPrint = prettyPrint;
          return this;
@@ -45,17 +52,42 @@ public interface ConfigurationWriter extends AutoCloseable {
          return this;
       }
 
+      public ConfigurationWriter.Builder namespaceAware(boolean namespaceAware) {
+         this.namespaceAware = namespaceAware;
+         return this;
+      }
+
+      public MediaType type() {
+         return type;
+      }
+
+      public boolean prettyPrint() {
+         return prettyPrint;
+      }
+
+      public boolean clearTextSecrets() {
+         return clearTextSecrets;
+      }
+
+      public boolean namespaceAware() {
+         return namespaceAware;
+      }
+
+      public int indent() {
+         return indent;
+      }
+
+      public Writer writer() {
+         return writer;
+      }
+
       public ConfigurationWriter build() {
-         switch (type.getTypeSubtype()) {
-            case MediaType.APPLICATION_XML_TYPE:
-               return new XmlConfigurationWriter(writer, prettyPrint, clearTextSecrets);
-            case MediaType.APPLICATION_YAML_TYPE:
-               return new YamlConfigurationWriter(writer, clearTextSecrets);
-            case MediaType.APPLICATION_JSON_TYPE:
-               return new JsonConfigurationWriter(writer, prettyPrint, clearTextSecrets);
-            default:
-               throw new IllegalArgumentException(type.toString());
-         }
+         return switch (type.getTypeSubtype()) {
+            case MediaType.APPLICATION_XML_TYPE -> new XmlConfigurationWriter(this);
+            case MediaType.APPLICATION_YAML_TYPE -> new YamlConfigurationWriter(this);
+            case MediaType.APPLICATION_JSON_TYPE -> new JsonConfigurationWriter(this);
+            default -> throw new IllegalArgumentException(type.toString());
+         };
       }
    }
 
@@ -72,6 +104,8 @@ public interface ConfigurationWriter extends AutoCloseable {
    void writeStartDocument();
 
    void writeStartElement(String name);
+
+   boolean namespaceAware();
 
    void writeStartElement(Enum<?> name);
 

@@ -40,6 +40,15 @@ public class Schema implements ConfigurationSchemaVersion {
       return (this.major > major) || ((this.major == major) && (this.minor >= minor));
    }
 
+   @Override
+   public String toString() {
+      return "Schema{" +
+         "uri='" + uri + '\'' +
+         ", major=" + major +
+         ", minor=" + minor +
+         '}';
+   }
+
    public static Schema fromNamespaceURI(String namespaceURI) {
       int major = Integer.parseInt(Version.getMajor());
       int minor = Integer.parseInt(Version.getMinor());
@@ -52,7 +61,7 @@ public class Schema implements ConfigurationSchemaVersion {
             major = Integer.parseInt(split[0]);
             minor = Integer.parseInt(split[1]);
          } catch (NumberFormatException e) {
-            // Ignore
+            uri = namespaceURI;
          }
          return new Schema(uri, major, minor);
       } else {

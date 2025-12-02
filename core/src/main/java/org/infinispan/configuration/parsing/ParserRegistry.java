@@ -242,9 +242,15 @@ public class ParserRegistry implements NamespaceMappingParser {
          // Next we strip off the version from the URI and look for a wildcard match
          int lastColon = namespace.lastIndexOf(':');
          String baseUri = namespace.substring(0,  lastColon + 1) + "*";
+         String version = namespace.substring(lastColon + 1);
          parser = parserMappings.get(new QName(baseUri, name));
+         if (parser == null) {
+            // Versionless namespace ?
+            parser = parserMappings.get(new QName(namespace + ":*", name));
+            version = Version.getMajorMinor();
+         }
          // See if we can get a default parser instead
-         if (parser == null || !isSupportedNamespaceVersion(parser.namespace, namespace.substring(lastColon + 1)))
+         if (parser == null || !isSupportedNamespaceVersion(parser.namespace, version))
             // Parse a possible cache name because the cache name has not a namespace definition in YAML/JSON
             return parseCacheName(reader, reader.getLocalName(NamingStrategy.IDENTITY), namespace);
       }

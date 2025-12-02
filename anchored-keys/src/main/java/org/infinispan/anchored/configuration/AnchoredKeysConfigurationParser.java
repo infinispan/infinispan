@@ -23,11 +23,11 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespace(root = "anchored-keys")
-@Namespace(uri = NAMESPACE + "*", root = "anchored-keys", since = "11.0")
+@Namespace(uri = NAMESPACE + ":*", root = "anchored-keys", since = "11.0")
 public class AnchoredKeysConfigurationParser implements ConfigurationParser {
 
    static final String PREFIX = "anchored-keys";
-   static final String NAMESPACE = Parser.NAMESPACE + PREFIX + ":";
+   static final String NAMESPACE = Parser.NAMESPACE + PREFIX;
 
    @Override
    public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {

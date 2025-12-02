@@ -1,12 +1,12 @@
 package org.infinispan.commons.configuration.io.xml;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Iterator;
 import java.util.Optional;
 
 import org.infinispan.commons.configuration.io.AbstractConfigurationWriter;
 import org.infinispan.commons.configuration.io.ConfigurationFormatFeature;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.configuration.io.ConfigurationWriterException;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 
@@ -21,8 +21,8 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
    private boolean openTag;
    private boolean skipIndentClose;
 
-   public XmlConfigurationWriter(Writer writer, boolean prettyPrint, boolean clearTextSecrets) {
-      super(writer, 4, prettyPrint, clearTextSecrets, NamingStrategy.KEBAB_CASE);
+   public XmlConfigurationWriter(ConfigurationWriter.Builder builder) {
+      super(builder, NamingStrategy.KEBAB_CASE);
    }
 
    public String getVersion() {
@@ -46,8 +46,8 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
       return standalone;
    }
 
-   public void setStandalone(Optional<Boolean> standalone) {
-      this.standalone = standalone;
+   public void setStandalone(boolean standalone) {
+      this.standalone = Optional.of(standalone);
    }
 
    @Override
@@ -97,7 +97,7 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
          tagStack.push(tag);
          tab();
          writer.write("<");
-         writer.write(naming.convert(tag.getName()));
+         writer.write(naming.convert(tag.name()));
          openTag = true;
          indent();
       } catch (IOException e) {
@@ -139,7 +139,7 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
    @Override
    public void writeEndListElement() {
       // XML allows repeated elements without a wrapper element
-      if (tagStack.peek().isExplicitOuter()) {
+      if (tagStack.peek().explicitOuter()) {
          writeEndElement();
       } else {
          tagStack.pop();
@@ -162,14 +162,16 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
       } else {
          namespaces.put(prefix, namespace);
       }
-      try {
-         writer.write(" xmlns:");
-         writer.write(prefix);
-         writer.write("=\"");
-         writer.write(namespace);
-         writer.write("\"");
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
+      if (namespaceAware) {
+         try {
+            writer.write(" xmlns:");
+            writer.write(prefix);
+            writer.write("=\"");
+            writer.write(namespace);
+            writer.write("\"");
+         } catch (IOException e) {
+            throw new ConfigurationWriterException(e);
+         }
       }
    }
 
@@ -178,12 +180,14 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
       if (!openTag) {
          throw new ConfigurationWriterException("Cannot set namespace without a started element");
       }
-      try {
-         writer.write(" xmlns=\"");
-         writer.write(namespace);
-         writer.write("\"");
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
+      if (namespaceAware) {
+         try {
+            writer.write(" xmlns=\"");
+            writer.write(namespace);
+            writer.write("\"");
+         } catch (IOException e) {
+            throw new ConfigurationWriterException(e);
+         }
       }
    }
 
@@ -203,7 +207,7 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
                tab();
             }
             writer.write("</");
-            writer.write(tagStack.pop().getName());
+            writer.write(tagStack.pop().name());
             writer.write(">");
             nl();
          }

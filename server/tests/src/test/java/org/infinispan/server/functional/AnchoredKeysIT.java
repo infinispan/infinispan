@@ -7,7 +7,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.StringConfiguration;
-import org.infinispan.commons.util.Version;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -36,10 +35,11 @@ public class AnchoredKeysIT {
 
    @Test
    public void testCreateAnchoredKeysCache() {
-      BasicConfiguration config = new StringConfiguration("<infinispan><cache-container><replicated-cache name=\"anchored2\">\n" +
-                        "<locking concurrency-level=\"100\" acquire-timeout=\"1000\"/>\n" +
-                           "<anchored-keys xmlns=\"urn:infinispan:config:anchored-keys:" + Version.getMajorMinor() + "\" enabled=\"true\"/>\n" +
-                       "</replicated-cache></cache-container></infinispan>");
+      BasicConfiguration config = new StringConfiguration("""
+         <replicated-cache name="anchored2">
+         <locking concurrency-level="100" acquire-timeout="1000"/>
+         <anchored-keys xmlns="urn:infinispan:config:anchored-keys" enabled="true"/>
+         </replicated-cache>""".trim());
       RemoteCacheManager rcm = SERVERS.hotrod().createRemoteCacheManager();
       rcm.administration().createCache("anchored2", config);
       test(rcm.getCache("anchored2"));
