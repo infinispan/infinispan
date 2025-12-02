@@ -51,6 +51,27 @@ public enum Resp3Type implements SerializationHint.SimpleHint {
    },
 
    /**
+    * Any type of string.
+    *
+    * @see ResponseWriter#string(byte[])
+    * @see ResponseWriter#string(CharSequence)
+    */
+   BULK_STRING_OR_MISSING {
+      @Override
+      public void serialize(Object object, ResponseWriter writer) {
+         if (object instanceof byte[]) {
+            if (((byte[]) object).length == 0) {
+               writer.nulls();
+            } else {
+               writer.string((byte[]) object);
+            }
+         } else {
+            writer.string((CharSequence) object);
+         }
+      }
+   },
+
+   /**
     * Integer numbers represented by 64-bits.
     *
     * @see ResponseWriter#integers(Number)
