@@ -1,449 +1,454 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <modelVersion>4.0.0</modelVersion>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.infinispan</groupId>
-        <artifactId>infinispan-server-integration</artifactId>
-        <version>16.1.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-server-integration</artifactId>
+      <version>16.1.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
 
-    <artifactId>infinispan-third-party-integrationtests</artifactId>
-    <name>Infinispan Integration Tests - Third Party Servers</name>
-    <description>Infinispan Integration Tests - Third Party Servers</description>
+   <artifactId>infinispan-third-party-integrationtests</artifactId>
+   <name>Infinispan Integration Tests - Third Party Servers</name>
+   <description>Infinispan Integration Tests - Third Party Servers</description>
 
-    <properties>
-        <version.wildfly>${appserver.version}</version.wildfly>
-        <version.arquillian-tomcat-managed>1.2.3.Final</version.arquillian-tomcat-managed>
-        <ispnserver.project.dir>${basedir}/../../../server/runtime</ispnserver.project.dir>
-        <ispn.config.file>${basedir}/../server-integration-commons/target/test-classes/infinispan-custom.xml</ispn.config.file>
-        <driver.jar>h2.jar</driver.jar>
-        <driver.dir>${project.basedir}/db-libs</driver.dir>
-        <driver.class>org.h2.Driver</driver.class>
-        <connection.url>jdbc:h2:mem:test;DATABASE_TO_UPPER=false</connection.url>
-        <db.username>sa</db.username>
-        <db.password>sa</db.password>
-        <database>h2</database>
-    </properties>
+   <properties>
+      <version.wildfly>${appserver.version}</version.wildfly>
+      <version.arquillian-tomcat-managed>1.2.3.Final</version.arquillian-tomcat-managed>
+      <ispnserver.project.dir>${basedir}/../../../server/runtime</ispnserver.project.dir>
+      <ispn.config.file>${basedir}/../server-integration-commons/target/test-classes/infinispan-custom.xml
+      </ispn.config.file>
+      <driver.jar>h2.jar</driver.jar>
+      <driver.dir>${project.basedir}/db-libs</driver.dir>
+      <driver.class>org.h2.Driver</driver.class>
+      <connection.url>jdbc:h2:mem:test;DATABASE_TO_UPPER=false</connection.url>
+      <db.username>sa</db.username>
+      <db.password>sa</db.password>
+      <database>h2</database>
+   </properties>
 
-    <repositories>
+   <repositories>
       <repository>
-          <id>jboss-repo</id>
-          <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+         <id>jboss-repo</id>
+         <url>https://repository.jboss.org/nexus/content/groups/public/</url>
       </repository>
-    </repositories>
+   </repositories>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.infinispan.protostream</groupId>
-            <artifactId>protostream-processor</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-commons-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-client-hotrod</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.spy</groupId>
-            <artifactId>spymemcached</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-integrationtests-commons</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.arquillian.junit</groupId>
-            <artifactId>arquillian-junit-container</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-depchain</artifactId>
-            <type>pom</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
-            <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+   <dependencies>
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>net.spy</groupId>
+         <artifactId>spymemcached</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-integrationtests-commons</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.arquillian.junit</groupId>
+         <artifactId>arquillian-junit-container</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.shrinkwrap.resolver</groupId>
+         <artifactId>shrinkwrap-resolver-depchain</artifactId>
+         <type>pom</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+         <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <arquillian.launch>${infinispan.server.integration.launch}</arquillian.launch>
-                        <catalinaHome1>${catalinaHome1}</catalinaHome1>
-                        <catalinaHome2>${catalinaHome2}</catalinaHome2>
-                        <catalinaBindHttpPort1>${catalinaBindHttpPort1}</catalinaBindHttpPort1>
-                        <catalinaBindHttpPort2>${catalinaBindHttpPort2}</catalinaBindHttpPort2>
-                        <catalinaJmxPort1>${catalinaJmxPort1}</catalinaJmxPort1>
-                        <catalinaJmxPort2>${catalinaJmxPort2}</catalinaJmxPort2>
-                        <jbossHome1>${jbossHome1}</jbossHome1>
-                        <jbossHome2>${jbossHome2}</jbossHome2>
-                        <server.jvm>${server.jvm}</server.jvm>
-                        <infinispan.server.integration.data-source>${infinispan.server.integration.data-source}</infinispan.server.integration.data-source>
-                        <driver.path>${driver.dir}/${driver.jar}</driver.path>
-                    </systemPropertyVariables>
-                    <additionalClasspathElements>
-                        <additionalClasspathElement>${driver.dir}/${driver.jar}</additionalClasspathElement>
-                    </additionalClasspathElements>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+   <build>
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*.xml</include>
+               <include>**/*.properties</include>
+            </includes>
+         </testResource>
+      </testResources>
 
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>configs</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/test/resources</directory>
-                                    <filtering>true</filtering>
-                                    <includes>
-                                        <include>**/*.xml</include>
-                                        <include>**/*.properties</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>src/test/resources/${database}.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+      <filters>
+         <filter>src/test/resources/${database}.properties</filter>
+      </filters>
 
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>generate-distros-and-configs</id>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                            <target>
-                                <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml" target="create-distro">
-                                    <property name="server.build.dist" value="${server.build.dist}" />
-                                    <property name="server.dist" value="${ispnserver.dist}" />
-                                    <property name="ispn.config.file" value="${ispn.config.file}" />
-                                </ant>
-                            </target>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>infinispan-server-startup</id>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+               <systemPropertyVariables>
+                  <arquillian.launch>${infinispan.server.integration.launch}</arquillian.launch>
+                  <catalinaHome1>${catalinaHome1}</catalinaHome1>
+                  <catalinaHome2>${catalinaHome2}</catalinaHome2>
+                  <catalinaBindHttpPort1>${catalinaBindHttpPort1}</catalinaBindHttpPort1>
+                  <catalinaBindHttpPort2>${catalinaBindHttpPort2}</catalinaBindHttpPort2>
+                  <catalinaJmxPort1>${catalinaJmxPort1}</catalinaJmxPort1>
+                  <catalinaJmxPort2>${catalinaJmxPort2}</catalinaJmxPort2>
+                  <jbossHome1>${jbossHome1}</jbossHome1>
+                  <jbossHome2>${jbossHome2}</jbossHome2>
+                  <server.jvm>${server.jvm}</server.jvm>
+                  <infinispan.server.integration.data-source>${infinispan.server.integration.data-source}
+                  </infinispan.server.integration.data-source>
+                  <driver.path>${driver.dir}/${driver.jar}</driver.path>
+               </systemPropertyVariables>
+               <additionalClasspathElements>
+                  <additionalClasspathElement>${driver.dir}/${driver.jar}</additionalClasspathElement>
+               </additionalClasspathElements>
+            </configuration>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>integration-test</goal>
+                     <goal>verify</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>generate-distros-and-configs</id>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <phase>package</phase>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <target>
+                        <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml"
+                             target="create-distro">
+                           <property name="server.build.dist" value="${server.build.dist}"/>
+                           <property name="server.dist" value="${ispnserver.dist}"/>
+                           <property name="ispn.config.file" value="${ispn.config.file}"/>
+                        </ant>
+                     </target>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>infinispan-server-startup</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <target>
+                        <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml"
+                             target="kill-server">
+                           <property name="hotrod.port" value="11222"/>
+                        </ant>
+                        <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml"
+                             target="start-server">
+                           <property name="server.dist" value="${ispnserver.dist}"/>
+                           <property name="port.offset" value="0"/>
+                           <property name="hotrod.port" value="11222"/>
+                           <property name="jboss.node.name" value="ispn-server"/>
+                           <property name="jboss.config.file" value="infinispan-custom.xml"/>
+                        </ant>
+                     </target>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>infinispan-server-shutdown</id>
+                  <phase>post-integration-test</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <target>
+                        <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml"
+                             target="kill-server">
+                           <property name="hotrod.port" value="11222"/>
+                        </ant>
+                     </target>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+
+   <profiles>
+      <profile>
+         <id>smoke</id>
+         <properties>
+            <skipTests>true</skipTests>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-failsafe-plugin</artifactId>
+                  <configuration>
+                     <skipITs>${skipTests}</skipITs>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <profile>
+         <id>third-party-tomcat</id>
+         <activation>
+            <property>
+               <name>infinispan.server.integration.launch</name>
+               <value>tomcat</value>
+            </property>
+         </activation>
+         <properties>
+            <infinispan.server.integration.launch>tomcat</infinispan.server.integration.launch>
+            <catalinaHome>${project.build.directory}/tomcat</catalinaHome>
+            <catalinaHome1>${project.build.directory}/tomcat1</catalinaHome1>
+            <catalinaHome2>${project.build.directory}/tomcat2</catalinaHome2>
+            <catalinaBindHttpPort1>8080</catalinaBindHttpPort1>
+            <catalinaBindHttpPort2>8081</catalinaBindHttpPort2>
+            <catalinaJmxPort1>8089</catalinaJmxPort1>
+            <catalinaJmxPort2>8090</catalinaJmxPort2>
+            <catalinaUnzipExpression>apache-tomcat-*</catalinaUnzipExpression>
+            <infinispan.server.integration.data-source>java:comp/env/datasources/ExampleDS
+            </infinispan.server.integration.data-source>
+         </properties>
+         <dependencies>
+            <!-- there is no arquillian-tomcat-managed-9. we are using arquillian-tomcat-managed-8 -->
+            <dependency>
+               <groupId>org.jboss.arquillian.container</groupId>
+               <artifactId>arquillian-tomcat-managed-10</artifactId>
+               <version>${version.arquillian-tomcat-managed}</version>
+               <scope>test</scope>
+            </dependency>
+            <dependency>
+               <groupId>org.jboss.weld.servlet</groupId>
+               <artifactId>weld-servlet-core</artifactId>
+               <version>${version.weld-servlet}</version>
+            </dependency>
+         </dependencies>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>tomcat-prepare</id>
                         <phase>pre-integration-test</phase>
                         <goals>
-                            <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
                         <configuration>
-                            <skip>${skipTests}</skip>
-                            <target>
-                                <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml" target="kill-server">
-                                    <property name="hotrod.port" value="11222" />
-                                </ant>
-                                <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml" target="start-server">
-                                    <property name="server.dist" value="${ispnserver.dist}" />
-                                    <property name="port.offset" value="0" />
-                                    <property name="hotrod.port" value="11222" />
-                                    <property name="jboss.node.name" value="ispn-server" />
-                                    <property name="jboss.config.file" value="infinispan-custom.xml" />
-                                </ant>
-                            </target>
+                           <target>
+                              <echo message="Copying tomcat server"/>
+                              <delete dir="${catalinaHome1}"/>
+                              <delete dir="${catalinaHome2}"/>
+                              <copy todir="${catalinaHome1}">
+                                 <fileset dir="${catalinaHome}"/>
+                              </copy>
+                              <copy todir="${catalinaHome2}">
+                                 <fileset dir="${catalinaHome}"/>
+                              </copy>
+
+                              <echo message="Copying configurations"/>
+                              <copy file="${basedir}/src/test/resources/tomcat/tomcat-users.xml"
+                                    todir="${catalinaHome1}/conf" overwrite="true"/>
+                              <copy file="${basedir}/src/test/resources/tomcat/context.xml"
+                                    todir="${catalinaHome1}/conf" overwrite="true"/>
+                              <copy file="${basedir}/src/test/resources/tomcat/tomcat-users.xml"
+                                    todir="${catalinaHome2}/conf" overwrite="true"/>
+                              <copy file="${basedir}/src/test/resources/tomcat/context.xml"
+                                    todir="${catalinaHome2}/conf" overwrite="true"/>
+
+                              <echo message="Replace configurations"/>
+                              <replaceregexp file="${catalinaHome1}/conf/server.xml" match="port=&quot;8080&quot;"
+                                             replace="port=&quot;${catalinaBindHttpPort1}&quot;" byline="true"/>
+                              <replaceregexp file="${catalinaHome1}/conf/server.xml" match="port=&quot;8005&quot;"
+                                             replace="port=&quot;8005&quot;" byline="true"/>
+                              <replaceregexp file="${catalinaHome2}/conf/server.xml" match="port=&quot;8080&quot;"
+                                             replace="port=&quot;${catalinaBindHttpPort2}&quot;" byline="true"/>
+                              <replaceregexp file="${catalinaHome2}/conf/server.xml" match="port=&quot;8005&quot;"
+                                             replace="port=&quot;8006&quot;" byline="true"/>
+                           </target>
                         </configuration>
-                    </execution>
-                    <execution>
-                        <id>infinispan-server-shutdown</id>
-                        <phase>post-integration-test</phase>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <profile>
+         <id>third-party-wildfly</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+            <property>
+               <name>infinispan.server.integration.launch</name>
+               <value>wildfly</value>
+            </property>
+         </activation>
+         <properties>
+            <infinispan.server.integration.launch>wildfly</infinispan.server.integration.launch>
+            <jbossHome1>${project.build.directory}/node1</jbossHome1>
+            <jbossHome2>${project.build.directory}/node2</jbossHome2>
+            <infinispan.server.integration.data-source>java:jboss/datasources/ExampleDS
+            </infinispan.server.integration.data-source>
+         </properties>
+         <dependencies>
+            <dependency>
+               <groupId>org.wildfly.arquillian</groupId>
+               <artifactId>wildfly-arquillian-container-managed</artifactId>
+            </dependency>
+         </dependencies>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.jboss.galleon</groupId>
+                  <artifactId>galleon-maven-plugin</artifactId>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>server-provisioning-node1</id>
                         <goals>
-                            <goal>run</goal>
+                           <goal>provision</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                           <install-dir>${project.build.directory}/node1</install-dir>
+                           <record-state>false</record-state>
+                           <!-- true: uses local m2 cache only -->
+                           <offline>false</offline>
+                           <feature-packs>
+                              <!-- full server -->
+                              <feature-pack>
+                                 <groupId>${appserver.groupId}</groupId>
+                                 <artifactId>wildfly-ee-galleon-pack</artifactId>
+                                 <version>${appserver.version}</version>
+                              </feature-pack>
+                           </feature-packs>
+                           <configurations>
+                              <config>
+                                 <model>standalone</model>
+                                 <name>standalone.xml</name>
+                              </config>
+                           </configurations>
+                           <plugin-options>
+                              <!--
+                              when true, the module.xml files only contains the maven coordinates of the jars to download when the server starts
+                              when false, the plugin downloads the jars at build time
+                               -->
+                              <jboss-maven-dist>false</jboss-maven-dist>
+                           </plugin-options>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>server-provisioning-node2</id>
+                        <goals>
+                           <goal>provision</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                           <install-dir>${project.build.directory}/node2</install-dir>
+                           <record-state>false</record-state>
+                           <!-- true: uses local m2 cache only -->
+                           <offline>false</offline>
+                           <feature-packs>
+                              <!-- full server -->
+                              <feature-pack>
+                                 <groupId>${appserver.groupId}</groupId>
+                                 <artifactId>wildfly-ee-galleon-pack</artifactId>
+                                 <version>${appserver.version}</version>
+                              </feature-pack>
+                           </feature-packs>
+                           <configurations>
+                              <config>
+                                 <model>standalone</model>
+                                 <name>standalone.xml</name>
+                              </config>
+                           </configurations>
+                           <plugin-options>
+                              <!--
+                              when true, the module.xml files only contains the maven coordinates of the jars to download when the server starts
+                              when false, the plugin downloads the jars at build time
+                               -->
+                              <jboss-maven-dist>false</jboss-maven-dist>
+                           </plugin-options>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>wildfly-prepare</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                           <goal>run</goal>
                         </goals>
                         <configuration>
-                            <skip>${skipTests}</skip>
-                            <target>
-                                <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml" target="kill-server">
-                                    <property name="hotrod.port" value="11222" />
-                                </ant>
-                            </target>
+                           <target>
+                              <echo message="Copying WildFly configuration"/>
+                              <copy file="${project.build.directory}/test-classes/wildfly/standalone-test.xml"
+                                    todir="${project.build.directory}/node1/standalone/configuration" overwrite="true"/>
+                              <copy file="${project.build.directory}/test-classes/wildfly/standalone-test.xml"
+                                    todir="${project.build.directory}/node2/standalone/configuration" overwrite="true"/>
+                           </target>
                         </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-
-    <profiles>
-        <profile>
-            <id>smoke</id>
-            <properties>
-                <skipTests>true</skipTests>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <configuration>
-                            <skipITs>${skipTests}</skipITs>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>third-party-tomcat</id>
-            <activation>
-                <property>
-                    <name>infinispan.server.integration.launch</name>
-                    <value>tomcat</value>
-                </property>
-            </activation>
-            <properties>
-                <infinispan.server.integration.launch>tomcat</infinispan.server.integration.launch>
-                <catalinaHome>${project.build.directory}/tomcat</catalinaHome>
-                <catalinaHome1>${project.build.directory}/tomcat1</catalinaHome1>
-                <catalinaHome2>${project.build.directory}/tomcat2</catalinaHome2>
-                <catalinaBindHttpPort1>8080</catalinaBindHttpPort1>
-                <catalinaBindHttpPort2>8081</catalinaBindHttpPort2>
-                <catalinaJmxPort1>8089</catalinaJmxPort1>
-                <catalinaJmxPort2>8090</catalinaJmxPort2>
-                <catalinaUnzipExpression>apache-tomcat-*</catalinaUnzipExpression>
-                <infinispan.server.integration.data-source>java:comp/env/datasources/ExampleDS</infinispan.server.integration.data-source>
-            </properties>
-            <dependencies>
-                <!-- there is no arquillian-tomcat-managed-9. we are using arquillian-tomcat-managed-8 -->
-                <dependency>
-                    <groupId>org.jboss.arquillian.container</groupId>
-                    <artifactId>arquillian-tomcat-managed-10</artifactId>
-                    <version>${version.arquillian-tomcat-managed}</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.jboss.weld.servlet</groupId>
-                    <artifactId>weld-servlet-core</artifactId>
-                    <version>${version.weld-servlet}</version>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>tomcat-prepare</id>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target>
-                                        <echo message="Copying tomcat server" />
-                                        <delete dir="${catalinaHome1}" />
-                                        <delete dir="${catalinaHome2}" />
-                                        <copy todir="${catalinaHome1}">
-                                            <fileset dir="${catalinaHome}"/>
-                                        </copy>
-                                        <copy todir="${catalinaHome2}">
-                                            <fileset dir="${catalinaHome}"/>
-                                        </copy>
-
-                                        <echo message="Copying configurations" />
-                                        <copy file="${basedir}/src/test/resources/tomcat/tomcat-users.xml" todir="${catalinaHome1}/conf" overwrite="true" />
-                                        <copy file="${basedir}/src/test/resources/tomcat/context.xml" todir="${catalinaHome1}/conf" overwrite="true" />
-                                        <copy file="${basedir}/src/test/resources/tomcat/tomcat-users.xml" todir="${catalinaHome2}/conf" overwrite="true" />
-                                        <copy file="${basedir}/src/test/resources/tomcat/context.xml" todir="${catalinaHome2}/conf" overwrite="true" />
-
-                                        <echo message="Replace configurations" />
-                                        <replaceregexp file="${catalinaHome1}/conf/server.xml" match="port=&quot;8080&quot;" replace="port=&quot;${catalinaBindHttpPort1}&quot;" byline="true"/>
-                                        <replaceregexp file="${catalinaHome1}/conf/server.xml" match="port=&quot;8005&quot;" replace="port=&quot;8005&quot;" byline="true"/>
-                                        <replaceregexp file="${catalinaHome2}/conf/server.xml" match="port=&quot;8080&quot;" replace="port=&quot;${catalinaBindHttpPort2}&quot;" byline="true"/>
-                                        <replaceregexp file="${catalinaHome2}/conf/server.xml" match="port=&quot;8005&quot;" replace="port=&quot;8006&quot;" byline="true"/>
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>third-party-wildfly</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-                <property>
-                    <name>infinispan.server.integration.launch</name>
-                    <value>wildfly</value>
-                </property>
-            </activation>
-            <properties>
-                <infinispan.server.integration.launch>wildfly</infinispan.server.integration.launch>
-                <jbossHome1>${project.build.directory}/node1</jbossHome1>
-                <jbossHome2>${project.build.directory}/node2</jbossHome2>
-                <infinispan.server.integration.data-source>java:jboss/datasources/ExampleDS</infinispan.server.integration.data-source>
-            </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.wildfly.arquillian</groupId>
-                    <artifactId>wildfly-arquillian-container-managed</artifactId>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jboss.galleon</groupId>
-                        <artifactId>galleon-maven-plugin</artifactId>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>server-provisioning-node1</id>
-                                <goals>
-                                    <goal>provision</goal>
-                                </goals>
-                                <phase>prepare-package</phase>
-                                <configuration>
-                                    <install-dir>${project.build.directory}/node1</install-dir>
-                                    <record-state>false</record-state>
-                                    <!-- true: uses local m2 cache only -->
-                                    <offline>false</offline>
-                                    <feature-packs>
-                                        <!-- full server -->
-                                        <feature-pack>
-                                            <groupId>${appserver.groupId}</groupId>
-                                            <artifactId>wildfly-ee-galleon-pack</artifactId>
-                                            <version>${appserver.version}</version>
-                                        </feature-pack>
-                                    </feature-packs>
-                                    <configurations>
-                                        <config>
-                                            <model>standalone</model>
-                                            <name>standalone.xml</name>
-                                        </config>
-                                    </configurations>
-                                    <plugin-options>
-                                        <!--
-                                        when true, the module.xml files only contains the maven coordinates of the jars to download when the server starts
-                                        when false, the plugin downloads the jars at build time
-                                         -->
-                                        <jboss-maven-dist>false</jboss-maven-dist>
-                                    </plugin-options>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>server-provisioning-node2</id>
-                                <goals>
-                                    <goal>provision</goal>
-                                </goals>
-                                <phase>prepare-package</phase>
-                                <configuration>
-                                    <install-dir>${project.build.directory}/node2</install-dir>
-                                    <record-state>false</record-state>
-                                    <!-- true: uses local m2 cache only -->
-                                    <offline>false</offline>
-                                    <feature-packs>
-                                        <!-- full server -->
-                                        <feature-pack>
-                                            <groupId>${appserver.groupId}</groupId>
-                                            <artifactId>wildfly-ee-galleon-pack</artifactId>
-                                            <version>${appserver.version}</version>
-                                        </feature-pack>
-                                    </feature-packs>
-                                    <configurations>
-                                        <config>
-                                            <model>standalone</model>
-                                            <name>standalone.xml</name>
-                                        </config>
-                                    </configurations>
-                                    <plugin-options>
-                                        <!--
-                                        when true, the module.xml files only contains the maven coordinates of the jars to download when the server starts
-                                        when false, the plugin downloads the jars at build time
-                                         -->
-                                        <jboss-maven-dist>false</jboss-maven-dist>
-                                    </plugin-options>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>wildfly-prepare</id>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target>
-                                        <echo message="Copying WildFly configuration" />
-                                        <copy file="${project.build.directory}/test-classes/wildfly/standalone-test.xml" todir="${project.build.directory}/node1/standalone/configuration" overwrite="true" />
-                                        <copy file="${project.build.directory}/test-classes/wildfly/standalone-test.xml" todir="${project.build.directory}/node2/standalone/configuration" overwrite="true" />
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>
