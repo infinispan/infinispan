@@ -1392,6 +1392,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> redis.jsonArrindex(key, jp3, jv2)).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR Path '$.non-existent' does not exist");
    }
+
    @Test
    public void testJSONARRPOP() {
       JsonPath jpRoot = new JsonPath("$");
@@ -1419,6 +1420,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
                {"bool":true,
                "null_value": null,
                "arr_value": ["one", "two", "three"],
+               "empty_arr_value": [],
                "nested":
                   {"bool": false,
                    "arr_value": [1, 2, 3, 4],
@@ -1427,7 +1429,14 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
                "legacy": true}
             """);
       redis.jsonSet(key, jpRoot, jv);
-      JsonPath jp = new JsonPath("$..arr_value");
+
+      // Test popping from empty array - should return array with null, not error
+      JsonPath jp = new JsonPath("$.empty_arr_value");
+      result = redis.jsonArrpop(key, jp);
+      assertThat(result).hasSize(1);
+      assertThat(result.toString()).isEqualTo("[null]");
+
+      jp = new JsonPath("$..arr_value");
       result = redis.jsonArrpop(key, jp , 1);
       assertThat(result.toString()).isEqualTo("[\"two\", 2]");
       result = redis.jsonArrpop(key, jp , -1);
@@ -1436,6 +1445,11 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(result.toString()).isEqualTo("[\"one\", 1]");
 
       // Test legacy path
+      // Test popping from empty array - should return null, not error
+      jp = new JsonPath(".empty_arr_value");
+      result = redis.jsonArrpop(key, jp);
+      assertThat(result.toString()).isEqualTo("[null]");
+
       redis.jsonSet(key, jpRoot, jv);
       jp = new JsonPath("..arr_value");
       result = redis.jsonArrpop(key, jp , 1);
