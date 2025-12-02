@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.StringWriter;
 
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.junit.Test;
 
 /**
@@ -15,7 +16,7 @@ public class JsonConfigurationWriterTest {
    @Test
    public void testWriteJson() {
       StringWriter sw = new StringWriter();
-      JsonConfigurationWriter w = new JsonConfigurationWriter(sw, false, false);
+      JsonConfigurationWriter w = new JsonConfigurationWriter(ConfigurationWriter.to(sw));
       w.writeStartDocument();
       w.writeStartElement("e1");
       w.writeAttribute("a1", "v1");

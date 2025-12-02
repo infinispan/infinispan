@@ -4,13 +4,14 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.StringWriter;
 
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.junit.Test;
 
 public class XmlConfigurationWriterTest {
    @Test
    public void testEscapes() {
       StringWriter sw = new StringWriter();
-      XmlConfigurationWriter w = new XmlConfigurationWriter(sw, false, false);
+      XmlConfigurationWriter w = new XmlConfigurationWriter(ConfigurationWriter.to(sw));
       w.writeStartDocument();
       w.writeStartElement("e1");
       w.writeAttribute("a1", "v\"1\"");

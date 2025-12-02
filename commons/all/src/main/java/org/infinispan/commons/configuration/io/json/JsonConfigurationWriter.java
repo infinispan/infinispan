@@ -1,12 +1,12 @@
 package org.infinispan.commons.configuration.io.json;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 import org.infinispan.commons.configuration.io.AbstractConfigurationWriter;
 import org.infinispan.commons.configuration.io.ConfigurationFormatFeature;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.configuration.io.ConfigurationWriterException;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -16,12 +16,11 @@ import org.infinispan.commons.dataconversion.internal.Json;
  * @since 12.1
  **/
 public class JsonConfigurationWriter extends AbstractConfigurationWriter {
-   private boolean attributes;
    private boolean openTag;
    private final Deque<Json> json;
 
-   public JsonConfigurationWriter(Writer writer, boolean prettyPrint, boolean clearTextSecrets) {
-      super(writer, 2, prettyPrint, clearTextSecrets, NamingStrategy.KEBAB_CASE);
+   public JsonConfigurationWriter(ConfigurationWriter.Builder builder) {
+      super(builder, NamingStrategy.KEBAB_CASE);
       json = new ArrayDeque<>();
    }
 
@@ -45,7 +44,7 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
       Json parent = json.peek();
       if (parent.isArray()) {
          parent.add(object);
-      } else if (parentTag != null && parentTag.isRepeating()) {
+      } else if (parentTag != null && parentTag.repeating()) {
          if (parent.has(name)) {
             parent.at(name).add(object);
          } else {
@@ -56,7 +55,6 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
       }
       json.push(object);
       openTag = true;
-      attributes = false;
    }
 
    @Override
@@ -65,7 +63,7 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
    }
 
    private String prefixName(String prefix, String namespace, String name) {
-      if (prefix == null) {
+      if (prefix == null || !namespaceAware) {
          return name;
       } else if (namespaces.containsKey(prefix)) {
          return prefix + ":" + name;
@@ -80,7 +78,6 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
       Json array = Json.array();
       json.peek().set(name, array);
       json.push(array);
-      attributes = false;
    }
 
    @Override
@@ -96,7 +93,6 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
       json.peek().set(name, array);
       json.push(array);
       openTag = true;
-      attributes = false;
    }
 
    @Override
@@ -152,7 +148,6 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
    }
 
    private Json attributeParent() {
-      attributes = true;
       Json parent = json.peek();
       if (parent.isArray()) { // Replace the array with an object
          json.pop();

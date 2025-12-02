@@ -21,19 +21,26 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
    private final int indent;
    protected final boolean prettyPrint;
    protected final boolean clearTextSecrets;
+   protected final boolean namespaceAware;
    protected final NamingStrategy naming;
 
-   protected AbstractConfigurationWriter(Writer writer, int indent, boolean prettyPrint, boolean clearTextSecrets, NamingStrategy naming) {
-      this.writer = writer;
-      this.indent = indent;
-      this.prettyPrint = prettyPrint;
-      this.clearTextSecrets = clearTextSecrets;
+   protected AbstractConfigurationWriter(ConfigurationWriter.Builder builder, NamingStrategy naming) {
+      this.writer = builder.writer();
+      this.indent = builder.indent();
+      this.prettyPrint = builder.prettyPrint();
+      this.clearTextSecrets = builder.clearTextSecrets();
+      this.namespaceAware = builder.namespaceAware();
       this.naming = naming;
    }
 
    @Override
    public boolean clearTextSecrets() {
       return clearTextSecrets;
+   }
+
+   @Override
+   public boolean namespaceAware() {
+      return namespaceAware;
    }
 
    @Override
@@ -53,7 +60,7 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
 
    @Override
    public void writeArrayElement(Enum<?> outer, Enum<?> inner, Enum<?> attribute, Iterable<String> values) {
-      writeArrayElement(outer.toString(), inner.toString(), attribute != null ? attribute.toString(): null, values);
+      writeArrayElement(outer.toString(), inner.toString(), attribute != null ? attribute.toString() : null, values);
    }
 
    @Override
@@ -138,43 +145,9 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
       Util.close(writer);
    }
 
-   public static class Tag {
-      final String name;
-      final boolean repeating;
-      final boolean explicitOuter;
-      final boolean explicitInner;
-      int children;
-
-      public Tag(String name, boolean repeating, boolean explicitOuter, boolean explicitInner) {
-         this.name = name;
-         this.repeating = repeating;
-         this.explicitOuter = explicitOuter;
-         this.explicitInner = explicitInner;
-      }
-
+   public record Tag(String name, boolean repeating, boolean explicitOuter, boolean explicitInner) {
       public Tag(String name) {
          this(name, false, false, true);
-      }
-
-      public String getName() {
-         return name;
-      }
-
-      public boolean isRepeating() {
-         return repeating;
-      }
-
-      public boolean isExplicitOuter() {
-         return explicitOuter;
-      }
-
-      public boolean isExplicitInner() {
-         return explicitInner;
-      }
-
-      @Override
-      public String toString() {
-         return name + (repeating ? "+" : "");
       }
    }
 }

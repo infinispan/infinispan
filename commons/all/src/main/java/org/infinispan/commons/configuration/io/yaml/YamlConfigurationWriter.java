@@ -1,11 +1,11 @@
 package org.infinispan.commons.configuration.io.yaml;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Iterator;
 
 import org.infinispan.commons.configuration.io.AbstractConfigurationWriter;
 import org.infinispan.commons.configuration.io.ConfigurationFormatFeature;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.configuration.io.ConfigurationWriterException;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 
@@ -14,13 +14,12 @@ import org.infinispan.commons.configuration.io.NamingStrategy;
  * @since 12.1
  **/
 public class YamlConfigurationWriter extends AbstractConfigurationWriter {
-   public static final int INDENT = 2;
    private boolean openTag;
    private boolean attributes;
    private boolean array;
 
-   public YamlConfigurationWriter(Writer writer, boolean clearTextSecrets) {
-      super(writer, INDENT, true, clearTextSecrets, NamingStrategy.CAMEL_CASE);
+   public YamlConfigurationWriter(ConfigurationWriter.Builder builder) {
+      super(builder.prettyPrint(true), NamingStrategy.CAMEL_CASE);
    }
 
    @Override
@@ -40,12 +39,12 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
          Tag parent = tagStack.peek();
          tagStack.push(tag);
          tab();
-         if (parent != null && parent.isRepeating()) {
+         if (parent != null && parent.repeating()) {
             writer.write("- ");
             array = true;
          } else {
             array = false;
-            writeName(tag.getName(), naming);
+            writeName(tag.name(), naming);
          }
          attributes = false;
          openTag = true;
@@ -66,7 +65,7 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
    }
 
    private String prefixName(String prefix, String namespace, String name) {
-      if (prefix == null) {
+      if (prefix == null || !namespaceAware) {
          return name;
       } else if (namespaces.containsKey(prefix)) {
          return prefix + ":" + name;
