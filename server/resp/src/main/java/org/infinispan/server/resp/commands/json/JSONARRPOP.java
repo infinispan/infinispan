@@ -41,30 +41,34 @@ public class JSONARRPOP extends RespCommand implements Resp3Command {
     }
 
     static BiConsumer<List<byte[]>, ResponseWriter> legacyReturn(byte[] path) {
-        // legacy path just one result and it must be not null
-        return (c, writer) -> {
-            if (c == null) {
-                writer.error("-ERR could not perform this operation on a key that doesn't exist");
-                return;
-            }
-            if (!c.isEmpty()) {
-                // Find and write the last non-null element
-                for (int i = c.size() - 1; i >= 0; i--) {
-                    if (c.get(i) != null) {
-                        writer.string(c.get(i));
-                        return;
-                    }
+       // legacy path reyturn one non null result, last one in the array
+       return (c, writer) -> {
+          if (c == null) {
+             writer.error("-ERR could not perform this operation on a key that doesn't exist");
+             return;
+          }
+          if (!c.isEmpty()) {
+             for (int i = c.size() - 1; i >= 0; i--) {
+                if (c.get(i) != null) {
+                   // Missing node case
+                   if (c.get(i).length == 0) {
+                      writer.nulls();
+                   } else {
+                      writer.string(c.get(i));
+                   }
+                   return;
                 }
-            }
-            writer.error("-ERR Path '" + RespUtil.utf8(path) + "' does not exist or not an array");
-        };
+             }
+          }
+          writer.error("-ERR Path '" + RespUtil.utf8(path) + "' does not exist or not an array");
+       };
     }
 
     static void jsonPathReturn(List<byte[]> c, ResponseWriter writer) {
         if (c == null) {
             writer.error("-ERR could not perform this operation on a key that doesn't exist");
         } else {
-            writer.array(c, Resp3Type.BULK_STRING);
+            writer.array(c, Resp3Type.BULK_STRING_OR_MISSING);
         }
     }
 }

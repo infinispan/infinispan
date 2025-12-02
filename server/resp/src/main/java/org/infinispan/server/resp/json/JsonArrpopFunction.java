@@ -15,6 +15,7 @@ import org.infinispan.util.function.SerializableFunction;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.MissingNode;
 import com.jayway.jsonpath.JsonPath;
 
 @ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_ARRPOP_FUNCTION)
@@ -50,10 +51,14 @@ public class JsonArrpopFunction implements SerializableFunction<ReadWriteEntryVi
             for (JsonNode pathAsNode : pathList) {
                 ArrayNode node = jpCtx.read(pathAsNode.asText());
                 JsonNode jsonNode = node.get(0);
-                if (jsonNode.isArray() && jsonNode.size() > 0) {
+                if (jsonNode.isArray()) {
                     ArrayNode destNode = (ArrayNode) jsonNode;
                     int removeIndex = toRemoveIndex(index, destNode.size());
                     JsonNode removed = destNode.remove(removeIndex);
+                    if (removed == null) {
+                        resList.add(MissingNode.getInstance().toString().getBytes(StandardCharsets.UTF_8));
+                        continue;
+                    }
                     if (JSONUtil.isRoot(pathAsNode.asText().getBytes(StandardCharsets.UTF_8))) {
                         // Updating the root node by replacing the cache entry
                         entryView.set(new JsonBucket(JSONUtil.objectMapper.writeValueAsBytes(destNode)));
