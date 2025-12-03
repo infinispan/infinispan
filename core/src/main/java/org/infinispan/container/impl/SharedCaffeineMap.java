@@ -3,6 +3,7 @@ package org.infinispan.container.impl;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.infinispan.commons.util.AbstractEntrySizeCalculatorHelper;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
@@ -41,7 +42,14 @@ public class SharedCaffeineMap<K, V> {
       if (memoryBased) {
          CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
                new PrimitiveEntrySizeCalculator()));
-         caffeine.weigher((k, v) -> (int) calc.calculateSize(k.getValue(), v))
+         // Have to include an overhead for the KVP and the cacheName. Note the cache name is a refernce so it only costs
+         // the object reference and not the actual String contents.
+         caffeine.weigher((k, v) ->
+                     // KeyValuePair header
+                     AbstractEntrySizeCalculatorHelper.OBJECT_SIZE +
+                           // KVP key and value
+                           AbstractEntrySizeCalculatorHelper.POINTER_SIZE * 2 +
+                           (int) calc.calculateSize(k.getValue(), v))
                .maximumWeight(thresholdSize);
       } else {
          caffeine.maximumSize(thresholdSize);
