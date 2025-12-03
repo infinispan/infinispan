@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
-import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.CacheConfigurationException;
@@ -72,7 +71,6 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    private Configuration cache2Config;
    private Configuration templateConfig;
-   private RestContainerClient restContainerClient, adminRestContainerClient;
    private ControlledTimeService timeService;
 
    @Override
@@ -103,8 +101,6 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    protected void createCacheManagers() throws Exception {
       Util.recursiveFileRemove(PERSISTENT_LOCATION);
       super.createCacheManagers();
-      restContainerClient = client.container();
-      adminRestContainerClient = adminClient.container();
       timeService = new ControlledTimeService();
       cacheManagers.forEach(cm -> TestingUtil.replaceComponent(cm, TimeService.class, timeService, true));
    }
@@ -145,7 +141,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testHealth() {
-      RestResponse response = join(restContainerClient.health());
+      RestResponse response = join(client.container().health());
       ResponseAssertion.assertThat(response).isOk();
       Json jsonNode = Json.read(response.body());
       Json clusterHealth = jsonNode.at("cluster_health");
@@ -158,7 +154,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       assertTrue(cacheNames.contains(CACHE_1));
       assertTrue(cacheNames.contains(CACHE_2));
 
-      response = join(restContainerClient.health(true));
+      response = join(client.container().health(true));
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasNoContent();
    }
@@ -175,7 +171,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
          } catch (CacheConfigurationException ignored) {
          }
       });
-      RestResponse response = join(restContainerClient.health());
+      RestResponse response = join(client.container().health());
       ResponseAssertion.assertThat(response).isOk();
 
       Json jsonNode = Json.read(response.body());
@@ -187,7 +183,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    public void testCacheConfigs() {
       String accept = "text/plain; q=0.9, application/json; q=0.6";
 
-      RestResponse response = join(restContainerClient.cacheConfigurations(accept));
+      RestResponse response = join(client.container().cacheConfigurations(accept));
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -203,7 +199,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    public void testCacheConfigsTemplates() {
       String accept = "text/plain; q=0.9, application/json; q=0.6";
 
-      RestResponse response = join(restContainerClient.templates(accept));
+      RestResponse response = join(client.container().templates(accept));
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -222,7 +218,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testGetGlobalConfig() {
-      RestResponse response = join(adminRestContainerClient.globalConfiguration());
+      RestResponse response = join(adminClient.container().globalConfiguration());
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -238,7 +234,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testGetGlobalConfigXML() {
-      RestResponse response = join(adminRestContainerClient.globalConfiguration(APPLICATION_XML_TYPE));
+      RestResponse response = join(adminClient.container().globalConfiguration(APPLICATION_XML_TYPE));
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -252,7 +248,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testInfo() {
-      RestResponse response = join(restContainerClient.info());
+      RestResponse response = join(client.container().info());
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -273,7 +269,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testStats() {
-      RestResponse response = join(adminRestContainerClient.stats());
+      RestResponse response = join(adminClient.container().stats());
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -329,12 +325,12 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    public void testRebalancingActions() {
       assertRebalancingStatus(true);
 
-      try (RestResponse response = join(adminRestContainerClient.disableRebalancing())) {
+      try (RestResponse response = join(adminClient.container().disableRebalancing())) {
          ResponseAssertion.assertThat(response).isOk();
          assertRebalancingStatus(false);
       }
 
-      try (RestResponse response = join(adminRestContainerClient.enableRebalancing())) {
+      try (RestResponse response = join(adminClient.container().enableRebalancing())) {
          ResponseAssertion.assertThat(response).isOk();
          assertRebalancingStatus(true);
       }

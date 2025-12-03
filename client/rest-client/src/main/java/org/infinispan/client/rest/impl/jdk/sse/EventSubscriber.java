@@ -37,9 +37,9 @@ public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
    public void onNext(String line) {
       if (line.isEmpty()) {
          Map<String, String> map = lines.stream()
-               .map(l -> l.split(":", 2))
-               .filter(pair -> !pair[0].isEmpty())
-               .collect(toMap(pair -> pair[0], pair -> pair[1].trim(), String::concat));
+            .map(l -> l.split(":", 2))
+            .filter(pair -> !pair[0].isEmpty())
+            .collect(toMap(pair -> pair[0], pair -> pair[1].trim(), String::concat));
          listener.onMessage(map.get("id"), map.get("event"), map.get("data"));
          lines.clear();
       } else {
@@ -50,32 +50,27 @@ public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
 
    @Override
    public void onError(Throwable throwable) {
-      if (subscription != null) {
-         listener.onError(throwable, responseInfo);
-      }
+      listener.onError(throwable, responseInfo);
    }
 
    @Override
    public void onComplete() {
-      subscription = null;
       listener.close();
    }
 
    @Override
    public void close() {
-      var sub = subscription;
-      subscription = null;
+      subscription.cancel();
       listener.close();
-      if (sub != null) sub.cancel();
    }
 
    public HttpResponse.BodyHandler<Void> bodyHandler() {
       return (responseInfo) -> {
          this.responseInfo = new RestResponseInfoJDK(responseInfo);
          return HttpResponse.BodySubscribers.fromLineSubscriber(this,
-               s -> null,
-               charsetFrom(responseInfo.headers()),
-               null);
+            s -> null,
+            charsetFrom(responseInfo.headers()),
+            null);
       };
    }
 
