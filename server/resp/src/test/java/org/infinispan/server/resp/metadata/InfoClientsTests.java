@@ -19,6 +19,14 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 @Test(groups = "functional", testName = "server.resp.metadata.InfoClientsTests")
 public class InfoClientsTests extends SingleNodeRespBaseTest {
 
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+         new InfoClientsTests(),
+         new InfoClientsTests().withAuthorization()
+      };
+   }
+
    public void testConnectedClients() throws Throwable {
       ClientMetadata metadata = server.metadataRepository().client();
 

@@ -55,6 +55,8 @@ public class TransactionMediaTypeTest extends TransactionOperationsTest {
       for (MediaType value : types) {
          instances.add(new TransactionMediaTypeTest().withValueType(value).withCacheMode(CacheMode.LOCAL));
          instances.add(new TransactionMediaTypeTest().withValueType(value).withSimpleCache());
+         instances.add(new TransactionMediaTypeTest().withValueType(value).withCacheMode(CacheMode.LOCAL).withAuthorization());
+         instances.add(new TransactionMediaTypeTest().withValueType(value).withSimpleCache().withAuthorization());
       }
       return instances.toArray();
    }

@@ -21,9 +21,11 @@ public class RespSimpleCacheTest extends SingleNodeRespBaseTest {
 
    @Override
    public Object[] factory() {
-      return new Object[] {
-            new RespSimpleCacheTest(),
-            new RespSimpleCacheTest().simpleCache(),
+      return new Object[]{
+         new RespSimpleCacheTest(),
+         new RespSimpleCacheTest().simpleCache(),
+         new RespSimpleCacheTest().withAuthorization(),
+         new RespSimpleCacheTest().simpleCache().withAuthorization()
       };
    }
 
@@ -78,14 +80,15 @@ public class RespSimpleCacheTest extends SingleNodeRespBaseTest {
       assertThat(redis.hget("HSET", "unknown")).isNull();
       assertThat(redis.hget("UNKNOWN", "unknown")).isNull();
       assertThat(redis.hgetall("HSET"))
-            .containsAllEntriesOf(
-                  Map.of("key1", "other-value1",
-                        "key2", "other-value2",
-                        "key3", "value3",
-                        "key4", "value4"));
+         .containsAllEntriesOf(
+            Map.of("key1", "other-value1",
+               "key2", "other-value2",
+               "key3", "value3",
+               "key4", "value4"));
 
       assertWrongType(() -> redis.set("plain", "string"), () -> redis.hmset("plain", Map.of("k1", "v1")));
-      assertWrongType(() -> {}, () -> redis.hget("plain", "k1"));
+      assertWrongType(() -> {
+      }, () -> redis.hget("plain", "k1"));
    }
 
    public void testSortedSetOperations() {
@@ -93,13 +96,13 @@ public class RespSimpleCacheTest extends SingleNodeRespBaseTest {
 
       assertThat(redis.zcard("not_existing")).isEqualTo(0);
       assertThat(redis.zadd("people", ZAddArgs.Builder.ch(),
-            just(18.9, "fabio"),
-            just(21.9, "marc")))
-            .isEqualTo(2);
+         just(18.9, "fabio"),
+         just(21.9, "marc")))
+         .isEqualTo(2);
       assertThat(redis.zcard("people")).isEqualTo(2);
       assertThat(redis.zrangeWithScores("people", 0, -1))
-            .containsExactly(just(18.9, "fabio"), just(21.9, "marc"));
-      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zcard("another"));
+         .containsExactly(just(18.9, "fabio"), just(21.9, "marc"));
+      assertWrongType(() -> redis.set("another", "tristan"), () -> redis.zcard("another"));
    }
 
    public void testListOperations() {
@@ -115,7 +118,7 @@ public class RespSimpleCacheTest extends SingleNodeRespBaseTest {
       assertThat(result).isEqualTo(5);
       assertThat(redis.lrange("people", 0, 4)).containsExactly("tristan", "william", "william", "jose", "pedro");
 
-      assertWrongType(() -> redis.set("leads", "tristan"), () ->  redis.rpush("leads", "william"));
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.rpush("leads", "william"));
    }
 
    public void testSetOperations() {
@@ -130,9 +133,9 @@ public class RespSimpleCacheTest extends SingleNodeRespBaseTest {
 
       // SADD on an existing key that contains a String, not a Set!
       // Set a String Command
-      assertWrongType(() -> redis.set("leads", "tristan"), () ->  redis.sadd("leads", "william"));
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.sadd("leads", "william"));
       // SADD on an existing key that contains a List, not a Set!
       // Create a List
-      assertWrongType(() -> redis.lpush("listleads", "tristan"), () ->  redis.sadd("listleads", "william"));
+      assertWrongType(() -> redis.lpush("listleads", "tristan"), () -> redis.sadd("listleads", "william"));
    }
 }
