@@ -368,4 +368,9 @@ public class NettyTransport implements Transport {
       log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration);
       return eventLoop;
    }
+
+   @Override
+   public InetSocketAddress getAddress() {
+      return address;
+   }
 }

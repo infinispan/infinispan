@@ -30,6 +30,7 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
    private String siteName;
    private int portOffset = 0;
    private String[] dataFiles;
+   private CertificateAuthority certificateAuthority;
 
    protected AbstractServerConfigBuilder(String configurationFile, boolean defaultFile) {
       this.configurationFile = configurationFile;
@@ -46,7 +47,7 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
 
    public InfinispanServerTestConfiguration createServerTestConfiguration() {
       return new InfinispanServerTestConfiguration(configurationFile, numServers, expectedServers, runMode, this.properties, mavenArtifacts,
-                  archives, jmx, parallelStartup, defaultFile, listeners, clusterName, siteName, portOffset, features, dataFiles);
+                  archives, jmx, parallelStartup, defaultFile, listeners, clusterName, siteName, portOffset, features, dataFiles, certificateAuthority);
    }
 
    public T mavenArtifacts(String... mavenArtifacts) {
@@ -148,6 +149,11 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
 
    public T dataFiles(String... dataFiles) {
       this.dataFiles = dataFiles;
+      return (T) this;
+   }
+
+   public T certificateAuthority(CertificateAuthority certificateAuthority) {
+      this.certificateAuthority = certificateAuthority;
       return (T) this;
    }
 }

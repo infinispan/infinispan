@@ -7,6 +7,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.artifacts.Artifacts;
+import org.infinispan.server.test.core.CertificateAuthority;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
@@ -31,11 +32,11 @@ public class AuthorizationCertIT extends InfinispanSuite {
 
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
-         InfinispanServerExtensionBuilder.config("configuration/AuthorizationCertTest.xml")
-               .runMode(ServerRunMode.CONTAINER)
-               .mavenArtifacts(ClusteredIT.mavenArtifacts())
-               .artifacts(Artifacts.artifacts())
-               .build();
+      InfinispanServerExtensionBuilder.config("configuration/AuthorizationCertTest.xml")
+         .runMode(ServerRunMode.CONTAINER)
+         .mavenArtifacts(ClusteredIT.mavenArtifacts())
+         .artifacts(Artifacts.artifacts())
+         .build();
 
    static class HotRod extends HotRodAuthorizationTest {
       @RegisterExtension
@@ -51,11 +52,11 @@ public class AuthorizationCertIT extends InfinispanSuite {
                SERVERS.getServerDriver().applyKeyStore(hotRodBuilder, user.getUser() + ".pfx");
             }
             hotRodBuilder.security()
-                  .ssl().sniHostName("infinispan.test")
-                  .authentication()
-                  .saslMechanism("EXTERNAL")
-                  .serverName("infinispan")
-                  .realm("default");
+               .ssl().sniHostName("infinispan.test")
+               .authentication()
+               .saslMechanism("EXTERNAL")
+               .serverName("infinispan")
+               .realm("default");
             return hotRodBuilder;
          });
       }
@@ -75,8 +76,8 @@ public class AuthorizationCertIT extends InfinispanSuite {
                SERVERS.getServerDriver().applyKeyStore(restBuilder, user.getUser() + ".pfx");
             }
             restBuilder.security().authentication().ssl()
-                  .sniHostName("infinispan")
-                  .hostnameVerifier((hostname, session) -> true).connectionTimeout(120_000).socketTimeout(120_000);
+               .sniHostName("infinispan")
+               .hostnameVerifier((hostname, session) -> true).connectionTimeout(120_000).socketTimeout(120_000);
             return restBuilder;
          });
       }
@@ -89,29 +90,29 @@ public class AuthorizationCertIT extends InfinispanSuite {
       public Resp() {
          super(SERVERS, true, true, AuthorizationCertIT::expectedServerPrincipalName, user -> {
             RedisOptions options = new RedisOptions()
-                  .setPoolName("pool-" + user.getUser());
+               .setPoolName("pool-" + user.getUser());
 
             PfxOptions certOpts;
             if (user == TestUser.ANONYMOUS) {
                certOpts = new PfxOptions()
-                     .setPath(SERVERS.getServerDriver().getCertificateFile("server.pfx").getPath())
-                     .setPassword(KEY_PASSWORD);
+                  .setPath(SERVERS.getServerDriver().getCertificateFile("server.pfx").getPath())
+                  .setPassword(KEY_PASSWORD);
             } else {
                certOpts = new PfxOptions()
-                     .setPath(SERVERS.getServerDriver().getCertificateFile(user.getUser() + ".pfx").getPath())
-                     .setPassword(KEY_PASSWORD);
+                  .setPath(SERVERS.getServerDriver().getCertificateFile(user.getUser() + ".pfx").getPath())
+                  .setPassword(KEY_PASSWORD);
             }
 
             PfxOptions trustOpts = new PfxOptions()
-                  .setPath(SERVERS.getServerDriver().getCertificateFile("ca.pfx").getPath())
-                  .setPassword(KEY_PASSWORD);
+               .setPath(SERVERS.getServerDriver().getCertificateFile("ca.pfx").getPath())
+               .setPassword(KEY_PASSWORD);
             options.getNetClientOptions()
-                  .setTrustAll(true)
-                  .setSsl(true)
-                  .setSslEngineOptions(new JdkSSLEngineOptions())
-                  .setKeyCertOptions(certOpts)
-                  .setTrustOptions(trustOpts)
-                  .setHostnameVerificationAlgorithm("");
+               .setTrustAll(true)
+               .setSsl(true)
+               .setSslEngineOptions(new JdkSSLEngineOptions())
+               .setKeyCertOptions(certOpts)
+               .setTrustOptions(trustOpts)
+               .setHostnameVerificationAlgorithm("");
 
             return options;
          });
@@ -119,6 +120,6 @@ public class AuthorizationCertIT extends InfinispanSuite {
    }
 
    private static String expectedServerPrincipalName(TestUser user) {
-      return String.format("CN=%s,OU=Infinispan,O=JBoss,L=Red Hat", user.getUser());
+      return String.format("CN=" + user.getUser() + "," + CertificateAuthority.DEFAULT_BASE_DN);
    }
 }

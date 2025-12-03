@@ -26,7 +26,7 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_SERVER_EXTRA_LIBS = PREFIX + "extension.libs";
    /**
-    * The driver to use for running the server tests. Will override the default driver. Can be either EMBEDDED or CONTAINER
+    * The driver to use for running the server tests. Will override the default driver. Can be either CONTAINER or FORKED
     */
    public static final String INFINISPAN_TEST_SERVER_DRIVER = PREFIX + "driver";
    /**
@@ -102,7 +102,9 @@ public class TestSystemPropertyNames {
    /**
     * Specifies whether a docker volume should be created and mounted to the container
     */
-   public static final String INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED= PREFIX + "container.volume";
+   public static final String INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED = PREFIX + "container.volume";
+
+   public static final String INFINISPAN_TEST_SERVER_CONTAINER_BIND = PREFIX + "container.bind";
 
    /**
     * Specifies the soft and hard ulimit to use in the container.

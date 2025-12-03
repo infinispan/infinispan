@@ -2,6 +2,7 @@ package org.infinispan.server.resilience;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -17,7 +18,6 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.tags.Resilience;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -35,18 +35,18 @@ public class ResilienceMaxRetryIT {
 
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
-         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
-               .runMode(ServerRunMode.EMBEDDED)
-               .numServers(3)
-               .build();
+      InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
+         .property(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true")
+         .numServers(3)
+         .build();
 
    @Test
    public void testMaxRetries0() {
       // Start the client with initial_server_list=server0 and max_retries=0
       RemoteCache<Integer, String> cache = SERVERS.hotrod()
-            .withClientConfiguration(new ConfigurationBuilder().maxRetries(0).connectionTimeout(500))
-            .withCacheMode(CacheMode.REPL_SYNC)
-            .create(0);
+         .withClientConfiguration(new ConfigurationBuilder().maxRetries(0).connectionTimeout(500))
+         .withCacheMode(CacheMode.REPL_SYNC)
+         .create(0);
 
       // Perform an operation so the client receives a topology update with server0, server1, and server2
       cache.get(ThreadLocalRandom.current().nextInt());

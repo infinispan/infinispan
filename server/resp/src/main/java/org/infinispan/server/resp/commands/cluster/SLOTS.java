@@ -1,7 +1,8 @@
 package org.infinispan.server.resp.commands.cluster;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -9,12 +10,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.NetworkAddress;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
-import org.infinispan.manager.CacheManagerInfo;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -32,7 +32,6 @@ import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.topology.CacheTopology;
 
 import io.netty.channel.ChannelHandlerContext;
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * CLUSTER SLOTS
@@ -58,12 +57,6 @@ public class SLOTS extends RespCommand implements Resp3Command {
       writer.arrayEnd();
    };
 
-   @GuardedBy("this")
-   private CompletionStage<List<SlotInformation>> lastExecution = null;
-
-   @GuardedBy("this")
-   private ConsistentHash lastAcceptedHash = null;
-
    public SLOTS() {
       super(2, 0, 0, 0, AclCategory.SLOW.mask());
    }
@@ -85,18 +78,13 @@ public class SLOTS extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      synchronized (this) {
-         if (!hash.equals(lastAcceptedHash)) {
-            lastExecution = getSlotsInformation(handler, hash);
-            lastAcceptedHash = hash;
-         }
-      }
+      CompletionStage<List<SlotInformation>> slotsInformation = getSlotsInformation(handler, hash, ((InetSocketAddress) ctx.channel().localAddress()).getAddress().getAddress());
 
-      return handler.stageToReturn(lastExecution, ctx, SERIALIZER);
+      return handler.stageToReturn(slotsInformation, ctx, SERIALIZER);
    }
 
-   private static CompletionStage<List<SlotInformation>> getSlotsInformation(Resp3Handler handler, ConsistentHash hash) {
-      return requestNodesNetworkInformation(hash.getMembers(), handler)
+   private static CompletionStage<List<SlotInformation>> getSlotsInformation(Resp3Handler handler, ConsistentHash hash, byte[] localAddress) {
+      return requestNodesNetworkInformation(hash.getMembers(), localAddress, handler)
             .thenApply(information -> {
                List<SlotInformation> response = new ArrayList<>();
 
@@ -129,12 +117,12 @@ public class SLOTS extends RespCommand implements Resp3Command {
             });
    }
 
-   private static CompletionStage<Map<Address, List<Object>>> requestNodesNetworkInformation(List<Address> members, Resp3Handler handler) {
+   private static CompletionStage<Map<Address, List<Object>>> requestNodesNetworkInformation(List<Address> members, byte[] localAddress, Resp3Handler handler) {
       Map<Address, List<Object>> responses = new ConcurrentHashMap<>(members.size());
       ClusterExecutor executor = SecurityActions.getClusterExecutor(handler.cache());
       String name = handler.respServer().getQualifiedName();
       return executor.filterTargets(members)
-            .submitConsumer(e -> readLocalInformation(name, e), (address, res, t) -> {
+            .submitConsumer(e -> readLocalInformation(name, localAddress, e), (address, res, t) -> {
                if (t != null) {
                   throw CompletableFutures.asCompletionException(t);
                }
@@ -142,32 +130,33 @@ public class SLOTS extends RespCommand implements Resp3Command {
             }).thenApply(ignore -> responses);
    }
 
-   private static List<Object> readLocalInformation(String serverName, EmbeddedCacheManager ecm) {
+   private static List<Object> readLocalInformation(String serverName, byte[] localAddress, EmbeddedCacheManager ecm) {
       List<Object> response = new ArrayList<>();
-      ComponentRef<RespServer> ref = SecurityActions.getGlobalComponentRegistry(ecm)
-            .getComponent(BasicComponentRegistry.class)
-            .getComponent(serverName, RespServer.class);
-
+      ComponentRef<RespServer> ref = RespServer.fromCacheManager(ecm, serverName);
       if (ref == null) {
          // Handle with basic information.
          return null;
       }
-
       // An array with network information.
       RespServer server = ref.running();
-      CacheManagerInfo info = ecm.getCacheManagerInfo();
-
-      response.add(server.getHost());
+      NettyTransport transport = server.getTransport();
+      if (transport == null) {
+         transport = (NettyTransport) server.getEnclosingProtocolServer().getTransport();
+      }
+      if (transport.getAddress().getAddress().isAnyLocalAddress()) {
+         response.add(NetworkAddress.findInterfaceAddressMatchingInetAddress(localAddress));
+      } else {
+         response.add(server.getHost());
+      }
       response.add(server.getPort());
-      response.add(info.getNodeName());
+      response.add(ecm.getCacheManagerInfo().getNodeName());
 
       // The last element is for additional metadata. For example, hostnames or something like that.
-      NettyTransport transport = server.getTransport();
-      if (transport != null) {
-         String host = transport.getHostName();
-         response.add(List.of(host));
-      } else {
-         response.add(Collections.emptyList());
+      try {
+         String hostname = InetAddress.getLocalHost().getHostName();
+         response.add(List.of("hostname", hostname));
+      } catch (Exception e) {
+         // Ignore
       }
       return response;
    }

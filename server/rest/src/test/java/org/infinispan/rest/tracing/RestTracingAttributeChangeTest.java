@@ -33,10 +33,11 @@ public class RestTracingAttributeChangeTest extends SingleCacheManagerTest {
    public static final String CACHE_NAME = "bla";
 
    public static final String CACHE_DEFINITION =
-         "<?xml version=\"1.0\"?>\n" +
-               "<local-cache name=\"bla\" statistics=\"true\">\n" +
-               "  <encoding media-type=\"application/x-protostream\"/>\n" +
-               "</local-cache>";
+      """
+         <?xml version="1.0"?>
+         <local-cache name="bla" statistics="true">
+           <encoding media-type="application/x-protostream"/>
+         </local-cache>""";
 
    private static final String PERSISTENT_LOCATION = tmpDirectory(RestTracingRuntimeEnablingTest.class.getName());
 

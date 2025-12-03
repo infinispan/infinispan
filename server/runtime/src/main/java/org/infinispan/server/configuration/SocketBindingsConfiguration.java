@@ -5,10 +5,10 @@ import java.util.Map;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.NetworkAddress;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.SinglePortServerConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
-import org.infinispan.server.network.NetworkAddress;
 
 public class SocketBindingsConfiguration extends ConfigurationElement<SocketBindingsConfiguration> {
 

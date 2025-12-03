@@ -24,9 +24,11 @@ public class NegotiateAuthenticator extends HttpAuthenticator {
    private final GSSManager gssManager;
    private final Oid oid;
    private final AtomicReference<String> token = new AtomicReference<>();
+   private final String overrideHost;
 
    public NegotiateAuthenticator(HttpClient client, AuthenticationConfiguration configuration) {
       super(client, configuration);
+      overrideHost = configuration.properties().getProperty("infinispan.negotiate.host-override");
       this.gssManager = GSSManager.getInstance();
       try {
          this.oid = new Oid(SPNEGO_OID);
@@ -39,7 +41,7 @@ public class NegotiateAuthenticator extends HttpAuthenticator {
    public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler) {
       try {
          HttpRequest request = response.request();
-         String host = request.uri().getHost();
+         String host = overrideHost == null ? request.uri().getHost() : overrideHost;
          token.set(generateToken(EMPTY, host));
          HttpRequest.Builder newRequest = copyRequest(request, (n, v) -> true).header(WWW_AUTH_RESP, "Negotiate " + token.get());
          return client.sendAsync(newRequest.build(), (HttpResponse.BodyHandler<T>) bodyHandler);

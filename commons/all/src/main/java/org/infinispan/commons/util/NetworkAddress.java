@@ -1,14 +1,15 @@
-package org.infinispan.server.network;
+package org.infinispan.commons.util;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.function.Predicate;
 
-import org.infinispan.server.Server;
+import org.infinispan.commons.logging.Log;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -132,7 +133,7 @@ public class NetworkAddress {
    }
 
    public static NetworkAddress match(String name, Predicate<NetworkInterface> ifMatcher, Predicate<InterfaceAddress> addressMatcher) throws IOException {
-      for (Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
+      for (Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
          NetworkInterface networkInterface = interfaces.nextElement();
          if (networkInterface.isUp()) {
             if (ifMatcher.test(networkInterface)) {
@@ -159,11 +160,11 @@ public class NetworkAddress {
    }
 
    private static InterfaceAddress findAddress(Predicate<InterfaceAddress> matcher) throws IOException {
-      for (Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
+      for (Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
          NetworkInterface networkInterface = interfaces.nextElement();
          if (networkInterface.isUp()) {
-            if (Server.log.isDebugEnabled()) {
-               Server.log.debugf("Network interface %s", networkInterface);
+            if (Log.CONFIG.isDebugEnabled()) {
+               Log.CONFIG.debugf("Network interface %s", networkInterface);
             }
             InterfaceAddress ifAddress = findAddress(networkInterface, matcher);
             if (ifAddress != null) return ifAddress;
@@ -175,8 +176,8 @@ public class NetworkAddress {
    private static InterfaceAddress findAddress(NetworkInterface networkInterface, Predicate<InterfaceAddress> matcher) {
       for (InterfaceAddress ifAddress : networkInterface.getInterfaceAddresses()) {
          InetAddress address = ifAddress.getAddress();
-         if (Server.log.isDebugEnabled()) {
-            Server.log.debugf("Network address %s (loopback=%b linklocal=%b sitelocal=%b)", address, address.isLoopbackAddress(), address.isLinkLocalAddress(), address.isSiteLocalAddress());
+         if (Log.CONFIG.isDebugEnabled()) {
+            Log.CONFIG.debugf("Network address %s (loopback=%b linklocal=%b sitelocal=%b)", address, address.isLoopbackAddress(), address.isLinkLocalAddress(), address.isSiteLocalAddress());
          }
          if (matcher.test(ifAddress)) {
             return ifAddress;
@@ -186,11 +187,11 @@ public class NetworkAddress {
    }
 
    private static NetworkInterface findInterface(Predicate<NetworkInterface> matcher) throws IOException {
-      for (Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
+      for (Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
          NetworkInterface networkInterface = interfaces.nextElement();
          if (networkInterface.isUp()) {
-            if (Server.log.isDebugEnabled()) {
-               Server.log.debugf("Network interface %s", networkInterface);
+            if (Log.CONFIG.isDebugEnabled()) {
+               Log.CONFIG.debugf("Network interface %s", networkInterface);
             }
             if (matcher.test(networkInterface)) {
                return networkInterface;
@@ -198,5 +199,49 @@ public class NetworkAddress {
          }
       }
       throw new IOException("No matching addresses found");
+   }
+
+   public static boolean inetAddressMatchesInterfaceAddress(byte[] inetAddress, byte[] interfaceAddress, int prefixLength) {
+      if (Log.CONFIG.isDebugEnabled()) {
+         Log.CONFIG.debugf("Matching incoming address '%s' with '%s'/%d", inetAddress, interfaceAddress, prefixLength);
+      }
+      if (inetAddress.length != interfaceAddress.length) {
+         return false;
+      }
+      for (int i = 0; i < inetAddress.length; i++) {
+         byte a = inetAddress[i];
+         byte b = interfaceAddress[i];
+         if (prefixLength >= 8) {
+            if (a != b) {
+               return false;
+            } else {
+               prefixLength -= 8;
+            }
+         } else if (prefixLength > 0) {
+            byte mask = (byte) NETMASK_BY_PREFIX[prefixLength - 1];
+            if ((a & mask) != (b & mask)) {
+               return false;
+            } else {
+               prefixLength = 0;
+            }
+         }
+      }
+      return true;
+   }
+
+   public static String findInterfaceAddressMatchingInetAddress(byte[] inetAddress) {
+      try {
+         for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+            NetworkInterface intf = en.nextElement();
+            for (InterfaceAddress address : intf.getInterfaceAddresses()) {
+               if (NetworkAddress.inetAddressMatchesInterfaceAddress(inetAddress, address.getAddress().getAddress(), address.getNetworkPrefixLength())) {
+                  return address.getAddress().getHostAddress();
+               }
+            }
+         }
+         return null;
+      } catch (SocketException e) {
+         throw new RuntimeException(e);
+      }
    }
 }

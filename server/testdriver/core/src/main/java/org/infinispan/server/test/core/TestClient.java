@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -144,7 +145,7 @@ public class TestClient {
       restCacheMap = new HashMap<>();
    }
 
-   public String addScript(RemoteCacheManager remoteCacheManager, String script) {
+   public String addScript(RemoteCacheContainer remoteCacheManager, String script) {
       RemoteCache<String, String> scriptCache = remoteCacheManager.getCache(SCRIPT_CACHE_NAME);
       try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(script)) {
          scriptCache.put(getMethodName(), CommonsTestingUtil.loadFileAsString(in));

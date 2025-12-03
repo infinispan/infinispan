@@ -19,7 +19,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.server.test.core.ResponseAssertion;
 import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;

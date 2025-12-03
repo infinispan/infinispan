@@ -21,6 +21,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
+import org.infinispan.server.test.core.CertificateAuthority;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerRunMode;
@@ -95,8 +96,8 @@ abstract class AbstractMultiClusterIT {
 
    protected static class ClusterConfiguration extends InfinispanServerTestConfiguration {
       public ClusterConfiguration(String configurationFile, int numServers, int portOffset, String[] mavenArtifacts) {
-         super(configurationFile, numServers, numServers, mavenArtifacts != null ? ServerRunMode.CONTAINER : ServerRunMode.EMBEDDED, new Properties(), mavenArtifacts, null,
-               false, false, false, Collections.emptyList(), null, null, portOffset, new String[]{}, new String[]{});
+         super(configurationFile, numServers, numServers, ServerRunMode.CONTAINER, new Properties(), mavenArtifacts, null,
+               false, false, false, Collections.emptyList(), null, null, portOffset, new String[]{}, new String[]{}, new CertificateAuthority());
       }
    }
 
