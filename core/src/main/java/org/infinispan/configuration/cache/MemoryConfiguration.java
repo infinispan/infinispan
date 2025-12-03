@@ -20,10 +20,10 @@ public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguratio
    public static final AttributeDefinition<String> MAX_SIZE = AttributeDefinition.builder(Attribute.MAX_SIZE, null, String.class).matcher((a1, a2) -> maxSizeToBytes(a1.get()) == maxSizeToBytes(a2.get())).build();
    public static final AttributeDefinition<Long> MAX_COUNT = AttributeDefinition.builder(Attribute.MAX_COUNT, -1L).build();
    public static final AttributeDefinition<EvictionStrategy> WHEN_FULL = AttributeDefinition.builder(Attribute.WHEN_FULL, EvictionStrategy.NONE).immutable().build();
-   public static final AttributeDefinition<String> CONTAINER_STORAGE = AttributeDefinition.builder(Attribute.CONTAINER_STORAGE, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> EVICTION_CONTAINER = AttributeDefinition.builder(Attribute.EVICTION_CONTAINER, null, String.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(MemoryConfiguration.class, STORAGE, MAX_SIZE, MAX_COUNT, WHEN_FULL, CONTAINER_STORAGE);
+      return new AttributeSet(MemoryConfiguration.class, STORAGE, MAX_SIZE, MAX_COUNT, WHEN_FULL, EVICTION_CONTAINER);
    }
 
    MemoryConfiguration(AttributeSet attributes) {
@@ -93,12 +93,12 @@ public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguratio
    }
 
    /**
-    * The name of the container storage used for eviction purposes. Note that when is non null, no other values
+    * The name of the eviction container used for eviction purposes. Note that when is non null, no other values
     * should be utilized.
-    * @return the container storage to use for shared eviction
+    * @return the eviction container to use for shared eviction
     */
-   public String containerStorage() {
-      return attributes.attribute(CONTAINER_STORAGE).get();
+   public String evictionContainer() {
+      return attributes.attribute(EVICTION_CONTAINER).get();
    }
 
    private boolean isSizeBounded() {

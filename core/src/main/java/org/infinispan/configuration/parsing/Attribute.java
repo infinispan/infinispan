@@ -50,8 +50,8 @@ public enum Attribute {
     CONNECTION_ATTEMPTS,
     CONNECTION_INTERVAL,
     CONSISTENT_HASH_FACTORY,
-    CONTAINER_STORAGE,
     CONTEXT_INITIALIZER,
+    COUNT,
     CORE_THREADS,
     DATA_CONTAINER,
     DEFAULT_CACHE,
@@ -63,6 +63,7 @@ public enum Attribute {
     ENCODER,
     EXECUTOR,
     EVICTION,
+    EVICTION_CONTAINER,
     @Deprecated(forRemoval=true, since = "11.0")
     EVICTION_EXECUTOR,
     @Deprecated(forRemoval=true, since = "11.0")

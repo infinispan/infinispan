@@ -39,16 +39,16 @@ public class ContainerMemoryEvictionTest extends MultipleCacheManagersTest {
 
       ConfigurationBuilder distCacheBuilder = new ConfigurationBuilder();
       distCacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)
-            .memory().containerStorage(SIZE_CONTAINER_NAME);
+            .memory().evictionContainer(SIZE_CONTAINER_NAME);
 
       ConfigurationBuilder localCacheBuilder = new ConfigurationBuilder();
-      localCacheBuilder.memory().containerStorage(SIZE_CONTAINER_NAME);
+      localCacheBuilder.memory().evictionContainer(SIZE_CONTAINER_NAME);
 
       defineConfigurationOnAllManagers(SIZE_DIST_CACHE_NAME, distCacheBuilder);
       defineConfigurationOnAllManagers(SIZE_LOCAL_CACHE_NAME, localCacheBuilder);
 
-      distCacheBuilder.memory().containerStorage(BYTE_CONTAINER_NAME);
-      localCacheBuilder.memory().containerStorage(BYTE_CONTAINER_NAME);
+      distCacheBuilder.memory().evictionContainer(BYTE_CONTAINER_NAME);
+      localCacheBuilder.memory().evictionContainer(BYTE_CONTAINER_NAME);
 
       defineConfigurationOnAllManagers(BYTE_DIST_CACHE_NAME, distCacheBuilder);
       defineConfigurationOnAllManagers(BYTE_LOCAL_CACHE_NAME, localCacheBuilder);

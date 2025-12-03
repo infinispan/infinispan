@@ -47,7 +47,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
       MemoryConfiguration memoryConfiguration = configuration.memory();
       boolean offHeap = memoryConfiguration.isOffHeap();
 
-      String containerMapName = memoryConfiguration.containerStorage();
+      String containerMapName = memoryConfiguration.evictionContainer();
       int segments = shouldSegment ? clusteringConfiguration.hash().numSegments() : 1;
       if (containerMapName != null) {
          String cacheName = componentRegistry.getCacheName();

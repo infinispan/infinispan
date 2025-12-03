@@ -153,7 +153,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
    public void testEvictionShareContainerNotPresent() {
       String containerName = "container";
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
-            .memory().containerStorage(containerName)
+            .memory().evictionContainer(containerName)
             .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
 
       dataContainerFactory.construct(COMPONENT_NAME);
@@ -163,7 +163,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
    public void testEvictionShareContainerPresent() {
       String containerName = "container";
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
-            .memory().containerStorage(containerName)
+            .memory().evictionContainer(containerName)
             .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
 
       dataContainerFactory.sharedContainerMaps.getMaps().put(containerName, new SharedCaffeineMap<>(13, false));

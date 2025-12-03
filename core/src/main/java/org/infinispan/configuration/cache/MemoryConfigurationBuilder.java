@@ -110,13 +110,13 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @param storageName the name of the container storage to use, validated at cache creation time
     * @return this
     */
-   public MemoryConfigurationBuilder containerStorage(String storageName) {
-      attributes.attribute(MemoryConfiguration.CONTAINER_STORAGE).set(storageName);
+   public MemoryConfigurationBuilder evictionContainer(String storageName) {
+      attributes.attribute(MemoryConfiguration.EVICTION_CONTAINER).set(storageName);
       return this;
    }
 
-   public String containerStorage() {
-      return attributes.attribute(MemoryConfiguration.CONTAINER_STORAGE).get();
+   public String evictionContainer() {
+      return attributes.attribute(MemoryConfiguration.EVICTION_CONTAINER).get();
    }
 
    private void checkBinaryRequirement() {
@@ -137,7 +137,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       if (isSizeBounded() && isCountBounded()) {
          throw CONFIG.cannotProvideBothSizeAndCount();
       }
-      if (containerStorage() != null) {
+      if (evictionContainer() != null) {
          if (isCountBounded() || isCountBounded()) {
             throw CONFIG.memorySharedConfigHasEviction();
          }
@@ -174,7 +174,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    @Override
    public void validate(GlobalConfiguration globalConfig) {
       super.validate(globalConfig);
-      String containerStorage = containerStorage();
+      String containerStorage = evictionContainer();
       if (containerStorage != null) {
          if (!globalConfig.getMemoryContainer().containsKey(containerStorage)) {
             throw CONFIG.memorySharedContainerNotExist(containerStorage);
