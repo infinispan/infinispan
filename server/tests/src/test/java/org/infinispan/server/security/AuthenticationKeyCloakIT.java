@@ -1,6 +1,7 @@
 package org.infinispan.server.security;
 
 import org.infinispan.server.test.core.KeyCloakServerExtension;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -15,6 +16,7 @@ public class AuthenticationKeyCloakIT extends AbstractAuthenticationKeyCloak {
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/AuthenticationKeyCloakTest.xml")
+               .runMode(ServerRunMode.EMBEDDED)
                .build();
 
    @RegisterExtension
