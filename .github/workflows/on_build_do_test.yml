@@ -120,7 +120,7 @@ jobs:
 
       - name: Maven Test
         env:
-          HIBERNATE_MATRIX: ${{ github.event.workflow_run.event == 'push' && '-Phibernate-matrix' || '' }}
+          HIBERNATE_MATRIX: ${{ github.event.workflow_run.event == 'push' && '-Phibernate-matrix' || '-Dnoop' }}
         id: maven-test
         shell: bash
         run: |
