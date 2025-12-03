@@ -266,7 +266,8 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
    @Override
    public void close() throws Exception {
       if (Runtime.version().feature() >= 21) {
-         ((AutoCloseable) httpClient).close(); // close() was only introduced in JDK 21
+         // HttpClient.close() can hang for 1 day
+         HttpClient.class.getMethod("shutdownNow").invoke(httpClient);
       }
       if (managedExecutorService) {
          executorService.shutdownNow();
