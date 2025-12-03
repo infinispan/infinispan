@@ -52,11 +52,15 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
 
    @Override
    public Object[] factory() {
-      return new Object[] {
-            new RespBxPOPTest(),
-            new RespBxPOPTest().simpleCache(),
-            new RespBxPOPTest().right(),
-            new RespBxPOPTest().simpleCache().right()
+      return new Object[]{
+         new RespBxPOPTest(),
+         new RespBxPOPTest().simpleCache(),
+         new RespBxPOPTest().right(),
+         new RespBxPOPTest().simpleCache().right(),
+         new RespBxPOPTest().withAuthorization(),
+         new RespBxPOPTest().simpleCache().withAuthorization(),
+         new RespBxPOPTest().right().withAuthorization(),
+         new RespBxPOPTest().simpleCache().right().withAuthorization()
       };
    }
 
@@ -115,7 +119,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       CacheNotifierImpl<?, ?> cni = (CacheNotifierImpl<?, ?>) TestingUtil.extractComponent(cache, CacheNotifier.class);
       // Check listener is unregistered
       eventually(() -> cni.getListeners().stream().noneMatch(
-            l -> l instanceof AbstractBlockingPop.PubSubListener || l instanceof RespBxPOPTest.FailingListener));
+         l -> l instanceof AbstractBlockingPop.PubSubListener || l instanceof RespBxPOPTest.FailingListener));
    }
 
    @Test
@@ -132,9 +136,9 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          assertThat(res.getValue()).isEqualTo(expectPop);
          // Check brpop (feeded by listener) removed just one element
          assertThat(redis.lrange("keyZ", 0, -1))
-               .containsExactly(expectRemain);
+            .containsExactly(expectRemain);
 
-         String[] values = { "first", "second", "third" };
+         String[] values = {"first", "second", "third"};
          redis.rpush("key1", values);
          res = bxPop(0, "key1");
          // Expected results depends on which pop is actually tested
@@ -145,7 +149,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          assertThat(res.getValue()).isEqualTo(expectPop1);
          // Check brpop (feeded by poll) removed just one element
          assertThat(redis.lrange("key1", 0, -1))
-               .containsExactlyInAnyOrder(remaining);
+            .containsExactlyInAnyOrder(remaining);
 
          res = bxPop(0, "key2", "key1");
          assertThat(res.getKey()).isEqualTo("key1");
@@ -157,7 +161,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
 
    @Test
    public void testBxPopMultipleListenersTwoKeysTwoEvents()
-         throws InterruptedException, ExecutionException, TimeoutException {
+      throws InterruptedException, ExecutionException, TimeoutException {
       try {
          RedisCommands<String, String> redis = redisConnection.sync();
          var cf = registerListener(() -> bxPopAsync(0, "key1", "key2"));
@@ -171,17 +175,17 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
             redis.rpush("key2", "value2a", "value2b");
          }
          List<KeyValue<String, String>> events = List.of(
-               cf.get(10, TimeUnit.SECONDS),
-               cf2.get(10, TimeUnit.SECONDS),
-               cf3.get(10, TimeUnit.SECONDS));
+            cf.get(10, TimeUnit.SECONDS),
+            cf2.get(10, TimeUnit.SECONDS),
+            cf3.get(10, TimeUnit.SECONDS));
 
          assertThat(events)
-               .hasSize(3)
-               .containsExactlyInAnyOrder(
-                     KeyValue.just("key1", "value1a"),
-                     KeyValue.just("key1", "value1b"),
-                     KeyValue.just("key2", "value2a")
-               );
+            .hasSize(3)
+            .containsExactlyInAnyOrder(
+               KeyValue.just("key1", "value1a"),
+               KeyValue.just("key1", "value1b"),
+               KeyValue.just("key2", "value2a")
+            );
       } finally {
          verifyListenerUnregistered();
       }
@@ -203,11 +207,11 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          assertThat(res.getKey()).isEqualTo("key");
          assertThat(res2.getKey()).isEqualTo("key");
          assertThat(redis.lrange("key", 0, -1))
-               .containsExactly("third");
+            .containsExactly("third");
          assertThat(Arrays.asList(res.getValue(), res2.getValue())).containsExactlyInAnyOrder("first", "second");
          // Check brpop (feeded by events) removed two events
          assertThat(redis.lrange("key", 0, -1))
-               .containsExactly("third");
+            .containsExactly("third");
       } finally {
          verifyListenerUnregistered();
       }
@@ -217,7 +221,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    public void testBxpopTwoKeys() throws InterruptedException, ExecutionException, TimeoutException {
       try {
          RedisCommands<String, String> redis = redisConnection.sync();
-         var data = new String[] { "value1a", "value1b" };
+         var data = new String[]{"value1a", "value1b"};
          redis.rpush("key1", data);
          redis.rpush("key2", "value2a", "value2b");
          RedisFuture<KeyValue<String, String>> cf = bxPopAsync(0, "key1", "key2");
@@ -233,7 +237,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    public void testBxpopTwoKeysOneEvent() throws InterruptedException, ExecutionException, TimeoutException {
       try {
          RedisCommands<String, String> redis = redisConnection.sync();
-         var data = new String[] { "value2a", "value2b" };
+         var data = new String[]{"value2a", "value2b"};
          redis.rpush("key2", "value2a", "value2b");
          var cf = registerListener(() -> bxPopAsync(0, "key1", "key2"));
          redis.rpush("key1", "value1a", "value1b");
@@ -248,7 +252,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    @Test
    public void testBxpopTwoKeysTwoEvents() throws InterruptedException, ExecutionException, TimeoutException {
       try {
-         var data = new String[] { "value1a", "value1b" };
+         var data = new String[]{"value1a", "value1b"};
          RedisCommands<String, String> redis = redisConnection.sync();
          var cf = registerListener(() -> bxPopAsync(0, "key1", "key2"));
          redis.rpush("key1", data);
@@ -264,7 +268,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    @Test
    public void testBxpopTwoListenersTwoKeys() throws InterruptedException, ExecutionException, TimeoutException {
       try {
-         var data = new String[] { "value1a", "value1b" };
+         var data = new String[]{"value1a", "value1b"};
          RedisCommands<String, String> redis = redisConnection.sync();
          redis.rpush("key1", data);
          redis.rpush("key2", "value2a", "value2b");
@@ -284,7 +288,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    @Test
    public void testBxpopTwoListenersTwoKeys2() throws InterruptedException, ExecutionException, TimeoutException {
       try {
-         var data = new String[] { "value2a", "value2b" };
+         var data = new String[]{"value2a", "value2b"};
          RedisCommands<String, String> redis = redisConnection.sync();
          redis.rpush("key1", "value1a");
          redis.rpush("key2", data);
@@ -304,7 +308,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    @Test
    public void testBxpopTwoListenersTwoKeysOneEvent() throws Exception {
       try {
-         var data = new String[] { "value2a", "value2b" };
+         var data = new String[]{"value2a", "value2b"};
          RedisCommands<String, String> redis = redisConnection.sync();
          redis.rpush("key1", "value1a");
          var cf = registerListener(() -> bxPopAsync(0, "key1", "key2"));
@@ -364,7 +368,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          var rest = redis1.lrange("key", 0, -1);
          assertThat(rest).hasSize(1);
          assertThat(Arrays.asList(res.getValue(), res2.getValue(), rest.get(0)))
-               .containsExactlyInAnyOrder("first", "second", "third");
+            .containsExactlyInAnyOrder("first", "second", "third");
       } finally {
          verifyListenerUnregistered();
       }
@@ -384,7 +388,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          var res2 = cf2.get(10, TimeUnit.SECONDS);
          var res3 = cf3.get(10, TimeUnit.SECONDS);
          assertThat(Arrays.asList(extractValue(res), extractValue(res2), extractValue(res3)))
-               .containsExactlyInAnyOrder("first", "second", null);
+            .containsExactlyInAnyOrder("first", "second", null);
          assertThat(redis1.lrange("key", 0, -1)).isEmpty();
       } finally {
          verifyListenerUnregistered();
@@ -401,8 +405,8 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          var cf3 = registerListener(() -> bxPopAsync(10, "key"));
 
          List<Future<?>> pushes = List.of(
-               fork(() -> xPush(redis1, "key", "first")),
-               fork(() -> xPush(redis2, "key", "second", "third", "fourth"))
+            fork(() -> xPush(redis1, "key", "first")),
+            fork(() -> xPush(redis2, "key", "second", "third", "fourth"))
          );
          var res = cf.get(10, TimeUnit.SECONDS);
          var res2 = cf2.get(10, TimeUnit.SECONDS);
@@ -412,10 +416,10 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          List<String> expected1 = Arrays.asList("first", "fourth", "third");
          List<String> expected2 = Arrays.asList("fourth", "second", "third");
          assertThat(results)
-               .hasSize(3)
-               .satisfiesAnyOf(
-                     ignore -> assertThat(results).containsExactlyElementsOf(expected1),
-                     ignore -> assertThat(results).containsExactlyElementsOf(expected2));
+            .hasSize(3)
+            .satisfiesAnyOf(
+               ignore -> assertThat(results).containsExactlyElementsOf(expected1),
+               ignore -> assertThat(results).containsExactlyElementsOf(expected2));
 
          for (Future<?> future : pushes) {
             future.get(10, TimeUnit.SECONDS);
@@ -436,9 +440,9 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       redis.rpush("key1", "first", "second", "third");
 
       assertThatThrownBy(() -> bxPopAsync(-1, "keyZ").get(10, TimeUnit.SECONDS))
-            .cause()
-            .isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageContaining("ERR value is out of range, must be positive");
+         .cause()
+         .isInstanceOf(RedisCommandExecutionException.class)
+         .hasMessageContaining("ERR value is out of range, must be positive");
       var res = bxPopAsync(1, "keyZ");
       // Ensure bxpop is expired
       eventually(res::isDone);
@@ -462,20 +466,20 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    private RedisFuture<KeyValue<String, String>> bxPopAsync(long to, String... keys) {
       RedisAsyncCommands<String, String> redisAsync = newConnection().async();
       return registerListener(() -> right ? redisAsync.brpop(to, keys)
-            : redisAsync.blpop(to, keys));
+         : redisAsync.blpop(to, keys));
    }
 
-   private RedisFuture<KeyValue<String, List<String>>> blmpop(long timeout, int count, String ... keys) {
+   private RedisFuture<KeyValue<String, List<String>>> blmpop(long timeout, int count, String... keys) {
       RedisAsyncCommands<String, String> async = newConnection().async();
       LMPopArgs args = (right ? LMPopArgs.Builder.right() : LMPopArgs.Builder.left())
-            .count(count);
+         .count(count);
       return registerListener(() -> async.blmpop(timeout, args, keys));
    }
 
    private KeyValue<String, String> bxPop(long to, String... keys) {
       RedisCommands<String, String> redis = newConnection().sync();
       return right ? redis.brpop(to, keys)
-            : redis.blpop(to, keys);
+         : redis.blpop(to, keys);
    }
 
    private Long xPush(RedisCommands<String, String> redis, String key, String... values) {
@@ -507,14 +511,14 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       @CacheEntryModified
       public CompletionStage<Void> onEvent(CacheEntryEvent<Object, Object> entryEvent) {
          blpop.getFuture().completeExceptionally(
-               new RuntimeException("Injected failure in OnEvent"));
+            new RuntimeException("Injected failure in OnEvent"));
          return CompletableFutures.completedNull();
       }
    }
 
    @Test
    public void testBxpopAsync()
-         throws InterruptedException, ExecutionException, TimeoutException {
+      throws InterruptedException, ExecutionException, TimeoutException {
       RedisCommands<String, String> redis = redisConnection.sync();
       redis.lpush("keyY", "firstY");
       try {
@@ -540,15 +544,15 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          RedisFuture<KeyValue<String, List<String>>> rf = blmpop(0, 3, key);
          KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
          List<String> expected = right
-               ? List.of("v1", "v2", "v3")
-               : List.of("v5", "v4", "v3");
+            ? List.of("v1", "v2", "v3")
+            : List.of("v5", "v4", "v3");
 
          assertThat(response.getKey()).isEqualTo(key);
          assertThat(response.getValue()).containsExactlyElementsOf(expected);
 
          String[] remaining = right
-               ? new String[] { "v5", "v4" }
-               : new String[] { "v2", "v1" };
+            ? new String[]{"v5", "v4"}
+            : new String[]{"v2", "v1"};
          assertThat(redis.lrange(key, 0, -1)).containsExactly(remaining);
       } finally {
          verifyListenerUnregistered();
@@ -618,20 +622,20 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          assertThat(res2.getKey()).isEqualTo(key);
 
          String[] exp1 = right
-               ? new String[] { "v1", "v2" }
-               : new String[] { "v5", "v4" };
+            ? new String[]{"v1", "v2"}
+            : new String[]{"v5", "v4"};
          String[] exp2 = right
-               ? new String[] { "v3", "v4" }
-               : new String[] { "v3", "v2" };
+            ? new String[]{"v3", "v4"}
+            : new String[]{"v3", "v2"};
 
          assertThat(res1.getValue()).hasSize(2)
-               .satisfiesAnyOf(
-                     l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp1),
-                     l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp2));
+            .satisfiesAnyOf(
+               l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp1),
+               l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp2));
          assertThat(res2.getValue()).hasSize(2)
-               .satisfiesAnyOf(
-                     l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp1),
-                     l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp2));
+            .satisfiesAnyOf(
+               l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp1),
+               l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp2));
          assertThat(res1.getValue()).doesNotContainAnyElementsOf(res2.getValue());
          assertThat(redis.lrange(key, 0, -1)).containsExactly(right ? "v5" : "v1");
       } finally {

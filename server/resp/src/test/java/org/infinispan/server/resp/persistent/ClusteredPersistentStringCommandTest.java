@@ -17,11 +17,13 @@ public class ClusteredPersistentStringCommandTest extends PersistentStringComman
 
    @Override
    public Object[] factory() {
-      return new Object[] {
-            new ClusteredPersistentStringCommandTest().withCacheMode(CacheMode.DIST_SYNC),
-            new ClusteredPersistentStringCommandTest().withCacheMode(CacheMode.REPL_SYNC),
+      return new Object[]{
+         new ClusteredPersistentStringCommandTest().withCacheMode(CacheMode.DIST_SYNC),
+         new ClusteredPersistentStringCommandTest().withCacheMode(CacheMode.REPL_SYNC),
+         new ClusteredPersistentStringCommandTest().withCacheMode(CacheMode.DIST_SYNC).withAuthorization(),
+         new ClusteredPersistentStringCommandTest().withCacheMode(CacheMode.REPL_SYNC).withAuthorization()
       };
-   };
+   }
 
    protected ClusteredPersistentStringCommandTest withCacheMode(CacheMode mode) {
       this.mode = mode;

@@ -22,6 +22,14 @@ import io.lettuce.core.api.sync.RedisCommands;
 @Test(groups = "functional", testName = "server.resp.persistent.PersistentStringCommandTest")
 public class PersistentStringCommandTest extends SingleNodeRespBaseTest {
 
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+         new PersistentStringCommandTest(),
+         new PersistentStringCommandTest().withAuthorization()
+      };
+   }
+
    @AfterClass(alwaysRun = true)
    protected void removeData() {
       Util.recursiveFileRemove(baseFolderName());

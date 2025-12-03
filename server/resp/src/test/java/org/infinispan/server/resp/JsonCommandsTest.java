@@ -51,8 +51,16 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
     * @since 15.2
     */
    private RedisCommands<String, String> redis;
-   private ObjectMapper mapper = new ObjectMapper().setNodeFactory(new InfinispanJsonNodeFactory());
-   private DefaultJsonParser defaultJsonParser = new DefaultJsonParser(mapper);
+   private final ObjectMapper mapper = new ObjectMapper().setNodeFactory(new InfinispanJsonNodeFactory());
+   private final DefaultJsonParser defaultJsonParser = new DefaultJsonParser(mapper);
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new JsonCommandsTest(),
+         new JsonCommandsTest().withAuthorization()
+      };
+   }
 
    @BeforeMethod
    public void initConnection() {
