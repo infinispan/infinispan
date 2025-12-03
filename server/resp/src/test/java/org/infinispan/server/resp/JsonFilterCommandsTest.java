@@ -21,7 +21,15 @@ public class JsonFilterCommandsTest extends SingleNodeRespBaseTest {
     * @since 15.2
     */
    private RedisCommands<String, String> redis;
-   private DefaultJsonParser defaultJsonParser = new DefaultJsonParser();
+   private final DefaultJsonParser defaultJsonParser = new DefaultJsonParser();
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new JsonFilterCommandsTest(),
+         new JsonFilterCommandsTest().withAuthorization()
+      };
+   }
 
    @BeforeMethod
    public void initConnection() {

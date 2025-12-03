@@ -20,6 +20,14 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 @Test(groups = "functional", testName = "dist.server.resp.PublishSubscribeTest")
 public class PublishSubscribeTest extends SingleNodeRespBaseTest {
 
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+         new PublishSubscribeTest(),
+         new PublishSubscribeTest().withAuthorization()
+      };
+   }
+
    @DataProvider(name = "booleans")
    protected Object[][] booleans() {
       // Reset disabled for now as the client isn't sending a reset command to the
