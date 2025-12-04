@@ -1,17 +1,20 @@
 package org.infinispan.rest.resources;
 
-import org.infinispan.client.rest.RestResponse;
-import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.rest.assertion.ResponseAssertion;
-import org.testng.annotations.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
+import static org.infinispan.functional.FunctionalTestUtils.await;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.security.AuthorizationPermission;
+import org.testng.annotations.Test;
 
 /**
  * @since 15.0
@@ -25,6 +28,15 @@ public class AccessManagementResourceTest extends AbstractRestResourceTest {
             new AccessManagementResourceTest().withSecurity(true).protocol(HTTP_11).ssl(false).browser(false),
             new AccessManagementResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false).browser(false),
       };
+   }
+
+   @Override
+   protected void addSecurity(GlobalConfigurationBuilder globalBuilder) {
+      // Override super method and DO NOT USE `IdentityRoleMapper`.
+      // We let it use the default, which should be `ClusterRoleMapper`.
+      globalBuilder.security().authorization().enable().groupOnlyMapping(false)
+            .role("ADMIN").description("admin role").permission(AuthorizationPermission.ALL)
+            .role("USER").description("user role").permission(AuthorizationPermission.WRITE, AuthorizationPermission.READ, AuthorizationPermission.EXEC, AuthorizationPermission.BULK_READ, AuthorizationPermission.CREATE);
    }
 
    @Test
@@ -51,6 +63,29 @@ public class AccessManagementResourceTest extends AbstractRestResourceTest {
       assertThat(jsonNode.at("permissions").asList()).containsExactly("ALL");
       assertThat(jsonNode.at("description").asString()).contains("admin role");
       assertThat(jsonNode.at("implicit").asBoolean()).isFalse();
+   }
+
+   @Test
+   public void testGrantAndDenyRole() {
+      try (RestResponse response = await(adminClient.security().createRole("NEW_ROLE", "something", List.of("READ")))) {
+         ResponseAssertion.assertThat(response).isOk();
+      }
+
+      try (RestResponse response = await(adminClient.security().grant("NEW_ROLE", List.of("WRITE")))) {
+         ResponseAssertion.assertThat(response).isOk();
+      }
+
+      try (RestResponse response = await(adminClient.security().deny("NEW_ROLE", List.of("WRITE")))) {
+         ResponseAssertion.assertThat(response).isOk();
+      }
+
+      try (RestResponse response = await(adminClient.security().flushCache())) {
+         ResponseAssertion.assertThat(response).isOk();
+      }
+
+      try (RestResponse response = await(adminClient.security().removeRole("NEW_ROLE"))) {
+         ResponseAssertion.assertThat(response).isOk();
+      }
    }
 
    @Test
