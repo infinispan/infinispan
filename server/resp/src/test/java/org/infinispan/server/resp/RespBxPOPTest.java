@@ -54,10 +54,10 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    public Object[] factory() {
       return new Object[]{
          new RespBxPOPTest(),
-         new RespBxPOPTest().simpleCache(),
          new RespBxPOPTest().right(),
-         new RespBxPOPTest().simpleCache().right(),
+         new RespBxPOPTest().simpleCache(),
          new RespBxPOPTest().withAuthorization(),
+         new RespBxPOPTest().simpleCache().right(),
          new RespBxPOPTest().simpleCache().withAuthorization(),
          new RespBxPOPTest().right().withAuthorization(),
          new RespBxPOPTest().simpleCache().right().withAuthorization()
@@ -82,7 +82,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
 
    @Override
    protected String parameters() {
-      return "[simpleCache=" + simpleCache + ", cacheMode=" + cacheMode + ", right=" + right + "]";
+      return "[simpleCache=" + simpleCache + ", cacheMode=" + cacheMode + ", right=" + right + ", authz=" + this.isAuthorizationEnabled() + "]";
    }
 
    @Override
