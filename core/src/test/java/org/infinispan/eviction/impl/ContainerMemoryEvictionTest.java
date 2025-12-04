@@ -1,6 +1,9 @@
 package org.infinispan.eviction.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
+
+import java.util.Arrays;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -8,12 +11,37 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "eviction.impl.ContainerMemoryEvictionTest")
 public class ContainerMemoryEvictionTest extends MultipleCacheManagersTest {
+   enum RunMode {
+      NO_PERSISTENCE,
+      PERSISTENCE {
+         @Override
+         void updateConfig(ConfigurationBuilder config) {
+            config.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+         }
+      },
+      PASSIVATION {
+         @Override
+         void updateConfig(ConfigurationBuilder config) {
+            config.persistence().persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+         }
+      };
+
+      void updateConfig(ConfigurationBuilder config) { }
+   }
+
+   private RunMode runMode;
+
+   public ContainerMemoryEvictionTest withRunMode(RunMode runMode) {
+      this.runMode = runMode;
+      return this;
+   }
 
    private static final int NODE_COUNT = 3;
 
@@ -27,6 +55,23 @@ public class ContainerMemoryEvictionTest extends MultipleCacheManagersTest {
    private static final int BYTE_CONTAINER_AMT = 4096;
 
    @Override
+   public Object[] factory() {
+      return Arrays.stream(RunMode.values())
+                  .map(rm -> new ContainerMemoryEvictionTest().withRunMode(rm))
+                  .toArray();
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return new Object[] { runMode };
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return new String[] { "runMode" };
+   }
+
+   @Override
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NODE_COUNT; i++) {
          GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
@@ -38,10 +83,12 @@ public class ContainerMemoryEvictionTest extends MultipleCacheManagersTest {
       }
 
       ConfigurationBuilder distCacheBuilder = new ConfigurationBuilder();
+      runMode.updateConfig(distCacheBuilder);
       distCacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)
             .memory().evictionContainer(SIZE_CONTAINER_NAME);
 
       ConfigurationBuilder localCacheBuilder = new ConfigurationBuilder();
+      runMode.updateConfig(localCacheBuilder);
       localCacheBuilder.memory().evictionContainer(SIZE_CONTAINER_NAME);
 
       defineConfigurationOnAllManagers(SIZE_DIST_CACHE_NAME, distCacheBuilder);
@@ -59,7 +106,7 @@ public class ContainerMemoryEvictionTest extends MultipleCacheManagersTest {
    private int distSize(String distCacheName) {
       int count = 0;
       for (int i = 0; i < NODE_COUNT; ++i) {
-         count += cache(i, distCacheName).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size();
+         count += cache(i, distCacheName).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_LOAD).size();
       }
       return count;
    }
@@ -84,7 +131,7 @@ public class ContainerMemoryEvictionTest extends MultipleCacheManagersTest {
       }
 
       // Retrieve the size of the distributed cache using the LOCAL_MODE flag
-      long distSize = distCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size();
+      long distSize = distCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_LOAD).size();
 
       // Now insert some into the first local cache which should cause some evictions
       for (int i = 1; i <= 5; i++) {
@@ -92,10 +139,16 @@ public class ContainerMemoryEvictionTest extends MultipleCacheManagersTest {
       }
 
       // Afterwards the dist size and local size should equal what the dist size before local insertion
-      int afterDistSize = distCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size();
+      int afterDistSize = distCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_LOAD).size();
       int localSize = localCache.size();
       if (afterDistSize > distSize) {
          fail("Size of local " + localSize + " and dist " + afterDistSize + " caches should be equal or less to prior dist size " + distSize);
+      }
+
+      // All persistence modes should have all data
+      if (runMode != RunMode.NO_PERSISTENCE) {
+         assertEquals(expectedSize / 2, distCache.size());
+         assertEquals(5, localCache.size());
       }
    }
 

@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.BoundedSegmentedDataContainer;
@@ -41,7 +42,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
    public Object construct(String componentName) {
       ClusteringConfiguration clusteringConfiguration = configuration.clustering();
 
-      boolean shouldSegment = clusteringConfiguration.cacheMode().needsStateTransfer();
+      boolean shouldSegment = Configurations.needSegments(configuration);
       int level = configuration.locking().concurrencyLevel();
 
       MemoryConfiguration memoryConfiguration = configuration.memory();
