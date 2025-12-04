@@ -3,6 +3,7 @@ package org.infinispan.rest.resources;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -259,8 +260,8 @@ public class SecurityResource implements ResourceHandler {
       if (roles == null) {
          return completedFuture(builder.status(HttpResponseStatus.BAD_REQUEST).build());
       }
-      roles.forEach(r -> principalRoleMapper.deny(r, principal));
-      return aclCacheFlush(request);
+      return CompletionStages.performSequentially(roles.iterator(), r ->  CompletableFuture.runAsync(() -> principalRoleMapper.deny(r, principal), invocationHelper.getExecutor()))
+            .thenCompose(ignore -> aclCacheFlush(request));
    }
 
    private CompletionStage<RestResponse> grant(RestRequest request, boolean newAccess) {
@@ -283,8 +284,8 @@ public class SecurityResource implements ResourceHandler {
          return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).build());
       }
 
-      roles.forEach(r -> principalRoleMapper.grant(r, principal));
-      return aclCacheFlush(request);
+      return CompletionStages.performSequentially(roles.iterator(), r -> CompletableFuture.runAsync(() ->  principalRoleMapper.grant(r, principal), invocationHelper.getExecutor()))
+            .thenCompose(ignore -> aclCacheFlush(request));
    }
 
    private boolean containsPrincipalName(String principal) {
