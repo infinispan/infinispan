@@ -46,16 +46,12 @@ public interface ConfigurationWriter extends AutoCloseable {
       }
 
       public ConfigurationWriter build() {
-         switch (type.getTypeSubtype()) {
-            case MediaType.APPLICATION_XML_TYPE:
-               return new XmlConfigurationWriter(writer, prettyPrint, clearTextSecrets);
-            case MediaType.APPLICATION_YAML_TYPE:
-               return new YamlConfigurationWriter(writer, clearTextSecrets);
-            case MediaType.APPLICATION_JSON_TYPE:
-               return new JsonConfigurationWriter(writer, prettyPrint, clearTextSecrets);
-            default:
-               throw new IllegalArgumentException(type.toString());
-         }
+         return switch (type.getTypeSubtype()) {
+            case MediaType.APPLICATION_XML_TYPE -> new XmlConfigurationWriter(writer, prettyPrint, clearTextSecrets);
+            case MediaType.APPLICATION_YAML_TYPE -> new YamlConfigurationWriter(writer, clearTextSecrets);
+            case MediaType.APPLICATION_JSON_TYPE -> new JsonConfigurationWriter(writer, prettyPrint, clearTextSecrets);
+            default -> throw new IllegalArgumentException(type.toString());
+         };
       }
    }
 

@@ -16,7 +16,6 @@ import org.infinispan.commons.dataconversion.internal.Json;
  * @since 12.1
  **/
 public class JsonConfigurationWriter extends AbstractConfigurationWriter {
-   private boolean attributes;
    private boolean openTag;
    private final Deque<Json> json;
 
@@ -56,7 +55,6 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
       }
       json.push(object);
       openTag = true;
-      attributes = false;
    }
 
    @Override
@@ -80,7 +78,6 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
       Json array = Json.array();
       json.peek().set(name, array);
       json.push(array);
-      attributes = false;
    }
 
    @Override
@@ -96,7 +93,6 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
       json.peek().set(name, array);
       json.push(array);
       openTag = true;
-      attributes = false;
    }
 
    @Override
@@ -152,7 +148,6 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
    }
 
    private Json attributeParent() {
-      attributes = true;
       Json parent = json.peek();
       if (parent.isArray()) { // Replace the array with an object
          json.pop();
@@ -183,7 +178,16 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
 
    @Override
    public void writeCharacters(String chars) {
-      //json.peek().add(chars);
+      Tag tag = tagStack.peek();
+      Json parent = json.peek();
+      if (openTag && parent.isObject()) {
+         json.pop();
+         parent = json.peek();
+         parent.set(tag.getName(), chars);
+         json.push(parent);
+      } else {
+         throw new IllegalStateException();
+      }
    }
 
    @Override

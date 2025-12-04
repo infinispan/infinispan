@@ -34,9 +34,11 @@ import java.util.stream.Collectors;
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestHeaders;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.time.ControlledTimeService;
@@ -286,7 +288,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testConfigListener() throws InterruptedException, IOException {
       SSEListener sseListener = new SSEListener();
-      try (Closeable ignored = adminClient.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Collections.emptyMap(), sseListener)) {
+      try (Closeable ignored = adminClient.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Map.of(RestHeaders.ACCEPT, MediaType.APPLICATION_JSON_TYPE), sseListener)) {
          assertTrue(sseListener.await(10, TimeUnit.SECONDS));
 
          // Assert that all the existing caches and templates have a corresponding event
@@ -316,6 +318,23 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
          // Assert that deletions create an event
          assertThat(client.cache("listen1").delete()).isOk();
          sseListener.expectEvent("remove-cache", "listen1");
+
+         // Create a schema
+         assertThat(client.schemas().put("address.proto", """
+               message Address {
+                   string street = 1;
+               }
+               """)).isOk();
+         sseListener.expectEvent("create-schema", "{\"schema\":{\"name\":\"address.proto\",\"errors\":\"\",\"proto\":\"message Address {\\n    string street = 1;\\n}\\n\"}}");
+         assertThat(client.schemas().put("address.proto", """
+               message Address {
+                   string street = 1;
+                   string city = 2;
+               }
+               """)).isOk();
+         sseListener.expectEvent("update-schema", "{\"schema\":{\"name\":\"address.proto\",\"errors\":\"\",\"proto\":\"message Address {\\n    string street = 1;\\n    string city = 2;\\n}\\n\"}}");
+         assertThat(client.schemas().delete("address.proto")).isOk();
+         sseListener.expectEvent("remove-schema", "address.proto");
       }
    }
 
