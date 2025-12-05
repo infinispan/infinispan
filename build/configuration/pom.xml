@@ -74,7 +74,7 @@
       <version.bouncycastle>1.70</version.bouncycastle>
       <version.byteman>4.0.26</version.byteman>
       <version.caffeine>3.2.3</version.caffeine>
-      <version.checker-qual>3.52.0</version.checker-qual>
+      <version.checker-qual>3.52.1</version.checker-qual>
       <version.commons.compress>1.28.0</version.commons.compress>
       <version.console>${versionx.org.infinispan.infinispan-console}</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
