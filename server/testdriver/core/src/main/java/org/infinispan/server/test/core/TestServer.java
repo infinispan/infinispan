@@ -9,6 +9,8 @@ import java.util.function.Consumer;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.openapi.OpenAPIClient;
+import org.infinispan.client.openapi.configuration.OpenAPIClientConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
@@ -106,6 +108,17 @@ public class TestServer {
       return RestClient.forConfiguration(builder.build());
    }
 
+   public OpenAPIClient newOpenAPIClient(OpenAPIClientConfigurationBuilder builder, int port) {
+      // Add all known server addresses, unless there are some already
+      if (builder.servers().isEmpty()) {
+         for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
+            InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
+            builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
+         }
+      }
+      return OpenAPIClient.forConfiguration(builder.build());
+   }
+
    public CloseableMemcachedClient newMemcachedClient(ConnectionFactoryBuilder builder) {
       return newMemcachedClient(builder, getDefaultPortNumber());
    }
@@ -134,22 +147,13 @@ public class TestServer {
       return configuration.isDefaultFile() && configuration.runMode() == ServerRunMode.CONTAINER;
    }
 
-   public static class CloseableMemcachedClient implements Closeable {
-      final MemcachedClient client;
-
-      public CloseableMemcachedClient(MemcachedClient client) {
-         this.client = client;
-      }
-
-      public MemcachedClient getClient() {
-         return client;
-      }
+   public record CloseableMemcachedClient(MemcachedClient client) implements Closeable {
 
       @Override
-      public void close() {
-         client.shutdown();
+         public void close() {
+            client.shutdown();
+         }
       }
-   }
 
    /**
     * Create a new REST client to connect to the server
@@ -163,6 +167,20 @@ public class TestServer {
       InetSocketAddress serverAddress = getDriver().getServerSocket(n, port);
       builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
       return RestClient.forConfiguration(builder.build());
+   }
+
+   /**
+    * Create a new OpenAPI client to connect to the server
+    *
+    * @param builder client configuration
+    * @param n the server number
+    *
+    * @return a client configured against the nth server
+    */
+   public OpenAPIClient newOpenAPIClientForServer(OpenAPIClientConfigurationBuilder builder, int port, int n) {
+      InetSocketAddress serverAddress = getDriver().getServerSocket(n, port);
+      builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
+      return OpenAPIClient.forConfiguration(builder.build());
    }
 
    public void add(Consumer<File> enhancer) {

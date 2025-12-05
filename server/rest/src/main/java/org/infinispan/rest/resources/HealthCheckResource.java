@@ -27,7 +27,7 @@ public class HealthCheckResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("health", "Health")
 
             .invocation().methods(GET, HEAD).anonymous(true).path("/health/live").requireCacheManagerStart(false)
             .handleWith(this::notifyServerRunning)
