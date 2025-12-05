@@ -13,10 +13,12 @@ on:
   pull_request:
     branches:
       - 14.0.x
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     steps:
       # Checkout the repository code
       - name: Checkout code
@@ -50,19 +52,46 @@ jobs:
         run: |
             CLIENTS=$(find client -maxdepth 2 -name pom.xml -exec dirname {} \; | paste -sd ',' -)
             ./mvnw verify -V -B -e -DrerunFailingTestsCount=2 \
-            -Dmaven.test.failure.ignore=true -Dansi.strip=true \
+            -fae -Dansi.strip=true \
             -pl core,$CLIENTS \
             -Dgithub.action=true
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/*-reports*/**/TEST-*.xml'
+          if-no-files-found: warn
+        if: always()
 
       # Publish test results as a GitHub check
       # This runs regardless of whether tests pass or fail
       # Excludes any files marked as FLAKY from the report
-      - name: Publish Clients Test Report
-        if: (success() || failure())
-        uses: ScaCap/action-surefire-report@v1.9.1
+      - name: Publish Client Test Report
+        uses: ctrf-io/github-test-reporter@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
         with:
-            check_name: Clients Test Report Result
-            ignore_flaky_tests: true
-            report_paths: |
-              **/*-reports*/**/TEST-*.xml
-              !**/*FLAKY*.xml
+          summary-delta-report: ${{ env.IS_FORK_PR }}
+          failed-folded-report: ${{ env.IS_FORK_PR }}
+          slowest-report: ${{ env.IS_FORK_PR != 'true' }}
+          previous-results-report: ${{ env.IS_FORK_PR != 'true' }}
+          write-ctrf-to-file: './ctrf-reports/ctrf-report.json'
+          report-path: '**/*-reports*/**/TEST-*.xml'
+          integrations-config: |
+            {
+              "junit-to-ctrf": {
+                "enabled": true,
+                "action": "convert",
+                "options": {
+                  "output": "./ctrf-reports/ctrf-report.json",
+                  "toolname": "junit-to-ctrf",
+                  "useSuiteName": false,
+                  "env": {
+                    "appName": "my-app"
+                  }
+                }
+              }
+            }
+        if: always()
