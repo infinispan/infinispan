@@ -819,6 +819,7 @@ public class Parser extends CacheParser {
                throw ParseUtils.unexpectedElement(reader);
             }
          }
+         ParseUtils.requireNoContent(reader);
       }
    }
 
