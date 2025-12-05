@@ -50,7 +50,7 @@ jobs:
         run: |
             CLIENTS=$(find client -maxdepth 2 -name pom.xml -exec dirname {} \; | paste -sd ',' -)
             ./mvnw verify -V -B -e -DrerunFailingTestsCount=2 \
-            -Dmaven.test.failure.ignore=true -Dansi.strip=true \
+            -fae -Dansi.strip=true \
             -pl core,$CLIENTS \
             -Dgithub.action=true
 
@@ -66,3 +66,4 @@ jobs:
             report_paths: |
               **/*-reports*/**/TEST-*.xml
               !**/*FLAKY*.xml
+            create_check: false
