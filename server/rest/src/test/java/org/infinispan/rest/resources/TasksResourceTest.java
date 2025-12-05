@@ -2,7 +2,7 @@ package org.infinispan.rest.resources;
 
 import static java.util.Collections.singletonMap;
 import static org.infinispan.client.rest.RestTaskClient.ResultType.ALL;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JAVASCRIPT;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_JAVASCRIPT;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -93,7 +93,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
       RestTaskClient taskClient = client.tasks();
 
       String script = getResourceAsString("hello.js", getClass().getClassLoader());
-      RestEntity scriptEntity = RestEntity.create(APPLICATION_JAVASCRIPT, script);
+      RestEntity scriptEntity = RestEntity.create(TEXT_JAVASCRIPT, script);
 
       CompletionStage<RestResponse> response = taskClient.uploadScript("hello", scriptEntity);
       ResponseAssertion.assertThat(response).isOk();

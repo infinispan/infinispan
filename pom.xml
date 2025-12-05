@@ -75,6 +75,7 @@
       <module>server/tests</module>
       <module>server/rollingupgradetests</module>
       <module>client/rest-client</module>
+      <module>client/openapi-client</module>
       <module>client/hotrod-client</module>
       <module>client/hotrod-client-test</module>
       <module>client/infinispan-key-value-store-hotrod</module>
@@ -223,6 +224,7 @@
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
       <versionx.org.mariadb.jdbc>3.5.6</versionx.org.mariadb.jdbc>
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
+      <versionx.org.openapitools>7.15.0</versionx.org.openapitools>
       <versionx.org.postgresql>42.7.8</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>1.21.3</versionx.org.testcontainers.testcontainers>
       <!-- Test dependency. Only update if testcontainer dependency > 1.17.6 with newer docker-java version is available in GraalVM metadata repository -->
@@ -2270,6 +2272,11 @@
                <version>${version.maven.project-info-reports}</version>
             </plugin>
             <plugin>
+               <groupId>org.openapitools</groupId>
+               <artifactId>openapi-generator-maven-plugin</artifactId>
+               <version>${versionx.org.openapitools}</version>
+            </plugin>
+            <plugin>
                <groupId>org.springframework.boot</groupId>
                <artifactId>spring-boot-maven-plugin</artifactId>
                <version>${version.spring.boot}</version>
@@ -2713,6 +2720,50 @@
 
       <!-- Only one of the root-dirX profiles will be active, and it will set infinispan.root to $REACTOR_ROOT -->
       <profile>
+         <id>root-dir4</id>
+         <activation>
+            <file>
+               <exists>${basedir}/../../../../maven-settings.xml</exists>
+            </file>
+         </activation>
+         <properties>
+            <infinispan.root>${basedir}/../../../..</infinispan.root>
+         </properties>
+      </profile>
+      <profile>
+         <id>root-dir3</id>
+         <activation>
+            <file>
+               <exists>${basedir}/../../../maven-settings.xml</exists>
+            </file>
+         </activation>
+         <properties>
+            <infinispan.root>${basedir}/../../..</infinispan.root>
+         </properties>
+      </profile>
+      <profile>
+         <id>root-dir2</id>
+         <activation>
+            <file>
+               <exists>${basedir}/../../maven-settings.xml</exists>
+            </file>
+         </activation>
+         <properties>
+            <infinispan.root>${basedir}/../..</infinispan.root>
+         </properties>
+      </profile>
+      <profile>
+         <id>root-dir1</id>
+         <activation>
+            <file>
+               <exists>${basedir}/../maven-settings.xml</exists>
+            </file>
+         </activation>
+         <properties>
+            <infinispan.root>${basedir}/..</infinispan.root>
+         </properties>
+      </profile>
+      <profile>
          <id>root-dir0</id>
          <activation>
             <file>
@@ -2746,50 +2797,6 @@
                </plugin>
             </plugins>
          </build>
-      </profile>
-      <profile>
-         <id>root-dir1</id>
-         <activation>
-            <file>
-               <exists>${basedir}/../maven-settings.xml</exists>
-            </file>
-         </activation>
-         <properties>
-            <infinispan.root>${basedir}/..</infinispan.root>
-         </properties>
-      </profile>
-      <profile>
-         <id>root-dir2</id>
-         <activation>
-            <file>
-               <exists>${basedir}/../../maven-settings.xml</exists>
-            </file>
-         </activation>
-         <properties>
-            <infinispan.root>${basedir}/../..</infinispan.root>
-         </properties>
-      </profile>
-      <profile>
-         <id>root-dir3</id>
-         <activation>
-            <file>
-               <exists>${basedir}/../../../maven-settings.xml</exists>
-            </file>
-         </activation>
-         <properties>
-            <infinispan.root>${basedir}/../../..</infinispan.root>
-         </properties>
-      </profile>
-      <profile>
-         <id>root-dir4</id>
-         <activation>
-            <file>
-               <exists>${basedir}/../../../../maven-settings.xml</exists>
-            </file>
-         </activation>
-         <properties>
-            <infinispan.root>${basedir}/../../../..</infinispan.root>
-         </properties>
       </profile>
       <profile>
          <id>nonParallel</id>
