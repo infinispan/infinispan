@@ -9,6 +9,9 @@ on:
 jobs:
   nightly-build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     steps:
       - name: Get latest Infinispan Server version
         id: get-latest-server-ver
@@ -37,18 +40,18 @@ jobs:
       - name: Maven Install (skip tests)
         run: ./mvnw install -DskipTests -B
 
-      - name: Replace configuration folder from 15.2.x
+      - name: Replace configuration folder from 16.0.x
         run: |
           rm -rf server/tests/src/test/resources/configuration
-          git fetch origin 15.2.x
-          git checkout origin/15.2.x -- server/tests/src/test/resources/configuration
-          git checkout origin/15.2.x -- server/tests/src/test/resources/jgroups_metrics.txt
+          git fetch origin 16.0.x
+          git checkout origin/16.0.x -- server/tests/src/test/resources/configuration
+          git checkout origin/16.0.x -- server/tests/src/test/resources/jgroups_metrics.txt
 
       - name: Maven Verify (server/tests)
         run: |
             ./mvnw clean verify \
             -V -B -e -DrerunFailingTestsCount=2 \
-            -Dmaven.test.failure.ignore=true -Dansi.strip=true \
+            -fae -Dansi.strip=true \
             -pl server/tests -DdefaultExcludedJUnitGroups=embeddedserver,cli \
             -Dorg.infinispan.test.server.dir=${{ github.workspace }}/infinispan-server-${ISPN_SERVER_VER}/ \
             -Dorg.infinispan.test.server.container.newerThan14=true \
@@ -56,19 +59,47 @@ jobs:
             com.ibm.db2:jcc:12.1.2.0,com.microsoft.sqlserver:mssql-jdbc:12.10.1.jre11
         # Get GitHub App token to use in API calls
 
-      - uses: actions/create-github-app-token@v2
-        if: success() || failure()
-        id: app-token
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
         with:
-          # required
-          app-id: ${{ secrets.GH_APP_ISPN_ID }}
-          private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+          name: test-reports
+          path: '**/*-reports*/**/TEST-*.xml'
+          if-no-files-found: warn
+        if: always()
+
+      - name: Upload server test logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-test-logs
+          path: server/tests/**/*.log
+          if-no-files-found: warn
+        if: always()
+
       - name: Publish Test Report
-        if: success() || failure()
-        # Waiting for https://github.com/ScaCap/action-surefire-report/pull/251
-        uses: rigazilla/action-surefire-report@summary
+        uses: ctrf-io/github-test-reporter@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
         with:
-            report_paths: '**/target/*-reports/TEST-*.xml'
-            github_token: ${{ steps.app-token.outputs.token }}
-            check_name: 'Cross-compatibility Test Report'
-            summary: "Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          summary-delta-report: ${{ env.IS_FORK_PR }}
+          failed-folded-report: ${{ env.IS_FORK_PR }}
+          slowest-report: ${{ env.IS_FORK_PR != 'true' }}
+          previous-results-report: ${{ env.IS_FORK_PR != 'true' }}
+          report-path: '**/*-reports*/**/TEST-*.xml'
+          write-ctrf-to-file: './ctrf-reports/ctrf-report.json'
+          integrations-config: |
+            {
+              "junit-to-ctrf": {
+                "enabled": true,
+                "action": "convert",
+                "options": {
+                  "output": "./ctrf-reports/ctrf-report.json",
+                  "toolname": "junit-to-ctrf",
+                  "useSuiteName": false,
+                  "env": {
+                    "appName": "my-app"
+                  }
+                }
+              }
+            }
+        if: always()
