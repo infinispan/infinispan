@@ -3,7 +3,7 @@
                  xmlns="urn:infinispan:config:16.1"
                  name="default" statistics="true">
    <eviction-containers>
-      <max-size-container name="size-container" size="10MB"/>
+      <max-size-container name="size-container" size="2KB"/>
       <max-count-container name="count-container" count="10"/>
    </eviction-containers>
    <serialization>

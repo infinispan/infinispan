@@ -2,6 +2,7 @@ package org.infinispan.server.functional.hotrod;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -44,5 +45,37 @@ public class HotRodCacheContainerEvictionIT {
 
       int secondSize = second.size();
       assertEquals(10, firstSize + secondSize);
+   }
+
+   @Test
+   public void testSharedEvictionSize() {
+      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+      configurationBuilder.memory().evictionContainer("size-container");
+      RemoteCache<String, String> first = SERVERS.hotrod().withServerConfiguration(configurationBuilder).create("third-cache");
+      RemoteCache<String, String> second = SERVERS.hotrod().withServerConfiguration(configurationBuilder).create("fourth-cache");
+
+      int size = 0;
+      for (; size < 10; ++size) {
+         first.put("key-" + size, "value-" + size);
+      }
+
+      int failSafeInsert = 100;
+
+      while (size == first.size()) {
+         first.put("key-" + size, "value-" + size);
+         if (failSafeInsert == size) {
+            fail("No eviction encountered after " + failSafeInsert + " inserts!");
+         }
+         size++;
+      }
+
+      int finalSize = first.size();
+
+      for (int i = 0; i < 3; ++i) {
+         second.put("key-" + i, "value-" + i);
+      }
+
+      // The writes to the second cache should cause the first to evict something
+      assertNotEquals(finalSize, first.size());
    }
 }
