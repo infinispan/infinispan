@@ -100,4 +100,24 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    public StateTransferConfiguration stateTransfer() {
       return stateTransferConfiguration;
    }
+
+   @Override
+   public boolean matches(ClusteringConfiguration other) {
+      if (this.cacheMode == CacheMode.LOCAL) {
+         return other.cacheMode == CacheMode.LOCAL;
+      }
+
+      if (!attributes.matches(other.attributes)) return false;
+      if (children.length != other.children.length) return false;
+      for (int i = 0; i < children.length; i++) {
+         ConfigurationElement ours = children[i];
+         ConfigurationElement theirs = other.children[i];
+
+         // Hash configuration does not matter for replicated caches.
+         if (ours == hashConfiguration && cacheMode().isReplicated()) continue;
+
+         if (!ours.matches(theirs)) return false;
+      }
+      return true;
+   }
 }

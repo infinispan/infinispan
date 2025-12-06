@@ -50,6 +50,8 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
             getBuilder().transaction().attributes.attribute(TRANSACTION_MODE);
       if (!transactionModeAttribute.isModified()) {
          getBuilder().transaction().transactionMode(TRANSACTIONAL);
+         getBuilder().transaction().useSynchronization(true);
+         getBuilder().transaction().recovery().enabled(false);
       }
    }
 
