@@ -85,11 +85,11 @@ RUN rm -rf \
 ADD src/main/docker/install-server.sh /tmp/
 RUN /tmp/install-server.sh ${NEWROOT} ${WORKDIR}
 ADD src/main/docker/launch.sh ${NEWROOT}${WORKDIR}/bin/
-# Build the AOT cache using a fixed memory configuration
+# Build the AOT cache using a fixed memory configuration. This will work for heaps < 32GB
 ENV JAVA_HOME=${NEWROOT}/usr/lib/jvm/default-java
 ENV JAVA_OPTS="-XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Xms64m -Xmx512m"
 # Temporarily disabled
-#RUN ${NEWROOT}/${WORKDIR}/bin/server.sh --aot || true
+RUN ${NEWROOT}/${WORKDIR}/bin/server.sh --aot || true
 ADD src/main/docker/bashrc ${NEWROOT}/${WORKDIR}/.bashrc
 RUN chown -R 65532:0 ${NEWROOT}/${WORKDIR}
 # Backwards compatibility
