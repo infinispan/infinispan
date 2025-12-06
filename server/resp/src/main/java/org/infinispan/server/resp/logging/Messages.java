@@ -15,4 +15,6 @@ public interface Messages {
    @Message(value = "NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time")
    String noAuthHello();
 
+   @Message(value = "Lua engine is not active")
+   String scriptEngineDisabled();
 }
