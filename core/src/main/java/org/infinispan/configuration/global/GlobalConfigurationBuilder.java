@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
@@ -206,6 +207,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    public GlobalConfigurationBuilder defaultCacheName(String defaultCacheName) {
       cacheContainerConfiguration.defaultCache(defaultCacheName);
       return this;
+   }
+
+   @Override
+   public GlobalConfigurationBuilder containerMemoryConfiguration(String namedMemoryConfig, Consumer<? super ContainerMemoryConfigurationBuilder> consumer) {
+      return cacheContainerConfiguration.containerMemoryConfiguration(namedMemoryConfig, consumer);
    }
 
    public Optional<String> defaultCacheName() {
