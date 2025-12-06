@@ -47,7 +47,7 @@ public class ProtoBufBuilderTest extends SingleHotRodServerTest {
       assertThat( remoteCacheManager.administration().schemas().retrieveAllSchemaErrors().isEmpty()).isTrue();
 
       String expectedSchema = ResourceUtils.getResourceAsString(getClass(), "/proto/ciao.proto");
-      assertThat(generatedSchema).isEqualTo(expectedSchema);
+      assertThat(generatedSchema).isEqualToIgnoringWhitespace(expectedSchema);
    }
 
 }

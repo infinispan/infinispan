@@ -6,7 +6,7 @@ Protobuf schema can include keys within values, as in the following example:
 .Protobuf schema with an embedded key
 [source,protobuf,options="nowrap",subs=attributes+]
 ----
-include::protobuf/books_embedded_keys.protobuf[]
+include::protobuf/books_embedded_keys.proto[]
 ----
 
 To use embedded keys, you must include the `embedded-key="true"` attribute or `embeddedKey(true)` method in your SQL store configuration.
