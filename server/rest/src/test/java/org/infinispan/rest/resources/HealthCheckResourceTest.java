@@ -25,6 +25,7 @@ import org.infinispan.security.Security;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @CleanupAfterMethod
@@ -73,6 +74,12 @@ public class HealthCheckResourceTest extends AbstractRestResourceTest {
    protected void createCacheManagers() throws Exception {
       Util.recursiveFileRemove(PERSISTENT_LOCATION);
       super.createCacheManagers();
+   }
+
+   @BeforeMethod(alwaysRun = true)
+   @Override
+   public void beforeMethod() {
+      super.beforeMethod();
       restServerClient = client.server();
    }
 
