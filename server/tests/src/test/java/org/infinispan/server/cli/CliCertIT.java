@@ -52,7 +52,7 @@ public class CliCertIT {
    public void cliClientCert() {
       InfinispanServerDriver driver = SERVERS.getServerDriver();
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{
+         CLI.main(new AeshDelegatingShell(terminal), properties,
                "-t",
                driver.getCertificateFile("ca.pfx").getAbsolutePath(),
                "-s",
@@ -64,8 +64,7 @@ public class CliCertIT {
                "--hostname-verifier",
                ".*",
                "-c",
-               "https://" + hostAddress() + ":11222"
-         }, properties);
+               "https://" + hostAddress() + ":11222");
          terminal.assertContains("//containers/default]>");
          terminal.clear();
       }
@@ -75,7 +74,7 @@ public class CliCertIT {
    public void connectClientCert() {
       InfinispanServerDriver driver = SERVERS.getServerDriver();
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), properties);
          terminal.assertContains("[disconnected]");
          terminal.send(String.format("connect -t %s -s %s -k %s -w %s --hostname-verifier=.* https://%s:11222",
                driver.getCertificateFile("ca.pfx").getAbsolutePath(),

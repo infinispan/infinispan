@@ -30,6 +30,8 @@ Configure the CLI with the `autoconnect-url` property instead of using the `conn
 bin/cli.sh -f batch
 ----
 
+It is possible to specify the `-f <file>` argument multiple times.
+
 [NOTE]
 ====
 CLI batch files support system property expansion. Strings that use the

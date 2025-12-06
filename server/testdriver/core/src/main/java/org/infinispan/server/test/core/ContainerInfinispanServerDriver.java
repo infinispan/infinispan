@@ -302,7 +302,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                      .withStatement(new RawStatement("COPY", "--chown=" + IMAGE_USER + ":" + IMAGE_USER + " tmp " + INFINISPAN_SERVER_HOME))
                      .withStatement(new RawStatement("COPY", "--chown=" + IMAGE_USER + ":" + IMAGE_USER + " lib " + serverPathFrom("lib")))
                      .workDir(INFINISPAN_SERVER_HOME)
-                     .entryPoint(args.toArray(new String[]{}))
+                     .entryPoint(args.toArray(Util.EMPTY_STRING_ARRAY))
                      .expose(
                            EXPOSED_PORTS
                      )

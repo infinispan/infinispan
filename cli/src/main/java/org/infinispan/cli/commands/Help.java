@@ -21,7 +21,6 @@ import org.aesh.command.shell.Shell;
 import org.aesh.readline.terminal.formatting.TerminalString;
 import org.aesh.readline.util.Parser;
 import org.aesh.terminal.utils.ANSI;
-import org.aesh.terminal.utils.Config;
 import org.infinispan.cli.completers.HelpCompleter;
 import org.infinispan.cli.impl.CliManProvider;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
@@ -32,7 +31,7 @@ import org.kohsuke.MetaInfServices;
 public class Help extends AeshFileDisplayer {
 
    @Arguments(completer = HelpCompleter.class)
-   private final List<String> manPages;
+   private List<String> manPages;
 
    private final ManFileParser fileParser;
    private final ManProvider manProvider;
@@ -58,10 +57,10 @@ public class Help extends AeshFileDisplayer {
          clearBottomLine();
          writeToConsole(ANSI.INVERT_BACKGROUND + "Pattern not found (press RETURN)" + ANSI.DEFAULT_TEXT);
       } else if (getSearchStatus() == TerminalPage.Search.NO_SEARCH ||
-            getSearchStatus() == TerminalPage.Search.RESULT) {
+         getSearchStatus() == TerminalPage.Search.RESULT) {
          writeToConsole(ANSI.INVERT_BACKGROUND);
          writeToConsole("Manual page " + fileParser.getName() + " line " + getTopVisibleRow() +
-               " (press h for help or q to quit)" + ANSI.DEFAULT_TEXT);
+            " (press h for help or q to quit)" + ANSI.DEFAULT_TEXT);
       }
    }
 
@@ -71,16 +70,11 @@ public class Help extends AeshFileDisplayer {
       if (manPages == null || manPages.isEmpty()) {
          shell.writeln("Call `help <command>` where command is one of:");
          List<TerminalString> commandNames = ((ContextAwareCommandInvocation) commandInvocation).getContext().getRegistry()
-               .getAllCommandNames().stream().map(n -> new TerminalString(n)).collect(Collectors.toList());
+            .getAllCommandNames().stream().map(TerminalString::new).toList();
          //then we print out the completions
          shell.write(Parser.formatDisplayListTerminalString(commandNames, shell.size().getHeight(), shell.size().getWidth()));
          //then on the next line we write the line again
          shell.writeln("");
-         return CommandResult.SUCCESS;
-      }
-
-      if (manPages.size() <= 0) {
-         shell.write("No manual entry for " + manPages.get(0) + Config.getLineSeparator());
          return CommandResult.SUCCESS;
       }
 
