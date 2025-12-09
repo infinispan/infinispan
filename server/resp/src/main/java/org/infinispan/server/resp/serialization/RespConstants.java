@@ -18,4 +18,6 @@ public interface RespConstants {
    byte[] CRLF = CRLF_STRING.getBytes(StandardCharsets.US_ASCII);
    String OK = "OK";
    String QUEUED_REPLY = "QUEUED";
+   String TRUE = "true";
+   String FALSE = "false";
 }
