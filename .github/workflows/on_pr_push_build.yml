@@ -67,3 +67,4 @@ jobs:
               **/*-reports*/**/TEST-*.xml
               !**/*FLAKY*.xml
             create_check: false
+            skip_publishing: true
