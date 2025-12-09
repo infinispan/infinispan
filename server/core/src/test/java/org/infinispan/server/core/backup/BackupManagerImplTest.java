@@ -426,15 +426,22 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
 
    private Map<String, DefaultCacheManager> createManagerMap(String... containers) {
       return Arrays.stream(containers)
-            .collect(Collectors.toMap(Function.identity(), name -> createManager()));
+            .collect(Collectors.toMap(Function.identity(), this::createManager));
    }
 
    private DefaultCacheManager createManager() {
+      return createManager(UUID.randomUUID().toString());
+   }
+
+   private DefaultCacheManager createManager(String name) {
+      Path path = workingDir.toPath().resolve(name);
+      Util.recursiveFileRemove(path);
+      path.toFile().mkdir();
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.cacheManagerName("default")
             .globalState().enable()
             .configurationStorage(ConfigurationStorage.OVERLAY)
-            .persistentLocation(workingDir.getAbsolutePath());
+            .persistentLocation(path.toFile().getAbsolutePath());
       return (DefaultCacheManager) TestCacheManagerFactory.newDefaultCacheManager(true, gcb, null);
    }
 
