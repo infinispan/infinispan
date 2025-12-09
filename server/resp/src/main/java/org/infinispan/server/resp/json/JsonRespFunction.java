@@ -54,7 +54,7 @@ public class JsonRespFunction implements SerializableFunction<ReadWriteEntryView
     private Object resp(JsonNode jsonNode) {
         if (jsonNode.isArray()) {
             ArrayList<Object> arr = new ArrayList<>();
-            arr.add("[");
+            arr.add('[');
             for (JsonNode jsonNode2 : ((ArrayNode) jsonNode)) {
                 arr.add(resp(jsonNode2));
             }
@@ -62,7 +62,7 @@ public class JsonRespFunction implements SerializableFunction<ReadWriteEntryView
         }
         if (jsonNode.isObject()) {
             ArrayList<Object> obj = new ArrayList<>();
-            obj.add("{");
+            obj.add('{');
             jsonNode.fields().forEachRemaining(entry -> {
                 obj.add(entry.getKey());
                 obj.add(resp(entry.getValue()));

@@ -81,12 +81,16 @@ public class JSONRESP extends RespCommand implements Resp3Command {
             writer.doubles(d);
             return;
          }
+         if (object instanceof Character c) {
+            writer.simpleString(c.toString());
+            return;
+         }
          if (object instanceof String s) {
             writer.string(s);
             return;
          }
          if (object instanceof Boolean b) {
-            writer.booleans(b);
+            writer.simpleString(b ? RespConstants.TRUE : RespConstants.FALSE);
             return;
          }
          if (object instanceof List<?> list) {
