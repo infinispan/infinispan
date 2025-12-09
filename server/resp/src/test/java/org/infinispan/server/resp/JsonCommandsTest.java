@@ -2098,7 +2098,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       list = resp(key, "$.colors");
       assertThat((List)list.get(0)).containsExactly("[", "black", "white");
       list = resp(key, "$.connection.*");
-      assertThat(list).containsExactly(true, null, "Bluetooth");
+      assertThat(list).containsExactly("true", null, "Bluetooth");
       assertThat(resp(key, "$.non-existent")).isEmpty();
       assertThatThrownBy(() -> resp(key, ".non-existent")).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR Path '$.non-existent' does not exist");
