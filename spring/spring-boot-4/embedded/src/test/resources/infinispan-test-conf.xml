@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:infinispan:config:16.0 http://infinispan.org/schemas/infinispan-config-16.0.xsd"
+            xmlns="urn:infinispan:config:16.0">
+
+    <cache-container default-cache="default-local" statistics="true">
+        <jmx domain="properties.test.spring.infinispan" />
+        <local-cache name="default-local" simple-cache="false">
+            <memory max-count="2000"/>
+        </local-cache>
+    </cache-container>
+</infinispan>

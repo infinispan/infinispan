@@ -6,20 +6,23 @@ If you use remote caches in a {brandname} Server deployment, you should also con
 
 [IMPORTANT]
 ====
-{brandname} only supports Spring version version 6.
+{brandname} supports Spring version version 6 and version 7.
 ====
 
 .Procedure
 . Add {brandname} and the Spring integration module to your `pom.xml`.
 +
-* Remote caches: `infinispan-spring6-remote`
-* Embedded caches: `infinispan-spring6-embedded`
+* Spring 6 Remote caches: `infinispan-spring6-remote`
+* Spring 7 Remote caches: `infinispan-spring7-remote`
+* Spring 6 Embedded caches: `infinispan-spring6-embedded`
+* Spring 7 Embedded caches: `infinispan-spring7-embedded`
 +
 [TIP]
 ====
-Spring Boot users can add the following artifacts instead of the `infinispan-spring6-embedded`:
+Spring Boot users can add the following artifacts instead of the `infinispan-spring6-embedded` or `infinispan-spring7-embedded`:
 
-* For Spring Boot 3 add `infinispan-spring-boot3-starter-embedded`
+* For Spring Boot 3.x add `infinispan-spring-boot3-starter-embedded`
+* For Spring Boot 4.x add `infinispan-spring-boot4-starter-embedded`
 ====
 . Configure your Hot Rod client to connect to your {brandname} Server deployment in the `hotrod-client.properties` file.
 +
@@ -31,16 +34,28 @@ include::properties/hotrod-client-remote.properties[]
 [discrete]
 == Spring Cache dependencies
 
-.Remote caches
+.Remote caches Spring 6
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::dependencies_maven/spring_cache_remote.xml[]
+include::dependencies_maven/spring6_cache_remote.xml[]
 ----
 
-.Embedded caches
+.Remote caches Spring 7
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::dependencies_maven/spring7_cache_remote.xml[]
+----
+
+.Embedded caches Spring 6
 [source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::dependencies_maven/spring_cache_embedded.xml[]
+include::dependencies_maven/spring6_cache_embedded.xml[]
+----
+
+.Embedded caches Spring 7
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::dependencies_maven/spring7_cache_embedded.xml[]
 ----
 
 [role="_additional-resources"]

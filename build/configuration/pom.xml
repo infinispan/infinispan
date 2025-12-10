@@ -121,6 +121,7 @@
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
       <version.junit5>5.14.1</version.junit5>
+      <version.junit6>6.0.0</version.junit6>
       <version.log4j>2.25.2</version.log4j>
       <!-- version.lucene is defined in the lucene profiles below -->
       <version.metainf-services>1.11</version.metainf-services>
@@ -156,10 +157,19 @@
       <version.opentelemetry.alpha>1.39.0-alpha</version.opentelemetry.alpha>
 
       <version.smallrye-mutiny>2.9.5</version.smallrye-mutiny>
+
+      <!-- Default versions Spring and Spring Boot-->
+      <version.spring>${version.spring6}</version.spring>
+      <version.spring.boot>${version.spring.boot3}</version.spring.boot>
+      <version.spring.session>${version.spring.session3}</version.spring.session>
       <!-- Spring 6, Spring Boot 3 versions -->
-      <version.spring>6.2.14</version.spring>
-      <version.spring.boot>3.5.8</version.spring.boot>
-      <version.spring.session>3.5.3</version.spring.session>
+      <version.spring6>6.2.14</version.spring6>
+      <version.spring.boot3>3.5.8</version.spring.boot3>
+      <version.spring.session3>3.5.3</version.spring.session3>
+      <!-- Spring 7, Spring Boot 4 versions -->
+      <version.spring7>7.0.1</version.spring7>
+      <version.spring.boot4>4.0.0</version.spring.boot4>
+      <version.spring.session4>4.0.0</version.spring.session4>
 
       <version.xstream>1.4.21</version.xstream>
 
