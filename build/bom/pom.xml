@@ -278,32 +278,22 @@
             <artifactId>infinispan-server-runtime</artifactId>
             <version>${project.version}</version>
          </dependency>
-
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-runtime</artifactId>
             <version>${project.version}</version>
             <classifier>loader</classifier>
          </dependency>
-
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>testcontainers-infinispan</artifactId>
             <version>${project.version}</version>
          </dependency>
-
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-testdriver-core</artifactId>
             <version>${project.version}</version>
          </dependency>
-
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-testdriver-junit4</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-testdriver-junit5</artifactId>

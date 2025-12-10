@@ -14,7 +14,6 @@
 
    <modules>
       <module>core</module>
-      <module>junit4</module>
       <module>junit5</module>
       <module>testcontainers</module>
    </modules>
