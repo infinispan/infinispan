@@ -1,0 +1,78 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-parent</artifactId>
+        <version>16.0.4-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>infinispan-spring-parent</artifactId>
+    <name>Infinispan Spring Support</name>
+    <packaging>pom</packaging>
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
+    </properties>
+    <description>
+        The Infinispan Spring Integration project provides Spring
+        integration for Infinispan, a high performance distributed cache.
+        Its primary features are
+
+        * An implementation of org.springframework.cache.CacheManager,
+        Spring's central caching abstraction, backed by Infinispan's
+        EmbeddedCacheManager. To be used if your Spring-powered
+        application and Infinispan are colocated, i.e. running within
+        the same VM.
+        * An implementation of org.springframework.cache.CacheManager
+        backed by Infinispan's RemoteCacheManager. To bes used if your
+        Spring-powered application accesses Infinispan remotely, i.e.
+        over the network.
+        * An implementation of org.springframework.cache.CacheManager
+        backed by a CacheContainer reference. To be used if your Spring-
+        powered application needs access to a CacheContainer defined
+        outside the application (e.g. retrieved from JNDI)
+        * Spring namespace support allowing shortcut definitions for all the
+        components above
+
+        In addition, Infinispan Spring Integration offers various FactoryBeans
+        for facilitating creation of Infinispan core classes - Cache, CacheManager,
+        ... - within a Spring context.
+    </description>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${version.junit6}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.transaction</groupId>
+                <artifactId>jakarta.transaction-api</artifactId>
+                <version>${version.jakarta.transaction}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>${version.jakarta.annotation-api}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <modules>
+        <module>common</module>
+        <module>embedded</module>
+        <module>remote</module>
+        <module>spring6</module>
+        <module>spring7</module>
+        <module>spring-boot-3</module>
+        <module>spring-boot-4</module>
+    </modules>
+</project>

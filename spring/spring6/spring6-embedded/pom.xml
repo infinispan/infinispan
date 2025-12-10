@@ -13,55 +13,29 @@
 
     <name>Infinispan Spring 6 Embedded support</name>
 
-    <properties>
-        <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
-        <java.version>17</java.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-    </properties>
-
     <dependencies>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-embedded</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-embedded</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <scope>provided</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.session</groupId>
             <artifactId>spring-session-core</artifactId>
-            <scope>provided</scope>
+            <scope>test</scope>
         </dependency>
-       <dependency>
-          <groupId>org.infinispan</groupId>
-          <artifactId>infinispan-component-processor</artifactId>
-       </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring6-common</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>jakarta.annotation</groupId>
-            <artifactId>jakarta.annotation-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.transaction</groupId>
-            <artifactId>jakarta.transaction-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-tx</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.narayana.jta</groupId>
-            <artifactId>narayana-jta</artifactId>
-        </dependency>
-
-        <!-- Test dependencies -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
@@ -74,7 +48,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring6-common</artifactId>
+            <artifactId>infinispan-spring-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
@@ -97,18 +71,6 @@
                     <artifactId>infinispan-commons</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-hotrod</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-hotrod</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -151,56 +113,18 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <build>
-        <testResources>
-            <testResource>
-                <directory>${project.basedir}/src/test/resources</directory>
-                <filtering>true</filtering>
-            </testResource>
-        </testResources>
         <plugins>
-           <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-surefire-plugin</artifactId>
-              <configuration>
-                 <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
-                 <dependenciesToScan>
-                    <!-- TestNGSuiteChecksTest -->
-                    <dependency>org.infinispan:infinispan-commons-test</dependency>
-                 </dependenciesToScan>
-              </configuration>
-           </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
+                <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
+                    <dependenciesToScan>
+                        <dependency>org.infinispan:infinispan-spring-embedded</dependency>
+                    </dependenciesToScan>
                 </configuration>
             </plugin>
         </plugins>
     </build>
-
-   <profiles>
-      <profile>
-         <id>java-alt-test</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-        <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
-                     <skipTests>true</skipTests>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
-
 </project>
