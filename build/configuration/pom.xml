@@ -126,7 +126,7 @@
       <!-- version.lucene is defined in the lucene profiles below -->
       <version.metainf-services>1.11</version.metainf-services>
       <version.micrometer>1.16.1</version.micrometer>
-      <version.mockito>5.20.0</version.mockito>
+      <version.mockito>5.21.0</version.mockito>
       <version.nashorn>15.7</version.nashorn>
       <version.netty>4.1.128.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
