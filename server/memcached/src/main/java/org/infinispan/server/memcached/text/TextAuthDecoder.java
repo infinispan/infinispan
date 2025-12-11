@@ -18,6 +18,7 @@ import org.infinispan.server.memcached.MemcachedServer;
  **/
 public abstract class TextAuthDecoder extends TextDecoder {
    private static final CompletionStage<byte[]> FAILED_AUTH = CompletableFuture.failedFuture(new SecurityException("Wrong credentials"));
+   private static final CompletionStage<byte[]> FORBIDDEN = CompletableFuture.failedFuture(new SecurityException("Forbidden"));
 
    private final UsernamePasswordAuthenticator authenticator;
 
@@ -28,6 +29,10 @@ public abstract class TextAuthDecoder extends TextDecoder {
 
    protected final MemcachedResponse auth(TextHeader header, byte[] token) {
       return send(header, auth(token));
+   }
+
+   protected final MemcachedResponse forbidden(TextHeader header) {
+      return send(header, FORBIDDEN);
    }
 
    private CompletionStage<byte[]> auth(byte[] token) {

@@ -39,6 +39,7 @@ public class CliIT {
          InfinispanServerExtensionBuilder.config("configuration/AuthorizationImplicitTest.xml")
                .mavenArtifacts(Common.NASHORN_DEPS)
                .runMode(ServerRunMode.CONTAINER)
+               .numServers(1)
                .build();
 
    private static File workingDir;
