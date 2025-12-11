@@ -1,5 +1,9 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser.SASL_DIGEST;
+import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser.SASL_EXTERNAL;
+import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser.SASL_PLAIN;
+
 import java.util.List;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -81,14 +85,14 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
          writer.writeStartElement(Element.AUTHENTICATION);
          attributeSet.write(writer);
          switch (authentication.saslMechanism()) {
-            case "PLAIN": {
+            case SASL_PLAIN: {
                writer.writeStartElement(Element.AUTH_PLAIN);
                writer.writeAttribute(Attribute.USERNAME, authentication.username());
                writer.writeAttribute(Attribute.PASSWORD, new String(authentication.password()));
                writer.writeEndElement();
                break;
             }
-            case "DIGEST-MD5": {
+            case SASL_DIGEST: {
                writer.writeStartElement(Element.AUTH_DIGEST);
                writer.writeAttribute(Attribute.USERNAME, authentication.username());
                writer.writeAttribute(Attribute.PASSWORD, new String(authentication.password()));
@@ -96,7 +100,7 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
                writer.writeEndElement();
                break;
             }
-            case "EXTERNAL": {
+            case SASL_EXTERNAL: {
                writer.writeEmptyElement(Element.AUTH_EXTERNAL);
                break;
             }

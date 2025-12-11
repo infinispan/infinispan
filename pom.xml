@@ -122,7 +122,7 @@
         java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
           core externalizers for JDK types
         java.nio, jdk.internal.ref, jdk.internal.misc, sun.nio.ch: Netty, server/hotrod
-        com.sun.security.sasl: CRAM-MD5 mechanism, server/hotrod
+        com.sun.security.sasl: SASL mechanism, server/hotrod
         java.text: XStream, server/rest
         java.security: Wildfly, server/integration/*
       -->

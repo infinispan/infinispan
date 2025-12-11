@@ -107,4 +107,11 @@ public class RestResponseJDK<T> implements RestResponse {
    public boolean usedAuthentication() {
       return response.request().headers().firstValue(AUTHORIZATION).isPresent();
    }
+
+   @Override
+   public String toString() {
+      return "RestResponseJDK{" +
+            "response=" + response +
+            '}';
+   }
 }

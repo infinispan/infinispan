@@ -67,6 +67,21 @@
          <artifactId>junit-jupiter-engine</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-auth-server-sasl</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-password-impl</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-scram</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>

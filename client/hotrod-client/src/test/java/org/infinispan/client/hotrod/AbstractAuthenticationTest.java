@@ -39,7 +39,7 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
          .enable()
             .sasl()
                .serverName("localhost")
-               .addAllowedMech("CRAM-MD5")
+               .addAllowedMech("SCRAM-SHA-256")
                .authenticator(createAuthenticationProvider());
       serverBuilder.authentication().sasl().mechProperties(mechProperties);
       int port = HotRodTestingUtil.serverPort() + index;
@@ -65,7 +65,7 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
          .security()
          .authentication()
          .enable()
-         .saslMechanism("CRAM-MD5")
+         .saslMechanism("SCRAM-SHA-256")
          .connectionPool()
             .maxActive(1);
       return clientBuilder;

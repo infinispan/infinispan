@@ -92,7 +92,7 @@ public class CustomPropertiesTest {
 
       // authentication
       assertThat(configuration.security().authentication().enabled()).isTrue();
-      assertThat(configuration.security().authentication().saslMechanism()).isEqualTo("DIGEST-MD5");
+      assertThat(configuration.security().authentication().saslMechanism()).isEqualTo("SCRAM-SHA-256");
       assertThat(configuration.security().authentication().callbackHandler()).isInstanceOf(BasicCallbackHandler.class);
       assertThat(configuration.security().authentication().serverName()).isEqualTo("my_ela_server_name");
       BasicCallbackHandler basicCallbackHandler = (BasicCallbackHandler) configuration.security().authentication().callbackHandler();

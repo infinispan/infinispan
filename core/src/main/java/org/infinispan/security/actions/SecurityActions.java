@@ -2,6 +2,7 @@ package org.infinispan.security.actions;
 
 import static org.infinispan.security.Security.doPrivileged;
 
+import java.security.Provider;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
@@ -192,5 +193,11 @@ public class SecurityActions {
 
    public static RaftManager getRaftManager(EmbeddedCacheManager ecm) {
       return doPrivileged(new GetRaftManagerAction(ecm));
+   }
+
+   public static void addSecurityProvider(Provider provider) {
+      if (java.security.Security.getProvider(provider.getName()) == null) {
+         java.security.Security.insertProviderAt(provider, 1);
+      }
    }
 }

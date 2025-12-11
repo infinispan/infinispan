@@ -4,6 +4,6 @@ clientBuilder.addServer()
                .port(11222)
              .security()
                .authentication()
-                 .saslMechanism("DIGEST-MD5")
+                 .saslMechanism("DIGEST-SHA-256")
                  .username("myuser")
                  .password("qwer1234!");

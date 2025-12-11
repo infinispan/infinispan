@@ -26,7 +26,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.io.FileWatcher;
 import org.infinispan.commons.util.ReloadingX509TrustManager;
-import org.infinispan.commons.util.SslContextFactory;
+import org.infinispan.commons.util.SecurityProviders;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Attribute;
@@ -77,7 +77,7 @@ public class TrustStoreConfiguration extends ConfigurationElement<TrustStoreConf
 
    public void build(SSLContextBuilder builder, Properties properties) {
       if (attributes.isModified()) {
-         Provider[] providers = SslContextFactory.discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
+         Provider[] providers = SecurityProviders.discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
          final X509TrustManager trustManager;
          if (attributes.attribute(PATH).isNull()) {
             try {

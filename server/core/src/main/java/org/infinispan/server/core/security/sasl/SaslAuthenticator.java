@@ -34,7 +34,7 @@ public interface SaslAuthenticator {
     * {@link SubjectSaslServer#SUBJECT} property. The default implementation of this method wraps any matching {@link
     * SaslServerFactory} with a {@link SubjectSaslServer} to transparently supply the resolved Subject.
     *
-    * @param mechanism  The non-null IANA-registered name of a SASL mechanism. (e.g. "GSSAPI", "CRAM-MD5").
+    * @param mechanism  The non-null IANA-registered name of a SASL mechanism. (e.g. "GSSAPI", "SCRAM-SHA-256").
     * @param principals Any principals which can be obtained before the authentication (e.g. TLS peer, remote network
     *                   address). Can be empty.
     * @param protocol   The non-null string name of the protocol for which the authentication is being performed (e.g.,

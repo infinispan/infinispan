@@ -4,7 +4,7 @@
               security-realm="default">
       <hotrod-connector>
         <authentication>
-          <sasl mechanisms="PLAIN DIGEST-MD5 GSSAPI EXTERNAL"
+          <sasl mechanisms="PLAIN DIGEST-SHA-256 GSSAPI EXTERNAL"
                 server-name="infinispan"
                 qop="auth"
                 policy="no-active no-plain-text"/>

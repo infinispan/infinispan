@@ -82,20 +82,22 @@ public class RespAuthAccessLoggingTest extends AbstractAuthAccessLoggingTest {
          }
       }
 
-      assertEquals(12, logAppender.size());
+      int i = 0;
 
-      assertThat(parseAccessLog(0)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "\"" + Messages.MESSAGES.noAuthHello() + "\"", "WHO", "-"));
-      assertThat(parseAccessLog(1)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "OK", "WHO", "writer"));
-      assertThat(parseAccessLog(2)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "writer"));
-      assertThat(parseAccessLog(3)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "writer"));
-      assertThat(parseAccessLog(4)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "SET", "STATUS", "OK", "WHO", "writer"));
-      assertThat(parseAccessLog(5)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "GET", "STATUS", "OK", "WHO", "writer"));
-      assertThat(parseAccessLog(6)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "OK", "WHO", "reader"));
-      assertThat(parseAccessLog(7)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "reader"));
-      assertThat(parseAccessLog(8)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "reader"));
-      assertThat(parseAccessLog(9)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "SET", "STATUS", "\"ISPN000287: Unauthorized access: subject 'Subject with principal(s): [SimpleUserPrincipal [name=reader]]' lacks 'WRITE' permission\"", "WHO", "reader"));
-      assertThat(parseAccessLog(10)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "GET", "STATUS", "OK", "WHO", "reader"));
-      assertThat(parseAccessLog(11)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "\"Unknown user\"", "WHO", "-"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "\"" + Messages.MESSAGES.noAuthHello() + "\"", "WHO", "-"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "OK", "WHO", "writer"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "writer"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "writer"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "SET", "STATUS", "OK", "WHO", "writer"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "GET", "STATUS", "OK", "WHO", "writer"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "OK", "WHO", "reader"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "reader"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "CLIENT", "STATUS", "OK", "WHO", "reader"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "SET", "STATUS", "\"ISPN000287: Unauthorized access: subject 'Subject with principal(s): [SimpleUserPrincipal [name=reader]]' lacks 'WRITE' permission\"", "WHO", "reader"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "GET", "STATUS", "OK", "WHO", "reader"));
+      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "\"Unknown user\"", "WHO", "-"));
+
+      assertEquals(i, logAppender.size());
    }
 
    private RedisClient createRespClient(String username, String password) {

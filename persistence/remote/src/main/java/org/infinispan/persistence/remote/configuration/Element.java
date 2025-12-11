@@ -19,6 +19,7 @@ public enum Element {
    AUTH_PLAIN("plain"),
    AUTH_DIGEST("digest"),
    AUTH_EXTERNAL("external"),
+   AUTH_SCRAM("scram"),
    CACHE("cache"),
    CONNECTION_POOL("connection-pool"),
    ENCRYPTION("encryption"),

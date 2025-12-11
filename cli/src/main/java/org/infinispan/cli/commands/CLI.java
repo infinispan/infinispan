@@ -89,9 +89,10 @@ import org.infinispan.cli.logging.Messages;
 import org.infinispan.cli.util.ZeroSecurityHostnameVerifier;
 import org.infinispan.cli.util.ZeroSecurityTrustManager;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
+import org.infinispan.commons.util.SecurityProviders;
 import org.infinispan.commons.util.ServiceFinder;
-import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
+import org.infinispan.security.actions.SecurityActions;
 import org.wildfly.security.credential.store.WildFlyElytronCredentialStoreProvider;
 import org.wildfly.security.keystore.KeyStoreUtil;
 
@@ -257,7 +258,7 @@ public class CLI extends CliCommand {
    }
 
    public static void configureSslContext(Context context, Resource truststore, String truststorePassword, Resource keystore, String keystorePassword, String providerName, String hostnameVerifier, boolean trustAll) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException {
-      Provider[] providers = SslContextFactory.discoverSecurityProviders(CLI.class.getClassLoader());
+      Provider[] providers = SecurityProviders.discoverSecurityProviders(CLI.class.getClassLoader());
       providerName = providerName != null ? providerName : context.getProperty(Context.Property.PROVIDER);
       String sslKeyStore = keystore != null ? keystore.getAbsolutePath() : context.getProperty(Context.Property.KEYSTORE);
       KeyManager[] keyManagers = null;

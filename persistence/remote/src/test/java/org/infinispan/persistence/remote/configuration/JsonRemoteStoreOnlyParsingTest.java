@@ -100,7 +100,7 @@ public class JsonRemoteStoreOnlyParsingTest {
       AuthenticationConfiguration authentication = store.security().authentication();
       assertEquals("servername", authentication.serverName());
       MechanismConfiguration mechanismConfiguration = authentication.mechanismConfiguration();
-      assertEquals("DIGEST-MD5", mechanismConfiguration.saslMechanism());
+      assertEquals("DIGEST-SHA-256", mechanismConfiguration.saslMechanism());
 
       SslConfiguration ssl = store.security().ssl();
       assertEquals("snihostname", ssl.sniHostName());
@@ -114,7 +114,7 @@ public class JsonRemoteStoreOnlyParsingTest {
       builder.persistence().addStore(RemoteStoreConfigurationBuilder.class)
             .remoteCacheName("remote").addServer().host("127.0.0.2").port(1111)
             .remoteSecurity()
-            .authentication().enable().saslMechanism("DIGEST-MD5")
+            .authentication().enable().saslMechanism("SCRAM-SHA-256")
             .username("user")
             .password("pass")
             .realm("default");

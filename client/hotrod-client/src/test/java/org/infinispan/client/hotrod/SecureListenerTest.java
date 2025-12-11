@@ -125,7 +125,7 @@ public class SecureListenerTest extends AbstractAuthenticationTest {
 
    public void testAddListenerWithoutPermission() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = newClientBuilder();
-      clientBuilder.security().authentication().saslMechanism("CRAM-MD5").username("RWuser").password("password");
+      clientBuilder.security().authentication().saslMechanism("SCRAM-SHA-256").username("RWuser").password("password");
 
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       RemoteCache<Object, Object> clientCache = remoteCacheManager.getCache(CACHE_NAME);
