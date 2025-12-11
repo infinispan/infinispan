@@ -8,7 +8,7 @@
           "authentication" : {
             "sasl" : {
               "server-name" : "infinispan",
-              "mechanisms" : [ "PLAIN","DIGEST-MD5","GSSAPI","EXTERNAL" ],
+              "mechanisms" : [ "PLAIN","DIGEST-SHA-256","GSSAPI","EXTERNAL" ],
               "qop" : [ "auth" ],
               "policy" : [ "no-active","no-plain-text" ]
             }

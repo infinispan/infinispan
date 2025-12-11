@@ -38,5 +38,5 @@ clientBuilder.addServer()
                .port(11222)
              .security().authentication()
                .serverName("myhotrodserver")
-               .saslMechanism("DIGEST-MD5")
+               .saslMechanism("SCRAM-SHA-256")
                .callbackHandler(new MyCallbackHandler("myuser","default","qwer1234!".toCharArray()));

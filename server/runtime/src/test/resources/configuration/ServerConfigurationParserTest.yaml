@@ -226,7 +226,7 @@ infinispan:
                   serverName: localhost
                   mechanisms:
                     - GSSAPI
-                    - DIGEST-MD5
+                    - DIGEST-SHA-256
                     - PLAIN
                   qop:
                     - auth
