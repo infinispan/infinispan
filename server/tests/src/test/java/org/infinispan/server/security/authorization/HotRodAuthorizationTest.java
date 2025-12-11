@@ -60,7 +60,7 @@ abstract class HotRodAuthorizationTest {
       this (ext, TestUser::getUser, user -> {
          ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
          hotRodBuilder.security().authentication()
-               .saslMechanism(System.getProperty(HOTROD_CLIENT_SASL_MECHANISM, "SCRAM-SHA-1"))
+               .saslMechanism(System.getProperty(HOTROD_CLIENT_SASL_MECHANISM, "SCRAM-SHA-256"))
                .serverName("infinispan")
                .realm("default")
                .username(user.getUser())

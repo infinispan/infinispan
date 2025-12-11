@@ -253,7 +253,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
          if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_HASHED)) {
             authentication
                   .enable()
-                  .addMechanisms("DIGEST");
+                  .addMechanisms("DIGEST-SHA-256");
             Server.log.debug("Enabled DIGEST for HTTP");
 
             // Only enable PLAIN if encryption is on

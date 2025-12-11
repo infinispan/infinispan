@@ -151,7 +151,7 @@
                <topology-state-transfer await-initial-retrieval="false" lock-timeout="12"
                                         replication-timeout="13"/>
                <authentication security-realm="default">
-                  <sasl server-name="localhost" mechanisms="GSSAPI DIGEST-MD5 PLAIN" qop="auth auth-conf"
+                  <sasl server-name="localhost" mechanisms="GSSAPI DIGEST-SHA-256 PLAIN" qop="auth auth-conf"
                         strength="high medium low"
                         policy="forward-secrecy no-active no-anonymous no-dictionary no-plain-text pass-credentials">
                      <property name="prop1">value1</property>

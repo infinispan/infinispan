@@ -57,12 +57,9 @@ public class UserTool {
 
 
    public static final List<String> DEFAULT_ALGORITHMS = List.of(
-         ScramDigestPassword.ALGORITHM_SCRAM_SHA_1,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_256,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_384,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_512,
-         DigestPassword.ALGORITHM_DIGEST_MD5,
-         DigestPassword.ALGORITHM_DIGEST_SHA,
          DigestPassword.ALGORITHM_DIGEST_SHA_256,
          DigestPassword.ALGORITHM_DIGEST_SHA_384,
          DigestPassword.ALGORITHM_DIGEST_SHA_512

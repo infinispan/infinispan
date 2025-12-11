@@ -20,6 +20,13 @@ We strongly recommend updating your queries and/or dashboards to the new metric'
 Legacy metrics names have been disabled. To restore this behavior, set `infinispan/cache-container/metrics/legacy`
 attribute to `true`.
 
+=== Security mechanisms
+
+Removed all references to `DIGEST-MD5`, `DIGEST-SHA`, `SCRAM-SHA-1` and `CRAM-MD5` authentication mechanisms as they
+should not be used because of their vulnerabilities.
+Additionally, the CLI `user create` and `user password` commands will no longer create hashes in user properties files
+using those algorithms. We recommend using at least `SCRAM-SHA-256` and `DIGEST-SHA-256` or stronger alternatives.
+
 == Upgrading from 15.2 to 16.0
 
 === Marshalling Changes
@@ -49,7 +56,7 @@ should be marshalled using ProtoStream. Custom commands can be registered by pro
 ==== Legacy Stores
 
 The tools module now contains the `Externalizer` and `AdvancedExternalizer` interfaces removed from infinispan-commons,
-to facilitate migrating legacy stores to 16.0. In order to use the the `StoreMigrator` all existing `Externalizer`
+to facilitate migrating legacy stores to 16.0. In order to use the `StoreMigrator` all existing `Externalizer`
 implementations need to be updated to reference the new package `org.infinispan.tools.store.migrator.marshaller.common`.
 
 === Query changes
