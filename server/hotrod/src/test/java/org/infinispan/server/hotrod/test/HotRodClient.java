@@ -453,14 +453,27 @@ public class HotRodClient implements Closeable {
    public TestResponse auth(SaslClient sc) throws SaslException {
       byte[] saslResponse = sc.hasInitialResponse() ? sc.evaluateChallenge(Util.EMPTY_BYTE_ARRAY) : Util.EMPTY_BYTE_ARRAY;
       AuthOp op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, sc.getMechanismName(), saslResponse);
-      TestResponse response = execute(op);
-      while (!sc.isComplete() || (response instanceof TestAuthResponse && !((TestAuthResponse) response).complete)) {
-         saslResponse = sc.evaluateChallenge(((TestAuthResponse) response).challenge);
-         op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, "", saslResponse);
-         response = execute(op);
+
+      for(;;) {
+         TestResponse response = execute(op);
+         if (response instanceof TestErrorResponse) {
+            sc.dispose();
+            return response;
+         } else if (response instanceof TestAuthResponse tar) {
+            if (!sc.isComplete() || !tar.complete) {
+               saslResponse = sc.evaluateChallenge(tar.challenge);
+               if (saslResponse == null) {
+                  sc.dispose();
+                  return response;
+               } else {
+                  op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, "", saslResponse);
+               }
+            } else {
+               sc.dispose();
+               return response;
+            }
+         }
       }
-      sc.dispose();
-      return response;
    }
 
    public TestResponse addClientListener(TestClientListener listener, boolean includeState,

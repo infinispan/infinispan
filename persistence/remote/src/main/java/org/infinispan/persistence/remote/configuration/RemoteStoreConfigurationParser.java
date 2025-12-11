@@ -32,6 +32,9 @@ import org.kohsuke.MetaInfServices;
 public class RemoteStoreConfigurationParser implements ConfigurationParser {
    public static final String PREFIX = "store:remote";
    public static final String NAMESPACE = Parser.NAMESPACE + PREFIX + ":";
+   public static final String SASL_DIGEST = "DIGEST-SHA-256";
+   public static final String SASL_PLAIN = "PLAIN";
+   public static final String SASL_EXTERNAL = "EXTERNAL";
 
    public RemoteStoreConfigurationParser() {
    }
@@ -205,19 +208,19 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
 
    private void parseAuthenticationPlain(ConfigurationReader reader, AuthenticationConfigurationBuilder authentication) {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName());
-      authentication.saslMechanism("PLAIN").username(attributes[0]).password(attributes[1]);
+      authentication.saslMechanism(SASL_PLAIN).username(attributes[0]).password(attributes[1]);
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseAuthenticationDigest(ConfigurationReader reader, AuthenticationConfigurationBuilder authentication) {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName(), Attribute.REALM.getLocalName());
-      authentication.saslMechanism("DIGEST-MD5").username(attributes[0]).password(attributes[1]).realm(attributes[2]);
+      authentication.saslMechanism(SASL_DIGEST).username(attributes[0]).password(attributes[1]).realm(attributes[2]);
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseAuthenticationExternal(ConfigurationReader reader, AuthenticationConfigurationBuilder authentication) {
       ParseUtils.requireNoAttributes(reader);
-      authentication.saslMechanism("EXTERNAL");
+      authentication.saslMechanism(SASL_EXTERNAL);
       ParseUtils.requireNoContent(reader);
    }
 

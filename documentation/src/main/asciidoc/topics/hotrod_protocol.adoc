@@ -1289,7 +1289,7 @@ Response (0x22):
 | Field Name          | Size       | Value
 | Header | variable | Response header
 | Mech count | vInt | The number of mechs
-| Mech 1 | string | String containing the name of the SASL mech in its IANA-registered form (e.g. GSSAPI, CRAM-MD5, etc)
+| Mech 1 | string | String containing the name of the SASL mech in its IANA-registered form (e.g. GSSAPI, SCRAM-SHA-256, etc)
 | Mech 2 | string |
 | ...etc |        |
 |==============================================================================

@@ -1,11 +1,9 @@
 package org.infinispan.persistence.remote.configuration;
 
 import static org.infinispan.commons.configuration.attributes.AttributeSerializer.SECRET;
-import static org.infinispan.persistence.remote.configuration.Element.AUTH_DIGEST;
-import static org.infinispan.persistence.remote.configuration.Element.AUTH_EXTERNAL;
-import static org.infinispan.persistence.remote.configuration.Element.AUTH_PLAIN;
 
-import org.infinispan.commons.CacheConfigurationException;
+import java.util.Objects;
+
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.Util;
@@ -49,23 +47,6 @@ public class MechanismConfiguration {
       return attributes;
    }
 
-   static String serializeMechanism(String mechanism) {
-      if (mechanism == null) return null;
-      switch (mechanism) {
-         case "PLAIN": {
-            return AUTH_PLAIN.getLocalName();
-         }
-         case "DIGEST-MD5": {
-            return AUTH_DIGEST.getLocalName();
-         }
-         case "EXTERNAL": {
-            return AUTH_EXTERNAL.getLocalName();
-         }
-      }
-      throw new CacheConfigurationException("Invalid sasl mechanism");
-   }
-
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -73,7 +54,7 @@ public class MechanismConfiguration {
 
       MechanismConfiguration that = (MechanismConfiguration) o;
 
-      return attributes != null ? attributes.equals(that.attributes) : that.attributes == null;
+      return Objects.equals(attributes, that.attributes);
    }
 
    @Override

@@ -9,7 +9,7 @@ server:
             serverName: "infinispan"
             mechanisms:
               - "PLAIN"
-              - "DIGEST-MD5"
+              - "DIGEST-SHA-256"
               - "GSSAPI"
               - "EXTERNAL"
             qop:

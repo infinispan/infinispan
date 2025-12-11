@@ -13,12 +13,12 @@
 | Similar to the `BASIC` HTTP mechanism.
 
 | `+DIGEST-*+`
-| Uses hashing algorithms and nonce values. Hot Rod connectors support `DIGEST-MD5`, `DIGEST-SHA`, `DIGEST-SHA-256`, `DIGEST-SHA-384`, and `DIGEST-SHA-512` hashing algorithms, in order of strength.
+| Uses hashing algorithms and nonce values. Hot Rod connectors support `DIGEST-SHA-256`, `DIGEST-SHA-384`, and `DIGEST-SHA-512` hashing algorithms, in order of strength.
 | Property realms and LDAP realms
 | Similar to the `Digest` HTTP mechanism.
 
 | `+SCRAM-*+`
-| Uses _salt_ values in addition to hashing algorithms and nonce values. Hot Rod connectors support `SCRAM-SHA`, `SCRAM-SHA-256`, `SCRAM-SHA-384`, and `SCRAM-SHA-512` hashing algorithms, in order of strength.
+| Uses _salt_ values in addition to hashing algorithms and nonce values. Hot Rod connectors support `SCRAM-SHA-256`, `SCRAM-SHA-384`, and `SCRAM-SHA-512` hashing algorithms, in order of strength.
 | Property realms and LDAP realms
 | Similar to the `Digest` HTTP mechanism.
 

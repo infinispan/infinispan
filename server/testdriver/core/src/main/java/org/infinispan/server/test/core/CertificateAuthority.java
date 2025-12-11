@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.infinispan.commons.util.SslContextFactory;
+import org.infinispan.commons.util.SecurityProviders;
 import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
@@ -67,7 +67,7 @@ public class CertificateAuthority {
    public static final String DEFAULT_BASE_DN = "OU=server,DC=infinispan,DC=org";
    public static final String KEY_ALGORITHM = "RSA";
    public static final String KEY_SIGNATURE_ALGORITHM = "SHA256withRSA";
-   private static final Provider[] ALL_PROVIDERS = SslContextFactory.discoverSecurityProviders(CertificateAuthority.class.getClassLoader());
+   private static final Provider[] ALL_PROVIDERS = SecurityProviders.discoverSecurityProviders(CertificateAuthority.class.getClassLoader());
 
    private final String baseDN;
    private final SelfSignedX509CertificateAndSigningKey ca;

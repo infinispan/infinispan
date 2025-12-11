@@ -10,7 +10,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author Tristan Tarrant
  * @since 9.1
  */
-public class SecurityConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder implements
+public class SecurityConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<SecurityConfigurationBuilder> implements
       Builder<SecurityConfiguration> {
 
    private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);

@@ -21,7 +21,7 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder = super.createHotRodClientConfigurationBuilder(host, serverPort);
-      builder.security().authentication().enable().saslMechanism("CRAM-MD5").username("admin").password("password");
+      builder.security().authentication().enable().saslMechanism("SCRAM-SHA-256").username("admin").password("password");
       return builder;
    }
 
@@ -53,7 +53,7 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
             .sasl()
             .authenticator(ssa)
             .serverName("localhost")
-            .addAllowedMech("CRAM-MD5");
+            .addAllowedMech("SCRAM-SHA-256");
       HotRodServer server = Security.doPrivileged(() -> HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder));
       servers.add(server);
       return server;
