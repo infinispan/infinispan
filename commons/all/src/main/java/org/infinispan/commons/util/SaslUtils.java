@@ -3,6 +3,7 @@ package org.infinispan.commons.util;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.ServiceLoader;
@@ -22,7 +23,7 @@ import org.infinispan.commons.logging.Log;
 public final class SaslUtils {
 
    /**
-    * Returns a collection of all of the registered {@code SaslServerFactory}s where the order is based on the order of
+    * Returns a collection of all the registered {@code SaslServerFactory}s where the order is based on the order of
     * the Provider registration and/or class path order.  Class path providers are listed before global providers; in
     * the event of a name conflict, the class path provider is preferred.
     *
@@ -47,6 +48,10 @@ public final class SaslUtils {
     */
    public static Collection<SaslClientFactory> getSaslClientFactories(ClassLoader classLoader, Provider[] providers, boolean includeGlobal) {
       return getFactories(SaslClientFactory.class, classLoader, providers, includeGlobal);
+   }
+
+   public static SaslClientFactory getSaslClientFactory(ClassLoader classLoader, String mechName) {
+      return getSaslClientFactories(classLoader, SecurityProviders.discoverSecurityProviders(classLoader), true).stream().filter(f -> Arrays.asList(f.getMechanismNames(null)).contains(mechName)).findFirst().orElseThrow(IllegalStateException::new);
    }
 
    private static <T> Collection<T> getFactories(Class<T> type, ClassLoader classLoader, Provider[] providers, boolean includeGlobal) {

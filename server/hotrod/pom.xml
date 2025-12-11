@@ -17,7 +17,6 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-processor</artifactId>
       </dependency>
-
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-core</artifactId>
@@ -74,6 +73,21 @@
       <dependency>
          <groupId>org.junit.jupiter</groupId>
          <artifactId>junit-jupiter-engine</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-auth-server-sasl</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-password-impl</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-scram</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>

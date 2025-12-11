@@ -22,7 +22,7 @@ public class SecureServerFailureRetryTest extends ServerFailureRetryTest {
          .enable()
             .sasl()
                .serverName("localhost")
-               .addAllowedMech("CRAM-MD5")
+               .addAllowedMech("SCRAM-SHA-256")
                .authenticator(sap);
       return HotRodClientTestingUtil.startHotRodServer(manager, serverBuilder);
    }
@@ -33,7 +33,7 @@ public class SecureServerFailureRetryTest extends ServerFailureRetryTest {
       clientBuilder
          .security().authentication()
             .enable()
-            .saslMechanism("CRAM-MD5")
+            .saslMechanism("SCRAM-SHA-256")
             .callbackHandler(new TestCallbackHandler("user", "realm", "password".toCharArray()))
          .forceReturnValues(true)
          .connectionTimeout(5)

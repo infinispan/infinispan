@@ -90,7 +90,7 @@ public class MemcachedTestingUtil {
    public static MemcachedServerConfigurationBuilder enableAuthentication(MemcachedServerConfigurationBuilder builder) {
       SimpleAuthenticator ssap = new SimpleAuthenticator();
       ssap.addUser(USERNAME, REALM, PASSWORD.toCharArray());
-      builder.authentication().enable().sasl().addAllowedMech("CRAM-MD5").authenticator(ssap)
+      builder.authentication().enable().sasl().addAllowedMech("SCRAM-SHA-256").authenticator(ssap)
             .serverName("localhost").addMechProperty(Sasl.POLICY_NOANONYMOUS, "true");
       builder.authentication().text().authenticator((username, password) -> {
          if (username.equals(USERNAME) && new String(password).equals(PASSWORD)) {

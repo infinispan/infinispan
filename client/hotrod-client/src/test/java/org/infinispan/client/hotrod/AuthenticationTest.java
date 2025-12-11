@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -85,7 +86,7 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
 
    @Test
    public void testAuthenticationViaURI() {
-      remoteCacheManager = new RemoteCacheManager("hotrod://user:password@localhost:" + hotrodServer.getPort() + "?auth_realm=realm&socket_timeout=3000&max_retries=3&connection_pool.max_active=1&sasl_mechanism=CRAM-MD5&default_executor_factory.threadname_prefix=" + TestResourceTracker.getCurrentTestShortName() + "-Client-Async");
+      remoteCacheManager = new RemoteCacheManager("hotrod://user:password@localhost:" + hotrodServer.getPort() + "?auth_realm=realm&socket_timeout=3000&max_retries=3&connection_pool.max_active=1&sasl_mechanism=SCRAM-SHA-256&default_executor_factory.threadname_prefix=" + TestResourceTracker.getCurrentTestShortName() + "-Client-Async");
       RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
       defaultRemote.put("a", "a");
       assertEquals("a", defaultRemote.get("a"));
@@ -94,7 +95,7 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
    @Test
    public void testAuthenticationWithUnsupportedMech() {
       ConfigurationBuilder clientBuilder = newClientBuilder();
-      clientBuilder.security().authentication().saslMechanism("SCRAM-SHA-256");
+      clientBuilder.security().authentication().saslMechanism("PLAIN");
       clientBuilder.security().authentication().username("user").password("password");
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       Exceptions.expectException(TransportException.class, SecurityException.class, ".*not among the supported server mechanisms.*",
@@ -110,7 +111,7 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
       ConfigurationBuilder clientBuilder = newClientBuilder();
       clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "foobar"));
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-      Exceptions.expectException(TransportException.class, HotRodClientException.class, ".*Invalid response.*", remoteCacheManager::getCache);
+      assertThatThrownBy(() -> remoteCacheManager.getCache()).cause().hasMessageContaining("ISPN006024");
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN006017:.*")

@@ -54,7 +54,7 @@ public class AuthHandler extends ActivationHandler {
          if (log.isTraceEnabled()) {
             log.tracef("Authenticating using mech: %s", authentication.saslMechanism());
          }
-         byte response[];
+         byte[] response;
          if (saslClient.hasInitialResponse()) {
             try {
                response = evaluateChallenge(saslClient, EMPTY_BYTES, authentication.clientSubject());

@@ -46,8 +46,11 @@ public abstract class MemcachedBaseAuthAccessLoggingTest extends AbstractAuthAcc
 
       MemcachedServerConfigurationBuilder builder = serverBuilder().protocol(getProtocol()).defaultCacheName("default");
       builder.authentication().enable()
-            .sasl().addAllowedMech("CRAM-MD5").authenticator(sap)
-            .serverName("localhost").addMechProperty(Sasl.POLICY_NOANONYMOUS, "true");
+            .sasl()
+            .addAllowedMech("SCRAM-SHA-256")
+            .authenticator(sap)
+            .serverName("localhost")
+            .addMechProperty(Sasl.POLICY_NOANONYMOUS, "true");
       builder.authentication().text().authenticator(sap);
       server = new MemcachedServer();
       Security.doAs(ADMIN, () -> {
@@ -79,7 +82,8 @@ public abstract class MemcachedBaseAuthAccessLoggingTest extends AbstractAuthAcc
          }
          try {
             client.get(k(0, user.getKey()));
-         } catch (Exception e) {}
+         } catch (Exception ignore) {
+         }
          client.shutdown();
       }
       verifyLogs();
