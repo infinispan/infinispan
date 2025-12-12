@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-spring-parent</artifactId>
+        <version>16.0.4-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>infinispan-spring-boot4-starter-parent</artifactId>
+    <name>Infinispan Spring Boot 4 Starter Parent</name>
+    <packaging>pom</packaging>
+
+    <description>Infinispan Spring Boot Starter 4 parent POM</description>
+
+    <properties>
+        <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
+        <version.spring>${version.spring7}</version.spring>
+        <version.spring.boot>${version.spring.boot4}</version.spring.boot>
+        <version.spring.session>${version.spring.session4}</version.spring.session>
+        <version.micrometer>1.16.0</version.micrometer>
+    </properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <parallel>none</parallel>
+                    <groups combine.self="override">${defaultJUnitGroups}</groups>
+                    <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+                    <disableXmlReport>false</disableXmlReport>
+                    <systemPropertyVariables>
+                        <org.infinispan.test.server.dir>${org.infinispan.test.server.dir}</org.infinispan.test.server.dir>
+                    </systemPropertyVariables>
+                    <properties>
+                        <!-- Deactivate the default listeners which may cause OOME. Jenkins uses the surefire generated XML file. -->
+                        <usedefaultlisteners>false</usedefaultlisteners>
+                        <listener>${junitListener}</listener>
+                    </properties>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit-platform</artifactId>
+                        <version>${version.maven.surefire}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+    <modules>
+        <module>embedded</module>
+        <module>remote</module>
+        <module>it-tests/session-tests</module>
+        <module>it-tests/embedded-tests</module>
+    </modules>
+</project>

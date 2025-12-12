@@ -309,10 +309,27 @@
             <artifactId>infinispan-server-testdriver-junit5</artifactId>
             <version>${project.version}</version>
          </dependency>
+
+         <!-- Spring and Spring Boot dependencies -->
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring6-common</artifactId>
+            <artifactId>infinispan-spring-common</artifactId>
             <version>${project.version}</version>
+         </dependency>
+         <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring-embedded</artifactId>
+             <version>${project.version}</version>
+         </dependency>
+         <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring-remote</artifactId>
+             <version>${project.version}</version>
+         </dependency>
+         <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring6-common</artifactId>
+             <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
@@ -325,6 +342,16 @@
             <version>${project.version}</version>
          </dependency>
          <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring7-embedded</artifactId>
+             <version>${project.version}</version>
+         </dependency>
+         <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring7-remote</artifactId>
+             <version>${project.version}</version>
+         </dependency>
+         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring-boot3-starter-embedded</artifactId>
             <version>${project.version}</version>
@@ -333,6 +360,16 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring-boot3-starter-remote</artifactId>
             <version>${project.version}</version>
+         </dependency>
+         <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring-boot4-starter-embedded</artifactId>
+             <version>${project.version}</version>
+         </dependency>
+         <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring-boot4-starter-remote</artifactId>
+             <version>${project.version}</version>
          </dependency>
 
          <dependency>

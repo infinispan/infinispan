@@ -79,8 +79,7 @@
       <module>client/hotrod-client-test</module>
       <module>client/infinispan-key-value-store-hotrod</module>
       <module>archetypes</module>
-      <module>spring/spring6</module>
-      <module>spring/spring-boot-3</module>
+      <module>spring</module>
       <module>cli</module>
       <module>tasks/api</module>
       <module>tasks/manager</module>
@@ -1082,48 +1081,65 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring5-common</artifactId>
+            <artifactId>infinispan-spring-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring5-embedded</artifactId>
-            <version>${version.infinispan}</version>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring-embedded</artifactId>
+             <type>test-jar</type>
+             <scope>test</scope>
+             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring5-remote</artifactId>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring6-common</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-            <version>${version.infinispan}</version>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring-remote</artifactId>
+             <type>test-jar</type>
+             <scope>test</scope>
+             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring6-embedded</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
+          <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-spring7-embedded</artifactId>
+              <version>${version.infinispan}</version>
+          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring6-remote</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
+          <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-spring7-remote</artifactId>
+              <version>${version.infinispan}</version>
+          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring-boot3-starter-embedded</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
+          <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-spring-boot4-starter-embedded</artifactId>
+              <version>${version.infinispan}</version>
+          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring-boot3-starter-remote</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
+          <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-spring-boot4-starter-remote</artifactId>
+              <version>${version.infinispan}</version>
+          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
@@ -1590,6 +1606,18 @@
          </dependency>
          <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
+            <version>${version.spring.boot}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-resttestclient</artifactId>
+             <version>${version.spring.boot}</version>
+             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <version>${version.spring.boot}</version>
             <scope>test</scope>
@@ -1608,7 +1636,19 @@
          </dependency>
          <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-micrometer-metrics</artifactId>
+            <version>${version.spring.boot}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+            <version>${version.spring.boot}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
             <version>${version.spring.boot}</version>
             <scope>provided</scope>
          </dependency>
