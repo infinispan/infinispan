@@ -12,7 +12,7 @@ import org.kohsuke.MetaInfServices;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
- * @since 10.0
+ * @since 10.0z`
  **/
 @MetaInfServices(Command.class)
 @CommandDefinition(name = "echo", description = "Echoes messages to the output. Useful for adding information to batch runs.")

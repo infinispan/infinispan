@@ -17,7 +17,7 @@ Each overlay file overwrites any conflicting configuration in the preceding conf
 
 [NOTE]
 ====
-If you pass cache configuration to {brandname} Server on startup it does not dynamically create those cache across the cluster.
+If you pass cache configuration to {brandname} Server on startup it does not dynamically create those caches across the cluster.
 You must manually propagate caches to each node.
 
 Additionally, cache configuration that you pass to {brandname} Server on startup must include the `infinispan` and `cache-container` elements.

@@ -71,4 +71,7 @@ public interface Messages {
 
    @Message("Activate JMX remoting with an optional argument to override the default port (9999).")
    String serverHelpJMX();
+
+   @Message("CLI batch script to execute before server startup. Can be specified multiple times.")
+   String serverHelpPreStartBatch();
 }

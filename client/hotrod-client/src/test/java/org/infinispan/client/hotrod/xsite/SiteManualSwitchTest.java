@@ -13,6 +13,7 @@ import javax.management.ObjectName;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.util.Util;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -78,7 +79,7 @@ public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
       assertSingleSiteHit(SITE_B, SITE_A, () -> assertNull(cacheA.put(3, "v3")));
       assertSingleSiteHit(SITE_B, SITE_A, () -> assertEquals("v3", cacheA.get(3)));
 
-      switched = mbeanServer.invoke(objectName, "switchToDefaultCluster", new Object[]{}, new String[]{});
+      switched = mbeanServer.invoke(objectName, "switchToDefaultCluster", Util.EMPTY_OBJECT_ARRAY, Util.EMPTY_STRING_ARRAY);
       assertEquals(Boolean.TRUE, switched);
       assertSingleSiteHit(SITE_A, SITE_B, () -> assertNull(cacheA.put(4, "v4")));
       assertSingleSiteHit(SITE_A, SITE_B, () -> assertEquals("v4", cacheA.get(4)));

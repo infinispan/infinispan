@@ -34,7 +34,7 @@ public class CliPipeTest {
       PipedOutputStream pipe = new PipedOutputStream();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       StreamShell shell = new StreamShell(new PipedInputStream(pipe), new PrintStream(out));
-      Thread thread = new Thread(() -> CLI.main(shell, new String[]{"-f", "-"}, properties));
+      Thread thread = new Thread(() -> CLI.main(shell, properties, "-f", "-"));
       thread.start();
       PrintWriter pw = new PrintWriter(pipe, true);
       pw.println("echo Piped");
