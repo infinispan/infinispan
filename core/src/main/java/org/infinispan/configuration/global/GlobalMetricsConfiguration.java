@@ -16,7 +16,7 @@ public class GlobalMetricsConfiguration {
    @Deprecated(forRemoval = true, since = "16.0")
    public static final AttributeDefinition<String> PREFIX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PREFIX, "").immutable().build();
    @Deprecated(forRemoval = true, since = "16.0")
-   public static final AttributeDefinition<Boolean> NAMES_AS_TAGS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NAMES_AS_TAGS, false).immutable().build();
+   public static final AttributeDefinition<Boolean> NAMES_AS_TAGS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NAMES_AS_TAGS, true).immutable().build();
    public static final AttributeDefinition<Boolean> ACCURATE_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ACCURATE_SIZE, false).build();
    @Deprecated(forRemoval = true, since = "16.0")
    public static final AttributeDefinition<Boolean> JVM = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.JVM, false).build();
