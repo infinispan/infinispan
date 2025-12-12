@@ -21,6 +21,7 @@
     <name>Infinispan Spring 6 support</name>
     <packaging>pom</packaging>
     <modules>
+        <module>spring6-common</module>
         <module>spring6-embedded</module>
         <module>spring6-remote</module>
     </modules>
