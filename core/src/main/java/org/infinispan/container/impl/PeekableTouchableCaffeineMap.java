@@ -6,6 +6,7 @@ import org.infinispan.commons.util.AbstractDelegatingConcurrentMap;
 import org.infinispan.container.entries.InternalCacheEntry;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Policy;
 
 public class PeekableTouchableCaffeineMap<K, V> extends AbstractDelegatingConcurrentMap<K, InternalCacheEntry<K, V>>
       implements PeekableTouchableMap<K, V> {
@@ -28,19 +29,23 @@ public class PeekableTouchableCaffeineMap<K, V> extends AbstractDelegatingConcur
    }
 
    @Override
-   public boolean touchKey(Object key, long currentTimeMillis) {
-      InternalCacheEntry<K, V> ice = peek(key);
-      if (ice != null) {
-         ice.touch(currentTimeMillis);
-         return true;
-      }
-      return false;
-   }
-
-   @Override
    public void touchAll(long currentTimeMillis) {
       for (InternalCacheEntry<K, V> ice : map.values()) {
          ice.touch(currentTimeMillis);
       }
    }
+
+   public void removeAll(Iterable<? extends K> iterable) {
+      caffeineCache.invalidateAll(iterable);
+   }
+
+   public Policy<K, InternalCacheEntry<K, V>> policy() {
+      return caffeineCache.policy();
+   }
+
+   public void cleanUp() {
+      caffeineCache.cleanUp();
+   }
+
+
 }

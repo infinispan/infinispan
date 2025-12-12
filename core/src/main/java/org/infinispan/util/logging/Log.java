@@ -2431,4 +2431,13 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Fallback to %s as required dependencies are not available", id = 714)
    void warnFallbackToNoOpMetrics(String clazz);
+
+   @Message(value = "Memory configuration uses a shared container cannot have individual eviction settings", id = 715)
+   CacheConfigurationException memorySharedConfigHasEviction();
+
+   @Message(value = "Memory configuration uses a shared container is not supported with off heap storage", id = 716)
+   CacheConfigurationException memorySharedConfigHasOffHeap();
+
+   @Message(value = "Memory configuration uses a shared container %s which is not present in global memory configuration", id = 717)
+   CacheConfigurationException memorySharedContainerNotExist(String containerName);
 }

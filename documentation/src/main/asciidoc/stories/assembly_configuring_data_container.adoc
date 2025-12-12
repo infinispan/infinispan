@@ -8,6 +8,9 @@ Control how {brandname} stores data in JVM memory by:
 * Adding lifespan and maximum idle times to expire entries and prevent stale data.
 * Configuring {brandname} to store data in off-heap, native memory.
 
+//Configuring Container Eviction
+include::{topics}/proc_configuring_container_eviction.adoc[leveloffset=+1]
+
 //Overview
 include::{topics}/con_default_memory.adoc[leveloffset=+1]
 include::{topics}/con_evict_vs_expire.adoc[leveloffset=+1]

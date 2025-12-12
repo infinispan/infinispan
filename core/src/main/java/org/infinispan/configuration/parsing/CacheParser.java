@@ -461,6 +461,9 @@ public class CacheParser implements ConfigurationParser {
             case STRATEGY:
                memoryBuilder.whenFull(ParseUtils.parseEnum(reader, i, EvictionStrategy.class, value));
                break;
+            case EVICTION_CONTAINER:
+               memoryBuilder.evictionContainer(value);
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

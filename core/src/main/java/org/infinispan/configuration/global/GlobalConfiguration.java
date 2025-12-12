@@ -162,6 +162,15 @@ public class GlobalConfiguration {
       return cacheContainerConfiguration.getZeroCapacityNode();
    }
 
+   /**
+    *
+    * @param containerName
+    * @return
+    */
+   public Map<String, ContainerMemoryConfiguration> getMemoryContainer() {
+      return cacheContainerConfiguration.containerMemoryConfiguration();
+   }
+
    @Override
    public String toString() {
       return "GlobalConfiguration{" +
