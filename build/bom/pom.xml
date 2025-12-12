@@ -310,6 +310,11 @@
             <version>${project.version}</version>
          </dependency>
          <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-spring6-common</artifactId>
+             <version>${project.version}</version>
+         </dependency>
+         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring6-embedded</artifactId>
             <version>${project.version}</version>
