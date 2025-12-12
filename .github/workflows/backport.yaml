@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: Backport
-        uses: kiegroup/git-backporting@v4.8.6
+        uses: kiegroup/git-backporting@v4.8.7
         with:
           target-branch: ${{ matrix.branch }}
           pull-request: ${{ github.event.pull_request.url }}
