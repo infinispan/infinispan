@@ -114,7 +114,7 @@
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
       <version.jboss.shrinkwrap.resolver>3.3.4</version.jboss.shrinkwrap.resolver>
       <version.jboss.threads>3.9.2</version.jboss.threads>
-      <version.jgroups>5.5.1.Final</version.jgroups>
+      <version.jgroups>5.5.2.Final</version.jgroups>
       <version.jgroups.raft>1.1.4.Final</version.jgroups.raft>
       <version.json-path>2.10.0</version.json-path>
       <version.json-smart>2.6.0</version.json-smart>
