@@ -2,7 +2,8 @@
 
 This repository contains various artifacts to create Infinispan Server images.
 
-The container descriptor uses a multi-stage approach to create a minimal, hardened, and secure container images, with a significantly reduced attack surface.
+The container descriptor uses a multi-stage approach to create a minimal, hardened, and secure container images, with a
+significantly reduced attack surface.
 
 ## Building the images
 
