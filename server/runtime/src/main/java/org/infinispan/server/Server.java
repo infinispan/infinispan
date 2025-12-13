@@ -372,6 +372,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
             }
          }
 
+         configurationBuilderHolder.global().metrics().jvm(true);
          configurationBuilderHolder.validate();
       } catch (IOException e) {
          throw new CacheConfigurationException(e);
@@ -570,7 +571,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
       if (rest.authentication().mechanisms().contains("BEARER_TOKEN")) {
          // Find the token realm
          RealmConfiguration realm = serverConfiguration.security().realms().getRealm(rest.authentication().securityRealm());
-         TokenRealmConfiguration realmConfiguration = realm.realmProviders().stream().filter(r -> r instanceof TokenRealmConfiguration).map(r -> (TokenRealmConfiguration) r).findFirst().get();
+         TokenRealmConfiguration realmConfiguration = realm.realmProviders().stream().filter(r -> r instanceof TokenRealmConfiguration).map(r -> (TokenRealmConfiguration) r).findFirst().orElseThrow();
          loginConfiguration.put(MODE, "OIDC");
          loginConfiguration.put(URL, realmConfiguration.authServerUrl());
          loginConfiguration.put(REALM, realmConfiguration.name());
@@ -720,9 +721,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
       for (Map.Entry<String, RealmConfiguration> realm : realms.realms().entrySet()) {
          for (Map.Entry<String, SecurityRealm> subRealm : realm.getValue().realms().entrySet()) {
             SecurityRealm securityRealm = subRealm.getValue();
-            if (securityRealm instanceof ModifiableSecurityRealm) {
-               ModifiableSecurityRealm msr = (ModifiableSecurityRealm) securityRealm;
-
+            if (securityRealm instanceof ModifiableSecurityRealm msr) {
                List<Principal> principals = new ArrayList<>();
                try (ModifiableRealmIdentityIterator iterator = msr.getRealmIdentityIterator()) {
                   while (iterator.hasNext()) {
