@@ -117,6 +117,7 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
    /**
     * Whether JVM metrics should be reported.
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    public boolean jvm() {
       return attributes.attribute(JVM).get();
    }
@@ -124,6 +125,7 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
    /**
     * Whether JVM metrics should be reported.
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    public GlobalMetricsConfigurationBuilder jvm(boolean jvm) {
       attributes.attribute(JVM).set(jvm);
       return this;
