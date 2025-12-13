@@ -1,3 +1,20 @@
+== Upgrading from 16.0 to 16.1
+
+=== Metrics
+
+==== JVM metrics no longer registered by default
+
+The default value of the `infinispan/cache-container/metrics/jvm` attribute has changed from `true` to `false`.
+Previously, this attribute registered metrics related to the JVM internals.
+As Infinispan is a library, the user application, rather than Infinispan, should be responsible for registering JVM metrics.
+This change does not affect the Infinispan server.
+
+==== Metrics attribute `names-as-tags` default value changed
+
+By default, when `infinispan/cache-container/metrics/names-as-tags=false`, the cache name appears in the metric's name, which complicates the construction of Prometheus queries and/or Grafana dashboards.
+For simplification, the default value changed to `true`.
+We strongly recommend updating your queries and/or dashboards to the new metric's name format, as this option will be removed in a future version.
+
 == Upgrading from 15.2 to 16.0
 
 === Marshalling Changes
