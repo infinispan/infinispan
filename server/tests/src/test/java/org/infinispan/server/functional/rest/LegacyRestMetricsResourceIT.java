@@ -36,6 +36,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.metrics.Constants;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -80,7 +81,7 @@ public class LegacyRestMetricsResourceIT {
    public void testOpenMetrics() {
       RestMetricsClient metricsClient = SERVERS.rest().create().metrics();
 
-      String metricName = "cache_manager_default_cache_" + SERVERS.getMethodName() + "_statistics_stores";
+      String metricName = "statistics_stores";
 
       try (RestResponse response = sync(metricsClient.metrics(true))) {
          assertEquals(200, response.status());
@@ -104,10 +105,10 @@ public class LegacyRestMetricsResourceIT {
       RestMetricsClient metricsClient = client.metrics();
 
       String cacheName = SERVERS.getMethodName();
-      String metricName = String.format("vendor_cache_manager_default_cache_%s_statistics_stores", cacheName);
+      String metricName = "vendor_statistics_stores";
       int numPuts = 10;
 
-      var metric = findMetric(getMetrics(metricsClient), metricName);
+      var metric = findCacheMetric(getMetrics(metricsClient), metricName, cacheName);
       metric.value().isZero();
       metric.assertTagPresent("cache", cacheName);
 
@@ -118,13 +119,13 @@ public class LegacyRestMetricsResourceIT {
          assertStatus(NO_CONTENT, cache.put("k" + i, "v" + i));
       }
 
-      findMetric(getMetrics(metricsClient), metricName).value().isEqualTo(10.0);
+      findCacheMetric(getMetrics(metricsClient), metricName, cacheName).value().isEqualTo(10.0);
 
       // delete cache and check that the metric is gone
       assertStatus(OK, client.cache(SERVERS.getMethodName()).delete());
 
       var metrics = getMetrics(metricsClient);
-      assertTrue(metrics.stream().noneMatch(m -> m.matches(metricName)));
+      assertTrue(metrics.stream().noneMatch(m -> m.matches(metricName) && m.containsTag(Constants.CACHE_TAG_NAME, cacheName)));
       assertTrue(metrics.stream().anyMatch(m -> m.name.startsWith("base_")));
       assertTrue(metrics.stream().anyMatch(m -> m.name.startsWith("vendor_")));
    }
@@ -133,12 +134,13 @@ public class LegacyRestMetricsResourceIT {
    public void testTimerMetrics() {
       RestClient client = SERVERS.rest().create();
       RestMetricsClient metricsClient = client.metrics();
+      var cacheName = SERVERS.getMethodName();
 
       // this is a histogram of write times
-      String metricName = "vendor_cache_manager_default_cache_" + SERVERS.getMethodName() + "_statistics_store_times_seconds_max";
+      String metricName = "vendor_statistics_store_times_seconds_max";
       int NUM_PUTS = 10;
 
-      findMetric(getMetrics(metricsClient), metricName).value().isZero();
+      findCacheMetric(getMetrics(metricsClient), metricName, cacheName).value().isZero();
 
       // put some entries then check that the stats were updated
       RestCacheClient cache = client.cache(SERVERS.getMethodName());
@@ -147,7 +149,7 @@ public class LegacyRestMetricsResourceIT {
          assertStatus(NO_CONTENT, cache.put("k" + i, "v" + i));
       }
 
-      findMetric(getMetrics(metricsClient), metricName).value().isPositive();
+      findCacheMetric(getMetrics(metricsClient), metricName, cacheName).value().isPositive();
    }
 
    @Test
@@ -156,16 +158,16 @@ public class LegacyRestMetricsResourceIT {
       RestMetricsClient metricsClient = client.metrics();
 
       String cacheName = SERVERS.getMethodName();
-      String metricName = String.format("vendor_cache_manager_default_cache_%s_statistics_stores", cacheName);
+      String metricName = "vendor_statistics_stores";
 
-      var metric = findMetric(getMetrics(metricsClient), metricName);
+      var metric = findCacheMetric(getMetrics(metricsClient), metricName, cacheName);
       metric.value().isZero();
-      metric.assertTagPresent("cache", cacheName);
+      metric.assertTagPresent(Constants.CACHE_TAG_NAME, cacheName);
 
       // delete cache and check that the metric is gone
-      assertStatus(OK, client.cache(SERVERS.getMethodName()).delete());
+      assertStatus(OK, client.cache(cacheName).delete());
 
-      assertTrue(getMetrics(metricsClient).stream().noneMatch(m -> m.matches(metricName)));
+      assertTrue(getMetrics(metricsClient).stream().noneMatch(m -> m.matches(metricName) && m.containsTag(Constants.CACHE_TAG_NAME, cacheName)));
    }
 
    @Test
@@ -187,21 +189,21 @@ public class LegacyRestMetricsResourceIT {
       List<Metric> metrics = getMetrics(metricsClient);
 
       // async requests counter
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_async_requests_total", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_stats_async_requests_total", IS_POSITIVE);
       // timed out request counter (no timeouts expected during testing)
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_timed_out_requests_total", IS_ZERO);
+      assertDetailedMetrics(metrics, "vendor_jgroups_stats_timed_out_requests_total", IS_ZERO);
       // sync requests histogram
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_sync_requests_seconds_count", IS_POSITIVE);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_sync_requests_seconds_sum", LESS_THAN_ONE);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_sync_requests_seconds_max", LESS_THAN_ONE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_stats_sync_requests_seconds_count", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_stats_sync_requests_seconds_sum", LESS_THAN_ONE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_stats_sync_requests_seconds_max", LESS_THAN_ONE);
       // bytes sent distribution summary
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_bytes_sent_count", IS_POSITIVE);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_bytes_sent_sum", IS_POSITIVE);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_bytes_sent_max", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_stats_bytes_sent_count", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_stats_bytes_sent_sum", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_stats_bytes_sent_max", IS_POSITIVE);
    }
 
    @Test
-   public void testDetailedKeyMetrics() throws Exception {
+   public void testDetailedKeyMetrics() {
       var client = SERVERS.rest().create();
       // put some entries then check that the stats were updated
       var cache = client.cache(SERVERS.getMethodName());
@@ -219,8 +221,8 @@ public class LegacyRestMetricsResourceIT {
 
       // unable to test remove hit since the return value is always ignored.
       for (var i = 0; i < OWNERSHIP.length; ++i) {
-         reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_hit_%s_total", cache.name(), OWNERSHIP[i])).value;
-         writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
+         reads[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_hit_%s_total", OWNERSHIP[i]), cache.name()).value;
+         writes[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_store_%s_total", OWNERSHIP[i]), cache.name()).value;
       }
 
       // only 1 operation was performed
@@ -231,7 +233,7 @@ public class LegacyRestMetricsResourceIT {
    }
 
    @Test
-   public void testDetailedKeyMetrics2() throws Exception {
+   public void testDetailedKeyMetrics2() {
       var client = SERVERS.rest().create();
       // put some entries then check that the stats were updated
       var cache = client.cache(SERVERS.getMethodName());
@@ -250,10 +252,10 @@ public class LegacyRestMetricsResourceIT {
       log.debugf("Test miss:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
 
       for (var i = 0; i < OWNERSHIP.length; ++i) {
-         reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
-         writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
-         rm_misses[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
-         rm_hits[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_hit_%s_total", cache.name(), OWNERSHIP[i])).value;
+         reads[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_miss_%s_total", OWNERSHIP[i]), cache.name()).value;
+         writes[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_store_%s_total", OWNERSHIP[i]), cache.name()).value;
+         rm_misses[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_remove_miss_%s_total", OWNERSHIP[i]), cache.name()).value;
+         rm_hits[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_remove_hit_%s_total", OWNERSHIP[i]), cache.name()).value;
       }
 
       // 1 miss + 1 hit (remove performs a read before removing)
@@ -321,6 +323,15 @@ public class LegacyRestMetricsResourceIT {
 
    public static Metric findMetric(List<Metric> metrics, String metricName) {
       var metricOpt = metrics.stream().filter(m -> m.matches(metricName)).findFirst();
+      assertTrue(metricOpt.isPresent());
+      return metricOpt.get();
+   }
+
+   public static Metric findCacheMetric(List<Metric> metrics, String metricName, String cacheName) {
+      var metricOpt = metrics.stream()
+            .filter(m -> m.matches(metricName))
+            .filter(m -> m.containsTag(Constants.CACHE_TAG_NAME, cacheName))
+            .findFirst();
       assertTrue(metricOpt.isPresent());
       return metricOpt.get();
    }
