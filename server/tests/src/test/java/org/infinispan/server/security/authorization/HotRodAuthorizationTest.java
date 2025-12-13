@@ -195,9 +195,9 @@ abstract class HotRodAuthorizationTest {
    @Test
    public void testExecScripts() {
       SkipJunit.skipCondition(() -> ext.getServerDriver().getConfiguration().runMode() != ServerRunMode.CONTAINER);
-      RemoteCache cache = ext.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).create();
-      String scriptName = ext.addScript(cache.getRemoteCacheManager(), "scripts/test.js");
-      Map params = new HashMap<>();
+      RemoteCache<String, String> cache = ext.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).create();
+      String scriptName = ext.addScript(cache.getRemoteCacheContainer(), "scripts/test.js");
+      Map<String, String> params = new HashMap<>();
       params.put("key", "k");
       params.put("value", "v");
 

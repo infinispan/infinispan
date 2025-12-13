@@ -15,6 +15,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
+import org.infinispan.server.test.core.CertificateAuthority;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 
 import com.oracle.svm.core.annotate.Alias;
@@ -65,7 +66,7 @@ final class Target_AbstractInfinispanServerDriver {
    }
 
    @Substitute
-   protected void createKeyStores(String extension, String type, String providerName) {
+   protected void createKeyStores(CertificateAuthority.ExportType type) {
       // no-op
    }
 }

@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.infinispan.server.test.core.ServerRunMode;
@@ -40,28 +41,29 @@ public class RequestTracingIT {
    public static final String SERVICE_NAME = "infinispan-server";
 
    private static final GenericContainer JAEGER = new GenericContainer(JAEGER_IMAGE)
-         .withEnv("COLLECTOR_OTLP_ENABLED", "true");
+      .withEnv("COLLECTOR_OTLP_ENABLED", "true")
+      .withNetwork(ContainerInfinispanServerDriver.NETWORK);
 
    @RegisterExtension
    public static final InfinispanServerExtension SERVER =
-         InfinispanServerExtensionBuilder.config("configuration/TracingServerTest.xml")
-               .runMode(ServerRunMode.CONTAINER)
-               .numServers(2)
-               .addListener(new InfinispanServerListener() {
-                  @Override
-                  public void before(InfinispanServerDriver driver) {
-                     JAEGER.start();
-                     String endpoint = String.format("http://%s:%s", ipAddress(JAEGER), "4318");
-                     driver.getConfiguration().properties()
-                           .setProperty("infinispan.tracing.collector-endpoint", endpoint);
-                  }
+      InfinispanServerExtensionBuilder.config("configuration/TracingServerTest.xml")
+         .runMode(ServerRunMode.CONTAINER)
+         .numServers(2)
+         .addListener(new InfinispanServerListener() {
+            @Override
+            public void before(InfinispanServerDriver driver) {
+               JAEGER.start();
+               String endpoint = String.format("http://%s:%s", ipAddress(JAEGER), "4318");
+               driver.getConfiguration().properties()
+                  .setProperty("infinispan.tracing.collector-endpoint", endpoint);
+            }
 
-                  @Override
-                  public void after(InfinispanServerDriver driver) {
-                     JAEGER.stop();
-                  }
-               })
-               .build();
+            @Override
+            public void after(InfinispanServerDriver driver) {
+               JAEGER.stop();
+            }
+         })
+         .build();
 
    @Test
    public void testRequestIsTraced() {
@@ -75,9 +77,9 @@ public class RequestTracingIT {
       String cacheName = remoteCache.getName();
       HttpClient client = HttpClient.newHttpClient();
       String queryUrl = String.format("http://%s:%s/api/traces?service=%s",
-            ipAddress(JAEGER),
-            JAEGER_QUERY_PORT,
-            SERVICE_NAME);
+         ipAddress(JAEGER),
+         JAEGER_QUERY_PORT,
+         SERVICE_NAME);
 
       AtomicReference<List<Json>> returnedSpans = new AtomicReference<>();
       Eventually.eventually(() -> {
@@ -131,11 +133,11 @@ public class RequestTracingIT {
       }
 
       Map<String, Json> hotRodPutTags = hotRodPut.get("tags").asJsonList().stream().collect(Collectors.toMap(
-            json -> json.asJsonMap().get("key").asString(),
-            json -> json.asJsonMap().get("value")));
+         json -> json.asJsonMap().get("key").asString(),
+         json -> json.asJsonMap().get("value")));
       Map<String, Json> clusterPutTags = clusterPut.get("tags").asJsonList().stream().collect(Collectors.toMap(
-            json -> json.asJsonMap().get("key").asString(),
-            json -> json.asJsonMap().get("value")));
+         json -> json.asJsonMap().get("key").asString(),
+         json -> json.asJsonMap().get("value")));
 
       // verify if the cache
       assertThat(hotRodPutTags.get("cache").asString()).isEqualTo(cacheName);

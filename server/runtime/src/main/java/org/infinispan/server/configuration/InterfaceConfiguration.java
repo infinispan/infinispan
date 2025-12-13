@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
-import org.infinispan.server.network.NetworkAddress;
+import org.infinispan.commons.util.NetworkAddress;
 
 /**
  * @since 10.0

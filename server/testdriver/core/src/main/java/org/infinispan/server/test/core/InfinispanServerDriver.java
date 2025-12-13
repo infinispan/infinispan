@@ -4,7 +4,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.security.cert.X509Certificate;
 import java.util.function.Consumer;
 
 import javax.management.MBeanServerConnection;
@@ -193,5 +192,5 @@ public interface InfinispanServerDriver {
 
    String syncFilesToServer(int server, String path);
 
-   X509Certificate createCertificate(String name, String type, String providerName);
+   InetAddress getTestHostAddress();
 }

@@ -26,7 +26,11 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-runtime</artifactId>
+         <artifactId>infinispan-core</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cli-client</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -46,8 +50,17 @@
           <artifactId>infinispan-client-hotrod</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-rest</artifactId>
+      </dependency>
+      <dependency>
          <groupId>io.vertx</groupId>
          <artifactId>vertx-redis-client</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-runtime</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>junit</groupId>

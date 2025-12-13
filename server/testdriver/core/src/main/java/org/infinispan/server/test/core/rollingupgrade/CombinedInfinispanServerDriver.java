@@ -4,7 +4,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.security.cert.X509Certificate;
 import java.util.function.Consumer;
 
 import javax.management.MBeanServerConnection;
@@ -34,6 +33,11 @@ public class CombinedInfinispanServerDriver implements InfinispanServerDriver {
    public CombinedInfinispanServerDriver(ContainerInfinispanServerDriver fromDriver, ContainerInfinispanServerDriver toDriver) {
       this.fromDriver = fromDriver;
       this.toDriver = toDriver;
+   }
+
+   @Override
+   public InetAddress getTestHostAddress() {
+      return fromDriver.getTestHostAddress();
    }
 
    @Override
@@ -163,11 +167,6 @@ public class CombinedInfinispanServerDriver implements InfinispanServerDriver {
 
    @Override
    public String syncFilesToServer(int server, String path) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public X509Certificate createCertificate(String name, String type, String providerName) {
       throw new UnsupportedOperationException();
    }
 

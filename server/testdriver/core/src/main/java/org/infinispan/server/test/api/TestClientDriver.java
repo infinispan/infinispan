@@ -2,7 +2,7 @@ package org.infinispan.server.test.api;
 
 import java.net.InetAddress;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.counter.api.CounterManager;
 
 /**
@@ -19,7 +19,7 @@ public interface TestClientDriver {
     * @param script the script to install
     * @return the named script
     */
-   String addScript(RemoteCacheManager remoteCacheManager, String script);
+   String addScript(RemoteCacheContainer remoteCacheManager, String script);
 
    /**
     * If the driver is being ran with a container that is running the server as opposed to in a separate process or

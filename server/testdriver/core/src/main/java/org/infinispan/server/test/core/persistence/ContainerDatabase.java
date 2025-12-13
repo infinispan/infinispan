@@ -13,6 +13,7 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.Containers;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.testcontainers.DockerClientFactory;
@@ -87,6 +88,7 @@ public class ContainerDatabase extends Database {
                )
          );
       }
+      container.withNetwork(ContainerInfinispanServerDriver.NETWORK);
       return container;
    }
 

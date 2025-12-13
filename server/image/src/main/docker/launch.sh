@@ -139,4 +139,3 @@ if [[ ! ${ARGS} =~ "--bind-address" ]]; then
   ARGS="--bind-address=0.0.0.0 ${ARGS}"
 fi
 exec "${ISPN_HOME}"/bin/server.sh ${ARGS}
-

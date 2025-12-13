@@ -64,7 +64,7 @@ public class AeshTestConnection implements Connection, AutoCloseable {
    }
 
    public void clear() {
-      if (bufferBuilder.length() > 0)
+      if (!bufferBuilder.isEmpty())
          bufferBuilder.delete(0, bufferBuilder.length());
    }
 
@@ -226,7 +226,7 @@ public class AeshTestConnection implements Connection, AutoCloseable {
    public void assertEquals(String expected) {
       Eventually.eventually(
             () -> new ComparisonFailure("Expected output was not equal to expected string after timeout", expected, bufferBuilder.toString()),
-            () -> expected.equals(bufferBuilder.toString()), 10_000, 50, TimeUnit.MILLISECONDS);
+            () -> expected.contentEquals(bufferBuilder), 10_000, 50, TimeUnit.MILLISECONDS);
    }
 
    public void send(String data) {

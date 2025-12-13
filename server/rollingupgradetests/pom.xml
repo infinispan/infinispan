@@ -40,7 +40,11 @@
          <scope>test</scope>
          <type>test-jar</type>
       </dependency>
-
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-testdriver-junit5</artifactId>

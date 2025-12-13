@@ -1,45 +1,22 @@
 package org.infinispan.server.test.core;
 
-import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
-
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.Provider;
-import java.security.PublicKey;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 import javax.net.ssl.SSLContext;
-import javax.security.auth.x500.X500Principal;
 
 import org.infinispan.cli.user.UserTool;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -50,21 +27,15 @@ import org.infinispan.commons.maven.MavenSettings;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Features;
+import org.infinispan.commons.util.NetworkAddress;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.server.Server;
-import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.test.api.TestUser;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.junit.Assume;
-import org.wildfly.security.x500.GeneralName;
-import org.wildfly.security.x500.cert.BasicConstraintsExtension;
-import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
-import org.wildfly.security.x500.cert.SubjectAlternativeNamesExtension;
-import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 import net.spy.memcached.ConnectionFactoryBuilder;
 
@@ -77,35 +48,21 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    public static final String TEST_HOST_ADDRESS = "org.infinispan.test.host.address";
    public static final String JOIN_TIMEOUT = "jgroups.join_timeout";
-   public static final String BASE_DN = "CN=%s,OU=Infinispan,O=JBoss,L=Red Hat";
    public static final String KEY_PASSWORD = "secret";
-   public static final String KEY_ALGORITHM = "RSA";
-   public static final String KEY_SIGNATURE_ALGORITHM = "SHA256withRSA";
    public static final int JMX_PORT = 9999;
 
    protected final InfinispanServerTestConfiguration configuration;
    protected final InetAddress testHostAddress;
-   protected final SelfSignedX509CertificateAndSigningKey ca;
 
    protected File rootDir;
    protected File confDir;
    protected ComponentStatus status;
-   protected final AtomicLong certSerial = new AtomicLong(1);
    protected String name;
-
-   protected final Provider[] ALL_PROVIDERS;
 
    protected AbstractInfinispanServerDriver(InfinispanServerTestConfiguration configuration, InetAddress testHostAddress) {
       this.configuration = configuration;
       this.testHostAddress = testHostAddress;
       this.status = ComponentStatus.INSTANTIATED;
-      ALL_PROVIDERS = SslContextFactory.discoverSecurityProviders(this.getClass().getClassLoader());
-      ca = SelfSignedX509CertificateAndSigningKey.builder()
-            .setDn(dn("CA"))
-            .setSignatureAlgorithmName(KEY_SIGNATURE_ALGORITHM)
-            .setKeyAlgorithmName(KEY_ALGORITHM)
-            .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
-            .build();
    }
 
    @Override
@@ -116,6 +73,11 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    @Override
    public InfinispanServerTestConfiguration getConfiguration() {
       return configuration;
+   }
+
+   @Override
+   public InetAddress getTestHostAddress() {
+      return testHostAddress;
    }
 
    protected abstract void start(String name, File rootDir);
@@ -150,7 +112,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       String testDir = CommonsTestingUtil.tmpDirectory(siteName + name);
       Util.recursiveFileRemove(testDir);
       rootDir = new File(testDir);
-      confDir = new File(rootDir, Server.DEFAULT_SERVER_CONFIG);
+      confDir = new File(rootDir, ServerConstants.DEFAULT_SERVER_CONFIG);
       if (!confDir.mkdirs()) {
          throw new RuntimeException("Failed to create server configuration directory " + confDir);
       }
@@ -159,10 +121,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
          copyProvidedServerConfigurationFile();
       }
       createUserFile("default");
-      createKeyStores(".pfx", "pkcs12", null);
-      // Only create BCFKS certs if BouncyCastle is on the classpath
-      if (findProvider(ALL_PROVIDERS, "BC", KeyStore.class, "BCFKS") != null) {
-         createKeyStores(".bcfks", "BCFKS", "BC");
+      createKeyStores(CertificateAuthority.ExportType.PFX);
+      if (CertificateAuthority.hasProvider("BC")) {
+         createKeyStores(CertificateAuthority.ExportType.BCFKS);
       }
    }
 
@@ -235,9 +196,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    protected static File createServerHierarchy(File baseDir, String name) {
       File rootDir = serverRoot(baseDir, name);
       for (String dir : Arrays.asList(
-            Server.DEFAULT_SERVER_DATA,
-            Server.DEFAULT_SERVER_LOG,
-            Server.DEFAULT_SERVER_LIB)
+         ServerConstants.DEFAULT_SERVER_DATA,
+         ServerConstants.DEFAULT_SERVER_LOG,
+         ServerConstants.DEFAULT_SERVER_LIB)
       ) {
          File d = new File(rootDir, dir);
          if (!d.exists()) {
@@ -272,7 +233,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       if (configuration.getDataFiles() == null)
          return;
 
-      File dataDir = new File(rootDir, Server.DEFAULT_SERVER_DATA);
+      File dataDir = new File(rootDir, ServerConstants.DEFAULT_SERVER_DATA);
       dataDir.mkdirs();
       for (String file : configuration.getDataFiles())
          copyResource(file, dataDir.toPath());
@@ -341,152 +302,20 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
     * <li><b>user2.pfx</b> A client certificate signed by the CA</li>
     * </ul>
     */
-   protected void createKeyStores(String extension, String type, String providerName) {
+   protected void createKeyStores(CertificateAuthority.ExportType type) {
       try {
-         Provider provider = findProvider(ALL_PROVIDERS, providerName, KeyPairGenerator.class, KEY_ALGORITHM);
-         KeyPairGenerator keyPairGenerator = provider != null ? KeyPairGenerator.getInstance(KEY_ALGORITHM, provider) : KeyPairGenerator.getInstance(KEY_ALGORITHM);
-         KeyPair keyPair = keyPairGenerator.generateKeyPair();
-         PrivateKey signingKey = keyPair.getPrivate();
-         PublicKey publicKey = keyPair.getPublic();
-
-         provider = findProvider(ALL_PROVIDERS, providerName, KeyStore.class, type);
-         KeyStore trustStore = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
-         trustStore.load(null, null);
-
-         writeKeyStore(ca, "ca", extension, type, providerName);
-
-         trustStore.setCertificateEntry("ca", ca.getSelfSignedCertificate());
-         createSignedCertificate(signingKey, publicKey, ca, "server", extension, trustStore, type, providerName);
-
+         CertificateAuthority certificateAuthority = configuration.certificateAuthority();
+         certificateAuthority.exportCertificates(confDir.toPath().resolve("ca." + type.ext()), type, KEY_PASSWORD.toCharArray(), "ca");
+         certificateAuthority.getCertificate("server", testHostAddress); // We want to add the IPAddress to the SAN
+         certificateAuthority.exportCertificateWithKey("server", confDir.toPath(), KEY_PASSWORD.toCharArray(), type);
          for (TestUser user : TestUser.values()) {
             if (user != TestUser.ANONYMOUS) {
-               createSignedCertificate(signingKey, publicKey, ca, user.getUser(), extension, trustStore, type, providerName);
+               certificateAuthority.exportCertificateWithKey(user.getUser(), confDir.toPath(), KEY_PASSWORD.toCharArray(), type);
             }
          }
-         createSignedCertificate(signingKey, publicKey, ca, "supervisor", extension, trustStore, type, providerName);
-
-         try (FileOutputStream os = new FileOutputStream(getCertificateFile("trust" + extension))) {
-            trustStore.store(os, KEY_PASSWORD.toCharArray());
-         }
-
-         SelfSignedX509CertificateAndSigningKey untrusted = SelfSignedX509CertificateAndSigningKey.builder()
-               .setDn(dn("CA"))
-               .setSignatureAlgorithmName(KEY_SIGNATURE_ALGORITHM)
-               .setKeyAlgorithmName(KEY_ALGORITHM).addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647").build();
-         writeKeyStore(untrusted, "untrusted", extension, type, providerName);
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-   }
-
-   protected static X500Principal dn(String cn) {
-      return new X500Principal(String.format(BASE_DN, cn));
-   }
-
-   protected void writeKeyStore(SelfSignedX509CertificateAndSigningKey certificate, String name, String extension, String type, String providerName) {
-      X509Certificate issuerCertificate = certificate.getSelfSignedCertificate();
-
-      writeKeyStore(getCertificateFile(name + extension), type, providerName, ks -> {
-         try {
-            ks.setCertificateEntry(name, issuerCertificate);
-         } catch (KeyStoreException e) {
-            throw new RuntimeException(e);
-         }
-      });
-      try (FileWriter w = new FileWriter(new File(confDir, name + extension + ".crt"))) {
-         w.write("-----BEGIN CERTIFICATE-----\n");
-         w.write(Base64.getEncoder().encodeToString(issuerCertificate.getEncoded()));
-         w.write("\n-----END CERTIFICATE-----\n");
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-      try (FileWriter w = new FileWriter(new File(confDir, name + extension + ".key"))) {
-         w.write("-----BEGIN PRIVATE KEY-----\n");
-         w.write(Base64.getEncoder().encodeToString(certificate.getSigningKey().getEncoded()));
-         w.write("\n-----END PRIVATE KEY-----\n");
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-   }
-
-   protected X509Certificate createSignedCertificate(PrivateKey signingKey, PublicKey publicKey,
-                                                     SelfSignedX509CertificateAndSigningKey ca,
-                                                     String name, String extension, KeyStore trustStore, String type, String providerName) throws CertificateException {
-      X509Certificate caCertificate = ca.getSelfSignedCertificate();
-      List<GeneralName> sANs = new ArrayList<>();
-      sANs.add(new GeneralName.DNSName("infinispan.test"));
-      sANs.add(new GeneralName.DNSName("localhost"));
-      byte[] address = testHostAddress.getAddress();
-      while (address[3] != -1) {
-         try {
-            sANs.add(new GeneralName.IPAddress(InetAddress.getByAddress(address).getHostAddress()));
-         } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-         }
-         address[3]++;
-      }
-      X509Certificate certificate = new X509CertificateBuilder()
-            .setIssuerDn(ca.getSelfSignedCertificate().getSubjectX500Principal())
-            .setSubjectDn(dn(name))
-            .setSignatureAlgorithmName(KEY_SIGNATURE_ALGORITHM)
-            .setSigningKey(ca.getSigningKey())
-            .setPublicKey(publicKey)
-            .setSerialNumber(BigInteger.valueOf(certSerial.getAndIncrement()))
-            .addExtension(new BasicConstraintsExtension(false, false, -1))
-            .addExtension(new SubjectAlternativeNamesExtension(false, sANs))
-            .build();
-
-      if (trustStore != null) {
-         try {
-            trustStore.setCertificateEntry(name, certificate);
-         } catch (KeyStoreException e) {
-            throw new RuntimeException(e);
-         }
-      }
-
-      writeKeyStore(getCertificateFile(name + extension), type, providerName, ks -> {
-         try {
-            ks.setKeyEntry(name, signingKey, KEY_PASSWORD.toCharArray(), new X509Certificate[]{certificate, caCertificate});
-            //ks.setCertificateEntry("ca", caCertificate);
-         } catch (KeyStoreException e) {
-            throw new RuntimeException(e);
-         }
-      });
-
-      try (Writer w = Files.newBufferedWriter(getCertificateFile(name + ".pem").toPath())) {
-         w.write("-----BEGIN PRIVATE KEY-----\n");
-         w.write(Base64.getEncoder().encodeToString(ca.getSigningKey().getEncoded()));
-         w.write("\n-----END PRIVATE KEY-----\n");
-         w.write("-----BEGIN CERTIFICATE-----\n");
-         w.write(Base64.getEncoder().encodeToString(certificate.getEncoded()));
-         w.write("\n-----END CERTIFICATE-----\n");
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-      try (FileWriter w = new FileWriter(new File(confDir, name + extension + ".crt"))) {
-         w.write("-----BEGIN CERTIFICATE-----\n");
-         w.write(Base64.getEncoder().encodeToString(certificate.getEncoded()));
-         w.write("\n-----END CERTIFICATE-----\n");
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-      try (FileWriter w = new FileWriter(new File(confDir, name + extension + ".key"))) {
-         w.write("-----BEGIN PRIVATE KEY-----\n");
-         w.write(Base64.getEncoder().encodeToString(ca.getSigningKey().getEncoded()));
-         w.write("\n-----END PRIVATE KEY-----\n");
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-      return certificate;
-   }
-
-   private void writeKeyStore(File file, String type, String providerName, Consumer<KeyStore> consumer) {
-      try (FileOutputStream os = new FileOutputStream(file)) {
-         Provider provider = findProvider(ALL_PROVIDERS, providerName, KeyStore.class, type);
-         KeyStore keyStore = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
-         keyStore.load(null, null);
-         consumer.accept(keyStore);
-         keyStore.store(os, KEY_PASSWORD.toCharArray());
+         certificateAuthority.exportCertificateWithKey("supervisor", confDir.toPath(), KEY_PASSWORD.toCharArray(), type);
+         certificateAuthority.exportCertificates(confDir.toPath().resolve("trust." + type.ext()), type, KEY_PASSWORD.toCharArray());
+         certificateAuthority.exportUntrustedCertificate("untrusted", confDir.toPath(), KEY_PASSWORD.toCharArray(), type);
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
@@ -500,10 +329,10 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    @Override
    public void applyKeyStore(ConfigurationBuilder builder, String certificateName, String type, String provider) {
       builder.security().ssl()
-            .keyStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
-            .keyStorePassword(KEY_PASSWORD.toCharArray())
-            .keyStoreType(type)
-            .provider(provider);
+         .keyStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
+         .keyStorePassword(KEY_PASSWORD.toCharArray())
+         .keyStoreType(type)
+         .provider(provider);
    }
 
    @Override
@@ -514,10 +343,10 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    @Override
    public void applyKeyStore(RestClientConfigurationBuilder builder, String certificateName, String type, String provider) {
       builder.security().ssl()
-            .keyStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
-            .keyStorePassword(KEY_PASSWORD.toCharArray())
-            .keyStoreType(type)
-            .provider(provider);
+         .keyStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
+         .keyStorePassword(KEY_PASSWORD.toCharArray())
+         .keyStoreType(type)
+         .provider(provider);
    }
 
    @Override
@@ -528,10 +357,10 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    @Override
    public void applyTrustStore(ConfigurationBuilder builder, String certificateName, String type, String provider) {
       builder.security().ssl()
-            .trustStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
-            .trustStorePassword(KEY_PASSWORD.toCharArray())
-            .trustStoreType(type)
-            .provider(provider);
+         .trustStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
+         .trustStorePassword(KEY_PASSWORD.toCharArray())
+         .trustStoreType(type)
+         .provider(provider);
    }
 
    @Override
@@ -542,10 +371,10 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    @Override
    public void applyTrustStore(RestClientConfigurationBuilder builder, String certificateName, String type, String provider) {
       builder.security().ssl()
-            .trustStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
-            .trustStorePassword(KEY_PASSWORD.toCharArray())
-            .trustStoreType(type)
-            .provider(provider);
+         .trustStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
+         .trustStorePassword(KEY_PASSWORD.toCharArray())
+         .trustStoreType(type)
+         .provider(provider);
    }
 
    @Override
@@ -557,21 +386,10 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    public void applyTrustStore(ConnectionFactoryBuilder builder, String certificateName, String type, String provider) {
       SslContextFactory factory = new SslContextFactory();
       SSLContext context = factory.trustStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
-            .trustStorePassword(KEY_PASSWORD.toCharArray())
-            .trustStoreType(type)
-            .provider(provider).build().sslContext();
+         .trustStorePassword(KEY_PASSWORD.toCharArray())
+         .trustStoreType(type)
+         .provider(provider).build().sslContext();
       builder.setSSLContext(context).setSkipTlsHostnameVerification(true);
-   }
-
-   @Override
-   public X509Certificate createCertificate(String name, String type, String providerName) {
-      try {
-         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM);
-         KeyPair keyPair = keyPairGenerator.generateKeyPair();
-         return createSignedCertificate(keyPair.getPrivate(), keyPair.getPublic(), ca, name, ".pfx", null, type, providerName);
-      } catch (CertificateException | NoSuchAlgorithmException e) {
-         throw new RuntimeException(e);
-      }
    }
 
    /**
