@@ -209,7 +209,9 @@ public class MultiHomedServerAddress implements ServerAddress {
       @ProtoFactory
       static InetAddressWithNetMask protoFactory(String hostAddress, short prefixLength) {
          try {
-            return new InetAddressWithNetMask(InetAddress.getByName(hostAddress), prefixLength);
+            // Remove the scope id if necessary
+            int scopeSeparator = hostAddress.lastIndexOf('%');
+            return new InetAddressWithNetMask(InetAddress.getByName(scopeSeparator < 0 ? hostAddress : hostAddress.substring(0, scopeSeparator)), prefixLength);
          } catch (UnknownHostException e) {
             throw new MarshallingException(String.format("Unable to resolve InetAddress by name '%s'", hostAddress), e);
          }
