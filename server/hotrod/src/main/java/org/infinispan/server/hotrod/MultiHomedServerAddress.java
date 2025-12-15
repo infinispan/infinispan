@@ -208,6 +208,9 @@ public class MultiHomedServerAddress implements ServerAddress {
 
       @ProtoFactory
       static InetAddressWithNetMask protoFactory(String hostAddress, short prefixLength) {
+         // Remove the scope id if necessary
+         int scopeSeparator = hostAddress.lastIndexOf('%');
+         hostAddress = scopeSeparator < 0 ? hostAddress : hostAddress.substring(0, scopeSeparator);
          try {
             return new InetAddressWithNetMask(InetAddress.getByName(hostAddress), prefixLength);
          } catch (UnknownHostException e) {

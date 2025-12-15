@@ -1,10 +1,14 @@
 package org.infinispan.server.hotrod;
 
+import static java.net.NetworkInterface.getNetworkInterfaces;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 
 import org.testng.annotations.Test;
 
@@ -58,5 +62,17 @@ public class InetAddressWithNetMaskTest {
       assertEquals(expected, addressWithNetMask.prefixLength);
       addressWithNetMask = new MultiHomedServerAddress.InetAddressWithNetMask(address, prefix, false);
       assertEquals(prefix, addressWithNetMask.prefixLength);
+   }
+
+   public void testScopeId() throws SocketException {
+      for(Enumeration<NetworkInterface> en = getNetworkInterfaces(); en.hasMoreElements(); ) {
+         NetworkInterface networkInterface = en.nextElement();
+         System.out.println(networkInterface.getDisplayName());
+         for(Enumeration<InetAddress> en1 = networkInterface.getInetAddresses(); en1.hasMoreElements(); ) {
+            InetAddress address = en1.nextElement();
+            System.out.println(address.getHostAddress());
+         }
+      }
+      MultiHomedServerAddress.InetAddressWithNetMask netMask = MultiHomedServerAddress.InetAddressWithNetMask.protoFactory("0:0:0:0:0:0:0:1", (short) 128);
    }
 }
