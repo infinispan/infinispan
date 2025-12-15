@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -766,6 +767,14 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
          return cacheStatus.getRebalancingStatus();
       } else {
          return RebalancingStatus.PENDING;
+      }
+   }
+
+   @Override
+   public void awaitRebalance(String cacheName, long timeout, TimeUnit unit) throws InterruptedException {
+      ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
+      if (cacheStatus != null) {
+         cacheStatus.awaitRebalance(timeout, unit);
       }
    }
 

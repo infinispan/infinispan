@@ -2,6 +2,7 @@ package org.infinispan.topology;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -97,6 +98,8 @@ public interface ClusterTopologyManager {
     * Retrieves the rebalancing status of a cache
     */
    RebalancingStatus getRebalancingStatus(String cacheName);
+
+   void awaitRebalance(String cacheName, long timeout, TimeUnit unit) throws InterruptedException;
 
    CompletionStage<Void> forceRebalance(String cacheName);
 

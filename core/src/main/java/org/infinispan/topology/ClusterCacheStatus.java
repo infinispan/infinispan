@@ -19,6 +19,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.commons.CacheException;
@@ -57,6 +58,7 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
  */
 public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private final ReentrantLock lock = new ReentrantLock();
+   private final Condition rebalanceInProgressCondition = lock.newCondition();
    // The HotRod client starts with topology 0, so we start with 1 to force an update
    public static final int INITIAL_TOPOLOGY_ID = 1;
    public static final int INITIAL_REBALANCE_ID = 1;
@@ -369,6 +371,17 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
    }
 
+   public void awaitRebalance(long timeout, TimeUnit unit) throws InterruptedException {
+      acquireLock();
+      try {
+         if (rebalanceInProgress) {
+            rebalanceInProgressCondition.await(timeout, unit);
+         }
+      } finally {
+         releaseLock();
+      }
+   }
+
    public void confirmRebalancePhase(Address member, int receivedTopologyId) {
       acquireLock();
       try {
@@ -438,6 +451,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    @GuardedBy("lock")
    private void endRebalance() {
       rebalanceInProgress = false;
+      rebalanceInProgressCondition.signalAll();
 
       CacheTopology currentTopology = getCurrentTopology();
       if (currentTopology == null) {
@@ -924,8 +938,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (!actualLeaver)
             return CompletableFutures.completedNull();
 
-         if (expectedMembers.isEmpty())
+         if (expectedMembers.isEmpty()) {
             clusterTopologyManager.removeCacheStatus(cacheName);
+            rebalanceInProgress = false;
+            rebalanceInProgressCondition.signalAll();
+         }
 
          if (currentTopology == null)
             return CompletableFutures.completedNull();
