@@ -167,9 +167,18 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
    @Override
    public InternalCacheEntry update(InternalCacheEntry ice, Metadata metadata) {
-      if (!isStoreMetadata(metadata, ice))
-         return updateMetadataUnawareEntry(ice, metadata.lifespan(), metadata.maxIdle());
-      else
+      if (!isStoreMetadata(metadata, ice)) {
+         long lifespan;
+         long maxIdle;
+         if (metadata == null) {
+            lifespan = -1;
+            maxIdle = -1;
+         } else {
+            lifespan = metadata.lifespan();
+            maxIdle = metadata.maxIdle();
+         }
+         return updateMetadataUnawareEntry(ice, lifespan, maxIdle);
+      } else
          return updateMetadataAwareEntry(ice, metadata);
    }
 

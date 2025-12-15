@@ -496,11 +496,12 @@ public class DummyInMemoryStore<K, V> implements WaitNonBlockingStore<K, V> {
 
    private static long sizeIncludingExpired(IntSet segments, AtomicReferenceArray<Map<Object, byte[]>> store) {
       long size = 0;
-      for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
-         int segment = iter.nextInt();
-         Map<Object, byte[]> map = store.get(segment);
-         if (map != null) {
-            size += map.size();
+      for (int i = 0; i < store.length(); ++i) {
+         if (segments.contains(i)) {
+            Map<Object, byte[]> map = store.get(i);
+            if (map != null) {
+               size += map.size();
+            }
          }
       }
       return size;
