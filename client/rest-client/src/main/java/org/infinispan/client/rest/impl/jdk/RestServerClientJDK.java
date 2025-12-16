@@ -134,7 +134,7 @@ public class RestServerClientJDK implements RestServerClient {
       String url = String.format("%s/connectors/%s/ip-filter", path, name);
       Json json = Json.array();
       for (IpFilterRule rule : rules) {
-         json.add(Json.object().set("type", rule.getType().name()).set("cidr", rule.getCidr()));
+         json.add(Json.object().set("type", rule.type().name()).set("cidr", rule.cidr()));
       }
       return client.post(url, RestEntity.create(MediaType.APPLICATION_JSON, json.toString()));
    }
