@@ -123,8 +123,10 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
       if (configuration.pingOnCreate()) {
          try {
             head("/").toCompletableFuture().get();
-         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+         } catch (ExecutionException e) {
+            throw new RuntimeException("Error connecting to " + baseURL, e.getCause());
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
          }
       }
    }

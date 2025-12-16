@@ -22,6 +22,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    private String username;
    private char[] password;
    private String realm;
+   private Properties properties = new Properties();
 
    public AuthenticationConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
@@ -112,10 +113,21 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
       return enable();
    }
 
+   /**
+    * Specifies custom properties
+    * @param key the property key
+    * @param value the property value
+    * @return this builder
+    */
+   public AuthenticationConfigurationBuilder property(String key, String value) {
+      properties.setProperty(key, value);
+      return enable();
+   }
+
    @Override
    public AuthenticationConfiguration create() {
       String mech = mechanism == null ? "AUTO" : mechanism;
-      return new AuthenticationConfiguration(clientSubject, enabled, mech, realm, username, password);
+      return new AuthenticationConfiguration(clientSubject, enabled, mech, realm, username, password, properties);
    }
 
    @Override
@@ -125,6 +137,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
       this.clientSubject = template.clientSubject();
       this.enabled = template.enabled();
       this.mechanism = template.mechanism();
+      this.properties = new Properties();
+      this.properties.putAll(template.properties());
       return this;
    }
 
