@@ -17,6 +17,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -236,5 +239,11 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    @Override
    public String toString() {
       return toString("RESP",  "auth=RESP");
+   }
+
+   public static ComponentRef<RespServer> fromCacheManager(EmbeddedCacheManager ecm, String serverName) {
+      return SecurityActions.getGlobalComponentRegistry(ecm)
+         .getComponent(BasicComponentRegistry.class)
+         .getComponent(serverName, RespServer.class);
    }
 }

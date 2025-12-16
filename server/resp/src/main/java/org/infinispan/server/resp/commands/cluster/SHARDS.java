@@ -1,7 +1,6 @@
 package org.infinispan.server.resp.commands.cluster;
 
-import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPhysicalAddress;
-
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,18 +12,22 @@ import java.util.function.BiConsumer;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.NetworkAddress;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.manager.CacheManagerInfo;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
 import org.infinispan.server.resp.serialization.Resp3Type;
@@ -33,7 +36,6 @@ import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.topology.CacheTopology;
 
 import io.netty.channel.ChannelHandlerContext;
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * CLUSTER SHARDS
@@ -59,12 +61,6 @@ public class SHARDS extends RespCommand implements Resp3Command {
       writer.arrayEnd();
    };
 
-   @GuardedBy("this")
-   private CompletionStage<List<ShardInformation>> lastExecution = null;
-
-   @GuardedBy("this")
-   private ConsistentHash lastAcceptedHash = null;
-
    public SHARDS() {
       super(2, 0, 0, 0, AclCategory.SLOW.mask());
    }
@@ -86,17 +82,14 @@ public class SHARDS extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      synchronized (this) {
-         if (!hash.equals(lastAcceptedHash)) {
-            lastExecution = readShardsInformation(hash, SecurityActions.getClusterExecutor(respCache),
-                  handler.respServer().segmentSlotRelation().slotWidth());
-            lastAcceptedHash = hash;
-         }
-      }
-      return handler.stageToReturn(lastExecution, ctx, SERIALIZER);
+      CompletionStage<List<ShardInformation>> info = readShardsInformation(hash, SecurityActions.getClusterExecutor(respCache),
+         handler.respServer().segmentSlotRelation().slotWidth(), handler.respServer().getQualifiedName(), ((InetSocketAddress) ctx.channel().localAddress()).getAddress().getAddress());
+
+
+      return handler.stageToReturn(info, ctx, SERIALIZER);
    }
 
-   private static CompletionStage<List<ShardInformation>> readShardsInformation(ConsistentHash hash, ClusterExecutor executor, int slotWidth) {
+   private static CompletionStage<List<ShardInformation>> readShardsInformation(ConsistentHash hash, ClusterExecutor executor, int slotWidth, String serverName, byte[] localAddress) {
 
       Map<List<Address>, IntSet> segmentOwners = new HashMap<>();
       for (int i = 0; i < hash.getNumSegments(); i++) {
@@ -104,7 +97,7 @@ public class SHARDS extends RespCommand implements Resp3Command {
                .add(i);
       }
 
-      return readNodeInformation(hash.getMembers(), executor)
+      return readNodeInformation(hash.getMembers(), executor, serverName, localAddress)
             .thenApply(information -> {
                List<ShardInformation> response = new ArrayList<>();
 
@@ -137,10 +130,10 @@ public class SHARDS extends RespCommand implements Resp3Command {
             });
    }
 
-   private static CompletionStage<Map<Address, Map<String, Object>>> readNodeInformation(List<Address> members, ClusterExecutor executor) {
+   private static CompletionStage<Map<Address, Map<String, Object>>> readNodeInformation(List<Address> members, ClusterExecutor executor, String serverName, byte[] localAddress) {
       final Map<Address, Map<String, Object>> responses = new ConcurrentHashMap<>(members.size());
       return executor.filterTargets(members)
-            .submitConsumer(SHARDS::readLocalNodeInformation, (address, res, t) -> {
+            .submitConsumer(ecm -> readLocalNodeInformation(ecm, serverName, localAddress), (address, res, t) -> {
                if (t != null) {
                   throw CompletableFutures.asCompletionException(t);
                }
@@ -149,19 +142,17 @@ public class SHARDS extends RespCommand implements Resp3Command {
             }).thenApply(ignore -> responses);
    }
 
-   private static Map<String, Object> readLocalNodeInformation(EmbeddedCacheManager ecm) {
+   private static Map<String, Object> readLocalNodeInformation(EmbeddedCacheManager ecm, String serverName, byte[] localAddress) {
       CacheManagerInfo manager = ecm.getCacheManagerInfo();
       String name = manager.getNodeName();
-      var address = findPhysicalAddress(ecm);
-      String host;
-      int port = 0;
-      if (address == null) {
-         host = ecm.getCacheManagerInfo().getNodeAddress();
-      } else {
-         host = address.address().getHostAddress();
-         port = address.port();
+      var address = NetworkAddress.findInterfaceAddressMatchingInetAddress(localAddress);
+      String host = address == null ? ecm.getCacheManagerInfo().getNodeAddress() : address;
+      ComponentRef<RespServer> ref = RespServer.fromCacheManager(ecm, serverName);
+      NettyTransport transport = ref.running().getTransport();
+      if (transport == null) {
+         transport = (NettyTransport) ref.running().getEnclosingProtocolServer().getTransport();
       }
-
+      int port = transport.getPort();
       return createNodeSerialized(name, host, port, "online");
    }
 
