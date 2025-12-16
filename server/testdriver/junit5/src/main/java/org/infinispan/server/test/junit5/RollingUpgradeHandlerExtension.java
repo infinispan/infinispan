@@ -13,11 +13,13 @@ import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
+import org.infinispan.server.test.core.compatibility.Compatibility;
 import org.infinispan.server.test.core.rollingupgrade.CombinedInfinispanServerDriver;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeVersion;
 import org.jboss.shrinkwrap.api.Archive;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -94,6 +96,7 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
 
    @Override
    public void beforeEach(ExtensionContext context) {
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(handler.getConfiguration(), context.getRequiredTestClass().getName(), context.getRequiredTestMethod().getName()));
       this.testClient = new TestClient(testServer);
       startTestClient(context, testClient);
    }
