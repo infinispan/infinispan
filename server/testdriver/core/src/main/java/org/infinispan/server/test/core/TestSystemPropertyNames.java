@@ -150,4 +150,8 @@ public class TestSystemPropertyNames {
     * Specifies the type of sasl mechanism for the Hot Rod client. Not all tests are using it.
     */
    public static final String HOTROD_CLIENT_SASL_MECHANISM = "org.infinispan.test.hotrod.client.salsmechanism";
+   /**
+    * Specifies
+    */
+   public static final String RESP_FORCE_STANDALONE_MODE = PREFIX + "resp.forceStandaloneMode";
 }

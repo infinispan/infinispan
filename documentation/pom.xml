@@ -69,6 +69,17 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
         </dependency>
+       <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-server-testdriver-core</artifactId>
+          <version>${project.version}</version>
+       </dependency>
+       <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-server-rollingupgrade-tests</artifactId>
+          <classifier>tests</classifier>
+          <version>${project.version}</version>
+       </dependency>
     </dependencies>
 
     <build>
@@ -128,6 +139,19 @@
                             </arguments>
                         </configuration>
                     </execution>
+                   <execution>
+                      <id>generate-compatibility-doc</id>
+                      <phase>process-classes</phase>
+                      <goals>
+                         <goal>java</goal>
+                      </goals>
+                      <configuration>
+                         <mainClass>org.infinispan.server.test.core.compatibility.Compatibility</mainClass>
+                         <arguments>
+                            <argument>${project.build.directory}/generated-asciidoc/compatibility.adoc</argument>
+                         </arguments>
+                      </configuration>
+                   </execution>
                 </executions>
             </plugin>
             <plugin>
