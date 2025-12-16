@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
+import org.infinispan.server.test.core.TestSystemPropertyNames;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
@@ -101,7 +102,7 @@ public class RespTestClientDriver extends AbstractTestClientDriver<RespTestClien
       RedisOptions opts = (options != null ? options : new RedisOptions())
             .setPoolName("resp-tests-pool");
 
-      if (size > 1) {
+      if (size > 1 && !testServer.getDriver().getConfiguration().properties().containsKey(TestSystemPropertyNames.RESP_FORCE_STANDALONE_MODE)) {
          opts = opts.setType(RedisClientType.CLUSTER);
       } else {
          opts = opts.setType(RedisClientType.STANDALONE);
