@@ -13,10 +13,13 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.persistence.JdbcConfigurationUtil;
 import org.infinispan.server.persistence.PersistenceIT;
 import org.infinispan.server.persistence.TableManipulation;
+import org.infinispan.server.test.core.compatibility.Compatibility;
 import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.core.persistence.DatabaseServerListener;
+import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfiguration;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -46,7 +49,9 @@ public class RollingUpgradePersistenceTestIT {
             uh -> assertDataIsCorrect(uh, cacheName)
             );
 
-      RollingUpgradeHandler.performUpgrade(builder.build());
+      RollingUpgradeConfiguration configuration = builder.build();
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(configuration));
+      RollingUpgradeHandler.performUpgrade(configuration);
    }
 
    @ParameterizedTest
@@ -99,7 +104,9 @@ public class RollingUpgradePersistenceTestIT {
          return true;
       });
 
-      RollingUpgradeHandler.performUpgrade(builder.build());
+      RollingUpgradeConfiguration configuration = builder.build();
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(configuration));
+      RollingUpgradeHandler.performUpgrade(configuration);
    }
 
    private void handleInitializer(RollingUpgradeHandler uh, String cacheName, BasicConfiguration configuration) {

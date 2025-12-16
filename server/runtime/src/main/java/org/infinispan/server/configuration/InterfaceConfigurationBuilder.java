@@ -7,7 +7,7 @@ import java.io.IOException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.server.network.NetworkAddress;
+import org.infinispan.commons.util.NetworkAddress;
 
 public class InterfaceConfigurationBuilder implements Builder<InterfaceConfiguration> {
    private final AttributeSet attributes;

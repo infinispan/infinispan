@@ -22,22 +22,22 @@ public class Containers {
       return container.getContainerInfo().getNetworkSettings().getNetworks().values().iterator().next().getIpAddress();
    }
 
-   public static InetAddress getDockerBridgeAddress() {
+   public static InetAddress getContainerNetworkGateway() {
+      return getContainerNetworkGateway("bridge");
+   }
+
+   public static InetAddress getContainerNetworkGateway(String id) {
       DockerClient dockerClient = DockerClientFactory.instance().client();
-      Network bridge = dockerClient.inspectNetworkCmd().withNetworkId("bridge").exec();
+      Network bridge = dockerClient.inspectNetworkCmd().withNetworkId(id).exec();
       String gateway = bridge.getIpam().getConfig().get(0).getGateway();
       return Exceptions.unchecked(() -> InetAddress.getByName(gateway));
    }
 
    public static String imageArchitecture() {
-      switch (System.getProperty("os.arch")) {
-         case "x86_64":
-         case "amd64":
-            return "amd64";
-         case "aarch64":
-            return "arm64";
-         default:
-            throw new IllegalArgumentException("Unknown architecture");
-      }
+      return switch (System.getProperty("os.arch")) {
+         case "x86_64", "amd64" -> "amd64";
+         case "aarch64" -> "arm64";
+         default -> throw new IllegalArgumentException("Unknown architecture");
+      };
    }
 }

@@ -7,8 +7,11 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.artifacts.Artifacts;
+import org.infinispan.server.test.core.compatibility.Compatibility;
+import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfiguration;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 public class RollingUpgradeTaskTestIT {
@@ -36,6 +39,8 @@ public class RollingUpgradeTaskTestIT {
          return true;
       });
 
-      RollingUpgradeHandler.performUpgrade(builder.build());
+      RollingUpgradeConfiguration configuration = builder.build();
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(configuration));
+      RollingUpgradeHandler.performUpgrade(configuration);
    }
 }

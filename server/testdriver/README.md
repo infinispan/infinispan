@@ -20,7 +20,6 @@ servers.
 
 The test driver can run Infinispan Servers in different modes:
 
-* **EMBEDDED**: all servers are run in the same JVM as the test
 * **CONTAINER**: the servers are executed inside a container
 * **FORKED**: the servers are executed in a different JVM process
 
@@ -33,7 +32,7 @@ These are all handled by a specific driver which takes care of:
 * creating user / role property files for authentication tests
 
 The driver used by tests can be chosen by setting the system property `org.infinispan.test.server.driver` to one of the above names.
-By default, the **EMBEDDED** driver will be used. When running the testsuite through Maven, you can force the use of the **CONTAINER** driver by using the `container` profile:
+By default, the **CONTAINER** driver will be used.
 
 ```
 mvn -Pcontainer verify

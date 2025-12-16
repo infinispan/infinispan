@@ -17,7 +17,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.RestClientConfigurationProperties;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.server.resp.configuration.RespServerConfiguration;
+import org.infinispan.server.test.core.ServerConstants;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -85,7 +85,7 @@ public class ResilienceStartupIT {
       RestClient rest = SERVER.rest().withClientConfiguration(restClientBuilder).get();
 
       // Define an invalid configuration for the RESP cache.
-      String invalidCacheName = RespServerConfiguration.DEFAULT_RESP_CACHE;
+      String invalidCacheName = ServerConstants.DEFAULT_RESP_CACHE;
       String invalidConfig = """
             <infinispan>
               <cache-container>

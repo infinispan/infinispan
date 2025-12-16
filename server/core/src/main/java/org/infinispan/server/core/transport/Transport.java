@@ -1,5 +1,6 @@
 package org.infinispan.server.core.transport;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.CompletionStage;
 
 import io.netty.channel.group.ChannelGroup;
@@ -46,4 +47,6 @@ public interface Transport {
    CompletionStage<Void> closeChannels(ChannelMatcher channelMatcher);
 
    ChannelGroup getAcceptedChannels();
+
+   InetSocketAddress getAddress();
 }

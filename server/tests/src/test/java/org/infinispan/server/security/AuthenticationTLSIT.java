@@ -74,6 +74,6 @@ public class AuthenticationTLSIT {
       MemcachedClient client = SERVERS.memcached().withClientConfiguration(builder).get();
       OperationFuture<Boolean> f = client.set("k" + mechanism, 0, "v");
       assertTrue(f.get(10, TimeUnit.SECONDS));
-      assertEquals(client.get("k" + mechanism), "v");
+      assertEquals("v", client.get("k" + mechanism));
    }
 }

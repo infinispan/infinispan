@@ -47,7 +47,7 @@ public abstract class AbstractAuthenticationKeyCloak {
    @Test
    public void testRestReadWrite() {
       String token = getToken();
-
+      System.out.printf("Bearer token %s%n", token);
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.security().authentication()
             .mechanism("BEARER_TOKEN")

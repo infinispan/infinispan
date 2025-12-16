@@ -2,7 +2,7 @@ package org.infinispan.server.test.junit5;
 
 import java.net.InetAddress;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.JmxTestClient;
@@ -24,7 +24,6 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * <a href="https://junit.org/junit5">JUnit 5</a> extension. <br/>
  *
  * The extension can be used in the most simple way that will work in container mode with a standalone server running.
- *
  * {@code
  *
  *    @RegisterExtension
@@ -36,7 +35,6 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  *    @RegisterExtension
  *    static InfinispanServerExtension SERVER = InfispanServerExtensionBuilder.config("infinispan.xml")
  *          .numServers(1)
- *          .runMode(ServerRunMode.EMBEDDED)
  *          .build();
  * }
  *
@@ -132,7 +130,7 @@ public class InfinispanServerExtension extends AbstractServerExtension implement
    }
 
    @Override
-   public String addScript(RemoteCacheManager remoteCacheManager, String script) {
+   public String addScript(RemoteCacheContainer remoteCacheManager, String script) {
       return testClient.addScript(remoteCacheManager, script);
    }
 

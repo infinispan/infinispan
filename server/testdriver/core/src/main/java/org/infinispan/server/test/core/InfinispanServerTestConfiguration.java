@@ -2,6 +2,7 @@ package org.infinispan.server.test.core;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import org.jboss.shrinkwrap.api.Archive;
@@ -41,12 +42,13 @@ public class InfinispanServerTestConfiguration {
    private final int portOffset;
    private final String[] features;
    private final String[] dataFiles;
+   private final CertificateAuthority certificateAuthority;
 
    public InfinispanServerTestConfiguration(String configurationFile, int numServers, int expectedServers,
                                             ServerRunMode runMode, Properties properties, String[] mavenArtifacts,
                                             Archive<?>[] archives, boolean jmx, boolean parallelStartup,
                                             boolean defaultFile, List<InfinispanServerListener> listeners, String clusterName, String site,
-                                            int portOffset, String[] features, String[] dataFiles) {
+                                            int portOffset, String[] features, String[] dataFiles, CertificateAuthority certificateAuthority) {
       this.configurationFile = configurationFile;
       this.numServers = numServers;
       this.expectedServers = expectedServers;
@@ -63,6 +65,7 @@ public class InfinispanServerTestConfiguration {
       this.portOffset = portOffset;
       this.features = features;
       this.dataFiles = dataFiles;
+      this.certificateAuthority = Objects.requireNonNullElseGet(certificateAuthority, CertificateAuthority::new);
    }
 
    public String configurationFile() {
@@ -135,5 +138,9 @@ public class InfinispanServerTestConfiguration {
 
    public String[] getDataFiles() {
       return dataFiles;
+   }
+
+   public CertificateAuthority certificateAuthority() {
+      return certificateAuthority;
    }
 }

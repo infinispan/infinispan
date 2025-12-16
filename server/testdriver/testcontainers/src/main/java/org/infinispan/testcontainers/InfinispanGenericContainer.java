@@ -1,8 +1,10 @@
 package org.infinispan.testcontainers;
 
 import java.net.InetAddress;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -15,6 +17,7 @@ import com.github.dockerjava.api.model.ContainerNetwork;
 /**
  * We can stop a container by doing rest calls. In this case, the TestContainers will have a wrong state.
  * Also, the TestContainers stop method is killing the container. See: https://github.com/testcontainers/testcontainers-java/issues/2608
+ *
  * @since 16.0
  */
 public class InfinispanGenericContainer {
@@ -108,6 +111,10 @@ public class InfinispanGenericContainer {
    }
 
    public String getNetworkIpAddress() {
+      return getNetworkIpAddresses().values().iterator().next();
+   }
+
+   public Map<String, String> getNetworkIpAddresses() {
       InspectContainerResponse containerInfo = containerInfo();
       if (containerInfo == null) {
          throw new NullPointerException(String.format("The requested container %s have an invalid state", this.containerId));
@@ -121,8 +128,7 @@ public class InfinispanGenericContainer {
       if (!containerInfo.getState().getRunning()) {
          throw new IllegalStateException("Server must be running");
       }
-      ContainerNetwork network = containerInfo.getNetworkSettings().getNetworks().values().iterator().next();
-      return network.getIpAddress();
+      return containerInfo.getNetworkSettings().getNetworks().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getIpAddress()));
    }
 
    public InspectContainerResponse containerInfo() {

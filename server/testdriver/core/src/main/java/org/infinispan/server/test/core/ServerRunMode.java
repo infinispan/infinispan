@@ -5,12 +5,6 @@ package org.infinispan.server.test.core;
  * @since 10.0
  **/
 public enum ServerRunMode {
-   EMBEDDED {
-      @Override
-      public AbstractInfinispanServerDriver newDriver(InfinispanServerTestConfiguration configuration) {
-         return new EmbeddedInfinispanServerDriver(configuration);
-      }
-   },
    CONTAINER {
       @Override
       public AbstractInfinispanServerDriver newDriver(InfinispanServerTestConfiguration configuration) {
@@ -30,7 +24,7 @@ public enum ServerRunMode {
          if (configuration.properties().containsKey(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME)) {
             driver = CONTAINER;
          } else {
-            String driverName = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DRIVER, EMBEDDED.name());
+            String driverName = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DRIVER, CONTAINER.name());
             driver = ServerRunMode.valueOf(driverName);
          }
          return driver.newDriver(configuration);

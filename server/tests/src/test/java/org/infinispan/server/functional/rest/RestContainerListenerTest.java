@@ -1,7 +1,7 @@
 package org.infinispan.server.functional.rest;
 
-import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
+import static org.infinispan.server.test.core.ResponseAssertion.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Closeable;
@@ -17,7 +17,6 @@ import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.junit5.InfinispanServer;
@@ -58,7 +57,7 @@ public class RestContainerListenerTest {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
       RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
-      WeakSSEListener sseListener = new WeakSSEListener();
+      RestOperations.WeakSSEListener sseListener = new RestOperations.WeakSSEListener();
       Map<String, String> headers = Collections.singletonMap("Accept", serialization.header());
 
       try (Closeable ignored = client.raw().listen("/rest/v2/container?action=listen", headers, sseListener)) {

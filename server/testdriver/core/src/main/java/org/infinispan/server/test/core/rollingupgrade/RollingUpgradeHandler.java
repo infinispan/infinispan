@@ -22,13 +22,13 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
-import org.infinispan.server.Server;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerConfigBuilder;
+import org.infinispan.server.test.core.ServerConstants;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.util.logging.Log;
@@ -198,7 +198,7 @@ public class RollingUpgradeHandler {
    /**
     * Similar to {@link #performUpgrade(RollingUpgradeConfiguration)} except that it will stop processing the upgrade
     * after it has a mixed cluster of 1 new and (n-1) old nodes. This allows for processing operations during this
-    * period. When done you should complete the Future when it can proceed or set it's exception in whic case it will
+    * period. When done you should complete the Future when it can proceed or set its exception in which case it will
     * clean up early.
     *
     * @param configuration the configuration to use
@@ -206,7 +206,6 @@ public class RollingUpgradeHandler {
     */
    public static RollingUpgradeHandler runUntilMixed(RollingUpgradeConfiguration configuration) {
       RollingUpgradeHandler handler = startOldCluster(configuration);
-
       try {
          handler.upgradeNewNode();
       } catch (Throwable t) {
@@ -216,7 +215,6 @@ public class RollingUpgradeHandler {
             handler.close();
          }
       }
-
       return handler;
    }
 
@@ -426,7 +424,7 @@ public class RollingUpgradeHandler {
       }
       builder.artifacts(artifacts);
       builder.mavenArtifacts(mavenArtifacts);
-      builder.property(Server.INFINISPAN_CLUSTER_STACK, protocol);
+      builder.property(ServerConstants.INFINISPAN_CLUSTER_STACK, protocol);
       listeners.forEach(builder::addListener);
       // If the nodeCount was the same as expected it means it is the start of a fresh cluster. In that case we don't
       // need the join timeout as there shouldn't be any existing nodes in the cluster and don't wait

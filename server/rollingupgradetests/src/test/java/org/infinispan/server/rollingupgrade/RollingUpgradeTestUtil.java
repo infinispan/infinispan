@@ -15,7 +15,7 @@ public class RollingUpgradeTestUtil {
 
    public static RollingUpgradeVersion getFromVersion() {
       String label = System.getProperty(INFINISPAN_ROLLING_UPGRADE_FROM_VERSION, "latest");
-      String version = System.getProperty(INFINISPAN_OLD_VERSION, "16.0.3");
+      String version = System.getProperty(INFINISPAN_OLD_VERSION, "16.0.4");
       return new RollingUpgradeVersion(label, version);
    }
 

@@ -1,0 +1,30 @@
+{
+  "compatibility": [
+    {
+      "version-from": "16.0.*",
+      "version-to": "16.1.*",
+      "properties": {
+        "org.infinispan.test.server.resp.forceStandaloneMode": "true"
+      },
+      "exceptions": [
+        {
+          "description": "RESP CLUSTER SLOTS/SHARDS commands don't work with INADDR_ANY socket bindings",
+          "issue": "https://github.com/infinispan/infinispan/issues/16391",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.rollingupgrade.DefaultRollingUpgradeTestIT",
+              "test-methods": [
+                "testRespClient"
+              ]
+            }
+          ]
+        },
+        {
+          "description": "Legacy metrics are disabled by default",
+          "issue": "https://github.com/infinispan/infinispan/issues/16392",
+          "test-failures": []
+        }
+      ]
+    }
+  ]
+}

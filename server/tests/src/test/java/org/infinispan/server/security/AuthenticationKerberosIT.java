@@ -21,13 +21,11 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
-import org.infinispan.server.test.core.Krb5ConfPropertyExtension;
+import org.infinispan.server.test.core.KerberosListener;
 import org.infinispan.server.test.core.LdapServerListener;
-import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,23 +38,22 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  * @since 10.1
  **/
 @Security
-@ExtendWith(Krb5ConfPropertyExtension.class)
 public class AuthenticationKerberosIT {
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
-         InfinispanServerExtensionBuilder.config("configuration/AuthenticationKerberosTest.xml")
-               .runMode(ServerRunMode.EMBEDDED)
-               .numServers(1)
-               .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
-               .addListener(new LdapServerListener(true))
-               .build();
+      InfinispanServerExtensionBuilder.config("configuration/AuthenticationKerberosTest.xml")
+         .numServers(1)
+         .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
+         .addListener(new KerberosListener())
+         .addListener(new LdapServerListener(true))
+         .build();
 
    static class ArgsProvider implements ArgumentsProvider {
       @Override
       public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
          List<Arguments> args = Common.SASL_KERBEROS.stream()
-               .map(k -> Arguments.of("Hot Rod", k))
-               .collect(Collectors.toList());
+            .map(k -> Arguments.of("Hot Rod", k))
+            .collect(Collectors.toList());
 
          for (Protocol protocol : HTTP_PROTOCOLS) {
             for (String mech : HTTP_KERBEROS_MECHS) {
@@ -81,10 +78,10 @@ public class AuthenticationKerberosIT {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       if (!mechanism.isEmpty()) {
          builder.security().authentication()
-               .saslMechanism(mechanism)
-               .serverName("datagrid")
-               .callbackHandler(new VoidCallbackHandler())
-               .clientSubject(Common.createSubject("admin", "INFINISPAN.ORG", "strongPassword".toCharArray()));
+            .saslMechanism(mechanism)
+            .serverName("datagrid")
+            .callbackHandler(new VoidCallbackHandler())
+            .clientSubject(Common.createSubject("admin", "INFINISPAN.ORG", "strongPassword".toCharArray()));
       }
 
       try {
@@ -102,10 +99,11 @@ public class AuthenticationKerberosIT {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       if (!mechanism.isEmpty()) {
          builder
-               .protocol(protocol)
-               .security().authentication()
-               .mechanism(mechanism)
-               .clientSubject(Common.createSubject("admin", "INFINISPAN.ORG", "strongPassword".toCharArray()));
+            .protocol(protocol)
+            .security().authentication()
+            .mechanism(mechanism)
+            .clientSubject(Common.createSubject("admin", "INFINISPAN.ORG", "strongPassword".toCharArray()))
+            .property("infinispan.negotiate.host-override", "localhost");
          // Kerberos is strict about the hostname, so we do this by hand
          InetSocketAddress serverAddress = SERVERS.getServerDriver().getServerSocket(0, 11222);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());

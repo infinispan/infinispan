@@ -71,14 +71,11 @@ public abstract class Database {
 
    public static Database fromProperties(String type, Properties properties) {
       String mode = properties.getProperty("database.mode");
-      switch (mode) {
-         case "CONTAINER":
-            return new ContainerDatabase(type, properties);
-         case "EXTERNAL":
-            return new ExternalDatabase(type, properties);
-         default:
-            throw new IllegalArgumentException(mode);
-      }
+      return switch (mode) {
+         case "CONTAINER" -> new ContainerDatabase(type, properties);
+         case "EXTERNAL" -> new ExternalDatabase(type, properties);
+         default -> throw new IllegalArgumentException(mode);
+      };
    }
 
    public abstract void start();
