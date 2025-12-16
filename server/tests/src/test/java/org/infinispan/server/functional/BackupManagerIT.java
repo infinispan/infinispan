@@ -10,11 +10,6 @@ import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.infinispan.server.core.BackupManager.Resources.Type.CACHES;
-import static org.infinispan.server.core.BackupManager.Resources.Type.COUNTERS;
-import static org.infinispan.server.core.BackupManager.Resources.Type.PROTO_SCHEMAS;
-import static org.infinispan.server.core.BackupManager.Resources.Type.TASKS;
-import static org.infinispan.server.core.BackupManager.Resources.Type.TEMPLATES;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyContains;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyEquals;
@@ -60,8 +55,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.counter.api.Storage;
-import org.infinispan.counter.configuration.Element;
-import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.Common;
 import org.junit.jupiter.api.AfterAll;
@@ -282,20 +275,20 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       Path createdBackup = source.driver.getRootDir().toPath().resolve("0/data/backups").resolve(backupName).resolve(fileName);
       try (ZipFile zip = new ZipFile(createdBackup.toFile())) {
          // Ensure that only cache-configs are present
-         assertNotNull(zipResourceDir(TEMPLATES));
-         assertResourceDoesntExist(zip, CACHES, COUNTERS, PROTO_SCHEMAS, TASKS);
+         assertNotNull(zipResourceDir("templates"));
+         assertResourceDoesntExist(zip, "caches", "counters", "proto", "proto-schemas", "tasks");
       }
       Files.delete(createdBackup);
    }
 
-   private void assertResourceDoesntExist(ZipFile zip, BackupManager.Resources.Type... types) {
-      for (BackupManager.Resources.Type type : types) {
+   private void assertResourceDoesntExist(ZipFile zip, String... types) {
+      for (String type : types) {
          String dir = zipResourceDir(type);
          assertNull(zip.getEntry(dir));
       }
    }
-   private String zipResourceDir(BackupManager.Resources.Type type) {
-      return "containers/default/" + type.toString();
+   private String zipResourceDir(String type) {
+      return "containers/default/" + type;
    }
 
    @Test
@@ -477,10 +470,10 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       }
       assertEquals(NUM_ENTRIES, getCacheSize(cacheName, client));
 
-      createCounter("weak-volatile", Element.WEAK_COUNTER, Storage.VOLATILE, client, 0);
-      createCounter("weak-persistent", Element.WEAK_COUNTER, Storage.PERSISTENT, client, -100);
-      createCounter("strong-volatile", Element.STRONG_COUNTER, Storage.VOLATILE, client, 50);
-      createCounter("strong-persistent", Element.STRONG_COUNTER, Storage.PERSISTENT, client, 0);
+      createCounter("weak-volatile", "weak-counter", Storage.VOLATILE, client, 0);
+      createCounter("weak-persistent", "weak-counter", Storage.PERSISTENT, client, -100);
+      createCounter("strong-volatile", "strong-counter", Storage.VOLATILE, client, 50);
+      createCounter("strong-persistent", "strong-counter", Storage.PERSISTENT, client, 0);
 
       addSchema(client);
 
@@ -499,10 +492,10 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
          assertStatusAndBodyEquals(OK, "Val-" + index, cache.get(index));
       }
 
-      assertCounter(client, "weak-volatile", Element.WEAK_COUNTER, Storage.VOLATILE, 0);
-      assertCounter(client, "weak-persistent", Element.WEAK_COUNTER, Storage.PERSISTENT, -100);
-      assertCounter(client, "strong-volatile", Element.STRONG_COUNTER, Storage.VOLATILE, 50);
-      assertCounter(client, "strong-persistent", Element.STRONG_COUNTER, Storage.PERSISTENT, 0);
+      assertCounter(client, "weak-volatile", "weak-counter", Storage.VOLATILE, 0);
+      assertCounter(client, "weak-persistent", "weak-counter", Storage.PERSISTENT, -100);
+      assertCounter(client, "strong-volatile", "strong-counter", Storage.VOLATILE, 50);
+      assertCounter(client, "strong-persistent", "strong-counter", Storage.PERSISTENT, 0);
 
       assertStatusAndBodyContains(OK, "message Person", client.schemas().get("schema.proto"));
       Json json = Json.read(assertStatus(OK, client.tasks().list(RestTaskClient.ResultType.USER)));
@@ -512,13 +505,14 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       assertEquals("scripts/test.js", tasks.get(0).at("name").asString());
    }
 
-   private void createCounter(String name, Element type, Storage storage, RestClient client, long delta) {
-      String config = format("{\n" +
-            "    \"%s\":{\n" +
-            "        \"initial-value\":0,\n" +
-            "        \"storage\":\"%s\"\n" +
-            "    }\n" +
-            "}", type, storage.toString());
+   private void createCounter(String name, String type, Storage storage, RestClient client, long delta) {
+      String config = format("""
+         {
+             "%s":{
+                 "initial-value":0,
+                 "storage":"%s"
+             }
+         }""", type, storage.toString());
       RestCounterClient counterClient = client.counter(name);
       assertStatus(OK, counterClient.create(RestEntity.create(MediaType.APPLICATION_JSON, config)));
       if (delta != 0) {
@@ -526,11 +520,11 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       }
    }
 
-   private void assertCounter(RestClient client, String name, Element type, Storage storage, long expectedValue) {
+   private void assertCounter(RestClient client, String name, String type, Storage storage, long expectedValue) {
       RestResponse rsp = await(client.counter(name).configuration());
       assertEquals(200, rsp.status());
       String content = rsp.body();
-      Json config = Json.read(content).at(type.toString());
+      Json config = Json.read(content).at(type);
       assertEquals(storage.toString(), config.at("storage").asString());
       assertEquals(0, config.at("initial-value").asInteger());
 

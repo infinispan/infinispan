@@ -19,7 +19,9 @@
       <skipRollingUpgradeTests>true</skipRollingUpgradeTests>
       <defaultTestGroup/>
       <defaultExcludedTestGroup/>
-      <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
+      <org.infinispan.test.server.dir>
+         ${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}
+      </org.infinispan.test.server.dir>
       <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
       <org.infinispan.test.server.container.ulimit>4096,65539</org.infinispan.test.server.container.ulimit>
       <org.infinispan.test.server.container.baseImageName/>
@@ -40,7 +42,36 @@
          <scope>test</scope>
          <type>test-jar</type>
       </dependency>
-
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-remote</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jboss-marshalling</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-clustered-counter</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-query</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-tasks-api</artifactId>
+         <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-testdriver-junit5</artifactId>
@@ -107,17 +138,20 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>org.openjdk.jmh</groupId>
+         <artifactId>jmh-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>io.vertx</groupId>
          <artifactId>vertx-redis-client</artifactId>
          <scope>test</scope>
       </dependency>
-
       <dependency>
          <groupId>io.vertx</groupId>
          <artifactId>vertx-junit5</artifactId>
          <scope>test</scope>
       </dependency>
-
       <dependency>
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-compress</artifactId>
@@ -218,10 +252,12 @@
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <build.directory>${project.build.directory}</build.directory>
-                  <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
+                  <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml
+                  </com.arjuna.ats.arjuna.common.propertiesFile>
 
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
-                  <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
+                  <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector
+                  </log4j2.contextSelector>
                   <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                   <infinispan.server.log.path>${infinispan.server.log.path}</infinispan.server.log.path>
 
@@ -235,7 +271,8 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener},org.infinispan.server.test.junit4.InfinispanServerTestListener</listener>
                </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${test.driverArgs} -Djdk.attach.allowAttachSelf=true</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${test.driverArgs} -Djdk.attach.allowAttachSelf=true
+               </argLine>
             </configuration>
             <executions>
                <execution>
@@ -261,7 +298,8 @@
             <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
-            <org.infinispan.test.server.container.baseImageName>infinispan/server:${project.version}</org.infinispan.test.server.container.baseImageName>
+            <org.infinispan.test.server.container.baseImageName>infinispan/server:${project.version}
+            </org.infinispan.test.server.container.baseImageName>
          </properties>
       </profile>
    </profiles>

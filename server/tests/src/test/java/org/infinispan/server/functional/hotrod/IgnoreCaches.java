@@ -1,7 +1,8 @@
 package org.infinispan.server.functional.hotrod;
 
 import static java.util.Collections.singleton;
-import static org.infinispan.rest.helper.RestResponses.assertStatus;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,7 +14,6 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.internal.InternalCacheNames;
-import org.infinispan.rest.helper.RestResponses;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.junit5.InfinispanServer;
@@ -64,19 +64,19 @@ public class IgnoreCaches {
    }
 
    private void assertCacheResponse(RestClient client, String cacheName, int code) {
-      assertStatus(code, client.cache(cacheName).get("whatever"));
+      assertThat(sync(client.cache(cacheName).get("whatever")).status()).isEqualTo(code);
    }
 
    private void unIgnoreCache(RestClient client, String cacheName) {
-      assertStatus(204, client.server().unIgnoreCache(cacheName));
+      assertThat(sync(client.server().unIgnoreCache(cacheName)).status()).isEqualTo(204);
    }
 
    private void ignoreCache(RestClient client, String cacheName) {
-      assertStatus(204, client.server().ignoreCache(cacheName));
+      assertThat(sync(client.server().ignoreCache(cacheName)).status()).isEqualTo(204);
    }
 
    private Set<String> getIgnoredCaches(RestClient client) {
-      Json body = RestResponses.jsonResponseBody(client.server().listIgnoredCaches());
+      Json body = Json.read(sync(client.server().listIgnoredCaches()).body());
       return body.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
    }
 }

@@ -11,8 +11,6 @@ import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.client.rest.RestResponse.TEMPORARY_REDIRECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
-import static org.infinispan.rest.tracing.RestTracingAttributeChangeTest.CACHE_DEFINITION;
-import static org.infinispan.rest.tracing.RestTracingAttributeChangeTest.CACHE_NAME;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyEquals;
 import static org.infinispan.server.test.core.Common.awaitStatus;
@@ -66,9 +64,9 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
-import org.infinispan.rest.assertion.ResponseAssertion;
-import org.infinispan.rest.resources.WeakSSEListener;
+import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.test.api.TestUser;
+import org.infinispan.server.test.core.ResponseAssertion;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.Test;
 
@@ -428,7 +426,7 @@ abstract class RESTAuthorizationTest {
       RestResponse distributionResponse = CompletionStages.join(distribution);
       assertEquals(OK, distributionResponse.status());
       Json json = Json.read(distributionResponse.body());
-      List<String> nodes = json.asJsonList().stream().map(j -> j.at("node_name").asString()).collect(Collectors.toList());
+      List<String> nodes = json.asJsonList().stream().map(j -> j.at("node_name").asString()).toList();
 
       RestServerClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().server();
       for (String name : nodes) {
@@ -523,7 +521,7 @@ abstract class RESTAuthorizationTest {
    @Test
    public void testRestListenSSEAuthorizations() throws Exception {
       RestClient adminClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
-      WeakSSEListener sseListener = new WeakSSEListener();
+      RestOperations.WeakSSEListener sseListener = new RestOperations.WeakSSEListener();
 
       // admin must be able to listen events.
       try (Closeable ignored = adminClient.raw().listen("/rest/v2/container?action=listen", Collections.emptyMap(), sseListener)) {
@@ -534,7 +532,7 @@ abstract class RESTAuthorizationTest {
       for (TestUser nonAdmin : TestUser.NON_ADMINS) {
          CountDownLatch latch = new CountDownLatch(1);
          RestClient client = ext.rest().withClientConfiguration(restBuilders.get(nonAdmin)).get();
-         WeakSSEListener listener = new WeakSSEListener() {
+         RestOperations.WeakSSEListener listener = new RestOperations.WeakSSEListener() {
             @Override
             public void onError(Throwable t, RestResponseInfo response) {
                if (response.status() == FORBIDDEN) {
@@ -682,10 +680,13 @@ abstract class RESTAuthorizationTest {
 
    @Test
    public void updateConfigurationAttribute() {
-      RestEntity config = RestEntity.create(APPLICATION_XML, CACHE_DEFINITION);
+      RestEntity config = RestEntity.create(APPLICATION_XML, """
+            <local-cache name="bla" statistics="true">
+              <encoding media-type="application/x-protostream"/>
+            </local-cache>""");
 
       RestCacheClient userCache = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN))
-            .get().cache(CACHE_NAME);
+            .get().cache("bla");
       CompletionStage<RestResponse> createCache = userCache.createWithConfiguration(config);
       ResponseAssertion.assertThat(createCache).isOk();
 

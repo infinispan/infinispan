@@ -2,7 +2,7 @@ package org.infinispan.server.test.junit5;
 
 import java.net.InetAddress;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.JmxTestClient;
@@ -89,7 +89,7 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
       // at the beginning of the entire JUnit run and instead only start a new suite after the previous was shutdown:q
       if (handler == null && !isSuiteClass(extensionContext)) {
          handler = RollingUpgradeHandler.runUntilMixed(configurationBuilder.build());
-         // Config is only used with from.. is that okay??
+         // Config is only used with from... is that okay??
          testServer = new TestServer(handler.getFromConfig(), new CombinedInfinispanServerDriver(handler.getFromDriver(), handler.getToDriver()));
       }
    }
@@ -107,7 +107,7 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
    }
 
    @Override
-   public String addScript(RemoteCacheManager remoteCacheManager, String script) {
+   public String addScript(RemoteCacheContainer remoteCacheManager, String script) {
       return testClient.addScript(remoteCacheManager, script);
    }
 

@@ -7,10 +7,12 @@ import javax.security.auth.Subject;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestUser;
+import org.infinispan.server.test.artifacts.Artifacts;
 import org.infinispan.server.test.core.Common;
+import org.infinispan.server.test.core.KerberosListener;
 import org.infinispan.server.test.core.LdapServerListener;
-import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -30,12 +32,13 @@ public class AuthorizationKerberosIT extends InfinispanSuite {
 
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
-         InfinispanServerExtensionBuilder.config("configuration/AuthorizationKerberosTest.xml")
-               .numServers(1)
-               .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
-               .addListener(new LdapServerListener(true))
-               .runMode(ServerRunMode.EMBEDDED)
-               .build();
+      InfinispanServerExtensionBuilder.config("configuration/AuthorizationKerberosTest.xml")
+         .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
+         .mavenArtifacts(ClusteredIT.mavenArtifacts())
+         .artifacts(Artifacts.artifacts())
+         .addListener(new KerberosListener())
+         .addListener(new LdapServerListener(true))
+         .build();
 
    static class HotRod extends HotRodAuthorizationTest {
       @RegisterExtension
@@ -47,11 +50,11 @@ public class AuthorizationKerberosIT extends InfinispanSuite {
             if (user != TestUser.ANONYMOUS) {
                Subject subject = Common.createSubject(user.getUser(), "INFINISPAN.ORG", user.getPassword().toCharArray());
                hotRodBuilder.security().authentication()
-                     .saslMechanism("GSSAPI")
-                     .serverName("datagrid")
-                     .realm("default")
-                     .callbackHandler(new VoidCallbackHandler())
-                     .clientSubject(subject);
+                  .saslMechanism("GSSAPI")
+                  .serverName("datagrid")
+                  .realm("default")
+                  .callbackHandler(new VoidCallbackHandler())
+                  .clientSubject(subject);
             }
             return hotRodBuilder;
          });
@@ -68,8 +71,9 @@ public class AuthorizationKerberosIT extends InfinispanSuite {
             if (user != TestUser.ANONYMOUS) {
                Subject subject = Common.createSubject(user.getUser(), "INFINISPAN.ORG", user.getPassword().toCharArray());
                restBuilder.security().authentication()
-                     .mechanism("SPNEGO")
-                     .clientSubject(subject);
+                  .mechanism("SPNEGO")
+                  .clientSubject(subject)
+                  .property("infinispan.negotiate.host-override", "localhost");
                // Kerberos is strict about the hostname, so we do this by hand
                InetSocketAddress serverAddress = SERVERS.getServerDriver().getServerSocket(0, 11222);
                restBuilder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());

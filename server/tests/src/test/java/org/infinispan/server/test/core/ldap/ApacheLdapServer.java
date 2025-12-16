@@ -166,6 +166,7 @@ public class ApacheLdapServer implements LdapServer {
       kdcServer.setKdcRealm(REALM);
       kdcServer.setAllowUdp(true);
       kdcServer.setKdcPort(KDC_PORT);
+      kdcServer.setKdcHost(LDAP_HOST);
       KdcConfig config = kdcServer.getKdcConfig();
       config.setString(KdcConfigKey.KDC_SERVICE_NAME, "TestKDCServer");
       config.setLong(KdcConfigKey.MAXIMUM_TICKET_LIFETIME, 60_000L * 1440);

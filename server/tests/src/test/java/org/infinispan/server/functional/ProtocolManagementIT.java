@@ -1,13 +1,14 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
@@ -16,15 +17,16 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.rest.IpFilterRule;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Exceptions;
-import org.infinispan.server.hotrod.MultiHomedServerAddress;
-import org.infinispan.server.network.NetworkAddress;
-import org.infinispan.server.test.core.ServerRunMode;
+import org.infinispan.commons.util.NetworkAddress;
+import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
+import org.infinispan.server.test.core.Containers;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.testcontainers.InfinispanGenericContainer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.Network;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -34,79 +36,90 @@ public class ProtocolManagementIT {
 
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
-         InfinispanServerExtensionBuilder.config("configuration/MultiEndpointClusteredServerTest.xml")
-               .runMode(ServerRunMode.EMBEDDED)
-               .numServers(2)
-               .property("infinispan.bind.address", "0.0.0.0")
-               .build();
+      InfinispanServerExtensionBuilder.config("configuration/MultiEndpointClusteredServerTest.xml")
+         .numServers(2)
+         .property("infinispan.bind.address", "0.0.0.0")
+         .build();
+   private final String address1;
+   private final String address2;
+
+   public ProtocolManagementIT() {
+      List<Map<String, String>> addresses = addNetworkToContainers(((ContainerInfinispanServerDriver) SERVERS.getServerDriver()).getContainers());
+      Iterator<String> iterator = addresses.get(0).values().iterator();
+      address1 = iterator.next();
+      address2 = iterator.next();
+   }
+
+   private static List<Map<String, String>> addNetworkToContainers(List<InfinispanGenericContainer> containers) {
+      Network otherNetwork = Network.newNetwork();
+      List<Map<String, String>> addresses = new ArrayList<>();
+      for (InfinispanGenericContainer c : containers) {
+         Containers.DOCKER_CLIENT.connectToNetworkCmd().withNetworkId(otherNetwork.getId()).withContainerId(c.getContainerId()).exec();
+         addresses.add(c.getNetworkIpAddresses());
+      }
+      return addresses;
+   }
 
    @Test
-   public void testIpFilter() throws IOException {
-      NetworkAddress loopback = NetworkAddress.loopback("loopback");
-      RestClientConfigurationBuilder loopbackBuilder = new RestClientConfigurationBuilder();
-      loopbackBuilder.addServer().host(loopback.getAddress().getHostAddress()).port(11222);
-      RestClient loopbackClient = SERVERS.rest().withClientConfiguration(loopbackBuilder).get();
-      assertStatus(200, loopbackClient.server().connectorNames());
+   public void testIpFilter() {
+      RestClientConfigurationBuilder address1Builder = new RestClientConfigurationBuilder();
+      address1Builder.addServer().host(address1).port(11222);
+      RestClient address1Client = SERVERS.rest().withClientConfiguration(address1Builder).get();
+      assertStatus(200, address1Client.server().connectorNames());
 
-      NetworkAddress siteLocal = NetworkAddress.match("sitelocal", iF -> !iF.getName().startsWith("docker"), a -> a.getAddress().isSiteLocalAddress());
-      RestClientConfigurationBuilder siteLocalBuilder0 = new RestClientConfigurationBuilder();
-      siteLocalBuilder0.addServer().host(siteLocal.getAddress().getHostAddress()).port(11222);
-      RestClient siteLocalClient0 = SERVERS.rest().withClientConfiguration(siteLocalBuilder0).get();
-      assertStatus(200, siteLocalClient0.server().connectorNames());
+      RestClientConfigurationBuilder address2Builder0 = new RestClientConfigurationBuilder();
+      address2Builder0.addServer().host(address2).port(11222);
+      RestClient address2Client0 = SERVERS.rest().withClientConfiguration(address2Builder0).get();
+      assertStatus(200, address2Client0.server().connectorNames());
 
-      RestClientConfigurationBuilder siteLocalBuilder1 = new RestClientConfigurationBuilder();
-      siteLocalBuilder1.addServer().host(siteLocal.getAddress().getHostAddress()).port(11322);
-      RestClient siteLocalClient1 = SERVERS.rest().withClientConfiguration(siteLocalBuilder1).get();
-      assertStatus(200, siteLocalClient1.server().connectorNames());
+      RestClientConfigurationBuilder address2Builder1 = new RestClientConfigurationBuilder();
+      address2Builder1.addServer().host(address2).port(11222);
+      RestClient address2Client1 = SERVERS.rest().withClientConfiguration(address2Builder1).get();
+      assertStatus(200, address2Client1.server().connectorNames());
 
-      // Use the server connection list to determine the client address
       List<IpFilterRule> rules = new ArrayList<>();
-      Json connections = Json.read(assertStatus(OK, loopbackClient.server().listConnections(false)));
-      for (Json connection : connections.asJsonList()) {
-         String remoteAddress = connection.at("remote-address").asString();
-         NetworkAddress r = NetworkAddress.inetAddress("r", remoteAddress.substring(1, remoteAddress.lastIndexOf(':')));
-         try {
-            NetworkAddress remote = NetworkAddress.match("remote", iF -> Exceptions.unchecked(() -> !iF.isLoopback()), a ->
-                  MultiHomedServerAddress.inetAddressMatchesInterfaceAddress(r.getAddress().getAddress(), a.getAddress().getAddress(), a.getNetworkPrefixLength())
-            );
-            rules.add(new IpFilterRule(IpFilterRule.RuleType.REJECT, remote.cidr()));
-         } catch (IOException e) {
-            // Ignore unmatched
-         }
+      try {
+         NetworkAddress r = NetworkAddress.inetAddress("r", address2);
+         NetworkAddress remote = NetworkAddress.match("remote", iF -> Exceptions.unchecked(() -> !iF.isLoopback()), a ->
+            NetworkAddress.inetAddressMatchesInterfaceAddress(r.getAddress().getAddress(), a.getAddress().getAddress(), a.getNetworkPrefixLength())
+         );
+         rules.add(new IpFilterRule(IpFilterRule.RuleType.REJECT, remote.cidr()));
+      } catch (IOException e) {
+         // Ignore unmatched
       }
 
-      assertStatus(204, loopbackClient.server().connectorIpFilterSet("endpoint-default", rules));
-      Exceptions.expectException(RuntimeException.class, IOException.class, () -> sync(siteLocalClient0.server().connectorNames()));
-      Exceptions.expectException(RuntimeException.class, IOException.class, () -> sync(siteLocalClient1.server().connectorNames()));
-      assertStatus(204, loopbackClient.server().connectorIpFiltersClear("endpoint-default"));
-      assertStatus(200, siteLocalClient0.server().connectorNames());
-      assertStatus(200, siteLocalClient1.server().connectorNames());
+      assertStatus(204, address1Client.server().connectorIpFilterSet("endpoint-default", rules));
+      Exceptions.expectException(RuntimeException.class, IOException.class, () -> sync(address2Client0.server().connectorNames()));
+      Exceptions.expectException(RuntimeException.class, IOException.class, () -> sync(address2Client1.server().connectorNames()));
+      assertStatus(204, address1Client.server().connectorIpFiltersClear("endpoint-default"));
+      assertStatus(200, address2Client0.server().connectorNames());
+      assertStatus(200, address2Client1.server().connectorNames());
 
       // Attempt to lock ourselves out
-      assertStatus(409, siteLocalClient0.server().connectorIpFilterSet("endpoint-default", rules));
+      assertStatus(409, address2Client0.server().connectorIpFilterSet("endpoint-default", rules));
 
       // Apply the filter just on the Hot Rod endpoint
-      assertStatus(204, loopbackClient.server().connectorIpFilterSet("HotRod-hotrod", rules));
+      assertStatus(204, address1Client.server().connectorIpFilterSet("HotRod-hotrod", rules));
       ConfigurationBuilder hotRodSiteLocalBuilder = new ConfigurationBuilder();
-      hotRodSiteLocalBuilder.addServer().host(siteLocal.getAddress().getHostAddress()).port(11222).clientIntelligence(ClientIntelligence.BASIC);
+      hotRodSiteLocalBuilder.addServer().host(address2).port(11222).clientIntelligence(ClientIntelligence.BASIC);
       RemoteCacheManager siteLocalRemoteCacheManager = SERVERS.hotrod().withClientConfiguration(hotRodSiteLocalBuilder).createRemoteCacheManager();
       Exceptions.expectException(TransportException.class, siteLocalRemoteCacheManager::getCacheNames);
       // REST should still work, so let's clear the rules
-      assertStatus(204, siteLocalClient0.server().connectorIpFiltersClear("HotRod-hotrod"));
+      assertStatus(204, address2Client0.server().connectorIpFiltersClear("HotRod-hotrod"));
       // And retry
       assertNotNull(siteLocalRemoteCacheManager.getCacheNames());
    }
 
    @Test
-   public void testConnectorStartStop() throws IOException {
-      NetworkAddress loopback = NetworkAddress.loopback("loopback");
+   public void testConnectorStartStop() {
+
       RestClientConfigurationBuilder defaultBuilder = new RestClientConfigurationBuilder();
-      defaultBuilder.addServer().host(loopback.getAddress().getHostAddress()).port(11222);
+      defaultBuilder.addServer().host(address1).port(11222);
       RestClient defaultClient = SERVERS.rest().withClientConfiguration(defaultBuilder).get();
       assertStatus(200, defaultClient.caches());
 
       RestClientConfigurationBuilder alternateBuilder = new RestClientConfigurationBuilder();
-      alternateBuilder.addServer().host(loopback.getAddress().getHostAddress()).port(11223);
+      alternateBuilder.addServer().host(address1).port(11223);
       RestClient alternateClient = SERVERS.rest().withClientConfiguration(alternateBuilder).get();
       assertStatus(200, alternateClient.caches());
 

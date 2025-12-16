@@ -7,7 +7,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.StringConfiguration;
-import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
@@ -23,7 +22,6 @@ public class AnchoredKeysIT {
    public static final InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/AnchoredKeys.xml")
                .numServers(2)
-               .runMode(ServerRunMode.EMBEDDED)
                .featuresEnabled("anchored-keys")
                .build();
 

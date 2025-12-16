@@ -8,7 +8,6 @@ import static org.infinispan.server.test.core.Common.sync;
 import java.net.ConnectException;
 
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
@@ -22,7 +21,6 @@ public class ShutdownRestIT {
    @RegisterExtension
    public static final InfinispanServerExtension SERVER =
          InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
-               .runMode(ServerRunMode.EMBEDDED)
                .numServers(1)
                .build();
 

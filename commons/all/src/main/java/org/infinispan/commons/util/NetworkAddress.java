@@ -202,10 +202,8 @@ public class NetworkAddress {
    }
 
    public static boolean inetAddressMatchesInterfaceAddress(byte[] inetAddress, byte[] interfaceAddress, int prefixLength) {
-      if (Log.CONFIG.isDebugEnabled()) {
-         Log.CONFIG.debugf("Matching incoming address '%s' with '%s'/%d", inetAddress, interfaceAddress, prefixLength);
-      }
       if (inetAddress.length != interfaceAddress.length) {
+         logNotMatched(inetAddress, interfaceAddress, prefixLength);
          return false;
       }
       for (int i = 0; i < inetAddress.length; i++) {
@@ -213,6 +211,7 @@ public class NetworkAddress {
          byte b = interfaceAddress[i];
          if (prefixLength >= 8) {
             if (a != b) {
+               logNotMatched(inetAddress, interfaceAddress, prefixLength);
                return false;
             } else {
                prefixLength -= 8;
@@ -220,13 +219,23 @@ public class NetworkAddress {
          } else if (prefixLength > 0) {
             byte mask = (byte) NETMASK_BY_PREFIX[prefixLength - 1];
             if ((a & mask) != (b & mask)) {
+               logNotMatched(inetAddress, interfaceAddress, prefixLength);
                return false;
             } else {
                prefixLength = 0;
             }
          }
       }
+      if (Log.CONFIG.isDebugEnabled()) {
+         Log.CONFIG.debugf("Matched incoming address '%s' with '%s'/%d", inetAddress, interfaceAddress, prefixLength);
+      }
       return true;
+   }
+
+   private static void logNotMatched(byte[] inetAddress, byte[] interfaceAddress, int prefixLength) {
+      if (Log.CONFIG.isDebugEnabled()) {
+         Log.CONFIG.debugf("Incoming address '%s' does not match '%s'/%d", inetAddress, interfaceAddress, prefixLength);
+      }
    }
 
    public static String findInterfaceAddressMatchingInetAddress(byte[] inetAddress) {

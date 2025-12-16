@@ -17,8 +17,11 @@ import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.server.test.api.TestUser;
+import org.infinispan.server.test.core.compatibility.Compatibility;
+import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfiguration;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
@@ -32,15 +35,16 @@ import net.spy.memcached.auth.AuthDescriptor;
 
 public class DefaultRollingUpgradeTestIT {
    @Test
-   public void testDefaultSetting() throws InterruptedException {
+   public void testDefaultSetting() {
       RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(DefaultRollingUpgradeTestIT.class.getName(),
             RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion());
-      builder.jgroupsProtocol("tcp");
-      RollingUpgradeHandler.performUpgrade(builder.build());
+      RollingUpgradeConfiguration configuration = builder.jgroupsProtocol("tcp").build();
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(configuration), "Incompatible test");
+      RollingUpgradeHandler.performUpgrade(configuration);
    }
 
    @Test
-   public void testHttpClient() throws Exception {
+   public void testHttpClient() {
       String cacheName = "rolling-upgrade";
       TestUser user = TestUser.ADMIN;
       int nodeCount = 3;
@@ -83,14 +87,16 @@ public class DefaultRollingUpgradeTestIT {
                }
             }
       );
-      RollingUpgradeHandler.performUpgrade(builder.build());
+      RollingUpgradeConfiguration configuration = builder.build();
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(configuration), "Incompatible test");
+      RollingUpgradeHandler.performUpgrade(configuration);
 
       // At least the initial interaction plus one for each node added.
       assertThat(interactions.get()).isGreaterThanOrEqualTo(1 + nodeCount);
    }
 
    @Test
-   public void testRespClient() throws Exception {
+   public void testRespClient() {
       TestUser user = TestUser.ADMIN;
       int nodeCount = 3;
       ByRef.Integer interactions = new ByRef.Integer(0);
@@ -129,14 +135,16 @@ public class DefaultRollingUpgradeTestIT {
             }
       );
 
-      RollingUpgradeHandler.performUpgrade(builder.build());
+      RollingUpgradeConfiguration configuration = builder.build();
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(configuration), "Incompatible test");
+      RollingUpgradeHandler.performUpgrade(configuration);
 
       // At least the initial interaction plus one when removing and one when adding a node.
       assertThat(interactions.get()).isGreaterThanOrEqualTo(1 + 2 * nodeCount);
    }
 
    @Test
-   public void testMemcachedClient() throws Exception {
+   public void testMemcachedClient() {
       TestUser user = TestUser.ADMIN;
       int nodeCount = 3;
       ByRef.Integer interactions = new ByRef.Integer(0);
@@ -174,7 +182,9 @@ public class DefaultRollingUpgradeTestIT {
             }
       );
 
-      RollingUpgradeHandler.performUpgrade(builder.build());
+      RollingUpgradeConfiguration configuration = builder.build();
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(configuration), "Incompatible test");
+      RollingUpgradeHandler.performUpgrade(configuration);
 
       // At least the initial interaction plus one for each node added.
       assertThat(interactions.get()).isGreaterThanOrEqualTo(1 + nodeCount);

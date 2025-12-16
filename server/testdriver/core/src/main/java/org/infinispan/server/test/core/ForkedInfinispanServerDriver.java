@@ -28,7 +28,6 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
-import org.infinispan.server.Server;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
@@ -48,7 +47,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
       if (globalServerHome == null || globalServerHome.isEmpty()) {
          throw new IllegalArgumentException("You must specify a " + TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR + " property.");
       }
-      serverDataPath = System.getProperty(Server.INFINISPAN_SERVER_ROOT_PATH);
+      serverDataPath = System.getProperty(ServerConstants.INFINISPAN_SERVER_ROOT_PATH);
       if (serverDataPath != null && !serverDataPath.trim().isEmpty() && !serverDataPath.contains("%d")) {
          throw new IllegalStateException("Server root path should have the index. Add the %d regex to the path. Example: /path/to/server_%d");
       }
@@ -90,7 +89,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
             createServerStructure(serverHome, serverRootPath);
             destConfDir = getServerConfDir(serverRootPath.getAbsolutePath());
             server = new ForkedServer(serverHome);
-            server.addSystemProperty(Server.INFINISPAN_SERVER_ROOT_PATH, serverRootPath);
+            server.addSystemProperty(ServerConstants.INFINISPAN_SERVER_ROOT_PATH, serverRootPath);
          } else {
             String serverHome = serverHomes.get(i).toString();
             destConfDir = getServerConfDir(serverHome);
@@ -99,7 +98,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
          server
                .setServerConfiguration(new File(configuration.configurationFile()).getPath())
                .setPortsOffset(i);
-         server.addSystemProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
+         server.addSystemProperty(ServerConstants.INFINISPAN_CLUSTER_STACK, System.getProperty(ServerConstants.INFINISPAN_CLUSTER_STACK));
          if (i == 0 && configuration.site() == null && !Boolean.parseBoolean(configuration.properties().getProperty(
                TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT))) {
             server.addSystemProperty(JOIN_TIMEOUT, "0");

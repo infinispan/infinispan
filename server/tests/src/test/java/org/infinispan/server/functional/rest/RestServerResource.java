@@ -34,7 +34,7 @@ public class RestServerResource {
       Json endpoints = server.at("endpoints");
       Json endpoint = endpoints.at("endpoint");
 
-      String inetAddress = SERVERS.isContainerized() ? "SITE_LOCAL" : "127.0.0.1";
+      String inetAddress = SERVERS.isContainerized() ? "0.0.0.0" : "127.0.0.1";
       assertEquals(inetAddress, interfaces.at(0).at("inet-address").at("value").asString());
       assertEquals("default", security.at("security-realms").at(0).at("name").asString());
       assertEquals("hotrod", endpoint.at("hotrod-connector").at("name").asString());
