@@ -1,0 +1,9 @@
+{
+  "compatibility": [
+    {
+      "version-from": "[16.0,16.1)",
+      "version-to": "[16.1,)",
+      "exceptions": []
+    }
+  ]
+}
