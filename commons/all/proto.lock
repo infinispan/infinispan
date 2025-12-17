@@ -1,18 +1,5 @@
 {
   "definitions" : [ {
-    "protopath" : "org:/:infinispan:/:commons:/:user.commons.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "NullValue",
-        "type_id" : 128,
-        "fields" : [ ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.commons"
-      }
-    }
-  }, {
     "protopath" : "org:/:infinispan:/:commons:/:query:/:client:/:query.proto",
     "def" : {
       "enums" : [ {
@@ -159,30 +146,16 @@
       }
     }
   }, {
-    "protopath" : "org:/:infinispan:/:commons:/:persistence.commons.proto",
+    "protopath" : "org:/:infinispan:/:commons:/:user.commons.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
-        "name" : "MediaType",
-        "type_id" : 12,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "tree",
-          "type" : "string",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "WrappedByteArray",
-        "type_id" : 1,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "bytes",
-          "type" : "bytes",
-          "optional" : true
-        } ]
+        "name" : "NullValue",
+        "type_id" : 128,
+        "fields" : [ ]
       } ],
       "package" : {
-        "name" : "org.infinispan.persistence.commons"
+        "name" : "org.infinispan.commons"
       }
     }
   }, {
@@ -278,6 +251,33 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.commons"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:commons:/:persistence.commons.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "MediaType",
+        "type_id" : 12,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "tree",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "WrappedByteArray",
+        "type_id" : 1,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bytes",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.commons"
       }
     }
   } ]

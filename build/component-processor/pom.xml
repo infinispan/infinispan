@@ -3,7 +3,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-build-configuration-parent</artifactId>
-      <version>16.0.4-SNAPSHOT</version>
+      <version>16.0.4</version>
       <relativePath>../configuration/pom.xml</relativePath>
    </parent>
    <modelVersion>4.0.0</modelVersion>

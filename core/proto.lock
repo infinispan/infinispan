@@ -1069,7 +1069,7 @@
           "optional" : true
         } ],
         "reserved_ids" : [ 2, 3 ],
-        "reserved_names" : [ "encoderId", "wrapperId" ]
+        "reserved_names" : [ "wrapperId", "encoderId" ]
       }, {
         "name" : "RebalanceStatusRequestCommand",
         "type_id" : 1159,

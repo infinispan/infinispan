@@ -1,135 +1,5 @@
 {
   "definitions" : [ {
-    "protopath" : "org:/:infinispan:/:server:/:core:/:query:/:global.remote.query.server.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "IckleBinaryProtobufFilterAndConverter",
-        "type_id" : 4404,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "delegate",
-          "type" : "IckleProtobufFilterAndConverter",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "IckleContinuousQueryProtobufCacheEventFilterConverter",
-        "type_id" : 4405,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "queryString",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "namedParameters",
-          "type" : "org.infinispan.global.core.MarshallableMap",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "matcherImplClass",
-          "type" : "org.infinispan.global.core.Class",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "IckleProtobufCacheEventFilterConverter",
-        "type_id" : 4406,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "filterAndConverter",
-          "type" : "IckleProtobufFilterAndConverter",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "IckleProtobufFilterAndConverter",
-        "type_id" : 4407,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "queryString",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "wrappedNamedParameters",
-          "type" : "org.infinispan.global.core.MarshallableMap",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "matcherImplClass",
-          "type" : "org.infinispan.global.core.Class",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "global.core.proto"
-      }, {
-        "path" : "global.query.core.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.global.remote.query.server"
-      }
-    }
-  }, {
-    "protopath" : "org:/:infinispan:/:server:/:core:/:global.server.core.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "IterationFilter",
-        "type_id" : 6500,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "requestType",
-          "type" : "org.infinispan.persistence.commons.MediaType",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "storageMediaType",
-          "type" : "org.infinispan.persistence.commons.MediaType",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "providedFilter",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "ConnectionAdderTask",
-        "type_id" : 6501,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "serverName",
-          "type" : "string",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "org/infinispan/protostream/message-wrapping.proto"
-      }, {
-        "path" : "persistence.commons.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.global.server.core"
-      }
-    }
-  }, {
-    "protopath" : "org:/:infinispan:/:server:/:core:/:query:/:persistence.remote_query.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "ProtobufValueWrapper",
-        "type_id" : 11,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "binary",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.remote_query"
-      }
-    }
-  }, {
     "protopath" : "org:/:infinispan:/:server:/:core:/:persistence.server.core.proto",
     "def" : {
       "enums" : [ ],
@@ -206,6 +76,136 @@
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.server.core"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:server:/:core:/:query:/:persistence.remote_query.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "ProtobufValueWrapper",
+        "type_id" : 11,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "binary",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.remote_query"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:server:/:core:/:global.server.core.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "IterationFilter",
+        "type_id" : 6500,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "requestType",
+          "type" : "org.infinispan.persistence.commons.MediaType",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "storageMediaType",
+          "type" : "org.infinispan.persistence.commons.MediaType",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "providedFilter",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ConnectionAdderTask",
+        "type_id" : 6501,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "serverName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "org/infinispan/protostream/message-wrapping.proto"
+      }, {
+        "path" : "persistence.commons.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.server.core"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:server:/:core:/:query:/:global.remote.query.server.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "IckleBinaryProtobufFilterAndConverter",
+        "type_id" : 4404,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "delegate",
+          "type" : "IckleProtobufFilterAndConverter",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IckleContinuousQueryProtobufCacheEventFilterConverter",
+        "type_id" : 4405,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "queryString",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "namedParameters",
+          "type" : "org.infinispan.global.core.MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "matcherImplClass",
+          "type" : "org.infinispan.global.core.Class",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IckleProtobufCacheEventFilterConverter",
+        "type_id" : 4406,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "filterAndConverter",
+          "type" : "IckleProtobufFilterAndConverter",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IckleProtobufFilterAndConverter",
+        "type_id" : 4407,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "queryString",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedNamedParameters",
+          "type" : "org.infinispan.global.core.MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "matcherImplClass",
+          "type" : "org.infinispan.global.core.Class",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "global.core.proto"
+      }, {
+        "path" : "global.query.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.remote.query.server"
       }
     }
   } ]

@@ -5,12 +5,12 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-build-configuration-parent</artifactId>
-      <version>16.0.4-SNAPSHOT</version>
+      <version>16.0.4</version>
       <relativePath>build/configuration/pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-parent</artifactId>
-   <version>16.0.4-SNAPSHOT</version>
+   <version>16.0.4</version>
    <packaging>pom</packaging>
    <name>Infinispan</name>
    <description>Infinispan project</description>
