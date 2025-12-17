@@ -131,6 +131,10 @@ public class OpenAPIClient implements AutoCloseable {
       return new CacheApi(apiClient);
    }
 
+   public org.infinispan.client.openapi.impl.jdk.CacheJDK cacheJDK(String name) {
+      return new org.infinispan.client.openapi.impl.jdk.CacheJDK(name, new CacheApi(apiClient), executorService);
+   }
+
    public static OpenAPIClient forConfiguration(OpenAPIClientConfiguration configuration) {
       return new OpenAPIClient(configuration);
    }
@@ -148,4 +152,5 @@ public class OpenAPIClient implements AutoCloseable {
    public OpenAPIClientConfiguration getConfiguration() {
       return configuration;
    }
+
 }
