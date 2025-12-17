@@ -6,12 +6,12 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-bom</artifactId>
-      <version>16.0.4</version>
+      <version>16.0.5-SNAPSHOT</version>
       <relativePath>../bom/pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-build-configuration-parent</artifactId>
-   <version>16.0.4</version>
+   <version>16.0.5-SNAPSHOT</version>
    <packaging>pom</packaging>
 
    <name>Infinispan Build Configuration</name>
@@ -30,7 +30,7 @@
       <maven.compiler.target>17</maven.compiler.target>
       <maven.compiler.release>17</maven.compiler.release>
 
-      <project.build.outputTimestamp>2025-12-17T13:47:58Z</project.build.outputTimestamp>
+      <project.build.outputTimestamp>2025-12-17T14:00:24Z</project.build.outputTimestamp>
 
       <!-- === Branding Configuration === -->
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
@@ -87,7 +87,7 @@
       <version.hibernate.core>6.6.37.Final</version.hibernate.core>
       <version.hibernate.search>8.1.2.Final</version.hibernate.search>
       <version.hibernate.models>1.0.1</version.hibernate.models>
-      <version.infinispan>16.0.4</version.infinispan>
+      <version.infinispan>16.0.5-SNAPSHOT</version.infinispan>
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.9.Final</version.infinispan.maven-plugins>
       <version.insights>2.0.4</version.insights>
