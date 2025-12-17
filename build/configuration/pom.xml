@@ -165,7 +165,7 @@
       <!-- Spring 6, Spring Boot 3 versions -->
       <version.spring6>6.2.15</version.spring6>
       <version.spring.boot3>3.5.8</version.spring.boot3>
-      <version.spring.session3>3.5.3</version.spring.session3>
+      <version.spring.session3>3.5.4</version.spring.session3>
       <!-- Spring 7, Spring Boot 4 versions -->
       <version.spring7>7.0.1</version.spring7>
       <version.spring.boot4>4.0.0</version.spring.boot4>
