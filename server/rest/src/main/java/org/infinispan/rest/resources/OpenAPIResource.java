@@ -7,7 +7,6 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,7 +15,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 import javax.sql.DataSource;
 
@@ -55,7 +53,7 @@ import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.ServerStateManager;
-import org.infinispan.tasks.TaskManager;
+import org.infinispan.tasks.manager.TaskManager;
 
 public class OpenAPIResource implements ResourceHandler {
 

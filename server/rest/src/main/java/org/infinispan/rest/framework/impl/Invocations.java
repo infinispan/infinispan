@@ -3,12 +3,9 @@ package org.infinispan.rest.framework.impl;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Function;
 
 import org.infinispan.rest.framework.Invocation;
-import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.ResourceDescription;
-import org.infinispan.rest.framework.RestRequest;
 
 /**
  *  Aggregator for {@link Invocation}.

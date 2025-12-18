@@ -7,7 +7,6 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.JmxTestClient;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
-import org.infinispan.server.test.api.OpenAPITestClientDriver;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -122,11 +121,6 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
    @Override
    public RestTestClientDriver rest() {
       return testClient.rest();
-   }
-
-   @Override
-   public OpenAPITestClientDriver openapi() {
-      return testClient.openapi();
    }
 
    @Override
