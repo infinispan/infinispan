@@ -1,0 +1,6 @@
+<infinispan>
+   <cache-container>
+      <distributed-cache name="dist" mode="SYNC" l1-lifespan="1200000" segments="2"/>
+   </cache-container>
+</infinispan>
+

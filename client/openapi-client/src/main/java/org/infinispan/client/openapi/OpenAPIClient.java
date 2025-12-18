@@ -53,7 +53,9 @@ public class OpenAPIClient implements AutoCloseable {
       builder
             .connectTimeout(Duration.ofMillis(configuration.connectionTimeout()))
             .followRedirects(configuration.followRedirects() ? HttpClient.Redirect.ALWAYS : HttpClient.Redirect.NEVER);
-      builder.executor(executorService);
+      // Don't set executor on HttpClient - let it use its own threads to avoid deadlock
+      // when calling synchronous send() from within the executor threads
+      // builder.executor(executorService);
       SslConfiguration ssl = configuration.security().ssl();
       if (ssl.enabled()) {
          SSLContext sslContext = ssl.sslContext();

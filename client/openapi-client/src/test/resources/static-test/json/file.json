@@ -1,0 +1,6 @@
+{
+  "cache-container": {
+    "name": "dist",
+    "mode": "SYNC"
+  }
+}
