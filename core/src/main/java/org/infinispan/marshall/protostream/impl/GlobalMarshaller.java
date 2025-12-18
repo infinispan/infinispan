@@ -61,7 +61,9 @@ public class GlobalMarshaller extends AbstractInternalProtoStreamMarshaller {
          // this code and remove the SetAdapter and ListAdapter from the GLOBAL SerializationContext in the
          // SerializationContextRegistry when a custom user marshaller is configured.
          var it = iterable.iterator();
-         return !it.hasNext() || isMarshallableWithoutWrapping(it.next());
+         if (it.hasNext()) {
+            return isMarshallableWithoutWrapping(it.next());
+         }
       }
       return super.isMarshallableWithProtoStream(o);
    }
