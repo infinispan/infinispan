@@ -1,5 +1,99 @@
 {
   "definitions" : [ {
+    "protopath" : "org:/:infinispan:/:query:/:core:/:global.query.core.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "ContinuousQueryResult.ResultType",
+        "type_id" : 4214,
+        "enum_fields" : [ {
+          "name" : "JOINING"
+        }, {
+          "name" : "UPDATED",
+          "integer" : 1
+        }, {
+          "name" : "LEAVING",
+          "integer" : 2
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "ContinuousQueryResult",
+        "type_id" : 4213,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "resultType",
+          "type" : "ContinuousQueryResult.ResultType",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "projection",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IckleContinuousQueryCacheEventFilterConverter",
+        "type_id" : 4212,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "queryString",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "namedParameters",
+          "type" : "org.infinispan.global.core.MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "matcherImplClass",
+          "type" : "org.infinispan.global.core.Class",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IckleCacheEventFilterConverter",
+        "type_id" : 4211,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "filterAndConverter",
+          "type" : "IckleFilterAndConverter",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IckleFilterAndConverter",
+        "type_id" : 4216,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "queryString",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedNamedParameters",
+          "type" : "org.infinispan.global.core.MarshallableMap",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "matcherImplClass",
+          "type" : "org.infinispan.global.core.Class",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "DeleteFunction",
+        "type_id" : 4215,
+        "fields" : [ ]
+      } ],
+      "imports" : [ {
+        "path" : "global.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.query.core"
+      }
+    }
+  }, {
     "protopath" : "org:/:infinispan:/:query:/:objectfilter:/:global.objectfilter.proto",
     "def" : {
       "enums" : [ {
@@ -589,100 +683,6 @@
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.query.core"
-      }
-    }
-  }, {
-    "protopath" : "org:/:infinispan:/:query:/:core:/:global.query.core.proto",
-    "def" : {
-      "enums" : [ {
-        "name" : "ContinuousQueryResult.ResultType",
-        "type_id" : 4214,
-        "enum_fields" : [ {
-          "name" : "JOINING"
-        }, {
-          "name" : "UPDATED",
-          "integer" : 1
-        }, {
-          "name" : "LEAVING",
-          "integer" : 2
-        } ]
-      } ],
-      "messages" : [ {
-        "name" : "ContinuousQueryResult",
-        "type_id" : 4213,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "resultType",
-          "type" : "ContinuousQueryResult.ResultType",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "value",
-          "type" : "org.infinispan.global.core.MarshallableObject",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "projection",
-          "type" : "org.infinispan.global.core.MarshallableArray",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "IckleContinuousQueryCacheEventFilterConverter",
-        "type_id" : 4212,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "queryString",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "namedParameters",
-          "type" : "org.infinispan.global.core.MarshallableMap",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "matcherImplClass",
-          "type" : "org.infinispan.global.core.Class",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "IckleCacheEventFilterConverter",
-        "type_id" : 4211,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "filterAndConverter",
-          "type" : "IckleFilterAndConverter",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "IckleFilterAndConverter",
-        "type_id" : 4216,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "queryString",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "wrappedNamedParameters",
-          "type" : "org.infinispan.global.core.MarshallableMap",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "matcherImplClass",
-          "type" : "org.infinispan.global.core.Class",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "DeleteFunction",
-        "type_id" : 4215,
-        "fields" : [ ]
-      } ],
-      "imports" : [ {
-        "path" : "global.core.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.global.query.core"
       }
     }
   } ]

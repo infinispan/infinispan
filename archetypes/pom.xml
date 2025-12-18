@@ -6,13 +6,13 @@
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
-        <version>16.0.5-SNAPSHOT</version>
+        <version>16.0.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>org.infinispan.archetypes</groupId>
     <artifactId>infinispan-archetypes</artifactId>
-    <version>16.0.5-SNAPSHOT</version>
+    <version>16.0.5</version>
 
     <name>Infinispan Archetypes</name>
     <description>Infinispan Maven Archetypes</description>
