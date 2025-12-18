@@ -5,8 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import org.infinispan.rest.framework.InvocationRegistry;
 import org.infinispan.rest.framework.LookupResult;
 import org.infinispan.rest.framework.Method;
+import org.infinispan.rest.framework.PathItem;
 import org.infinispan.rest.framework.RegistrationException;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.ResourceManager;
@@ -34,7 +36,7 @@ public class ResourceManagerImpl implements ResourceManager {
          Set<String> paths = invocation.paths();
          paths.forEach(path -> {
             validate(path);
-            List<PathItem> p = Arrays.stream(path.split("/")).filter(s -> !s.isEmpty()).map(PathItem::fromString).toList();
+            List<PathItem> p = Arrays.stream(path.split("/")).filter(s -> !s.isEmpty()).map(ResourceManagerImpl::fromString).toList();
             List<PathItem> pathWithCtx = new ArrayList<>();
             pathWithCtx.add(new StringPathItem(context));
             pathWithCtx.addAll(p);
@@ -73,4 +75,13 @@ public class ResourceManagerImpl implements ResourceManager {
       return resourceTree.find(method, pathItems, action);
    }
 
+   @Override
+   public InvocationRegistry registry() {
+      return resourceTree;
+   }
+
+   private static PathItem fromString(String path) {
+      if (PathItem.hasPathParameter(path)) return new VariablePathItem(path);
+      return new StringPathItem(path);
+   }
 }

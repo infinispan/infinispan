@@ -147,7 +147,7 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion hasNoContentEncoding() {
-      Assertions.assertThat(response.headers().get(CONTENT_ENCODING_HEADER.getValue())).isNull();
+      Assertions.assertThat(response.headers().get(CONTENT_ENCODING_HEADER.toString())).isNull();
       return this;
    }
 
@@ -167,7 +167,7 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion hasContentEncoding(String encoding) {
-      Assertions.assertThat(response.header(CONTENT_ENCODING_HEADER.getValue())).isEqualTo(encoding);
+      Assertions.assertThat(response.header(CONTENT_ENCODING_HEADER.toString())).isEqualTo(encoding);
       return this;
    }
 

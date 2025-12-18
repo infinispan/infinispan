@@ -7,12 +7,14 @@ import static org.infinispan.rest.framework.impl.LookupResultImpl.NOT_FOUND;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.function.BiConsumer;
 
 import org.infinispan.rest.framework.Invocation;
+import org.infinispan.rest.framework.InvocationRegistry;
 import org.infinispan.rest.framework.LookupResult;
 import org.infinispan.rest.framework.LookupResult.Status;
 import org.infinispan.rest.framework.Method;
+import org.infinispan.rest.framework.PathItem;
 import org.infinispan.rest.logging.Log;
 
 /**
@@ -20,7 +22,7 @@ import org.infinispan.rest.logging.Log;
  *
  * @since 10.0
  */
-class ResourceNode {
+class ResourceNode implements InvocationRegistry {
 
    private static final Log logger = Log.getLog(ResourceNode.class);
    public static final StringPathItem WILDCARD_PATH = new StringPathItem("*");
@@ -36,13 +38,13 @@ class ResourceNode {
 
    private void updateTable(Invocation invocation) {
       if (invocation != null) {
-         String action = invocation.getAction();
+         String action = invocation.action();
          if (action == null) {
             invocation.methods().forEach(m -> {
                String method = m.toString();
-               Invocation previous = invocationTable.put(new ExtendedMethod(method), invocation);
+               Invocation previous = invocationTable.put(new ExtendedMethod(method, null), invocation);
                if (previous != null) {
-                  throw logger.duplicateResourceMethod(invocation.getName(), m, pathItem.toString());
+                  throw logger.duplicateResourceMethod(invocation.name(), m, pathItem.toString());
                }
             });
          } else {
@@ -60,14 +62,15 @@ class ResourceNode {
       return null;
    }
 
-   void insertPath(Invocation invocation, List<PathItem> path) {
+   @Override
+   public void insertPath(Invocation invocation, List<PathItem> path) {
       insertPathInternal(this, invocation, path);
    }
 
-   public String dumpTree() {
-      StringBuilder stringBuilder = new StringBuilder();
-      dumpTree(stringBuilder, this, 0);
-      return stringBuilder.toString();
+   @Override
+   public void traverse(BiConsumer<PathItem, Invocation> consumer) {
+      invocationTable.forEach((k, v) -> consumer.accept(pathItem, v));
+      children.forEach((k, v) -> v.traverse(consumer));
    }
 
    @Override
@@ -77,15 +80,6 @@ class ResourceNode {
             ", invocationTable=" + invocationTable +
             ", children=" + children +
             '}';
-   }
-
-   private void dumpTree(StringBuilder builder, ResourceNode node, int ident) {
-      for (int i = 0; i < ident; i++) builder.append("    ");
-      if (!node.pathItem.getPath().equals("/")) builder.append("/").append(node.pathItem);
-      else builder.append(node.pathItem);
-      node.invocationTable.forEach((k, v) -> builder.append(" ").append(k).append(":").append(v));
-      builder.append("\n");
-      node.children.forEach((key, value) -> dumpTree(builder, value, ident + 1));
    }
 
    private void insertPathInternal(ResourceNode node, Invocation invocation, List<PathItem> path) {
@@ -149,7 +143,8 @@ class ResourceNode {
       return null;
    }
 
-   LookupResult find(Method method, List<PathItem> path, String action) {
+   @Override
+   public LookupResult find(Method method, List<PathItem> path, String action) {
       ResourceNode current = this;
       Map<String, String> variables = new HashMap<>();
       boolean root = true;
@@ -185,32 +180,6 @@ class ResourceNode {
       return INVALID_METHOD;
    }
 
-   private static class ExtendedMethod {
-      final String method;
-      final String action;
-
-      ExtendedMethod(String method, String action) {
-         this.method = method;
-         this.action = action;
-      }
-
-      ExtendedMethod(String method) {
-         this.method = method;
-         this.action = null;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-         ExtendedMethod that = (ExtendedMethod) o;
-         return method.equals(that.method) &&
-               Objects.equals(action, that.action);
-      }
-
-      @Override
-      public int hashCode() {
-         return Objects.hash(method, action);
-      }
+   private record ExtendedMethod(String method, String action) {
    }
 }

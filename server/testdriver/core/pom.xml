@@ -39,6 +39,10 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-openapi</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>memcached-client</artifactId>
       </dependency>
       <dependency>
