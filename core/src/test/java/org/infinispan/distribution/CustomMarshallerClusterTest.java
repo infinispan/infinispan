@@ -3,9 +3,12 @@ package org.infinispan.distribution;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
@@ -35,15 +38,26 @@ public class CustomMarshallerClusterTest extends MultipleCacheManagersTest {
 
    public void testRemotePutGetWithCollections() {
       var val = new MyClass("v");
+      testRemotePutGet(List.of());
       testRemotePutGet(List.of(val));
       testRemotePutGet(List.of(List.of(val)));
+      testRemotePutGet(Set.of());
       testRemotePutGet(Set.of(val));
       testRemotePutGet(Set.of(Set.of(val)));
+
+      var treeSet = new TreeSet<>();
+      treeSet.add(val);
+      testRemotePutGet(Collections.unmodifiableSortedSet(treeSet));
+      testRemotePutGet(Collections.unmodifiableSortedSet(new TreeSet<>()));
    }
 
-   public void testRemotePutGetWithNestedMap() {
+   public void testRemotePutGetWithMaps() {
       var nestedMapVal = Map.of("parentMap", Map.of("nestedMapKey", new MyClass("v")));
       testRemotePutGet(nestedMapVal);
+      testRemotePutGet(Collections.unmodifiableNavigableMap(new TreeMap<>()));
+      testRemotePutGet(Collections.unmodifiableNavigableMap(new TreeMap<>(nestedMapVal)));
+      testRemotePutGet(Collections.unmodifiableSortedMap(new TreeMap<>()));
+      testRemotePutGet(Collections.unmodifiableSortedMap(new TreeMap<>(nestedMapVal)));
    }
 
    private void testRemotePutGet(Object value) {
@@ -52,6 +66,10 @@ public class CustomMarshallerClusterTest extends MultipleCacheManagersTest {
       assertEquals(value, cache(2).get(key));
    }
 
-   record MyClass(String value) implements Serializable {
+   record MyClass(String value) implements Comparable<MyClass>, Serializable {
+      @Override
+      public int compareTo(MyClass other) {
+         return value.compareTo(other.value);
+      }
    }
 }
