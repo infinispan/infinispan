@@ -475,10 +475,10 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       RestResponse executeGet() {
          Map<String, String> headers = new HashMap<>();
          if (this.accept != null) {
-            headers.put(RequestHeader.ACCEPT_HEADER.getValue(), this.accept.toString());
+            headers.put(RequestHeader.ACCEPT_HEADER.toString(), this.accept.toString());
          }
          if (keyContentType != null) {
-            headers.put(RequestHeader.KEY_CONTENT_TYPE_HEADER.getValue(), this.keyContentType);
+            headers.put(RequestHeader.KEY_CONTENT_TYPE_HEADER.toString(), this.keyContentType);
          }
          return join(restCacheClient.get(this.key.toString(), headers));
       }

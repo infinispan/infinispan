@@ -36,14 +36,14 @@ public class InvocationHelper {
    private MetricsRegistry metricsRegistry;
    private ProtobufMetadataManager protobufMetadataManager;
 
-   InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager,
+   public InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager,
                     RestServerConfiguration configuration, ServerManagement server, Executor executor) {
       this.protocolServer = protocolServer;
       this.restCacheManager = restCacheManager;
       this.configuration = configuration;
       this.server = server;
       this.executor = executor;
-      String url = server.getLoginConfiguration(protocolServer).get(ServerManagement.URL);
+      String url = server != null ? server.getLoginConfiguration(protocolServer).get(ServerManagement.URL) : "";
       String baseAuthUrl = createURLForCSPHeader(url);
       cspHeader = String.format("default-src 'self' %s data:; style-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'; frame-src 'self' %s; frame-ancestors 'self'; object-src 'none'; report-uri 'self';", baseAuthUrl, baseAuthUrl);
    }
@@ -127,11 +127,11 @@ public class InvocationHelper {
    }
 
    public NettyRestResponse.Builder newResponse(FullHttpRequest request) {
-      return newResponse(request.headers().get(RequestHeader.USER_AGENT.getValue()), request.uri());
+      return newResponse(request.headers().get(RequestHeader.USER_AGENT.toString()), request.uri());
    }
 
    public NettyRestResponse.Builder newResponse(RestRequest request) {
-      return newResponse(request.header(RequestHeader.USER_AGENT.getValue()), request.uri());
+      return newResponse(request.header(RequestHeader.USER_AGENT.toString()), request.uri());
    }
 
    private NettyRestResponse.Builder newResponse(String userAgent, String uri) {

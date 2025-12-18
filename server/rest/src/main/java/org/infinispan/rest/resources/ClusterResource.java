@@ -62,7 +62,7 @@ public class ClusterResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("cluster", "REST resource to manage the cluster.")
             .invocation().methods(POST).path("/v2/cluster").withAction("stop")
                .permission(AuthorizationPermission.LIFECYCLE).name("CLUSTER STOP").auditContext(AuditContext.SERVER)
                .handleWith(this::stop)

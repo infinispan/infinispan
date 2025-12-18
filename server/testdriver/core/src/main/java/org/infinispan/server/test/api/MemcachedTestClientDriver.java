@@ -40,7 +40,7 @@ public class MemcachedTestClientDriver extends AbstractTestClientDriver<Memcache
    }
 
    public MemcachedClient get() {
-      return testClient.registerResource(testServer.newMemcachedClient(builder, port)).getClient();
+      return testClient.registerResource(testServer.newMemcachedClient(builder, port)).client();
    }
 
    @Override

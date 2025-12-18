@@ -1,6 +1,6 @@
 package org.infinispan.rest.resources;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JAVASCRIPT;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_JAVASCRIPT;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
@@ -43,7 +43,7 @@ public class TasksResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("tasks", "REST endpoint to manage tasks.")
             .invocation().methods(GET).path("/v2/tasks/").handleWith(this::listTasks)
             .invocation().methods(PUT, POST).path("/v2/tasks/{taskName}").handleWith(this::createScriptTask)
             .invocation().methods(POST).path("/v2/tasks/{taskName}").withAction("exec").handleWith(this::runTask)
@@ -84,7 +84,7 @@ public class TasksResource implements ResourceHandler {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
       ContentSource contents = request.contents();
       byte[] bytes = contents.rawContent();
-      MediaType sourceType = request.contentType() == null ? APPLICATION_JAVASCRIPT : request.contentType();
+      MediaType sourceType = request.contentType() == null ? TEXT_JAVASCRIPT : request.contentType();
       String script = StandardConversions.convertTextToObject(bytes, sourceType);
 
       return CompletableFuture.supplyAsync(() -> {
