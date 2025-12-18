@@ -60,7 +60,7 @@ jobs:
         # Get GitHub App token to use in API calls
 
       - name: Upload test reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-reports
           path: '**/*-reports*/**/TEST-*.xml'
@@ -68,7 +68,7 @@ jobs:
         if: always()
 
       - name: Upload server test logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: server-test-logs
           path: server/tests/**/*.log
