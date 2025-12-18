@@ -16,7 +16,6 @@ import java.util.concurrent.locks.LockSupport;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -49,8 +48,8 @@ import org.testng.annotations.BeforeMethod;
  */
 public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
-   protected final List<TestSite> sites = new ArrayList<>();
-   private final Map<String, Integer> siteName2index = new HashMap<>();
+   protected final List<TestSite> sites = new ArrayList<>(3);
+   private final Map<String, Integer> siteName2index = new HashMap<>(3);
 
    @BeforeMethod(alwaysRun = true) // run even for tests in the unstable group
    public void createBeforeMethod() {
@@ -83,7 +82,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    @AfterClass(alwaysRun = true) // run even if the test failed
    protected void destroy() {
-      if (cleanupAfterTest())  {
+      if (cleanupAfterTest()) {
          killSites();
       }
    }
@@ -106,18 +105,13 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    }
 
    protected void killSite(TestSite ts) {
-      ts.cacheManagers.forEach(Lifecycle::stop);
+      TestingUtil.killCacheManagers(ts.cacheManagers);
+      ts.cacheManagers.clear();
    }
 
    protected void stopSite(int siteIndex) {
       TestSite site = site(siteIndex);
-      List<EmbeddedCacheManager> cacheManagers = site.cacheManagers;
-      while (!cacheManagers.isEmpty()) {
-         cacheManagers.remove(cacheManagers.size() - 1).stop();
-         if (!cacheManagers.isEmpty()) {
-            site.waitForClusterToForm(null);
-         }
-      }
+      killSite(site);
       assertTrue(site.cacheManagers.isEmpty());
    }
 
@@ -192,39 +186,39 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return sites.get(siteName2index.get(name));
    }
 
-   protected <K,V> Cache<K,V> cache(String site, int index) {
+   protected <K, V> Cache<K, V> cache(String site, int index) {
       return site(site).cache(index);
    }
 
-   protected <K,V> Cache<K,V> cache(String site, String cacheName, int index) {
+   protected <K, V> Cache<K, V> cache(String site, String cacheName, int index) {
       return site(site).cache(cacheName, index);
    }
 
-   protected <K,V> Cache<K,V> cache(int siteIndex, String cacheName, int nodeIndex) {
+   protected <K, V> Cache<K, V> cache(int siteIndex, String cacheName, int nodeIndex) {
       return site(siteIndex).cache(cacheName, nodeIndex);
    }
 
-   protected <K,V> List<Cache<K,V>> caches(String site) {
+   protected <K, V> List<Cache<K, V>> caches(String site) {
       return caches(site, null);
    }
 
-   protected <K,V> List<Cache<K,V>> caches(String site, String cacheName) {
+   protected <K, V> List<Cache<K, V>> caches(String site, String cacheName) {
       return Collections.unmodifiableList(site(site).getCaches(cacheName));
    }
 
-   protected <K,V> List<Cache<K,V>> caches(int siteIndex) {
+   protected <K, V> List<Cache<K, V>> caches(int siteIndex) {
       return caches(siteIndex, null);
    }
 
-   protected <K,V> List<Cache<K,V>> caches(int siteIndex, String cacheName) {
+   protected <K, V> List<Cache<K, V>> caches(int siteIndex, String cacheName) {
       return Collections.unmodifiableList(site(siteIndex).getCaches(cacheName));
    }
 
-   protected <K, V> Cache<K,V> cache(int siteIndex, int cacheIndex) {
+   protected <K, V> Cache<K, V> cache(int siteIndex, int cacheIndex) {
       return site(siteIndex).cache(cacheIndex);
    }
 
-   protected <K, V> Cache<K,V> cache(int siteIndex, int cacheIndex, String cacheName) {
+   protected <K, V> Cache<K, V> cache(int siteIndex, int cacheIndex, String cacheName) {
       return site(siteIndex).cache(cacheName, cacheIndex);
    }
 
@@ -250,7 +244,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    }
 
    protected final <K, V> void assertEventuallyInSite(final String siteName, final EventuallyAssertCondition<K, V> condition,
-                                                long timeout, TimeUnit timeUnit) {
+                                                      long timeout, TimeUnit timeUnit) {
       eventually(() -> {
          for (Cache<K, V> cache : AbstractXSiteTest.this.<K, V>caches(siteName)) {
             if (!condition.assertInCache(cache)) {
@@ -290,7 +284,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    }
 
    public class TestSite {
-      protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<>();
+      protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<>(2);
       private final String siteName;
       private final int siteIndex;
 
@@ -394,7 +388,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
 
       public <K, V> List<Cache<K, V>> getCaches(String cacheName) {
-         List<Cache<K,V>> caches = new ArrayList<>(cacheManagers.size());
+         List<Cache<K, V>> caches = new ArrayList<>(cacheManagers.size());
          for (EmbeddedCacheManager cm : cacheManagers) {
             caches.add(cacheName == null ? cm.getCache() : cm.getCache(cacheName));
          }
@@ -415,11 +409,11 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          TestingUtil.killCacheManagers(cacheManagers.remove(index));
       }
 
-      public <K,V> Cache<K,V> cache(int index) {
+      public <K, V> Cache<K, V> cache(int index) {
          return cacheManagers.get(index).getCache();
       }
 
-      public <K,V> AdvancedCache<K,V> advancedCache(int index) {
+      public <K, V> AdvancedCache<K, V> advancedCache(int index) {
          Cache<K, V> cache = cache(index);
          return cache.getAdvancedCache();
       }
@@ -435,7 +429,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
    }
 
-   protected  TransactionTable txTable(Cache cache) {
+   protected static TransactionTable txTable(Cache<?, ?> cache) {
       return ComponentRegistry.componentOf(cache, TransactionTable.class);
    }
 
@@ -451,7 +445,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return (DefaultIracManager) TestingUtil.extractComponent(cache(site, cacheName, index), IracManager.class);
    }
 
-   protected boolean isIracManagerEmpty(Cache<?, ?> cache) {
+   protected static boolean isIracManagerEmpty(Cache<?, ?> cache) {
       IracManager manager = TestingUtil.extractComponent(cache, IracManager.class);
       if (manager instanceof ManualIracManager) {
          return ((ManualIracManager) manager).isEmpty();
@@ -462,7 +456,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
    }
 
-   protected DefaultIracTombstoneManager iracTombstoneManager(Cache<?, ?> cache) {
+   protected static DefaultIracTombstoneManager iracTombstoneManager(Cache<?, ?> cache) {
       return (DefaultIracTombstoneManager) TestingUtil.extractComponent(cache, IracTombstoneManager.class);
    }
 
