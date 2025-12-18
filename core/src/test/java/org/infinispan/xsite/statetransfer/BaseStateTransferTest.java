@@ -339,6 +339,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
                //command before state... we need to wait
                checkPoint.awaitStrict("apply-state", 30, TimeUnit.SECONDS);
             }
+            return cf;
          }
 
          @Override
