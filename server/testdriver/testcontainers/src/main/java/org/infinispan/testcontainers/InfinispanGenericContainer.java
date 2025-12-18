@@ -1,11 +1,14 @@
 package org.infinispan.testcontainers;
 
 import java.net.InetAddress;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.OutputFrame;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse;
@@ -50,6 +53,12 @@ public class InfinispanGenericContainer {
       // it could be stopped by the rest call and then NotModifiedException will be throw
       if (isRunning()) {
          dockerClient().stopContainerCmd(this.containerId).exec();
+      }
+   }
+
+   public void restart() {
+      if (isRunning()) {
+         dockerClient().restartContainerCmd(this.containerId).exec();
       }
    }
 
@@ -137,6 +146,10 @@ public class InfinispanGenericContainer {
 
    public String getLogs() {
       return this.genericContainer.getLogs();
+   }
+
+   public List<Consumer<OutputFrame>> getLogConsumer() {
+      return this.genericContainer.getLogConsumers();
    }
 
    public int getMappedPort(int port) {
