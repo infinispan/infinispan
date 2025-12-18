@@ -343,7 +343,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
                //command before state... we need to wait
                return cf.thenCompose(unused -> checkPoint.awaitStrictAsync("apply-state", 30, TimeUnit.SECONDS, testExecutor()));
             }
-            return CompletableFutures.completedNull();
+            return cf;
          }
 
          @Override

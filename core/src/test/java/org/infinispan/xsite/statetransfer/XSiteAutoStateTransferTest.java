@@ -36,7 +36,6 @@ import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
-import org.infinispan.xsite.status.BringSiteOnlineResponse;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 import org.infinispan.xsite.status.TakeSiteOfflineResponse;
@@ -274,9 +273,6 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       // put some data
       insertDataInSite0(method, cacheName);
 
-      // Initial state transfer should ignore the status. Switched to online for asserting that condition.
-      bringSiteOnline(cacheName, remoteSite);
-
       var siteMasterController = findSiteMaster(cacheName);
 
       // Let's block the event
@@ -315,9 +311,6 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
 
       // put some data
       insertDataInSite0(method, cacheName);
-
-      // Initial state transfer should ignore the status. Switched to online for asserting that condition.
-      bringSiteOnline(cacheName, remoteSite);
 
       var siteMasterController = findSiteMaster(cacheName);
 
@@ -386,7 +379,6 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
    }
 
    private void createCache(int siteIdx, String cacheName) {
-      //noinspection resource
       manager(siteIdx, 0)
             .administration()
             .withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
@@ -420,14 +412,6 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
          var manager = takeOfflineManager(i, cacheName);
          assertNotSame(TakeSiteOfflineResponse.TSOR_NO_SUCH_SITE, manager.takeSiteOffline(remoteSite));
          assertEquals(SiteState.OFFLINE, manager.getSiteState(remoteSite));
-      }
-   }
-
-   private void bringSiteOnline(String cacheName, String remoteSite) {
-      for (int i = 0; i < defaultNumberOfNodes(); ++i) {
-         var manager = takeOfflineManager(i, cacheName);
-         assertNotSame(BringSiteOnlineResponse.BSOR_NO_SUCH_SITE, manager.bringSiteOnline(remoteSite));
-         assertEquals(SiteState.ONLINE, manager.getSiteState(remoteSite));
       }
    }
 
