@@ -23,7 +23,7 @@ public enum RequestHeader {
    TTL_SECONDS_HEADER("timeToLiveSeconds"),
    USER_AGENT("User-Agent");
 
-   private static final CharSequence[] ALL_VALUES = Arrays.stream(values()).map(RequestHeader::getValue).toArray(String[]::new);
+   private static final CharSequence[] ALL_VALUES = Arrays.stream(values()).map(RequestHeader::toString).toArray(String[]::new);
 
    private final String value;
 
@@ -31,7 +31,8 @@ public enum RequestHeader {
       this.value = value;
    }
 
-   public String getValue() {
+   @Override
+   public String toString() {
       return value;
    }
 

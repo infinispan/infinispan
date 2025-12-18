@@ -525,7 +525,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    protected CompletionStage<RestResponse> get(String id, String accept) {
       String path = String.format("/rest/v2/caches/%s/%s", cacheName(), id);
-      return client.raw().get(path, Collections.singletonMap(RequestHeader.ACCEPT_HEADER.getValue(), accept));
+      return client.raw().get(path, Collections.singletonMap(RequestHeader.ACCEPT_HEADER.toString(), accept));
    }
 
    protected Json createPerson(int id, String name, String surname, String street, String postCode, String gender, int... phoneNumbers) {

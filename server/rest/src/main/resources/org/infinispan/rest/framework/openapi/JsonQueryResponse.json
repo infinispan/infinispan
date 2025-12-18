@@ -1,0 +1,1 @@
+{"type":"object","properties":{"query":{"type":"string"},"start_offset":{"type":"integer","format":"int32"},"max_results":{"type":"integer","format":"int32"},"hit_count_accuracy":{"type":"integer","format":"int32"}}}

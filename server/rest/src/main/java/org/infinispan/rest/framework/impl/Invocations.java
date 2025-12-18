@@ -3,8 +3,12 @@ package org.infinispan.rest.framework.impl;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Function;
 
 import org.infinispan.rest.framework.Invocation;
+import org.infinispan.rest.framework.Method;
+import org.infinispan.rest.framework.ResourceDescription;
+import org.infinispan.rest.framework.RestRequest;
 
 /**
  *  Aggregator for {@link Invocation}.
@@ -26,8 +30,14 @@ public class Invocations implements Iterable<Invocation> {
 
    public static class Builder {
 
+      private final ResourceDescription description;
+
       private InvocationImpl.Builder currentBuilder;
       List<Invocation> invocations = new LinkedList<>();
+
+      public Builder(String group, String description) {
+         this.description = new ResourceDescription(group, description);
+      }
 
       public InvocationImpl.Builder invocation() {
          if (currentBuilder != null) {
@@ -49,5 +59,8 @@ public class Invocations implements Iterable<Invocation> {
          return new Invocations(invocations);
       }
 
+      public final ResourceDescription description() {
+         return description;
+      }
    }
 }

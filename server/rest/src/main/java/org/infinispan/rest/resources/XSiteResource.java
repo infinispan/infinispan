@@ -78,7 +78,7 @@ public class XSiteResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("x-site", "Handles REST calls for cache and cache manager level X-Site operations")
             .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/local/").withAction("clear-push-state-status")
                .permission(AuthorizationPermission.ADMIN).name("XSITE PUSH STATE STATUS CLEAR").auditContext(AuditContext.CACHE)
                .handleWith(this::clearPushStateStatus)

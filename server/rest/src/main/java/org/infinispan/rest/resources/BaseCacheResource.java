@@ -97,7 +97,7 @@ public class BaseCacheResource {
       }
    }
 
-   CompletionStage<RestResponse> putValueToCache(RestRequest request) {
+   protected CompletionStage<RestResponse> putValueToCache(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
 
       MediaType contentType = request.contentType();
@@ -216,7 +216,7 @@ public class BaseCacheResource {
                      .created(ice.getCreated())
                      .lastUsed(ice.getLastUsed());
 
-               List<String> extended = request.parameters().get(EXTENDED_HEADER.getValue());
+               List<String> extended = request.parameters().get(EXTENDED_HEADER.toString());
                RestServerConfiguration restServerConfiguration = invocationHelper.getConfiguration();
                if (extended != null && !extended.isEmpty() && CacheOperationsHelper.supportsExtendedHeaders(restServerConfiguration, extended.iterator().next())) {
                   responseBuilder.clusterPrimaryOwner(restCacheManager.getPrimaryOwner(cacheName, key, request))
