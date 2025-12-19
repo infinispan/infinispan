@@ -61,8 +61,8 @@ jobs:
       operand: ${{ needs.image.outputs.image }}
       operandArtifact: operand-image
       operandVersion: ${{ needs.image.outputs.version }}
-      ref: main
-      repository: infinispan/infinispan-operator
+      ref: curl_debug_logging
+      repository: ryanemerson/infinispan-operator
       skipList: '15.1.0,15.1.1'
       testName: TestOperandUpgrades
       upgradeDepth: 0
