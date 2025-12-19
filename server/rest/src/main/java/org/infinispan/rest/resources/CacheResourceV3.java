@@ -101,7 +101,12 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .parameter(RequestHeader.KEY_CONTENT_TYPE_HEADER, ParameterIn.HEADER, false, Schema.STRING, "The content type for the key")
                .parameter(RequestHeader.TTL_SECONDS_HEADER, ParameterIn.HEADER, false, Schema.INTEGER, "The time-to-live (TTL) of the entry in seconds")
                .parameter(RequestHeader.MAX_TIME_IDLE_HEADER, ParameterIn.HEADER, false, Schema.INTEGER, "The maximum idle time in seconds")
-               .request("Entry value", true, Map.of(MATCH_ALL, Schema.NONE))
+               .request("Entry value", true, sequencedMap(
+                     Map.entry(APPLICATION_JSON, Schema.NONE),
+                     Map.entry(APPLICATION_YAML, Schema.NONE),
+                     Map.entry(TEXT_PLAIN, Schema.NONE),
+                     Map.entry(MATCH_ALL, Schema.NONE)
+               ))
                .response(NO_CONTENT, "Entry was stored")
                .response(CONFLICT, "ETag conflict", TEXT_PLAIN, Schema.STRING)
                .handleWith(this::putValueToCache)
