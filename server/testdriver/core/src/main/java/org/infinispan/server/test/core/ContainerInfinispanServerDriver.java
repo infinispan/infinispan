@@ -81,9 +81,9 @@ import com.github.dockerjava.api.model.Ulimit;
  **/
 public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDriver {
    private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ContainerInfinispanServerDriver.class);
-   private static final String STARTUP_MESSAGE_REGEX = ".*ISPN080001.*";
-   private static final String SHUTDOWN_MESSAGE_REGEX = ".*ISPN080003.*";
-   private static final String CLUSTER_VIEW_REGEX = ".*ISPN000093.*(?<=\\()(%1$d)(?=\\)).*|.*ISPN000094.*(?<=\\()(%1$d)(?=\\)).*";
+   public static final String STARTUP_MESSAGE_REGEX = ".*ISPN080001.*";
+   public static final String SHUTDOWN_MESSAGE_REGEX = ".*ISPN080003.*";
+   static final String CLUSTER_VIEW_REGEX = ".*ISPN000093.*(?<=\\()(%1$d)(?=\\)).*|.*ISPN000094.*(?<=\\()(%1$d)(?=\\)).*";
    private static final int TIMEOUT_SECONDS = Integer.getInteger(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_TIMEOUT_SECONDS, 45);
    private static final Long IMAGE_MEMORY = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY, null);
    private static final Long IMAGE_MEMORY_SWAP = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP, null);
@@ -123,6 +123,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       // Ensure there are no left-overs from previous runs
       cleanup();
    }
+
+   private Consumer<OutputFrame>[] logConsumers;
 
    protected ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(
@@ -368,7 +370,12 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    }
 
    private GenericContainer<?> createContainer(int i, Consumer<OutputFrame>... logConsumers) {
+      this.logConsumers = logConsumers;
       return createContainer(i, null, logConsumers);
+   }
+
+   public Consumer<OutputFrame>[] getLogConsumers() {
+      return logConsumers;
    }
 
    private GenericContainer<?> createContainer(int i, String volumeName, Consumer<OutputFrame>... logConsumers) {
@@ -579,6 +586,24 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
+   public void restartReusingContainer(int server) {
+      InfinispanGenericContainer container = containers.get(server);
+      List<Consumer<OutputFrame>> logConsumer = container.getLogConsumer();
+      CountdownLatchLoggingConsumer consumerToRestart = null;
+      for (Consumer<OutputFrame> consumer : logConsumer) {
+         if (consumer instanceof CountdownLatchLoggingConsumer latchLoggingConsumer) {
+            if (latchLoggingConsumer.getRegex().equals(STARTUP_MESSAGE_REGEX)) {
+               latchLoggingConsumer.resetCountLatch(1);
+               consumerToRestart =  latchLoggingConsumer;
+               return;
+            }
+         }
+      }
+      container.restart();
+      final CountdownLatchLoggingConsumer consumerToRestartFinal = consumerToRestart;
+      Exceptions.unchecked(() -> consumerToRestartFinal.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+   }
+
    public void restart(int server, Consumer<OutputFrame> consumer) {
       if (isRunning(server)) {
          throw new IllegalStateException("Server " + server + " is still running");
@@ -742,5 +767,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          image.get();
          return image.getDockerImageName();
       }
+   }
+
+   public InfinispanGenericContainer getContainer(int i) {
+      return containers.get(i);
    }
 }

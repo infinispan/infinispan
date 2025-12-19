@@ -27,10 +27,13 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.impl.EntityLoaderFactory;
+import org.infinispan.query.impl.IndexStartupRunner;
+import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.mapper.mapping.SearchMappingCommonBuilding;
 import org.infinispan.query.stats.impl.LocalIndexStatistics;
@@ -141,6 +144,12 @@ public class LifecycleCallbacks implements ModuleLifecycle {
             searchMapping = new LazySearchMapping(commonBuilding, entityLoader, serCtx, cache, protobufMetadataManager, queryCache);
 
             cr.registerComponent(searchMapping, SearchMapping.class);
+            Indexer indexer = cr.getComponent(Indexer.class);
+            if (indexer == null) {
+               Indexer massIndexer = new DistributedExecutorMassIndexer(cache);
+               cr.registerComponent(massIndexer, Indexer.class);
+            }
+            IndexStartupRunner.run(searchMapping, indexer, cr.getConfiguration());
             BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
             bcr.replaceComponent(IndexStatistics.class.getName(), new LocalIndexStatistics(), true);
             bcr.rewire();
