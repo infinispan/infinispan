@@ -355,7 +355,7 @@
                         <artifactItem>
                            <groupId>org.mvnpm</groupId>
                            <artifactId>swagger-ui-dist</artifactId>
-                           <version>5.20.8</version>
+                           <version>${version.swagger-ui-dist}</version>
                            <outputDirectory>${server.output.dir}/static/swagger-ui</outputDirectory>
                            <includes>META-INF/resources/_static/**</includes>
                            <fileMappers>
