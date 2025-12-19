@@ -17,14 +17,12 @@
 /object-filter/        @fax4ever
 /quarkus/              @ryanemerson @wburns
 /persistence/          @ryanemerson @wburns
-/query/                @fax4ever
-/query-core/           @fax4ever
-/query-dsl/            @fax4ever
-/remote-query/         @fax4ever
+/query/                @karesti
 /server/core/          @wburns
 /server/hotrod/        @wburns
 /server/memcached/     @tristantarrant @wburns
 /server/resp/          @karesti @jabolina @rigazilla @wburns
+/server/rollingupgradetests @jabolina @wburns
 /server/router/        @tristantarrant
 /server/runtime/       @tristantarrant
 /server/tests/         @andyuk1986 @Crumby
