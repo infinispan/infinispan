@@ -1,5 +1,7 @@
 package org.infinispan.server.core.query.impl;
 
+import static org.infinispan.commons.util.Util.EMPTY_STRING_ARRAY;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -247,7 +249,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
          }
       }
       Collections.sort(fileNames);
-      return fileNames.toArray(new String[fileNames.size()]);
+      return fileNames.toArray(EMPTY_STRING_ARRAY);
    }
 
    @ManagedOperation(description = "Get the contents of a protobuf definition file", displayName = "Get Protofile")
