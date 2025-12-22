@@ -60,7 +60,7 @@ When connecting a Hot Rod client to the image, the following SASL properties mus
 ----
 infinispan.client.hotrod.auth_username=admin
 infinispan.client.hotrod.auth_password=changme
-infinispan.client.hotrod.sasl_mechanism=DIGEST-MD5
+infinispan.client.hotrod.sasl_mechanism=DIGEST-SHA-256
 ----
 
 == Identities Batch

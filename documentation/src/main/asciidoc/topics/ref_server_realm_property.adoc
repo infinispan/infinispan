@@ -3,7 +3,7 @@
 Property realms use property files to define users and groups.
 
 * `users.properties` contains {brandname} user credentials.
-Passwords can be pre-digested with the `DIGEST-MD5` and `DIGEST` authentication mechanisms.
+Passwords can be pre-digested.
 * `groups.properties` associates users with roles and permissions.
 
 .users.properties
