@@ -94,7 +94,7 @@ public class ServerResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("server", "REST resource to manage the current server.")
             .invocation().methods(GET).path("/v2/server/")
                .handleWith(this::info)
             .invocation().methods(GET).path("/v2/server/config")
