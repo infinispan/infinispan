@@ -2,6 +2,7 @@ package org.infinispan.server.resp;
 
 import static org.infinispan.commons.logging.Log.CONFIG;
 
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -53,6 +54,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    private static final Log log = LogFactory.getLog(RespServer.class);
    public static final String RESP_SERVER_FEATURE = "resp-server";
    public static final MediaType RESP_KEY_MEDIA_TYPE = MediaType.APPLICATION_OCTET_STREAM;
+   private Configuration defaultCacheConfiguration;
    private MetadataRepository metadataRepository;
    private MediaType configuredValueType = MediaType.APPLICATION_OCTET_STREAM;
    private DefaultIterationManager iterationManager;
@@ -78,12 +80,12 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       dataStructureIterationManager.addKeyValueFilterConverterFactory(GlobMatchFilterConverterFactory.class.getName(), new GlobMatchFilterConverterFactory(true));
       metadataRepository = new MetadataRepository();
       initializeLuaTaskEngine(gcr);
+      defineCacheConfiguration();
 
       super.internalPostStart();
    }
 
-   @Override
-   public CompletionStage<Void> initializeDefaultCache() {
+   private void defineCacheConfiguration() {
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       if (!globalConfiguration.features().isAvailable(RESP_SERVER_FEATURE)) {
          return CompletableFuture.failedFuture(CONFIG.featureDisabled(RESP_SERVER_FEATURE));
@@ -124,6 +126,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          }
          builder.statistics().enable().aliases("0");
          explicitConfiguration = builder.build();
+         SecurityActions.defineConfiguration(cacheManager, cacheName, explicitConfiguration);
       } else {
          if (!RESP_KEY_MEDIA_TYPE.equals(explicitConfiguration.encoding().keyDataType().mediaType()))
             return CompletableFuture.failedFuture(CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType()));
@@ -133,10 +136,17 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             return CompletableFuture.failedFuture(CONFIG.respCacheUseDefineConsistentHash(cacheName, explicitConfiguration.clustering().hash().keyPartitioner().getClass().getName()));
          }
       }
-      segmentSlots = new SegmentSlotRelation(explicitConfiguration.clustering().hash().numSegments());
-      Configuration c = explicitConfiguration;
+
+      defaultCacheConfiguration = explicitConfiguration;
+   }
+
+   @Override
+   public CompletionStage<Void> initializeDefaultCache() {
+      Objects.requireNonNull(defaultCacheConfiguration, "Cache configuration is null");
+      String cacheName = configuration.defaultCacheName();
+      segmentSlots = new SegmentSlotRelation(defaultCacheConfiguration.clustering().hash().numSegments());
       return getBlockingManager()
-            .runBlocking(() -> SecurityActions.getOrCreateCache(cacheManager, cacheName, c), "create-resp-cache");
+            .runBlocking(() -> SecurityActions.getOrCreateCache(cacheManager, cacheName, defaultCacheConfiguration), "create-resp-cache");
    }
 
    @Override
