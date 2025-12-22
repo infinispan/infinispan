@@ -37,7 +37,7 @@ public interface TestClientDriver {
 
    /**
     * Get the REST instance
-    * @return {@link RestTestClientDriver} instance}
+    * @return {@link RestTestClientDriver} instance
     */
    RestTestClientDriver rest();
 

@@ -77,6 +77,9 @@
       <delete>
          <fileset dir="${output.dir}/static/console" includes="*.LICENSE.txt"/>
       </delete>
+      <replace dir="${output.dir}/static/swagger-ui" token="./swagger-initializer.js" value="/swagger-initializer">
+         <include name="index.html"/>
+      </replace>
    </target>
 
    <target name="copy-runtime">

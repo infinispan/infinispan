@@ -59,7 +59,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("protobuf", "REST resource to manage Protobuf schemas.")
             // Key related operations
             .invocation().methods(GET).path("/v2/schemas").handleWith(this::getSchemasNames)
             .invocation().methods(GET).path("/v2/schemas").withAction("types").handleWith(this::getTypes)

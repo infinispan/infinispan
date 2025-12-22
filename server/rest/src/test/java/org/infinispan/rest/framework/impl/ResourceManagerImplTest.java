@@ -115,12 +115,12 @@ public class ResourceManagerImplTest {
    }
 
    private void assertInvocation(LookupResult result, String name) {
-      assertEquals(name, result.getInvocation().getName());
+      assertEquals(name, result.getInvocation().name());
    }
 
    private void registerHandler(String ctx, String handlerName, Method method, String... paths) {
       resourceManager.registerResource(ctx, () -> {
-         Invocations.Builder builder = new Invocations.Builder();
+         Invocations.Builder builder = new Invocations.Builder("test", "testing");
          Arrays.stream(paths).forEach(p -> builder.invocation().method(method).path(p).name(handlerName).handleWith(restRequest -> null));
          return builder.create();
       });
@@ -128,7 +128,7 @@ public class ResourceManagerImplTest {
 
    private void registerHandlerWithAction(String ctx, Method[] methods, String handlerName, String action, String... paths) {
       resourceManager.registerResource(ctx, () -> {
-         Invocations.Builder builder = new Invocations.Builder();
+         Invocations.Builder builder = new Invocations.Builder("test", "testing");
          Arrays.stream(paths).forEach(p -> {
             InvocationImpl.Builder invocation = builder.invocation();
             invocation.methods(methods).path(p).name(handlerName).handleWith(restRequest -> null);
