@@ -6,6 +6,9 @@ import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 
 import java.io.IOException;
 
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheContainer;
+import org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -41,7 +44,7 @@ enum QuerySerializer {
       @Override
       byte[] serializeQueryRequest(RemoteQuery<?> remoteQuery, QueryRequest queryRequest) {
          final SerializationContext serCtx = remoteQuery.getSerializationContext();
-         Marshaller marshaller;
+         Marshaller marshaller = null;
          if (serCtx != null) {
             try {
                return ProtobufUtil.toByteArray(serCtx, queryRequest);
@@ -49,7 +52,26 @@ enum QuerySerializer {
                throw new HotRodClientException(e);
             }
          } else {
-            marshaller = remoteQuery.getCache().getRemoteCacheContainer().getMarshaller();
+            RemoteCache<?, ?> cache = remoteQuery.getCache();
+            RemoteCacheContainer container = remoteQuery.getCache().getRemoteCacheContainer();
+            RemoteCacheConfiguration remoteCacheConfiguration = container.getConfiguration().remoteCaches().get(cache.getName());
+            if (remoteCacheConfiguration != null) {
+               // Use the marshaller configured for the cache on client side
+               marshaller = remoteCacheConfiguration.marshaller();
+               if (marshaller == null) {
+                  // Use the marshaller class configured for the cache on client side
+                  Class<? extends Marshaller> marshallerClass = remoteCacheConfiguration.marshallerClass();
+                  if (marshallerClass != null) {
+                     marshaller = container.getMarshallerRegistry().getMarshaller(marshallerClass);
+                  }
+               }
+            }
+
+            if (marshaller == null) {
+               // If the marshaller is still null, use the default marshaller
+               marshaller = remoteQuery.getCache().getRemoteCacheContainer().getMarshaller();
+            }
+
             try {
                return marshaller.objectToByteBuffer(queryRequest);
             } catch (IOException e) {
