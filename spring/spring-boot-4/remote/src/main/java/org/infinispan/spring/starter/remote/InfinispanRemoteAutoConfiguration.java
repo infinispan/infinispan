@@ -73,7 +73,7 @@ public class InfinispanRemoteAutoConfiguration {
 
       boolean hasHotRodPropertiesFile = ctx.getResource(infinispanProperties.getClientProperties()).exists();
       boolean hasConfigurer = infinispanRemoteConfigurer != null;
-      boolean hasProperties = StringUtils.hasText(infinispanProperties.getServerList());
+      boolean hasProperties = StringUtils.hasText(infinispanProperties.getServerList()) || StringUtils.hasLength(infinispanProperties.getURI());
       ConfigurationBuilder builder = new ConfigurationBuilder();
       //by default, add java white list and marshaller
       builder.addJavaSerialAllowList("java.util.*", "java.time.*", "org.springframework.*", "org.infinispan.spring.common.*", "org.infinispan.spring.remote.*");
@@ -132,7 +132,11 @@ public class InfinispanRemoteAutoConfiguration {
    public static class ConditionalOnConfigurationResources implements Condition {
       @Override
       public boolean matches(ConditionContext ctx, AnnotatedTypeMetadata atm) {
-         return hasHotRodClientPropertiesFile(ctx) || hasServersProperty(ctx);
+         return hasHotRodClientPropertiesFile(ctx) || hasServersProperty(ctx) || hasConnectionUri(ctx);
+      }
+
+      private boolean hasConnectionUri(ConditionContext conditionContext) {
+         return conditionContext.getEnvironment().getProperty("infinispan.remote.connection-uri") != null;
       }
 
       private boolean hasServersProperty(ConditionContext conditionContext) {
