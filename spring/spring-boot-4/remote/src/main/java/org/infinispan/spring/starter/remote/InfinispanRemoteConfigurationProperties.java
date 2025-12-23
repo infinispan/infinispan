@@ -46,6 +46,14 @@ public class InfinispanRemoteConfigurationProperties extends org.infinispan.clie
    }
 
 
+   public String getConnectionUri() {
+      return super.getURI();
+   }
+
+   public void setConnectionUri(String connectionUri) {
+      super.setURI(connectionUri);
+   }
+
    public ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       Properties properties = this.getProperties();
