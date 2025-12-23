@@ -13,7 +13,7 @@ jobs:
         - name: Set run_id based on event type
           id: run_id
           run: |
-            echo "runid=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+            echo "runid=${{ github.event.workflow_run.id }}" >> "$GITHUB_OUTPUT"
 
         # Downloading surefire report artifact containing
         - name: Download Surefire Report Artifact
@@ -45,7 +45,22 @@ jobs:
           id: job-status
           run: |
             JOB_STATUS=$(gh api https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs --jq '.jobs[] | select(.name=="Maven Test") | .conclusion')
-            echo "job_status=$JOB_STATUS" >> $GITHUB_OUTPUT
+            echo "job_status=$JOB_STATUS" >> "$GITHUB_OUTPUT"
+
+        - name: Download Check Run ID
+          if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
+          uses: actions/download-artifact@v7.0.0
+          with:
+            name: check-run-id
+            github-token: ${{ github.token }}
+            run-id: ${{ steps.run_id.outputs.runid }}
+
+        - name: Read Check Run ID
+          if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
+          id: read_check_id
+          run: |
+            CHECK_RUN_ID=$(cat check-run-id.txt)
+            echo "check_run_id=$CHECK_RUN_ID" >> "$GITHUB_OUTPUT"
 
         - name: Publish Test Report
           if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
@@ -60,27 +75,17 @@ jobs:
             report_paths: |
               **/surefire-test-report/**/*-reports*/**/TEST-*.xml
 
-        - name: Download Check Run ID
-          if: failure() && steps.job-status.outputs.job_status == 'success'
-          uses: actions/download-artifact@v7.0.0
-          with:
-            name: check-run-id
-            github-token: ${{ github.token }}
-            run-id: ${{ steps.run_id.outputs.runid }}
-
-        - name: Read Check Run ID
-          if: failure() && steps.job-status.outputs.job_status == 'success'
-          id: read_check_id
+        - name: Display Check Run URL
+          if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
           run: |
-            CHECK_RUN_ID=$(cat check-run-id.txt)
-            echo "CHECK_RUN_ID=$CHECK_RUN_ID" >> $GITHUB_ENV
+            echo "::notice title=Test Report Published::View test report: https://github.com/${{ github.repository }}/runs/${{ steps.read_check_id.outputs.check_run_id }}"
 
         - name: Set failure check if Publish Test Report step failed
           if: failure() && steps.job-status.outputs.job_status == 'success'
           env:
             GH_TOKEN: ${{ steps.app-token.outputs.token }}
           run: |
-            gh api repos/${{ github.repository }}/check-runs/${CHECK_RUN_ID} \
+            gh api repos/${{ github.repository }}/check-runs/"${{ steps.read_check_id.outputs.check_run_id }}"\
               -H "Accept: application/vnd.github+json" \
               -f status="completed" \
               -f conclusion="failure" \
@@ -105,10 +110,12 @@ jobs:
               echo "Job status is '${{ steps.job-status.outputs.job_status }}', marking as failed."
               exit 1
             fi
-            COUNT=$(find . -name "TEST-*.xml" | while read f; do xmlstarlet sel -t -c  "count(//testcase)" -n "$f"; done | awk '{s+=$1} END {print s}')
-            echo "test_count=$COUNT" >> $GITHUB_OUTPUT
-            echo "test_min=$MIN_TEST_NUM" >> $GITHUB_OUTPUT
-            echo "is_valid=true" >> $GITHUB_OUTPUT
+            COUNT=$(find . -name "TEST-*.xml" | while read -r f; do xmlstarlet sel -t -c  "count(//testcase)" -n "$f"; done | awk '{s+=$1} END {print s}')
+            {
+              echo "test_count=$COUNT"
+              echo "test_min=$MIN_TEST_NUM"
+              echo "is_valid=true"
+            } >> "$GITHUB_OUTPUT"
 
         - name: Set test number check status on success
           if: fromJSON(steps.test-number.outputs.test_count) >= fromJSON(steps.test-number.outputs.test_min)
@@ -145,7 +152,7 @@ jobs:
     - name: Set run_id based on event type
       id: run_id
       run: |
-         echo "runid=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+         echo "runid=${{ github.event.workflow_run.id }}" >> "$GITHUB_OUTPUT"
 
     - name: Download a Build Artifact
       uses: actions/download-artifact@v7.0.0
@@ -181,7 +188,22 @@ jobs:
         fi
 
         JOB_STATUS=$(gh api "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs" --jq ".jobs[] | select(.name==\"$JOB_NAME\") | .conclusion")
-        echo "job_status=$JOB_STATUS" >> $GITHUB_OUTPUT
+        echo "job_status=$JOB_STATUS" >> "$GITHUB_OUTPUT"
+
+    - name: Download Check Run ID
+      if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
+      uses: actions/download-artifact@v7.0.0
+      with:
+        name: check-run-id-${{ matrix.targets }}
+        github-token: ${{ github.token }}
+        run-id: ${{ steps.run_id.outputs.runid }}
+
+    - name: Read Check Run ID
+      if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
+      id: read_check_id
+      run: |
+        CHECK_RUN_ID=$(cat "check-run-id-${{ matrix.targets }}.txt")
+        echo "check_run_id=$CHECK_RUN_ID" >> "$GITHUB_OUTPUT"
 
     - name: Publish Test Report
       if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
@@ -196,27 +218,17 @@ jobs:
         report_paths: |
           **/*-reports*/**/TEST-*.xml
 
-    - name: Download Check Run ID
-      if: failure()
-      uses: actions/download-artifact@v7.0.0
-      with:
-        name: check-run-id-${{ matrix.targets }}
-        github-token: ${{ github.token }}
-        run-id: ${{ steps.run_id.outputs.runid }}
-
-    - name: Read Check Run ID
-      if: failure()
-      id: read_check_id
+    - name: Display Check Run URL
+      if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
       run: |
-        CHECK_RUN_ID=$(cat check-run-id-${{ matrix.targets }}.txt)
-        echo "CHECK_RUN_ID=$CHECK_RUN_ID" >> $GITHUB_ENV
+        echo "::notice title=Test Report Published (${{ matrix.targets }})::View test report: https://github.com/${{ github.repository }}/runs/${{ steps.read_check_id.outputs.check_run_id }}"
 
     - name: Set failure check if Publish Test Report step failed
       if: failure()
       env:
         GH_TOKEN: ${{ steps.app-token.outputs.token }}
       run: |
-        gh api repos/${{ github.repository }}/check-runs/${CHECK_RUN_ID} \
+        gh api repos/${{ github.repository }}/check-runs/"${{ steps.read_check_id.outputs.check_run_id }}" \
           -H "Accept: application/vnd.github+json" \
           -f status="completed" \
           -f conclusion="failure" \
