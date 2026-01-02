@@ -75,5 +75,8 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       assertThat(afterBuilder).isNotNull();
       Configuration after = afterBuilder.build();
       assertThat(after.matches(before)).isTrue();
+
+      before.validateUpdate(name, after);
+      before.update(name, after);
    }
 }
