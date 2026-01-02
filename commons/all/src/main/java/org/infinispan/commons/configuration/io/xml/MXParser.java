@@ -593,9 +593,7 @@ public class MXParser
       }
    }
 
-   public String getNamespace(String prefix)
-   //throws XmlPullParserException
-   {
+   public String getNamespace(String prefix) {
       //int count = namespaceCount[ depth ];
       if (prefix != null) {
          for (int i = namespaceEnd - 1; i >= 0; i--) {
@@ -619,11 +617,9 @@ public class MXParser
       return null;
    }
 
-
    public int getDepth() {
       return depth;
    }
-
 
    private static int findFragment(int bufMinPos, char[] b, int start, int end) {
       //System.err.println("bufStart="+bufStart+" b="+printable(new String(b, start, end - start))+" start="+start+" end="+end);
@@ -3077,15 +3073,11 @@ public class MXParser
    private static final boolean[] lookupNameStartChar = new boolean[LOOKUP_MAX];
    private static final boolean[] lookupNameChar = new boolean[LOOKUP_MAX];
 
-   private static void setName(char ch)
-   //{ lookupNameChar[ (int)ch / 32 ] |= (1 << (ch % 32)); }
-   {
+   private static void setName(char ch) {
       lookupNameChar[ch] = true;
    }
 
-   private static void setNameStart(char ch)
-   //{ lookupNameStartChar[ (int)ch / 32 ] |= (1 << (ch % 32)); setName(ch); }
-   {
+   private static void setNameStart(char ch) {
       lookupNameStartChar[ch] = true;
       setName(ch);
    }

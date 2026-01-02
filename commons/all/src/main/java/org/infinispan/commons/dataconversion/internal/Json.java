@@ -544,8 +544,7 @@ public class Json implements java.io.Serializable {
                                 Function<URI, Json> uriResolver) throws Exception {
       if (expanded.containsKey(json)) return json;
       if (json.isObject()) {
-         if (json.has("id") && json.at("id").isString()) // change scope of nest references
-         {
+         if (json.has("id") && json.at("id").isString()) { // change scope of nest references
             base = base.resolve(json.at("id").asString());
          }
 
@@ -735,8 +734,7 @@ public class Json implements java.io.Serializable {
             }
          }
 
-         class CheckPatternProperty // implements Instruction
-         {
+         class CheckPatternProperty {
             Pattern pattern;
             Instruction schema;
 
@@ -2471,8 +2469,7 @@ public class Json implements java.io.Serializable {
                int compared = compareJson(at(thisIndex), thatElement, compareBy);
                if (compared < 0) // this < that
                   thisIndex++;
-               else if (compared > 0) // this > that
-               {
+               else if (compared > 0) { // this > that
                   L.add(thisIndex, dup ? thatElement.dup() : thatElement);
                   thatIndex++;
                } else { // equal, ignore

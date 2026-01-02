@@ -64,13 +64,13 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
 
    @SuppressWarnings("unchecked")
    public <E extends ClientEvent> BlockingQueue<E> queue(ClientEvent.Type type) {
-      switch (type) {
-         case CLIENT_CACHE_ENTRY_CREATED: return (BlockingQueue<E>) createdEvents;
-         case CLIENT_CACHE_ENTRY_MODIFIED: return (BlockingQueue<E>) modifiedEvents;
-         case CLIENT_CACHE_ENTRY_REMOVED: return (BlockingQueue<E>) removedEvents;
-         case CLIENT_CACHE_ENTRY_EXPIRED: return (BlockingQueue<E>) expiredEvents;
-         default: throw new IllegalArgumentException("Unknown event type: " + type);
-      }
+      return switch (type) {
+         case CLIENT_CACHE_ENTRY_CREATED -> (BlockingQueue<E>) createdEvents;
+         case CLIENT_CACHE_ENTRY_MODIFIED -> (BlockingQueue<E>) modifiedEvents;
+         case CLIENT_CACHE_ENTRY_REMOVED -> (BlockingQueue<E>) removedEvents;
+         case CLIENT_CACHE_ENTRY_EXPIRED -> (BlockingQueue<E>) expiredEvents;
+         default -> throw new IllegalArgumentException("Unknown event type: " + type);
+      };
    }
 
    @ClientCacheEntryCreated
@@ -79,17 +79,20 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
       createdEvents.add(e);
    }
 
-   @ClientCacheEntryModified @SuppressWarnings("unused")
+   @ClientCacheEntryModified
+   @SuppressWarnings("unused")
    public void handleModifiedEvent(ClientCacheEntryModifiedEvent e) {
       modifiedEvents.add(e);
    }
 
-   @ClientCacheEntryRemoved @SuppressWarnings("unused")
+   @ClientCacheEntryRemoved
+   @SuppressWarnings("unused")
    public void handleRemovedEvent(ClientCacheEntryRemovedEvent e) {
       removedEvents.add(e);
    }
 
-   @ClientCacheEntryExpired @SuppressWarnings("unused")
+   @ClientCacheEntryExpired
+   @SuppressWarnings("unused")
    public void handleExpiredEvent(ClientCacheEntryExpiredEvent e) {
       expiredEvents.add(e);
    }
@@ -217,27 +220,37 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
 
    @ClientListener(filterFactoryName = "static-filter-factory")
    public static class StaticFilteredEventLogListener<K> extends EventLogListener<K> {
-      public StaticFilteredEventLogListener(RemoteCache<K, ?> r) { super(r); }
+      public StaticFilteredEventLogListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
    @ClientListener(filterFactoryName = "raw-static-filter-factory", useRawData = true)
    public static class RawStaticFilteredEventLogListener<K> extends EventLogListener<K> {
-      public RawStaticFilteredEventLogListener(RemoteCache<K, ?> r) { super(r); }
+      public RawStaticFilteredEventLogListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
    @ClientListener(filterFactoryName = "static-filter-factory", includeCurrentState = true)
    public static class StaticFilteredEventLogWithStateListener<K> extends EventLogListener<K> {
-      public StaticFilteredEventLogWithStateListener(RemoteCache<K, ?> r) { super(r); }
+      public StaticFilteredEventLogWithStateListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
    @ClientListener(filterFactoryName = "dynamic-filter-factory")
    public static class DynamicFilteredEventLogListener<K> extends EventLogListener<K> {
-      public DynamicFilteredEventLogListener(RemoteCache<K, ?> r) { super(r); }
+      public DynamicFilteredEventLogListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
    @ClientListener(filterFactoryName = "dynamic-filter-factory", includeCurrentState = true)
    public static class DynamicFilteredEventLogWithStateListener<K> extends EventLogListener<K> {
-      public DynamicFilteredEventLogWithStateListener(RemoteCache<K, ?> r) { super(r); }
+      public DynamicFilteredEventLogWithStateListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
    @NamedFactory(name = "static-filter-factory")
@@ -336,7 +349,7 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
 
          @Override
          public boolean accept(byte[] key, byte[] previousValue, Metadata previousMetadata, byte[] value,
-               Metadata metadata, EventType eventType) {
+                               Metadata metadata, EventType eventType) {
             return Arrays.equals(key, staticKey);
          }
       }

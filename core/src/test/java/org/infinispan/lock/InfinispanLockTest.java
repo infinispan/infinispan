@@ -287,7 +287,9 @@ public class InfinispanLockTest extends AbstractInfinispanTest {
       assertTrue(lock.isLocked());
       assertTrue(promise.isAvailable());
       promise.lock();
-      assertTrue(promise.toInvocationStage(() -> {throw new IllegalStateException();}).isDone());
+      assertTrue(promise.toInvocationStage(() -> {
+         throw new IllegalStateException();
+      }).isDone());
       assertTrue(promise.toInvocationStage().isDone());
       promise.addListener(state -> assertEquals(LockState.ACQUIRED, state));
       assertEquals(0, releaseCount.get());

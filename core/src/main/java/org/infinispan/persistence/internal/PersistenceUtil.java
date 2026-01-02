@@ -37,6 +37,7 @@ import io.reactivex.rxjava3.core.Scheduler;
 /**
  * Persistence Utility that is useful for internal classes. Normally methods that require non public classes, such as
  * PersistenceManager, should go in here.
+ *
  * @author William Burns
  * @since 9.4
  */
@@ -46,28 +47,28 @@ public class PersistenceUtil {
 
    private static final int SEGMENT_NOT_PROVIDED = -1;
 
-   public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer,
-         final PersistenceManager persistenceManager, K key, final InvocationContext ctx, final TimeService timeService,
-         final AtomicReference<Boolean> isLoaded) {
+   public static <K, V> InternalCacheEntry<K, V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer,
+                                                                             final PersistenceManager persistenceManager, K key, final InvocationContext ctx, final TimeService timeService,
+                                                                             final AtomicReference<Boolean> isLoaded) {
       return loadAndStoreInDataContainer(dataContainer, SEGMENT_NOT_PROVIDED, persistenceManager, key, ctx, timeService,
             isLoaded);
    }
 
-   public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer, int segment,
-         final PersistenceManager persistenceManager, K key, final InvocationContext ctx, final TimeService timeService,
-         final AtomicReference<Boolean> isLoaded) {
+   public static <K, V> InternalCacheEntry<K, V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer, int segment,
+                                                                             final PersistenceManager persistenceManager, K key, final InvocationContext ctx, final TimeService timeService,
+                                                                             final AtomicReference<Boolean> isLoaded) {
       return loadAndComputeInDataContainer(dataContainer, segment, persistenceManager, key, ctx, timeService, null, isLoaded);
    }
 
-   public static <K, V> InternalCacheEntry<K,V> loadAndComputeInDataContainer(DataContainer<K, V> dataContainer,
-         int segment, final PersistenceManager persistenceManager, K key, final InvocationContext ctx,
-         final TimeService timeService, DataContainer.ComputeAction<K, V> action) {
+   public static <K, V> InternalCacheEntry<K, V> loadAndComputeInDataContainer(DataContainer<K, V> dataContainer,
+                                                                               int segment, final PersistenceManager persistenceManager, K key, final InvocationContext ctx,
+                                                                               final TimeService timeService, DataContainer.ComputeAction<K, V> action) {
       return loadAndComputeInDataContainer(dataContainer, segment, persistenceManager, key, ctx, timeService, action, null);
    }
 
    private static <K, V> InternalCacheEntry<K, V> loadAndComputeInDataContainer(DataContainer<K, V> dataContainer,
-         int segment, final PersistenceManager persistenceManager, K key, final InvocationContext ctx,
-         final TimeService timeService, DataContainer.ComputeAction<K, V> action, final AtomicReference<Boolean> isLoaded) {
+                                                                                int segment, final PersistenceManager persistenceManager, K key, final InvocationContext ctx,
+                                                                                final TimeService timeService, DataContainer.ComputeAction<K, V> action, final AtomicReference<Boolean> isLoaded) {
       final ByRef<Boolean> expired = new ByRef<>(null);
 
       DataContainer.ComputeAction<K, V> computeAction = (k, oldEntry, factory) -> {
@@ -106,9 +107,10 @@ public class PersistenceUtil {
                   isLoaded.set(Boolean.TRUE); //loaded!
                }
                entryToUse = convert(loaded, factory);
-            } else {if (isLoaded != null) {
-               isLoaded.set(Boolean.FALSE); //not loaded
-            }
+            } else {
+               if (isLoaded != null) {
+                  isLoaded.set(Boolean.FALSE); //not loaded
+               }
 
                entryToUse = null;
             }
@@ -120,7 +122,7 @@ public class PersistenceUtil {
             return entryToUse;
          }
       };
-      InternalCacheEntry<K,V> entry;
+      InternalCacheEntry<K, V> entry;
       if (segment != SEGMENT_NOT_PROVIDED && dataContainer instanceof InternalDataContainer) {
          entry = ((InternalDataContainer<K, V>) dataContainer).compute(segment, key, computeAction);
       } else {
@@ -174,7 +176,7 @@ public class PersistenceUtil {
    }
 
    public static <R> Flowable<R> parallelizePublisher(IntSet segments, Scheduler scheduler,
-         IntFunction<Publisher<R>> publisherFunction) {
+                                                      IntFunction<Publisher<R>> publisherFunction) {
       Flowable<Publisher<R>> flowable = Flowable.fromStream(segments.intStream().mapToObj(publisherFunction));
       // We internally support removing rxjava empty flowables - don't waste thread on them
       flowable = flowable.filter(f -> f != Flowable.empty());
@@ -209,7 +211,7 @@ public class PersistenceUtil {
       Class<?> classAnnotation = null;
       if (annotation == null) {
          if (cfg instanceof CustomStoreConfiguration) {
-            classAnnotation = ((CustomStoreConfiguration)cfg).customStoreClass();
+            classAnnotation = ((CustomStoreConfiguration) cfg).customStoreClass();
          }
       } else {
          classAnnotation = annotation.value();

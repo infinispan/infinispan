@@ -26,12 +26,14 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "server.hotrod.HotRodAsymmetricClusterTest")
 public class HotRodAsymmetricClusterTest extends HotRodMultiNodeTest {
 
-  protected String cacheName() { return "asymmetricCache"; }
+   protected String cacheName() {
+      return "asymmetricCache";
+   }
 
-  protected ConfigurationBuilder createCacheConfig() {
-     return hotRodCacheConfiguration(
-           getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
-  }
+   protected ConfigurationBuilder createCacheConfig() {
+      return hotRodCacheConfiguration(
+            getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
+   }
 
    @Override
    protected boolean pingOnConnect() {
@@ -39,25 +41,25 @@ public class HotRodAsymmetricClusterTest extends HotRodMultiNodeTest {
    }
 
    @Override
-  protected void createCacheManagers() {
-     for (int i = 0; i < 2; i++) {
-        EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration());
-        cacheManagers.add(cm);
-        if (i == 0) {
-           cm.defineConfiguration(cacheName(), createCacheConfig().build());
-        }
-     }
-  }
+   protected void createCacheManagers() {
+      for (int i = 0; i < 2; i++) {
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration());
+         cacheManagers.add(cm);
+         if (i == 0) {
+            cm.defineConfiguration(cacheName(), createCacheConfig().build());
+         }
+      }
+   }
 
    public void testPutInCacheDefinedNode(Method m) {
       HotRodClient client0 = clients().get(0);
       assertStatus(client0.ping(), Success);
-      TestResponse resp = client0.put(k(m) , 0, 0, v(m));
+      TestResponse resp = client0.put(k(m), 0, 0, v(m));
       assertStatus(resp, Success);
    }
 
    public void testPutInNonCacheDefinedNode(Method m) {
-      TestResponse resp = clients().get(1).put(k(m) , 0, 0, v(m));
+      TestResponse resp = clients().get(1).put(k(m), 0, 0, v(m));
       assertStatus(resp, ParseError);
    }
 

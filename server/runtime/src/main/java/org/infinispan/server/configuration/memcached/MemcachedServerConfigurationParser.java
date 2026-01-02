@@ -37,8 +37,7 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
    private static final org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
 
    @Override
-   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder)
-         {
+   public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       if (!holder.inScope(ServerConfigurationParser.ENDPOINTS_SCOPE)) {
          throw coreLog.invalidScope(ServerConfigurationParser.ENDPOINTS_SCOPE, holder.getScope());
       }

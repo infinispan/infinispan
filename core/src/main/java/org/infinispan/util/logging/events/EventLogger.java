@@ -24,18 +24,15 @@ public interface EventLogger extends Listenable {
    /**
     * Logs a message to the event log with the specified level
     *
-    * @param level
-    *           the severity level of the event
-    * @param message
-    *           the message to log
+    * @param level   the severity level of the event
+    * @param message the message to log
     */
    void log(EventLogLevel level, EventLogCategory category, String message);
 
    /**
     * Logs a message to the event log using the {@link EventLogLevel#INFO} severity
     *
-    * @param message
-    *           the message to log
+    * @param message the message to log
     */
    default void info(EventLogCategory category, String message) {
       log(EventLogLevel.INFO, category, message);
@@ -44,8 +41,7 @@ public interface EventLogger extends Listenable {
    /**
     * Logs a message to the event log using the {@link EventLogLevel#WARN} severity
     *
-    * @param message
-    *           the message to log
+    * @param message the message to log
     */
    default void warn(EventLogCategory category, String message) {
       log(EventLogLevel.WARN, category, message);
@@ -54,8 +50,7 @@ public interface EventLogger extends Listenable {
    /**
     * Logs a message to the event log using the {@link EventLogLevel#ERROR} severity
     *
-    * @param message
-    *           the message to log
+    * @param message the message to log
     */
    default void error(EventLogCategory category, String message) {
       log(EventLogLevel.ERROR, category, message);
@@ -64,8 +59,7 @@ public interface EventLogger extends Listenable {
    /**
     * Logs a message to the event log using the {@link EventLogLevel#FATAL} severity
     *
-    * @param message
-    *           the message to log
+    * @param message the message to log
     */
    default void fatal(EventLogCategory category, String message) {
       log(EventLogLevel.FATAL, category, message);
@@ -88,14 +82,15 @@ public interface EventLogger extends Listenable {
     * @param scope the address of the node
     * @return the event logger
     */
-   default EventLogger scope(Address scope) { return this; }
+   default EventLogger scope(Address scope) {
+      return this;
+   }
 
    /**
     * Sets a cache as context of this event log. The name of the cache will be used to indicate the
     * context.
     *
-    * @param cache
-    *           the cache to set as context
+    * @param cache the cache to set as context
     * @return the event logger
     */
    default EventLogger context(Cache<?, ?> cache) {
@@ -105,8 +100,7 @@ public interface EventLogger extends Listenable {
    /**
     * Sets a context of this event log.
     *
-    * @param context
-    *           the name of the context
+    * @param context the name of the context
     * @return the event logger
     */
    default EventLogger context(String context) {
@@ -116,8 +110,7 @@ public interface EventLogger extends Listenable {
    /**
     * Sets a detail for this event log which could include additional information.
     *
-    * @param detail
-    *           the event log detail
+    * @param detail the event log detail
     * @return the event logger
     */
    default EventLogger detail(String detail) {
@@ -128,8 +121,7 @@ public interface EventLogger extends Listenable {
     * Sets a throwable to include as detail for this event. Both the localized message of the
     * Throwable and its stack trace will be recorded as the event's detail
     *
-    * @param t
-    *           a throwable
+    * @param t a throwable
     * @return the event logger
     */
    default EventLogger detail(Throwable t) {
@@ -144,8 +136,7 @@ public interface EventLogger extends Listenable {
     * Sets a security subject for this event log. The name of the main user principal of the subject
     * will be recorded in the log.
     *
-    * @param subject
-    *           the security subject
+    * @param subject the security subject
     * @return the event logger
     */
    default EventLogger who(Subject subject) {
@@ -160,8 +151,7 @@ public interface EventLogger extends Listenable {
     * Sets a security principal for this event log. The name of the principal will be recorded in
     * the log.
     *
-    * @param principal
-    *           the security principal
+    * @param principal the security principal
     * @return the event logger
     */
    default EventLogger who(Principal principal) {
@@ -175,8 +165,7 @@ public interface EventLogger extends Listenable {
    /**
     * Sets a security name for this event log.
     *
-    * @param s
-    *           the security name
+    * @param s the security name
     * @return the event logger
     */
    default EventLogger who(String s) {
@@ -186,14 +175,10 @@ public interface EventLogger extends Listenable {
    /**
     * Retrieves the event logs from the cluster within the specified range
     *
-    * @param start
-    *           the instant from which to retrieve the logs
-    * @param count
-    *           the number of logs to retrieve
-    * @param category
-    *           an optional category filter
-    * @param level
-    *           an optional level filter
+    * @param start    the instant from which to retrieve the logs
+    * @param count    the number of logs to retrieve
+    * @param category an optional category filter
+    * @param level    an optional level filter
     * @return a list of {@link EventLog}s
     */
    List<EventLog> getEvents(Instant start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level);
