@@ -11,9 +11,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import jakarta.transaction.Status;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.group.Group;
@@ -24,6 +21,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.logging.Logger;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author esalter

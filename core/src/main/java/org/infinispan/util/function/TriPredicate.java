@@ -1,7 +1,7 @@
 package org.infinispan.util.function;
 
-import java.util.function.Predicate;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 /**
  * Represents a predicate (boolean-valued function) of three arguments.  This is

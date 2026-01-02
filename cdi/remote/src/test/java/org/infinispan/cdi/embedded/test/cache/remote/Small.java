@@ -10,9 +10,9 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import jakarta.inject.Qualifier;
-
 import org.infinispan.cdi.remote.Remote;
+
+import jakarta.inject.Qualifier;
 
 /**
  * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI

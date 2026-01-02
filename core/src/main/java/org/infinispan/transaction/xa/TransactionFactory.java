@@ -4,8 +4,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
@@ -25,6 +23,8 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareLocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Factory for transaction related state.

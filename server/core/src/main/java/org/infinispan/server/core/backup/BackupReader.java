@@ -21,6 +21,8 @@ import java.util.zip.ZipFile;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.DefaultCacheManager;
@@ -29,9 +31,7 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.backup.resources.ContainerResourceFactory;
 import org.infinispan.server.core.logging.Log;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Responsible for reading backup bytes and restoring the contents to the appropriate cache manager.

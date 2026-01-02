@@ -8,10 +8,6 @@ import java.util.concurrent.CompletionStage;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.SystemException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.CacheImpl;
@@ -49,6 +45,11 @@ import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ByteString;
+
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
 
 /**
  * A class that handles the prepare request from the Hot Rod clients.

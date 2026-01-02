@@ -5,12 +5,12 @@ import java.util.Set;
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.ProgrammaticMappingConfigurationContext;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.impl.EntityLoaderFactory;
+import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
+import org.infinispan.query.mapper.mapping.SearchMappingCommonBuilding;
 import org.infinispan.server.core.query.impl.indexing.ProtobufEntityConverter;
 import org.infinispan.server.core.query.impl.mapping.model.ProtobufBootstrapIntrospector;
 import org.infinispan.server.core.query.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.server.core.query.impl.mapping.typebridge.ProtobufMessageBinder;
-import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
-import org.infinispan.query.mapper.mapping.SearchMappingCommonBuilding;
 
 public final class SerializationContextSearchMapping {
 

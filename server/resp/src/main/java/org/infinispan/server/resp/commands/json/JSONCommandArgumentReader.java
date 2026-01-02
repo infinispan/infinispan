@@ -1,10 +1,10 @@
 package org.infinispan.server.resp.commands.json;
 
-import org.infinispan.server.resp.json.JSONUtil;
+import static org.infinispan.server.resp.json.JSONUtil.JSON_ROOT;
 
 import java.util.List;
 
-import static org.infinispan.server.resp.json.JSONUtil.JSON_ROOT;
+import org.infinispan.server.resp.json.JSONUtil;
 
 /**
  * Helper class for reading JSON command arguments.

@@ -1,12 +1,5 @@
 package org.infinispan.spring.common.session;
 
-import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.protostream.annotations.ProtoAdapter;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.spring.common.session.MapSessionProtoAdapter.SessionAttribute;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -14,6 +7,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoAdapter;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.spring.common.session.MapSessionProtoAdapter.SessionAttribute;
 
 /**
  * Protostream adapter for {@link SessionUpdateRemappingFunction}.

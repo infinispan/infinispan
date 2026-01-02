@@ -1,9 +1,5 @@
 package org.infinispan.context.impl;
 
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
@@ -15,6 +11,10 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
+
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Invocation context to be used for transactional caches.

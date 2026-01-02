@@ -15,8 +15,8 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.descriptors.Type;
 
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 import com.google.errorprone.annotations.ThreadSafe;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * The {@link org.infinispan.server.resp.hll.HyperLogLog} magic.

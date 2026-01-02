@@ -1,11 +1,11 @@
 package org.infinispan.cdi.embedded.event.cachemanager;
 
-import jakarta.enterprise.event.Event;
-
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+
+import jakarta.enterprise.event.Event;
 
 /**
  * @author Pete Muir

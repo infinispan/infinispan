@@ -3,13 +3,13 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 import static org.infinispan.configuration.cache.IndexingConfiguration.ENABLED;
-import static org.infinispan.configuration.cache.IndexingConfiguration.USE_JAVA_EMBEDDED_ENTITIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXING_MODE;
 import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
 import static org.infinispan.configuration.cache.IndexingConfiguration.PATH;
 import static org.infinispan.configuration.cache.IndexingConfiguration.STARTUP_MODE;
 import static org.infinispan.configuration.cache.IndexingConfiguration.STORAGE;
+import static org.infinispan.configuration.cache.IndexingConfiguration.USE_JAVA_EMBEDDED_ENTITIES;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.nio.file.Paths;

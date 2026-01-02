@@ -16,8 +16,6 @@ import java.util.function.Function;
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CachePublisher;
@@ -53,6 +51,8 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * SecureCacheImpl.

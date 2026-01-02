@@ -4,14 +4,14 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Test the condition described here: {@link org.infinispan.interceptors.distribution.TxDistributionInterceptor#ignorePreviousValueOnBackup}.

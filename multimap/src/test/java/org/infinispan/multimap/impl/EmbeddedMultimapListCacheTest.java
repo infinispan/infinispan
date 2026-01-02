@@ -1,15 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.data.Person;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
-
-import java.util.Collections;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.functional.FunctionalTestUtils.await;
@@ -25,6 +15,16 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
+
+import java.util.Collections;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.data.Person;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
 
 /**
  * Single Multimap Cache Test with Linked List

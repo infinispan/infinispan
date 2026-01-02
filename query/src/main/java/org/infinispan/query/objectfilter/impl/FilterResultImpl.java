@@ -5,10 +5,10 @@ import java.util.Arrays;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.protostream.impl.MarshallableArray;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
-import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.query.objectfilter.ObjectFilter;
 
 /**
  * @author anistor@redhat.com

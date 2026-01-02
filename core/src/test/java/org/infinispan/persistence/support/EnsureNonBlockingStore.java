@@ -3,8 +3,6 @@ package org.infinispan.persistence.support;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commons.test.BlockHoundHelper;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -15,6 +13,7 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import jakarta.transaction.Transaction;
 
 public class EnsureNonBlockingStore<K, V> extends WaitDelegatingNonBlockingStore<K, V> {
    public EnsureNonBlockingStore(NonBlockingStore<K, V> delegate, KeyPartitioner keyPartitioner) {

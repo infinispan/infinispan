@@ -1,7 +1,6 @@
 package org.infinispan.tx;
 
-import jakarta.transaction.TransactionManager;
-
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -9,8 +8,9 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
-import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * Tests all TransactionManagerLookup impls shipped with Infinispan for correctness

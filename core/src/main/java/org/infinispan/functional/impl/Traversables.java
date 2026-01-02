@@ -13,9 +13,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-import org.infinispan.functional.Traversable;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.functional.Traversable;
 
 public final class Traversables {
 

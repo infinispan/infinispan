@@ -110,11 +110,12 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.reactivestreams.Publisher;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import jakarta.transaction.Transaction;
 import jakarta.transaction.TransactionManager;
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * {@link StateConsumer} implementation.

@@ -13,6 +13,7 @@ import java.util.function.Function;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -23,7 +24,6 @@ import org.infinispan.functional.EntryView;
 import org.infinispan.functional.Traversable;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * A {@link ReadWriteMapImpl} that works with a simple cache.

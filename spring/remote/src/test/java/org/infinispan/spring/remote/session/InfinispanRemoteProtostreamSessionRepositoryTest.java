@@ -1,5 +1,7 @@
 package org.infinispan.spring.remote.session;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -23,8 +25,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 @Test(testName = "spring.session.InfinispanRemoteProtostreamSessionRepositoryTest", groups = "functional")
 @ContextConfiguration(classes = BasicConfiguration.class)

@@ -10,8 +10,6 @@ import static org.infinispan.commons.util.concurrent.CompletableFutures.extractE
 import static org.infinispan.commons.util.concurrent.CompletableFutures.identity;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.rethrowExceptionIfPresent;
 
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,6 +22,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;

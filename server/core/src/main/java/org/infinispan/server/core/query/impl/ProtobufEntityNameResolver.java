@@ -1,7 +1,7 @@
 package org.infinispan.server.core.query.impl;
 
-import org.infinispan.query.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.objectfilter.impl.syntax.parser.EntityNameResolver;
 
 /**
  * @author anistor@redhat.com

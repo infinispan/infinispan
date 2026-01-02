@@ -3,7 +3,6 @@ package org.infinispan.tx;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import jakarta.transaction.Transaction;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -21,6 +20,8 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 /**
  * @author Mircea.Markus@jboss.com

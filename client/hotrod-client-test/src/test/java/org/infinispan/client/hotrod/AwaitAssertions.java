@@ -5,9 +5,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
-import io.smallrye.mutiny.Uni;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.junit.jupiter.api.Assertions;
+
+import io.smallrye.mutiny.Uni;
 
 /**
  * @since 14.0

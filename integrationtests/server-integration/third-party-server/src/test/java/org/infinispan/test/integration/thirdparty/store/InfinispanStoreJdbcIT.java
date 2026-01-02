@@ -3,8 +3,8 @@ package org.infinispan.test.integration.thirdparty.store;
 import static org.infinispan.test.integration.GenericDeploymentHelper.addLibrary;
 import static org.infinispan.test.integration.thirdparty.DeploymentHelper.isTomcat;
 
-import org.infinispan.test.integration.thirdparty.DeploymentHelper;
 import org.infinispan.test.integration.store.AbstractInfinispanStoreJdbcIT;
+import org.infinispan.test.integration.thirdparty.DeploymentHelper;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;

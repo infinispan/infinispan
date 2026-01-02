@@ -1,9 +1,9 @@
 package org.infinispan.cli.completers;
 
-import org.infinispan.cli.Context;
-
 import java.io.IOException;
 import java.util.Collection;
+
+import org.infinispan.cli.Context;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

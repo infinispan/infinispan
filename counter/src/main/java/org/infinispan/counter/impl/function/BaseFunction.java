@@ -5,9 +5,9 @@ import java.util.function.Function;
 
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
-import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.functional.EntryView;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 
 /**
  * A base function to update an existing counter.

@@ -1,5 +1,12 @@
 package org.infinispan.query.core.stats.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -8,13 +15,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.IndexStatisticsSnapshot;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * A snapshot for {@link IndexStatistics}.

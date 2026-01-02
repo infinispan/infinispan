@@ -1,13 +1,13 @@
 package org.infinispan.multimap.impl;
 
-import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
-
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 
 /**
  * Since 15.0

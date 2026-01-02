@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,8 +15,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
-
-import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 /**
  *

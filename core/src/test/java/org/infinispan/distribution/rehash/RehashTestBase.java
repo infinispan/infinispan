@@ -11,17 +11,18 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * A base test for all rehashing tests

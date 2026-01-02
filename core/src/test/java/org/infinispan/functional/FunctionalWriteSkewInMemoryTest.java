@@ -9,18 +9,19 @@ import java.util.Collections;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Stream;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Status;
-import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.WriteSkewException;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
+import jakarta.transaction.Transaction;
 
 @Test(groups = "functional", testName = "functional.FunctionalWriteSkewInMemoryTest")
 public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {

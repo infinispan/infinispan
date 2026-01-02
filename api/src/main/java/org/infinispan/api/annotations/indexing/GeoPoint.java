@@ -10,8 +10,8 @@ import java.lang.annotation.Target;
 import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.TypeMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.TypeMappingAnnotationProcessorRef;
-import org.infinispan.api.common.annotations.indexing._private.GeoPointProcessor;
 import org.infinispan.api.annotations.indexing.model.LatLng;
+import org.infinispan.api.common.annotations.indexing._private.GeoPointProcessor;
 
 /**
  * Defines a {@link LatLng} binding from a type or a property

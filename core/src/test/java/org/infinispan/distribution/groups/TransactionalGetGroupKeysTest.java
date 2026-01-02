@@ -4,6 +4,10 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Map;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
+import org.testng.annotations.Test;
+
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
 import jakarta.transaction.NotSupportedException;
@@ -11,10 +15,6 @@ import jakarta.transaction.RollbackException;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.Transaction;
 import jakarta.transaction.TransactionManager;
-
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.IsolationLevel;
-import org.testng.annotations.Test;
 
 /**
  * It tests the grouping advanced interface for transactional caches.

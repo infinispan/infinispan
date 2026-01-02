@@ -4,13 +4,13 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * A Listenable that can also filter events based on key

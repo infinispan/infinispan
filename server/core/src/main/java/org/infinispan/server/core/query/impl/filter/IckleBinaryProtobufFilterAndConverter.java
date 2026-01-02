@@ -14,12 +14,12 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.query.objectfilter.ObjectFilter;
 
 /**
  * Adapter for {@link IckleProtobufFilterAndConverter} that produces binary values as a result of filter/conversion.

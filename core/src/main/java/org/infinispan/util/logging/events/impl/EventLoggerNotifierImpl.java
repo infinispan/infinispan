@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -20,6 +18,8 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLoggerNotifier;
+
+import jakarta.transaction.Transaction;
 
 @Scope(Scopes.GLOBAL)
 public class EventLoggerNotifierImpl extends AbstractListenerImpl<EventLog, ListenerInvocation<EventLog>> implements EventLoggerNotifier {

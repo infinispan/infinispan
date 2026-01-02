@@ -14,6 +14,7 @@ import java.util.stream.BaseStream;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -25,7 +26,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.reactivestreams.Publisher;
 

@@ -5,13 +5,13 @@ import java.io.FileNotFoundException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 

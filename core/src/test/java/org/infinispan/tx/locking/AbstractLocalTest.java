@@ -7,14 +7,14 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Collections;
 import java.util.Map;
 
-import jakarta.transaction.SystemException;
-
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.context.Flag;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.SystemException;
 
 /**
  * @author Mircea Markus

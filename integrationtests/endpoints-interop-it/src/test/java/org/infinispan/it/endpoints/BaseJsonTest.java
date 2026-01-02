@@ -3,10 +3,10 @@ package org.infinispan.it.endpoints;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 
 import java.nio.charset.StandardCharsets;

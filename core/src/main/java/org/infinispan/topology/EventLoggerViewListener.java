@@ -4,6 +4,7 @@ import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.List;
 import java.util.function.Consumer;
+
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;

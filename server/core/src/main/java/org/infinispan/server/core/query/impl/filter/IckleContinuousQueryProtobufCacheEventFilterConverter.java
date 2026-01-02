@@ -11,11 +11,11 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.protostream.impl.MarshallableMap;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.query.objectfilter.Matcher;
-import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.continuous.IckleContinuousQueryCacheEventFilterConverter;
+import org.infinispan.query.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.remote.client.impl.ContinuousQueryResult;
 import org.infinispan.server.core.query.impl.RemoteQueryManager;
 

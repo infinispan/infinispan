@@ -4,21 +4,21 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.Properties;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Disposes;
-import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
-
 import org.infinispan.cdi.embedded.test.Deployments;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.test.TestResourceTrackingListener;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 
 /**
  * Tests that the default remote cache manager can be overridden.

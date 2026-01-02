@@ -28,6 +28,8 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.context.InvocationContext;
@@ -45,8 +47,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.remoting.transport.ValidSingleResponseCollector;
 import org.infinispan.transaction.impl.RemoteTransaction;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Interceptor used by IRAC for pessimistic transactional caches to handle the local site updates.

@@ -1,10 +1,10 @@
 package org.infinispan.factories;
 
-import jakarta.transaction.TransactionSynchronizationRegistry;
-
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+
+import jakarta.transaction.TransactionSynchronizationRegistry;
 
 /**
  * Factory for the TransactionSynchronizationRegistry

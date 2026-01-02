@@ -4,10 +4,10 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * @since 9.1

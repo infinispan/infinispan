@@ -1,5 +1,9 @@
 package org.infinispan.query.mapper;
 
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
+import java.util.Arrays;
+
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.ProgrammaticMappingConfigurationContext;
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.TypeMappingStep;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -10,10 +14,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.kohsuke.MetaInfServices;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-
-import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 @Test(groups = "functional", testName = "query.query.ProgrammaticSearchMappingProviderTest")
 public class ProgrammaticSearchMappingProviderTest extends SingleCacheManagerTest {

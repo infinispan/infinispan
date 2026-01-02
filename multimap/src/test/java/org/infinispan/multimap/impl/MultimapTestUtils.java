@@ -1,16 +1,17 @@
 package org.infinispan.multimap.impl;
 
-import jakarta.transaction.TransactionManager;
-import org.infinispan.multimap.api.embedded.MultimapCache;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.data.Person;
-
-import java.util.Map;
-
 import static java.lang.String.format;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Map;
+
+import org.infinispan.multimap.api.embedded.MultimapCache;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.data.Person;
+
+import jakarta.transaction.TransactionManager;
 
 public class MultimapTestUtils {
    public static final String NAMES_KEY = "names";

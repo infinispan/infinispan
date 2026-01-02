@@ -5,9 +5,9 @@ import java.lang.invoke.MethodHandles;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
 import org.hibernate.search.util.common.reflect.spi.ValueHandleFactory;
+import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.server.core.query.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.server.core.query.impl.mapping.type.ProtobufKeyValuePair;
-import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
 
 public class ProtobufBootstrapIntrospector implements PojoBootstrapIntrospector {
 

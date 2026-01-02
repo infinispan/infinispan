@@ -1,5 +1,16 @@
 package org.infinispan.server.resp;
 
+import static io.lettuce.core.LMPopArgs.Builder.left;
+import static io.lettuce.core.LMPopArgs.Builder.right;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+
+import java.util.List;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LPosArgs;
@@ -10,16 +21,6 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static io.lettuce.core.LMPopArgs.Builder.left;
-import static io.lettuce.core.LMPopArgs.Builder.right;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 /**
  * RESP List commands testing

@@ -7,9 +7,9 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIAL
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.ResponseHeader.CONTENT_TYPE_HEADER;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;

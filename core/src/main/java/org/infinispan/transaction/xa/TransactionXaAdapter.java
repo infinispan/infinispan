@@ -10,10 +10,10 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.tx.AsyncXaResource;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
-import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

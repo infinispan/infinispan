@@ -10,9 +10,9 @@ import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.query.mapper.mapping.EntityConverter;
 import org.infinispan.server.core.query.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.server.core.query.impl.mapping.type.ProtobufKeyValuePair;
-import org.infinispan.query.mapper.mapping.EntityConverter;
 
 public final class ProtobufEntityConverter implements EntityConverter {
 

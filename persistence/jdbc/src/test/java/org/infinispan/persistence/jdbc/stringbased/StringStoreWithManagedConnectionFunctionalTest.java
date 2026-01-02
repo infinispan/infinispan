@@ -1,11 +1,11 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.common.impl.connectionfactory.SimpleConnectionFactory;
-import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
-import org.testng.annotations.Test;
-
 import static org.infinispan.persistence.jdbc.UnitTestDatabaseManager.configureSimpleConnectionFactory;
+
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.impl.connectionfactory.SimpleConnectionFactory;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.StringStoreWithManagedConnectionFunctionalTest")
 public class StringStoreWithManagedConnectionFunctionalTest extends AbstractStringBasedCacheStore {

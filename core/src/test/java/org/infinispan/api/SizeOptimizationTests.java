@@ -20,8 +20,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
@@ -42,6 +40,8 @@ import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "api.SizeOptimizationTests")
 public class SizeOptimizationTests extends MultipleCacheManagersTest {

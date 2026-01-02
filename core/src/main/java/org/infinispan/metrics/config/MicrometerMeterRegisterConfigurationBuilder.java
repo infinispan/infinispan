@@ -2,7 +2,6 @@ package org.infinispan.metrics.config;
 
 import java.util.Objects;
 
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -10,6 +9,7 @@ import org.infinispan.configuration.global.AbstractGlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 
 /**
  * Builder to inject an instance of {@link MeterRegistry}.
