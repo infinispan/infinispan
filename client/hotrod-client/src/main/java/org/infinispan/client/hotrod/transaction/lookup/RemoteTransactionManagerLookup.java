@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.transaction.lookup;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.client.hotrod.transaction.manager.RemoteTransactionManager;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * Returns an instance of {@link RemoteTransactionManager}.

@@ -2,8 +2,6 @@ package org.infinispan.test.fwk;
 
 import static org.infinispan.test.AbstractInfinispanTest.TIME_SERVICE;
 
-import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -11,6 +9,8 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.MortalCacheValue;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.TestingUtil;
 

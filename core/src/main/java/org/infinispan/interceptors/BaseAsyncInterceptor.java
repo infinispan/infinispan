@@ -6,13 +6,13 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Base class for an interceptor in the new asynchronous invocation chain.

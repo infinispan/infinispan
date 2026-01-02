@@ -2,11 +2,11 @@ package org.infinispan.test.integration.cdi;
 
 import static org.junit.Assert.assertNotEquals;
 
-import jakarta.inject.Inject;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.junit.Test;
+
+import jakarta.inject.Inject;
 
 /**
  * Tests whether {@link DefaultCacheManager} sets custom Cache name to avoid JMX

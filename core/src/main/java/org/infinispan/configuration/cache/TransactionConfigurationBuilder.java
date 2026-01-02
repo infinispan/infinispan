@@ -1,5 +1,18 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.TransactionConfiguration.AUTO_COMMIT;
+import static org.infinispan.configuration.cache.TransactionConfiguration.CACHE_STOP_TIMEOUT;
+import static org.infinispan.configuration.cache.TransactionConfiguration.COMPLETED_TX_TIMEOUT;
+import static org.infinispan.configuration.cache.TransactionConfiguration.LOCKING_MODE;
+import static org.infinispan.configuration.cache.TransactionConfiguration.NOTIFICATIONS;
+import static org.infinispan.configuration.cache.TransactionConfiguration.REAPER_WAKE_UP_INTERVAL;
+import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP;
+import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MODE;
+import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP;
+import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS;
+import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import java.util.concurrent.TimeUnit;
 
 import javax.transaction.xa.XAResource;
@@ -17,18 +30,6 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 
 import jakarta.transaction.Synchronization;
 import jakarta.transaction.TransactionManager;
-import static org.infinispan.configuration.cache.TransactionConfiguration.AUTO_COMMIT;
-import static org.infinispan.configuration.cache.TransactionConfiguration.CACHE_STOP_TIMEOUT;
-import static org.infinispan.configuration.cache.TransactionConfiguration.COMPLETED_TX_TIMEOUT;
-import static org.infinispan.configuration.cache.TransactionConfiguration.LOCKING_MODE;
-import static org.infinispan.configuration.cache.TransactionConfiguration.NOTIFICATIONS;
-import static org.infinispan.configuration.cache.TransactionConfiguration.REAPER_WAKE_UP_INTERVAL;
-import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP;
-import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MODE;
-import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP;
-import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS;
-import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
-import static org.infinispan.util.logging.Log.CONFIG;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.

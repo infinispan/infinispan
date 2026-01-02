@@ -3,7 +3,6 @@ package org.infinispan.partitionhandling;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-import javax.transaction.xa.XAException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -12,6 +11,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;

@@ -2,12 +2,12 @@ package org.infinispan.server.insights.report;
 
 import java.io.IOException;
 
-import com.redhat.insights.reports.InsightsSubreport;
 import org.infinispan.server.insights.helper.JsonGeneratorHelper;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.redhat.insights.reports.InsightsSubreport;
 
 public class InfinispanSubReportSerializer extends JsonSerializer<InsightsSubreport> {
 

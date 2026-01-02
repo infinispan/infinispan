@@ -4,9 +4,9 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 
+import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManager;
 import org.infinispan.spring.embedded.session.InfinispanEmbeddedSessionRepository;
-import org.infinispan.spring.common.provider.SpringCache;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

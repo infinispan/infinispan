@@ -1,8 +1,8 @@
 package org.infinispan.context.impl;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.transaction.impl.RemoteTransaction;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Context to be used for transaction that originated remotely.

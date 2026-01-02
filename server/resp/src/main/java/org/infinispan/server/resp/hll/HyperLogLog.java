@@ -10,8 +10,8 @@ import org.infinispan.server.resp.hll.internal.CompactSet;
 import org.infinispan.server.resp.hll.internal.ExplicitSet;
 import org.infinispan.server.resp.hll.internal.HLLRepresentation;
 
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 import com.google.errorprone.annotations.ThreadSafe;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * The HyperLogLog algorithm implementation.

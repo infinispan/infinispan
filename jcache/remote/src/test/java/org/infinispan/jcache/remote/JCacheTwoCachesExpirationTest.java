@@ -18,6 +18,7 @@ import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.AbstractTwoCachesExpirationTest;
@@ -26,7 +27,6 @@ import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperat
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 

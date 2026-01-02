@@ -10,6 +10,7 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -20,7 +21,6 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
 import org.infinispan.partitionhandling.AvailabilityMode;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;

@@ -1,9 +1,9 @@
 package org.infinispan.security;
 
-import org.infinispan.security.mappers.ClusterRoleMapper;
-
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.security.mappers.ClusterRoleMapper;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

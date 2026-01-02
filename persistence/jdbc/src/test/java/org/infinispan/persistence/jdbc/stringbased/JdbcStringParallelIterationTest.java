@@ -2,8 +2,8 @@ package org.infinispan.persistence.jdbc.stringbased;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.ParallelIterationTest;
-import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**

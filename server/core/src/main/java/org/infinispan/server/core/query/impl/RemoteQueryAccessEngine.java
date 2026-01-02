@@ -19,9 +19,9 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.query.core.impl.QueryResultImpl;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.query.impl.access.RemoteQueryAccessQuery;
 import org.infinispan.server.core.query.impl.logging.Log;
-import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.tasks.query.RemoteQueryAccess;
 
 @Scope(Scopes.NAMED_CACHE)

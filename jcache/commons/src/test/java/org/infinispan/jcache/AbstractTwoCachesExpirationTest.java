@@ -16,8 +16,8 @@ import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
 import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListenerException;
 
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
 /**

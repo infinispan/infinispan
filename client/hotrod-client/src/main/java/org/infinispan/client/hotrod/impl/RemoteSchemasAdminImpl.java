@@ -1,17 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
-import org.infinispan.api.exception.InfinispanException;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.RemoteSchemasAdmin;
-import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
-import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.internal.InternalCacheNames;
-import org.infinispan.commons.util.concurrent.CompletionStages;
-import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.schema.Schema;
+import static org.infinispan.client.hotrod.Flag.FORCE_RETURN_VALUE;
+import static org.infinispan.client.hotrod.impl.RemoteCacheManagerAdminImpl.string;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,8 +14,18 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.infinispan.client.hotrod.Flag.FORCE_RETURN_VALUE;
-import static org.infinispan.client.hotrod.impl.RemoteCacheManagerAdminImpl.string;
+import org.infinispan.api.exception.InfinispanException;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteSchemasAdmin;
+import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.internal.InternalCacheNames;
+import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.schema.Schema;
 
 public class RemoteSchemasAdminImpl implements RemoteSchemasAdmin {
     public static final Log log = LogFactory.getLog(RemoteSchemasAdminImpl.class);

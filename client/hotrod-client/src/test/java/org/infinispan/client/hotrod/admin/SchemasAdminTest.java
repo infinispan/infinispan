@@ -1,5 +1,16 @@
 package org.infinispan.client.hotrod.admin;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.client.hotrod.RemoteSchemasAdmin.SchemaOpResultType.CREATED;
+import static org.infinispan.client.hotrod.RemoteSchemasAdmin.SchemaOpResultType.DELETED;
+import static org.infinispan.client.hotrod.RemoteSchemasAdmin.SchemaOpResultType.NONE;
+import static org.infinispan.client.hotrod.RemoteSchemasAdmin.SchemaOpResultType.UPDATED;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
+import java.util.Optional;
+import java.util.concurrent.CompletionException;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.RemoteSchemasAdmin.SchemaOpResultType;
@@ -13,17 +24,6 @@ import org.infinispan.protostream.schema.Schema;
 import org.infinispan.protostream.schema.Type;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Optional;
-import java.util.concurrent.CompletionException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.client.hotrod.RemoteSchemasAdmin.SchemaOpResultType.CREATED;
-import static org.infinispan.client.hotrod.RemoteSchemasAdmin.SchemaOpResultType.DELETED;
-import static org.infinispan.client.hotrod.RemoteSchemasAdmin.SchemaOpResultType.NONE;
-import static org.infinispan.client.hotrod.RemoteSchemasAdmin.SchemaOpResultType.UPDATED;
-import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 @Test(groups = "functional", testName = "client.hotrod.admin.SchemasAdminTest")
 public class SchemasAdminTest extends SingleHotRodServerTest {

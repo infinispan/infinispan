@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.remoting.transport.Address;
@@ -19,6 +17,8 @@ import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Transaction table that delegates prepared transaction's management to the {@link RecoveryManager}.

@@ -61,6 +61,8 @@ import org.infinispan.xsite.irac.IracXSiteBackup;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.CompletableObserver;
@@ -68,7 +70,6 @@ import io.reactivex.rxjava3.core.CompletableSource;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.functions.Predicate;
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * A default implementation for {@link IracTombstoneManager}.

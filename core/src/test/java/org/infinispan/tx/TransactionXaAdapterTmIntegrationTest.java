@@ -13,6 +13,7 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -29,7 +30,6 @@ import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

@@ -4,8 +4,10 @@ import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.IOException;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
 import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;

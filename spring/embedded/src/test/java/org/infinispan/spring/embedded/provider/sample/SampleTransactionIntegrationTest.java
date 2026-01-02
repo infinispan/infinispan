@@ -1,17 +1,11 @@
 package org.infinispan.spring.embedded.provider.sample;
 
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
+import org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManager;
 import org.infinispan.spring.embedded.provider.sample.entity.Book;
 import org.infinispan.spring.embedded.provider.sample.service.CachedTransactionBookService;
-import org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.annotation.DirtiesContext;
@@ -20,6 +14,12 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTransactionalTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Transaction integration tests. Verifies transaction manager functioning across DB/service/cache level.

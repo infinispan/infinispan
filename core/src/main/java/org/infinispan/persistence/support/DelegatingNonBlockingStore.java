@@ -4,13 +4,13 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.reactivestreams.Publisher;
+
+import jakarta.transaction.Transaction;
 
 public abstract class DelegatingNonBlockingStore<K, V> implements NonBlockingStore<K, V> {
    public abstract NonBlockingStore<K, V> delegate();

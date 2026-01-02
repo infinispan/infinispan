@@ -1,10 +1,10 @@
 package org.infinispan.graalvm.substitutions.graal;
 
 import org.infinispan.commons.jdkspecific.CallerId;
+import org.infinispan.commons.util.Version;
 
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
-import org.infinispan.commons.util.Version;
 
 /**
  * Both variations using a security manager or using Reflection class require loading up JNI

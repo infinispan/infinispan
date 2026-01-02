@@ -2,9 +2,9 @@ package org.infinispan.notifications;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Interface that enhances {@link FilteringListenable} with the possibility of specifying the

@@ -1,5 +1,7 @@
 package org.infinispan.server.state;
 
+import static java.util.Objects.requireNonNullElse;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,8 +51,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.ipfilter.IpFilterRuleType;
 import io.netty.handler.ssl.SslHandler;
-
-import static java.util.Objects.requireNonNullElse;
 
 /**
  * Manages cluster-wide server state for a given {@link EmbeddedCacheManager}. This handles:

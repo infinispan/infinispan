@@ -11,17 +11,17 @@ import java.util.Optional;
 import java.util.concurrent.CompletionException;
 import java.util.stream.IntStream;
 
-import jakarta.transaction.Status;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.function.SerializableFunction;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "functional.FunctionalTxInMemoryTest")
 public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {

@@ -8,11 +8,11 @@ import java.util.concurrent.TimeUnit;
 
 import javax.cache.Cache;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
 /**

@@ -1,13 +1,13 @@
 package org.infinispan.distribution;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 /**
  * @author Mircea.Markus@jboss.com

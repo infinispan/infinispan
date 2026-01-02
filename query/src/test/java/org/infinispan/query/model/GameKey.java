@@ -1,5 +1,7 @@
 package org.infinispan.query.model;
 
+import java.util.Objects;
+
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
@@ -7,8 +9,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
-
-import java.util.Objects;
 
 @Indexed
 @Transformable(transformer = GameKey.GameKeyTransformer.class)

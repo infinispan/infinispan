@@ -1,9 +1,9 @@
 package org.infinispan.transaction.xa;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.transaction.impl.LocalTransaction;
+
+import jakarta.transaction.Transaction;
 
 /**
  * {@link LocalTransaction} implementation to be used with {@link TransactionXaAdapter}.

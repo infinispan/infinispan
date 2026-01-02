@@ -3,6 +3,7 @@ package org.infinispan.counter.impl.factory;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.WeakCounter;
@@ -13,7 +14,6 @@ import org.infinispan.counter.impl.weak.WeakCounterImpl;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Creates {@link WeakCounter} stored in a {@link Cache}.

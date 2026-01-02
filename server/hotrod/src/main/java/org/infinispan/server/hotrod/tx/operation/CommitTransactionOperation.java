@@ -8,15 +8,12 @@ import java.util.function.BiFunction;
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
-import jakarta.transaction.HeuristicCommitException;
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.RollbackException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.server.hotrod.HotRodHeader;
@@ -27,7 +24,11 @@ import org.infinispan.server.hotrod.tx.table.Status;
 import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+
+import jakarta.transaction.HeuristicCommitException;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
 
 /**
  * It commits a transaction in all involved caches.

@@ -1,11 +1,11 @@
 package org.infinispan.transaction.lookup;
 
 
-import jakarta.transaction.TransactionManager;
-import jakarta.transaction.UserTransaction;
-
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
+
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.UserTransaction;
 
 
 /**

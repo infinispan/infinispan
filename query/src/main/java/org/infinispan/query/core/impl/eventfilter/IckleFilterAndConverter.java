@@ -12,12 +12,12 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.marshall.protostream.impl.MarshallableMap;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.query.objectfilter.Matcher;
-import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.QueryCache;
+import org.infinispan.query.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.ObjectFilter;
 
 /**
  * A filter implementation that is both a KeyValueFilter and a converter. The implementation relies on the Matcher and a

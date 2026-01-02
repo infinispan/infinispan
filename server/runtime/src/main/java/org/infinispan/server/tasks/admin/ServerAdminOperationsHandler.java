@@ -9,9 +9,9 @@ import org.infinispan.server.core.admin.embeddedserver.CacheRemoveTask;
 import org.infinispan.server.core.admin.embeddedserver.CacheUpdateConfigurationAttributeTask;
 import org.infinispan.server.core.admin.embeddedserver.CacheUpdateIndexSchemaTask;
 import org.infinispan.server.core.admin.embeddedserver.SchemaCreateOrUpdateTask;
+import org.infinispan.server.core.admin.embeddedserver.SchemaSafeDeleteTask;
 import org.infinispan.server.core.admin.embeddedserver.TemplateCreateTask;
 import org.infinispan.server.core.admin.embeddedserver.TemplateRemoveTask;
-import org.infinispan.server.core.admin.embeddedserver.SchemaSafeDeleteTask;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

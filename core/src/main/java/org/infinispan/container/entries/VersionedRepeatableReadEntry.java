@@ -5,6 +5,7 @@ import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
@@ -12,7 +13,6 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.util.EntryLoader;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

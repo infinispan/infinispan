@@ -7,9 +7,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import org.reactivestreams.FlowAdapters;
+
 import io.reactivex.rxjava3.core.Flowable;
 import io.smallrye.mutiny.Multi;
-import org.reactivestreams.FlowAdapters;
 
 public final class FlowUtils {
 

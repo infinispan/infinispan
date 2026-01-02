@@ -3,8 +3,8 @@ package org.infinispan.interceptors;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.context.InvocationContext;
 
 /**
  * A sync {@link InvocationStage} for {@link Throwable}.

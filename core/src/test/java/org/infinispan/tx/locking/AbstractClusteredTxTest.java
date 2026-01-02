@@ -5,14 +5,14 @@ import static org.testng.Assert.assertNull;
 import java.util.Collections;
 import java.util.Map;
 
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
+import org.testng.annotations.Test;
+
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
 import jakarta.transaction.RollbackException;
 import jakarta.transaction.SystemException;
-
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.tm.EmbeddedTransactionManager;
-import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus

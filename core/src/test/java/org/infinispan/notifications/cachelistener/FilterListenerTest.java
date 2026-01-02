@@ -1,5 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -20,8 +22,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "notifications.cachelistener.FilterListenerTest")
 public class FilterListenerTest extends AbstractInfinispanTest {

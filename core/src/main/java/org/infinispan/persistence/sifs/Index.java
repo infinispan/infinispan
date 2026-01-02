@@ -36,13 +36,14 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.util.concurrent.NonBlockingManager;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.functions.Action;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Keeps the entry positions persisted in a file. It consists of couple of segments, each for one modulo-range of key's

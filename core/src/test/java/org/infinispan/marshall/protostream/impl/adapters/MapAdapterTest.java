@@ -2,7 +2,6 @@ package org.infinispan.marshall.protostream.impl.adapters;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

@@ -16,6 +16,7 @@ import java.util.zip.ZipFile;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.reactive.RxJavaInterop;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
@@ -26,7 +27,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.reactivex.rxjava3.core.Flowable;
 

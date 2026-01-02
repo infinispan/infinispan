@@ -5,16 +5,16 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.Map;
 
+import org.infinispan.configuration.cache.IsolationLevel;
+import org.infinispan.transaction.WriteSkewException;
+import org.testng.annotations.Test;
+
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
 import jakarta.transaction.RollbackException;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.Transaction;
 import jakarta.transaction.TransactionManager;
-
-import org.infinispan.transaction.WriteSkewException;
-import org.infinispan.configuration.cache.IsolationLevel;
-import org.testng.annotations.Test;
 
 /**
  * It tests the grouping advanced interface for transactional caches with write-skew check enabled.

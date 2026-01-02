@@ -4,10 +4,10 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.ServiceLoader;
 
-import jakarta.enterprise.inject.spi.Extension;
-
 import org.infinispan.cdi.embedded.InfinispanExtensionEmbedded;
 import org.testng.annotations.Test;
+
+import jakarta.enterprise.inject.spi.Extension;
 
 @Test(groups="functional", testName="cdi.test.ServiceLoaderTest")
 public class ServiceLoaderTest {

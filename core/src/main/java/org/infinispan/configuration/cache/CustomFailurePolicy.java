@@ -5,11 +5,11 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.Cache;
 import org.infinispan.xsite.AbstractCustomFailurePolicy;
 import org.infinispan.xsite.BackupFailureException;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Used for implementing custom policies in case of communication failures with a remote site. The handle methods are

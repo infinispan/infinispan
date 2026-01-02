@@ -9,8 +9,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -25,6 +23,8 @@ import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Mircea Markus

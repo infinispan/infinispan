@@ -1,11 +1,11 @@
 package org.infinispan.remoting.transport.impl;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.remoting.transport.ValidResponseCollector;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Response collector that discards successful responses and returns {@code null}.

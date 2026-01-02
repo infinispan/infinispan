@@ -6,6 +6,7 @@ import static org.infinispan.server.hotrod.HotRodOperation.COUNTER_RESET;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
@@ -18,7 +19,6 @@ import org.infinispan.server.hotrod.counter.response.CounterValueTestResponse;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
 import org.infinispan.server.hotrod.test.TestResponse;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A {@link WeakCounter} implementation for Hot Rod server testing.

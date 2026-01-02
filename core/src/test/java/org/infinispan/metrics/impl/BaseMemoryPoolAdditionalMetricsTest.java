@@ -1,8 +1,9 @@
 package org.infinispan.metrics.impl;
 
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
+
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * @author Alexander Schwartz

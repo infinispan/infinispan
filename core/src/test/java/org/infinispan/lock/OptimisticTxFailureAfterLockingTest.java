@@ -1,18 +1,18 @@
 package org.infinispan.lock;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Transaction;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
 
 /**
  * Test the failures after lock acquired for Optimistic transactional caches.

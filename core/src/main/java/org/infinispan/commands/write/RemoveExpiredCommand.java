@@ -6,8 +6,8 @@ import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.TimeoutException;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;

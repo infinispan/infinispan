@@ -1,5 +1,7 @@
 package org.infinispan.encoding;
 
+import java.util.Objects;
+
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -14,8 +16,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoReserved;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-
-import java.util.Objects;
 
 /**
  * Handle conversions for Keys or values.

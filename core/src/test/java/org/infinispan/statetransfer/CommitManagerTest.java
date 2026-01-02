@@ -1,13 +1,9 @@
 package org.infinispan.statetransfer;
 
-import org.infinispan.commons.time.TimeService;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ReadCommittedEntry;
-import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.context.Flag;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.Test;
+import static org.mockito.Mockito.mock;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -16,10 +12,14 @@ import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.mockito.Mockito.mock;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ReadCommittedEntry;
+import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.context.Flag;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "statetransfer.CommitManagerTest")
 public class CommitManagerTest {

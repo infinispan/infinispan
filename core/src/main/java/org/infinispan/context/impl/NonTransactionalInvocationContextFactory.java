@@ -1,7 +1,5 @@
 package org.infinispan.context.impl;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
@@ -9,6 +7,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Invocation Context container to be used for non-transactional caches.

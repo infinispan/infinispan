@@ -1,9 +1,9 @@
 package org.infinispan.query.core.stats;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 /**
  * A snapshot of {@link SearchStatistics}.

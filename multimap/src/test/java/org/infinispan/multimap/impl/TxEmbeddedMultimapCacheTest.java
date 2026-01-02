@@ -12,19 +12,19 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.putValuesOnMultimap
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
 import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.function.SerializablePredicate;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Multimap Cache with transactions in single cache
