@@ -4,14 +4,14 @@
            socket-binding="default" security-realm="default">
    <hotrod-connector name="hotrod">
       <authentication>
-         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 CRAM-MD5 PLAIN"
+         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 PLAIN"
                server-name="infinispan"/>
       </authentication>
    </hotrod-connector>
    <rest-connector name="rest"/>
    <memcached-connector name="memcached">
       <authentication>
-         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 CRAM-MD5 PLAIN"/>
+         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 PLAIN"/>
       </authentication>
    </memcached-connector>
 </endpoint>

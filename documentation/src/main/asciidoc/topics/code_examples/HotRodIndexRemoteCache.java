@@ -6,6 +6,6 @@ ConfigurationBuilder builder = new ConfigurationBuilder();
                .username("username")
                .password("password")
                .realm("default")
-               .saslMechanism("DIGEST-MD5");
+               .saslMechanism("DIGEST-SHA-256");
       builder.remoteCache("my-cache")
                .configuration("<distributed-cache name=\"my-cache\"><encoding media-type=\"application/x-protostream\"/><indexing><indexed-entities><indexed-entity>book_sample.Book</indexed-entity></indexed-entities></indexing></distributed-cache>");

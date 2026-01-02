@@ -284,7 +284,7 @@ All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `IC
 |`false`
 
 |`sasl_mechanism`
-|SASL mechanism to use for authentication (e.g., `SCRAM-SHA-512`, `DIGEST-MD5`, `PLAIN`, `EXTERNAL`).
+|SASL mechanism to use for authentication (e.g., `SCRAM-SHA-512`, `DIGEST-SHA-256`, `PLAIN`, `EXTERNAL`).
 |String
 |none
 

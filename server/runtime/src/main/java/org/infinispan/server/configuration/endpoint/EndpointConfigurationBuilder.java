@@ -197,13 +197,9 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
                   SaslMechanismInformation.Names.SCRAM_SHA_512,
                   SaslMechanismInformation.Names.SCRAM_SHA_384,
                   SaslMechanismInformation.Names.SCRAM_SHA_256,
-                  SaslMechanismInformation.Names.SCRAM_SHA_1,
                   SaslMechanismInformation.Names.DIGEST_SHA_512,
                   SaslMechanismInformation.Names.DIGEST_SHA_384,
-                  SaslMechanismInformation.Names.DIGEST_SHA_256,
-                  SaslMechanismInformation.Names.DIGEST_SHA,
-                  SaslMechanismInformation.Names.CRAM_MD5,
-                  SaslMechanismInformation.Names.DIGEST_MD5
+                  SaslMechanismInformation.Names.DIGEST_SHA_256
             );
             Server.log.debugf("Enabled SCRAM, DIGEST and CRAM mechanisms for %s", name);
 
@@ -253,7 +249,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
          if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_HASHED)) {
             authentication
                   .enable()
-                  .addMechanisms("DIGEST");
+                  .addMechanisms("DIGEST-SHA-256");
             Server.log.debug("Enabled DIGEST for HTTP");
 
             // Only enable PLAIN if encryption is on
