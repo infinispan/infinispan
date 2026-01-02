@@ -1883,13 +1883,13 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testCacheListener() throws InterruptedException, IOException {
       SSEListener sseListener = new SSEListener();
-      Closeable listen = client.raw().listen("/rest/v2/caches/default?action=listen", Collections.singletonMap(ACCEPT, TEXT_PLAIN_TYPE), sseListener);
-      assertTrue(sseListener.await(10, TimeUnit.SECONDS));
-      putTextEntryInCache("default", "AKey", "AValue");
-      sseListener.expectEvent("cache-entry-created", "AKey");
-      removeTextEntryFromCache("default", "AKey");
-      sseListener.expectEvent("cache-entry-removed", "AKey");
-      listen.close();
+      try (Closeable ignored = client.raw().listen("/rest/v2/caches/default?action=listen", Collections.singletonMap(ACCEPT, TEXT_PLAIN_TYPE), sseListener)) {
+         assertTrue(sseListener.await(10, TimeUnit.SECONDS));
+         putTextEntryInCache("default", "AKey", "AValue");
+         sseListener.expectEvent("cache-entry-created", "AKey");
+         removeTextEntryFromCache("default", "AKey");
+         sseListener.expectEvent("cache-entry-removed", "AKey");
+      }
    }
 
    @Test

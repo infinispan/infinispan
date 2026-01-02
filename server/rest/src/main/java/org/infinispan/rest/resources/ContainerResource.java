@@ -66,6 +66,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
+import org.infinispan.server.core.query.ProtobufMetadataManager;
 import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -124,15 +125,15 @@ public class ContainerResource implements ResourceHandler {
 
             // Shutdown the container content
             .invocation().methods(POST).path("/v2/container").withAction("shutdown").name("SHUTDOWN CONTAINER")
-               .auditContext(AuditContext.CACHEMANAGER).handleWith(this::shutdown)
+            .auditContext(AuditContext.CACHEMANAGER).handleWith(this::shutdown)
 
             // Container configuration listener
             .invocation().methods(GET).path("/v2/container/config").withAction("listen")
-               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::listenConfig)
+            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::listenConfig)
 
             // Container lifecycle listener
             .invocation().method(GET).path("/v2/container").withAction("listen")
-               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::listenLifecycle)
+            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::listenLifecycle)
 
             // Cache Manager info
             .invocation().methods(GET).path("/v2/cache-managers/{name}").deprecated().handleWith(this::getInfo)
@@ -167,27 +168,27 @@ public class ContainerResource implements ResourceHandler {
 
             // BackupManager
             .invocation().methods(GET).path("/v2/cache-managers/{name}/backups")
-               .deprecated().handleWith(this::getAllBackupNames)
+            .deprecated().handleWith(this::getAllBackupNames)
             .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/cache-managers/{name}/backups/{backupName}")
-               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
-               .deprecated().handleWith(this::backup)
+            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+            .deprecated().handleWith(this::backup)
             .invocation().methods(GET).path("/v2/cache-managers/{name}/restores")
-               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
-               .deprecated().handleWith(this::getAllRestoreNames)
+            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+            .deprecated().handleWith(this::getAllRestoreNames)
             .invocation().methods(DELETE, HEAD, POST).path("/v2/cache-managers/{name}/restores/{restoreName}")
-               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
-               .deprecated().handleWith(this::restore)
+            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+            .deprecated().handleWith(this::restore)
 
             .invocation().methods(GET).path("/v2/container/backups").handleWith(this::getAllBackupNames)
             .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/container/backups/{backupName}")
-               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
-               .handleWith(this::backup)
+            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+            .handleWith(this::backup)
             .invocation().methods(GET).path("/v2/container/restores")
-               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
-               .handleWith(this::getAllRestoreNames)
+            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+            .handleWith(this::getAllRestoreNames)
             .invocation().methods(DELETE, HEAD, POST).path("/v2/container/restores/{restoreName}")
-               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
-               .handleWith(this::restore)
+            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+            .handleWith(this::restore)
 
             .create();
    }
@@ -209,7 +210,7 @@ public class ContainerResource implements ResourceHandler {
       if (responseBuilder.getHttpStatus() == NOT_FOUND)
          return completedFuture(responseBuilder.build());
 
-      return CompletableFuture.supplyAsync(()-> {
+      return CompletableFuture.supplyAsync(() -> {
          try {
             EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
             SecurityActions.getGlobalComponentRegistry(cacheManager).getLocalTopologyManager().setRebalancingEnabled(enable);
@@ -477,12 +478,14 @@ public class ContainerResource implements ResourceHandler {
    @Listener
    public class ConfigurationListener {
       final EmbeddedCacheManager cacheManager;
+      final ProtobufMetadataManager metadataManager;
       final EventStream eventStream;
       final MediaType mediaType;
       private final boolean pretty;
 
       protected ConfigurationListener(EmbeddedCacheManager cacheManager, MediaType mediaType, boolean includeCurrentState, boolean pretty) {
          this.cacheManager = cacheManager;
+         this.metadataManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ProtobufMetadataManager.class);
          this.mediaType = mediaType;
          this.pretty = pretty;
          this.eventStream = new EventStream(
@@ -493,6 +496,12 @@ public class ContainerResource implements ResourceHandler {
                            String eventType = config.isTemplate() ? "create-template" : "create-cache";
                            stream.sendEvent(new ServerSentEvent(eventType, serializeConfig(config, configName, mediaType, pretty)));
                         }
+                        CompletableFuture.runAsync(() -> {
+                           for (String name : metadataManager.getProtofileNames()) {
+                              stream.sendEvent(new ServerSentEvent("create-schema", serializeSchema(mediaType, name, metadataManager.getFileErrors(name), metadataManager.getProtofile(name))));
+                           }
+                        }, invocationHelper.getExecutor());
+
                      } : null,
                () -> Security.doPrivileged(() -> {
                   cacheManager.removeListenerAsync(this);
@@ -513,16 +522,21 @@ public class ContainerResource implements ResourceHandler {
 
       @ConfigurationChanged
       public CompletionStage<Void> onConfigurationEvent(ConfigurationChangedEvent event) {
+         String entityName = event.getConfigurationEntityName();
          String eventType = event.getConfigurationEventType().toString().toLowerCase() + "-" + event.getConfigurationEntityType();
          final ServerSentEvent sse;
          if (event.getConfigurationEventType() == ConfigurationChangedEvent.EventType.REMOVE) {
-            sse = new ServerSentEvent(eventType, event.getConfigurationEntityName());
+            sse = new ServerSentEvent(eventType, entityName);
          } else {
             switch (event.getConfigurationEntityType()) {
-               case "cache":
-               case "template":
-                     Configuration config = SecurityActions.getCacheConfiguration(cacheManager, event.getConfigurationEntityName());
-                     sse = new ServerSentEvent(eventType, serializeConfig(config, event.getConfigurationEntityName(), mediaType, pretty));
+               case ConfigurationChangedEvent.CACHE:
+               case ConfigurationChangedEvent.TEMPLATE:
+                  Configuration config = SecurityActions.getCacheConfiguration(cacheManager, entityName);
+                  sse = new ServerSentEvent(eventType, serializeConfig(config, entityName, mediaType, pretty));
+                  break;
+               case ConfigurationChangedEvent.SCHEMA:
+                  Map<String, Object> value = event.getConfigurationEntityValue();
+                  sse = new ServerSentEvent(eventType, serializeSchema(mediaType, entityName, value.get("errors").toString(), value.get("file").toString()));
                   break;
                default:
                   // Unhandled entity type, ignore
@@ -530,6 +544,22 @@ public class ContainerResource implements ResourceHandler {
             }
          }
          return eventStream.sendEvent(sse);
+      }
+
+      private static String serializeSchema(MediaType mediaType, String name, String errors, String proto) {
+         StringWriter s = new StringWriter();
+         try (ConfigurationWriter w = ConfigurationWriter.to(s).withType(mediaType).build()) {
+            w.writeStartDocument();
+            w.writeStartElement("schema");
+            w.writeAttribute("name", name);
+            w.writeAttribute("errors", errors);
+            w.writeStartElement("proto");
+            w.writeCharacters(proto);
+            w.writeEndElement();
+            w.writeEndElement();
+            w.writeEndDocument();
+         }
+         return s.toString();
       }
    }
 }
