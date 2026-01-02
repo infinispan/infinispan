@@ -330,7 +330,7 @@
             <executions>
                <execution>
                   <id>console</id>
-                  <phase>generate-test-resources</phase>
+                  <phase>process-resources</phase>
                   <goals>
                      <goal>unpack</goal>
                   </goals>
@@ -341,6 +341,38 @@
                            <artifactId>infinispan-console</artifactId>
                            <outputDirectory>${server.output.dir}/static/console</outputDirectory>
                         </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>swagger-ui</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>unpack</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.mvnpm</groupId>
+                           <artifactId>swagger-ui-dist</artifactId>
+                           <version>5.20.8</version>
+                           <outputDirectory>${server.output.dir}/static/swagger-ui</outputDirectory>
+                           <includes>META-INF/resources/_static/**</includes>
+                           <fileMappers>
+                              <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
+                           </fileMappers>
+                        </artifactItem>
+                        <!--artifactItem>
+                           <groupId>org.mvnpm</groupId>
+                           <artifactId>swagger-ui-themes</artifactId>
+                           <version>3.0.1</version>
+                           <outputDirectory>${server.output.dir}/static/swagger-ui</outputDirectory>
+                           <includes>META-INF/resources/_static/**</includes>
+                           <excludes>**/*.png</excludes>
+                           <fileMappers>
+                              <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
+                           </fileMappers>
+                        </artifactItem-->
                      </artifactItems>
                   </configuration>
                </execution>
@@ -407,7 +439,7 @@
                </execution>
                <execution>
                   <id>build-server</id>
-                  <phase>process-test-resources</phase>
+                  <phase>process-resources</phase>
                   <goals>
                      <goal>run</goal>
                   </goals>

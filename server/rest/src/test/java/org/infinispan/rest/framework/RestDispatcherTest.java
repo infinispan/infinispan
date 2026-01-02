@@ -208,7 +208,7 @@ public class RestDispatcherTest {
 
       @Override
       public Invocations getInvocations() {
-         return new Invocations.Builder()
+         return new Invocations.Builder("test", "testing")
                .invocation().name("alwaysReady").method(GET).path("/context/{variable1}").requireCacheManagerStart(false).handleWith(this::singleVar)
                .invocation().name("doubleVars").method(GET).path("/context/{variable1}/{variable2}").handleWith(this::doubleVars)
                .invocation().name("tripleVars").method(GET).path("/context/{variable1}/{variable2}/{variable3}").withAction("triple").handleWith(this::tripleVarWithAction)
@@ -244,7 +244,7 @@ public class RestDispatcherTest {
 
       @Override
       public Invocations getInvocations() {
-         return new Invocations.Builder()
+         return new Invocations.Builder("test", "testing")
                .invocation().name("allCounters").method(GET).path("/counters").handleWith(this::listAllCounters)
                .invocation().name("addCounter").method(POST).path("/counters/{name}").handleWith(this::addCounter)
                .invocation().name("getCounter").method(GET).path("/counters/{name}").handleWith(this::getCounter)
@@ -290,7 +290,7 @@ public class RestDispatcherTest {
 
       @Override
       public Invocations getInvocations() {
-         return new Invocations.Builder()
+         return new Invocations.Builder("test", "testing")
                .invocation().methods(GET, HEAD).path("/jvm/memory").path("/v2/java-memory").handleWith(this::showMemory)
                .create();
       }
@@ -304,7 +304,7 @@ public class RestDispatcherTest {
 
       @Override
       public Invocations getInvocations() {
-         return new Invocations.Builder()
+         return new Invocations.Builder("test", "testing")
                .invocation().method(GET).path("/").path("/image.gif").handleWith(this::serveStaticResource)
                .create();
       }
@@ -318,7 +318,7 @@ public class RestDispatcherTest {
 
       @Override
       public Invocations getInvocations() {
-         return new Invocations.Builder()
+         return new Invocations.Builder("test", "testing")
                .invocation().method(GET).path("/web").path("/web/*").handleWith(this::handleGet)
                .create();
       }
@@ -337,7 +337,7 @@ public class RestDispatcherTest {
 
       @Override
       public Invocations getInvocations() {
-         return new Invocations.Builder()
+         return new Invocations.Builder("test", "testing")
                .invocation().method(GET).path("/secure").permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::handleGet)
                .create();
       }
