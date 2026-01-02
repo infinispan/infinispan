@@ -79,7 +79,8 @@ public abstract class MemcachedBaseAuthAccessLoggingTest extends AbstractAuthAcc
          }
          try {
             client.get(k(0, user.getKey()));
-         } catch (Exception e) {}
+         } catch (Exception ignore) {
+         }
          client.shutdown();
       }
       verifyLogs();

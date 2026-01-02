@@ -87,8 +87,7 @@ public final class ZSetCommonUtils {
             score.value = ArgumentUtils.toDouble(arg);
          }
          return score;
-      } catch (NumberFormatException ex) {
-
+      } catch (NumberFormatException ignore) {
       }
       return null;
    }

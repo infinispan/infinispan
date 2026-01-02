@@ -155,7 +155,7 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
                if (useTx) {
                   try {
                      mgr.commit();
-                  } catch (Exception e1) {
+                  } catch (Exception ignore) {
                   }
                }
                latch.countDown();

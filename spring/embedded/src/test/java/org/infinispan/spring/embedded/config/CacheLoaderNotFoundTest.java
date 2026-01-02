@@ -36,7 +36,7 @@ public class CacheLoaderNotFoundTest extends AbstractTestNGSpringContextTests {
       try {
          super.springTestContextPrepareTestInstance();
          fail("Show have thrown an error indicating issues with the cache loader");
-      } catch (IllegalStateException e) {
+      } catch (IllegalStateException ignore) {
       }
    }
 

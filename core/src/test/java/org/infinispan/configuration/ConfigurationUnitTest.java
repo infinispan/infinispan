@@ -505,7 +505,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          if (url != null) {
             try {
                inputStream = url.openStream();
-            } catch (IOException e) {
+            } catch (IOException ignore) {
             }
          }
 

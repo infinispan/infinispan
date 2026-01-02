@@ -22,7 +22,7 @@ public class HashConfigurationBuilderTest extends AbstractInfinispanTest {
       try {
          cb.clustering().hash().numOwners(0);
          Assert.fail("IllegalArgumentException expected");
-      } catch (IllegalArgumentException e) {
+      } catch (IllegalArgumentException ignore) {
       }
    }
 
@@ -37,7 +37,7 @@ public class HashConfigurationBuilderTest extends AbstractInfinispanTest {
       try {
          cb.clustering().hash().numSegments(0);
          Assert.fail("IllegalArgumentException expected");
-      } catch (IllegalArgumentException e) {
+      } catch (IllegalArgumentException ignore) {
       }
    }
 }

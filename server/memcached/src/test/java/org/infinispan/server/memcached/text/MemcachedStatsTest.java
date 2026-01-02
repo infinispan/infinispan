@@ -256,8 +256,8 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
          clients.forEach(client -> {
             try {
                client.shutdown(20, TimeUnit.SECONDS);
-            } catch (Throwable t) {
-            } // Ignore it...
+            } catch (Throwable ignore) {
+            }
          });
       }
    }

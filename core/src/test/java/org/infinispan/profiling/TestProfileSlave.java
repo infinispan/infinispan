@@ -52,7 +52,7 @@ public class TestProfileSlave extends AbstractProfileTest {
          public void run() {
             try {
                 while (true) Thread.sleep(10000);
-            } catch (Exception e) {
+            } catch (Exception ignore) {
             }
          }
       };

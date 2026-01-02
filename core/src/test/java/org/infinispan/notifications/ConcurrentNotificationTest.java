@@ -45,8 +45,8 @@ public class ConcurrentNotificationTest extends AbstractInfinispanTest {
    }
 
    public void testThreads() throws Exception {
-      Thread workers[] = new Thread[20];
-      final List<Exception> exceptions = new LinkedList<Exception>();
+      Thread[] workers = new Thread[20];
+      final List<Exception> exceptions = new LinkedList<>();
       final int loops = 100;
       final CountDownLatch latch = new CountDownLatch(1);
 
@@ -56,7 +56,7 @@ public class ConcurrentNotificationTest extends AbstractInfinispanTest {
             public void run() {
                try {
                   latch.await();
-               } catch (InterruptedException e) {
+               } catch (InterruptedException ignore) {
                }
 
                for (int j = 0; j < loops; j++) {

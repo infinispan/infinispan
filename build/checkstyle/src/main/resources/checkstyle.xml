@@ -54,6 +54,9 @@
       <module name="MutableException"/>
       <!--<module name="CovariantEquals" />-->
       <module name="EqualsAvoidNull"/>
+      <module name="EmptyCatchBlock">
+         <property name="exceptionVariableName" value="expected|ignore"/>
+      </module>
       <!--<module name="IllegalCatch">-->
       <!--<property name="illegalClassNames" value="java.lang.Throwable, java.lang.RuntimeException" />-->
       <!--</module>-->

@@ -35,7 +35,7 @@ public class SINTERCARD extends RespCommand implements Resp3Command {
       int keysNum = 0;
       try {
          keysNum = ArgumentUtils.toInt(arguments.get(0));
-      } catch (NumberFormatException ex) {
+      } catch (NumberFormatException ignore) {
       }
 
       // Wrong numKey value
