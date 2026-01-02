@@ -54,7 +54,8 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     */
    private TransactionManager tm = null;
 
-   @Inject GlobalConfiguration globalCfg;
+   @Inject
+   GlobalConfiguration globalCfg;
 
    /**
     * Get the system-wide used TransactionManager
@@ -114,8 +115,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
       InitialContext ctx;
       try {
          ctx = new InitialContext();
-      }
-      catch (NamingException e) {
+      } catch (NamingException e) {
          CONTAINER.failedToCreateInitialCtx(e);
          lookupFailed = true;
          return;
@@ -128,10 +128,9 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
             try {
                log.debugf("Trying to lookup TransactionManager for %s", knownJNDIManager.getPrettyName());
                jndiObject = ctx.lookup(knownJNDIManager.getJndiLookup());
-            }
-            catch (NamingException e) {
+            } catch (NamingException e) {
                log.debugf("Failed to perform a lookup for [%s (%s)]",
-                         knownJNDIManager.getJndiLookup(), knownJNDIManager.getPrettyName());
+                     knownJNDIManager.getJndiLookup(), knownJNDIManager.getPrettyName());
                continue;
             }
             if (jndiObject instanceof TransactionManager) {

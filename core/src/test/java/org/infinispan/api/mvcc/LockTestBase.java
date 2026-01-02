@@ -50,11 +50,11 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       ConfigurationBuilder defaultCfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
 
       defaultCfg
-         .locking()
+            .locking()
             .isolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED)
             .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .transaction()
-               .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       cm = TestCacheManagerFactory.createCacheManager(defaultCfg);
       ltd.cache = cm.getCache();
       ltd.lockManager = TestingUtil.extractComponentRegistry(ltd.cache).getComponent(LockManager.class);
@@ -228,8 +228,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       String value = cache.get("k2");
       if (repeatableRead) {
          assert null == value : "Should have repeatable read";
-      }
-      else
+      } else
          // no guarantees with read committed
          assertTrue(null == value || "v2".equals(value));
       tm.commit();

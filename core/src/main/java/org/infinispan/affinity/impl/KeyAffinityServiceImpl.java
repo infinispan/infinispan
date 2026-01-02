@@ -233,8 +233,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
             }
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-         }
-         finally {
+         } finally {
             log.debugf("Shutting down KeyAffinity service for key set: %s", filter);
          }
       }
@@ -304,7 +303,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       existingKeyCount.set(0);
       if (log.isTraceEnabled()) {
          log.tracef("resetNumberOfKeys ends with: maxNumberOfKeys=%s, existingKeyCount=%s",
-                    maxNumberOfKeys.get(), existingKeyCount.get());
+               maxNumberOfKeys.get(), existingKeyCount.get());
       }
    }
 
@@ -340,6 +339,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       ConsistentHash hash = distributionManager.getCacheTopology().getWriteConsistentHash();
       return hash.getMembers().contains(address);
    }
+
    private DistributionManager getDistributionManager() {
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       if (distributionManager == null) {

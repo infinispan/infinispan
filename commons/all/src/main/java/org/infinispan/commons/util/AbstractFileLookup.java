@@ -33,9 +33,8 @@ public abstract class AbstractFileLookup implements FileLookup {
    @Override
    public InputStream lookupFile(String filename, ClassLoader cl) {
       try {
-         return lookupFileStrict( filename, cl );
-      }
-      catch (FileNotFoundException e) {
+         return lookupFileStrict(filename, cl);
+      } catch (FileNotFoundException e) {
          return null;
       }
    }
@@ -78,7 +77,7 @@ public abstract class AbstractFileLookup implements FileLookup {
          }
          default:
             InputStream streamToBeReturned = getAsInputStreamFromClassLoader(uri.toString(), cl);
-            if(streamToBeReturned == null) {
+            if (streamToBeReturned == null) {
                throw CONTAINER.unableToLoadFileUsingScheme(scheme);
             }
             return streamToBeReturned;
@@ -93,8 +92,7 @@ public abstract class AbstractFileLookup implements FileLookup {
          File f = new File(filename);
          if (f.exists()) try {
             u = f.toURI().toURL();
-         }
-         catch (MalformedURLException e) {
+         } catch (MalformedURLException e) {
             // what do we do here?
          }
       }
@@ -120,8 +118,7 @@ public abstract class AbstractFileLookup implements FileLookup {
       File f = new File(filename);
       if (f.exists()) try {
          u.add(f.toURI().toURL());
-      }
-      catch (MalformedURLException e) {
+      } catch (MalformedURLException e) {
          // what do we do here?
       }
       return u;

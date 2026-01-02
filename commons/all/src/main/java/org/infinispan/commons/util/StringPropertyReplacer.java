@@ -100,22 +100,18 @@ public class StringPropertyReplacer {
          char c = chars[i];
 
          // Dollar sign outside brackets
-         if (c == '$' && state != IN_BRACKET)
+         if (c == '$' && state != IN_BRACKET) {
             state = SEEN_DOLLAR;
-
             // Open bracket immediatley after dollar
-         else if (c == '{' && state == SEEN_DOLLAR) {
+         } else if (c == '{' && state == SEEN_DOLLAR) {
             buffer.append(string, start, i - 1);
             state = IN_BRACKET;
             start = i - 1;
-         }
-
-         // No open bracket after dollar
-         else if (state == SEEN_DOLLAR)
+         } else if (state == SEEN_DOLLAR) {
+            // No open bracket after dollar
             state = NORMAL;
-
+         } else if (c == '}' && state == IN_BRACKET) {
             // Closed bracket after open bracket
-         else if (c == '}' && state == IN_BRACKET) {
             // No content
             if (start + 2 == i) {
                buffer.append("${}"); // REVIEW: Correct?

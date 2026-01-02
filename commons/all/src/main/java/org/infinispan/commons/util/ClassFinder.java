@@ -23,7 +23,7 @@ public class ClassFinder {
    private static final Log log = LogFactory.getLog(ClassFinder.class);
 
    public static final String PATH = System.getProperty("java.class.path") + File.pathSeparator
-            + System.getProperty("surefire.test.class.path");
+         + System.getProperty("surefire.test.class.path");
 
    public static List<Class<?>> withAnnotationPresent(List<Class<?>> classes, Class<? extends Annotation> c) {
       List<Class<?>> clazzes = new ArrayList<>(classes.size());
@@ -110,10 +110,10 @@ public class ClassFinder {
                classes.add(claz);
             } catch (NoClassDefFoundError ncdfe) {
                log.warnf("%s has reference to a class %s that could not be loaded from classpath",
-                         cf.getAbsolutePath(), ncdfe.getMessage());
+                     cf.getAbsolutePath(), ncdfe.getMessage());
             } catch (Throwable e) {
                // Catch all since we do not want skip iteration
-               log.warn("On path " + cf.getAbsolutePath() + " could not load class "+ clazz, e);
+               log.warn("On path " + cf.getAbsolutePath() + " could not load class " + clazz, e);
             }
          }
       } else {
@@ -137,15 +137,14 @@ public class ClassFinder {
                         classes.add(claz);
                      } catch (NoClassDefFoundError ncdfe) {
                         log.warnf("%s has reference to a class %s that could not be loaded from classpath",
-                                  entry.getName(), ncdfe.getMessage());
+                              entry.getName(), ncdfe.getMessage());
                      } catch (Throwable e) {
                         // Catch all since we do not want skip iteration
-                        log.warn("From jar path " + entry.getName() + " could not load class "+ clazz, e);
+                        log.warn("From jar path " + entry.getName() + " could not load class " + clazz, e);
                      }
                   }
                }
-            }
-            finally {
+            } finally {
                try {
                   jar.close();
                } catch (IOException e) {
@@ -173,6 +172,6 @@ public class ClassFinder {
    private static String toClassName(String classFileName) {
       // Remove the .class suffix and replace / with .
       return classFileName.substring(0, classFileName.length() - 6)
-                          .replace(File.separator, ".");
+            .replace(File.separator, ".");
    }
 }

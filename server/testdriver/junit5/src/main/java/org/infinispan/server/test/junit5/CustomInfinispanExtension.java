@@ -31,8 +31,7 @@ public class CustomInfinispanExtension implements BeforeAllCallback, BeforeEachC
                ReflectionSupport.findMethod(is.getClass(), methodName, ExtensionContext.class)
                      .ifPresent(m -> ReflectionSupport.invokeMethod(m, is, context));
             }
-         }
-         catch (Exception ex) {
+         } catch (Exception ex) {
             throw new RuntimeException(ex);
          }
       });
@@ -97,8 +96,7 @@ public class CustomInfinispanExtension implements BeforeAllCallback, BeforeEachC
             Object finalIs = is;
             ReflectionSupport.findMethod(is.getClass(), "beforeAll", ExtensionContext.class)
                   .ifPresent(m -> ReflectionSupport.invokeMethod(m, finalIs, extensionContext));
-         }
-         catch (Exception ex) {
+         } catch (Exception ex) {
             throw new RuntimeException(ex);
          }
       });

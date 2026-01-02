@@ -43,9 +43,9 @@ import org.testng.annotations.Test;
 public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
    @Override
    public Object[] factory() {
-      return new Object[] {
-         new DistSyncTxL1FuncTest().isolationLevel(IsolationLevel.READ_COMMITTED),
-         new DistSyncTxL1FuncTest().isolationLevel(IsolationLevel.REPEATABLE_READ)
+      return new Object[]{
+            new DistSyncTxL1FuncTest().isolationLevel(IsolationLevel.READ_COMMITTED),
+            new DistSyncTxL1FuncTest().isolationLevel(IsolationLevel.REPEATABLE_READ)
       };
    }
 
@@ -77,8 +77,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
    protected <K> void assertL1StateOnLocalWrite(Cache<? super K, ?> cache, Cache<?, ?> updatingCache, K key, Object valueWrite) {
       if (cache != updatingCache) {
          super.assertL1StateOnLocalWrite(cache, updatingCache, key, valueWrite);
-      }
-      else {
+      } else {
          InternalCacheEntry ice = cache.getAdvancedCache().getDataContainer().peek(key);
          assertNotNull(ice);
          assertEquals(valueWrite, ice.getValue());
@@ -212,8 +211,8 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
 
          // That also unblocks the get command and allows it to perform the remote get
          controlledRpcManager.expectCommand(ClusteredGetCommand.class)
-                             .skipSend()
-                             .receive(address(ownerCache), new ExceptionResponse(new TestException()));
+               .skipSend()
+               .receive(address(ownerCache), new ExceptionResponse(new TestException()));
 
          Exceptions.expectExecutionException(RemoteException.class, TestException.class, futureReplace);
 
@@ -263,7 +262,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
     * See ISPN-3648
     */
    public void testBackupOwnerInvalidatesL1WhenPrimaryIsUnaware() throws InterruptedException, TimeoutException,
-                                                                      BrokenBarrierException, ExecutionException {
+         BrokenBarrierException, ExecutionException {
 
       final Cache<Object, String>[] owners = getOwners(key, 2);
 
@@ -281,7 +280,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       // will also block the primary owner since it is a sync call
       CyclicBarrier backupPutBarrier = new CyclicBarrier(2);
       addBlockingInterceptor(backupOwnerCache, backupPutBarrier, getCommitCommand(), getL1InterceptorClass(),
-                             false);
+            false);
 
       try {
          Future<String> future = fork(() -> ownerCache.put(key, secondValue));
@@ -299,7 +298,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          // Add a barrier to block the get from being retrieved on the primary owner
          CyclicBarrier ownerGetBarrier = new CyclicBarrier(2);
          addBlockingInterceptor(ownerCache, ownerGetBarrier, GetCacheEntryCommand.class, getL1InterceptorClass(),
-                                false);
+               false);
 
          // This should be retrieved from the backup owner
          assertEquals(firstValue, nonOwnerCache.get(key));

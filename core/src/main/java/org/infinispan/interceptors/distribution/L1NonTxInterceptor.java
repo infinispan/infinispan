@@ -72,20 +72,28 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    private static final Log log = LogFactory.getLog(L1NonTxInterceptor.class);
 
-   @Inject protected L1Manager l1Manager;
-   @Inject protected ClusteringDependentLogic cdl;
-   @Inject protected EntryFactory entryFactory;
-   @Inject protected CommandsFactory commandsFactory;
-   @Inject protected InternalDataContainer dataContainer;
-   @Inject protected StateTransferLock stateTransferLock;
-   @Inject protected KeyPartitioner keyPartitioner;
-   @Inject protected BlockingManager blockingManager;
+   @Inject
+   protected L1Manager l1Manager;
+   @Inject
+   protected ClusteringDependentLogic cdl;
+   @Inject
+   protected EntryFactory entryFactory;
+   @Inject
+   protected CommandsFactory commandsFactory;
+   @Inject
+   protected InternalDataContainer dataContainer;
+   @Inject
+   protected StateTransferLock stateTransferLock;
+   @Inject
+   protected KeyPartitioner keyPartitioner;
+   @Inject
+   protected BlockingManager blockingManager;
 
    private long l1Lifespan;
    private long replicationTimeout;
 
    /**
-    *  This map holds all the current write synchronizers registered for a given key.  This map is only added to when an
+    * This map holds all the current write synchronizers registered for a given key.  This map is only added to when an
     * operation is invoked that would cause a remote get to occur (which is controlled by whether or not the
     * {@link L1NonTxInterceptor#skipL1Lookup(FlagAffectedCommand, Object)} method returns
     * true.  This map <b>MUST</b> have the value inserted removed in a finally block after the remote get is done to
@@ -114,10 +122,10 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       l1Lifespan = cacheConfiguration.clustering().l1().lifespan();
       replicationTimeout = cacheConfiguration.clustering().remoteTimeout();
       cacheConfiguration.clustering()
-                   .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
-                   .addListener((a, ignored) -> {
-                      replicationTimeout = a.get().longValue();
-                   });
+            .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+            .addListener((a, ignored) -> {
+               replicationTimeout = a.get().longValue();
+            });
    }
 
    @Override
@@ -133,12 +141,12 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    }
 
    private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command,
-         boolean isEntry) throws Throwable {
+                                       boolean isEntry) throws Throwable {
       return performCommandWithL1WriteIfAble(ctx, command, isEntry, false, true);
    }
 
    protected Object performCommandWithL1WriteIfAble(InvocationContext ctx, DataCommand command,
-         boolean isEntry, boolean shouldAlwaysRunNextInterceptor, boolean registerL1) throws Throwable {
+                                                    boolean isEntry, boolean shouldAlwaysRunNextInterceptor, boolean registerL1) throws Throwable {
       if (ctx.isOriginLocal()) {
          Object key = command.getKey();
          // If the command isn't going to return a remote value - just pass it down the interceptor chain
@@ -156,10 +164,10 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    }
 
    private Object performL1Lookup(InvocationContext ctx, VisitableCommand command,
-                                                boolean runInterceptorOnConflict, Object key, boolean isEntry) throws Throwable {
+                                  boolean runInterceptorOnConflict, Object key, boolean isEntry) throws Throwable {
       // Most times the putIfAbsent will be successful, so not doing a get first
       L1WriteSynchronizer l1WriteSync = new L1WriteSynchronizer(dataContainer, l1Lifespan, stateTransferLock,
-                                                                cdl);
+            cdl);
       L1WriteSynchronizer presentSync = concurrentWrites.putIfAbsent(key, l1WriteSync);
 
       // If the sync was null that means we are the first to register for the given key.  If not that means there is
@@ -350,7 +358,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          // to complete
          if (ctx.lookupEntry(key) == null) {
             currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-                                                            true, false, currentStage);
+                  true, false, currentStage);
          }
       }
       l1Aborts.dependsOn(EntryFactory.expirationCheckDelay(currentStage, initialStage));
@@ -379,8 +387,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
                   success = false;
                   // Save the interruption status, but don't throw an explicit exception
                   Thread.currentThread().interrupt();
-               }
-               catch (ExecutionException e) {
+               } catch (ExecutionException e) {
                   // We don't care what the L1 update exception was
                   success = false;
                }
@@ -394,7 +401,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    }
 
    private Object handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command,
-         boolean assumeOriginKeptEntryInL1) {
+                                         boolean assumeOriginKeptEntryInL1) {
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          if (log.isTraceEnabled()) {
             log.tracef("local mode forced, suppressing L1 calls.");
@@ -452,7 +459,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, segment, true, false, CompletableFutures.completedNull());
 
       return stage.thenApply(ignore -> commandsFactory.buildInvalidateFromL1Command(EnumUtil.EMPTY_BIT_SET,
-            Collections.singleton(key)))
+                  Collections.singleton(key)))
             .thenCombine(l1Abort, (c, ___) -> c);
    }
 

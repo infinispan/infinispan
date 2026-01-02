@@ -23,8 +23,7 @@ public class TransactionSynchronizationRegistryFactory extends AbstractNamedCach
          if (lookup != null) {
             return lookup.getTransactionSynchronizationRegistry();
          }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new CacheConfigurationException("failed obtaining TransactionSynchronizationRegistry", e);
       }
       return null;

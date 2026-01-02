@@ -48,7 +48,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    private volatile Channel listenerChannel;
 
    InvalidatedNearRemoteCache(InternalRemoteCache<K, V> remoteCache, ClientStatistics clientStatistics,
-         NearCacheService<K, V> nearcache) {
+                              NearCacheService<K, V> nearcache) {
       super(remoteCache);
       this.clientStatistics = clientStatistics;
       this.nearcache = nearcache;
@@ -66,7 +66,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    public static <K, V> InvalidatedNearRemoteCache<K, V> delegatingNearCache(RemoteCacheImpl<K, V> remoteCache,
-         NearCacheService<K, V> nearCacheService) {
+                                                                             NearCacheService<K, V> nearCacheService) {
       return new InvalidatedNearRemoteCache<>(remoteCache, remoteCache.clientStatistics, nearCacheService);
    }
 
@@ -117,10 +117,9 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
                      log.tracef("Unable to cache returned value for key %s as operation was performed during a" +
                            " bloom filter update", org.infinispan.commons.util.Util.toStr(key));
                   }
-               }
-               // Having a listener address means it has a bloom filter. When we have a bloom filter we cannot
-               // cache values upon a retry as we can't guarantee the bloom filter is updated on the server properly
-               else if (listenerChannel != null && v.retried()) {
+               } else if (listenerChannel != null && v.retried()) {
+                  // Having a listener address means it has a bloom filter. When we have a bloom filter we cannot
+                  // cache values upon a retry as we can't guarantee the bloom filter is updated on the server properly
                   if (trace) {
                      log.tracef("Unable to cache returned value for key %s as operation was retried",
                            org.infinispan.commons.util.Util.toStr(key));

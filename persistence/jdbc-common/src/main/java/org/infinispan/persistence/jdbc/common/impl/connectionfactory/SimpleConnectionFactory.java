@@ -34,8 +34,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
       SimpleConnectionFactoryConfiguration factoryConfiguration;
       if (config instanceof SimpleConnectionFactoryConfiguration) {
          factoryConfiguration = (SimpleConnectionFactoryConfiguration) config;
-      }
-      else {
+      } else {
          throw new PersistenceException("ConnectionFactoryConfiguration has to be an instance of " +
                "SimpleConnectionFactoryConfiguration.");
       }
@@ -70,7 +69,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    @Override
    public void releaseConnection(Connection conn) {
       try {
-         if (conn!=null) {
+         if (conn != null) {
             conn.close();
             connectionCount--;
          }
@@ -103,8 +102,8 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    @Override
    public String toString() {
       return "SimpleConnectionFactory{" +
-              "connectionUrl='" + connectionUrl + '\'' +
-              ", userName='" + userName + '\'' +
-              "} " + super.toString();
+            "connectionUrl='" + connectionUrl + '\'' +
+            ", userName='" + userName + '\'' +
+            "} " + super.toString();
    }
 }

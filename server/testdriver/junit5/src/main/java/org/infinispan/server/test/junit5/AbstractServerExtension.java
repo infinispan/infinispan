@@ -39,6 +39,7 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
       // We need to replace the $ for subclasses as it causes issues with the testcontainers docker client
       return extensionContext.getRequiredTestClass().getName().replaceAll("\\$", "-");
    }
+
    protected void initSuiteClasses(ExtensionContext extensionContext) {
       if (!suiteTestClasses.isEmpty())
          return;
@@ -61,7 +62,7 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
       if (selectClasses != null) {
          for (Class<?> klass : selectClasses.value()) {
             if (findAnnotatedMethods(klass, Test.class, HierarchyTraversalMode.TOP_DOWN).isEmpty() &&
-            findAnnotatedMethods(klass, ParameterizedTest.class, HierarchyTraversalMode.TOP_DOWN).isEmpty()) {
+                  findAnnotatedMethods(klass, ParameterizedTest.class, HierarchyTraversalMode.TOP_DOWN).isEmpty()) {
                throw new IllegalArgumentException("Class " + klass + " doesn't contain any methods with @Test or @ParameterizedTest annotations");
             }
             suiteTestClasses.add(klass);
@@ -89,6 +90,7 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
          testServer.getDriver().start(testName);
       }
    }
+
    protected void startTestClient(ExtensionContext extensionContext, TestClient testClient) {
       // Include getDisplayName to ensure ParameterizedTest uniqueness
       String methodName = String.format("%s.%s.%s", extensionContext.getRequiredTestClass().getSimpleName(), extensionContext.getRequiredTestMethod(), extensionContext.getDisplayName());
@@ -108,8 +110,7 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
                try {
                   field.setAccessible(true);
                   field.set(testInstance, value);
-               }
-               catch (Exception ex) {
+               } catch (Exception ex) {
                   throw new RuntimeException(ex);
                }
             });

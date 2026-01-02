@@ -383,8 +383,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
             } catch (RollbackException e) {
                Exceptions.assertException(ContainerFullException.class, getMostNestedSuppressedThrowable(e));
             }
-         }
-         else {
+         } else {
             tm.rollback();
             fail("Transaction was no longer active!");
          }

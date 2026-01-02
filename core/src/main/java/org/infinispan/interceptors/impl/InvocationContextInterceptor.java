@@ -44,15 +44,18 @@ import jakarta.transaction.Transaction;
 public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
 
-   @Inject ComponentRegistry componentRegistry;
-   @Inject TransactionTable txTable;
+   @Inject
+   ComponentRegistry componentRegistry;
+   @Inject
+   TransactionTable txTable;
 
    private volatile boolean shuttingDown = false;
 
    private final InvocationExceptionFunction<VisitableCommand> suppressExceptionsHandler = (rCtx, rCommand, throwable) -> {
       if (throwable instanceof InvalidCacheUsageException || throwable instanceof InterruptedException) {
          throw throwable;
-      } if (throwable instanceof UserRaisedFunctionalException) {
+      }
+      if (throwable instanceof UserRaisedFunctionalException) {
          if (rCtx.isOriginLocal()) {
             throw throwable.getCause();
          } else {
@@ -155,7 +158,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
    private String getCacheNamePrefix() {
       String cacheName = componentRegistry.getCacheName();
-      return  "Cache '" + cacheName + "'";
+      return "Cache '" + cacheName + "'";
    }
 
    /**

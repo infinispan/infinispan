@@ -2,6 +2,7 @@ package org.infinispan.query.api;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -20,7 +21,7 @@ public class ReplaceTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
-         .indexing()
+            .indexing()
             .enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(TestEntity.class);
@@ -37,8 +38,7 @@ public class ReplaceTest extends SingleCacheManagerTest {
          simpleCache.put(se1.getId(), se1);
          TestEntity se1ret = (TestEntity) simpleCache.replace(se2.getId(), se2);
          assertEquals(se1, se1ret);
-      }
-      finally {
+      } finally {
          TestingUtil.killCacheManagers(simpleCacheManager);
       }
    }
@@ -57,7 +57,7 @@ public class ReplaceTest extends SingleCacheManagerTest {
       TestEntity se2 = new TestEntity("name2", "surname2", 10, "note"); // same id
       cache.put(se1.getId(), se1);
       // note we use conditional replace here
-      assert cache.replace(se2.getId(), se1, se2);
+      assertTrue(cache.replace(se2.getId(), se1, se2));
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 

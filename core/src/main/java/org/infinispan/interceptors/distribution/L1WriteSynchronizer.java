@@ -16,13 +16,13 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.jboss.logging.Logger;
 
 /**
-* A write synchronizer that allows for a single thread to run the L1 update while others can block until it is
-* completed.  Also allows for someone to attempt to cancel the write to the L1.  If they are unable to, they should
-* really wait until the L1 write has completed so they can guarantee their update will be ordered properly.
-*
-* @author wburns
-* @since 6.0
-*/
+ * A write synchronizer that allows for a single thread to run the L1 update while others can block until it is
+ * completed.  Also allows for someone to attempt to cancel the write to the L1.  If they are unable to, they should
+ * really wait until the L1 write has completed so they can guarantee their update will be ordered properly.
+ *
+ * @author wburns
+ * @since 6.0
+ */
 public class L1WriteSynchronizer {
    private static final Logger log = Logger.getLogger(L1WriteSynchronizer.class);
    private final L1WriteSync sync = new L1WriteSync();
@@ -67,6 +67,7 @@ public class L1WriteSynchronizer {
 
       /**
        * Attempt to update the sync to signal that we want to update L1 with value
+       *
        * @return whether it should continue with running L1 update
        */
       boolean attemptUpdateToRunning() {
@@ -79,6 +80,7 @@ public class L1WriteSynchronizer {
 
       /**
        * Attempt to update the sync to signal that we want to cancel the L1 update
+       *
        * @return whether the L1 run was skipped
        */
       boolean attemptToSkipFullRun() {
@@ -109,7 +111,7 @@ public class L1WriteSynchronizer {
 
       void innerSet(Object value) {
          // This should never have to loop, but just in case :P
-         for (;;) {
+         for (; ; ) {
             int s = getState();
             if (s == COMPLETED) {
                return;
@@ -124,7 +126,7 @@ public class L1WriteSynchronizer {
 
       void innerException(Throwable t) {
          // This should never have to loop, but just in case :P
-         for (;;) {
+         for (; ; ) {
             int s = getState();
             if (s == COMPLETED) {
                return;
@@ -150,6 +152,7 @@ public class L1WriteSynchronizer {
     * Attempts to mark the L1 update to only retrieve the value and not to actually update the L1 cache.
     * If the L1 skipping is not successful, that means it is currently running, which means for consistency
     * any writes should wait until this update completes since the update doesn't acquire any locks
+    *
     * @return Whether or not it was successful in skipping L1 update
     */
    public boolean trySkipL1Update() {
@@ -174,8 +177,7 @@ public class L1WriteSynchronizer {
                runL1Update(key, ice);
             }
          }
-      }
-      finally {
+      } finally {
          sync.innerSet(ice);
       }
    }
@@ -198,8 +200,7 @@ public class L1WriteSynchronizer {
          } else {
             log.tracef("Data container contained value after rehash for key %s", key);
          }
-      }
-      finally {
+      } finally {
          stateTransferLock.releaseSharedTopologyLock();
       }
    }

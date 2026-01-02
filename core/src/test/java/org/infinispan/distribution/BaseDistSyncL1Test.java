@@ -102,7 +102,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
    protected abstract Class<? extends AsyncInterceptor> getL1InterceptorClass();
 
-   protected <K> void assertL1StateOnLocalWrite(Cache<? super K,?> cache, Cache<?, ?> updatingCache, K key, Object valueWrite) {
+   protected <K> void assertL1StateOnLocalWrite(Cache<? super K, ?> cache, Cache<?, ?> updatingCache, K key, Object valueWrite) {
       // Default just assumes it invalidated the cache
       assertIsNotInL1(cache, key);
    }
@@ -134,8 +134,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          // The nonOwnerCache should retrieve new value as it isn't in L1
          assertEquals(updateValue, nonOwnerCache.get(key));
          assertIsInL1(nonOwnerCache, key);
-      }
-      finally {
+      } finally {
          removeAllBlockingInterceptorsFromCache(nonOwnerCache);
       }
    }
@@ -253,8 +252,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
             assertEquals(secondValue, nonOwnerCache.get(key));
             return isInL1(nonOwnerCache, key);
          });
-      }
-      finally {
+      } finally {
          removeAllBlockingInterceptorsFromCache(nonOwnerCache);
       }
    }
@@ -264,7 +262,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
     */
    @Test
    public void testGetAfterWriteAlreadyInvalidatedCurrentGet() throws InterruptedException, TimeoutException,
-                                                                      BrokenBarrierException, ExecutionException {
+         BrokenBarrierException, ExecutionException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -552,7 +550,8 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
    /**
     * Replaces StateTransferLock in cache with a proxy one that will block on
     * {#link StateTransferLock#acquireSharedTopologyLock} until the checkpoint is triggered
-    * @param cache The cache to replace the StateTransferLock on
+    *
+    * @param cache      The cache to replace the StateTransferLock on
     * @param checkPoint The checkpoint to use to trigger blocking
     * @return The original real StateTransferLock
     */
@@ -575,7 +574,8 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
    /**
     * Replaces L1Manager in cache with a proxy one that will block on
     * {#link L1Manager#registerL1WriteSynchronizer} until the checkpoint is triggered
-    * @param cache The cache to replace the L1Manager on
+    *
+    * @param cache      The cache to replace the L1Manager on
     * @param checkPoint The checkpoint to use to trigger blocking
     * @return The original real L1Manager
     */

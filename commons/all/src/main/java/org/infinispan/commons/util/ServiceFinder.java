@@ -31,8 +31,7 @@ public class ServiceFinder {
          } catch (Exception e) {
             // Ignore
          }
-      }
-      else {
+      } else {
          for (ClassLoader loader : loaders) {
             if (loader == null)
                throw new NullPointerException();

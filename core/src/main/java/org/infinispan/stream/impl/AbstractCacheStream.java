@@ -30,11 +30,12 @@ import org.infinispan.util.logging.Log;
 import org.reactivestreams.Publisher;
 
 /**
- * Abstract stream that provides all of the common functionality required for all types of Streams including the various
+ * Abstract stream that provides all the common functionality required for all types of Streams including the various
  * primitive types.
+ *
  * @param <Original> the original type of the underlying stream - normally CacheEntry or Object
- * @param <T> The type returned by the stream
- * @param <S> The stream interface
+ * @param <T>        The type returned by the stream
+ * @param <S>        The stream interface
  */
 public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S>, S2 extends S> implements BaseStream<T, S> {
    protected final Queue<IntermediateOperation> intermediateOperations;
@@ -133,7 +134,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
    }
 
    protected void addIntermediateOperation(Queue<IntermediateOperation> intermediateOperations,
-           IntermediateOperation<T, S, ?, ?> intermediateOperation) {
+                                           IntermediateOperation<T, S, ?, ?> intermediateOperation) {
       intermediateOperations.add(intermediateOperation);
    }
 
@@ -180,7 +181,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
    }
 
    <R> R performPublisherOperation(Function<? super Publisher<T>, ? extends CompletionStage<R>> transformer,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                                   Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       Function usedTransformer;
       if (intermediateOperations.isEmpty()) {
          usedTransformer = transformer;
@@ -217,8 +218,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
             return e -> ((KeyValuePair<?, Out>) e).getValue();
          }
       },
-      FLAT_MAP
-      ;
+      FLAT_MAP;
 
       public <In, Out> Function<In, Out> getFunction() {
          // There is no unwrapping required as we just have the CacheEntry directly
@@ -233,19 +233,18 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
     * exceptions of the first.
     */
    protected static Consumer<Supplier<PrimitiveIterator.OfInt>> composeWithExceptions(Consumer<Supplier<PrimitiveIterator.OfInt>> a,
-         Consumer<Supplier<PrimitiveIterator.OfInt>> b) {
+                                                                                      Consumer<Supplier<PrimitiveIterator.OfInt>> b) {
       return (segments) -> {
          try {
             a.accept(segments);
-         }
-         catch (Throwable e1) {
+         } catch (Throwable e1) {
             try {
                b.accept(segments);
-            }
-            catch (Throwable e2) {
+            } catch (Throwable e2) {
                try {
                   e1.addSuppressed(e2);
-               } catch (Throwable ignore) {}
+               } catch (Throwable ignore) {
+               }
             }
             throw e1;
          }
