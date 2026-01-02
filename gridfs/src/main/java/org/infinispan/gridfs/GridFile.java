@@ -38,10 +38,11 @@ public class GridFile extends File {
 
    /**
     * Creates a GridFile instance
-    * @param pathname path of file
+    *
+    * @param pathname      path of file
     * @param metadataCache cache to use to store metadata
-    * @param chunkSize chunk size.  Will be upgraded to next highest power of two.
-    * @param fs GridFilesystem instance
+    * @param chunkSize     chunk size.  Will be upgraded to next highest power of two.
+    * @param fs            GridFilesystem instance
     */
    GridFile(String pathname, Cache<String, Metadata> metadataCache, int chunkSize, GridFilesystem fs) {
       super(pathname);
@@ -218,10 +219,9 @@ public class GridFile extends File {
          boolean parentsExist = checkParentDirs(getAbsolutePath(), alsoCreateParentDirs);
          if (!parentsExist)
             return false;
-         metadataCache.put(getAbsolutePath(),new Metadata(0, System.currentTimeMillis(), chunkSize, Metadata.DIR));
+         metadataCache.put(getAbsolutePath(), new Metadata(0, System.currentTimeMillis(), chunkSize, Metadata.DIR));
          return true;
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          return false;
       }
    }
@@ -252,11 +252,11 @@ public class GridFile extends File {
 
    @Override
    public boolean setLastModified(long time) {
-      if (time < 0){
+      if (time < 0) {
          throw new IllegalArgumentException("Negative time");
       }
       Metadata metadata = getMetadata();
-      if(metadata == null){
+      if (metadata == null) {
          return false;
       }
       metadata.setModificationTime(time);
@@ -416,7 +416,7 @@ public class GridFile extends File {
    @Override
    public boolean equals(Object obj) {
       if (obj instanceof GridFile) {
-          return compareTo((GridFile)obj) == 0;
+         return compareTo((GridFile) obj) == 0;
       }
       return false;
    }

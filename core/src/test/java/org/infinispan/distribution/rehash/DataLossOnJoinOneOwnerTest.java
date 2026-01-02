@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests data loss during state transfer when a single data owner is configured.
+ *
  * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2011 Red Hat Inc.
  * @author Alex Heneveld
  * @author Manik Surtani
@@ -39,8 +40,7 @@ public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
          TestingUtil.blockUntilViewsReceived(45000, cm1, cm2);
          hasKey(c1);
          hasKey(c2);
-      }
-      finally {
+      } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }
    }
@@ -53,7 +53,7 @@ public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
    public EmbeddedCacheManager newCM() {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.DIST_SYNC)
-               .hash().numOwners(1)
+            .hash().numOwners(1)
             .clustering().l1().disable();
       return TestCacheManagerFactory.createClusteredCacheManager(c);
    }

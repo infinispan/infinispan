@@ -9,7 +9,7 @@ import com.google.errorprone.annotations.ThreadSafe;
  * MurmurHash3 implementation in Java, based on Austin Appleby's <a href=
  * "https://code.google.com/p/smhasher/source/browse/trunk/MurmurHash3.cpp"
  * >original in C</a>
- *
+ * <p>
  * Only implementing x64 version, because this should always be faster on 64 bit
  * native processors, even 64 bit being ran with a 32 bit OS; this should also
  * be as fast or faster than the x86 version on some modern 32 bit processors.
@@ -45,14 +45,14 @@ public class MurmurHash3 implements Hash {
 
    static long getblock(byte[] key, int i) {
       return
-           ((key[i + 0] & 0x00000000000000FFL))
-         | ((key[i + 1] & 0x00000000000000FFL) << 8)
-         | ((key[i + 2] & 0x00000000000000FFL) << 16)
-         | ((key[i + 3] & 0x00000000000000FFL) << 24)
-         | ((key[i + 4] & 0x00000000000000FFL) << 32)
-         | ((key[i + 5] & 0x00000000000000FFL) << 40)
-         | ((key[i + 6] & 0x00000000000000FFL) << 48)
-         | ((key[i + 7] & 0x00000000000000FFL) << 56);
+            ((key[i + 0] & 0x00000000000000FFL))
+                  | ((key[i + 1] & 0x00000000000000FFL) << 8)
+                  | ((key[i + 2] & 0x00000000000000FFL) << 16)
+                  | ((key[i + 3] & 0x00000000000000FFL) << 24)
+                  | ((key[i + 4] & 0x00000000000000FFL) << 32)
+                  | ((key[i + 5] & 0x00000000000000FFL) << 40)
+                  | ((key[i + 6] & 0x00000000000000FFL) << 48)
+                  | ((key[i + 7] & 0x00000000000000FFL) << 56);
    }
 
    static void bmix(State state) {
@@ -90,7 +90,7 @@ public class MurmurHash3 implements Hash {
    /**
     * Hash a value using the x64 128 bit variant of MurmurHash3
     *
-    * @param key value to hash
+    * @param key  value to hash
     * @param seed random value
     * @return 128 bit hashed key, in an array containing two longs
     */
@@ -116,22 +116,37 @@ public class MurmurHash3 implements Hash {
       int tail = (key.length >>> 4) << 4;
 
       switch (key.length & 15) {
-         case 15: state.k2 ^= (long) key[tail + 14] << 48;
-         case 14: state.k2 ^= (long) key[tail + 13] << 40;
-         case 13: state.k2 ^= (long) key[tail + 12] << 32;
-         case 12: state.k2 ^= (long) key[tail + 11] << 24;
-         case 11: state.k2 ^= (long) key[tail + 10] << 16;
-         case 10: state.k2 ^= (long) key[tail + 9] << 8;
-         case 9:  state.k2 ^= key[tail + 8];
+         case 15:
+            state.k2 ^= (long) key[tail + 14] << 48;
+         case 14:
+            state.k2 ^= (long) key[tail + 13] << 40;
+         case 13:
+            state.k2 ^= (long) key[tail + 12] << 32;
+         case 12:
+            state.k2 ^= (long) key[tail + 11] << 24;
+         case 11:
+            state.k2 ^= (long) key[tail + 10] << 16;
+         case 10:
+            state.k2 ^= (long) key[tail + 9] << 8;
+         case 9:
+            state.k2 ^= key[tail + 8];
 
-         case 8:  state.k1 ^= (long) key[tail + 7] << 56;
-         case 7:  state.k1 ^= (long) key[tail + 6] << 48;
-         case 6:  state.k1 ^= (long) key[tail + 5] << 40;
-         case 5:  state.k1 ^= (long) key[tail + 4] << 32;
-         case 4:  state.k1 ^= (long) key[tail + 3] << 24;
-         case 3:  state.k1 ^= (long) key[tail + 2] << 16;
-         case 2:  state.k1 ^= (long) key[tail + 1] << 8;
-         case 1:  state.k1 ^= key[tail + 0];
+         case 8:
+            state.k1 ^= (long) key[tail + 7] << 56;
+         case 7:
+            state.k1 ^= (long) key[tail + 6] << 48;
+         case 6:
+            state.k1 ^= (long) key[tail + 5] << 40;
+         case 5:
+            state.k1 ^= (long) key[tail + 4] << 32;
+         case 4:
+            state.k1 ^= (long) key[tail + 3] << 24;
+         case 3:
+            state.k1 ^= (long) key[tail + 2] << 16;
+         case 2:
+            state.k1 ^= (long) key[tail + 1] << 8;
+         case 1:
+            state.k1 ^= key[tail + 0];
             bmix(state);
       }
 
@@ -146,13 +161,13 @@ public class MurmurHash3 implements Hash {
       state.h1 += state.h2;
       state.h2 += state.h1;
 
-      return new long[] { state.h1, state.h2 };
+      return new long[]{state.h1, state.h2};
    }
 
    /**
     * Hash a value using the x64 64 bit variant of MurmurHash3
     *
-    * @param key value to hash
+    * @param key  value to hash
     * @param seed random value
     * @return 64 bit hashed key
     */
@@ -179,22 +194,37 @@ public class MurmurHash3 implements Hash {
       int tail = (key.length >>> 4) << 4;
 
       switch (key.length & 15) {
-         case 15: state.k2 ^= (long) key[tail + 14] << 48;
-         case 14: state.k2 ^= (long) key[tail + 13] << 40;
-         case 13: state.k2 ^= (long) key[tail + 12] << 32;
-         case 12: state.k2 ^= (long) key[tail + 11] << 24;
-         case 11: state.k2 ^= (long) key[tail + 10] << 16;
-         case 10: state.k2 ^= (long) key[tail + 9] << 8;
-         case 9:  state.k2 ^= key[tail + 8];
+         case 15:
+            state.k2 ^= (long) key[tail + 14] << 48;
+         case 14:
+            state.k2 ^= (long) key[tail + 13] << 40;
+         case 13:
+            state.k2 ^= (long) key[tail + 12] << 32;
+         case 12:
+            state.k2 ^= (long) key[tail + 11] << 24;
+         case 11:
+            state.k2 ^= (long) key[tail + 10] << 16;
+         case 10:
+            state.k2 ^= (long) key[tail + 9] << 8;
+         case 9:
+            state.k2 ^= key[tail + 8];
 
-         case 8:  state.k1 ^= (long) key[tail + 7] << 56;
-         case 7:  state.k1 ^= (long) key[tail + 6] << 48;
-         case 6:  state.k1 ^= (long) key[tail + 5] << 40;
-         case 5:  state.k1 ^= (long) key[tail + 4] << 32;
-         case 4:  state.k1 ^= (long) key[tail + 3] << 24;
-         case 3:  state.k1 ^= (long) key[tail + 2] << 16;
-         case 2:  state.k1 ^= (long) key[tail + 1] << 8;
-         case 1:  state.k1 ^= key[tail + 0];
+         case 8:
+            state.k1 ^= (long) key[tail + 7] << 56;
+         case 7:
+            state.k1 ^= (long) key[tail + 6] << 48;
+         case 6:
+            state.k1 ^= (long) key[tail + 5] << 40;
+         case 5:
+            state.k1 ^= (long) key[tail + 4] << 32;
+         case 4:
+            state.k1 ^= (long) key[tail + 3] << 24;
+         case 3:
+            state.k1 ^= (long) key[tail + 2] << 16;
+         case 2:
+            state.k1 ^= (long) key[tail + 1] << 8;
+         case 1:
+            state.k1 ^= key[tail + 0];
             bmix(state);
       }
 
@@ -215,7 +245,7 @@ public class MurmurHash3 implements Hash {
    /**
     * Hash a value using the x64 32 bit variant of MurmurHash3
     *
-    * @param key value to hash
+    * @param key  value to hash
     * @param seed random value
     * @return 32 bit hashed key
     */
@@ -226,7 +256,7 @@ public class MurmurHash3 implements Hash {
    /**
     * Hash a value using the x64 128 bit variant of MurmurHash3
     *
-    * @param key value to hash
+    * @param key  value to hash
     * @param seed random value
     * @return 128 bit hashed key, in an array containing two longs
     */
@@ -265,13 +295,13 @@ public class MurmurHash3 implements Hash {
       state.h1 += state.h2;
       state.h2 += state.h1;
 
-      return new long[] { state.h1, state.h2 };
+      return new long[]{state.h1, state.h2};
    }
 
    /**
     * Hash a value using the x64 64 bit variant of MurmurHash3
     *
-    * @param key value to hash
+    * @param key  value to hash
     * @param seed random value
     * @return 64 bit hashed key
     */
@@ -316,7 +346,7 @@ public class MurmurHash3 implements Hash {
    /**
     * Hash a value using the x64 32 bit variant of MurmurHash3
     *
-    * @param key value to hash
+    * @param key  value to hash
     * @param seed random value
     * @return 32 bit hashed key
     */
@@ -384,8 +414,7 @@ public class MurmurHash3 implements Hash {
          return hash((byte[]) o);
       else if (o instanceof WrappedBytes) {
          return hash(((WrappedBytes) o).getBytes());
-      }
-      else if (o instanceof long[])
+      } else if (o instanceof long[])
          return hash((long[]) o);
       else if (o instanceof String)
          return hashString((String) o);
@@ -414,7 +443,7 @@ public class MurmurHash3 implements Hash {
          int cp;
          if (!Character.isSurrogate(c1)) {
             cp = c1;
-         } else if (Character.isHighSurrogate(c1)){
+         } else if (Character.isHighSurrogate(c1)) {
             if (i + 1 < stringLen) {
                char c2 = s.charAt(i + 1);
                if (Character.isLowSurrogate(c2)) {
@@ -462,7 +491,7 @@ public class MurmurHash3 implements Hash {
       state.k2 = 0;
       switch (byteLen & 15) {
          case 15:
-            state.k2 ^= (long) ((byte)(savedK2 >> 48)) << 48;
+            state.k2 ^= (long) ((byte) (savedK2 >> 48)) << 48;
          case 14:
             state.k2 ^= (long) ((byte) (savedK2 >> 40)) << 40;
          case 13:

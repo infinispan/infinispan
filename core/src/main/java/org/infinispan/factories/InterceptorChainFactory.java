@@ -77,7 +77,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    private static final Log log = LogFactory.getLog(InterceptorChainFactory.class);
 
    private AsyncInterceptor createInterceptor(AsyncInterceptor interceptor,
-         Class<? extends AsyncInterceptor> interceptorType) {
+                                              Class<? extends AsyncInterceptor> interceptorType) {
       ComponentRef<? extends AsyncInterceptor> chainedInterceptor = basicComponentRegistry.getComponent(interceptorType);
       if (chainedInterceptor != null) {
          return chainedInterceptor.wired();
@@ -199,8 +199,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       if (configuration.clustering().l1().enabled()) {
          if (transactionMode.isTransactional()) {
             interceptorChain.appendInterceptor(createInterceptor(new L1TxInterceptor(), L1TxInterceptor.class), false);
-         }
-         else {
+         } else {
             interceptorChain.appendInterceptor(createInterceptor(new L1NonTxInterceptor(), L1NonTxInterceptor.class), false);
          }
       }
@@ -273,9 +272,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    /**
     * Adds all the interceptors related to persistence to the stack.
     *
-    * @param interceptorChain The chain
+    * @param interceptorChain   The chain
     * @param cacheConfiguration The configuration of the cache that owns the interceptor
-    * @param stores A list of {@link StoreConfiguration} possibly not present in the cacheConfiguration
+    * @param stores             A list of {@link StoreConfiguration} possibly not present in the cacheConfiguration
     */
    public void addPersistenceInterceptors(AsyncInterceptorChain interceptorChain, Configuration cacheConfiguration, List<StoreConfiguration> stores) {
       TransactionMode transactionMode = cacheConfiguration.transaction().transactionMode();

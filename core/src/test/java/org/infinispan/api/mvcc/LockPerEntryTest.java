@@ -44,8 +44,7 @@ public class LockPerEntryTest extends SingleCacheManagerTest {
             public void run() {
                try {
                   l.await();
-               }
-               catch (Exception e) {
+               } catch (Exception e) {
                   // ignore
                }
                for (int i = 0; i < numLoops; i++) {
@@ -58,8 +57,7 @@ public class LockPerEntryTest extends SingleCacheManagerTest {
                            cache.remove("Key" + i);
                            break;
                      }
-                  }
-                  catch (Exception e) {
+                  } catch (Exception e) {
                      exceptions.add(e);
                   }
                }

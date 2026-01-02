@@ -35,11 +35,11 @@ public class TransactionSetup {
 
    static {
       init();
-      }
+   }
 
    private static void init() {
       String property = JTA;
-       if (DUMMY_TM.equalsIgnoreCase(property)) {
+      if (DUMMY_TM.equalsIgnoreCase(property)) {
          System.out.println("Transaction manager used: Dummy");
          final String lookup = EmbeddedTransactionManagerLookup.class.getName();
          final EmbeddedTransactionManagerLookup instance = new EmbeddedTransactionManagerLookup();
@@ -68,56 +68,53 @@ public class TransactionSetup {
             public TransactionManager getManager() {
                try {
                   return instance.getTransactionManager();
-               }
-               catch (Exception e) {
+               } catch (Exception e) {
                   throw new RuntimeException(e);
                }
 
             }
          };
       } else {
-          System.out.println("Transaction manager used: JBossTM");
+         System.out.println("Transaction manager used: JBossTM");
 
-          final String lookup = JBossStandaloneJTAManagerLookup.class.getName();
-          final JBossStandaloneJTAManagerLookup instance = new JBossStandaloneJTAManagerLookup();
-          operations = new Operations() {
-             @Override
-             public UserTransaction getUserTransaction() {
-                try {
-                   return instance.getUserTransaction();
-                }
-                catch (Exception e) {
-                   throw new RuntimeException(e);
-                }
-             }
+         final String lookup = JBossStandaloneJTAManagerLookup.class.getName();
+         final JBossStandaloneJTAManagerLookup instance = new JBossStandaloneJTAManagerLookup();
+         operations = new Operations() {
+            @Override
+            public UserTransaction getUserTransaction() {
+               try {
+                  return instance.getUserTransaction();
+               } catch (Exception e) {
+                  throw new RuntimeException(e);
+               }
+            }
 
-             @Override
-             public void cleanup() {
-             }
+            @Override
+            public void cleanup() {
+            }
 
-             @Override
-             public String getLookup() {
-                return lookup;
-             }
+            @Override
+            public String getLookup() {
+               return lookup;
+            }
 
 
-             @Override
-             public TransactionManagerLookup lookup() {
-                return instance;
-             }
+            @Override
+            public TransactionManagerLookup lookup() {
+               return instance;
+            }
 
-             @Override
-             public TransactionManager getManager() {
-                try {
-                   return instance.getTransactionManager();
-                }
-                catch (Exception e) {
-                   throw new RuntimeException(e);
-                }
-             }
+            @Override
+            public TransactionManager getManager() {
+               try {
+                  return instance.getTransactionManager();
+               } catch (Exception e) {
+                  throw new RuntimeException(e);
+               }
+            }
 
-          };
-       }
+         };
+      }
    }
 
    public static TransactionManager getManager() {

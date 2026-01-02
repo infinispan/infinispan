@@ -86,11 +86,10 @@ public class ProtobufKeyValueTypeModel implements PojoRawTypeModel<ProtobufKeyVa
 
    @Override
    public PojoTypeModel<? extends ProtobufKeyValuePair> cast(PojoTypeModel<?> other) {
-      if ( other.rawType().isSubTypeOf( this ) ) {
+      if (other.rawType().isSubTypeOf(this)) {
          // Redundant cast; no need to create a new type.
          return (PojoTypeModel<? extends ProtobufKeyValuePair>) other;
-      }
-      else {
+      } else {
          // There is no generic type information to retain for protobuf types; we can just return this.
          // Also, calling other.castTo(...) would mean losing the type name, and we definitely don't want that.
          return this;

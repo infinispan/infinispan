@@ -54,13 +54,13 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       DummyInMemoryStoreConfigurationBuilder dummyCfg = builder
             .persistence()
-               .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-                  // Async store doesn't help much if operations are always synchronous
-                  .asyncOperation(true)
-                  .storeName(AsyncStoreTest.class.getName())
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            // Async store doesn't help much if operations are always synchronous
+            .asyncOperation(true)
+            .storeName(AsyncStoreTest.class.getName())
             .segmented(false);
       dummyCfg
-         .async()
+            .async()
             .enable();
       InitializationContext testCtx = PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller);
       InitializationContext ctx = new DelegatingInitializationContext() {
@@ -93,7 +93,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       marshaller.stop();
    }
 
-   @Test(timeOut=30000)
+   @Test(timeOut = 30000)
    public void testPutRemove() throws Exception {
       TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
@@ -105,7 +105,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       doTestRemove(number, key);
    }
 
-   @Test(timeOut=30000)
+   @Test(timeOut = 30000)
    public void testRepeatedPutRemove() throws Exception {
       TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
@@ -127,7 +127,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       assertEquals(0, failures);
    }
 
-   @Test(timeOut=30000)
+   @Test(timeOut = 30000)
    public void testPutClearPut() throws Exception {
       TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
@@ -142,7 +142,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       doTestRemove(number, key);
    }
 
-   @Test(timeOut=30000)
+   @Test(timeOut = 30000)
    public void testRepeatedPutClearPut() throws Exception {
       TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
@@ -166,7 +166,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       assertEquals(0, failures);
    }
 
-   @Test(timeOut=30000)
+   @Test(timeOut = 30000)
    public void testMultiplePutsOnSameKey() throws Exception {
       TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
@@ -178,7 +178,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       doTestSameKeyRemove(key);
    }
 
-   @Test(timeOut=30000)
+   @Test(timeOut = 30000)
    public void testRestrictionOnAddingToAsyncQueue() throws Exception {
       TestResourceTracker.testThreadStarted(this.getTestName());
       InitializationContext ctx = createStore();
@@ -195,8 +195,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       try {
          store.write(0, MarshalledEntryUtil.create("k", marshaller));
          fail("Should have restricted this entry from being made");
-      }
-      catch (CacheException expected) {
+      } catch (CacheException expected) {
       }
 
       // clean up
@@ -256,9 +255,9 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
 
       builder.persistence()
-             .addStore(DelayStore.ConfigurationBuilder.class)
-             .async()
-             .modificationQueueSize(queueSize);
+            .addStore(DelayStore.ConfigurationBuilder.class)
+            .async()
+            .modificationQueueSize(queueSize);
 
       store = new AsyncNonBlockingStore<>(underlying);
       InitializationContext ctx = PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller);
@@ -312,11 +311,11 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                .persistence().passivation(passivation)
                .addStore(DelayStore.ConfigurationBuilder.class)
                .async()
-                  // This cannot be 1. When using passivation in doTestEndToEndPutPut we block a store write to key X.
-                  // This would then mean we have a batch of 1 we would not allow any subsequent writes to complete
-                  // as they will be enqueued. This allows us to let the test block passivation but continue.
-                  .modificationQueueSize(2)
-                  .enable();
+               // This cannot be 1. When using passivation in doTestEndToEndPutPut we block a store write to key X.
+               // This would then mean we have a batch of 1 we would not allow any subsequent writes to complete
+               // as they will be enqueued. This allows us to let the test block passivation but continue.
+               .modificationQueueSize(2)
+               .enable();
          return config;
       }
 

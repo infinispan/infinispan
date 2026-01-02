@@ -72,6 +72,7 @@
       <module name="LeftCurly">
          <property name="option" value="eol" />
       </module>
+      <module name="RightCurly"/>
 
       <!--<module name="ParenPad">-->
       <!--<property name="tokens" value="CTOR_CALL, METHOD_CALL, SUPER_CTOR_CALL" />-->

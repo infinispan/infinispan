@@ -56,29 +56,25 @@ public class ConcurrentNotificationTest extends AbstractInfinispanTest {
             public void run() {
                try {
                   latch.await();
-               }
-               catch (InterruptedException e) {
+               } catch (InterruptedException e) {
                }
 
                for (int j = 0; j < loops; j++) {
                   try {
                      cache.put("key", "value");
-                  }
-                  catch (Exception e) {
+                  } catch (Exception e) {
                      exceptions.add(new Exception("Caused on thread " + getName() + " in loop " + j + " when doing a put()", e));
                   }
 
                   try {
                      cache.remove("key");
-                  }
-                  catch (Exception e) {
+                  } catch (Exception e) {
                      exceptions.add(new Exception("Caused on thread " + getName() + " in loop " + j + " when doing a remove()", e));
                   }
 
                   try {
                      cache.get("key");
-                  }
-                  catch (Exception e) {
+                  } catch (Exception e) {
                      log.error("Exception received!", e);
                      exceptions.add(new Exception("Caused on thread " + getName() + " in loop " + j + " when doing a get()", e));
                   }

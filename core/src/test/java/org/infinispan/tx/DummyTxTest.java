@@ -86,8 +86,7 @@ public class DummyTxTest extends SingleCacheManagerTest {
 
                      if (success) {
                         removed.incrementAndGet();
-                     }
-                     else {
+                     } else {
                         didNothing.incrementAndGet();
                      }
                   } catch (Throwable e) {

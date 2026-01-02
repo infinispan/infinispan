@@ -59,8 +59,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
                   return originalValue;
                }
                return nonOwnerCache.get(key);
-            }
-            else {
+            } else {
                return nonOwnerCache.put(key, nonOwnerValue);
             }
          });
@@ -87,8 +86,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          // The nonOwnerCache should retrieve new value as it isn't in L1
          assertEquals(updateValue, nonOwnerCache.get(key));
          assertIsInL1(nonOwnerCache, key);
-      }
-      finally {
+      } finally {
          removeAllBlockingInterceptorsFromCache(nonOwnerCache);
       }
    }
@@ -210,7 +208,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
          // Now wait for the get to return and block it for now
          ControlledRpcManager.BlockedResponseMap blockedPutResponses =
-            crm.expectCommand(PutKeyValueCommand.class).send().expectAllResponses();
+               crm.expectCommand(PutKeyValueCommand.class).send().expectAllResponses();
 
          // Owner should have the new value
          assertEquals(firstValue, ownerCache.remove(key));
@@ -299,7 +297,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
     * See ISPN-3617
     */
    public void testNonOwnerRemovesValueFromL1ProperlyOnWrite() throws InterruptedException, TimeoutException,
-                                                                      BrokenBarrierException, ExecutionException {
+         BrokenBarrierException, ExecutionException {
 
       final Cache<Object, String>[] owners = getOwners(key, 2);
 
@@ -320,7 +318,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       // Add a barrier to block the get from being retrieved on the backup owner
       CyclicBarrier backupGetBarrier = new CyclicBarrier(2);
       addBlockingInterceptor(backupOwnerCache, backupGetBarrier, GetCacheEntryCommand.class, L1NonTxInterceptor.class,
-                             false);
+            false);
 
       try {
          Future<String> future = fork(() -> nonOwnerCache.put(key, secondValue));

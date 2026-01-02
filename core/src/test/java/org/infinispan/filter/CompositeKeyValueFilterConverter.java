@@ -46,8 +46,7 @@ public class CompositeKeyValueFilterConverter<K, V, C> implements KeyValueFilter
    public C filterAndConvert(K key, V value, Metadata metadata) {
       if (accept(key, value, metadata)) {
          return convert(key, value, metadata);
-      }
-      else {
+      } else {
          return null;
       }
    }

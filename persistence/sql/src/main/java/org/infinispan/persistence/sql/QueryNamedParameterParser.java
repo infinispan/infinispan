@@ -62,8 +62,7 @@ public class QueryNamedParameterParser {
             skipToPosition = skipCommentsAndQuotes(statement, i);
             if (i == skipToPosition) {
                break;
-            }
-            else {
+            } else {
                i = skipToPosition;
             }
          }
@@ -97,8 +96,7 @@ public class QueryNamedParameterParser {
                   parameterList.add(parameter);
                }
                j++;
-            }
-            else {
+            } else {
                while (j < statement.length && !isParameterSeparator(statement[j])) {
                   j++;
                }
@@ -110,8 +108,7 @@ public class QueryNamedParameterParser {
                }
             }
             i = j - 1;
-         }
-         else {
+         } else {
             if (c == '\\') {
                int j = i + 1;
                if (j < statement.length && statement[j] == ':') {
@@ -133,8 +130,9 @@ public class QueryNamedParameterParser {
 
    /**
     * Skip over comments and quoted names present in an SQL statement.
+    *
     * @param statement character array containing SQL statement
-    * @param position current position of statement
+    * @param position  current position of statement
     * @return next position to process after any comments or quotes are skipped
     */
    private static int skipCommentsAndQuotes(char[] statement, int position) {

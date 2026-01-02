@@ -193,8 +193,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
             try {
                // test out if we can get the read lock since there is a write lock going as well.
                cache1.get(key);
-            }
-            catch (CacheException e) {
+            } catch (CacheException e) {
                log.error("Error reading the cache", e);
                throw e;
             }
