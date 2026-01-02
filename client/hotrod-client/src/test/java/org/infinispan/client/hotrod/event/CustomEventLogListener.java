@@ -65,13 +65,13 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
    }
 
    protected BlockingQueue<E> queue(ClientEvent.Type type) {
-      switch (type) {
-         case CLIENT_CACHE_ENTRY_CREATED: return createdCustomEvents;
-         case CLIENT_CACHE_ENTRY_MODIFIED: return modifiedCustomEvents;
-         case CLIENT_CACHE_ENTRY_REMOVED: return removedCustomEvents;
-         case CLIENT_CACHE_ENTRY_EXPIRED: return expiredCustomEvents;
-         default: throw new IllegalArgumentException("Unknown event type: " + type);
-      }
+      return switch (type) {
+         case CLIENT_CACHE_ENTRY_CREATED -> createdCustomEvents;
+         case CLIENT_CACHE_ENTRY_MODIFIED -> modifiedCustomEvents;
+         case CLIENT_CACHE_ENTRY_REMOVED -> removedCustomEvents;
+         case CLIENT_CACHE_ENTRY_EXPIRED -> expiredCustomEvents;
+         default -> throw new IllegalArgumentException("Unknown event type: " + type);
+      };
    }
 
    public void expectNoEvents(ClientEvent.Type type) {
@@ -204,7 +204,9 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
 
    @ClientListener(converterFactoryName = "static-converter-factory")
    public static class StaticCustomEventLogListener<K> extends CustomEventLogListener<K, CustomEvent> {
-      public StaticCustomEventLogListener(RemoteCache<K, ?> r) { super(r); }
+      public StaticCustomEventLogListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
 
       @Override
       public void expectSingleCustomEvent(ClientEvent.Type type, CustomEvent expected) {
@@ -234,28 +236,36 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
 
       private void expectTimeOrdered(CustomEvent before, CustomEvent after) {
          assertTrue("Before timestamp=" + before.timestamp + ", after timestamp=" + after.timestamp,
-            before.timestamp < after.timestamp);
+               before.timestamp < after.timestamp);
       }
    }
 
    @ClientListener(converterFactoryName = "raw-static-converter-factory", useRawData = true)
    public static class RawStaticCustomEventLogListener<K> extends CustomEventLogListener<K, byte[]> {
-      public RawStaticCustomEventLogListener(RemoteCache<K, ?> r) { super(r); }
+      public RawStaticCustomEventLogListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
    @ClientListener(converterFactoryName = "static-converter-factory", includeCurrentState = true)
    public static class StaticCustomEventLogWithStateListener<K> extends CustomEventLogListener<K, CustomEvent> {
-      public StaticCustomEventLogWithStateListener(RemoteCache<K, ?> r) { super(r); }
+      public StaticCustomEventLogWithStateListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
    @ClientListener(converterFactoryName = "dynamic-converter-factory")
    public static class DynamicCustomEventLogListener<K> extends CustomEventLogListener<K, CustomEvent> {
-      public DynamicCustomEventLogListener(RemoteCache<K, ?> r) { super(r); }
+      public DynamicCustomEventLogListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
    @ClientListener(converterFactoryName = "dynamic-converter-factory", includeCurrentState = true)
    public static class DynamicCustomEventWithStateLogListener<K> extends CustomEventLogListener<K, CustomEvent> {
-      public DynamicCustomEventWithStateLogListener(RemoteCache<K, ?> r) { super(r); }
+      public DynamicCustomEventWithStateLogListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
    @ClientListener(converterFactoryName = "simple-converter-factory")
@@ -346,7 +356,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       static class RawStaticConverter implements CacheEventConverter<byte[], byte[], byte[]>, Serializable {
          @Override
          public byte[] convert(byte[] key, byte[] previousValue, Metadata previousMetadata, byte[] value,
-               Metadata metadata, EventType eventType) {
+                               Metadata metadata, EventType eventType) {
             return value != null ? concat(key, value) : key;
          }
       }
@@ -384,7 +394,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
 
          @Override
          public CustomEvent filterAndConvert(Integer key, String oldValue, Metadata oldMetadata,
-            String newValue, Metadata newMetadata, EventType eventType) {
+                                             String newValue, Metadata newMetadata, EventType eventType) {
             count++;
             if (params[0].equals(key))
                return new CustomEvent<>(key, null, count);
@@ -396,7 +406,9 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
 
    @ClientListener(filterFactoryName = "filter-converter-factory", converterFactoryName = "filter-converter-factory")
    public static class FilterCustomEventLogListener<K> extends CustomEventLogListener<K, CustomEvent> {
-      public FilterCustomEventLogListener(RemoteCache<K, ?> r) { super(r); }
+      public FilterCustomEventLogListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
    static byte[] concat(byte[] a, byte[] b) {

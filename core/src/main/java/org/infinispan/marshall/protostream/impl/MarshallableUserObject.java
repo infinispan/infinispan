@@ -73,10 +73,14 @@ public class MarshallableUserObject<T> extends AbstractMarshallableWrapper<T> {
       }
 
       @Override
-      public Class<MarshallableUserObject> getJavaClass() { return MarshallableUserObject.class; }
+      public Class<MarshallableUserObject> getJavaClass() {
+         return MarshallableUserObject.class;
+      }
 
       @Override
-      public String getTypeName() { return typeName; }
+      public String getTypeName() {
+         return typeName;
+      }
 
       @Override
       public MarshallableUserObject read(ReadContext ctx) throws IOException {

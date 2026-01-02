@@ -10,27 +10,23 @@ import java.util.List;
  *
  * @author Pete Muir
  */
-public class EnumerationList<T> extends ForwardingList<T>
-{
+public class EnumerationList<T> extends ForwardingList<T> {
    // The enumeration as a list
-   private final List<T> list = new LinkedList<T>();
+   private final List<T> list = new LinkedList<>();
 
    /**
     * Constructor
     *
     * @param enumeration The enumeration
     */
-   public EnumerationList(Enumeration<T> enumeration)
-   {
-      while (enumeration.hasMoreElements())
-      {
+   public EnumerationList(Enumeration<T> enumeration) {
+      while (enumeration.hasMoreElements()) {
          list.add(enumeration.nextElement());
       }
    }
 
    @Override
-   protected List<T> delegate()
-   {
+   protected List<T> delegate() {
       return list;
    }
 }

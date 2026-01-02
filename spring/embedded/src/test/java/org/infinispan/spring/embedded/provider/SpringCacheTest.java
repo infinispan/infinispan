@@ -59,7 +59,7 @@ public class SpringCacheTest extends SingleCacheManagerTest {
 
    @DataProvider
    public static Object[][] encodings() {
-      return new Object[][] {
+      return new Object[][]{
             {MediaType.APPLICATION_OBJECT_TYPE},
             {MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE},
             {MediaType.APPLICATION_PROTOSTREAM_TYPE},
@@ -293,7 +293,9 @@ public class SpringCacheTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = Cache.ValueRetrievalException.class)
    public void testValueLoaderWithExceptionWhenLoading() {
       //when//then
-      cache.get("test", () -> {throw new IllegalStateException();});
+      cache.get("test", () -> {
+         throw new IllegalStateException();
+      });
    }
 
    @Test

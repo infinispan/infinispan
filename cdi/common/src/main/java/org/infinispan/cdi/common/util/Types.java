@@ -5,53 +5,30 @@ package org.infinispan.cdi.common.util;
  *
  * @author Pete Muir
  */
-public class Types
-{
+public class Types {
 
-   public static Class<?> boxedClass(Class<?> type)
-   {
-      if (!type.isPrimitive())
-      {
+   public static Class<?> boxedClass(Class<?> type) {
+      if (!type.isPrimitive()) {
          return type;
-      }
-      else if (type == Boolean.TYPE)
-      {
+      } else if (type == Boolean.TYPE) {
          return Boolean.class;
-      }
-      else if (type == Character.TYPE)
-      {
+      } else if (type == Character.TYPE) {
          return Character.class;
-      }
-      else if (type == Byte.TYPE)
-      {
+      } else if (type == Byte.TYPE) {
          return Byte.class;
-      }
-      else if (type == Short.TYPE)
-      {
+      } else if (type == Short.TYPE) {
          return Short.class;
-      }
-      else if (type == Integer.TYPE)
-      {
+      } else if (type == Integer.TYPE) {
          return Integer.class;
-      }
-      else if (type == Long.TYPE)
-      {
+      } else if (type == Long.TYPE) {
          return Long.class;
-      }
-      else if (type == Float.TYPE)
-      {
+      } else if (type == Float.TYPE) {
          return Float.class;
-      }
-      else if (type == Double.TYPE)
-      {
+      } else if (type == Double.TYPE) {
          return Double.class;
-      }
-      else if (type == Void.TYPE)
-      {
+      } else if (type == Void.TYPE) {
          return Void.class;
-      }
-      else
-      {
+      } else {
          // Vagaries of if/else statement, can't be reached ;-)
          return type;
       }

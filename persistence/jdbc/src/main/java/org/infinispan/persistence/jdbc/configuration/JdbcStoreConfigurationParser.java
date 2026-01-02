@@ -120,8 +120,7 @@ public class JdbcStoreConfigurationParser extends AbstractJdbcStoreConfiguration
       parseTableElements(reader, builder);
    }
 
-   private void parseTableElements(ConfigurationReader reader, TableManipulationConfigurationBuilder<?, ?> builder)
-         {
+   private void parseTableElements(ConfigurationReader reader, TableManipulationConfigurationBuilder<?, ?> builder) {
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {

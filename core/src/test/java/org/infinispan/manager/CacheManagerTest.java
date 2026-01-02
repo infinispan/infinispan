@@ -98,8 +98,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          assertEquals(getDefaultCacheName(cm), cm.getCache().getName());
 
          expectException(CacheConfigurationException.class,
-                         () -> cm.defineConfiguration(getDefaultCacheName(cm),
-                                                      new ConfigurationBuilder().build()));
+               () -> cm.defineConfiguration(getDefaultCacheName(cm),
+                     new ConfigurationBuilder().build()));
 
          expectException(CacheConfigurationException.class, () -> cm.getCache("non-existent-cache"));
       } finally {
@@ -187,13 +187,13 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = createCacheManager(false);
 
       expectException(NullPointerException.class,
-                      () -> cm.defineConfiguration("cache1", null));
+            () -> cm.defineConfiguration("cache1", null));
 
       expectException(NullPointerException.class,
-                      () -> cm.defineConfiguration(null, null));
+            () -> cm.defineConfiguration(null, null));
 
       expectException(NullPointerException.class,
-                      () -> cm.defineConfiguration(null, new ConfigurationBuilder().build()));
+            () -> cm.defineConfiguration(null, new ConfigurationBuilder().build()));
    }
 
    public void testDefineConfigurationTwice() {
@@ -420,7 +420,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       FailingGlobalComponent failingGlobalComponent = new FailingGlobalComponent();
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
       globalBuilder.addModule(TestGlobalConfigurationBuilder.class)
-                   .testGlobalComponent(FailingGlobalComponent.class.getName(), failingGlobalComponent);
+            .testGlobalComponent(FailingGlobalComponent.class.getName(), failingGlobalComponent);
       ConfigurationBuilder builder = new ConfigurationBuilder();
 
       Exceptions.expectException(EmbeddedCacheManagerStartupException.class, () -> createCacheManager(globalBuilder, builder));
@@ -447,7 +447,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
             holder.getGlobalConfigurationBuilder().read(globalCfg);
             holder.getNamedConfigurationBuilders().put(TestCacheManagerFactory.DEFAULT_CACHE_NAME,
-                                                       new ConfigurationBuilder().read(cfg, Combine.DEFAULT));
+                  new ConfigurationBuilder().read(cfg, Combine.DEFAULT));
 
             withCacheManager(new CacheManagerCallable(new DefaultCacheManager(holder, true)) {
                @Override
@@ -531,9 +531,9 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c
             .persistence()
-               .addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(storeName).shared(isStoreShared)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(storeName).shared(isStoreShared)
             .clustering()
-               .cacheMode(isClustered ? CacheMode.REPL_SYNC : CacheMode.LOCAL);
+            .cacheMode(isClustered ? CacheMode.REPL_SYNC : CacheMode.LOCAL);
 
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().clusteredDefault();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(gcb, c);
@@ -598,7 +598,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          return CompletableFutures.completedNull();
       }
 
-      @Override public CompletionStage<Void> stop() {
+      @Override
+      public CompletionStage<Void> stop() {
          throw new IllegalStateException("Test");
       }
 
@@ -634,11 +635,19 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    public static class UnreliableCacheStoreConfigurationBuilder
          extends AbstractStoreConfigurationBuilder<UnreliableCacheStoreConfiguration, UnreliableCacheStoreConfigurationBuilder> {
-      public UnreliableCacheStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) { super(builder, UnreliableCacheStoreConfiguration.attributeDefinitionSet()); }
-      @Override public UnreliableCacheStoreConfiguration create() {
+      public UnreliableCacheStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
+         super(builder, UnreliableCacheStoreConfiguration.attributeDefinitionSet());
+      }
+
+      @Override
+      public UnreliableCacheStoreConfiguration create() {
          return new UnreliableCacheStoreConfiguration(attributes.protect(), async.create());
       }
-      @Override public UnreliableCacheStoreConfigurationBuilder self() { return this; }
+
+      @Override
+      public UnreliableCacheStoreConfigurationBuilder self() {
+         return this;
+      }
    }
 
    static class ExceptionInterceptor extends BaseCustomAsyncInterceptor {

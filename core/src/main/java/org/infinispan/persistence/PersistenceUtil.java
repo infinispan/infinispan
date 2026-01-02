@@ -36,7 +36,7 @@ public class PersistenceUtil {
    // This method is blocking - but only invoked by tests or user code
    @SuppressWarnings("checkstyle:ForbiddenMethod")
    public static <K, V> Set<K> toKeySet(NonBlockingStore<K, V> nonBlockingStore, IntSet segments,
-         Predicate<? super K> filter) {
+                                        Predicate<? super K> filter) {
       return Flowable.fromPublisher(nonBlockingStore.publishKeys(segments, filter))
             .collect(Collectors.toSet())
             .blockingGet();
@@ -52,14 +52,15 @@ public class PersistenceUtil {
     * <p>
     * Note that returned publisher will be publishing entries from the invocation of the executor. Thus any subscription
     * will not block the thread it was invoked on, unless explicitly configured to do so.
-    * @param segments segments to parallelize across
-    * @param executor the executor execute parallelized operations on
+    *
+    * @param segments          segments to parallelize across
+    * @param executor          the executor execute parallelized operations on
     * @param publisherFunction function that creates a different publisher for each segment
-    * @param <R> the returned value
+    * @param <R>               the returned value
     * @return a publisher that
     */
    public static <R> Publisher<R> parallelizePublisher(IntSet segments, Executor executor,
-         IntFunction<Publisher<R>> publisherFunction) {
+                                                       IntFunction<Publisher<R>> publisherFunction) {
       return org.infinispan.persistence.internal.PersistenceUtil.parallelizePublisher(segments, Schedulers.from(executor),
             publisherFunction);
    }
@@ -80,16 +81,16 @@ public class PersistenceUtil {
       GlobalStateConfiguration globalState = globalConfiguration.globalState();
       Path persistentLocation = Paths.get(globalState.persistentLocation());
       if (location == null) {
-          if (!globalState.enabled()) {
-             // Should never be reached as store builders should ensure that the locations are not null during validation.
-             throw PERSISTENCE.storeLocationRequired();
-          }
-          return persistentLocation;
+         if (!globalState.enabled()) {
+            // Should never be reached as store builders should ensure that the locations are not null during validation.
+            throw PERSISTENCE.storeLocationRequired();
+         }
+         return persistentLocation;
       }
 
       Path path = Paths.get(location);
       if (!globalState.enabled()) {
-          return path;
+         return path;
       }
       if (path.isAbsolute()) {
          // Ensure that the path lives under the global persistent location

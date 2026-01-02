@@ -333,29 +333,29 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       T ret = processEntryProcessor(mutable, entryProcessor, arguments);
 
       switch (mutable.getOperation()) {
-      case NONE:
-         break;
-      case ACCESS:
-         updateTTLForAccessed(cache, key, oldValue);
-         break;
-      case UPDATE:
-         V newValue = mutable.getNewValue();
-         if (newValue == null) {
-            throw new EntryProcessorException();
-         }
-         if (oldValue != null) {
-            // Only allow change to be applied if value has not
-            // changed since the start of the processing.
-            replace(cache, cacheWithoutStats, key, oldValue, newValue, true);
-         } else {
-            put(cache, cache, key, newValue, true);
-         }
-         writeToCacheWriter(key, newValue);
-         break;
-      case REMOVE:
-         cache.remove(key);
-         removeFromCacheWriter(key);
-         break;
+         case NONE:
+            break;
+         case ACCESS:
+            updateTTLForAccessed(cache, key, oldValue);
+            break;
+         case UPDATE:
+            V newValue = mutable.getNewValue();
+            if (newValue == null) {
+               throw new EntryProcessorException();
+            }
+            if (oldValue != null) {
+               // Only allow change to be applied if value has not
+               // changed since the start of the processing.
+               replace(cache, cacheWithoutStats, key, oldValue, newValue, true);
+            } else {
+               put(cache, cache, key, newValue, true);
+            }
+            writeToCacheWriter(key, newValue);
+            break;
+         case REMOVE:
+            cache.remove(key);
+            removeFromCacheWriter(key);
+            break;
       }
 
       return ret;
@@ -485,6 +485,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          removeFromCacheWriter(k);
       }
    }
+
    @Override
    protected void addListener(AbstractJCacheListenerAdapter<K, V> listenerAdapter) {
       cache.addClientListener(listenerAdapter);
@@ -511,7 +512,9 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    }
 
    private class RemoteCacheWithCacheStorePut extends RemoteCacheWithCacheStore<K, V> {
-      public RemoteCacheWithCacheStorePut() {super(JCache.this.cache, JCache.this.jcacheLoader, JCache.this.jcacheWriter, JCache.this.configuration);}
+      public RemoteCacheWithCacheStorePut() {
+         super(JCache.this.cache, JCache.this.jcacheLoader, JCache.this.jcacheWriter, JCache.this.configuration);
+      }
 
       @Override
       protected void onLoad(K key, V value) {

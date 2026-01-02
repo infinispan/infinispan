@@ -35,17 +35,18 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
       private long estimateRemaining = Long.MAX_VALUE;
 
       public Builder(Iterator<? extends T> iterator) {
-         Objects.nonNull(iterator);
+         Objects.requireNonNull(iterator);
          this.iterator = Closeables.iterator(iterator);
       }
 
       public Builder(CloseableIterator<? extends T> closeableIterator) {
-         Objects.nonNull(closeableIterator);
+         Objects.requireNonNull(closeableIterator);
          this.iterator = closeableIterator;
       }
 
       /**
        * Sets the characteristics the subsequent spliterator will have.
+       *
        * @param characteristics
        * @return
        */
@@ -57,6 +58,7 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
       /**
        * Sets the batch increase size.  This controls how much larger subsequent splits are.
        * The default value is 1024;
+       *
        * @param batchIncrease
        * @return this
        */
@@ -70,10 +72,11 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
 
       /**
        * Sets the max batch size for a thread to use - This defaults to 51200
+       *
        * @param maxBatchSize
        * @return this
        */
-      public Builder setMaxBatchSize(int maxBatchSize) {
+      public Builder<T> setMaxBatchSize(int maxBatchSize) {
          if (maxBatchSize <= 0) {
             throw new IllegalArgumentException("The maxBatchSize " + maxBatchSize + " must be greater than 0");
          }
@@ -85,6 +88,7 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
        * Sets how many estimated elements are remaining for this iterator
        * This defaults to Long.MAX_VALUE.  It is heavily recommended to provide an exact or estimate value
        * to help with controlling parallelism
+       *
        * @param estimateRemaining
        * @return this
        */
@@ -100,7 +104,7 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
          }
          if (batchIncrease > maxBatchSize) {
             throw new IllegalArgumentException("Max batch size " + maxBatchSize +
-                    " cannot be larger than batchIncrease" + batchIncrease);
+                  " cannot be larger than batchIncrease" + batchIncrease);
          }
          return new IteratorAsSpliterator<>(this);
       }
@@ -168,7 +172,9 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
    }
 
    @Override
-   public int characteristics() { return characteristics; }
+   public int characteristics() {
+      return characteristics;
+   }
 
    @Override
    public Comparator<? super T> getComparator() {
