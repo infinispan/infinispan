@@ -5,8 +5,8 @@ import static org.testng.Assert.assertNull;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.configuration.cache.IsolationLevel;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
 /**

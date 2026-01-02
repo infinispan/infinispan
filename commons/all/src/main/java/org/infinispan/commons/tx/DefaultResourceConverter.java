@@ -3,8 +3,9 @@ package org.infinispan.commons.tx;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import jakarta.transaction.Synchronization;
 import javax.transaction.xa.XAResource;
+
+import jakarta.transaction.Synchronization;
 
 /**
  * A default blocking implementation of {@link TransactionResourceConverter}.

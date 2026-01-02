@@ -6,8 +6,6 @@ import static org.testng.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.cdi.embedded.test.testutil.Deployments;
@@ -19,6 +17,8 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
+
+import jakarta.inject.Inject;
 
 /**
  * Tests that configured caches are registered in the corresponding cache manager.

@@ -1,5 +1,11 @@
 package org.infinispan.query.aggregation;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -7,12 +13,6 @@ import org.infinispan.query.model.IndexedPlayer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 @Test(groups = "functional", testName = "query.aggregation.QueryAggregationSumTest")
 public class QueryAggregationsSimpleTest extends SingleCacheManagerTest {

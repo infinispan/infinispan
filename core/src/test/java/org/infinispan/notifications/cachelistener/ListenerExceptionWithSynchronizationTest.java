@@ -7,8 +7,6 @@ import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Method;
 
-import jakarta.transaction.RollbackException;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -20,6 +18,8 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
 
 /**
  * Tests listener exception behaivour when caches are configured with

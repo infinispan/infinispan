@@ -2,11 +2,6 @@ package org.infinispan.api.mvcc.repeatable_read;
 
 import java.util.stream.StreamSupport;
 
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.SystemException;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -14,6 +9,11 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.WriteSkewWithPersistenceTest")
 public class WriteSkewWithPersistenceTest extends WriteSkewTest {

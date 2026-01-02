@@ -27,6 +27,7 @@ import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -34,7 +35,6 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
-import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 

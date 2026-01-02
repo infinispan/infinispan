@@ -1,5 +1,8 @@
 package org.infinispan.query.core.stats.impl;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.cache.Configuration;
@@ -12,9 +15,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.stats.QueryStatisticsSnapshot;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 /**
  *  Manages query statistics for a Cache.

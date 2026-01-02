@@ -7,14 +7,14 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
+
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Locked Stream that is designed for transactions. This way it can suspend and resume the transaction upon invocation.

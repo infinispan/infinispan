@@ -1,10 +1,10 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.objectfilter.impl.MetadataAdapter;
 import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.query.objectfilter.impl.util.ReflectionHelper;
-import org.infinispan.query.mapper.mapping.SearchMapping;
 
 /**
  * Like ReflectionMatcher but also able to use Hibernate Search metadata if available.

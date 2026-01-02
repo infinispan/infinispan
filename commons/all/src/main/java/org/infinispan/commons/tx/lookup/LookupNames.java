@@ -2,12 +2,13 @@ package org.infinispan.commons.tx.lookup;
 
 import static org.infinispan.commons.logging.Log.CONTAINER;
 
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Optional;
+
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;

@@ -2,11 +2,11 @@ package org.infinispan.api.mvcc.read_committed;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 @Test(groups = "functional", testName = "api.mvcc.read_committed.ReadCommittedLockTest")
 public class ReadCommittedLockTest extends LockTestBase {

@@ -1,8 +1,8 @@
 package org.infinispan.telemetry;
 
-import org.infinispan.commons.configuration.io.NamingStrategy;
-
 import static java.util.Arrays.stream;
+
+import org.infinispan.commons.configuration.io.NamingStrategy;
 
 public enum SpanCategory {
 

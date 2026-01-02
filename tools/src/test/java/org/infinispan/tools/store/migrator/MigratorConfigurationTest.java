@@ -46,7 +46,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ClassAllowList;
-import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
@@ -69,6 +68,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
 import org.infinispan.tools.store.migrator.jdbc.JdbcConfigurationUtil;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.infinispan10.Infinispan10Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan8.Infinispan8Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan9.Infinispan9Marshaller;

@@ -2,10 +2,10 @@ package org.infinispan.client.hotrod.transaction.manager;
 
 import java.util.UUID;
 
+import org.infinispan.commons.tx.TransactionManagerImpl;
+
 import jakarta.transaction.Transaction;
 import jakarta.transaction.TransactionManager;
-
-import org.infinispan.commons.tx.TransactionManagerImpl;
 
 /**
  * A simple {@link TransactionManager} implementation.

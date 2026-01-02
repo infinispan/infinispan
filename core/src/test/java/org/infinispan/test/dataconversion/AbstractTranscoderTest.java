@@ -1,15 +1,15 @@
 package org.infinispan.test.dataconversion;
 
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.Transcoder;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.Transcoder;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.TranscoderTest")
 public abstract class AbstractTranscoderTest {

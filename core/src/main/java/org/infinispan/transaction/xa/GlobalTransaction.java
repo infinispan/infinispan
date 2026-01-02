@@ -1,7 +1,8 @@
 package org.infinispan.transaction.xa;
 
-import javax.transaction.xa.Xid;
 import java.util.concurrent.atomic.AtomicLong;
+
+import javax.transaction.xa.Xid;
 
 import org.infinispan.commands.RequestUUID;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;

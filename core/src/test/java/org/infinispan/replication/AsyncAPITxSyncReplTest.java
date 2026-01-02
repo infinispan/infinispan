@@ -5,9 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Collections;
 import java.util.concurrent.Future;
 
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,6 +13,9 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "replication.AsyncAPITxSyncReplTest")
 public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {

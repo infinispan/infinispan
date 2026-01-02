@@ -1,12 +1,12 @@
 package org.infinispan.multimap.impl;
 
+import java.util.Objects;
+
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-
-import java.util.Objects;
 
 @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SCORED_VALUE)
 public class ScoredValue<V> implements Comparable<ScoredValue<V>> {

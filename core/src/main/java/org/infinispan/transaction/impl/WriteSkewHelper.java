@@ -7,6 +7,9 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.VersionedRepeatableReadEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -19,9 +22,6 @@ import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.remoting.responses.PrepareResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.transaction.WriteSkewException;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 
 /**

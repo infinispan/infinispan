@@ -6,6 +6,7 @@ import java.util.Objects;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -16,7 +17,6 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.reactivex.rxjava3.subscribers.DefaultSubscriber;
-import org.reactivestreams.Publisher;
 
 public abstract class CacheChunkedStream<T> {
    protected static final Log logger = LogFactory.getLog(CacheChunkedStream.class);

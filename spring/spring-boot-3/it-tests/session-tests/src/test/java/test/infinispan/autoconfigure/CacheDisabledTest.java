@@ -1,7 +1,6 @@
 package test.infinispan.autoconfigure;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
-
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.spring.starter.embedded.InfinispanEmbeddedAutoConfiguration;
 import org.infinispan.spring.starter.embedded.InfinispanEmbeddedCacheManagerAutoConfiguration;

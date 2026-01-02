@@ -1,5 +1,19 @@
 package org.infinispan.rest.resources;
 
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
+import static org.infinispan.rest.resources.AbstractRestResourceTest.ADMIN;
+import static org.infinispan.rest.resources.AbstractRestResourceTest.REALM;
+import static org.infinispan.rest.resources.AbstractRestResourceTest.USER;
+import static org.infinispan.rest.resources.ClusterResource.CACHE_MANAGER_STATUS;
+import static org.infinispan.rest.resources.ClusterResource.MEMBERS;
+import static org.infinispan.rest.resources.ClusterResource.NODE_ADDRESS;
+import static org.infinispan.rest.resources.ClusterResource.PHYSICAL_ADDRESSES;
+import static org.infinispan.rest.resources.ClusterResource.ROLLING_UPGRADE;
+import static org.infinispan.rest.resources.ClusterResource.VERSION;
+
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
@@ -20,20 +34,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
-import static org.infinispan.rest.resources.AbstractRestResourceTest.ADMIN;
-import static org.infinispan.rest.resources.AbstractRestResourceTest.REALM;
-import static org.infinispan.rest.resources.AbstractRestResourceTest.USER;
-import static org.infinispan.rest.resources.ClusterResource.CACHE_MANAGER_STATUS;
-import static org.infinispan.rest.resources.ClusterResource.MEMBERS;
-import static org.infinispan.rest.resources.ClusterResource.NODE_ADDRESS;
-import static org.infinispan.rest.resources.ClusterResource.PHYSICAL_ADDRESSES;
-import static org.infinispan.rest.resources.ClusterResource.ROLLING_UPGRADE;
-import static org.infinispan.rest.resources.ClusterResource.VERSION;
 
 @Test(groups = "functional", testName = "rest.LocalClusterResourceTest")
 public class LocalClusterResourceTest extends SingleCacheManagerTest {

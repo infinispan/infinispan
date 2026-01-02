@@ -7,8 +7,8 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.marshall.core.impl.DelegatingUserMarshaller;
-import org.infinispan.marshall.protostream.impl.GlobalMarshaller;
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
+import org.infinispan.marshall.protostream.impl.GlobalMarshaller;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 
 /**

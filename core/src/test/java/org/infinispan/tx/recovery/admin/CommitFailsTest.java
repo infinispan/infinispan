@@ -11,12 +11,12 @@ import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

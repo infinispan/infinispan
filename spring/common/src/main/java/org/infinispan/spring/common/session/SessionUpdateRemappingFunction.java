@@ -1,12 +1,12 @@
 package org.infinispan.spring.common.session;
 
-import org.springframework.session.MapSession;
-
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.function.BiFunction;
+
+import org.springframework.session.MapSession;
 
 public class SessionUpdateRemappingFunction implements BiFunction<String, MapSession, MapSession>, Serializable {
 

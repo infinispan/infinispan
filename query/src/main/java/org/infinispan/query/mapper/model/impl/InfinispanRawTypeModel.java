@@ -1,10 +1,5 @@
 package org.infinispan.query.mapper.model.impl;
 
-import org.hibernate.models.spi.MemberDetails;
-import org.hibernate.search.mapper.pojo.model.models.spi.AbstractPojoModelsRawTypeModel;
-import org.hibernate.search.mapper.pojo.model.spi.GenericContextAwarePojoGenericTypeModel.RawTypeDeclaringContext;
-import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
-
 import java.lang.reflect.Member;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +7,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import org.hibernate.models.spi.MemberDetails;
+import org.hibernate.search.mapper.pojo.model.models.spi.AbstractPojoModelsRawTypeModel;
+import org.hibernate.search.mapper.pojo.model.spi.GenericContextAwarePojoGenericTypeModel.RawTypeDeclaringContext;
+import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 
 class InfinispanRawTypeModel<T> extends AbstractPojoModelsRawTypeModel<T, InfinispanBootstrapIntrospector> {
 

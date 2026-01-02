@@ -3,8 +3,8 @@ package org.infinispan.functional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.functional.EntryView.ReadEntryView;
 
 /**
  * Holder class for functional listener definitions.

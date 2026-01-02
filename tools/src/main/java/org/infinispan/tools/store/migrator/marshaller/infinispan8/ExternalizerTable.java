@@ -7,8 +7,8 @@ import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.jboss.marshalling.commons.StreamingMarshaller;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.ByteBufferImplExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.EmbeddedMetadataExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.EnumSetExternalizer;

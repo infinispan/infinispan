@@ -1,18 +1,19 @@
 package org.infinispan.graalvm.substitutions.graal;
 
-import com.oracle.svm.core.annotate.Alias;
-import com.oracle.svm.core.annotate.RecomputeFieldValue;
-import com.oracle.svm.core.annotate.Substitute;
-import com.oracle.svm.core.annotate.TargetClass;
-import org.jgroups.JChannel;
-import org.jgroups.protocols.DELAY;
-import org.jgroups.util.Util;
-
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+
+import org.jgroups.JChannel;
+import org.jgroups.protocols.DELAY;
+import org.jgroups.util.Util;
+
+import com.oracle.svm.core.annotate.Alias;
+import com.oracle.svm.core.annotate.RecomputeFieldValue;
+import com.oracle.svm.core.annotate.Substitute;
+import com.oracle.svm.core.annotate.TargetClass;
 
 public class SubstituteJGroups {
 }

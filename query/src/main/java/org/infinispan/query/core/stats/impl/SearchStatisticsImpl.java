@@ -1,11 +1,11 @@
 package org.infinispan.query.core.stats.impl;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.QueryStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
-
-import java.util.concurrent.CompletionStage;
 
 /**
  * Query and Index statistics for a Cache.

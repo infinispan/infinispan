@@ -3,8 +3,8 @@ package org.infinispan.distribution;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.context.Flag;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.context.Flag;
 import org.testng.annotations.Test;
 
 

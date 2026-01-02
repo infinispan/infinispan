@@ -6,9 +6,9 @@ import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.impl.entries.CounterValue;
+import org.infinispan.functional.EntryView;
 import org.infinispan.functional.MetaParam;
 import org.infinispan.functional.impl.CounterConfigurationMetaParam;
-import org.infinispan.functional.EntryView;
 
 /**
  * A helper with the function logic.

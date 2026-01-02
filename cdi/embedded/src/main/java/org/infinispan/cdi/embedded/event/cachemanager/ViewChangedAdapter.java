@@ -3,13 +3,13 @@ package org.infinispan.cdi.embedded.event.cachemanager;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.enterprise.event.Event;
-
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
+
+import jakarta.enterprise.event.Event;
 
 /**
  * @author Pete Muir

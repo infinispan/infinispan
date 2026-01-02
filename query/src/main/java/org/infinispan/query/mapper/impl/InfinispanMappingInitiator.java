@@ -9,8 +9,8 @@ import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoTypeMetadataCon
 import org.hibernate.search.mapper.pojo.mapping.spi.AbstractPojoMappingInitiator;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.infinispan.query.concurrent.FailureCounter;
-import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.query.impl.EntityLoaderFactory;
+import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.query.mapper.mapping.EntityConverter;
 import org.infinispan.query.mapper.mapping.MappingConfigurationContext;
 import org.infinispan.query.mapper.mapping.ProgrammaticSearchMappingProvider;

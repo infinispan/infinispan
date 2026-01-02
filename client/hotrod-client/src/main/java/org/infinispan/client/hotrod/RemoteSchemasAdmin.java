@@ -1,9 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.api.Experimental;
-import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.schema.Schema;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -11,6 +7,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
+
+import org.infinispan.api.Experimental;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.schema.Schema;
 
 /**
  * Manages schema operations such as create, update, delete, and retrieval.

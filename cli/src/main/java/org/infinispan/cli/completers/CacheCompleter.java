@@ -1,13 +1,13 @@
 package org.infinispan.cli.completers;
 
+import java.util.Collection;
+import java.util.Optional;
+
 import org.aesh.command.Command;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.CacheAwareCommand;
 import org.infinispan.cli.resources.CacheResource;
 import org.infinispan.cli.resources.Resource;
-
-import java.util.Collection;
-import java.util.Optional;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

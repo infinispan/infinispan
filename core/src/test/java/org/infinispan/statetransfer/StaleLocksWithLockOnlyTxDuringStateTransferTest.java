@@ -7,8 +7,6 @@ import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
 import static org.testng.AssertJUnit.assertEquals;
 
-import jakarta.transaction.TransactionManager;
-
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
@@ -29,6 +27,8 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @Test(testName = "lock.StaleLocksWithLockOnlyTxDuringStateTransferTest", groups = "functional")
 @CleanupAfterMethod

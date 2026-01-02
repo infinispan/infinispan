@@ -27,8 +27,8 @@ import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 import com.google.errorprone.annotations.ThreadSafe;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * Implementation of KeyAffinityService.

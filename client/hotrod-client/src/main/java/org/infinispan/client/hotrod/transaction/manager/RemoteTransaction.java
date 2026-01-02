@@ -1,8 +1,8 @@
 package org.infinispan.client.hotrod.transaction.manager;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commons.tx.TransactionImpl;
+
+import jakarta.transaction.Transaction;
 
 /**
  * A {@link Transaction} implementation used by {@link RemoteTransactionManager}.

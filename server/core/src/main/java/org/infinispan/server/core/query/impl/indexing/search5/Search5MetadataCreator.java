@@ -12,6 +12,7 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
+import org.infinispan.query.mapper.mapping.impl.DefaultAnalysisConfigurer;
 import org.infinispan.server.core.query.impl.indexing.FieldMapping;
 import org.infinispan.server.core.query.impl.indexing.IndexingKeyMetadata;
 import org.infinispan.server.core.query.impl.indexing.IndexingMetadata;
@@ -19,7 +20,6 @@ import org.infinispan.server.core.query.impl.indexing.SpatialFieldMapping;
 import org.infinispan.server.core.query.impl.indexing.infinispan.InfinispanAnnotations;
 import org.infinispan.server.core.query.impl.indexing.infinispan.InfinispanMetadataCreator;
 import org.infinispan.server.core.query.impl.logging.Log;
-import org.infinispan.query.mapper.mapping.impl.DefaultAnalysisConfigurer;
 
 //todo [anistor] Should be able to have multiple mappings per field like in Hibernate Search, ie. have a @Fields plural annotation
 

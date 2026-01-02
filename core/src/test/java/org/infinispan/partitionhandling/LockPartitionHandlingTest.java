@@ -5,8 +5,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.stream.Stream;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,6 +14,8 @@ import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "partitionhandling.LockPartitionHandlingTest")
 public class LockPartitionHandlingTest extends BasePartitionHandlingTest {

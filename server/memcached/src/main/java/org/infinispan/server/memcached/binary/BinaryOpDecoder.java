@@ -25,6 +25,7 @@ import javax.security.auth.Subject;
 import org.infinispan.commons.util.SimpleImmutableEntry;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
@@ -33,7 +34,6 @@ import org.infinispan.server.memcached.MemcachedMetadata;
 import org.infinispan.server.memcached.MemcachedResponse;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.ParseUtil;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.jgroups.util.CompletableFutures;
 
 abstract class BinaryOpDecoder extends BinaryDecoder {

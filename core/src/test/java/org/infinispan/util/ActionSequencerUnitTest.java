@@ -20,10 +20,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestException;
 import org.infinispan.util.concurrent.ActionSequencer;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

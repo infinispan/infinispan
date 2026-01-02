@@ -1,9 +1,9 @@
 package org.infinispan.integrationtests.cdi.weld;
 
+import org.infinispan.Cache;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
-import org.infinispan.Cache;
 
 /**
  * CDI bean for testing.

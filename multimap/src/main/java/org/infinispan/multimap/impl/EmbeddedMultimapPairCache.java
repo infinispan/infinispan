@@ -1,5 +1,7 @@
 package org.infinispan.multimap.impl;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,8 +25,6 @@ import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapReplaceFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Multimap which holds a collection of key-values pairs.

@@ -3,8 +3,6 @@ package org.infinispan.query.objectfilter.impl.predicateindex;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 
-import org.infinispan.query.objectfilter.impl.logging.Log;
-import org.infinispan.query.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
@@ -14,6 +12,8 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.query.objectfilter.impl.logging.Log;
+import org.infinispan.query.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
 import org.jboss.logging.Logger;
 
 /**

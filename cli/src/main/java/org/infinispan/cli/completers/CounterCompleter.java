@@ -1,11 +1,11 @@
 package org.infinispan.cli.completers;
 
-import org.infinispan.cli.Context;
-import org.infinispan.cli.connection.Connection;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+
+import org.infinispan.cli.Context;
+import org.infinispan.cli.connection.Connection;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

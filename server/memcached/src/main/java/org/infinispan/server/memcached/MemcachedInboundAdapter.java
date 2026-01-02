@@ -2,9 +2,9 @@ package org.infinispan.server.memcached;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.memcached.logging.Log;
 import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;

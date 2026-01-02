@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -24,7 +25,6 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

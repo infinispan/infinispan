@@ -1,6 +1,13 @@
 
 package org.infinispan.server.core.admin.embeddedserver;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.internal.InternalCacheNames;
@@ -11,13 +18,6 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
 import org.infinispan.server.core.admin.AdminServerTask;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Safely deletes a ProtoStream schema from the server.

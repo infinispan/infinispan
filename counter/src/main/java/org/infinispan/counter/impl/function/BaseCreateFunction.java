@@ -5,8 +5,8 @@ import java.util.function.Function;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
-import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.functional.EntryView;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**

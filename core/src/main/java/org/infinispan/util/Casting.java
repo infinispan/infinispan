@@ -1,9 +1,9 @@
 package org.infinispan.util;
 
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+
+import org.infinispan.util.function.SerializableSupplier;
 
 public class Casting {
 

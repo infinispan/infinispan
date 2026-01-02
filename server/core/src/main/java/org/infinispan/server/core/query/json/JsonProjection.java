@@ -4,8 +4,8 @@ import static org.infinispan.server.core.query.json.JSONConstants.HIT;
 
 import java.util.Map;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 /**
  * @since 9.4

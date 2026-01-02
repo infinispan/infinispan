@@ -3,10 +3,10 @@ package org.infinispan.server.core.query.impl;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.query.remote.client.impl.QueryRequest;
-import org.infinispan.server.core.query.impl.logging.Log;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.core.QueryFacade;
+import org.infinispan.server.core.query.impl.logging.Log;
 import org.kohsuke.MetaInfServices;
 
 /**

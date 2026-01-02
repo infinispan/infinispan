@@ -1,6 +1,7 @@
 package org.infinispan.commons.test;
 
 import java.util.Arrays;
+
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;

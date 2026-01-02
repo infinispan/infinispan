@@ -3,8 +3,8 @@ package org.infinispan.query.objectfilter;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.query.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.objectfilter.impl.aggregation.FieldAccumulator;
 
 /**
  * An object matcher able to test a given object against multiple registered filters specified either as Ickle queries

@@ -2,9 +2,6 @@ package org.infinispan.transaction.lookup;
 
 import java.lang.reflect.Method;
 
-import jakarta.transaction.TransactionManager;
-import jakarta.transaction.UserTransaction;
-
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -13,6 +10,9 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.UserTransaction;
 
 /**
  * WildFly transaction client lookup (WildFly 11 and later).

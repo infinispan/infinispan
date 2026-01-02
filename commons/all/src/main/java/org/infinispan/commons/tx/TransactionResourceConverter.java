@@ -1,7 +1,8 @@
 package org.infinispan.commons.tx;
 
-import jakarta.transaction.Synchronization;
 import javax.transaction.xa.XAResource;
+
+import jakarta.transaction.Synchronization;
 
 /**
  * Converts {@link Synchronization} and {@link XAResource} to {@link AsyncSynchronization} and {@link AsyncXaResource}.

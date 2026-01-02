@@ -4,11 +4,11 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.functional.functions.InjectableComponent;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
 import org.infinispan.server.hotrod.tx.table.TxState;
-import org.infinispan.commons.time.TimeService;
 
 /**
  * A base {@link Function} implementation to update the {@link TxState} stored in {@link Cache}.

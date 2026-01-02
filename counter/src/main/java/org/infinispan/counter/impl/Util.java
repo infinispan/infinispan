@@ -4,8 +4,8 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
-import org.infinispan.counter.exception.CounterException;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.counter.exception.CounterException;
 
 /**
  * Utility methods.

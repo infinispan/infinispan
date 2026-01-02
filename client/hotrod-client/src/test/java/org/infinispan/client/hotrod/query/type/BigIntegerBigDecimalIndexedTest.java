@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.query.type;
 
-import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

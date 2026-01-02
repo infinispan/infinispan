@@ -1,10 +1,10 @@
 package org.infinispan.tx.exception;
 
-import jakarta.transaction.Status;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Status;
 
 /**
  * @author Mircea.Markus@jboss.com

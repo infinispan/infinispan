@@ -1,8 +1,8 @@
 package org.infinispan.persistence.jdbc.common.configuration;
 
-import static org.infinispan.persistence.jdbc.common.logging.Log.CONFIG;
-import static org.infinispan.persistence.jdbc.common.configuration.ManagedConnectionFactoryConfiguration.JNDI_URL;
 import static org.infinispan.persistence.jdbc.common.configuration.ManagedConnectionFactoryConfiguration.DATA_SOURCE;
+import static org.infinispan.persistence.jdbc.common.configuration.ManagedConnectionFactoryConfiguration.JNDI_URL;
+import static org.infinispan.persistence.jdbc.common.logging.Log.CONFIG;
 
 import javax.sql.DataSource;
 

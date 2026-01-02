@@ -7,12 +7,12 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * {@link PartitionHandlingManager} implementation when the cluster is always available.

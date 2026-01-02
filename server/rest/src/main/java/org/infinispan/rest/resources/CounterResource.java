@@ -25,6 +25,7 @@ import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.io.StringBuilderWriter;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.StrongCounter;
@@ -46,7 +47,6 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Handler for the counter resource.

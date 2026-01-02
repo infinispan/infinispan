@@ -17,13 +17,13 @@ import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.persistence.jdbc.common.JdbcUtil;
 import org.infinispan.persistence.jdbc.common.TableOperations;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfiguration;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;

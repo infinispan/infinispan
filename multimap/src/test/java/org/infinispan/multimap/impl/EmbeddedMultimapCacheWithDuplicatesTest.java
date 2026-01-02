@@ -1,5 +1,13 @@
 package org.infinispan.multimap.impl;
 
+import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.multimap.impl.MultimapTestUtils.JULIEN;
+import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
+import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
+import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
@@ -9,14 +17,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
-import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
-import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
-import static org.infinispan.multimap.impl.MultimapTestUtils.JULIEN;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @Test(groups = "functional", testName = "multimap.EmbeddedMultimapCacheWithDuplicatesTest")
 public class EmbeddedMultimapCacheWithDuplicatesTest extends SingleCacheManagerTest {

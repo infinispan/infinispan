@@ -1,10 +1,10 @@
 package org.infinispan.counter.impl.listener;
 
+import static java.util.Objects.requireNonNull;
+
 import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.impl.entries.CounterValue;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * The {@link CounterEvent} implementation.

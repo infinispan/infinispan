@@ -1,10 +1,6 @@
 package org.infinispan.marshall.core;
 
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.Transcoder;
-import org.infinispan.commons.dataconversion.Wrapper;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.infinispan.util.logging.Log.CONTAINER;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.Transcoder;
+import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * @see EncoderRegistry
