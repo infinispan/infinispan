@@ -1,6 +1,5 @@
 package org.infinispan.persistence.jdbc.stores;
 
-import static jakarta.transaction.Status.STATUS_ROLLEDBACK;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -9,13 +8,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -31,10 +28,14 @@ import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Test to check that a transactional store commits/rollsback stored values as expected. Also ensures that a failed
@@ -109,7 +110,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
       cache.put(KEY1, VAL1);
       cache.put(KEY2, VAL2);
       tm.rollback();
-      assert tx.getStatus() == STATUS_ROLLEDBACK;
+      assert tx.getStatus() == Status.STATUS_ROLLEDBACK;
       assertRowCount(0);
    }
 
@@ -131,7 +132,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
          Throwable throwable = Exceptions.extractException(tm::commit);
          Exceptions.assertException(RollbackException.class, throwable);
          Exceptions.assertException(XAException.class, PersistenceException.class, throwable.getSuppressed()[0]);
-         assertEquals(STATUS_ROLLEDBACK, tx.getStatus());
+         assertEquals(Status.STATUS_ROLLEDBACK, tx.getStatus());
          assertRowCount(0);
       } finally {
          // The mock doesn't have any metadata, so its stop() method won't be invoked

@@ -1,6 +1,30 @@
 package org.infinispan.rest.resources;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.infinispan.rest.framework.Method.DELETE;
+import static org.infinispan.rest.framework.Method.GET;
+import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
+
+import java.security.Principal;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -29,29 +53,7 @@ import org.infinispan.security.impl.SubjectACL;
 import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.server.core.ServerManagement;
 
-import javax.security.auth.Subject;
-import java.security.Principal;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
-import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
-import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.infinispan.rest.framework.Method.DELETE;
-import static org.infinispan.rest.framework.Method.GET;
-import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.rest.framework.Method.PUT;
-import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
-import static org.infinispan.rest.resources.ResourceUtil.isPretty;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * @since 10.1

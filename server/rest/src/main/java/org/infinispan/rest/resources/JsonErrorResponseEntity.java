@@ -1,7 +1,7 @@
 package org.infinispan.rest.resources;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 class JsonErrorResponseEntity implements JsonSerialization {
 

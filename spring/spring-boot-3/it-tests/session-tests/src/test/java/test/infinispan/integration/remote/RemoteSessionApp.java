@@ -1,5 +1,8 @@
 package test.infinispan.integration.remote;
 
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+
 import org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory;
 import org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean;
 import org.infinispan.spring.remote.session.configuration.EnableInfinispanRemoteHttpSession;
@@ -10,10 +13,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.test.util.TestSocketUtils;
-import test.infinispan.integration.SecurityConfig;
 
-import java.net.InetSocketAddress;
-import java.util.Arrays;
+import test.infinispan.integration.SecurityConfig;
 
 @SpringBootApplication
 @EnableInfinispanRemoteHttpSession

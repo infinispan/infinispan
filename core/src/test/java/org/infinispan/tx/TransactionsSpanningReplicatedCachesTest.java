@@ -6,9 +6,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,6 +13,9 @@ import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = {"functional", "smoke"}, testName = "tx.TransactionsSpanningReplicatedCachesTest")
 public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManagersTest {

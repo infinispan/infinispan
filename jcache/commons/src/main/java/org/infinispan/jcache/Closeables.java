@@ -1,9 +1,9 @@
 package org.infinispan.jcache;
 
-import org.infinispan.jcache.logging.Log;
-
 import java.io.Closeable;
 import java.util.Set;
+
+import org.infinispan.jcache.logging.Log;
 
 class Closeables {
 

@@ -6,14 +6,14 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.util.concurrent.CompletionStage;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "xsite", testName = "xsite.RollbackNoPrepareOptimisticTest")
 public class RollbackNoPreparePessimisticTest extends AbstractTwoSitesTest {

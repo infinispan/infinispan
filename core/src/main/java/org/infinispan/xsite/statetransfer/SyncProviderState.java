@@ -16,9 +16,10 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.CompletableSource;
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * A {@link XSiteStateProviderState} for synchronous cross-site replication state transfer.

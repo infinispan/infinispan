@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
+
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
@@ -12,8 +14,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
-
-import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.

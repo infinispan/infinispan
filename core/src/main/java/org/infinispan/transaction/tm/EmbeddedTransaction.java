@@ -6,11 +6,12 @@ import static org.infinispan.commons.util.Util.longToBytes;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
-import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.tx.TransactionImpl;
 import org.infinispan.commons.tx.XidImpl;
+
+import jakarta.transaction.Transaction;
 
 /**
  * A {@link Transaction} implementation used by {@link EmbeddedBaseTransactionManager}.

@@ -6,12 +6,12 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.protostream.impl.MarshallableMap;
-import org.infinispan.query.objectfilter.Matcher;
-import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
+import org.infinispan.query.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.server.core.query.impl.RemoteQueryManager;
 
 /**

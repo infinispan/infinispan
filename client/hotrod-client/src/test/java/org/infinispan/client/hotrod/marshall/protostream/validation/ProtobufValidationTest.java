@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod.marshall.protostream.validation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
+
 import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.test.annotation.TestForIssue;
@@ -10,8 +12,6 @@ import org.infinispan.protostream.schema.Schema;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Optional;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.marshall.protostream.validation.ProtobufValidationTest")
 @TestForIssue(jiraKey = "ISPN-14816")

@@ -9,6 +9,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
@@ -17,7 +18,6 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 public class NotifyHelper {
    public static <K, V> CompletionStage<Void> entryCommitted(CacheNotifier<K, V> notifier, FunctionalNotifier<K, V> functionalNotifier,

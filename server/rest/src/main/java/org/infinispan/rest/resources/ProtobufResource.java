@@ -25,7 +25,6 @@ import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-import org.infinispan.server.core.query.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestRequestHandler;
@@ -40,6 +39,7 @@ import org.infinispan.rest.operations.exceptions.NoKeyException;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.core.query.ProtobufMetadataManager;
+import org.infinispan.server.core.query.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.telemetry.InfinispanTelemetry;
 
 import io.netty.handler.codec.http.HttpResponseStatus;

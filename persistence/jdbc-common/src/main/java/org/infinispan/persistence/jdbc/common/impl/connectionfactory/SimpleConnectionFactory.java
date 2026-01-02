@@ -7,9 +7,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import org.infinispan.commons.util.Util;
-import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.common.configuration.SimpleConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
 

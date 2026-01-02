@@ -1,13 +1,13 @@
 package org.infinispan.query.mapper.impl;
 
+import java.util.Map;
+
 import org.hibernate.search.engine.environment.bean.BeanReference;
 import org.hibernate.search.engine.environment.bean.spi.ParameterizedBeanReference;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoTypeMetadataContributor;
 import org.hibernate.search.mapper.pojo.model.additionalmetadata.building.spi.PojoAdditionalMetadataCollectorTypeNode;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.infinispan.query.mapper.search.loading.context.impl.InfinispanSelectionLoadingBinder;
-
-import java.util.Map;
 
 class InfinispanEntityTypeContributor implements PojoTypeMetadataContributor {
 

@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 
-import org.infinispan.tools.store.migrator.marshaller.common.Externalizer;
 import org.infinispan.jboss.marshalling.commons.ExtendedRiverUnmarshaller;
 import org.infinispan.tools.store.migrator.marshaller.LegacyJBossMarshaller;
 import org.infinispan.tools.store.migrator.marshaller.common.AbstractUnsupportedStreamingMarshaller;
+import org.infinispan.tools.store.migrator.marshaller.common.Externalizer;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
 

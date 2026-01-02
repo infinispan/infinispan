@@ -3,8 +3,8 @@ package org.infinispan.server.core.query.json;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.server.core.query.json.JSONConstants.HIT;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 /**
  * Represents each of the search results.

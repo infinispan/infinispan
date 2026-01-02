@@ -4,12 +4,12 @@ import java.util.Arrays;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.objectfilter.SortField;
 import org.infinispan.query.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
-import org.infinispan.protostream.annotations.Proto;
-import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @param <TypeMetadata> is either {@link java.lang.Class} or {@link org.infinispan.protostream.descriptors.Descriptor}

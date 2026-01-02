@@ -1,7 +1,7 @@
 package org.infinispan.api.annotations.indexing.model;
 
-import org.infinispan.api.annotations.indexing.Longitude;
 import org.infinispan.api.annotations.indexing.Latitude;
+import org.infinispan.api.annotations.indexing.Longitude;
 
 /**
  * A point in the geocentric coordinate system.

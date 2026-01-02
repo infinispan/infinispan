@@ -5,13 +5,13 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationCallback;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.commons.util.logging.TraceException;
 
 /**
  * Invocation stage representing a computation that may or may not be done yet.

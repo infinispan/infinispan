@@ -8,11 +8,11 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.lang.reflect.Method;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 
 @Test(groups = {"functional", "transaction"}, testName = "api.batch.BatchWithTMTest")

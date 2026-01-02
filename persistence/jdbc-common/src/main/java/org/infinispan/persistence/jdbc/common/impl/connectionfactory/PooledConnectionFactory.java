@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
 
-import io.agroal.api.configuration.AgroalConnectionPoolConfiguration;
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.common.JdbcUtil;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
@@ -15,6 +14,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 
 import io.agroal.api.AgroalDataSource;
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
+import io.agroal.api.configuration.AgroalConnectionPoolConfiguration;
 import io.agroal.api.configuration.supplier.AgroalDataSourceConfigurationSupplier;
 import io.agroal.api.configuration.supplier.AgroalPropertiesReader;
 import io.agroal.api.security.NamePrincipal;

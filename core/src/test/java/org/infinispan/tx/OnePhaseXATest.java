@@ -3,8 +3,6 @@ package org.infinispan.tx;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,6 +14,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "tx.OnePhaseXATest", description = "See ISPN-156 for details.")
 public class OnePhaseXATest extends AbstractInfinispanTest {

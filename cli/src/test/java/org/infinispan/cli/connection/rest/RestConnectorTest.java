@@ -1,19 +1,20 @@
 package org.infinispan.cli.connection.rest;
 
-import org.infinispan.cli.util.ZeroSecurityTrustManager;
-import org.infinispan.client.rest.configuration.RestClientConfiguration;
-import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.junit.Test;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import java.security.NoSuchAlgorithmException;
-import java.util.Properties;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.security.NoSuchAlgorithmException;
+import java.util.Properties;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+
+import org.infinispan.cli.util.ZeroSecurityTrustManager;
+import org.infinispan.client.rest.configuration.RestClientConfiguration;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.junit.Test;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

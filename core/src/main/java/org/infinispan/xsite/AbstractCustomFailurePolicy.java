@@ -2,10 +2,10 @@ package org.infinispan.xsite;
 
 import java.util.Map;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CustomFailurePolicy;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Support class for {@link CustomFailurePolicy}.

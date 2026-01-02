@@ -1,7 +1,5 @@
 package org.infinispan.xsite;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -12,6 +10,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.SyncInvocationStage;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
+
+import jakarta.transaction.Transaction;
 
 /**
  * A no-op implementation of {@link BackupSender}.

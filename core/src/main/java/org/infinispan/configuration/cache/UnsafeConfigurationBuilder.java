@@ -1,13 +1,13 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.UnsafeConfiguration.UNRELIABLE_RETURN_VALUES;
+
 import java.util.Map;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
-
-import static org.infinispan.configuration.cache.UnsafeConfiguration.UNRELIABLE_RETURN_VALUES;
 
 /**
  * Controls certain tuning parameters that may break some of Infinispan's public API contracts in exchange for better

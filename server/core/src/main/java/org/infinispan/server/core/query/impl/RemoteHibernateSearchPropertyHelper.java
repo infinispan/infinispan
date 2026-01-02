@@ -15,18 +15,18 @@ import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldTypeDescriptor;
 import org.hibernate.search.engine.backend.types.IndexFieldTraits;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.query.objectfilter.ParsingException;
-import org.infinispan.query.objectfilter.impl.syntax.IndexedFieldProvider;
-import org.infinispan.query.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
-import org.infinispan.query.objectfilter.impl.util.StringHelper;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
-import org.infinispan.server.core.query.impl.indexing.IndexingMetadata;
 import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.query.objectfilter.ParsingException;
+import org.infinispan.query.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.query.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
+import org.infinispan.query.objectfilter.impl.util.StringHelper;
+import org.infinispan.server.core.query.impl.indexing.IndexingMetadata;
 
 public final class RemoteHibernateSearchPropertyHelper extends ProtobufPropertyHelper {
 

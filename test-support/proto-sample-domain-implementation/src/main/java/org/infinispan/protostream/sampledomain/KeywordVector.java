@@ -1,13 +1,13 @@
 package org.infinispan.protostream.sampledomain;
 
+import java.util.List;
+
 import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.api.annotations.indexing.Vector;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-
-import java.util.List;
 
 @Indexed
 public class KeywordVector {

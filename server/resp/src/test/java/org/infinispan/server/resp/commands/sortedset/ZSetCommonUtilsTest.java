@@ -1,8 +1,8 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import org.testng.annotations.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.testng.annotations.Test;
 
 public class ZSetCommonUtilsTest {
 

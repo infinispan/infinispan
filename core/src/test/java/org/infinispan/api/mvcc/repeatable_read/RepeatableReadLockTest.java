@@ -4,15 +4,15 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.RepeatableReadLockTest")
 public class RepeatableReadLockTest extends LockTestBase {

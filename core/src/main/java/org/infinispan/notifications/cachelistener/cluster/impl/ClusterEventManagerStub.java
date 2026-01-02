@@ -4,13 +4,13 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

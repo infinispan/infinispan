@@ -21,6 +21,8 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.logging.Log;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -40,7 +42,6 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * A Netty based transport.

@@ -1,12 +1,12 @@
 package org.infinispan.test.fwk;
 
-import jakarta.transaction.TransactionManager;
-import jakarta.transaction.UserTransaction;
-
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
-import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.UserTransaction;
 
 /**
  * A simple abstraction for transaction manager interaction

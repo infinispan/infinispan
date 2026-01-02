@@ -3,10 +3,10 @@ package org.infinispan.server.core.query.impl;
 import java.io.IOException;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.query.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.query.objectfilter.impl.syntax.parser.EntityNameResolver;
 
 /**
  * A sub-class of ReflectionMatcher that is able to lookup classes by their protobuf type name and can work with object

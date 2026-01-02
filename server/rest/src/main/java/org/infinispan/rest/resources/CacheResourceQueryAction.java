@@ -19,9 +19,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.query.objectfilter.ParsingException;
-import org.infinispan.server.core.query.impl.RemoteQueryManager;
-import org.infinispan.server.core.query.json.JsonQueryErrorResult;
-import org.infinispan.server.core.query.json.JsonQueryRequest;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ContentSource;
@@ -29,6 +26,9 @@ import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.server.core.query.impl.RemoteQueryManager;
+import org.infinispan.server.core.query.json.JsonQueryErrorResult;
+import org.infinispan.server.core.query.json.JsonQueryRequest;
 
 /**
  * Helper for handling the 'search' action of the {@link BaseCacheResource}.

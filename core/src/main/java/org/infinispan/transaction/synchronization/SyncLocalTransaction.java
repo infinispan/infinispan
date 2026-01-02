@@ -1,9 +1,9 @@
 package org.infinispan.transaction.synchronization;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import jakarta.transaction.Transaction;
 
 /**
  * {@link LocalTransaction} implementation to be used with {@link SynchronizationAdapter}.

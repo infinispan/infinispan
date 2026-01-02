@@ -4,8 +4,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.server.core.query.json.JSONConstants.CAUSE;
 import static org.infinispan.server.core.query.json.JSONConstants.MESSAGE;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 public class JsonQueryErrorResult implements JsonSerialization {
    private final String message;

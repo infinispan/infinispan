@@ -1,7 +1,8 @@
 package org.infinispan.rest;
-import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
+
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.InvocationHelperTest")
 public class InvocationHelperTest {

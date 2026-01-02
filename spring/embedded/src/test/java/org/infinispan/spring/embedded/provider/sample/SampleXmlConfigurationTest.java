@@ -1,8 +1,8 @@
 package org.infinispan.spring.embedded.provider.sample;
 
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
-import org.infinispan.spring.embedded.provider.sample.service.CachedBookService;
 import org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManager;
+import org.infinispan.spring.embedded.provider.sample.service.CachedBookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;

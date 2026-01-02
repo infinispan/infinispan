@@ -4,9 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Transaction;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
@@ -14,6 +11,9 @@ import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
 
 @Test(testName = "container.versioning.DistWriteSkewTest", groups = "functional")
 public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {

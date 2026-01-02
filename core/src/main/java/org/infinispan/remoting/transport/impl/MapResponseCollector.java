@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -17,7 +18,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Response collector supporting {@link JGroupsTransport#invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder)}.

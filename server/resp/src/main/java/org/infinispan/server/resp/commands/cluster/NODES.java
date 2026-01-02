@@ -30,8 +30,9 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.topology.CacheTopology;
 
-import io.netty.channel.ChannelHandlerContext;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * CLUSTER NODES

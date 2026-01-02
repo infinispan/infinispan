@@ -1,10 +1,11 @@
 package org.infinispan.client.hotrod.configuration;
 
-import jakarta.transaction.Synchronization;
-import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.RemoteCache;
+
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.Transaction;
 
 /**
  * Specifies how the {@link RemoteCache} is enlisted in the {@link Transaction}.

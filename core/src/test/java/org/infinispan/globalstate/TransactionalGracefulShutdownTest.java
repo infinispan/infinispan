@@ -6,8 +6,6 @@ import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.topology.CacheShutdownCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -26,6 +24,8 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @CleanupAfterMethod
 @Test(groups = "functional", testName = "globalstate.TransactionalGracefulShutdownTest")

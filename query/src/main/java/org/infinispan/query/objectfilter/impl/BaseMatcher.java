@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.objectfilter.FilterCallback;
 import org.infinispan.query.objectfilter.FilterSubscription;
 import org.infinispan.query.objectfilter.Matcher;
@@ -19,7 +20,6 @@ import org.infinispan.query.objectfilter.impl.syntax.IndexedSearchPredicateDetec
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
-import org.infinispan.query.dsl.Query;
 import org.jboss.logging.Logger;
 
 /**

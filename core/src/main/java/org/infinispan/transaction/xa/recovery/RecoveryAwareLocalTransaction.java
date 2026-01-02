@@ -1,9 +1,9 @@
 package org.infinispan.transaction.xa.recovery;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Extends {@link org.infinispan.transaction.xa.LocalXaTransaction} and adds recovery related information.

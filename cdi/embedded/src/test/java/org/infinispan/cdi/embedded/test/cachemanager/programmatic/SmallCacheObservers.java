@@ -1,9 +1,9 @@
 package org.infinispan.cdi.embedded.test.cachemanager.programmatic;
 
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-
-import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 
 /**
  * @author Pete Muir

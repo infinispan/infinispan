@@ -4,12 +4,12 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.query.objectfilter.impl.MetadataAdapter;
-import org.infinispan.query.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.query.dsl.embedded.impl.MetadataProjectableAdapter;
+import org.infinispan.query.objectfilter.impl.MetadataAdapter;
+import org.infinispan.query.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
 
 public class ProtobufMetadataProjectableAdapter extends MetadataProjectableAdapter<Descriptor, FieldDescriptor, Integer> {
 

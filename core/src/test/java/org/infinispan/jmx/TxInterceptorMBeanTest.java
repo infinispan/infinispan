@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.jmx.MBeanServerLookup;
@@ -21,6 +20,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "jmx.TxInterceptorMBeanTest")
 public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {

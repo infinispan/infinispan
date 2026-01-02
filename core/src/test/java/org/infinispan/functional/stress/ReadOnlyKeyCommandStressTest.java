@@ -1,20 +1,20 @@
 package org.infinispan.functional.stress;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.GetAllCommandStressTest;
-import org.infinispan.functional.FunctionalMap;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
-import org.infinispan.test.fwk.InCacheMode;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.Cache;
+import org.infinispan.commands.GetAllCommandStressTest;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.ReadOnlyMapImpl;
+import org.infinispan.test.fwk.InCacheMode;
+import org.testng.annotations.Test;
 
 @Test(groups = "stress", testName = "functional.stress.ReadOnlyKeyCommandStressTest")
 @InCacheMode(CacheMode.DIST_SYNC)

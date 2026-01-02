@@ -6,8 +6,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.ByteBufferImplExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.EmbeddedMetadataExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.EnumSetExternalizer;

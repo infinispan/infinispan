@@ -1,11 +1,5 @@
 package org.infinispan.stats.impl;
 
-import static org.infinispan.stats.ContainerStats.LONG_ATTRIBUTES;
-import static org.infinispan.stats.ContainerStats.MEMORY_AVAILABLE;
-import static org.infinispan.stats.ContainerStats.MEMORY_MAX;
-import static org.infinispan.stats.ContainerStats.MEMORY_TOTAL;
-import static org.infinispan.stats.ContainerStats.MEMORY_USED;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

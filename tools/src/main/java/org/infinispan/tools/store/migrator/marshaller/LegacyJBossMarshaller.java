@@ -1,9 +1,9 @@
 package org.infinispan.tools.store.migrator.marshaller;
 
-import org.infinispan.jboss.marshalling.commons.StreamingMarshaller;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.AbstractJBossMarshaller;
 import org.infinispan.jboss.marshalling.commons.DefaultContextClassResolver;
+import org.infinispan.jboss.marshalling.commons.StreamingMarshaller;
 import org.jboss.marshalling.AnnotationClassExternalizerFactory;
 import org.jboss.marshalling.ObjectTable;
 

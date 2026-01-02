@@ -1,10 +1,10 @@
 package org.infinispan.server.core.backup;
 
 import static org.infinispan.server.core.BackupManager.Resources.Type.CACHES;
-import static org.infinispan.server.core.BackupManager.Resources.Type.TEMPLATES;
 import static org.infinispan.server.core.BackupManager.Resources.Type.COUNTERS;
 import static org.infinispan.server.core.BackupManager.Resources.Type.PROTO_SCHEMAS;
 import static org.infinispan.server.core.BackupManager.Resources.Type.TASKS;
+import static org.infinispan.server.core.BackupManager.Resources.Type.TEMPLATES;
 
 import java.util.Arrays;
 import java.util.Collection;

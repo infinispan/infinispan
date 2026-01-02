@@ -14,10 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
@@ -30,6 +26,10 @@ import org.infinispan.filter.CompositeKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Test to verify distributed stream iterator when in a tx

@@ -9,12 +9,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.MarshallingException;
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.data.BrokenMarshallingPojo;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**

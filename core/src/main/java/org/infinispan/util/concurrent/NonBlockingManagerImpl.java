@@ -18,9 +18,10 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 @Scope(Scopes.GLOBAL)
 public class NonBlockingManagerImpl implements NonBlockingManager {

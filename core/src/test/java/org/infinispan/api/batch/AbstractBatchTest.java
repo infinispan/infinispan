@@ -6,14 +6,14 @@ import static org.testng.AssertJUnit.assertNull;
 import java.lang.reflect.Method;
 import java.util.concurrent.Future;
 
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = {"functional", "transaction", "smoke"})
 public abstract class AbstractBatchTest extends SingleCacheManagerTest {

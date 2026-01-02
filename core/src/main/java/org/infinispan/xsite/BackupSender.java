@@ -1,7 +1,5 @@
 package org.infinispan.xsite;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -10,6 +8,8 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Component responsible with sending backup data to remote sites. The send operation is executed async, it's up to the

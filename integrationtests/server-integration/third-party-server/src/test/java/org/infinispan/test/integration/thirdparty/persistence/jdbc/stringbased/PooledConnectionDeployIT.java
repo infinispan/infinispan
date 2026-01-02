@@ -1,5 +1,7 @@
 package org.infinispan.test.integration.thirdparty.persistence.jdbc.stringbased;
 
+import static org.infinispan.test.integration.thirdparty.persistence.jdbc.util.BaseJdbcDeploy.addJdbcLibraries;
+
 import org.infinispan.test.integration.persistence.jdbc.stringbased.PooledConnectionIT;
 import org.infinispan.test.integration.persistence.jdbc.util.JdbcConfigurationUtil;
 import org.infinispan.test.integration.persistence.jdbc.util.TableManipulation;
@@ -10,8 +12,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.test.integration.thirdparty.persistence.jdbc.util.BaseJdbcDeploy.addJdbcLibraries;
 
 @RunWith(Arquillian.class)
 public class PooledConnectionDeployIT extends PooledConnectionIT {

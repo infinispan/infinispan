@@ -2,13 +2,13 @@ package org.infinispan.query.distributed;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.ThreadLeakChecker;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.test.Transaction;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.jboss.byteman.contrib.bmunit.BMNGListener;
 import org.jboss.byteman.contrib.bmunit.BMRule;
 import org.testng.annotations.AfterClass;

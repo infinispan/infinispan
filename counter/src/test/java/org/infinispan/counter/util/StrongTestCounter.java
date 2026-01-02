@@ -1,10 +1,10 @@
 package org.infinispan.counter.util;
 
-import org.infinispan.counter.api.SyncStrongCounter;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
 import org.infinispan.counter.api.StrongCounter;
+import org.infinispan.counter.api.SyncStrongCounter;
 
 /**
  * @author Pedro Ruivo

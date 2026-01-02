@@ -6,9 +6,9 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.util.Map;
 
-import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.LegacyJBossMarshaller;
 import org.infinispan.tools.store.migrator.marshaller.common.AbstractUnsupportedStreamingMarshaller;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 
 /**
  * LegacyVersionAwareMarshaller that is used to read bytes marshalled using Infinispan 8.x. This is useful for providing

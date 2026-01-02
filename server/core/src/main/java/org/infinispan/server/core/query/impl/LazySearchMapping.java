@@ -18,9 +18,6 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.impl.EntityLoaderFactory;
-import org.infinispan.server.core.query.impl.logging.Log;
-import org.infinispan.server.core.query.impl.mapping.SerializationContextSearchMapping;
-import org.infinispan.server.core.query.impl.util.LazyRef;
 import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
@@ -30,6 +27,9 @@ import org.infinispan.query.mapper.mapping.metamodel.IndexMetamodel;
 import org.infinispan.query.mapper.scope.SearchScope;
 import org.infinispan.query.mapper.session.SearchSession;
 import org.infinispan.query.mapper.work.SearchIndexer;
+import org.infinispan.server.core.query.impl.logging.Log;
+import org.infinispan.server.core.query.impl.mapping.SerializationContextSearchMapping;
+import org.infinispan.server.core.query.impl.util.LazyRef;
 
 /**
  * @since 12.0

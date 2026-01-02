@@ -1,11 +1,11 @@
 package org.infinispan.lock.singlelock;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 /**
  * @author Mircea Markus

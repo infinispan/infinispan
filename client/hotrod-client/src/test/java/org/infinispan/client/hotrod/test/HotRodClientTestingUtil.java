@@ -1,5 +1,24 @@
 package org.infinispan.client.hotrod.test;
 
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX;
+import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
+import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
+import static org.infinispan.test.TestingUtil.extractField;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.function.Consumer;
+
+import javax.management.ObjectName;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.Internals;
@@ -35,24 +54,6 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
-
-import javax.management.ObjectName;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.function.Consumer;
-
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX;
-import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
-import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
-import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
-import static org.infinispan.test.TestingUtil.extractField;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * Utility methods for the Hot Rod client

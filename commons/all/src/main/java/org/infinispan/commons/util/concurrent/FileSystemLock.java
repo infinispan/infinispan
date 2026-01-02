@@ -10,8 +10,8 @@ import java.nio.file.Path;
 
 import org.infinispan.commons.util.Util;
 
-import com.google.errorprone.annotations.concurrent.GuardedBy;
 import com.google.errorprone.annotations.ThreadSafe;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 /**
  * A simplified global lock backed by the file system.
