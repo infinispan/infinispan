@@ -154,14 +154,14 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
             if (owners.contains(address0) || owners.contains(address1)) {
                fail("get(" + k + ") should have failed on cache " + address(a0));
             }
-         } catch (AvailabilityException e) {
+         } catch (AvailabilityException ignore) {
          }
          try {
             cache(a1).put(k, k);
             if (owners.contains(address0) || owners.contains(address1)) {
                fail("put(" + k + ", v) should have failed on cache " + address(a0));
             }
-         } catch (AvailabilityException e) {
+         } catch (AvailabilityException ignore) {
          }
       }
 

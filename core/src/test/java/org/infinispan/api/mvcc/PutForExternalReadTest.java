@@ -182,21 +182,21 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       try {
          cache1.put(key, value);
          fail("Should have barfed");
-      } catch (RuntimeException re) {
+      } catch (RuntimeException ignore) {
       }
 
       // clean up any indeterminate state left over
       try {
          cache1.remove(key);
          fail("Should have barfed");
-      } catch (RuntimeException re) {
+      } catch (RuntimeException ignore) {
       }
 
       assertNull("Should have cleaned up", cache1.get(key));
       assertNull("Should have cleaned up", cache1.getAdvancedCache().getDataContainer().peek(key));
       assertNull("Should have cleaned up", cache2.get(key));
       InternalCacheEntry<Object, String> cache2Entry = cache2.getAdvancedCache().getDataContainer().peek(key);
-      assertTrue("Should have cleaned up", cache2Entry == null);
+      assertNull("Should have cleaned up", cache2Entry);
 
       // should not barf
       cache1.putForExternalRead(key, value);
@@ -267,11 +267,11 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
       replListener2.expectWithTx(PutKeyValueCommand.class);
       tm1.begin();
-      assertEquals(tm1.getTransaction().getStatus(), Status.STATUS_ACTIVE);
+      assertEquals(Status.STATUS_ACTIVE, tm1.getTransaction().getStatus());
       cache1.putForExternalRead(key, value);
-      assertEquals(tm1.getTransaction().getStatus(), Status.STATUS_ACTIVE);
+      assertEquals(Status.STATUS_ACTIVE, tm1.getTransaction().getStatus());
       cache1.put(key, value);
-      assertEquals(tm1.getTransaction().getStatus(), Status.STATUS_ACTIVE);
+      assertEquals(Status.STATUS_ACTIVE, tm1.getTransaction().getStatus());
       log.info("Before commit!!");
       tm1.commit();
 

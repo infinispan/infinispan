@@ -66,7 +66,7 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
          try {
             futureGet.get(1, TimeUnit.SECONDS);
             fail("Get command should have blocked waiting");
-         } catch (TimeoutException e) {
+         } catch (TimeoutException ignore) {
 
          }
 
@@ -120,7 +120,7 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
          try {
             futurePut.get(1, TimeUnit.SECONDS);
             fail("Get command should have blocked waiting");
-         } catch (TimeoutException e) {
+         } catch (TimeoutException ignore) {
 
          }
 

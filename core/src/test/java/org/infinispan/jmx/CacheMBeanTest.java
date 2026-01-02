@@ -113,17 +113,17 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       try {
          log.info(server.getMBeanInfo(managerON));
          fail("Failure expected, " + managerON + " shouldn't be registered in mbean server");
-      } catch (InstanceNotFoundException e) {
+      } catch (InstanceNotFoundException ignore) {
       }
       try {
          log.info(server.getMBeanInfo(defaultOn));
          fail("Failure expected, " + defaultOn + " shouldn't be registered in mbean server");
-      } catch (InstanceNotFoundException e) {
+      } catch (InstanceNotFoundException ignore) {
       }
       try {
          log.info(server.getMBeanInfo(galderOn));
          fail("Failure expected, " + galderOn + " shouldn't be registered in mbean server");
-      } catch (InstanceNotFoundException e) {
+      } catch (InstanceNotFoundException ignore) {
       }
    }
 

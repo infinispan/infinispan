@@ -449,7 +449,7 @@ public class Json implements java.io.Serializable {
       } finally {
          if (reader != null) try {
             reader.close();
-         } catch (Throwable t) {
+         } catch (Throwable ignore) {
          }
       }
    }

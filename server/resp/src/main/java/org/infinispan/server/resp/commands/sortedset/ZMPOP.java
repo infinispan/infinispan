@@ -49,7 +49,7 @@ public class ZMPOP extends RespCommand implements Resp3Command {
       try {
          byte[] bytes = arguments.get(pos++);
          numberKeys = ArgumentUtils.toInt(bytes);
-      } catch (Exception ex) {
+      } catch (Exception ignore) {
       }
 
       if (numberKeys <= 0) {

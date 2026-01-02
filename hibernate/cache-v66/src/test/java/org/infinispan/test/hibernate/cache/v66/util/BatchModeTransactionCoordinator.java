@@ -126,7 +126,7 @@ public class BatchModeTransactionCoordinator implements TransactionCoordinator {
       JdbcConnectionAccess jdbcConnectionAccess = mock(JdbcConnectionAccess.class);
       try {
          when(jdbcConnectionAccess.obtainConnection()).thenReturn(connection);
-      } catch (SQLException e) {
+      } catch (SQLException ignore) {
       }
       return new JtaIsolationDelegate(jdbcConnectionAccess, mock(SqlExceptionHelper.class), tm);
    }

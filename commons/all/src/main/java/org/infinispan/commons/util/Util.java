@@ -427,7 +427,7 @@ public final class Util {
       if (s == null) return;
       try {
          s.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
    }
 
@@ -441,7 +441,7 @@ public final class Util {
       if (ctx == null) return;
       try {
          ctx.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
    }
 

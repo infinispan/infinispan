@@ -53,7 +53,7 @@ public class LOLWUT extends RespCommand implements Resp3Command {
       try {
          s.append(read(is));
          s.append('\n');
-      } catch (IOException e) {
+      } catch (IOException ignore) {
       }
       Util.close(is);
 
