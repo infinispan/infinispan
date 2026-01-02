@@ -134,22 +134,13 @@ public class TestServer {
       return configuration.isDefaultFile() && configuration.runMode() == ServerRunMode.CONTAINER;
    }
 
-   public static class CloseableMemcachedClient implements Closeable {
-      final MemcachedClient client;
-
-      public CloseableMemcachedClient(MemcachedClient client) {
-         this.client = client;
-      }
-
-      public MemcachedClient getClient() {
-         return client;
-      }
+   public record CloseableMemcachedClient(MemcachedClient client) implements Closeable {
 
       @Override
-      public void close() {
-         client.shutdown();
+         public void close() {
+            client.shutdown();
+         }
       }
-   }
 
    /**
     * Create a new REST client to connect to the server

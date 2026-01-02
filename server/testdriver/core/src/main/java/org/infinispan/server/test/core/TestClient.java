@@ -165,7 +165,7 @@ public class TestClient {
 
    public MemcachedClient getMemcachedClient(ConnectionFactoryBuilder builder) {
       TestServer.CloseableMemcachedClient memcachedClient = testServer.newMemcachedClient(builder);
-      return registerResource(memcachedClient).getClient();
+      return registerResource(memcachedClient).client();
    }
 
    public String getMethodName() {
