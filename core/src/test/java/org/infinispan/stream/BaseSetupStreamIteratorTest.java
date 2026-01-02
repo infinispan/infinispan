@@ -60,6 +60,10 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       // Do nothing to config by default, used by people who extend this
    }
 
+   protected void afterCacheCreated(ConfigurationBuilder builder) {
+      // Do nothing to config by default, used by people who extend this
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
@@ -82,6 +86,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
          cacheManagers.add(cm);
          cm.defineConfiguration(CACHE_NAME, builderUsed.build());
       }
+      afterCacheCreated(builderUsed);
    }
 
    protected static <K, V> Map<K, V> mapFromIterator(Iterator<? extends Map.Entry<K, V>> iterator) {
