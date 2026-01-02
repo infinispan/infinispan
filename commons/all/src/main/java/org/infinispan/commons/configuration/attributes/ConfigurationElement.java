@@ -100,23 +100,47 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
       return true;
    }
 
+   public void update(String parentName, T other, Attribute<?> ... ignored) {
+      updateInternal(parentName, other, ignored);
+   }
+
+   public void update(String parentName, T other, ConfigurationElement<?> parent) {
+      update(parentName, other);
+   }
+
    @Override
    public void update(String parentName, T other) {
+      updateInternal(parentName, other);
+   }
+
+   private void updateInternal(String parentName, T other, Attribute<?> ... ignored) {
       String qualifiedName = qualifiedName(parentName);
-      this.attributes.update(qualifiedName, other.attributes);
+      this.attributes.update(qualifiedName, other.attributes, ignored);
       for (int i = 0; i < children.length; i++) {
          ConfigurationElement ours = children[i];
          ConfigurationElement theirs = other.children[i];
-         ours.update(qualifiedName, theirs);
+         ours.update(qualifiedName, theirs, this);
       }
+   }
+
+   public void validateUpdate(String parentName, T other, ConfigurationElement<?> parent) {
+      validateUpdate(parentName, other);
+   }
+
+   public void validateUpdate(String parentName, T other, Attribute<?> ... ignored) {
+      validateUpdateInternal(parentName, other, ignored);
    }
 
    @Override
    public void validateUpdate(String parentName, T other) {
+      validateUpdateInternal(parentName, other);
+   }
+
+   private void validateUpdateInternal(String parentName, T other, Attribute<?> ... ignored) {
       String qualifiedName = qualifiedName(parentName);
       IllegalArgumentException iae = Log.CONFIG.invalidConfiguration(qualifiedName);
       try {
-         this.attributes.validateUpdate(qualifiedName, other.attributes);
+         this.attributes.validateUpdate(qualifiedName, other.attributes, ignored);
       } catch (Throwable t) {
          Util.unwrapSuppressed(iae, t);
       }
@@ -124,7 +148,7 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
          ConfigurationElement ours = children[i];
          ConfigurationElement theirs = other.children[i];
          try {
-            ours.validateUpdate(qualifiedName, theirs);
+            ours.validateUpdate(qualifiedName, theirs, this);
          } catch (Throwable t) {
             Util.unwrapSuppressed(iae, t);
          }
