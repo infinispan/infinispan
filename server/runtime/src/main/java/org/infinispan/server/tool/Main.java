@@ -88,6 +88,9 @@ public abstract class Main {
                version(stdOut);
                exit(0);
                return;
+            case "--safe-mode":
+               stdOut.println("Toggling safe mode for node");
+               break;
             default:
                try {
                   handleArgumentCommand(command, parameter, iterator);
