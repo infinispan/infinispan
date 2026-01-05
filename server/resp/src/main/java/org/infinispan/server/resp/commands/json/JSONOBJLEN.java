@@ -26,6 +26,6 @@ public class JSONOBJLEN extends JSONLEN {
 
    @Override
    protected void raiseTypeError(byte[] path) {
-      throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' does not exist or not an object");
+      throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' is not an object");
    }
 }

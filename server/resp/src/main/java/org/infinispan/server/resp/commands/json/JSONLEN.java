@@ -7,7 +7,6 @@ import java.util.function.BiConsumer;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.serialization.Resp3Type;
@@ -63,10 +62,8 @@ public abstract class JSONLEN extends RespCommand implements Resp3Command {
 
     BiConsumer<List<Long>, ResponseWriter> legacyOutput(byte[] path) {
         return (c, writer) -> {
-            if (c == null) {
+            if (c == null || c.isEmpty()) {
                 writer.nulls();
-            } else if (c.isEmpty()) {
-                throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' does not exist");
             } else if (c.get(0) == null) {
                 raiseTypeError(path);
             } else {

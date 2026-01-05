@@ -25,6 +25,6 @@ public class JSONARRLEN extends JSONLEN {
 
    @Override
    protected void raiseTypeError(byte[] path) {
-      throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' does not exist or not an array");
+      throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' is not an array");
    }
 }
