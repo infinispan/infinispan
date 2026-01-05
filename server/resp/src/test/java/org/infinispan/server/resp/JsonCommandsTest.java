@@ -645,7 +645,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
    @Test
    public void testJSONOBJLEN() {
-      String key = k();
+      final String key = k();
       JsonPath jp = new JsonPath("$");
       // JSON.SET doc . {}
       assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("{}"))).isEqualTo("OK");
@@ -665,13 +665,18 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
                        { "id": 2, "value": "Item Two" },
                        { "id": 3, "value": "Item Three" }
                    ]
-               }
+               },
+               "items": {
+                  "name": "Item One",
+                  "id": 1
+               },
+               "array": [1,2,3]
             }
                """;
       JsonValue jv = defaultJsonParser.createJsonValue(jsonValue);
       redis.jsonSet(key, jp, jv);
       var result = redis.jsonObjlen(key, jp);
-      assertThat(result).containsExactly(1L);
+      assertThat(result).containsExactly(3L);
       jp = new JsonPath("$.root");
       result = redis.jsonObjlen(key, jp);
       assertThat(result).containsExactly(3L);
@@ -685,12 +690,24 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.jsonObjlen("notExistingKey").get(0)).isNull();
       jp = new JsonPath(".");
       assertThat(redis.jsonObjlen("notExistingKey", jp).get(0)).isNull();
-      // Jsonpath style returns error on non-existing object. Cannot use
-      // a simple "$" path, since lettuce doesn't pass it to the server
+
+      // Legacy style returns null on non-existing object.
+      jp = new JsonPath(".nonExistentPath");
+      assertThat(redis.jsonObjlen(key, jp).get(0)).isNull();
+
+      // JsonPath style returns empty array on non-existing object.
+      jp = new JsonPath("$.nonExistentPath");
+      assertThat(redis.jsonObjlen(key, jp)).isEmpty();
+
+      // Legacy style returns first result in path matching
+      assertThat(redis.jsonObjlen(key, new JsonPath("..nested"))).containsExactly(2L);
+
+      // Legacy style returns error if non object node appears as first
+      // in path matching
       assertThatThrownBy(() -> {
-         redis.jsonObjlen("notExistingKey", new JsonPath("$.root"));
+         redis.jsonObjlen(key, new JsonPath("..array"));
       }).isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageStartingWith("ERR Path '$.root' does not exist or not an object");
+            .hasMessageStartingWith("ERR Path '..array' is not an object");
    }
 
    @Test
@@ -735,7 +752,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() ->
          redis.jsonStrlen(key, new JsonPath("."))
       ).isInstanceOf(RedisCommandExecutionException.class)
-              .hasMessage("ERR Path '.' does not exist or not a string");
+              .hasMessage("ERR Path '.' is not a string");
 
       //  JSON.STRLEN doc $..a
       assertThat(redis.jsonStrlen(key, new JsonPath("$..a"))).containsExactly(3L, 5L, null);
@@ -788,26 +805,28 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() ->
          redis.jsonArrlen(key)
       ).isInstanceOf(RedisCommandExecutionException.class)
-              .hasMessage("ERR Path '.' does not exist or not an array");
+              .hasMessage("ERR Path '.' is not an array");
       // JSON.SET doc . '{"v1": 2}'
       assertThat(redis.jsonSet(key, jpDollar, defaultJsonParser.createJsonValue("{\"v1\": 2}"))).isEqualTo("OK");
       // JSON.ARRLEN doc
       assertThatThrownBy(() ->
               redis.jsonArrlen(key)
       ).isInstanceOf(RedisCommandExecutionException.class)
-              .hasMessage("ERR Path '.' does not exist or not an array");
+              .hasMessage("ERR Path '.' is not an array");
 
       // JSON.SET doc $ '{"name":"Wireless earbuds","description":"Wireless Bluetooth in-ear headphones","connection":{"wireless":true,"type":"Bluetooth"},"price":64.99,"stock":17,"colors":["black","white"], "max_level":[80, 100, 120]}'
       assertThat(redis.jsonSet(key, jpDollar, jv)).isEqualTo("OK");
       assertThatThrownBy(() ->
               redis.jsonArrlen(key, new JsonPath("."))
       ).isInstanceOf(RedisCommandExecutionException.class)
-              .hasMessage("ERR Path '.' does not exist or not an array");
+              .hasMessage("ERR Path '.' is not an array");
+
+      assertThat(redis.jsonArrlen(key, new JsonPath("..notExists")).get(0)).isNull();
 
       assertThatThrownBy(() ->
-              redis.jsonArrlen(key, new JsonPath("..notExists"))
+              redis.jsonArrlen(key, new JsonPath("..connection"))
       ).isInstanceOf(RedisCommandExecutionException.class)
-              .hasMessage("ERR Path '..notExists' does not exist");
+              .hasMessage("ERR Path '..connection' is not an array");
 
       // JSON.ARRLEN doc $..max_level
       assertThat(redis.jsonArrlen(key, new JsonPath("$..max_level"))).containsExactly(3L);
