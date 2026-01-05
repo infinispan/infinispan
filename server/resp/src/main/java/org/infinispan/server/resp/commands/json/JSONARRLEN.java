@@ -15,7 +15,7 @@ import org.infinispan.server.resp.json.EmbeddedJsonCache;
  */
 public class JSONARRLEN extends JSONLEN {
    public JSONARRLEN() {
-      super("JSON.ARRLEN", false, AclCategory.JSON.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
+      super("JSON.ARRLEN", AclCategory.JSON.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
    }
 
    @Override
@@ -25,6 +25,6 @@ public class JSONARRLEN extends JSONLEN {
 
    @Override
    protected void raiseTypeError(byte[] path) {
-      throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' does not exist or not an array");
+      throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' is not an array");
    }
 }
