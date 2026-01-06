@@ -1,0 +1,133 @@
+name: Rolling Upgrade Test Module
+
+on:
+  workflow_call:
+    inputs:
+      # The identifier for this matrix entry (e.g., 'standard', 'special-config')
+      name:
+        required: true
+        type: string
+      # The extra arguments to pass to the test (e.g., '-DcustomProperty=true')
+      maven-args:
+        required: false
+        type: string
+        default: ''
+      # Context inputs
+      run-id:
+        required: true
+        type: string
+      source-head-sha:
+        required: true
+        type: string
+    secrets:
+      GH_APP_ISPN_ID:
+        required: true
+      GH_APP_ISPN_KEY:
+        required: true
+
+jobs:
+  test:
+    name: Rolling Upgrades (${{ inputs.name }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
+
+      - name: Extract Maven Artifacts
+        uses: ./.github/actions/extract-maven-artifacts
+        with:
+          run-id: ${{ inputs.run-id }}
+
+      - name: Download Infinispan Server
+        id: dis
+        uses: ./.github/actions/download-infinispan
+        with:
+          run-id: ${{ inputs.run-id }}
+          github-token: ${{ github.token }}
+
+      - name: Extract Infinispan Server
+        working-directory: /tmp
+        run: unzip -q "${GITHUB_WORKSPACE}/infinispan-server-${{ steps.dis.outputs.server-version }}.zip"
+
+      - name: Extract Infinispan Source
+        run: |
+          mkdir test_dir && cd test_dir
+          unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
+          mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
+
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.GH_APP_ISPN_ID }}
+          private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+
+      # Create a unique Check Run for this specific matrix entry
+      - name: Create Check Run
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        id: create_check
+        run: |
+          CHECK_RUN=$(gh api repos/${{ github.repository }}/check-runs \
+            -H "Accept: application/vnd.github+json" \
+            -f name="Test Report Rolling Upgrades (${{ inputs.name }})" \
+            -f head_sha="${{ inputs.source-head-sha }}" \
+            -f status="in_progress" \
+            -f "output[summary]=Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            -f "output[title]=Waiting for report result..." \
+            --method POST \
+            --jq '.id')
+          echo "id=$CHECK_RUN" >> "$GITHUB_OUTPUT"
+
+      - name: Run Rolling Upgrade Tests
+        working-directory: test_dir/infinispan
+        run: |
+          ./mvnw verify -B -e -pl server/rollingupgradetests \
+            -Dmaven.test.failure.ignore=true \
+            -Dansi.strip=true \
+            -DskipRollingUpgradeTests=false \
+            -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
+            -Pcoverage ${{ inputs.maven-args }}
+
+      # Update Check Run Status
+      - name: Update Check Run (Failure)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh api repos/${{ github.repository }}/check-runs/${{ steps.create_check.outputs.id }} \
+            -H "Accept: application/vnd.github+json" \
+            -f status="completed" \
+            -f conclusion="failure" \
+            -f "output[title]=Run Failed" \
+            -f "output[summary]=Tests failed. See logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --method PATCH
+
+      - name: Archive commit sha PR
+        if: >
+          (success() || failure())
+        run: |
+          echo -n ${{ inputs.source-head-sha }} > github-sha.txt
+
+      # Upload Artifacts with a UNIQUE name based on the input name
+      # This allows the main workflow to distinguish between matrix runs
+      - name: Upload jacoco exec files
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: jacoco-files-rolling-upgrades-${{ inputs.name }}
+          path: |
+            test_dir/infinispan/server/rollingupgradetests/target/*.exec
+
+      - name: Upload surefire test report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: surefire-test-report-rolling-upgrades-${{ inputs.name }}
+          path: |
+            test_dir/infinispan/**/target/*-reports*/**/TEST-*.xml
+            !test_dir/infinispan/**/target/*-reports*/**/TEST-*FLAKY.xml
+            test_dir/infinispan/**/*.dump*
+            test_dir/infinispan/**/hs_err_*
+            github-sha.txt

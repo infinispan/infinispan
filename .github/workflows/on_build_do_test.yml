@@ -263,7 +263,7 @@ jobs:
   targets-test:
     needs: get-info
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    name: ${{ matrix.targets == 'tomcat' && 'tomcat' || matrix.targets == 'rolling-upgrades' && 'rolling-upgrades' || format('db ({0})', matrix.targets) }}
+    name: ${{ matrix.targets == 'tomcat' && 'tomcat' || format('db ({0})', matrix.targets) }}
     runs-on: ubuntu-latest
     env:
       TOMCAT_VERSION: 11.0.12
@@ -275,7 +275,6 @@ jobs:
           - oracle
           - db2
           - tomcat
-          - rolling-upgrades
     steps:
       - uses: actions/checkout@v6
 
@@ -359,25 +358,14 @@ jobs:
           integrationtests/server-integration/third-party-server/ \
           -DcatalinaHome="${CATALINA_HOME}" -Dinfinispan.server.integration.launch=tomcat
 
-
       - name: Test
-        if: ${{ matrix.targets != 'tomcat' && matrix.targets != 'rolling-upgrades' }}
+        if: ${{ matrix.targets != 'tomcat' }}
         run: |
           cd test_dir/infinispan && \
           ./mvnw verify -B -e -pl server/tests -Dmaven.test.failure.ignore=true \
             -Dansi.strip=true \
             -DdefaultTestGroup=database \
             -Dorg.infinispan.test.database.types=${{ matrix.targets }} \
-            -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
-            -Pcoverage
-
-      - name: Run rolling upgrades
-        if: ${{ matrix.targets == 'rolling-upgrades' }}
-        run: |
-          cd test_dir/infinispan && \
-          ./mvnw verify -B -e -pl server/rollingupgradetests -Dmaven.test.failure.ignore=true \
-            -Dansi.strip=true \
-            -DskipRollingUpgradeTests=false \
             -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
             -Pcoverage
 
@@ -435,15 +423,39 @@ jobs:
           name: jacoco-files-${{ matrix.targets }}
           path: |
             test_dir/infinispan/server/tests/target/*.exec
-            test_dir/infinispan/server/rollingupgradetests/target/*.exec
+
+
+  rolling-upgrades-matrix:
+    needs: get-info
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: "Rolling Upgrades (${{ matrix.targets.name }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        targets:
+          # The name here should match the reporting side in the on_test_publish_surefire_report workflow
+          - name: 'latest'
+            args: '-Dorg.infinispan.test.server.rolling.upgrade.from=latest'
+          - name: 'first-version'
+            args: '-Dorg.infinispan.test.server.rolling.upgrade.from=16.0.1'
+    uses: ./.github/workflows/rolling-upgrade-test.yml
+    with:
+      name: ${{ matrix.targets.name }}
+      maven-args: ${{ matrix.targets.args }}
+      run-id: ${{ github.event.workflow_run.id }}
+      source-head-sha: ${{ needs.get-info.outputs.source-head-sha }}
+    secrets:
+      GH_APP_ISPN_ID: ${{ secrets.GH_APP_ISPN_ID }}
+      GH_APP_ISPN_KEY: ${{ secrets.GH_APP_ISPN_KEY }}
 
   coverage:
-    needs: [get-info, ci-build-test-pr, targets-test]
+    needs: [get-info, ci-build-test-pr, targets-test, rolling-upgrades-matrix]
     if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.source-event == 'pull_request' }}
     name: Publish Coverage Report
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
+      ROLLING_UPGRADE_COVERAGE: 'latest'
     steps:
       - uses: actions/checkout@v6
 
@@ -539,7 +551,10 @@ jobs:
         run: |
           cd test_dir/infinispan-rolling-upgrade
           mvn clean install -DskipTests=true -pl server/rollingupgradetests -am
-          cp ${{ github.workspace }}/jacoco-files-rolling-upgrades/rollingupgradetests/target/*.exec server/rollingupgradetests/target/
+          
+          # COPY only the artifact for the primary variant
+          cp ${{ github.workspace }}/jacoco-files-rolling-upgrades-${{ env.ROLLING_UPGRADE_COVERAGE }}/*.exec server/rollingupgradetests/target/
+          
           mvn validate -P jacocoReport
           mkdir ${{ github.workspace }}/jacocoReport-rolling-upgrade
           cp -R jacoco-report/ ${{ github.workspace }}/jacocoReport-rolling-upgrade
