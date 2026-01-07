@@ -49,7 +49,12 @@ abstract class JSONNUM extends RespCommand implements Resp3Command {
     abstract CompletionStage<List<Number>> perform(EmbeddedJsonCache ejc, byte[] key, byte[] jsonPath, byte[] value);
 
     private static void collectionNumbers(List<Number> numbers, ResponseWriter writer) {
+        if (numbers != null) {
         writer.array(numbers, JSONNUM::singleNumber);
+        } else {
+            writer.error("-ERR result is not a number");
+        }
+
     }
 
     private static void singleNumber(Number number, ResponseWriter writer) {

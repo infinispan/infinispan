@@ -1326,6 +1326,64 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
               .hasMessage("ERR could not perform this operation on a key that doesn't exist");
    }
 
+   @Test
+   public void testJSONNUMINCRBYNonFinite() {
+      JsonPath jp = new JsonPath("$");
+      String key = k();
+
+      // Test infinity from overflow (addition)
+      redis.jsonSet(key, jp, defaultJsonParser.createJsonValue(String.valueOf(Double.MAX_VALUE)));
+      assertThatThrownBy(() -> redis.jsonNumincrby(key, jp, Double.MAX_VALUE))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR result is not a number");
+
+      // Test negative infinity from underflow
+      redis.jsonSet(key, jp, defaultJsonParser.createJsonValue(String.valueOf(-Double.MAX_VALUE)));
+      assertThatThrownBy(() -> redis.jsonNumincrby(key, jp, -Double.MAX_VALUE))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR result is not a number");
+
+      // Test with nested paths - one path produces infinity
+      JsonValue jv = defaultJsonParser.createJsonValue(
+            "{\"a\":" + Double.MAX_VALUE + ", \"b\": {\"a\":5}}");
+      redis.jsonSet(key, jp, jv);
+      assertThatThrownBy(() -> redis.jsonNumincrby(key, new JsonPath("$..a"), Double.MAX_VALUE))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR result is not a number");
+   }
+
+   @Test
+   public void testJSONNUMMULTBYNonFinite() {
+      JsonPath jp = new JsonPath("$");
+      String key = k();
+
+      // Test infinity from overflow (multiplication)
+      redis.jsonSet(key, jp, defaultJsonParser.createJsonValue(String.valueOf(Double.MAX_VALUE)));
+      assertThatThrownBy(() -> jsonMultBy(key, "$", 2))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR result is not a number");
+
+      // Test negative infinity
+      redis.jsonSet(key, jp, defaultJsonParser.createJsonValue(String.valueOf(Double.MAX_VALUE)));
+      assertThatThrownBy(() -> jsonMultBy(key, "$", -2))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR result is not a number");
+
+      // Test NaN scenario: 0 * very large number approaching infinity
+      redis.jsonSet(key, jp, defaultJsonParser.createJsonValue(String.valueOf(1e308)));
+      assertThatThrownBy(() -> jsonMultBy(key, "$", 10))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR result is not a number");
+
+      // Test with nested paths - one path produces infinity
+      JsonValue jv = defaultJsonParser.createJsonValue(
+            "{\"a\":" + Double.MAX_VALUE + ", \"b\": {\"a\":2}}");
+      redis.jsonSet(key, jp, jv);
+      assertThatThrownBy(() -> jsonMultBy(key, "$..a", 2))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR result is not a number");
+   }
+
    private List<Number> jsonMultBy(String key, String path, int multiplier) {
       RedisCodec<String, String> codec = StringCodec.UTF8;
       return redis.dispatch(TestCommandType.JSON_NUMMULTBY, new NumberListOutput<>(codec),
