@@ -11,8 +11,8 @@ import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.impl.BaseQueryResponse;
 import org.infinispan.query.remote.client.impl.JsonClientQueryResponse;
 import org.infinispan.query.remote.client.impl.QueryRequest;
@@ -40,33 +40,25 @@ enum QuerySerializer {
    DEFAULT(MATCH_ALL) {
       @Override
       byte[] serializeQueryRequest(RemoteQuery<?> remoteQuery, QueryRequest queryRequest) {
-         final SerializationContext serCtx = remoteQuery.getSerializationContext();
-         Marshaller marshaller;
-         if (serCtx != null) {
-            try {
-               return ProtobufUtil.toByteArray(serCtx, queryRequest);
-            } catch (IOException e) {
-               throw new HotRodClientException(e);
+         Marshaller marshaller = remoteQuery.getCache().getMarshaller();
+         try {
+            if (marshaller instanceof ProtoStreamMarshaller && remoteQuery.getSerializationContext() != null) {
+               return ProtobufUtil.toByteArray(remoteQuery.getSerializationContext(), queryRequest);
             }
-         } else {
-            marshaller = remoteQuery.getCache().getRemoteCacheContainer().getMarshaller();
-            try {
-               return marshaller.objectToByteBuffer(queryRequest);
-            } catch (IOException e) {
-               throw new HotRodClientException(e);
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-               throw new HotRodClientException(e);
-            }
+            return marshaller.objectToByteBuffer(queryRequest);
+         } catch (IOException e) {
+            throw new HotRodClientException(e);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new HotRodClientException(e);
          }
       }
 
       @Override
       QueryResponse readQueryResponse(Marshaller marshaller, RemoteQuery<?> remoteQuery, byte[] bytesResponse) {
-         SerializationContext serCtx = remoteQuery.getSerializationContext();
-         if (serCtx != null) {
+         if (marshaller instanceof ProtoStreamMarshaller) {
             try {
-               return ProtobufUtil.fromByteArray(serCtx, bytesResponse, QueryResponse.class);
+               return ProtobufUtil.fromByteArray(remoteQuery.getSerializationContext(), bytesResponse, QueryResponse.class);
             } catch (IOException e) {
                throw new HotRodClientException(e);
             }
