@@ -43,6 +43,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration;
 import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
@@ -69,6 +70,7 @@ import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
@@ -106,6 +108,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    protected DataFormat dataFormat;
    protected ClientStatistics clientStatistics;
    protected ObjectName mbeanObjectName;
+   protected Marshaller marshaller;
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService,
                           Function<InternalRemoteCache<K,V>, CacheOperationsFactory> factoryFunction) {
@@ -126,6 +129,30 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       this.clientListenerNotifier = rcm.getListenerNotifier();
       this.flagInt = rcm.getConfiguration().forceReturnValues() ? Flag.FORCE_RETURN_VALUE.getFlagInt() : 0;
       this.queryFactory = new RemoteQueryFactory(this);
+   }
+
+   @Override
+   public Marshaller getMarshaller() {
+      if (this.marshaller == null) {
+         RemoteCacheContainer container = this.getRemoteCacheContainer();
+         RemoteCacheConfiguration remoteCacheConfiguration = container.getConfiguration().remoteCaches().get(this.getName());
+         if (remoteCacheConfiguration != null) {
+            // Use the marshaller configured for the cache on client side
+            this.marshaller = remoteCacheConfiguration.marshaller();
+            if (this.marshaller == null) {
+               // Use the marshaller class configured for the cache on client side
+               Class<? extends Marshaller> marshallerClass = remoteCacheConfiguration.marshallerClass();
+               if (marshallerClass != null) {
+                  this.marshaller = container.getMarshallerRegistry().getMarshaller(marshallerClass);
+               }
+            }
+         }
+         if (this.marshaller == null) {
+            // If the marshaller is still null, use the default marshaller
+            this.marshaller = container.getMarshaller();
+         }
+      }
+      return this.marshaller;
    }
 
    protected RemoteCacheImpl(RemoteCacheImpl<?, ?> other, int flagInt) {
