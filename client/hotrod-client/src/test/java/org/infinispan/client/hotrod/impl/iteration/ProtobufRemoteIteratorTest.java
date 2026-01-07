@@ -98,7 +98,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest {
 
       assertForAll(values, s -> s instanceof String);
 
-      Marshaller marshaller = clients.iterator().next().getMarshaller();
+      Marshaller marshaller = cache.getMarshaller();
       LocalizedCacheTopology cacheTopology = advancedCache(0).getDistributionManager().getCacheTopology();
 
       assertKeysInSegment(results, segments, marshaller, cacheTopology::getSegment);

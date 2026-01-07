@@ -213,11 +213,11 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
 
    @Override
    public void resolveStorage(MediaType key, MediaType value) {
-      if (key != null && !delegate.getRemoteCacheManager().getMarshaller().mediaType().match(key)) {
+      if (key != null && !delegate.getMarshaller().mediaType().match(key)) {
          // The server has a storage type which the cache marshaller does not handle.
          // This could lead to losing events in the bloom filter, where the client and server see the key differently.
          // To avoid this issue, the client negotiate the type when installing the listener, but it needs a proper configuration.
-         Class<? extends Marshaller> marshallerClass = delegate.getRemoteCacheManager().getMarshaller().getClass();
+         Class<? extends Marshaller> marshallerClass = delegate.getMarshaller().getClass();
          log.invalidateNearDefaultMarshallerMismatch(delegate.getName(), marshallerClass, key);
          listenerChannel = nearcache.start(this);
          delegate.resolveStorage(key, value);

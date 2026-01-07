@@ -453,6 +453,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return checkTransactionSupport(cacheName, managerOpFactory, dispatcher, log);
    }
 
+   @Override
    public MarshallerRegistry getMarshallerRegistry() {
       return marshallerRegistry;
    }

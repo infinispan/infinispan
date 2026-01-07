@@ -650,7 +650,7 @@ public class HotRodCacheEvents {
             new CustomEventLogListener.RawStaticCustomEventLogListener<>(remoteCache(protocolVersion));
       listener.accept((l, remote) -> {
          l.expectNoEvents();
-         Marshaller marshaller = remote.getRemoteCacheContainer().getMarshaller();
+         Marshaller marshaller = remote.getMarshaller();
          Integer key = 1;
          String value = "one";
          try {
