@@ -1,5 +1,7 @@
 package org.infinispan.cli.commands;
 
+import static org.infinispan.commons.util.Util.EMPTY_STRING_ARRAY;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Reader;
@@ -11,6 +13,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.UnrecoverableKeyException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -67,6 +70,7 @@ import org.infinispan.cli.commands.rest.Task;
 import org.infinispan.cli.commands.rest.Topology;
 import org.infinispan.cli.commands.troubleshoot.Troubleshoot;
 import org.infinispan.cli.completers.ContextAwareCompleterInvocationProvider;
+import org.infinispan.cli.completers.OnErrorCompleter;
 import org.infinispan.cli.connection.RegexHostnameVerifier;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.cli.impl.CliAliasManager;
@@ -184,6 +188,12 @@ public class CLI extends CliCommand {
    @Option(name = "hostname-verifier", description = "A regular expression used to match hostnames when connecting to SSL/TLS-enabled servers")
    String hostnameVerifier;
 
+   @Option(name = "on-error", description = "Action to take when a command fails", completer = OnErrorCompleter.class, defaultValue = "FAIL_FAST")
+   String onError;
+
+   @Option(description = "Whether to echo commands to the output", hasValue = false)
+   boolean echo;
+
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
 
@@ -191,6 +201,8 @@ public class CLI extends CliCommand {
    public boolean isHelp() {
       return help;
    }
+
+   private OnErrorCompleter.OnError oe;
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -203,6 +215,7 @@ public class CLI extends CliCommand {
          invocation.printf("License Apache License, v. 2.0. https://www.apache.org/licenses/LICENSE-2.0\n");
          return CommandResult.SUCCESS;
       }
+      oe = OnErrorCompleter.OnError.valueOf(onError);
 
       context = invocation.getContext();
 
@@ -291,13 +304,13 @@ public class CLI extends CliCommand {
       runtimeBuilder.shell(shell);
 
       CliRuntimeRunner cliRunner = new CliRuntimeRunner("batch", runtimeBuilder.build());
-      String[] args = new String[inputFiles.size() + 1];
-      args[0] = "run";
-      for (int i = 0; i < inputFiles.size(); i++) {
-         args[i + 1] = inputFiles.get(i);
-      }
+      List<String> args = new ArrayList<>();
+      args.add("run");
+      args.add("--echo=" + echo);
+      args.add("--on-error=" + oe.name());
+      args.addAll(inputFiles);
       int exitCode = cliRunner
-            .args(args)
+            .args(args.toArray(EMPTY_STRING_ARRAY))
             .execute();
       context.disconnect();
       return CommandResult.valueOf(exitCode);
@@ -385,6 +398,7 @@ public class CLI extends CliCommand {
    }
 
    public static int main(Shell shell, String[] args, Properties properties, boolean kube) {
+      ExitCodeResultHandler.reset();
       CommandRuntime<?> runtime = null;
       try {
          SecurityActions.addSecurityProvider(WildFlyElytronCredentialStoreProvider.getInstance());
@@ -400,7 +414,7 @@ public class CLI extends CliCommand {
    }
 
    public static int main(Shell shell, Properties properties, String... args) {
-      return main(shell, args == null ? Util.EMPTY_STRING_ARRAY : args, properties, isKubernetesMode());
+      return main(shell, args == null ? EMPTY_STRING_ARRAY : args, properties, isKubernetesMode());
    }
 
    public static void main(String... args) throws IOException {
