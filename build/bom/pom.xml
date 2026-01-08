@@ -45,7 +45,7 @@
       <!-- Maven plugins -->
       <version.maven.gpg>3.2.8</version.maven.gpg>
       <version.maven.javadoc>3.12.0</version.maven.javadoc>
-      <version.maven.sonatype.central>0.9.0</version.maven.sonatype.central>
+      <version.maven.sonatype.central>0.10.0</version.maven.sonatype.central>
    </properties>
 
    <dependencyManagement>
