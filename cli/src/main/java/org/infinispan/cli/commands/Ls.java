@@ -13,6 +13,8 @@ import org.infinispan.cli.completers.CdContextCompleter;
 import org.infinispan.cli.completers.ListFormatCompleter;
 import org.infinispan.cli.completers.PrettyPrintCompleter;
 import org.infinispan.cli.connection.Connection;
+import org.infinispan.cli.converters.ListFormatConverter;
+import org.infinispan.cli.converters.PrettyPrintConverter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.printers.PrettyPrinter;
 import org.infinispan.cli.resources.Resource;
@@ -29,11 +31,11 @@ public class Ls extends CliCommand {
    @Argument(description = "The path of the subsystem/item", completer = CdContextCompleter.class)
    String path;
 
-   @Option(shortName = 'f', description = "Use a listing format (supported only by some resources)", defaultValue = "NAMES", completer = ListFormatCompleter.class)
-   String format;
+   @Option(shortName = 'f', description = "Use a listing format (supported only by some resources)", defaultValue = "NAMES", completer = ListFormatCompleter.class, converter = ListFormatConverter.class)
+   Resource.ListFormat format;
 
-   @Option(shortName = 'p', name = "pretty-print", description = "Pretty-print the output", defaultValue = "TABLE", completer = PrettyPrintCompleter.class)
-   String prettyPrint;
+   @Option(shortName = 'p', name = "pretty-print", description = "Pretty-print the output", defaultValue = "TABLE", completer = PrettyPrintCompleter.class, converter = PrettyPrintConverter.class)
+   PrettyPrinter.PrettyPrintMode prettyPrint;
 
    @Option(shortName = 'l', hasValue = false, description = "Shortcut for -f FULL.")
    boolean l;
@@ -56,7 +58,7 @@ public class Ls extends CliCommand {
          connection.refreshServerInfo();
          Resource resource = connection.getActiveResource().getResource(path);
 
-         resource.printChildren(l ? Resource.ListFormat.FULL : Resource.ListFormat.valueOf(format), maxItems, PrettyPrinter.PrettyPrintMode.valueOf(prettyPrint), invocation.getShell());
+         resource.printChildren(l ? Resource.ListFormat.FULL : format, maxItems, prettyPrint, invocation.getShell());
 
          return CommandResult.SUCCESS;
       } catch (IOException e) {

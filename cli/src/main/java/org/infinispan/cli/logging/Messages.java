@@ -9,8 +9,9 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 
-import org.aesh.command.CommandException;
 import org.aesh.command.parser.RequiredOptionException;
+import org.infinispan.cli.completers.EncryptionCompleter;
+import org.infinispan.cli.completers.ExposeCompleter;
 import org.infinispan.cli.patching.PatchInfo;
 import org.infinispan.cli.patching.PatchOperation;
 import org.infinispan.cli.resources.Resource;
@@ -202,8 +203,12 @@ public interface Messages {
    @Message(value = "Filter rule '%s' is not in the format [ACCEPT|REJECT]/{CIDR}")
    IllegalArgumentException illegalFilterRule(String rule);
 
-   @Message(value = "Error executing file: %s, line %d: '%s'")
-   CommandException batchError(String file, int lineNumber, String line, @Cause Throwable t);
+   @Message(value = "Batch error: %s, line %d: '%s'")
+   String batchError(String file, int lineNumber, String line, @Cause Throwable t);
+
+   default String batchError(String file, int lineNumber, String line) {
+      return batchError(file, lineNumber, line, null);
+   }
 
    @Message("Option '%s' requires option '%s'")
    RequiredOptionException requiresAllOf(String option1, String option2);
@@ -227,10 +232,10 @@ public interface Messages {
    IllegalStateException noOperatorSubscription(String namespace);
 
    @Message("Expose type '%s' requires a port")
-   IllegalArgumentException exposeTypeRequiresPort(String exposeType);
+   IllegalArgumentException exposeTypeRequiresPort(ExposeCompleter.Expose exposeType);
 
    @Message("Encryption type '%s' requires a secret name")
-   IllegalArgumentException encryptionTypeRequiresSecret(String encryptionType);
+   IllegalArgumentException encryptionTypeRequiresSecret(EncryptionCompleter.Encryption encryptionType);
 
    @Message("No running pods available in service %s")
    IllegalStateException noRunningPodsInService(String name);
