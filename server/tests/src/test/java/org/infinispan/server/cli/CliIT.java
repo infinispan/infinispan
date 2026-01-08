@@ -36,10 +36,10 @@ public class CliIT {
 
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
-         InfinispanServerExtensionBuilder.config("configuration/AuthorizationImplicitTest.xml")
-               .mavenArtifacts(Common.NASHORN_DEPS)
-               .runMode(ServerRunMode.CONTAINER)
-               .build();
+      InfinispanServerExtensionBuilder.config("configuration/AuthorizationImplicitTest.xml")
+         .mavenArtifacts(Common.NASHORN_DEPS)
+         .runMode(ServerRunMode.CONTAINER)
+         .build();
 
    private static File workingDir;
    private static Properties properties;
@@ -177,7 +177,7 @@ public class CliIT {
    public void testCliBatch() {
       System.setProperty("serverAddress", hostAddress());
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{"-f", getCliResource("batch.cli").getPath()}, properties);
+      CLI.main(shell, new String[]{"-f", getCliResource("batch.cli").getPath()}, properties, false);
       shell.assertContains("Hi CLI running on " + System.getProperty("os.arch"));
       shell.assertContains("batch1");
    }
@@ -186,7 +186,7 @@ public class CliIT {
    public void testCliBatchError() {
       System.setProperty("serverAddress", hostAddress());
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{"-f", getCliResource("batch-error.cli").getPath()}, properties);
+      CLI.main(shell, new String[]{"-f", getCliResource("batch-error.cli").getPath()}, properties, false);
       shell.assertContains("Hi CLI running on " + System.getProperty("os.arch"));
       shell.assertContains("batch-error.cli, line 2");
    }
@@ -194,7 +194,7 @@ public class CliIT {
    @Test
    public void testCliBatchPreconnect() {
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{"-c", connectionUrl(), "-f", getCliResource("batch-preconnect.cli").getPath()}, properties);
+      CLI.main(shell, new String[]{"-c", connectionUrl(), "-f", getCliResource("batch-preconnect.cli").getPath()}, properties, false);
       shell.assertContains("Hi CLI");
       shell.assertContains("batch2");
    }

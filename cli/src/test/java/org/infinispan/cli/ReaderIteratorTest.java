@@ -30,29 +30,30 @@ public class ReaderIteratorTest {
 
    @Test
    public void testStructuredJSONIterator() throws IOException {
-      String json = "[{\"key\":\n" +
-            "{\n" +
-            "   \"_type\": \"string\",\n" +
-            "   \"_value\": \"k1\"\n" +
-            "}\n" +
-            ",\"value\":\n" +
-            "{\n" +
-            "   \"_type\": \"string\",\n" +
-            "   \"_value\": \"v1\"\n" +
-            "}\n" +
-            ",\"timeToLiveSeconds\": 12000, \"maxIdleTimeSeconds\": 12000, \"created\": 1655871119343, \"lastUsed\": 1655871119343, \"expireTime\": 1655883119343}," +
-            "{\"key\":\n" +
-            "{\n" +
-            "   \"_type\": \"string\",\n" +
-            "   \"_value\": \"k2\"\n" +
-            "}\n" +
-            ",\"value\":\n" +
-            "{\n" +
-            "   \"_type\": \"string\",\n" +
-            "   \"_value\": \"v2\"\n" +
-            "}\n" +
-            ",\"timeToLiveSeconds\": 12000, \"maxIdleTimeSeconds\": 12000, \"created\": 1655871119343, \"lastUsed\": 1655871119343, \"expireTime\": 1655883119343}," +
-            "]";
+      String json = """
+            [{"key":
+            {
+               "_type": "string",
+               "_value": "k1"
+            }
+            ,"value":
+            {
+               "_type": "string",
+               "_value": "v1"
+            }
+            ,"timeToLiveSeconds": 12000, "maxIdleTimeSeconds": 12000, "created": 1655871119343, "lastUsed": 1655871119343, "expireTime": 1655883119343},\
+            {"key":
+            {
+               "_type": "string",
+               "_value": "k2"
+            }
+            ,"value":
+            {
+               "_type": "string",
+               "_value": "v2"
+            }
+            ,"timeToLiveSeconds": 12000, "maxIdleTimeSeconds": 12000, "created": 1655871119343, "lastUsed": 1655871119343, "expireTime": 1655883119343},\
+            ]""";
       StringReader r = new StringReader(json);
       JsonReaderIterator iterator = new JsonReaderIterator(r);
       assertTrue(iterator.hasNext());
