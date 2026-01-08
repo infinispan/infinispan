@@ -14,6 +14,8 @@ import org.aesh.command.option.OptionGroup;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.EncryptionCompleter;
 import org.infinispan.cli.completers.ExposeCompleter;
+import org.infinispan.cli.converters.EncryptionConverter;
+import org.infinispan.cli.converters.ExposeConverter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.KubernetesContext;
 import org.infinispan.cli.logging.Messages;
@@ -62,8 +64,8 @@ public class Create extends CliCommand {
       @Option(shortName = 'v', description = "Specifies the server version. If omitted, the latest available version will be used.")
       String version;
 
-      @Option(name = "expose-type", completer = ExposeCompleter.class, description = "Makes the service available on the network through a LoadBalancer, NodePort, or Route.")
-      String exposeType;
+      @Option(name = "expose-type", description = "Makes the service available on the network through a LoadBalancer, NodePort, or Route.", completer = ExposeCompleter.class, converter = ExposeConverter.class)
+      ExposeCompleter.Expose exposeType;
 
       @Option(name = "expose-port", defaultValue = "0", description = "Sets the network port where the service is available. You must set a port if the expose type is LoadBalancer or NodePort.")
       int exposePort;
@@ -71,8 +73,8 @@ public class Create extends CliCommand {
       @Option(name = "expose-host", description = "Optionally sets the hostname if the expose type is Route.")
       String exposeHost;
 
-      @Option(name = "encryption-type", completer = EncryptionCompleter.class, description = "The type of encryption: one of None, Secret, Service")
-      String encryptionType;
+      @Option(name = "encryption-type", description = "The type of encryption: one of None, Secret, Service", completer = EncryptionCompleter.class, converter = EncryptionConverter.class)
+      EncryptionCompleter.Encryption encryptionType;
 
       @Option(name = "encryption-secret", description = "The name of the secret containing the TLS certificate")
       String encryptionSecret;
@@ -111,7 +113,7 @@ public class Create extends CliCommand {
             GenericKubernetesResource expose = new GenericKubernetesResource();
             spec.setAdditionalProperty("expose", expose);
             expose.setAdditionalProperty("type", exposeType);
-            switch (ExposeCompleter.Expose.valueOf(exposeType)) {
+            switch (exposeType) {
                case LoadBalancer:
                   if (exposePort == 0) {
                      throw Messages.MSG.exposeTypeRequiresPort(exposeType);
@@ -137,7 +139,7 @@ public class Create extends CliCommand {
             GenericKubernetesResource encryption = new GenericKubernetesResource();
             security.setAdditionalProperty("endpointEncryption", encryption);
             encryption.setAdditionalProperty("type", encryptionType);
-            if (EncryptionCompleter.Encryption.valueOf(encryptionType) == EncryptionCompleter.Encryption.Secret) {
+            if (encryptionType == EncryptionCompleter.Encryption.Secret) {
                if (encryptionSecret != null) {
                   encryption.setAdditionalProperty("certSecretName", encryptionSecret);
                } else {
