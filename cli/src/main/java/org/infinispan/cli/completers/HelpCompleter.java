@@ -8,7 +8,7 @@ import org.aesh.command.completer.OptionCompleter;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.registry.CommandRegistry;
 
-public class HelpCompleter implements OptionCompleter {
+public class HelpCompleter implements OptionCompleter<CompleterInvocation> {
    @Override
    public void complete(CompleterInvocation invocation) {
       List<String> completeValues = new ArrayList<>();
