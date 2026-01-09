@@ -16,7 +16,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.server.resp.logging.Messages;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.core.tags.Resilience;
@@ -101,7 +100,7 @@ public class NativeMissingResilienceIT {
          RedisCommands<String, String> redis = conn.sync();
          assertThatThrownBy(() -> redis.eval("return redis.call('set', KEYS[1], ARGV[1])", ScriptOutputType.STATUS, new String[]{ "key", "value" }))
                .isInstanceOf(RedisCommandExecutionException.class)
-               .hasMessageContaining(Messages.MESSAGES.scriptEngineDisabled());
+               .hasMessageContaining("Lua engine is not active");
       }
    }
 
