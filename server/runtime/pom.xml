@@ -19,6 +19,7 @@
       <maven.compiler.target>25</maven.compiler.target>
       <maven.compiler.release>25</maven.compiler.release>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+      <version.lucene>${version.lucene10}</version.lucene>
       <defaultTestGroup/>
       <defaultExcludedTestGroup/>
       <server.output.dir>${project.build.directory}/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.output.dir>
@@ -45,6 +46,20 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-rest</artifactId>
          <type>jar</type>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-query</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>org.hibernate.search</groupId>
+               <artifactId>hibernate-search-backend-lucene</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      <dependency>
+         <groupId>org.hibernate.search</groupId>
+         <artifactId>hibernate-search-backend-lucene-next</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
