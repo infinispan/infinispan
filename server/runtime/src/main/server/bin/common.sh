@@ -329,7 +329,7 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
             exit
         fi
         PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:AOTCacheOutput=${AOT_CACHE} -Dinfinispan.shutdown.immediately=true -Djgroups.join_timeout=0"
-    elif [ -f "$AOT_CACHE" ]; then
+    elif [ -f "$AOT_CACHE" ] && [ "$JMX_REMOTING" != "true" ]; then
         # If an AOT cache is present, use it
         PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:AOTMode=on -XX:AOTCache=$AOT_CACHE"
     fi
