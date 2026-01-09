@@ -18,6 +18,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
 
     - name: Setup Java
       uses: ./.github/actions/setup-java
@@ -26,11 +28,12 @@ jobs:
       run: ./mvnw install -Pdistribution -pl documentation -am
 
     - name: Clone infinispan.github.io
-      uses: actions/checkout@master
+      uses: actions/checkout@v6
       with:
         repository: infinispan/infinispan.github.io
         ref: master
         path: infinispan.github.io
+        persist-credentials: false
 
     - if: github.ref != 'refs/heads/main'
       name: Copy docs to version
@@ -45,7 +48,6 @@ jobs:
     - name: Commit files
       run: |
         cd infinispan.github.io
-        git config -l | grep 'http\..*\.extraheader' | cut -d= -f1 | xargs -L1 git config --unset-all
         git config --global user.email "infinispan@infinispan.org"
         git config --global user.name "Infinispan"
         git add . --all
