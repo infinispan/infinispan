@@ -1,5 +1,11 @@
 == Upgrading from 16.0 to 16.1
 
+=== Require JDK 25 for Infinispan Server
+
+Infinispan Server now requires JDK 25. This only affects the server distribution and the container image.
+It does not affect the individual server modules (aside from `infinispan-server-runtime`) nor the Hot Rod client
+applications.
+
 === Metrics
 
 ==== JVM metrics no longer registered by default
