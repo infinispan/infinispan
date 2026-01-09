@@ -20,6 +20,18 @@
           ]
         },
         {
+          "description": "Boolean indexed queries may be rewritten by Lucene and use more clauses internally",
+          "issue": "https://github.com/infinispan/infinispan/issues/16477",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.hotrod.HotRodCacheQueries",
+              "test-methods": [
+                "testManyInClauses"
+              ]
+            }
+          ]
+        },
+        {
           "description": "Legacy metrics are disabled by default",
           "issue": "https://github.com/infinispan/infinispan/issues/16392",
           "test-failures": []

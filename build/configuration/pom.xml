@@ -125,6 +125,8 @@
       <version.junit6>6.0.0</version.junit6>
       <version.log4j>2.25.3</version.log4j>
       <!-- version.lucene is defined in the lucene profiles below -->
+      <version.lucene9>9.12.3</version.lucene9>
+      <version.lucene10>10.3.2</version.lucene10>
       <version.metainf-services>1.11</version.metainf-services>
       <version.micrometer>1.16.2</version.micrometer>
       <version.mockito>5.21.0</version.mockito>
@@ -278,14 +280,14 @@
             <activeByDefault>true</activeByDefault>
          </activation>
          <properties>
-            <version.lucene>9.12.3</version.lucene>
+            <version.lucene>${version.lucene9}</version.lucene>
             <hibernate.search.backend.artifactId>hibernate-search-backend-lucene</hibernate.search.backend.artifactId>
          </properties>
       </profile>
       <profile>
          <id>lucene10</id>
          <properties>
-            <version.lucene>10.2.2</version.lucene>
+            <version.lucene>${version.lucene10}</version.lucene>
             <hibernate.search.backend.artifactId>hibernate-search-backend-lucene-next</hibernate.search.backend.artifactId>
          </properties>
       </profile>

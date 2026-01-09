@@ -1,12 +1,12 @@
 package org.infinispan.server.functional.hotrod;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -197,16 +197,8 @@ public class HotRodCacheQueries {
       User fromCache = remoteCache.get(1);
       assertUser1(fromCache);
 
-      Set<String> values = new HashSet<>();
-      values.add("Tom");
-      for (int i = 0; i < 1024; i++) {
-         values.add("test" + i);
-      }
-      Query<User> query = remoteCache.query("from sample_bank_account.User where name in (" + values.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) +")");
-
-      // this Ickle query translates to a BooleanQuery with 1025 clauses, 1 more than the max default (1024) so
-      // executing it will fail unless the server jvm arg -Dinfinispan.query.lucene.max-boolean-clauses=1025 takes effect
-
+      // Stay within the bound set by infinispan.query.lucene.max-boolean-clauses
+      Query<User> query = getUserQueryWithClauses(remoteCache, ClusteredIT.MAX_BOOLEAN_CLAUSES - 5);
       List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -219,22 +211,22 @@ public class HotRodCacheQueries {
    public void testWayTooManyInClauses(boolean indexed) {
       RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
 
-      Set<String> values = new HashSet<>();
-      for (int i = 0; i < 1026; i++) {
-         values.add("test" + i);
-      }
-
-      Query<User> query = remoteCache.query("from sample_bank_account.User where name in (" + values.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) +")");
-
-      // this Ickle query translates to a BooleanQuery with 1026 clauses, 1 more than the configured
-      // -Dinfinispan.query.lucene.max-boolean-clauses=1025, so executing the query is expected to fail
-
+      // Exceed the bound set by infinispan.query.lucene.max-boolean-clauses
+      Query<User> query = getUserQueryWithClauses(remoteCache, ClusteredIT.MAX_BOOLEAN_CLAUSES + 5);
       if (indexed) {
-         Exception expectedException = assertThrows(HotRodClientException.class, query::execute);
-         assertTrue(expectedException.getMessage().contains("maxClauseCount is set to 1025"));
+         assertThatThrownBy(query::execute).isInstanceOf(HotRodClientException.class).hasMessageContaining("maxClauseCount is set to");
       } else {
          query.execute();
       }
+   }
+
+   private static Query<User> getUserQueryWithClauses(RemoteCache<Integer, User> remoteCache, int clauses) {
+      Set<String> values = new HashSet<>();
+      values.add("Tom");
+      for (int i = 0; i < clauses - 1; i++) {
+         values.add("test" + i);
+      }
+      return remoteCache.query("from sample_bank_account.User where name in (" + values.stream().collect(Collectors.joining("\",\"", "\"", "\"")) + ")");
    }
 
    @ParameterizedTest
@@ -256,9 +248,9 @@ public class HotRodCacheQueries {
    @Test
    public void testProjectionAndFilteringOnEmbeddedData() {
       RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,
-              TestDomainSCI.INSTANCE, "sample_bank_account.KeywordVector");
+            TestDomainSCI.INSTANCE, "sample_bank_account.KeywordVector");
       for (int i = 0; i < 10; i++) {
-         List<Metadata> metadata = Arrays.asList(new Metadata("key1", "value" + i), new Metadata("key2", "value" + i%2));
+         List<Metadata> metadata = Arrays.asList(new Metadata("key1", "value" + i), new Metadata("key2", "value" + i % 2));
          KeywordVector keywordVector = createImage(i, 50, metadata);
          remoteCache.put(keywordVector.getName(), keywordVector);
       }
@@ -270,11 +262,11 @@ public class HotRodCacheQueries {
    @Test
    public void testVectorSearch() {
       RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,
-              TestDomainSCI.INSTANCE, "sample_bank_account.KeywordVector");
+            TestDomainSCI.INSTANCE, "sample_bank_account.KeywordVector");
 
       KeywordVector center = null;
       for (int i = 0; i < 10; i++) {
-         List<Metadata> metadata = Arrays.asList(new Metadata("key1", "value" + i), new Metadata("key2", "value" + i%2));
+         List<Metadata> metadata = Arrays.asList(new Metadata("key1", "value" + i), new Metadata("key2", "value" + i % 2));
          KeywordVector keywordVector = createImage(i, 50, metadata);
          if (i == 7) {
             center = keywordVector;
