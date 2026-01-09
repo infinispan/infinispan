@@ -331,7 +331,7 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
         PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:AOTCacheOutput=${AOT_CACHE} -Dinfinispan.shutdown.immediately=true -Djgroups.join_timeout=0"
     elif [ -f "$AOT_CACHE" ]; then
         # If an AOT cache is present, use it
-        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:AOTMode=on -XX:AOTCache=$AOT_CACHE"
+        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:AOTMode=auto -XX:AOTCache=$AOT_CACHE"
     fi
 
     if [ "$GC_LOG" = "true" ]; then
