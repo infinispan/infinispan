@@ -13,10 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.CopyArgs;
 import io.lettuce.core.GetExArgs;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisCommandExecutionException;
@@ -690,5 +693,143 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       expected.add(KeyValue.just("k4", "v4"));
       expected.add(KeyValue.empty("k5"));
       assertThat(results).containsExactlyElementsOf(expected);
+   }
+
+   @Test
+   public void testCopyNotPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String nonPresentKey = "missingKey";
+      String newKey = "newKey";
+      Boolean returnValue = redis.copy(nonPresentKey, newKey);
+      assertThat(returnValue.booleanValue()).isFalse();
+   }
+
+   @Test
+   public void testCopy() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      //Prepare data
+      String key = "key";
+      String value = "value";
+      String newKey = "newKey";
+      redis.set(key, value);
+
+      Boolean returnValue = redis.copy(key, newKey);
+      assertThat(returnValue.booleanValue()).isTrue();
+      assertThat(redis.get(newKey)).isEqualTo(value);
+   }
+
+   @Test
+   public void testCopyToExistingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      //Prepare data
+      String key = "key";
+      String value = "value";
+      String existingKey = "existingKey";
+      String existingValue = "existingValue";
+      redis.set(key, value);
+      redis.set(existingKey, existingValue);
+
+      Boolean returnValue = redis.copy(key, existingKey);
+      assertThat(returnValue.booleanValue()).isFalse();
+      assertThat(redis.get(existingKey)).isEqualTo(existingValue);
+   }
+
+   public void testCopyWithReplaceToNonExistingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      //Prepare data
+      String key = "key";
+      String value = "value";
+      String nonExistingKey = "existingKey";
+      redis.set(key, value);
+
+      var copyArgs = new CopyArgs().replace(true);
+      Boolean returnValue = redis.copy(key, nonExistingKey, copyArgs);
+
+      assertThat(returnValue.booleanValue()).isTrue();
+      assertThat(redis.get(nonExistingKey)).isEqualTo(value);
+   }
+
+   public void testCopyToExistingKeyWithReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      //Prepare data
+      String key = "key";
+      String value = "value";
+      String existingKey = "existingKey";
+      String existingValue = "existingValue";
+      redis.set(key, value);
+      redis.set(existingKey, existingValue);
+
+      CopyArgs copyArgs = new CopyArgs();
+      copyArgs.replace(true);
+      Boolean returnValue = redis.copy(key, existingKey, copyArgs);
+
+      assertThat(returnValue.booleanValue()).isTrue();
+      assertThat(redis.get(existingKey)).isEqualTo(value);
+   }
+
+   public void testCopyToNewDB() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      //Creating the new DB
+      manager(0).createCache("1", builder.build());
+
+      //Prepare data
+      String key = "key";
+      String value = "value";
+      String newKey = "newKey";
+      redis.set(key, value);
+
+      var copyArgs = new CopyArgs().destinationDb(1);
+      Boolean returnValue = redis.copy(key, newKey, copyArgs);
+      assertThat(returnValue.booleanValue()).isTrue();
+      assertThat(redis.get(newKey)).isEqualTo(null);
+
+      //switching DB
+      redis.select(1);
+      assertThat(redis.get(newKey)).isEqualTo(value);
+      redis.select(0);
+   }
+
+   public void testCopyToNewDBWithReplace() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      //Prepare data
+      String key = "key";
+      String value = "value";
+      String existingKey = "newKey";
+      String existingValue = "newValue";
+      redis.set(key, value);
+      //Adding data to other db and switching back
+      redis.select(1);
+      redis.set(existingKey, existingValue);
+      redis.select(0);
+
+      var copyArgs = new CopyArgs().destinationDb(1).replace(true);
+      Boolean returnValue = redis.copy(key, existingKey, copyArgs);
+      assertThat(returnValue.booleanValue()).isTrue();
+      assertThat(redis.get(existingKey)).isEqualTo(null);
+
+      //switching DB
+      redis.select(1);
+      assertThat(redis.get(existingKey)).isEqualTo(value);
+      redis.select(0);
+   }
+
+   public void testCopyToNonExistentDB() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      //Prepare data
+      String key = "key";
+      String value = "value";
+      String newKey = "newKey";
+      redis.set(key, value);
+
+      var copyArgs = new CopyArgs().destinationDb(5);
+      Exceptions.expectException(RedisCommandExecutionException.class, "ERR ISPN000436: Cache '5' has been requested, but no matching cache configuration exists",
+            () -> redis.copy(key, newKey, copyArgs));
    }
 }
