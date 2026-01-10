@@ -1,6 +1,5 @@
 package org.infinispan.query.backend;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -124,7 +123,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       isPersistenceEnabled = cacheConfiguration.persistence().usingStores();
       javaEmbeddedEntities = cacheConfiguration.indexing().useJavaEmbeddedEntities();
       this.cache = cache;
-      Map<String, Class<?>> indexedClasses1 = Collections.unmodifiableMap(indexedClasses);
    }
 
    @Start

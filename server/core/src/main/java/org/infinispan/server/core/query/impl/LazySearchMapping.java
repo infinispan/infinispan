@@ -288,7 +288,7 @@ public class LazySearchMapping implements SearchMapping {
          SearchMappingBuilder builder = SerializationContextSearchMapping.createBuilder(commonBuilding, entityLoader, indexedEntityTypes, serCtx);
          searchMapping = builder != null ? builder.build(previousIntegration) : null;
       }
-      if (indexingConfiguration.enabled()) {
+      if (!cache.isEmpty() && indexingConfiguration.enabled()) {
          if (valueDataConversion.getStorageMediaType().match(APPLICATION_PROTOSTREAM)) {
             // Try to resolve the indexed type names to protobuf type names.
             Set<String> knownTypes = protobufMetadataManager.getKnownTypes();
