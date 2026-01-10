@@ -7,7 +7,7 @@ sourceDirs="$2"
 copy_files() {
     source_dir="$1"
     db="${source_dir##*-}"
-    for file in "$source_dir"/tests/target/*; do
+    for file in "$source_dir"/*; do
         if [[ -d $file ]]; then
             echo "Skipping directory: $file"
             continue
@@ -27,7 +27,7 @@ copy_files() {
 }
 
 for i in $sourceDirs; do
-    if [[ "$i" == *-rolling-upgrades ]]; then
+    if [[ "$i" == *-rolling-upgrades-* ]]; then
         echo "Skipping $i as it matches the ignore pattern."
         continue # 'continue' skips to the next item in the loop
     fi

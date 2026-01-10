@@ -147,7 +147,6 @@ jobs:
           - oracle
           - db2
           - tomcat
-          - rolling-upgrades
     steps:
     - name: Set run_id based on event type
       id: run_id
@@ -181,8 +180,6 @@ jobs:
       run: |
         if [ "${{ matrix.targets }}" = "tomcat" ]; then
           JOB_NAME="tomcat"
-        elif [ "${{ matrix.targets }}" = "rolling-upgrades" ]; then
-          JOB_NAME="rolling-upgrades"
         else
           JOB_NAME="db (${{ matrix.targets }})"
         fi
@@ -235,3 +232,92 @@ jobs:
           -f "output[summary]=Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
           -f "output[title]=Run Failed" \
           --method PATCH
+
+   rolling-upgrades-report:
+      runs-on: ubuntu-latest
+      strategy:
+        fail-fast: false
+        matrix:
+          name:
+            # The name here should match the names in on_build_do_test workflow file.
+            - latest
+            - first-version
+      steps:
+      - name: Set run_id based on event type
+        id: run_id
+        run: |
+           echo "runid=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+
+      - name: Download Rolling Upgrade Artifact
+        uses: actions/download-artifact@v7.0.0
+        with:
+          name: surefire-test-report-rolling-upgrades-${{ matrix.name }}
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.run_id.outputs.runid }}
+
+      - name: Get github sha
+        id: github_sha
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ./github-sha.txt
+
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.GH_APP_ISPN_ID }}
+          private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+
+      - name: Get job status
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        id: job-status
+        run: |
+          # Match the specific job name defined inside the rolling-upgrade-test.yml workflow
+          JOB_SUFFIX="Rolling Upgrades (${{ matrix.name }})"
+          
+          # Use 'endswith' to ignore the variable prefix (caller job name + arguments)
+          JOB_STATUS=$(gh api "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs" \
+          --jq ".jobs[] | select(.name | endswith(\"$JOB_SUFFIX\")) | .conclusion")
+          
+          echo "Found status: $JOB_STATUS"
+          echo "job_status=$JOB_STATUS" >> $GITHUB_OUTPUT
+
+      - name: Publish Test Report
+        if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
+        uses: rigazilla/action-surefire-report@summary
+        with:
+          github_token: ${{ steps.app-token.outputs.token }}
+          check_name: Test Report Rolling Upgrades (${{ matrix.name }})
+          commit: ${{ steps.github_sha.outputs.content }}
+          ignore_flaky_tests: true
+          summary: "Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}"
+          report_paths: |
+            **/*-reports*/**/TEST-*.xml
+
+      - name: Download Check Run ID
+        if: failure()
+        uses: actions/download-artifact@v7.0.0
+        with:
+          name: check-run-id-rolling-upgrades-${{ matrix.name }}
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.run_id.outputs.runid }}
+
+      - name: Read Check Run ID
+        if: failure()
+        id: read_check_id
+        run: |
+          CHECK_RUN_ID=$(cat check-run-id.txt)
+          echo "CHECK_RUN_ID=$CHECK_RUN_ID" >> $GITHUB_ENV
+
+      - name: Set failure check if Publish Test Report step failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh api repos/${{ github.repository }}/check-runs/${CHECK_RUN_ID} \
+            -H "Accept: application/vnd.github+json" \
+            -f status="completed" \
+            -f conclusion="failure" \
+            -f "output[summary]=Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            -f "output[title]=Run Failed" \
+            --method PATCH
