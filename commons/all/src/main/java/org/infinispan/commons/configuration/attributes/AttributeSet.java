@@ -383,17 +383,44 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
       return true;
    }
 
+   public void update(String parentName, AttributeSet other, Attribute<?> ... ignore) {
+      updateInternal(parentName, other, ignore);
+   }
+
    @Override
    public void update(String parentName, AttributeSet other) {
+      updateInternal(parentName, other);
+   }
+
+   public void updateInternal(String parentName, AttributeSet other, Attribute<?> ... ignore) {
+      OUTER:
       for (Map.Entry<String, Attribute<?>> e : attributes.entrySet()) {
+         for (Attribute<?> attribute : ignore) {
+            if (attribute.name().equals(e.getValue().name()))
+               continue OUTER;
+         }
          e.getValue().update(parentName, other.attribute(e.getKey()));
       }
    }
 
+   public void validateUpdate(String parentName, AttributeSet other, Attribute<?> ... ignored) {
+      validateUpdateInternal(parentName, other, ignored);
+   }
+
    @Override
    public void validateUpdate(String parentName, AttributeSet other) {
+      validateUpdateInternal(parentName, other);
+   }
+
+   private void validateUpdateInternal(String parentName, AttributeSet other, Attribute<?> ... ignore) {
       IllegalArgumentException iae = new IllegalArgumentException();
+      OUTER:
       for (Map.Entry<String, Attribute<?>> e : attributes.entrySet()) {
+         for (Attribute<?> attribute : ignore) {
+            if (attribute.name().equals(e.getValue().name()))
+               continue OUTER;
+         }
+
          try {
             e.getValue().validateUpdate(parentName, other.attribute(e.getKey()));
          } catch (Throwable t) {
