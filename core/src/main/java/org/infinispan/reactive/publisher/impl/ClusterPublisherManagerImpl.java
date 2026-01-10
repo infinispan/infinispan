@@ -40,6 +40,7 @@ import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -108,6 +109,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    @Inject Configuration cacheConfiguration;
    @Inject ComponentRegistry componentRegistry;
    @Inject PersistenceManager persistenceManager;
+   @Inject GlobalConfiguration nodeConfiguration;
 
    // Make sure we don't create one per invocation
    private final KeyComposedType KEY_COMPOSED = new KeyComposedType<>();
@@ -141,7 +143,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    @Start
    public void start() {
       maxSegment = cacheConfiguration.clustering().hash().numSegments();
-      replicatedCache = cacheConfiguration.clustering().cacheMode().isReplicated();
+      // Only optimize for replicated caches when the node is not zero capacity.
+      replicatedCache = cacheConfiguration.clustering().cacheMode().isReplicated() && !nodeConfiguration.isZeroCapacityNode();
       updateStoreInfo(cacheConfiguration.persistence());
       persistenceManager.addStoreListener(storeChangeListener);
 
