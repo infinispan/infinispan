@@ -40,7 +40,7 @@ abstract class JsonNumOpFunction implements SerializableFunction<ReadWriteEntryV
       try {
          incrNode = JSONUtil.objectMapper.readTree(value);
          if (!incrNode.isNumber()) {
-            throw new IllegalArgumentException("Non a valid increment number: " + incrNode.asText());
+            throw new IllegalArgumentException("Not a valid increment number: " + incrNode.asText());
          }
       } catch (IOException e) {
          throw new RuntimeException(e);
@@ -60,6 +60,7 @@ abstract class JsonNumOpFunction implements SerializableFunction<ReadWriteEntryV
          ArrayNode pathList = modifiableCtx.read(jpath);
          boolean changed = false;
          List<Number> resList = new ArrayList<>(pathList.size());
+         List<String> resPathList = new ArrayList<>(pathList.size());
          for (JsonNode pathAsNode : pathList) {
             String pathAsText = pathAsNode.asText();
             ArrayNode node = getForContext.read(pathAsText);
@@ -67,6 +68,10 @@ abstract class JsonNumOpFunction implements SerializableFunction<ReadWriteEntryV
                if (JSONUtil.isRoot(pathAsText.getBytes(StandardCharsets.UTF_8))) {
                   // We are changing the root !
                   Number incremented = operate(node.get(0), incrNode);
+                  if (!isFinite(incremented)) {
+                     // Do nothing and return null, will be handled by the caller
+                     return null;
+                  }
                   String jsonNumberValue = "" + incremented + "";
                   entryView.set(new JsonBucket(jsonNumberValue.getBytes(StandardCharsets.UTF_8)));
                   resList.add(incremented);
@@ -74,11 +79,23 @@ abstract class JsonNumOpFunction implements SerializableFunction<ReadWriteEntryV
                   return resList;
                }
                Number incremented = operate(node.get(0), incrNode);
-               modifiableCtx.set(pathAsText, incremented);
+               if (!isFinite(incremented)) {
+                  // Do nothing and return null, will be handled by the caller
+                  return null;
+               }
+               resPathList.add(pathAsText);
                resList.add(incremented);
-               changed = true;
             } else {
+               resPathList.add(pathAsText);
                resList.add(null);
+            }
+         }
+         // Apply all modifications after processing all paths
+         for (int i = 0; i < resList.size(); i++) {
+            Number n = resList.get(i);
+            if (n != null) {
+               modifiableCtx.set(resPathList.get(i), resList.get(i));
+               changed = true;
             }
          }
          if (changed) {
@@ -90,6 +107,13 @@ abstract class JsonNumOpFunction implements SerializableFunction<ReadWriteEntryV
       } catch (Exception e) {
          throw new CacheException(e);
       }
+   }
+
+   private boolean isFinite(Number n) {
+      if (n instanceof Double || n instanceof Float) {
+         return Double.isFinite(n.doubleValue());
+      }
+      return true;
    }
 
    protected abstract Number operate(JsonNode numNode, JsonNode incrNode);
