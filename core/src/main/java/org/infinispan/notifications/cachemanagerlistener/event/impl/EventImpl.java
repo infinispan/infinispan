@@ -8,7 +8,6 @@ import java.util.Objects;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
-import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.SitesViewChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -20,7 +19,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Manik Surtani
  * @since 4.0
  */
-public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChangedEvent, MergeEvent, ConfigurationChangedEvent, SitesViewChangedEvent {
+public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChangedEvent, MergeEvent, SitesViewChangedEvent {
 
    private String cacheName;
    private EmbeddedCacheManager cacheManager;
@@ -30,9 +29,6 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    private int viewId;
    private List<List<Address>> subgroupsMerged;
    private boolean mergeView;
-   private String configurationEntityType;
-   private String configurationEntityName;
-   private EventType configurationEventType;
    private Collection<String> sitesView;
    private Collection<String> sitesUp;
    private Collection<String> sitesDown;
@@ -129,15 +125,12 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       return viewId == event.viewId &&
             mergeView == event.mergeView &&
             type == event.type &&
-            configurationEventType == event.configurationEventType &&
             Objects.equals(cacheName, event.cacheName) &&
             Objects.equals(cacheManager, event.cacheManager) &&
             Objects.equals(newMembers, event.newMembers) &&
             Objects.equals(oldMembers, event.oldMembers) &&
             Objects.equals(localAddress, event.localAddress) &&
             Objects.equals(subgroupsMerged, event.subgroupsMerged) &&
-            Objects.equals(configurationEntityType, event.configurationEntityType) &&
-            Objects.equals(configurationEntityName, event.configurationEntityName) &&
             Objects.equals(sitesView, event.sitesView) &&
             Objects.equals(sitesUp, event.sitesUp) &&
             Objects.equals(sitesDown, event.sitesDown);
@@ -154,9 +147,6 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       result = 31 * result + viewId;
       result = 31 * result + (subgroupsMerged == null ? 0 : subgroupsMerged.hashCode());
       result = 31 * result + (mergeView ? 1 : 0);
-      result = 31 * result + (configurationEntityType != null ? configurationEntityType.hashCode() : 0);
-      result = 31 * result + (configurationEntityName != null ? configurationEntityName.hashCode() : 0);
-      result = 31 * result + (configurationEventType != null ? configurationEventType.hashCode() : 0);
       result = 31 * result + (sitesView != null ? sitesView.hashCode() : 0);
       result = 31 * result + (sitesUp != null ? sitesUp.hashCode() : 0);
       result = 31 * result + (sitesDown != null ? sitesDown.hashCode() : 0);
@@ -175,9 +165,6 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
             ", viewId=" + viewId +
             ", subgroupsMerged=" + subgroupsMerged +
             ", mergeView=" + mergeView +
-            ", configurationEntityType='" + configurationEntityType + '\'' +
-            ", configurationEntityName='" + configurationEntityName + '\'' +
-            ", configurationEventType=" + configurationEventType +
             ", sitesView=" + sitesView +
             ", sitesUp=" + sitesUp +
             ", sitesDown=" + sitesDown +
@@ -200,33 +187,6 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
 
    public void setMergeView(boolean b) {
       mergeView = b;
-   }
-
-   public void setConfigurationEventType(EventType eventType) {
-      configurationEventType = eventType;
-   }
-
-   public void setConfigurationEntityType(String type) {
-      configurationEntityType = type;
-   }
-
-   public void setConfigurationEntityName(String name) {
-      configurationEntityName = name;
-   }
-
-   @Override
-   public EventType getConfigurationEventType() {
-      return configurationEventType;
-   }
-
-   @Override
-   public String getConfigurationEntityType() {
-      return configurationEntityType;
-   }
-
-   @Override
-   public String getConfigurationEntityName() {
-      return configurationEntityName;
    }
 
    @Override

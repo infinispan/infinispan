@@ -1,7 +1,7 @@
 package org.infinispan.rest.resources;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
@@ -71,7 +71,7 @@ public class SSEListener implements RestEventListener {
       KeyValuePair<String, String> event = events.poll(10, TimeUnit.SECONDS);
       assertNotNull(event);
       assertEquals(type, event.getKey());
-      assertTrue(event.getValue().contains(subString));
+      assertThat(event.getValue()).contains(subString);
       consumer.accept(event);
    }
 }
