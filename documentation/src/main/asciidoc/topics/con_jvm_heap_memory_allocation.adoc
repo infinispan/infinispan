@@ -82,7 +82,7 @@ The following table outlines the elements in the previous calculation:
 | Element | Description
 
 |`int` | Denotes the calculated value for `m1` as an integer. 
-| `x` | Represents the average size of a key-value pair. You can determine the value of `x` bu using the following calculator: `x =  Serialized size of key + Serialized size of value + Metadata`
+| `x` | Represents the average size of a key-value pair. You can determine the value of `x` by using the following calculator: `x =  Serialized size of key + Serialized size of value + Metadata`
 | `y` a| Represents the expected number of cache entries for each node. Consider the type of cache mode when determining a value for `y`. For example:
 
 * For distributed mode, determine the volume of owners per cache entry.
@@ -91,7 +91,7 @@ The following table outlines the elements in the previous calculation:
 Note: Ensure that the number of entries (H) does not exceed the expected JVM heap space (S). Otherwise, {brandname} might evict more cache entries to optimize JVM memory space
 
 | `p` | 
-Denotes a fractional value for the full heap space that Infinsipan uses to store cache entries. Typical starting value is p=0.5.
+Denotes a fractional value for the full heap space that {brandname} uses to store cache entries. Typical starting value is p=0.5.
 
 Consider that the JVM, heap size, GC parameters, and the volume of data stored in JVM memory can affect the length of a GC operation. You might need to configure your GC implementation to facilitate these operations.
 
