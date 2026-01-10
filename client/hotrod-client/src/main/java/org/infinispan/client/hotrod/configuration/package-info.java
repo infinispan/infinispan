@@ -360,7 +360,7 @@
  *          <td><b>infinispan.client.hotrod.auth_realm</b></td>
  *          <td>String</td>
  *          <td>default</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#realm(String) realm} (for DIGEST-MD5 authentication).</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#realm(String) realm} (for DIGEST-* authentication).</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.sasl_properties.*</b></td>

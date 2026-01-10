@@ -53,7 +53,7 @@ public class AuthorizationGracefulShutdownIT {
    private org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientHotRodSecurityConfiguration(TestUser user) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       builder.security().authentication()
-            .saslMechanism("SCRAM-SHA-1")
+            .saslMechanism("SCRAM-SHA-256")
             .serverName("infinispan")
             .realm("default")
             .username(user.getUser())

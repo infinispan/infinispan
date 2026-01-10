@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.io.FileWatcher;
 import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.SecurityProviders;
 import org.infinispan.commons.util.SslContextFactory;
 
 import io.netty.bootstrap.Bootstrap;
@@ -175,7 +176,7 @@ public class ChannelHandler {
             builder.ciphers(ssl.ciphers());
          }
          if (ssl.provider() != null) {
-            Provider provider = SslContextFactory.findProvider(ssl.provider(), SslContext.class.getSimpleName(), "TLS");
+            Provider provider = SecurityProviders.findProvider(ssl.provider(), SslContext.class.getSimpleName(), "TLS");
             builder.sslContextProvider(provider);
          }
          return builder.build();

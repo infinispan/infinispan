@@ -58,12 +58,9 @@ public class UserTool {
 
 
    public static final List<String> DEFAULT_ALGORITHMS = List.of(
-         ScramDigestPassword.ALGORITHM_SCRAM_SHA_1,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_256,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_384,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_512,
-         DigestPassword.ALGORITHM_DIGEST_MD5,
-         DigestPassword.ALGORITHM_DIGEST_SHA,
          DigestPassword.ALGORITHM_DIGEST_SHA_256,
          DigestPassword.ALGORITHM_DIGEST_SHA_384,
          DigestPassword.ALGORITHM_DIGEST_SHA_512
@@ -303,23 +300,15 @@ public class UserTool {
             AlgorithmParameterSpec spec;
             sb.append(algorithm);
             sb.append(":");
-            switch (algorithm) {
-               case ScramDigestPassword.ALGORITHM_SCRAM_SHA_1:
-               case ScramDigestPassword.ALGORITHM_SCRAM_SHA_256:
-               case ScramDigestPassword.ALGORITHM_SCRAM_SHA_384:
-               case ScramDigestPassword.ALGORITHM_SCRAM_SHA_512:
-                  spec = new IteratedSaltedPasswordAlgorithmSpec(ScramDigestPassword.DEFAULT_ITERATION_COUNT, salt(ScramDigestPassword.DEFAULT_SALT_SIZE));
-                  break;
-               case DigestPassword.ALGORITHM_DIGEST_MD5:
-               case DigestPassword.ALGORITHM_DIGEST_SHA:
-               case DigestPassword.ALGORITHM_DIGEST_SHA_256:
-               case DigestPassword.ALGORITHM_DIGEST_SHA_384:
-               case DigestPassword.ALGORITHM_DIGEST_SHA_512:
-                  spec = new DigestPasswordAlgorithmSpec(username, realm);
-                  break;
-               default:
-                  throw MSG.userToolUnknownAlgorithm(algorithm);
-            }
+            spec = switch (algorithm) {
+               case ScramDigestPassword.ALGORITHM_SCRAM_SHA_1, ScramDigestPassword.ALGORITHM_SCRAM_SHA_256,
+                    ScramDigestPassword.ALGORITHM_SCRAM_SHA_384, ScramDigestPassword.ALGORITHM_SCRAM_SHA_512 ->
+                     new IteratedSaltedPasswordAlgorithmSpec(ScramDigestPassword.DEFAULT_ITERATION_COUNT, salt(ScramDigestPassword.DEFAULT_SALT_SIZE));
+               case DigestPassword.ALGORITHM_DIGEST_MD5, DigestPassword.ALGORITHM_DIGEST_SHA,
+                    DigestPassword.ALGORITHM_DIGEST_SHA_256, DigestPassword.ALGORITHM_DIGEST_SHA_384,
+                    DigestPassword.ALGORITHM_DIGEST_SHA_512 -> new DigestPasswordAlgorithmSpec(username, realm);
+               default -> throw MSG.userToolUnknownAlgorithm(algorithm);
+            };
             Password encrypted = passwordFactory.generatePassword(new EncryptablePasswordSpec(password.toCharArray(), spec));
             byte[] encoded = BasicPasswordSpecEncoding.encode(encrypted, PROVIDERS);
             sb.append(ByteIterator.ofBytes(encoded).base64Encode().drainToString());
