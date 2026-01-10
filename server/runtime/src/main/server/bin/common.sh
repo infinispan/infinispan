@@ -367,3 +367,18 @@ CLASSPATH=
 for JAR in "$ISPN_HOME/boot"/*.jar; do
     CLASSPATH="$CLASSPATH:$JAR"
 done
+
+OVERRIDES_FILE=$(find "$DIRNAME/.." -type f -name "overrides.env" -print -quit 2>/dev/null)
+if [ -f "$OVERRIDES_FILE" ]; then
+  if [ -f /etc/hostname ]; then
+    MY_ID=$(cat /etc/hostname)
+  else
+    MY_ID=$HOSTNAME
+  fi
+
+  EXTRA_ARGS=$(grep "^${MY_ID}=" "$OVERRIDES_FILE" | cut -d '=' -f2-)
+
+  if [ -n "$EXTRA_ARGS" ]; then
+    ARGUMENTS="${ARGUMENTS} ${EXTRA_ARGS}"
+  fi
+fi
