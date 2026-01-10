@@ -3,11 +3,12 @@
 Documentation for Infinispan is maintained on https://infinispan.org
 
 If you are interested in contributing a translation of the documentation, please get in touch with the Infinispan
-development team.  Details on how to do so are on https://infinispan.org/community/
+development team. Details on how to do so are on https://infinispan.org/community/
 
 ## Internationalizing logging
 
-Infinispan logs fully support internationalization. The following is a list of modules and their message id reservation ranges:
+Infinispan logs fully support internationalization. The following is a list of modules and their message id reservation
+ranges:
 
      0001 -  1000    core
      1001 -  2000    tree
