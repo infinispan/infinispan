@@ -81,6 +81,8 @@ import org.junit.platform.suite.api.Suite;
 })
 public class ClusteredIT extends InfinispanSuite {
 
+   public static int MAX_BOOLEAN_CLAUSES = 1030;
+
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
@@ -88,7 +90,7 @@ public class ClusteredIT extends InfinispanSuite {
                .runMode(ServerRunMode.CONTAINER)
                .mavenArtifacts(mavenArtifacts())
                .artifacts(Artifacts.artifacts())
-               .property("infinispan.query.lucene.max-boolean-clauses", "1025")
+               .property("infinispan.query.lucene.max-boolean-clauses", Integer.toString(MAX_BOOLEAN_CLAUSES))
                .build();
 
    public static String[] mavenArtifacts() {
