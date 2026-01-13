@@ -6,6 +6,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -26,12 +27,14 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
+      // The operation is only applied in the transaction originator.
+      // The transactional stores need to enlist and that can only happen in the node the TX originates.
       if (ctx.isOriginLocal()) {
          if (!command.isOnePhaseCommit()) {
             return asyncInvokeNext(ctx, command, persistenceManager.prepareAllTxStores(ctx, BOTH));
          } else {
             return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-               if (command.isSuccessful())
+               if (!command.isSuccessful() || !responseContextHasModifications(rCtx))
                   return null;
 
                // Persist the modifications in one phase
@@ -57,5 +60,9 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
          return asyncInvokeNext(ctx, command, persistenceManager.rollbackAllTxStores(ctx, BOTH));
       }
       return invokeNext(ctx, command);
+   }
+
+   private boolean responseContextHasModifications(InvocationContext ctx) {
+      return ctx instanceof TxInvocationContext<?> txCtx && txCtx.hasModifications();
    }
 }
