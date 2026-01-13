@@ -1240,12 +1240,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
                         flowableToUse = flowableToUse.publish().autoConnect(2);
 
                         Flowable<NonBlockingStore.SegmentedPublisher<Object>> removeFlowable = createRemoveFlowable(
-                              flowableToUse, shared, segmented, storeStatus);
+                              flowableToUse, storeStatus, ctx);
 
                         ByRef.Long writeCount = new ByRef.Long(0);
 
                         Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> writeFlowable =
-                              createWriteFlowable(flowableToUse, ctx, shared, segmented, writeCount, storeStatus);
+                              createWriteFlowable(flowableToUse, ctx, writeCount, storeStatus);
 
                         CompletionStage<Void> storeBatchStage = flowableHandler.handleFlowables(storeStatus.store(),
                               segmentCount(segmented), removeFlowable, writeFlowable);
@@ -1261,20 +1261,20 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private <K, V> Flowable<NonBlockingStore.SegmentedPublisher<Object>> createRemoveFlowable(
-         Flowable<MVCCEntry<K, V>> flowableToUse, boolean shared, boolean segmented, StoreStatus storeStatus) {
+         Flowable<MVCCEntry<K, V>> flowableToUse, StoreStatus storeStatus, InvocationContext ctx) {
 
       Flowable<K> keyRemoveFlowable = flowableToUse
             .filter(MVCCEntry::isRemoved)
             .map(MVCCEntry::getKey);
 
       Flowable<NonBlockingStore.SegmentedPublisher<Object>> flowable;
-      if (segmented) {
+      if (storeStatus.config.segmented()) {
          flowable = keyRemoveFlowable
                .groupBy(keyPartitioner::getSegment)
                .map(SegmentPublisherWrapper::wrap);
-         flowable = filterSharedSegments(flowable, null, shared);
+         flowable = filterSharedSegments(flowable, null, storeStatus, ctx);
       } else {
-         if (shared && !isInvalidationCache) {
+         if (shouldFilterByOwnership(storeStatus, ctx)) {
             keyRemoveFlowable = keyRemoveFlowable.filter(k ->
                   distributionManager.getCacheTopology().getDistribution(k).isPrimary());
          }
@@ -1296,8 +1296,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private <K, V> Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> createWriteFlowable(
-         Flowable<MVCCEntry<K, V>> flowableToUse, InvocationContext ctx, boolean shared, boolean segmented,
-         ByRef.Long writeCount, StoreStatus storeStatus) {
+         Flowable<MVCCEntry<K, V>> flowableToUse, InvocationContext ctx, ByRef.Long writeCount, StoreStatus storeStatus) {
 
       Flowable<MarshallableEntry<K, V>> entryWriteFlowable = flowableToUse
             .filter(mvccEntry -> !mvccEntry.isRemoved())
@@ -1309,7 +1308,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             });
 
       Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> flowable;
-      if (segmented) {
+      if (storeStatus.config.segmented()) {
          // Note the writeCount includes entries that aren't written due to being shared
          // at this point
          entryWriteFlowable = entryWriteFlowable.doOnNext(obj -> writeCount.inc());
@@ -1317,9 +1316,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
                .groupBy(me -> keyPartitioner.getSegment(me.getKey()))
                .map(SegmentPublisherWrapper::wrap);
          // The writeCount will be decremented for each grouping of values ignored
-         flowable = filterSharedSegments(flowable, writeCount, shared);
+         flowable = filterSharedSegments(flowable, writeCount, storeStatus, ctx);
       } else {
-         if (shared && !isInvalidationCache) {
+         if (shouldFilterByOwnership(storeStatus, ctx)) {
             entryWriteFlowable = entryWriteFlowable.filter(me ->
                   distributionManager.getCacheTopology().getDistribution(me.getKey()).isPrimary());
          }
@@ -1341,8 +1340,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private <I> Flowable<NonBlockingStore.SegmentedPublisher<I>> filterSharedSegments(
-         Flowable<NonBlockingStore.SegmentedPublisher<I>> flowable, ByRef.Long writeCount, boolean shared) {
-      if (!shared || isInvalidationCache) {
+         Flowable<NonBlockingStore.SegmentedPublisher<I>> flowable, ByRef.Long writeCount, StoreStatus storeStatus, InvocationContext ctx) {
+      if (!shouldFilterByOwnership(storeStatus, ctx)) {
          return flowable;
       }
       return flowable.map(sp -> {
@@ -1523,6 +1522,20 @@ public class PersistenceManagerImpl implements PersistenceManager {
       } finally {
          releaseReadLock(stamp);
       }
+   }
+
+   private boolean shouldFilterByOwnership(StoreStatus storeStatus, InvocationContext ctx) {
+      // A non-shared store or invalidation caches do not need to check key ownership again.
+      if (!storeStatus.config.shared() || isInvalidationCache)
+         return false;
+
+      // At this point, the store is shared.
+      // A transactional store only double-checks the key ownership if it is outside a transaction.
+      // If the store is transactional, shared, and is in a TX, the operation MUST be performed over the modifications without filtering.
+      if (storeStatus.config.transactional())
+         return !ctx.isInTxScope();
+
+      return true;
    }
 
    /**
