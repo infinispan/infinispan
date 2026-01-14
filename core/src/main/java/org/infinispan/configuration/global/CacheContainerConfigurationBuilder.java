@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -155,16 +154,8 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       return shutdown;
    }
 
-   @Override
-   public GlobalConfigurationBuilder containerMemoryConfiguration(String namedMemoryConfig, Consumer<? super ContainerMemoryConfigurationBuilder> consumer) {
-      containerMaps.compute(namedMemoryConfig, (___, config) -> {
-         if (config == null) {
-            config = new ContainerMemoryConfigurationBuilder(getGlobalConfig());
-         }
-         consumer.accept(config);
-         return config;
-      });
-      return getGlobalConfig();
+   public ContainerMemoryConfigurationBuilder containerMemoryConfiguration(String namedMemoryConfig) {
+      return containerMaps.computeIfAbsent(namedMemoryConfig, (___) -> new ContainerMemoryConfigurationBuilder(getGlobalConfig()));
    }
 
    public CacheContainerConfigurationBuilder defaultCache(String defaultCacheName) {
@@ -244,6 +235,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> {
          throw e;
       });
+      containerMaps.values().forEach(ContainerMemoryConfigurationBuilder::validate);
    }
 
    @Override

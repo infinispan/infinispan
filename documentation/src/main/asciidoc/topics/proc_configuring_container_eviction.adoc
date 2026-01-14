@@ -10,7 +10,7 @@ Note that this setting is not cluster-wide; it applies only to the local node.
 All caches using the shared eviction container share the same eviction policy.
 This means that data from one cache can evict data from another cache, which might not be desirable.
 If you need strict control over the memory usage of a specific cache, use per-cache eviction instead.
-Runtime updates of the shared eviction container are not yet supported, but should be coming soon.
+Runtime updates of the shared eviction container are not yet supported.
 
 .Memory overhead
 A cache that uses a shared eviction container incurs a minor memory overhead.

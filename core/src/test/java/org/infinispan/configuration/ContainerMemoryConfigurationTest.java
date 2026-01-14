@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertFalse;
 
 import java.lang.reflect.Method;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.global.ContainerMemoryConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -20,8 +21,7 @@ public class ContainerMemoryConfigurationTest extends AbstractInfinispanTest {
    @Test
    public void testMemoryConfigurationWithMaxSize(Method m) {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.containerMemoryConfiguration(m.getName(), cmcb ->
-         cmcb.maxSize("1.5 GB"));
+      builder.containerMemoryConfiguration(m.getName()).maxSize("1.5 GB");
 
       GlobalConfiguration global = builder.build();
 
@@ -34,8 +34,7 @@ public class ContainerMemoryConfigurationTest extends AbstractInfinispanTest {
    @Test
    public void testMemoryConfigurationWithMaxCount(Method m) {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.containerMemoryConfiguration(m.getName(), cmcb ->
-            cmcb.maxCount(2000));
+      builder.containerMemoryConfiguration(m.getName()).maxCount(2000L);
 
       GlobalConfiguration global = builder.build();
 
@@ -47,7 +46,7 @@ public class ContainerMemoryConfigurationTest extends AbstractInfinispanTest {
 
    public void testUseDefaultMemoryConfiguration(Method m) {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.containerMemoryConfiguration(m.getName(), cmcb -> {});
+      builder.containerMemoryConfiguration(m.getName());
 
       GlobalConfiguration global = builder.build();
 
@@ -58,14 +57,22 @@ public class ContainerMemoryConfigurationTest extends AbstractInfinispanTest {
       assertEquals(-1, configuration.maxCount());
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = ".*Cannot configure both maxCount and maxSize in memory configuration.*")
+   public void testMemoryConfigurationWithBothSizeAndCount(Method m) {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder.containerMemoryConfiguration(m.getName()).maxSize("1.5 GB").maxCount(2000L);
+
+      builder.build();
+   }
+
    @Test
    public void testChangeFromDefault(Method m) {
       GlobalConfigurationBuilder initial = new GlobalConfigurationBuilder();
-      initial.containerMemoryConfiguration(m.getName(), cmcb -> {});
+      initial.containerMemoryConfiguration(m.getName());
       ContainerMemoryConfiguration initialConfig = initial.build().getMemoryContainer().get(m.getName());
       assertEquals(-1, initialConfig.maxCount());
 
-      initial.containerMemoryConfiguration(m.getName(), cmcb -> cmcb.maxCount(3));
+      initial.containerMemoryConfiguration(m.getName()).maxCount(3L);
       ContainerMemoryConfiguration larger = initial.build().getMemoryContainer().get(m.getName());
       assertEquals(3, larger.maxCount());
    }

@@ -325,18 +325,61 @@
         </xs:annotation>
       </xs:element>
       <xs:element name="eviction-containers" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Configures container memory for caches that share memory spaces.
+            These containers are bounded by size (bytes) or count (number of entries).
+            When the limit is reached, entries are evicted to prevent memory from growing indefinitely.
+            You can define max-count-container or max-size-container, but not both.
+          </xs:documentation>
+        </xs:annotation>
         <xs:complexType>
           <xs:choice maxOccurs="unbounded">
             <xs:element name="max-count-container">
+              <xs:annotation>
+                <xs:documentation>
+                  Configures a memory container with a maximum number of entries.
+                </xs:documentation>
+              </xs:annotation>
               <xs:complexType>
-                <xs:attribute name="name" type="xs:string" use="required"/>
-                <xs:attribute name="count" type="xs:integer" use="required"/>
+                <xs:attribute name="name" type="xs:string" use="required">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Specifies the name of the memory container.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="count" type="xs:integer" use="required">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Sets the maximum number of entries for the memory container.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
               </xs:complexType>
             </xs:element>
             <xs:element name="max-size-container">
+              <xs:annotation>
+                <xs:documentation>
+                  Configures a memory container with a maximum size in bytes.
+                </xs:documentation>
+              </xs:annotation>
               <xs:complexType>
-                <xs:attribute name="name" type="xs:string" use="required"/>
-                <xs:attribute name="size" type="xs:string" use="required"/>
+                <xs:attribute name="name" type="xs:string" use="required">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Specifies the name of the memory container.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="size" type="xs:string" use="required">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Sets the maximum size of the memory container in bytes.
+                      The value can be a number or a string ending with KB, MB, GB, TB, PB (e.g., "10MB").
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
               </xs:complexType>
             </xs:element>
           </xs:choice>
