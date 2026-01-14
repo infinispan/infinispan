@@ -656,12 +656,12 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    }
 
    @Override
-   public String syncFilesToServer(int server, String path) {
+   public String syncFilesToServer(int server, String path, String destination) {
       Path local = Paths.get(path);
       Path parent = local.getParent();
       try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
            TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
-         Files.walkFileTree(local, new FileVisitor<Path>() {
+         Files.walkFileTree(local, new FileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                Path relativize = parent.relativize(dir);
@@ -699,9 +699,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          });
          tar.close();
          DOCKER_CLIENT.copyArchiveToContainerCmd(containers.get(server).getContainerId())
-               .withTarInputStream(new ByteArrayInputStream(bos.toByteArray()))
-               .withRemotePath("/tmp").exec();
-         return Paths.get("/tmp").resolve(local.getFileName()).toString();
+            .withTarInputStream(new ByteArrayInputStream(bos.toByteArray()))
+            .withRemotePath(destination).exec();
+         return Paths.get(destination).resolve(local.getFileName()).toString();
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
