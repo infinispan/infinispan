@@ -52,7 +52,7 @@ public class ContainerMemoryEvictionTest extends MultipleCacheManagersTest {
    private static final String SIZE_LOCAL_CACHE_NAME = "size-local-cache";
    private static final String BYTE_LOCAL_CACHE_NAME = "byte-local-cache";
    private static final int SIZE_CONTAINER_AMT = 10;
-   private static final int BYTE_CONTAINER_AMT = 4096;
+   private static final String BYTE_CONTAINER_AMT = "4096B";
 
    @Override
    public Object[] factory() {
@@ -75,8 +75,8 @@ public class ContainerMemoryEvictionTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NODE_COUNT; i++) {
          GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
-         gcb.containerMemoryConfiguration(SIZE_CONTAINER_NAME, c -> c.maxCount(SIZE_CONTAINER_AMT));
-         gcb.containerMemoryConfiguration(BYTE_CONTAINER_NAME, c -> c.maxSize(BYTE_CONTAINER_AMT));
+         gcb.containerMemoryConfiguration(SIZE_CONTAINER_NAME).maxCount(SIZE_CONTAINER_AMT)
+               .containerMemoryConfiguration(BYTE_CONTAINER_NAME).maxSize(BYTE_CONTAINER_AMT);
 
          EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(gcb, new ConfigurationBuilder());
          cacheManagers.add(cm);

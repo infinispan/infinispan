@@ -792,7 +792,7 @@ public class Parser extends CacheParser {
                   }
                }
                long countToUse = count;
-               holder.getGlobalConfigurationBuilder().containerMemoryConfiguration(name, b -> b.maxCount(countToUse));
+               holder.getGlobalConfigurationBuilder().containerMemoryConfiguration(name).maxCount(countToUse);
                break;
             }
             case MAX_SIZE_CONTAINER: {
@@ -812,7 +812,7 @@ public class Parser extends CacheParser {
                   }
                }
                String sizeToUse = size;
-               holder.getGlobalConfigurationBuilder().containerMemoryConfiguration(name, b -> b.maxSize(sizeToUse));
+               holder.getGlobalConfigurationBuilder().containerMemoryConfiguration(name).maxSize(sizeToUse);
                break;
             }
             default: {

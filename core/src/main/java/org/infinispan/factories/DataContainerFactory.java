@@ -1,5 +1,7 @@
 package org.infinispan.factories;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.function.Supplier;
 
 import org.infinispan.commons.marshall.WrappedBytes;
@@ -54,7 +56,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          String cacheName = componentRegistry.getCacheName();
          SharedCaffeineMap<?, ?> sharedCaffeineMap = sharedContainerMaps.getMap(containerMapName);
          if (sharedCaffeineMap == null) {
-            throw new IllegalStateException("Shared container not available: " + containerMapName);
+            throw CONTAINER.sharedContainerNotFound(containerMapName);
          }
          return sharedCaffeineMap.newContainer(cacheName, basicComponentRegistry, segments);
       }

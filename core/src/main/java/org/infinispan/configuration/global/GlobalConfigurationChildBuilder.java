@@ -1,7 +1,6 @@
 package org.infinispan.configuration.global;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -104,12 +103,14 @@ public interface GlobalConfigurationChildBuilder {
    GlobalConfigurationBuilder defaultCacheName(String defaultCacheName);
 
    /**
+    * Configures a named container memory, which allows for a shared memory space used by multiple caches that can be bounded.
+    * When the limit is surpassed, an entry is evicted to ensure memory does not grow too much.
+    * The memory container supports both count based (number of entries) and size based (how much approximate memory in bytes) eviction methods.
     *
-    * @param namedMemoryConfig
-    * @param consumer
-    * @return
+    * @param namedMemoryConfig The name of the memory container.
+    * @return <code>this</code>, for method chaining.
     */
-   GlobalConfigurationBuilder containerMemoryConfiguration(String namedMemoryConfig, Consumer<? super ContainerMemoryConfigurationBuilder> consumer);
+   ContainerMemoryConfigurationBuilder containerMemoryConfiguration(String namedMemoryConfig);
 
    /**
     * Builds a {@link GlobalConfiguration} object using the settings applied to this builder

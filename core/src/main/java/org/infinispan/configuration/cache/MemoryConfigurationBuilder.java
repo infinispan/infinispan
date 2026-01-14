@@ -138,7 +138,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
          throw CONFIG.cannotProvideBothSizeAndCount();
       }
       if (evictionContainer() != null) {
-         if (isCountBounded() || isCountBounded()) {
+         if (isSizeBounded() || isCountBounded()) {
             throw CONFIG.memorySharedConfigHasEviction();
          }
          if (storage() == StorageType.OFF_HEAP) {
@@ -147,7 +147,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       }
       EvictionStrategy strategy = whenFull();
       if (strategy.isEnabled()) {
-         if (!isCountBounded() && !isSizeBounded()) {
+         if (!isSizeBounded() && !isCountBounded()) {
             throw CONFIG.invalidEvictionSize();
          }
          if (strategy.isExceptionBased()) {

@@ -139,7 +139,6 @@ public enum Element {
     THREAD_FACTORIES,
     THREAD_FACTORY,
     THREAD_POOLS,
-    THRESHOLD,
     TRACING,
     TRANSACTION,
     TRANSPORT,
