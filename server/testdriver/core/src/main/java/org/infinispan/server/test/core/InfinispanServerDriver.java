@@ -191,7 +191,11 @@ public interface InfinispanServerDriver {
     */
    String syncFilesFromServer(int server, String dir);
 
-   String syncFilesToServer(int server, String path);
+   default String syncFilesToServer(int server, String path) {
+      return syncFilesToServer(server, path, "/tmp");
+   }
+
+   String syncFilesToServer(int server, String path, String destination);
 
    X509Certificate createCertificate(String name, String type, String providerName);
 }
