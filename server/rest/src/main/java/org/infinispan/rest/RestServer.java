@@ -36,6 +36,7 @@ import org.infinispan.rest.resources.StaticContentResource;
 import org.infinispan.rest.resources.SwaggerUIResource;
 import org.infinispan.rest.resources.TasksResource;
 import org.infinispan.rest.resources.XSiteResource;
+import org.infinispan.rest.resources.XSiteResourceV3;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.logging.Log;
@@ -150,6 +151,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(restContext, new CounterResourceV3(invocationHelper));
       resourceManager.registerResource(restContext, new ContainerResource(invocationHelper));
       resourceManager.registerResource(restContext, new XSiteResource(invocationHelper));
+      resourceManager.registerResource(restContext, new XSiteResourceV3(invocationHelper));
       resourceManager.registerResource(restContext, new SearchAdminResource(invocationHelper));
       resourceManager.registerResource(restContext, new SearchAdminResourceV3(invocationHelper));
       resourceManager.registerResource(restContext, new TasksResource(invocationHelper));
