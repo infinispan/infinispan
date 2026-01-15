@@ -36,6 +36,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.BaseNonBlockingStoreTest;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
+import org.infinispan.reactive.internal.subscriptions.AsyncSubscription;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
@@ -47,7 +48,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import io.reactivex.rxjava3.internal.subscriptions.AsyncSubscription;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;

@@ -27,6 +27,7 @@ import org.infinispan.util.ByteString;
 
 /**
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
+ *
  * @param <K> the key type
  */
 @ProtoTypeId(ProtoStreamTypeIds.REDUCTION_PUBLISHER_REQUEST_COMMAND)
@@ -153,13 +154,13 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
    @Override
    public String toString() {
       return "PublisherRequestCommand{" +
-             ", flags=" + EnumUtil.prettyPrintBitSet(explicitFlags, Flag.class) +
-             ", topologyId=" + topologyId +
-             ", segments=" + segments +
-             ", keys=" + Util.toStr(keys) +
-             ", excludedKeys=" + Util.toStr(excludedKeys) +
-             ", transformer= " + transformer +
-             ", finalizer=" + finalizer +
-             '}';
+            ", flags=" + EnumUtil.prettyPrintBitSet(explicitFlags, Flag.class) +
+            ", topologyId=" + topologyId +
+            ", segments=" + segments +
+            ", keys=" + Util.toStr(keys) +
+            ", excludedKeys=" + Util.toStr(excludedKeys) +
+            ", transformer= " + transformer +
+            ", finalizer=" + finalizer +
+            '}';
    }
 }

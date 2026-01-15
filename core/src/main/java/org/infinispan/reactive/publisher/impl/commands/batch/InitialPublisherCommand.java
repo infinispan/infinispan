@@ -39,8 +39,8 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
    private int topologyId = -1;
 
    public InitialPublisherCommand(ByteString cacheName, String requestId, DeliveryGuarantee deliveryGuarantee,
-         int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
-         boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+                                  int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
+                                  boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
       super(cacheName);
       this.requestId = requestId;
       this.deliveryGuarantee = deliveryGuarantee;
