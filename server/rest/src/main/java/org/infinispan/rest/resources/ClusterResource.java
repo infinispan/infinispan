@@ -97,7 +97,7 @@ public class ClusterResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> stop(RestRequest request) {
+   protected CompletionStage<RestResponse> stop(RestRequest request) {
       return CompletableFuture.supplyAsync(() -> {
          List<String> servers = request.parameters().get("server");
 
@@ -110,28 +110,28 @@ public class ClusterResource implements ResourceHandler {
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
+   protected CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = Security.doAs(request.getSubject(), backupManager::getBackupNames);
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(names), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> backup(RestRequest request) {
+   protected CompletionStage<RestResponse> backup(RestRequest request) {
       return BackupManagerResource.handleBackupRequest(invocationHelper, request, backupManager,
             (name, workingDir, json) -> backupManager.create(name, workingDir));
    }
 
-   private CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
+   protected CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = Security.doAs(request.getSubject(), backupManager::getRestoreNames);
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(names), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> restore(RestRequest request) {
+   protected CompletionStage<RestResponse> restore(RestRequest request) {
       return BackupManagerResource.handleRestoreRequest(invocationHelper, request, backupManager, (name, path, json) -> backupManager.restore(name, path));
    }
 
-   private CompletionStage<RestResponse> distribution(RestRequest request) {
+   protected CompletionStage<RestResponse> distribution(RestRequest request) {
       boolean pretty = isPretty(request);
       return clusterDistribution()
             .thenApply(distributions -> asJsonResponse(invocationHelper.newResponse(request), Json.array(distributions.stream()
@@ -163,7 +163,7 @@ public class ClusterResource implements ResourceHandler {
             });
    }
 
-   private CompletionStage<RestResponse> handleRaftMembers(RestRequest request) {
+   protected CompletionStage<RestResponse> handleRaftMembers(RestRequest request) {
       RaftManager raftManager = raftManager();
       if (!raftManager.isRaftAvailable()) {
          return CompletableFuture.completedFuture(invocationHelper.noContentResponse(request));
@@ -172,7 +172,7 @@ public class ClusterResource implements ResourceHandler {
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.array(raftManager.raftMembers()), isPretty);
    }
 
-   private CompletionStage<RestResponse> handleAddRaftMember(RestRequest request) {
+   protected CompletionStage<RestResponse> handleAddRaftMember(RestRequest request) {
       RaftManager raftManager = raftManager();
       if (!raftManager.isRaftAvailable()) {
          return CompletableFuture.completedFuture(invocationHelper.notFoundResponse(request));
@@ -181,7 +181,7 @@ public class ClusterResource implements ResourceHandler {
       return raftManager.addMember(raftId).thenApply(unused -> invocationHelper.newResponse(request, OK));
    }
 
-   private CompletionStage<RestResponse> handleRemoveRaftMember(RestRequest request) {
+   protected CompletionStage<RestResponse> handleRemoveRaftMember(RestRequest request) {
       RaftManager raftManager = raftManager();
       if (!raftManager.isRaftAvailable()) {
          return CompletableFuture.completedFuture(invocationHelper.notFoundResponse(request));
@@ -194,7 +194,7 @@ public class ClusterResource implements ResourceHandler {
       return SecurityActions.getRaftManager(invocationHelper.getRestCacheManager().getInstance());
    }
 
-   CompletionStage<RestResponse> handleClusterMembers(RestRequest request) {
+   protected CompletionStage<RestResponse> handleClusterMembers(RestRequest request) {
       EmbeddedCacheManager cacheManager = invocationHelper.getProtocolServer().getCacheManager();
       boolean pretty = isPretty(request);
       Map<String, Json> clusterInfos = new ConcurrentHashMap<>();
