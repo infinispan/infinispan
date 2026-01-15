@@ -17,10 +17,6 @@
          <artifactId>infinispan-core</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-processor</artifactId>
-      </dependency>
-      <dependency>
          <groupId>org.rocksdb</groupId>
          <artifactId>rocksdbjni</artifactId>
       </dependency>

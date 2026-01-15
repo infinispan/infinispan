@@ -94,11 +94,6 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-processor</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.apache.kerby</groupId>
          <artifactId>kerby-kdc</artifactId>
       </dependency>

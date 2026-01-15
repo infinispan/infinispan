@@ -30,11 +30,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-processor</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>org.hibernate.models</groupId>
          <artifactId>hibernate-models</artifactId>
       </dependency>
@@ -60,11 +55,6 @@
          <artifactId>infinispan-commons</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-component-processor</artifactId>
       </dependency>
 
       <dependency>

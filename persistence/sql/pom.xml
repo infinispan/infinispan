@@ -19,11 +19,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-processor</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>com.fasterxml.jackson.core</groupId>
          <artifactId>jackson-core</artifactId>
       </dependency>

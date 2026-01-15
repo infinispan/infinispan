@@ -62,9 +62,5 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-commons</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.infinispan.protostream</groupId>
-            <artifactId>protostream-processor</artifactId>
-        </dependency>
     </dependencies>
 </project>

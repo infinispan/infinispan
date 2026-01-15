@@ -19,11 +19,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-processor</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jdbc-common</artifactId>
       </dependency>

@@ -84,14 +84,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-component-processor</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan.protostream</groupId>
-            <artifactId>protostream-processor</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.projectreactor.tools</groupId>
             <artifactId>blockhound</artifactId>
             <optional>true</optional>

@@ -27,6 +27,17 @@
          <artifactId>hibernate-search-mapper-pojo-base</artifactId>
          <optional>true</optional>
       </dependency>
+      <!-- The following component processors shouldn't really be here, since they are on the annotation path, but otherwise they may not be available in partial builds -->
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-component-processor</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-logging-processor</artifactId>
+         <scope>provided</scope>
+      </dependency>
    </dependencies>
    <build>
       <plugins>

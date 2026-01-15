@@ -13,19 +13,9 @@
     <description>Infinispan Multimap module</description>
 
     <dependencies>
-       <dependency>
-          <groupId>org.infinispan</groupId>
-          <artifactId>infinispan-component-processor</artifactId>
-       </dependency>
-
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.infinispan.protostream</groupId>
-            <artifactId>protostream-processor</artifactId>
         </dependency>
 
         <dependency>

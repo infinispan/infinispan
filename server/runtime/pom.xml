@@ -27,15 +27,6 @@
    </properties>
 
    <dependencies>
-      <!-- Build dependencies. -->
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-component-processor</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-processor</artifactId>
-      </dependency>
       <!-- Compile dependencies. All of these will be shipped in the server -->
       <dependency>
          <groupId>org.infinispan</groupId>

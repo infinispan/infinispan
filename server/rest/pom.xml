@@ -28,19 +28,8 @@
 
       <dependency>
          <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-processor</artifactId>
-         <version>${version.protostream}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
          <artifactId>protostream</artifactId>
          <version>${version.protostream}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-component-processor</artifactId>
       </dependency>
 
       <dependency>
