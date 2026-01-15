@@ -192,7 +192,7 @@ public class ContainerResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> getInfo(RestRequest request) {
+   protected CompletionStage<RestResponse> getInfo(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
@@ -204,7 +204,7 @@ public class ContainerResource implements ResourceHandler {
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
+   protected CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND)
          return completedFuture(responseBuilder.build());
@@ -221,7 +221,7 @@ public class ContainerResource implements ResourceHandler {
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> getConfig(RestRequest request) {
+   protected CompletionStage<RestResponse> getConfig(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
@@ -245,7 +245,7 @@ public class ContainerResource implements ResourceHandler {
       return completedFuture(responseBuilder.build());
    }
 
-   private CompletionStage<RestResponse> getStats(RestRequest request) {
+   protected CompletionStage<RestResponse> getStats(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
@@ -254,7 +254,7 @@ public class ContainerResource implements ResourceHandler {
             .thenCompose(json -> asJsonResponseFuture(invocationHelper.newResponse(request), json, isPretty(request)));
    }
 
-   private CompletionStage<RestResponse> resetStats(RestRequest request) {
+   protected CompletionStage<RestResponse> resetStats(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
@@ -265,15 +265,15 @@ public class ContainerResource implements ResourceHandler {
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> getHealth(RestRequest request) {
+   protected CompletionStage<RestResponse> getHealth(RestRequest request) {
       return getHealth(request, false);
    }
 
-   private CompletionStage<RestResponse> getHealthStatus(RestRequest request) {
+   protected CompletionStage<RestResponse> getHealthStatus(RestRequest request) {
       return getHealth(request, true);
    }
 
-   private CompletionStage<RestResponse> getHealth(RestRequest request, boolean anon) {
+   protected CompletionStage<RestResponse> getHealth(RestRequest request, boolean anon) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
@@ -298,7 +298,7 @@ public class ContainerResource implements ResourceHandler {
       return completedFuture(responseBuilder.build());
    }
 
-   private CompletionStage<RestResponse> getAllCachesConfiguration(RestRequest request) {
+   protected CompletionStage<RestResponse> getAllCachesConfiguration(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
       boolean pretty = isPretty(request);
@@ -316,7 +316,7 @@ public class ContainerResource implements ResourceHandler {
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(configurations), pretty);
    }
 
-   private CompletionStage<RestResponse> getAllCachesConfigurationTemplates(RestRequest request) {
+   protected CompletionStage<RestResponse> getAllCachesConfigurationTemplates(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
       boolean pretty = isPretty(request);
@@ -347,13 +347,13 @@ public class ContainerResource implements ResourceHandler {
       return new NamedCacheConfiguration(n, sw.toString());
    }
 
-   private CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
+   protected CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = backupManager.getBackupNames();
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(names), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> backup(RestRequest request) {
+   protected CompletionStage<RestResponse> backup(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       return BackupManagerResource.handleBackupRequest(invocationHelper, request, backupManager, (name, workingDir, json) -> {
          BackupManager.Resources resources = BackupManagerResource.getResources(json);
@@ -362,13 +362,13 @@ public class ContainerResource implements ResourceHandler {
       });
    }
 
-   private CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
+   protected CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = backupManager.getRestoreNames();
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(names), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> restore(RestRequest request) {
+   protected CompletionStage<RestResponse> restore(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       return BackupManagerResource.handleRestoreRequest(invocationHelper, request, backupManager, (name, path, json) -> {
          BackupManager.Resources resources = BackupManagerResource.getResources(json);
@@ -377,7 +377,7 @@ public class ContainerResource implements ResourceHandler {
       });
    }
 
-   private CompletionStage<RestResponse> convertToJson(RestRequest request) {
+   protected CompletionStage<RestResponse> convertToJson(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
       ContentSource contents = request.contents();
@@ -426,22 +426,22 @@ public class ContainerResource implements ResourceHandler {
       }
    }
 
-   private CompletionStage<RestResponse> shutdown(RestRequest request) {
+   protected CompletionStage<RestResponse> shutdown(RestRequest request) {
       return CompletableFuture.supplyAsync(() -> {
          Security.doAs(request.getSubject(), invocationHelper.getServer()::containerStop);
          return invocationHelper.newResponse(request).status(NO_CONTENT).build();
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> listenConfig(RestRequest request) {
+   protected CompletionStage<RestResponse> listenConfig(RestRequest request) {
       return streamConfigurationAndEvents(request, false);
    }
 
-   private CompletionStage<RestResponse> listenLifecycle(RestRequest request) {
+   protected CompletionStage<RestResponse> listenLifecycle(RestRequest request) {
       return streamConfigurationAndEvents(request, true);
    }
 
-   private CompletionStage<RestResponse> streamConfigurationAndEvents(RestRequest request, boolean includeLifecycle) {
+   protected CompletionStage<RestResponse> streamConfigurationAndEvents(RestRequest request, boolean includeLifecycle) {
       MediaType mediaType = negotiateMediaType(request, APPLICATION_YAML, APPLICATION_JSON, APPLICATION_XML);
       boolean includeCurrentState = Boolean.parseBoolean(request.getParameter("includeCurrentState"));
       boolean pretty = isPretty(request);
