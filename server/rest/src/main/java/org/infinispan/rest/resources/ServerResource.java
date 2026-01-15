@@ -192,7 +192,7 @@ public class ServerResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> doIgnoreOp(RestRequest request) {
+   protected CompletionStage<RestResponse> doIgnoreOp(RestRequest request) {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
       boolean add = request.method().equals(POST);
 
@@ -212,34 +212,48 @@ public class ServerResource implements ResourceHandler {
             .thenApply(r -> builder.build());
    }
 
-   private CompletionStage<RestResponse> listIgnored(RestRequest request) {
+   protected CompletionStage<RestResponse> listIgnored(RestRequest request) {
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
       Set<String> ignored = serverStateManager.getIgnoredCaches();
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(ignored), isPretty(request));
    }
 
    private CompletionStage<RestResponse> connectorStartStop(RestRequest request) {
+      switch (request.getAction()) {
+         case "start":
+            return connectorStart(request);
+         case "stop":
+            return connectorStop(request);
+      }
+      throw Log.REST.unknownAction(request.getAction());
+   }
+
+   protected CompletionStage<RestResponse> connectorStart(RestRequest request) {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
       String connectorName = request.variables().get("connector");
       ProtocolServer<?> connector = invocationHelper.getServer().getProtocolServers().get(connectorName);
       if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
-      switch (request.getAction()) {
-         case "start":
-            return Security.doAs(request.getSubject(), () ->
-                  serverStateManager.connectorStart(connectorName).thenApply(r -> builder.build()));
-         case "stop":
-            if (connector.equals(invocationHelper.getProtocolServer()) || connector.equals(invocationHelper.getProtocolServer().getEnclosingProtocolServer())) {
-               return completedFuture(builder.status(CONFLICT).entity(Messages.MSG.connectorMatchesRequest(connectorName)).build());
-            } else {
-               return Security.doAs(request.getSubject(), () ->
-                     serverStateManager.connectorStop(connectorName).thenApply(r -> builder.build()));
-            }
-      }
-      throw Log.REST.unknownAction(request.getAction());
+      return Security.doAs(request.getSubject(), () ->
+            serverStateManager.connectorStart(connectorName).thenApply(r -> builder.build()));
    }
 
-   private CompletionStage<RestResponse> connectorStatus(RestRequest request) {
+   protected CompletionStage<RestResponse> connectorStop(RestRequest request) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
+      String connectorName = request.variables().get("connector");
+      ProtocolServer<?> connector = invocationHelper.getServer().getProtocolServers().get(connectorName);
+      if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
+
+      if (connector.equals(invocationHelper.getProtocolServer()) || connector.equals(invocationHelper.getProtocolServer().getEnclosingProtocolServer())) {
+         return completedFuture(builder.status(CONFLICT).entity(Messages.MSG.connectorMatchesRequest(connectorName)).build());
+      }
+
+      ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
+      return Security.doAs(request.getSubject(), () ->
+            serverStateManager.connectorStop(connectorName).thenApply(r -> builder.build()));
+   }
+
+   protected CompletionStage<RestResponse> connectorStatus(RestRequest request) {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
       String connectorName = request.variables().get("connector");
 
@@ -277,7 +291,7 @@ public class ServerResource implements ResourceHandler {
       });
    }
 
-   private CompletionStage<RestResponse> connectorIpFilterList(RestRequest request) {
+   protected CompletionStage<RestResponse> connectorIpFilterList(RestRequest request) {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
 
       ProtocolServer<?> connector = getProtocolServer(request);
@@ -300,7 +314,7 @@ public class ServerResource implements ResourceHandler {
       return invocationHelper.getServer().getProtocolServers().get(connectorName);
    }
 
-   private CompletionStage<RestResponse> listConnections(RestRequest request) {
+   protected CompletionStage<RestResponse> listConnections(RestRequest request) {
       boolean global = Boolean.parseBoolean(request.getParameter("global"));
       if (global) {
          List<Json> results = Collections.synchronizedList(new ArrayList<>());
@@ -333,7 +347,7 @@ public class ServerResource implements ResourceHandler {
       }
    }
 
-   private CompletionStage<RestResponse> connectorIpFilterClear(RestRequest request) {
+   protected CompletionStage<RestResponse> connectorIpFilterClear(RestRequest request) {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
 
       String connectorName = request.variables().get("connector");
@@ -344,11 +358,11 @@ public class ServerResource implements ResourceHandler {
       return Security.doAs(request.getSubject(), () -> serverStateManager.clearConnectorIpFilterRules(connectorName).thenApply(r -> builder.build()));
    }
 
-   private CompletionStage<RestResponse> listConnectors(RestRequest request) {
+   protected CompletionStage<RestResponse> listConnectors(RestRequest request) {
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(invocationHelper.getServer().getProtocolServers().keySet()), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> connectorIpFilterSet(RestRequest request) {
+   protected CompletionStage<RestResponse> connectorIpFilterSet(RestRequest request) {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
 
       String connectorName = request.variables().get("connector");
@@ -382,11 +396,11 @@ public class ServerResource implements ResourceHandler {
       return Security.doAs(request.getSubject(), () -> serverStateManager.setConnectorIpFilterRule(connectorName, rules).thenApply(r -> builder.build()));
    }
 
-   private CompletionStage<RestResponse> memory(RestRequest request) {
+   protected CompletionStage<RestResponse> memory(RestRequest request) {
       return asJsonResponseFuture(invocationHelper.newResponse(request), new JVMMemoryInfoInfo().toJson(), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> heapDump(RestRequest request) {
+   protected CompletionStage<RestResponse> heapDump(RestRequest request) {
       boolean live = Boolean.parseBoolean(request.getParameter("live"));
       boolean pretty = isPretty(request);
       ServerManagement server = invocationHelper.getServer();
@@ -402,27 +416,27 @@ public class ServerResource implements ResourceHandler {
       }, blockingExecutor);
    }
 
-   private CompletionStage<RestResponse> env(RestRequest request) {
+   protected CompletionStage<RestResponse> env(RestRequest request) {
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(System.getProperties()), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> info(RestRequest request) {
+   protected CompletionStage<RestResponse> info(RestRequest request) {
       return asJsonResponseFuture(invocationHelper.newResponse(request), new ServerInfo(invocationHelper.getServer()).toJson(), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> overviewReport(RestRequest request) {
+   protected CompletionStage<RestResponse> overviewReport(RestRequest request) {
       return CompletableFuture.supplyAsync(() -> asJsonResponse(invocationHelper.newResponse(request),
             invocationHelper.getServer().overviewReport(),
             isPretty(request)), blockingExecutor);
    }
 
-   private CompletionStage<RestResponse> threads(RestRequest request) {
+   protected CompletionStage<RestResponse> threads(RestRequest request) {
       return completedFuture(invocationHelper.newResponse(request)
             .contentType(TEXT_PLAIN).entity(Util.threadDump())
             .build());
    }
 
-   private CompletionStage<RestResponse> report(RestRequest request) {
+   protected CompletionStage<RestResponse> report(RestRequest request) {
       ServerManagement server = invocationHelper.getServer();
       return Security.doAs(request.getSubject(), () -> server.getServerReport().handle((path, t) -> {
                if (t != null) {
@@ -447,7 +461,7 @@ public class ServerResource implements ResourceHandler {
             .build();
    }
 
-   private CompletionStage<RestResponse> nodeReport(RestRequest request) {
+   protected CompletionStage<RestResponse> nodeReport(RestRequest request) {
       String targetName = request.variables().get("nodeName");
       EmbeddedCacheManager cacheManager = invocationHelper.getProtocolServer().getCacheManager();
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
@@ -496,7 +510,7 @@ public class ServerResource implements ResourceHandler {
             });
    }
 
-   private CompletionStage<RestResponse> stop(RestRequest request) {
+   protected CompletionStage<RestResponse> stop(RestRequest request) {
       return CompletableFuture.supplyAsync(() -> {
          Security.doAs(request.getSubject(), () -> invocationHelper.getServer().serverStop(Collections.emptyList()));
          return invocationHelper.newResponse(request)
@@ -504,7 +518,7 @@ public class ServerResource implements ResourceHandler {
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> config(RestRequest request) {
+   protected CompletionStage<RestResponse> config(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       MediaType accept = negotiateMediaType(request, APPLICATION_JSON, APPLICATION_XML, APPLICATION_YAML);
       responseBuilder.contentType(accept);
@@ -517,11 +531,11 @@ public class ServerResource implements ResourceHandler {
       return CompletableFuture.completedFuture(responseBuilder.build());
    }
 
-   private CompletionStage<RestResponse> dataSourceList(RestRequest request) {
+   protected CompletionStage<RestResponse> dataSourceList(RestRequest request) {
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(invocationHelper.getServer().getDataSources().keySet()), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> dataSourceTest(RestRequest request) {
+   protected CompletionStage<RestResponse> dataSourceTest(RestRequest request) {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
 
       String name = request.variables().get("datasource");
@@ -542,7 +556,7 @@ public class ServerResource implements ResourceHandler {
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> getCacheConfigDefaultAttributes(RestRequest request) {
+   protected CompletionStage<RestResponse> getCacheConfigDefaultAttributes(RestRequest request) {
       Configuration configuration = new ConfigurationBuilder().build();
       Map<String, Object> attributes = new LinkedHashMap<>();
       allAttributes(configuration, attributes, configuration.elementName());
