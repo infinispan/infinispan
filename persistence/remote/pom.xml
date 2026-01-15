@@ -52,14 +52,6 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-component-processor</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-processor</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jboss-marshalling</artifactId>
          <!-- Prevent transitive dependency -->
          <optional>true</optional>

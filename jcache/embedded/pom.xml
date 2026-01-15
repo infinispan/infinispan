@@ -13,10 +13,6 @@
    <description>JCACHE (JSR-107) implementation using Infinispan embedded mode</description>
 
    <dependencies>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-component-processor</artifactId>
-      </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -33,11 +29,6 @@
          <artifactId>infinispan-jcache-commons</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-processor</artifactId>
       </dependency>
 
       <dependency>
