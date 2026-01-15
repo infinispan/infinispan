@@ -30,11 +30,13 @@ import io.reactivex.rxjava3.core.Single;
 /**
  * Static factory method class to provide various reducers and finalizers for use with distributed Publisher. Note
  * that these functions are all serializable by Infinispan assuming that any passed arguments are as well.
+ *
  * @author wburns
  * @since 10.0
  */
 public class PublisherReducers {
-   private PublisherReducers() { }
+   private PublisherReducers() {
+   }
 
    public static Function<Publisher<Boolean>, CompletionStage<Boolean>> and() {
       return AndFinalizer.INSTANCE;
@@ -167,19 +169,20 @@ public class PublisherReducers {
     * biFunction. Failure to do so will cause unexpected results.
     * <p>
     * If the initial value needs to be modified, you should use {@link #reduceWith(Callable, BiFunction)} instead.
-    * @param identity initial identity value to use (this value must not be modified by the provide biFunction)
+    *
+    * @param identity   initial identity value to use (this value must not be modified by the provide biFunction)
     * @param biFunction biFunction used to reduce the values into a single one
-    * @param <I> input type
-    * @param <E> output reduced type
+    * @param <I>        input type
+    * @param <E>        output reduced type
     * @return function that will map a publisher of the input type to a completion stage of the output type
     */
    public static <I, E> Function<Publisher<I>, CompletionStage<E>> reduce(E identity,
-         BiFunction<E, ? super I, E> biFunction) {
+                                                                          BiFunction<E, ? super I, E> biFunction) {
       return new ReduceWithIdentityReducer<>(MarshallableObject.create(identity), MarshallableObject.create(biFunction));
    }
 
    public static <I, E> Function<Publisher<I>, CompletionStage<E>> reduceWith(Callable<? extends E> initialSupplier,
-         BiFunction<E, ? super I, E> biFunction) {
+                                                                              BiFunction<E, ? super I, E> biFunction) {
       return new ReduceWithInitialSupplierReducer<>(MarshallableObject.create(initialSupplier), MarshallableObject.create(biFunction));
    }
 

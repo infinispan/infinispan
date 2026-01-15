@@ -37,7 +37,7 @@ public class PublisherResponse {
    final transient int size;
 
    public PublisherResponse(Object[] results, IntSet completedSegments, IntSet lostSegments, int size, boolean complete,
-         List<PublisherHandler.SegmentResult> segmentResults) {
+                            List<PublisherHandler.SegmentResult> segmentResults) {
       this.results = results;
       this.completedSegments = completedSegments;
       this.lostSegments = lostSegments;

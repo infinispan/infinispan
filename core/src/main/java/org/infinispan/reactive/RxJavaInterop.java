@@ -16,11 +16,13 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
 /**
  * Static factory class that provides methods to obtain commonly used instances for interoperation between RxJava
  * and standard JRE.
+ *
  * @author wburns
  * @since 10.0
  */
 public class RxJavaInterop extends org.infinispan.commons.reactive.RxJavaInterop {
-   private RxJavaInterop() { }
+   private RxJavaInterop() {
+   }
 
    protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
@@ -60,9 +62,10 @@ public class RxJavaInterop extends org.infinispan.commons.reactive.RxJavaInterop
     * This method also only allows for a single subscriber to the Flowable, any additional subscribers will receive
     * an exception when subscribing to the returned Flowable.
     * {@link #voidCompletionStageToFlowable(CompletionStage)} can support any number of subscribers.
-    * @param stage stage to complete
+    *
+    * @param stage                  stage to complete
     * @param ignoreErrorIfCancelled whether to ignore an error if cancelled
-    * @param <R> stage type
+    * @param <R>                    stage type
     * @return a Flowable that is completed when the stage is
     */
    public static <R> Flowable<R> voidCompletionStageToFlowable(CompletionStage<Void> stage, boolean ignoreErrorIfCancelled) {
@@ -95,8 +98,9 @@ public class RxJavaInterop extends org.infinispan.commons.reactive.RxJavaInterop
     * to convert the values to a {@link Flowable}. Note this is useful as Flowable does not allow <b>null</b> values
     * and this function will handle this properly by not publishing a value if it is null. So it is possible to have
     * an empty Flowable returned.
-    * @return a function to be used to combine the possible values as a returned Flowable
+    *
     * @param <I> user value type
+    * @return a function to be used to combine the possible values as a returned Flowable
     */
    public static <I> BiFunction<I, I, Flowable<I>> combinedBiFunction() {
       return (BiFunction) combineBiFunction;

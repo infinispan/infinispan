@@ -11,6 +11,7 @@ import org.reactivestreams.Publisher;
 
 /**
  * Handles locally publishing entries from the cache. This manager will return results that contains suspected segments
+ *
  * @param <K> The key type for the underlying cache
  * @param <V> the value type for the underlying cache
  * @author wburns
@@ -20,13 +21,14 @@ public interface LocalPublisherManager<K, V> {
    /**
     * Same as {@link #entryReduction(boolean, IntSet, Set, Set, long, DeliveryGuarantee, Function, Function)}
     * except that the source publisher provided to the <b>transformer</b> is made up of keys only.
+    *
     * @param <R> return value type
     * @return CompletionStage that contains the resulting value when complete
     */
    <R> CompletionStage<PublisherResult<R>> keyReduction(boolean parallelPublisher, IntSet segments,
-         Set<K> keysToInclude, Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
+                                                        Set<K> keysToInclude, Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                                        Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
+                                                        Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 
    /**
     * Performs the given <b>transformer</b> and <b>finalizer</b> on data in the cache that is local, resulting in a
@@ -61,25 +63,26 @@ public interface LocalPublisherManager<K, V> {
     *    </tr>
     * </table>
     *
-    * @param <R> return value type
+    * @param <R>               return value type
     * @param parallelPublisher Whether the publisher should be parallelized
-    * @param segments determines what entries should be evaluated by only using ones that map to the given segments (must not be null)
-    * @param keysToInclude set of keys that should only be used. May be null, in which case all provided entries for the given segments will be evaluated
-    * @param keysToExclude set of keys that should not be used. May be null, in which case all provided entries will be evaluated
-    * @param explicitFlags cache flags
+    * @param segments          determines what entries should be evaluated by only using ones that map to the given segments (must not be null)
+    * @param keysToInclude     set of keys that should only be used. May be null, in which case all provided entries for the given segments will be evaluated
+    * @param keysToExclude     set of keys that should not be used. May be null, in which case all provided entries will be evaluated
+    * @param explicitFlags     cache flags
     * @param deliveryGuarantee delivery guarantee for given entries
-    * @param transformer reduces the given publisher of data eventually into a single value. Must not be null.
-    * @param finalizer reduces all of the single values produced by the transformer or this finalizer into one final value. May be null if not parallel
+    * @param transformer       reduces the given publisher of data eventually into a single value. Must not be null.
+    * @param finalizer         reduces all of the single values produced by the transformer or this finalizer into one final value. May be null if not parallel
     * @return CompletionStage that contains the resulting value when complete
     */
    <R> CompletionStage<PublisherResult<R>> entryReduction(boolean parallelPublisher, IntSet segments,
-         Set<K> keysToInclude, Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
+                                                          Set<K> keysToInclude, Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                                          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
+                                                          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 
    /**
-    * Same as {@link #entryPublisher( IntSet, Set, Set, long, DeliveryGuarantee, Function)}
+    * Same as {@link #entryPublisher(IntSet, Set, Set, long, DeliveryGuarantee, Function)}
     * except that the source publisher provided to the <b>transformer</b> is made up of keys only.
+    *
     * @param <R> return value type
     * @return SegmentAwarePublisher that will publish the values when subscribed to along with segment completions and losses
     */
@@ -114,13 +117,14 @@ public interface LocalPublisherManager<K, V> {
     * This publisher will not intermingle entries from different segment together.
     * This guarantee should allow for callers to be able to optimize knowing this since segments can be completed
     * quicker and fewer entries should have to be retained in memory.
-    * @param segments determines what entries should be evaluated by only using ones that map to the given segments (must not be null)
-    * @param keysToInclude set of keys that should only be used. May be null, in which case all provided entries for the given segments will be evaluated
-    * @param keysToExclude set of keys that should not be used. May be null, in which case all provided entries will be evaluated
-    * @param explicitFlags cache flags
+    *
+    * @param segments          determines what entries should be evaluated by only using ones that map to the given segments (must not be null)
+    * @param keysToInclude     set of keys that should only be used. May be null, in which case all provided entries for the given segments will be evaluated
+    * @param keysToExclude     set of keys that should not be used. May be null, in which case all provided entries will be evaluated
+    * @param explicitFlags     cache flags
     * @param deliveryGuarantee delivery guarantee for given entries
-    * @param transformer transforms the values to another value (0 to many). Must not be null.
-    * @param <R> return value type
+    * @param transformer       transforms the values to another value (0 to many). Must not be null.
+    * @param <R>               return value type
     * @return SegmentAwarePublisher that will publish the values when subscribed to along with segment completions and losses
     */
    <R> SegmentAwarePublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
@@ -130,6 +134,7 @@ public interface LocalPublisherManager<K, V> {
    /**
     * Method to invoke when a set of segments are being removed from this node. This way operations can be aware
     * of possible data loss while processing.
+    *
     * @param lostSegments the segments that are being removed from this node
     */
    void segmentsLost(IntSet lostSegments);

@@ -16,6 +16,7 @@ import org.reactivestreams.Subscriber;
  * <p>
  * If segment completion is not needed, use the {@link Publisher#subscribe(Subscriber)}. This allows
  * implementors to optimize for the case when segment completion is not needed as this may require additional overhead.
+ *
  * @param <R>
  */
 public interface SegmentPublisherSupplier<R> {
@@ -73,6 +74,7 @@ public interface SegmentPublisherSupplier<R> {
 
    /**
     * Returns a publisher that can be used to subscribe to the values available.
+    *
     * @return a Publisher that publishes the resulting values without corresponding segment information
     */
    Publisher<R> publisherWithoutSegments();
@@ -90,6 +92,7 @@ public interface SegmentPublisherSupplier<R> {
     * <p>
     * If segment information is not required, please use {@link #publisherWithoutSegments()} as implementations
     * may have additional optimizations in place for when this information is not required.
+    *
     * @return a Publisher that publishes the resulting values with segment information
     */
    Publisher<Notification<R>> publisherWithSegments();

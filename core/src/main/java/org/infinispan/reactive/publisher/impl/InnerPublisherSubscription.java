@@ -48,7 +48,7 @@ public class InnerPublisherSubscription<K, I, R, E> implements LongConsumer, Act
    private volatile boolean alreadyCreated;
 
    private InnerPublisherSubscription(InnerPublisherSubscriptionBuilder<K, I, R> builder,
-         FlowableProcessor<E> flowableProcessor, Map.Entry<Address, IntSet> firstTarget) {
+                                      FlowableProcessor<E> flowableProcessor, Map.Entry<Address, IntSet> firstTarget) {
       this.builder = builder;
       this.flowableProcessor = flowableProcessor;
 
@@ -63,8 +63,8 @@ public class InnerPublisherSubscription<K, I, R, E> implements LongConsumer, Act
       private final int topologyId;
 
       public InnerPublisherSubscriptionBuilder(ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent,
-            int batchSize, Supplier<Map.Entry<Address, IntSet>> supplier, Map<Address, Set<K>> excludedKeys,
-            int topologyId) {
+                                               int batchSize, Supplier<Map.Entry<Address, IntSet>> supplier, Map<Address, Set<K>> excludedKeys,
+                                               int topologyId) {
          this.parent = parent;
          this.batchSize = batchSize;
          this.supplier = supplier;
@@ -123,6 +123,7 @@ public class InnerPublisherSubscription<K, I, R, E> implements LongConsumer, Act
     * This method is invoked every time a new request is sent to the underlying publisher. We need to submit a request
     * if there is not a pending one. Whenever requestedAmount is a number greater than 0, that means we must submit or
     * there is a pending one.
+    *
     * @param count request count
     */
    @Override
@@ -249,7 +250,7 @@ public class InnerPublisherSubscription<K, I, R, E> implements LongConsumer, Act
     * Method invoked on each value providing the value and segment. This method is designed to be overridden by an
     * extended class.
     *
-    * @param value published value
+    * @param value   published value
     * @param segment segment of the value
     */
    protected void doOnValue(R value, int segment) {

@@ -7,6 +7,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Enumeration defining the possible delivery guarantees for entries.
+ *
  * @author wburns
  * @since 10.0
  */
@@ -48,7 +49,7 @@ public enum DeliveryGuarantee {
    },
    ;
 
-    abstract <K, V> CachePublisher<K, V> applyToPublisher(CachePublisher<K, V> cachePublisher);
+   abstract <K, V> CachePublisher<K, V> applyToPublisher(CachePublisher<K, V> cachePublisher);
 
    private static final DeliveryGuarantee[] CACHED_VALUES = DeliveryGuarantee.values();
 
