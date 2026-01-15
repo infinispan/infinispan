@@ -131,7 +131,7 @@
       <version.micrometer>1.16.2</version.micrometer>
       <version.mockito>5.21.0</version.mockito>
       <version.nashorn>15.7</version.nashorn>
-      <version.netty>4.1.128.Final</version.netty>
+      <version.netty>4.1.130.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
       <version.org.wildfly.arquillian>5.1.0.Final</version.org.wildfly.arquillian>
