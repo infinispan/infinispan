@@ -63,7 +63,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.ContainerResourceTest")
 public class ContainerResourceTest extends AbstractRestResourceTest {
-   private static final String PERSISTENT_LOCATION = tmpDirectory(ContainerResourceTest.class.getName());
+   private final String PERSISTENT_LOCATION = tmpDirectory(this.getClass().getName());
    private static final String CACHE_1 = "cache1";
    private static final String CACHE_2 = "cache2";
    private static final String CACHE_3= "cache3";
@@ -143,7 +143,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testHealth() {
-      RestResponse response = join(client.container().health());
+      RestResponse response = join(getHealth());
       ResponseAssertion.assertThat(response).isOk();
       Json jsonNode = Json.read(response.body());
       Json clusterHealth = jsonNode.at("cluster_health");
@@ -156,7 +156,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       assertTrue(cacheNames.contains(CACHE_1));
       assertTrue(cacheNames.contains(CACHE_2));
 
-      response = join(client.container().health(true));
+      response = join(getHealthStatus());
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasNoContent();
    }
@@ -173,7 +173,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
          } catch (CacheConfigurationException ignored) {
          }
       });
-      RestResponse response = join(client.container().health());
+      RestResponse response = join(getHealth());
       ResponseAssertion.assertThat(response).isOk();
 
       Json jsonNode = Json.read(response.body());
@@ -185,7 +185,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    public void testCacheConfigs() {
       String accept = "text/plain; q=0.9, application/json; q=0.6";
 
-      RestResponse response = join(client.container().cacheConfigurations(accept));
+      RestResponse response = join(getCacheConfigurations(accept));
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -201,7 +201,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    public void testCacheConfigsTemplates() {
       String accept = "text/plain; q=0.9, application/json; q=0.6";
 
-      RestResponse response = join(client.container().templates(accept));
+      RestResponse response = join(getTemplates(accept));
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -220,7 +220,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testGetGlobalConfig() {
-      RestResponse response = join(adminClient.container().globalConfiguration());
+      RestResponse response = join(getGlobalConfiguration());
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -236,7 +236,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testGetGlobalConfigXML() {
-      RestResponse response = join(adminClient.container().globalConfiguration(APPLICATION_XML_TYPE));
+      RestResponse response = join(getGlobalConfigurationWithMediaType(APPLICATION_XML_TYPE));
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -250,7 +250,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testInfo() {
-      RestResponse response = join(client.container().info());
+      RestResponse response = join(getInfo());
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -271,7 +271,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testStats() {
-      RestResponse response = join(adminClient.container().stats());
+      RestResponse response = join(getStats());
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -284,7 +284,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testConfigListener() throws InterruptedException, IOException {
       SSEListener sseListener = new SSEListener();
-      try (Closeable ignored = adminClient.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Map.of(RestHeaders.ACCEPT, MediaType.APPLICATION_JSON_TYPE), sseListener)) {
+      try (Closeable ignored = adminClient.raw().listen(getConfigListenerEndpoint(), Map.of(RestHeaders.ACCEPT, MediaType.APPLICATION_JSON_TYPE), sseListener)) {
          assertTrue(sseListener.await(10, TimeUnit.SECONDS));
 
          // Assert that all the existing caches and templates have a corresponding event
@@ -344,12 +344,12 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    public void testRebalancingActions() {
       assertRebalancingStatus(true);
 
-      try (RestResponse response = join(adminClient.container().disableRebalancing())) {
+      try (RestResponse response = join(disableRebalancing())) {
          ResponseAssertion.assertThat(response).isOk();
          assertRebalancingStatus(false);
       }
 
-      try (RestResponse response = join(adminClient.container().enableRebalancing())) {
+      try (RestResponse response = join(enableRebalancing())) {
          ResponseAssertion.assertThat(response).isOk();
          assertRebalancingStatus(true);
       }
@@ -376,5 +376,51 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    private List<String> extractCacheNames(Json cacheStatuses) {
       return cacheStatuses.asJsonList().stream().map(j -> j.at("cache_name").asString()).collect(Collectors.toList());
+   }
+
+   // ===== Protected helper methods for V3 test inheritance =====
+
+   protected CompletionStage<RestResponse> getHealth() {
+      return client.container().health();
+   }
+
+   protected CompletionStage<RestResponse> getHealthStatus() {
+      return client.container().health(true);
+   }
+
+   protected CompletionStage<RestResponse> getCacheConfigurations(String accept) {
+      return client.container().cacheConfigurations(accept);
+   }
+
+   protected CompletionStage<RestResponse> getTemplates(String accept) {
+      return client.container().templates(accept);
+   }
+
+   protected CompletionStage<RestResponse> getGlobalConfiguration() {
+      return adminClient.container().globalConfiguration();
+   }
+
+   protected CompletionStage<RestResponse> getGlobalConfigurationWithMediaType(String mediaType) {
+      return adminClient.container().globalConfiguration(mediaType);
+   }
+
+   protected CompletionStage<RestResponse> getInfo() {
+      return client.container().info();
+   }
+
+   protected CompletionStage<RestResponse> getStats() {
+      return adminClient.container().stats();
+   }
+
+   protected CompletionStage<RestResponse> enableRebalancing() {
+      return adminClient.container().enableRebalancing();
+   }
+
+   protected CompletionStage<RestResponse> disableRebalancing() {
+      return adminClient.container().disableRebalancing();
+   }
+
+   protected String getConfigListenerEndpoint() {
+      return "/rest/v2/container/config?action=listen&includeCurrentState=true";
    }
 }

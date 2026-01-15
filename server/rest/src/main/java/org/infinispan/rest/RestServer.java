@@ -19,6 +19,7 @@ import org.infinispan.rest.resources.CacheResourceV2;
 import org.infinispan.rest.resources.CacheResourceV3;
 import org.infinispan.rest.resources.ClusterResource;
 import org.infinispan.rest.resources.ContainerResource;
+import org.infinispan.rest.resources.ContainerResourceV3;
 import org.infinispan.rest.resources.CounterResource;
 import org.infinispan.rest.resources.CounterResourceV3;
 import org.infinispan.rest.resources.HealthCheckResource;
@@ -150,6 +151,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(restContext, new CounterResource(invocationHelper));
       resourceManager.registerResource(restContext, new CounterResourceV3(invocationHelper));
       resourceManager.registerResource(restContext, new ContainerResource(invocationHelper));
+      resourceManager.registerResource(restContext, new ContainerResourceV3(invocationHelper));
       resourceManager.registerResource(restContext, new XSiteResource(invocationHelper));
       resourceManager.registerResource(restContext, new XSiteResourceV3(invocationHelper));
       resourceManager.registerResource(restContext, new SearchAdminResource(invocationHelper));
