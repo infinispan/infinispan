@@ -9,6 +9,7 @@ import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -36,6 +37,8 @@ import org.infinispan.rest.operations.CacheOperationsHelper;
 import org.infinispan.rest.resources.mcp.McpConstants;
 import org.infinispan.rest.resources.mcp.McpInputSchema;
 import org.infinispan.rest.resources.mcp.McpProperty;
+import org.infinispan.rest.resources.mcp.McpResourceItem;
+import org.infinispan.rest.resources.mcp.McpResourceTemplate;
 import org.infinispan.rest.resources.mcp.McpTool;
 import org.infinispan.rest.resources.mcp.McpType;
 import org.infinispan.security.actions.SecurityActions;
@@ -52,6 +55,46 @@ public class McpResource implements ResourceHandler {
    public static final String COUNTER_NAME = "counterName";
    private final InvocationHelper invocationHelper;
    private final Map<String, McpTool> TOOLS;
+   private static final List<McpResourceItem> RESOURCES = List.of(
+         new McpResourceItem(
+               "infinispan+logs://server?lines=200",
+               "server log",
+               "CHECK THIS FIRST for server status, health, errors, warnings, exceptions, startup/shutdown events, and troubleshooting",
+               "text/plain"
+         ),
+         new McpResourceItem(
+               "infinispan+logs://audit?lines=200",
+               "audit log",
+               "Check for security events: authentication attempts, authorization failures, suspicious activity",
+               "text/plain"
+         ),
+         new McpResourceItem(
+               "infinispan+logs://rest-access?lines=200",
+               "REST access log",
+               "Check REST API usage patterns: request rates, errors (4xx/5xx), slow endpoints, client IPs",
+               "text/plain"
+         )
+   );
+   private static final List<McpResourceTemplate> RESOURCE_TEMPLATES = List.of(
+         new McpResourceTemplate(
+               "infinispan+cache://{cacheName}/{key}",
+               "cache value",
+               "Retrieves a value from a cache",
+               null
+         ),
+         new McpResourceTemplate(
+               "infinispan+counter://{countername}",
+               "counter value",
+               "Retrieves a value from a counter",
+               null
+         ),
+         new McpResourceTemplate(
+               "infinispan+logs://{logType}?lines={lines}",
+               "server logs",
+               "Read server logs to check health status, diagnose errors, warnings, exceptions, performance issues, and monitor server activity. Use this to answer questions about server health and troubleshooting.",
+               "text/plain"
+         )
+   );
 
    public McpResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
@@ -86,7 +129,7 @@ public class McpResource implements ResourceHandler {
                   "getCacheEntry",
                   new McpTool(
                         "getCacheEntry",
-                        "Retrieves an value from a cache",
+                        "Retrieves a value from a cache",
                         new McpInputSchema(
                               McpType.OBJECT,
                               new McpProperty(
@@ -404,52 +447,25 @@ public class McpResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> mcpResourcesList(RestRequest request, Json json) {
+      Json resources = Json.array();
+      for (McpResourceItem resource : RESOURCES) {
+         resources.add(resource.toJson());
+      }
       Json response = rpcResponse(json)
             .set(McpConstants.RESULT, Json.object()
-                  .set("resources", Json.array()
-                        .add(Json.object()
-                              .set("uri", "infinispan+logs://server?lines=200")
-                              .set(McpConstants.NAME, "server log")
-                              .set(McpConstants.DESCRIPTION, "CHECK THIS FIRST for server status, health, errors, warnings, exceptions, startup/shutdown events, and troubleshooting")
-                              .set("mimeType", "text/plain")
-                        )
-                        .add(Json.object()
-                              .set("uri", "infinispan+logs://audit?lines=200")
-                              .set(McpConstants.NAME, "audit log")
-                              .set(McpConstants.DESCRIPTION, "Check for security events: authentication attempts, authorization failures, suspicious activity")
-                              .set("mimeType", "text/plain")
-                        )
-                        .add(Json.object()
-                              .set("uri", "infinispan+logs://rest-access?lines=200")
-                              .set(McpConstants.NAME, "REST access log")
-                              .set(McpConstants.DESCRIPTION, "Check REST API usage patterns: request rates, errors (4xx/5xx), slow endpoints, client IPs")
-                              .set("mimeType", "text/plain")
-                        )
-                  )
+                  .set("resources", resources)
             );
       return asJsonResponseFuture(invocationHelper.newResponse(request), response, false);
    }
 
    private CompletionStage<RestResponse> mcpResourcesTemplatesList(RestRequest request, Json json) {
+      Json resourceTemplates = Json.array();
+      for (McpResourceTemplate template : RESOURCE_TEMPLATES) {
+         resourceTemplates.add(template.toJson());
+      }
       Json response = rpcResponse(json)
             .set(McpConstants.RESULT, Json.object()
-                  .set("resourceTemplates", Json.array()
-                        .add(Json.object()
-                                    .set("uriTemplate", "infinispan+cache://{cacheName}/{key}")
-                                    .set(McpConstants.NAME, "cache value")
-                                    .set(McpConstants.DESCRIPTION, "Retrieves a value from a cache")
-                              //.set("mimeType", "text/plain")
-                        ).add(Json.object()
-                              .set("uriTemplate", "infinispan+counter://{countername}")
-                              .set(McpConstants.NAME, "counter value")
-                              .set(McpConstants.DESCRIPTION, "Retrieves a value from a counter")
-                        ).add(Json.object()
-                              .set("uriTemplate", "infinispan+logs://{logType}?lines={lines}")
-                              .set(McpConstants.NAME, "server logs")
-                              .set(McpConstants.DESCRIPTION, "Read server logs to check health status, diagnose errors, warnings, exceptions, performance issues, and monitor server activity. Use this to answer questions about server health and troubleshooting.")
-                              .set("mimeType", "text/plain")
-                        )
-                  )
+                  .set("resourceTemplates", resourceTemplates)
             );
       return asJsonResponseFuture(invocationHelper.newResponse(request), response, false);
    }
