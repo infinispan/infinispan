@@ -79,7 +79,7 @@
       <version.console>${versionx.org.infinispan.infinispan-console}</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
       <version.fabric8.docker-maven-plugin>0.48.0</version.fabric8.docker-maven-plugin>
-      <version.fabric8.kubernetes-client>7.4.0</version.fabric8.kubernetes-client>
+      <version.fabric8.kubernetes-client>7.5.1</version.fabric8.kubernetes-client>
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
       <version.glassfish.jaxb>4.0.6</version.glassfish.jaxb>
       <version.groovy>2.4.21</version.groovy>
