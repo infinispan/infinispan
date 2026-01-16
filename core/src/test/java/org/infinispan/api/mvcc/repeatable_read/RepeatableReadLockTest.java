@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
-import org.infinispan.commons.test.Exceptions;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 

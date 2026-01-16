@@ -12,9 +12,9 @@ import java.util.stream.Collectors;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AeshTestConnection;
+import org.infinispan.testing.Testing;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 
@@ -31,7 +31,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
 
    @BeforeAll
    public static void setup() {
-      workingDir = Path.of(CommonsTestingUtil.tmpDirectory(RollingUpgradeDynamicStoreCliIT.class));
+      workingDir = Path.of(Testing.tmpDirectory(RollingUpgradeDynamicStoreCliIT.class));
       Util.recursiveFileRemove(workingDir);
       properties = new Properties(System.getProperties());
       properties.put("cli.dir", workingDir.toAbsolutePath());

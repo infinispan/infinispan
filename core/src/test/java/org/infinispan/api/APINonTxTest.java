@@ -1,11 +1,11 @@
 package org.infinispan.api;
 
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.test.TestingUtil.assertNoLocks;
 import static org.infinispan.test.TestingUtil.createMapEntry;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -34,7 +34,6 @@ import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.LockedStream;
-import org.infinispan.commons.lambda.NamedLambdas;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.functional.FunctionalMap;
@@ -48,6 +47,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.lambda.NamedLambdas;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.impl.InfinispanLock;

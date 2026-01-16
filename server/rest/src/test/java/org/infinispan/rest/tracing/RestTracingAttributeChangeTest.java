@@ -2,7 +2,7 @@ package org.infinispan.rest.tracing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.nio.file.Paths;
 import java.util.concurrent.CompletionStage;
@@ -13,7 +13,6 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -26,6 +25,7 @@ import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
 import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.Test;
 
 public class RestTracingAttributeChangeTest extends SingleCacheManagerTest {

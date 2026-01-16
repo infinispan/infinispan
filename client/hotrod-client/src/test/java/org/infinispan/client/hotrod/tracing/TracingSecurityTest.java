@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 import javax.security.auth.Subject;
 
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
@@ -24,6 +23,7 @@ import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryService;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 import io.opentelemetry.sdk.trace.data.SpanData;

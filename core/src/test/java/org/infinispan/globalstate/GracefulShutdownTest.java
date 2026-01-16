@@ -2,8 +2,8 @@ package org.infinispan.globalstate;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.lifecycle.ComponentStatus.TERMINATED;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.IllegalLifecycleStateException;

@@ -49,8 +49,6 @@ import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -66,6 +64,8 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.ThreadLeakChecker;
 import org.infinispan.tools.store.migrator.jdbc.JdbcConfigurationUtil;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;

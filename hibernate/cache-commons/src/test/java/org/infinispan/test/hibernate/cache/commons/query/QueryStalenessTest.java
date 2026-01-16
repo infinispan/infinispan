@@ -9,11 +9,11 @@ import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.junit4.CustomRunner;
 import org.hibernate.testing.orm.junit.JiraKey;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
+import org.infinispan.testing.TestResourceTracker;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

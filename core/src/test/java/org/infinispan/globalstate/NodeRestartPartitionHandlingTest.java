@@ -6,12 +6,12 @@ import java.io.File;
 import java.util.Arrays;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.partitionhandling.BaseStatefulPartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.topology.MissingMembersException;
 import org.testng.annotations.Test;
 

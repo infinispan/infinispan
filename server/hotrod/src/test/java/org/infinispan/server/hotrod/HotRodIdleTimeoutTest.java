@@ -1,11 +1,11 @@
 package org.infinispan.server.hotrod;
 
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
+import static org.infinispan.testing.Exceptions.expectException;
 
 import java.lang.reflect.Method;
 import java.nio.channels.ClosedChannelException;

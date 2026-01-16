@@ -8,12 +8,12 @@ import java.util.List;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.model.Developer;
 import org.infinispan.query.model.Game;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.maxresult.DistributedMaxResultTest")

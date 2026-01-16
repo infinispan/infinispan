@@ -3,11 +3,11 @@ package org.infinispan.query.pagination.pagination;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.model.Developer;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

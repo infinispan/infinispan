@@ -9,11 +9,11 @@ import java.util.Map;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.commons.test.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.testing.Eventually;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;

@@ -18,10 +18,10 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
-import static org.infinispan.commons.test.skip.SkipTestNG.skipIf;
 import static org.infinispan.rest.RequestHeader.IF_MODIFIED_SINCE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.testing.skip.SkipTestNG.skipIf;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.time.ZonedDateTime;

@@ -4,11 +4,11 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.infinispan.commons.test.skip.OS;
-import org.infinispan.commons.test.skip.SkipTestNG;
-import org.infinispan.commons.test.skip.StringLogAppender;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CherryPickClassLoader;
+import org.infinispan.testing.skip.OS;
+import org.infinispan.testing.skip.SkipTestNG;
+import org.infinispan.testing.skip.StringLogAppender;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.impl.transport.netty.NativeTransportTest")

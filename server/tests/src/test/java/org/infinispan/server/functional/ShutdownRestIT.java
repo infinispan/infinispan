@@ -1,9 +1,9 @@
 package org.infinispan.server.functional;
 
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
-import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
+import static org.infinispan.testing.Eventually.eventually;
 
 import java.net.ConnectException;
 

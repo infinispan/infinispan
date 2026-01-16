@@ -49,7 +49,7 @@
       <Logger name="org.jgroups" level="DEBUG"/>
       <Logger name="org.jgroups.protocols.pbcast.GMS" level="TRACE"/>
 
-      <Logger name="org.infinispan.commons.test.TestSuiteProgress">
+      <Logger name="org.infinispan.testing.TestSuiteProgress">
          <AppenderRef ref="FailuresFile" level="ERROR"/>
       </Logger>
 

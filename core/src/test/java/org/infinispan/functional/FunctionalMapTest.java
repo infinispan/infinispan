@@ -41,7 +41,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.versioning.NumericVersion;
@@ -65,6 +64,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.skip.SkipTestNG;
 import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.Test;
 

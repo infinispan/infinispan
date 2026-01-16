@@ -3,8 +3,8 @@ package org.infinispan.server.resp;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.RedisCommandTimeoutException;

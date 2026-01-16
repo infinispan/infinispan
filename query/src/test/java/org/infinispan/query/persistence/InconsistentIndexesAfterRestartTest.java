@@ -13,7 +13,6 @@ import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -25,6 +24,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -153,7 +153,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
 
    @BeforeClass
    protected void setUpTempDir() {
-      TMP_DIR = CommonsTestingUtil.tmpDirectory(this.getClass());
+      TMP_DIR = Testing.tmpDirectory(this.getClass());
       new File(TMP_DIR).mkdirs();
    }
 

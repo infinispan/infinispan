@@ -10,11 +10,11 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.query.ProtobufMetadataManager;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

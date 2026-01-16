@@ -20,8 +20,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
@@ -34,6 +32,8 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -60,7 +60,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      location = CommonsTestingUtil.tmpDirectory(SingleFileStoreStressTest.class);
+      location = Testing.tmpDirectory(SingleFileStoreStressTest.class);
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.globalState().enable().persistentLocation(location);
 

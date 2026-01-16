@@ -44,7 +44,7 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-commons-test</artifactId>
+         <artifactId>infinispan-testing</artifactId>
          <scope>test</scope>
       </dependency>
 
@@ -119,7 +119,7 @@
                <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
                <dependenciesToScan>
                   <!-- TestNGSuiteChecksTest -->
-                  <dependency>org.infinispan:infinispan-commons-test</dependency>
+                  <dependency>org.infinispan:infinispan-testing</dependency>
                </dependenciesToScan>
             </configuration>
          </plugin>

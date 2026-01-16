@@ -6,9 +6,9 @@ import java.util.Optional;
 
 import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.schema.Schema;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

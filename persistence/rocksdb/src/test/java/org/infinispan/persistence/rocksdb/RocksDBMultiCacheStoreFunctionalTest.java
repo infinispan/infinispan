@@ -3,18 +3,18 @@ package org.infinispan.persistence.rocksdb;
 import java.io.File;
 import java.nio.file.Paths;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.MultiStoresFunctionalTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.rocksdb.RocksDBMultiCacheStoreFunctionalTest")
 public class RocksDBMultiCacheStoreFunctionalTest extends MultiStoresFunctionalTest<RocksDBStoreConfigurationBuilder> {
 
-   private final File tmpDir = new File(CommonsTestingUtil.tmpDirectory(this.getClass()));
+   private final File tmpDir = new File(Testing.tmpDirectory(this.getClass()));
 
    @BeforeMethod
    protected void cleanDataFiles() {

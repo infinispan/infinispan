@@ -6,10 +6,10 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.test.skip.StringLogAppender;
 import org.infinispan.server.memcached.configuration.MemcachedProtocol;
 import org.infinispan.server.memcached.test.MemcachedSingleNodeTest;
+import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.skip.StringLogAppender;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "server.memcached.logging.MemcachedAccessLoggingTest")

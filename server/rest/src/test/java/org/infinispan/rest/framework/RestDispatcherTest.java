@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.rest.framework.impl.Invocations;
@@ -31,6 +30,7 @@ import org.infinispan.security.CustomAuditLoggerTest;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

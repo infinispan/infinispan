@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -20,6 +19,7 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.server.Server;
 import org.infinispan.server.security.ElytronPasswordProviderSupplier;
 import org.infinispan.server.security.KeyStoreUtils;
+import org.infinispan.testing.Exceptions;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

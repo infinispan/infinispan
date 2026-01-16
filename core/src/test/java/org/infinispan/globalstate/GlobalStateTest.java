@@ -1,8 +1,8 @@
 package org.infinispan.globalstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
-import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.testing.Exceptions.expectException;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
@@ -24,7 +24,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.jdkspecific.CallerId;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -42,6 +41,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.testing.Exceptions;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

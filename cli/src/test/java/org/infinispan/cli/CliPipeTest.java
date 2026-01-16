@@ -13,9 +13,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.StreamShell;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Eventually;
 import org.infinispan.commons.util.Util;
+import org.infinispan.testing.Eventually;
+import org.infinispan.testing.Testing;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
 
@@ -25,7 +25,7 @@ import org.junit.Test;
 public class CliPipeTest {
    @Test
    public void testCliBatchPipe() throws IOException, InterruptedException {
-      File workingDir = new File(CommonsTestingUtil.tmpDirectory(CliPipeTest.class));
+      File workingDir = new File(Testing.tmpDirectory(CliPipeTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());

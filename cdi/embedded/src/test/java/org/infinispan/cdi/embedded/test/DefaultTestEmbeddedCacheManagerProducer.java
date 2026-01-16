@@ -2,12 +2,12 @@ package org.infinispan.cdi.embedded.test;
 
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.TestResourceTracker;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;

@@ -1,6 +1,6 @@
 package org.infinispan.scripting;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
+import static org.infinispan.testing.Testing.loadFileAsString;
 
 import java.io.InputStream;
 

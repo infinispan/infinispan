@@ -33,7 +33,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-commons-test</artifactId>
+            <artifactId>infinispan-testing</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -113,7 +113,7 @@
                         <listener>${testNGListeners}</listener>
                     </properties>
                    <dependenciesToScan>
-                      <dependency>org.infinispan:infinispan-commons-test</dependency>
+                      <dependency>org.infinispan:infinispan-testing</dependency>
                    </dependenciesToScan>
                 </configuration>
             </plugin>

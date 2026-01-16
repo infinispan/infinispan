@@ -5,7 +5,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClie
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
-import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
+import static org.infinispan.testing.Testing.loadFileAsString;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 

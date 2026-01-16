@@ -16,8 +16,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.lambda.NamedLambdas;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -28,6 +26,8 @@ import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.testing.Testing;
+import org.infinispan.testing.lambda.NamedLambdas;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -88,7 +88,7 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
    @BeforeClass(alwaysRun = true)
    @Override
    public void createBeforeClass() throws Throwable {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+      tmpDirectory = Testing.tmpDirectory(getClass());
       super.createBeforeClass();
    }
 

@@ -17,7 +17,7 @@ import java.util.Queue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.infinispan.commons.test.Exceptions;
+import org.infinispan.testing.Exceptions;
 import org.junit.Test;
 
 /**

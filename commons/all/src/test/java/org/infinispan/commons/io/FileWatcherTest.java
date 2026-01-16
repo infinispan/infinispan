@@ -12,8 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Eventually;
+import org.infinispan.testing.Eventually;
+import org.infinispan.testing.Testing;
 import org.junit.Test;
 
 /**
@@ -24,7 +24,7 @@ public class FileWatcherTest {
    @Test
    public void testFileWatcher() throws IOException, InterruptedException {
       try(FileWatcher watcher = new FileWatcher()) {
-         Path tmpDir = Paths.get(CommonsTestingUtil.tmpDirectory(FileWatcherTest.class));
+         Path tmpDir = Paths.get(Testing.tmpDirectory(FileWatcherTest.class));
          Files.createDirectories(tmpDir);
          Path a = tmpDir.resolve("a");
          Files.deleteIfExists(a);

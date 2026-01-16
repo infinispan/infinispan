@@ -65,7 +65,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-commons-test</artifactId>
+            <artifactId>infinispan-testing</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.ThreadGroups;
 import org.infinispan.commons.jdkspecific.ThreadCreator;
-import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.tasks.ServerTaskEngine;
@@ -21,6 +20,7 @@ import org.infinispan.tasks.manager.TaskManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.junit.JUnitThreadTrackerRule;
 import org.junit.ClassRule;
 import org.junit.Test;
 

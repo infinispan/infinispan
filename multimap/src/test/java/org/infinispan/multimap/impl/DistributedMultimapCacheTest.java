@@ -1,7 +1,6 @@
 package org.infinispan.multimap.impl;
 
 import static java.lang.String.format;
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.MultimapTestUtils.EMPTY_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.JULIEN;
@@ -13,6 +12,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.infinispan.multimap.impl.MultimapTestUtils.assertMultimapCacheSize;
 import static org.infinispan.multimap.impl.MultimapTestUtils.putValuesOnMultimapCache;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;

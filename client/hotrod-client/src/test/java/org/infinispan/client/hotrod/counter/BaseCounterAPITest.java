@@ -16,12 +16,12 @@ import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.counter.impl.NotificationManager;
 import org.infinispan.client.hotrod.counter.impl.RemoteCounterManager;
-import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest;
+import org.infinispan.testing.ExceptionRunnable;
 import org.testng.annotations.Test;
 
 /**

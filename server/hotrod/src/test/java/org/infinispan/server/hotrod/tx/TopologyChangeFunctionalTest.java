@@ -16,7 +16,6 @@ import java.util.List;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -34,6 +33,7 @@ import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.server.hotrod.tx.table.functions.CreateStateFunction;
 import org.infinispan.server.hotrod.tx.table.functions.TxFunction;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.skip.SkipTestNG;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionTable;

@@ -1,7 +1,7 @@
 package org.infinispan.persistence.sifs;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.nio.file.Paths;
 

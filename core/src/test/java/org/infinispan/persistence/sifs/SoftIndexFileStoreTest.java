@@ -27,8 +27,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -39,6 +37,8 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.Testing;
 import org.infinispan.util.PersistenceMockUtil;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.mockito.Mockito;
@@ -59,7 +59,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
 
    @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+      tmpDirectory = Testing.tmpDirectory(getClass());
    }
 
    @AfterClass(alwaysRun = true)

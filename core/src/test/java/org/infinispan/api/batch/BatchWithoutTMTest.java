@@ -7,10 +7,10 @@ import java.lang.reflect.Method;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 

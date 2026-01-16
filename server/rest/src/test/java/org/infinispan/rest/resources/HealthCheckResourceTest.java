@@ -3,9 +3,9 @@ package org.infinispan.rest.resources;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.rest.RestResponseInfo.OK;
 import static org.infinispan.client.rest.RestResponseInfo.SERVICE_UNAVAILABLE;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.partitionhandling.PartitionHandling.DENY_READ_WRITES;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.nio.file.Paths;
 import java.util.stream.Stream;

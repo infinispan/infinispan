@@ -1,7 +1,7 @@
 package org.infinispan.server.functional.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.commons.test.Eventually.eventually;
+import static org.infinispan.testing.Eventually.eventually;
 
 import java.util.ArrayList;
 import java.util.List;

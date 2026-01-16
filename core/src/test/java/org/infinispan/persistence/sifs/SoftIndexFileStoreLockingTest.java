@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -18,6 +16,8 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -41,9 +41,9 @@ public class SoftIndexFileStoreLockingTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+      tmpDirectory = Testing.tmpDirectory(getClass());
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().enable().persistentLocation(Testing.tmpDirectory(this.getClass()));
       EmbeddedCacheManager ecm = TestCacheManagerFactory.newDefaultCacheManager(true, global, new ConfigurationBuilder());
       TestingUtil.defineConfiguration(ecm, CACHE_NAME, createCacheConfiguration().build());
       return ecm;

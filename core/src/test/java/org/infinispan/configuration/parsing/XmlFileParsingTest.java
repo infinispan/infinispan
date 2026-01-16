@@ -1,7 +1,7 @@
 package org.infinispan.configuration.parsing;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
@@ -19,7 +19,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
@@ -48,6 +47,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.tx.TestLookup;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.testng.annotations.Test;

@@ -1,6 +1,6 @@
 package org.infinispan.cli.commands.troubleshoot;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -15,10 +15,10 @@ import java.util.UUID;
 
 import org.infinispan.cli.AeshTestShell;
 import org.infinispan.cli.commands.CLI;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.FileSystemLock;
 import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.testing.Testing;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -32,7 +32,7 @@ public class PersistentStateParseTest {
 
    @Test
    public void testListAllStates() throws IOException {
-      File workingDir = new File(CommonsTestingUtil.tmpDirectory(PersistentStateParseTest.class));
+      File workingDir = new File(Testing.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
@@ -48,7 +48,7 @@ public class PersistentStateParseTest {
 
    @Test
    public void showStateContents() throws IOException {
-      File workingDir = new File(CommonsTestingUtil.tmpDirectory(PersistentStateParseTest.class));
+      File workingDir = new File(Testing.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
@@ -64,7 +64,7 @@ public class PersistentStateParseTest {
 
    @Test
    public void testSuccessfulDeleteScope() throws IOException {
-      File workingDir = new File(CommonsTestingUtil.tmpDirectory(PersistentStateParseTest.class));
+      File workingDir = new File(Testing.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
@@ -86,7 +86,7 @@ public class PersistentStateParseTest {
 
    @Test
    public void testFailedDeleteOnGlobalLock() throws IOException {
-      File workingDir = new File(CommonsTestingUtil.tmpDirectory(PersistentStateParseTest.class));
+      File workingDir = new File(Testing.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());

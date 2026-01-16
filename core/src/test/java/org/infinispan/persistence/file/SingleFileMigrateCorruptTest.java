@@ -15,7 +15,6 @@ import java.util.stream.IntStream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -23,6 +22,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -45,7 +45,7 @@ public class SingleFileMigrateCorruptTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setUpTempDir() throws IOException {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = Testing.tmpDirectory(this.getClass());
       new File(tmpDirectory).mkdirs();
    }
 
