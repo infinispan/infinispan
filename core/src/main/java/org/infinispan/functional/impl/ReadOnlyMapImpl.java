@@ -34,15 +34,16 @@ public class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implement
       super(params, functionalMap);
    }
 
-   public static <K, V> ReadOnlyMap<K, V> create(FunctionalMapImpl<K, V> functionalMap) {
-      return create(Params.from(functionalMap.params.params), functionalMap);
-   }
-
-   private static <K, V> ReadOnlyMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
+   static <K, V> ReadOnlyMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
       if (functionalMap.cache().getCacheConfiguration().simpleCache()) {
          return new SimpleReadOnlyMapImpl<>(params, functionalMap);
       }
       return new ReadOnlyMapImpl<>(params, functionalMap);
+   }
+
+   @Override
+   public ReadOnlyMap<K, V> toReadOnlyMap() {
+      return this;
    }
 
    @Override

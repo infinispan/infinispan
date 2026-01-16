@@ -14,8 +14,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.set.SAddFunction;
 import org.infinispan.multimap.impl.function.set.SGetFunction;
 import org.infinispan.multimap.impl.function.set.SMIsMember;
@@ -39,8 +37,8 @@ public class EmbeddedSetCache<K, V> {
 
    public EmbeddedSetCache(Cache<K, SetBucket<V>> cache) {
       this.cache = cache.getAdvancedCache();
-      FunctionalMapImpl<K, SetBucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
-      this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
+      FunctionalMap<K, SetBucket<V>> functionalMap = FunctionalMap.create(this.cache);
+      this.readWriteMap = functionalMap.toReadWriteMap();
       this.entryFactory = SecurityActions.getCacheComponentRegistry(this.cache).getInternalEntryFactory().running();
    }
 

@@ -26,11 +26,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -274,7 +272,7 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
    }
 
    private static Map<?, ?> read(Cache<Object, Object> cache, Collection<?> keys) {
-      ReadOnlyMap<Object, Object> ro = ReadOnlyMapImpl.create(FunctionalMapImpl.create(cache.getAdvancedCache()));
+      ReadOnlyMap<Object, Object> ro = FunctionalMap.create(cache.getAdvancedCache()).toReadOnlyMap();
       Map<Object, Object> map = new HashMap<>();
       for (Object key : keys) {
          ro.eval(key, MarshallableFunctions.identity()).join().find().ifPresent(value -> map.put(key, value));
@@ -283,14 +281,14 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
    }
 
    private static Map<?, ?> readMany(Cache<Object, Object> cache, Collection<?> keys) {
-      ReadOnlyMap<Object, Object> ro = ReadOnlyMapImpl.create(FunctionalMapImpl.create(cache.getAdvancedCache()));
+      ReadOnlyMap<Object, Object> ro = FunctionalMap.create(cache.getAdvancedCache()).toReadOnlyMap();
       return ro.evalMany(new HashSet<>(keys), MarshallableFunctions.identity())
             .filter(view -> view.find().isPresent())
             .collect(Collectors.toMap(ReadEntryView::key, ReadEntryView::get));
    }
 
    private static Map<?, ?> readWrite(Cache<Object, Object> cache, Collection<?> keys) {
-      ReadWriteMap<Object, Object> rw = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache.getAdvancedCache()));
+      ReadWriteMap<Object, Object> rw = FunctionalMap.create(cache.getAdvancedCache()).toReadWriteMap();
       Map<Object, Object> map = new HashMap<>();
       for (Object key : keys) {
          rw.eval(key, MarshallableFunctions.identity()).join().find().ifPresent(value -> map.put(key, value));
@@ -299,7 +297,7 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
    }
 
    private static Map<?, ?> readWriteMany(Cache<Object, Object> cache, Collection<?> keys) {
-      ReadWriteMap<Object, Object> ro = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache.getAdvancedCache()));
+      ReadWriteMap<Object, Object> ro = FunctionalMap.create(cache.getAdvancedCache()).toReadWriteMap();
       return ro.evalMany(new HashSet<>(keys), MarshallableFunctions.identity())
             .filter(view -> view.find().isPresent())
             .collect(Collectors.toMap(ReadWriteEntryView::key, ReadWriteEntryView::get));

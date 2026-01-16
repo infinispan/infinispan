@@ -18,8 +18,6 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction;
@@ -53,8 +51,8 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
 
    public EmbeddedMultimapPairCache(Cache<K, HashMapBucket<HK, HV>> cache) {
       this.cache = cache.getAdvancedCache();
-      FunctionalMapImpl<K, HashMapBucket<HK, HV>> functionalMap = FunctionalMapImpl.create(this.cache);
-      this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
+      FunctionalMap<K, HashMapBucket<HK, HV>> functionalMap = FunctionalMap.create(this.cache);
+      this.readWriteMap = functionalMap.toReadWriteMap();
    }
 
    /**

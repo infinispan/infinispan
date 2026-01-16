@@ -9,6 +9,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.functional.EntryView.ReadEntryView;
@@ -16,6 +17,7 @@ import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.Listeners.ReadWriteListeners;
 import org.infinispan.functional.Listeners.WriteListeners;
+import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.util.function.SerializableBiConsumer;
@@ -53,18 +55,45 @@ import org.infinispan.util.function.SerializableFunction;
  * with other {@link CompletableFuture} instances.
  *
  * <p>For those operations that return multiple results, the API returns
- * instances of a {@link Traversable} interface which offers a lazy pull­style
- * API for working with multiple results. Although push­style interfaces for
+ * instances of a {@link Traversable} interface which offers a lazy pull-style
+ * API for working with multiple results. Although push-style interfaces for
  * handling multiple results, such as RxJava, are fully asynchronous, they're
- * harder to use from a user’s perspective. {@link Traversable},​ being a lazy
- * pull­style API, can still be asynchronous underneath since the user can
+ * harder to use from a user’s perspective. {@link Traversable}, being a lazy
+ * pull-style API, can still be asynchronous underneath since the user can
  * decide to work on the {@link Traversable} at a later stage, and the
  * implementation itself can decide when to compute those results.
  *
  * @since 8.0
  */
 @Experimental
-public interface FunctionalMap<K, V> extends AutoCloseable {
+public interface FunctionalMap<K, V> {
+
+   /**
+    * Create a FunctionalMap which wraps the supplied {@link AdvancedCache}
+    *
+    * @param cache the {@link AdvancedCache} to wrap
+    * @param <K>   the key type
+    * @param <V>   the value type
+    * @return an instance of FunctionalMap
+    */
+   static <K, V> FunctionalMap<K, V> create(AdvancedCache<K, V> cache) {
+      return FunctionalMapImpl.create(cache);
+   }
+
+   /**
+    * Returns a ReadWriteMap, a FunctionalMap with semantics specific to read/write use-cases
+    */
+   ReadWriteMap<K, V> toReadWriteMap();
+
+   /**
+    * Returns a ReadOnlyMap, a FunctionalMap with semantics specific to read-only use-cases
+    */
+   ReadOnlyMap<K, V> toReadOnlyMap();
+
+   /**
+    * Returns a WriteOnlyMap, a FunctionalMap with semantics specific to write-only use-cases
+    */
+   WriteOnlyMap<K, V> toWriteOnlyMap();
 
    /**
     * Tweak functional map executions providing {@link Param} instances.
@@ -147,11 +176,11 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * @param key the key associated with the {@link ReadEntryView} to be
        *            passed to the function.
-       * @param f function that takes a {@link ReadEntryView} associated with
-       *          the key, and returns a value.
+       * @param f   function that takes a {@link ReadEntryView} associated with
+       *            the key, and returns a value.
        * @param <R> function return type
        * @return a {@link CompletableFuture} which will be completed with the
-       *         returned value from the function
+       * returned value from the function
        */
       <R> CompletableFuture<R> eval(K key, Function<ReadEntryView<K, V>, R> f);
 
@@ -174,7 +203,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * present in keys collection set. Similar to {@link #eval(Object, Function)},
        * if the user is not sure whether a particular key is present,
        * {@link ReadEntryView#find()} can be used to find out for sure.
-       *
+       * <p>
        * DESIGN RATIONALE:
        * <ul>
        *    <li>It makes sense to expose global operation like this instead of
@@ -189,12 +218,12 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * @param keys the keys associated with each of the {@link ReadEntryView}
        *             passed in the function callbacks
-       * @param f function that takes a {@link ReadEntryView} associated with
-       *          the key, and returns a value. It'll be invoked once for each key
-       *          passed in
-       * @param <R> function return type
+       * @param f    function that takes a {@link ReadEntryView} associated with
+       *             the key, and returns a value. It'll be invoked once for each key
+       *             passed in
+       * @param <R>  function return type
        * @return a sequential {@link Traversable} that can be navigated to
-       *         retrieve each function return value
+       * retrieve each function return value
        */
       <R> Traversable<R> evalMany(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f);
 
@@ -243,7 +272,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
     * The write operations that can be applied per entry are exposed by
     * {@link WriteEntryView}.
     *
-    * <p>Write-only operations require locks to be acquired but crucially
+    * <p>Write-only operations require locks to be acquired, but crucially
     * they do not require reading previous value or metadata parameter
     * information associated with the cached entry, which sometimes can be
     * expensive since they involve talking to a remote node in the cluster
@@ -290,15 +319,15 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>Note that when transcoders are in place despite the argument type and value type don't have to match
        * the argument will use value encoding.
        *
-       * @param key the key associated with the {@link WriteEntryView} to be
-       *            passed to the operation
+       * @param key      the key associated with the {@link WriteEntryView} to be
+       *                 passed to the operation
        * @param argument argument passed in as first parameter to the
-       *              {@link BiConsumer} operation.
-       * @param f operation that takes a user defined value, and a
-       *          {@link WriteEntryView} associated with the key, and writes
-       *          to the {@link WriteEntryView} passed in without returning anything
+       *                 {@link BiConsumer} operation.
+       * @param f        operation that takes a user defined value, and a
+       *                 {@link WriteEntryView} associated with the key, and writes
+       *                 to the {@link WriteEntryView} passed in without returning anything
        * @return a {@link CompletableFuture} which will be completed when the
-       *         operation completes
+       * operation completes
        */
       <T> CompletableFuture<Void> eval(K key, T argument, BiConsumer<T, WriteEntryView<K, V>> f);
 
@@ -326,10 +355,10 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * @param key the key associated with the {@link WriteEntryView} to be
        *            passed to the operation
-       * @param f operation that takes a {@link WriteEntryView} associated with
-       *          the key and writes to the it without returning anything
+       * @param f   operation that takes a {@link WriteEntryView} associated with
+       *            the key and writes to it without returning anything
        * @return a {@link CompletableFuture} which will be completed when the
-       *         operation completes
+       * operation completes
        */
       CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<K, V>> f);
 
@@ -362,13 +391,13 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * the argument will use value encoding.
        *
        * @param arguments the key/value pairs associated with each of the
-       *             {@link WriteEntryView} passed in the function callbacks
-       * @param f operation that consumes a value associated with a key in the
-       *          entry collection and the {@link WriteEntryView} associated
-       *          with that key in the cache
+       *                  {@link WriteEntryView} passed in the function callbacks
+       * @param f         operation that consumes a value associated with a key in the
+       *                  entry collection and the {@link WriteEntryView} associated
+       *                  with that key in the cache
        * @return a {@link CompletableFuture} which will be completed when
-       *         the {@link BiConsumer} operation has been executed against
-       *         all entries
+       * the {@link BiConsumer} operation has been executed against
+       * all entries
        */
       <T> CompletableFuture<Void> evalMany(Map<? extends K, ? extends T> arguments, BiConsumer<T, WriteEntryView<K, V>> f);
 
@@ -398,11 +427,11 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * @param keys the keys associated with each of the {@link WriteEntryView}
        *             passed in the function callbacks
-       * @param f operation that the {@link WriteEntryView} associated with
-       *          one of the keys passed in
+       * @param f    operation that the {@link WriteEntryView} associated with
+       *             one of the keys passed in
        * @return a {@link CompletableFuture} which will be completed when
-       *         the {@link Consumer} operation has been executed against all
-       *         entries
+       * the {@link Consumer} operation has been executed against all
+       * entries
        */
       CompletableFuture<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<K, V>> f);
 
@@ -426,8 +455,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * @param f operation that the {@link WriteEntryView} associated with
        *          one of the keys passed in
        * @return a {@link CompletableFuture} which will be completed when
-       *         the {@link Consumer} operation has been executed against all
-       *         entries
+       * the {@link Consumer} operation has been executed against all
+       * entries
        */
       CompletableFuture<Void> evalAll(Consumer<WriteEntryView<K, V>> f);
 
@@ -444,7 +473,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
       /**
        * Truncate the contents of the cache, returning a {@link CompletableFuture}
        * that will be completed when the truncate process completes.
-       *
+       * <p>
        * This method can be used to implement:
        *
        * <ul>
@@ -452,7 +481,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * </ul>
        *
        * @return a {@link CompletableFuture} that completes when the truncat
-       *         has finished
+       * has finished
        */
       CompletableFuture<Void> truncate();
 
@@ -491,7 +520,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * with the key and return a {@link CompletableFuture} with the return
        * type of the function. If the user is not sure if the key is present,
        * {@link ReadWriteEntryView#find()} can be used to find out for sure.
-       *
+       * <p>
        * This method can be used to implement single-key read-write operations
        * in {@link ConcurrentMap} that do not depend on value information given
        * by the user such as:
@@ -506,11 +535,11 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * @param key the key associated with the {@link ReadWriteEntryView} to be
        *            passed to the function.
-       * @param f function that takes a {@link ReadWriteEntryView} associated with
-       *          the key, and returns a value.
+       * @param f   function that takes a {@link ReadWriteEntryView} associated with
+       *            the key, and returns a value.
        * @param <R> function return type
        * @return a {@link CompletableFuture} which will be completed with the
-       *         returned value from the function
+       * returned value from the function
        */
       <R> CompletableFuture<R> eval(K key, Function<ReadWriteEntryView<K, V>, R> f);
 
@@ -530,7 +559,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * return a {@link CompletableFuture} which will be completed with the
        * returned value by the function.
        *
-       * <p>This method provides the the capability to both update the value and
+       * <p>This method provides the capability to both update the value and
        * metadata associated with that key, and return previous value or metadata.
        *
        * <p>This method can be used to implement the vast majority of single-key
@@ -563,16 +592,16 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * {@link ReadEntryView#key()} nor the internally stored value provided
        * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
        *
-       * @param key the key associated with the {@link ReadWriteEntryView} to be
-       *            passed to the operation
+       * @param key      the key associated with the {@link ReadWriteEntryView} to be
+       *                 passed to the operation
        * @param argument argument passed in as first parameter to the {@link BiFunction}.
-       * @param f operation that takes a user defined value, and a
-       *          {@link ReadWriteEntryView} associated with the key, and writes
-       *          to the {@link ReadWriteEntryView} passed in, possibly
-       *          returning previously stored value or metadata information
-       * @param <R> type of the function's return
+       * @param f        operation that takes a user defined value, and a
+       *                 {@link ReadWriteEntryView} associated with the key, and writes
+       *                 to the {@link ReadWriteEntryView} passed in, possibly
+       *                 returning previously stored value or metadata information
+       * @param <R>      type of the function's return
        * @return a {@link CompletableFuture} which will be completed with the
-       *         returned value from the function
+       * returned value from the function
        */
       <T, R> CompletableFuture<R> eval(K key, T argument, BiFunction<T, ReadWriteEntryView<K, V>, R> f);
 
@@ -608,10 +637,10 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
        *
        * @param arguments the key/value pairs associated with each of the
-       *             {@link ReadWriteEntryView} passed in the function callbacks
-       * @param f function that takes in a value associated with a key in the
-       *          entries collection and the {@link ReadWriteEntryView} associated
-       *          with that key in the cache
+       *                  {@link ReadWriteEntryView} passed in the function callbacks
+       * @param f         function that takes in a value associated with a key in the
+       *                  entries collection and the {@link ReadWriteEntryView} associated
+       *                  with that key in the cache
        * @return a {@link Traversable} to navigate each {@link BiFunction} return
        */
       <T, R> Traversable<R> evalMany(Map<? extends K, ? extends T> arguments, BiFunction<T, ReadWriteEntryView<K, V>, R> f);
@@ -641,8 +670,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * @param keys the keys associated with each of the {@link ReadWriteEntryView}
        *             passed in the function callbacks
-       * @param f function that the {@link ReadWriteEntryView} associated with
-       *          one of the keys passed in, and returns a value
+       * @param f    function that the {@link ReadWriteEntryView} associated with
+       *             one of the keys passed in, and returns a value
        * @return a {@link Traversable} to navigate each {@link Function} return
        */
       <R> Traversable<R> evalMany(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f);

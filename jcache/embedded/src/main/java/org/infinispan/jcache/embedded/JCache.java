@@ -39,10 +39,9 @@ import org.infinispan.configuration.cache.ExpirationConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.Param;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheListenerAdapter;
 import org.infinispan.jcache.Exceptions;
@@ -92,7 +91,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       // to comply with specifications such as JSR-107, which mandate that
       // {@link Cache#clear()}} calls do not fire entry removed notifications
       this.skipListenerCache = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
-      this.rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache));
+      this.rwMap = FunctionalMap.create(cache).toReadWriteMap();
       this.rwMapSkipCacheLoad = rwMap.withParams(Param.PersistenceMode.SKIP_LOAD);
       this.stats = new RICacheStatistics(this.cache);
 

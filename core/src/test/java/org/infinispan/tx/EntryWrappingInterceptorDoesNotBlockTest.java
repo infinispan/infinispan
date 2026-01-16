@@ -33,8 +33,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Traversable;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -186,8 +184,8 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    }
 
    private Object readWriteKey(MagicKey key, int index) {
-      FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache(0).getAdvancedCache()));
-      CompletableFuture cf = rwMap.eval(key, view -> {
+      FunctionalMap.ReadWriteMap<Object, Object> rwMap = FunctionalMap.create(cache(0).getAdvancedCache()).toReadWriteMap();
+      CompletableFuture<String> cf = rwMap.eval(key, view -> {
          assertFalse(view.find().isPresent());
          view.set("v" + index);
          return "r" + index;
@@ -198,7 +196,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    private Object readWriteMany(MagicKey key, int index) {
       // make sure the other key is stable
       MagicKey otherKey = new MagicKey("other", cache(0), cache(2));
-      FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache(0).getAdvancedCache()));
+      FunctionalMap.ReadWriteMap<Object, Object> rwMap = FunctionalMap.create(cache(0).getAdvancedCache()).toReadWriteMap();
       HashSet<MagicKey> keys = new HashSet<>(Arrays.asList(key, otherKey));
       Traversable<Object> traversable = rwMap.evalMany(keys, view -> {
          assertFalse(view.find().isPresent());
@@ -209,8 +207,8 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    }
 
    private Object readWriteKeyValue(MagicKey key, int index) {
-      FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache(0).getAdvancedCache()));
-      CompletableFuture cfa = rwMap.eval(key, "v" + index, (value, view) -> {
+      FunctionalMap.ReadWriteMap<Object, Object> rwMap = FunctionalMap.create(cache(0).getAdvancedCache()).toReadWriteMap();
+      CompletableFuture<String> cfa = rwMap.eval(key, "v" + index, (value, view) -> {
          assertFalse(view.find().isPresent());
          view.set(value);
          return "r" + index;
@@ -221,7 +219,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    private Object readWriteManyEntries(MagicKey key, int index) {
       // make sure the other key is stable
       MagicKey otherKey = new MagicKey("other", cache(0), cache(2));
-      FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache(0).getAdvancedCache()));
+      FunctionalMap.ReadWriteMap<Object, Object> rwMap = FunctionalMap.create(cache(0).getAdvancedCache()).toReadWriteMap();
       HashMap<MagicKey, Object> map = new HashMap<>();
       map.put(key, "v" + index);
       map.put(otherKey, "something");

@@ -17,8 +17,8 @@ import org.infinispan.security.actions.SecurityActions;
 /**
  * A {@link WriteOnlyMapImpl} that works with a simple cache.
  *
- * @since 15.0
  * @see WriteOnlyMapImpl
+ * @since 15.0
  */
 @Experimental
 public class SimpleWriteOnlyMapImpl<K, V> extends WriteOnlyMapImpl<K, V> implements SimpleFunctionalMap<K, V> {
@@ -30,15 +30,6 @@ public class SimpleWriteOnlyMapImpl<K, V> extends WriteOnlyMapImpl<K, V> impleme
       this.notifier = SecurityActions.getCacheComponentRegistry(functionalMap.cache)
             .getComponent(CacheNotifier.class);
    }
-
-   public static <K, V> WriteOnlyMap<K, V> create(FunctionalMapImpl<K, V> functionalMap) {
-      return create(Params.from(functionalMap.params.params), functionalMap);
-   }
-
-   private static <K, V> WriteOnlyMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
-      return new SimpleWriteOnlyMapImpl<>(params, functionalMap);
-   }
-
 
    @Override
    public CompletableFuture<Void> eval(K key, Consumer<EntryView.WriteEntryView<K, V>> f) {

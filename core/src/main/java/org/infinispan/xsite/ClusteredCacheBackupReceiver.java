@@ -52,8 +52,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.MarshallableFunctions;
@@ -359,7 +357,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       TransactionHandler(Cache<Object, Object> backup, TransactionTable transactionTable, InvocationContextFactory invocationContextFactory, InvocationHelper invocationHelper) {
          //ignore return values on the backup
          backupCache = backup.getAdvancedCache().withStorageMediaType().withFlags(IGNORE_RETURN_VALUES, SKIP_XSITE_BACKUP);
-         writeOnlyMap = WriteOnlyMapImpl.create(FunctionalMapImpl.create(backupCache));
+         writeOnlyMap = FunctionalMap.create(backupCache).toWriteOnlyMap();
          remote2localTx = new ConcurrentHashMap<>();
          this.transactionTable = transactionTable;
          this.invocationContextFactory = invocationContextFactory;

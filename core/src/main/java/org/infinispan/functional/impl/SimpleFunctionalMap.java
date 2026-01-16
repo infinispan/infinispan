@@ -13,9 +13,9 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 /**
  * An internal interface for implementation of {@link FunctionalMap} for a simple cache.
  *
- * @since 15.0
  * @param <K>: Map key type.
  * @param <V>: Map value type.
+ * @since 15.0
  */
 interface SimpleFunctionalMap<K, V> extends FunctionalMap<K, V> {
 

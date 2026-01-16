@@ -33,7 +33,7 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    final CommandsFactory commandsFactory;
    final InvocationContextFactory invCtxFactory;
    final Object lockOwner;
-   final FunctionalNotifier notifier;
+   final FunctionalNotifier<K, V> notifier;
    final KeyPartitioner keyPartitioner;
 
    public static <K, V> FunctionalMapImpl<K, V> create(Params params, AdvancedCache<K, V> cache) {
@@ -44,6 +44,21 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    public static <K, V> FunctionalMapImpl<K, V> create(AdvancedCache<K, V> cache) {
       Params params = Params.fromFlagsBitSet(getFlagsBitSet(cache));
       return new FunctionalMapImpl<>(params, cache);
+   }
+
+   @Override
+   public ReadWriteMap<K, V> toReadWriteMap() {
+      return ReadWriteMapImpl.create(params, this);
+   }
+
+   @Override
+   public ReadOnlyMap<K, V> toReadOnlyMap() {
+      return ReadOnlyMapImpl.create(params, this);
+   }
+
+   @Override
+   public WriteOnlyMap<K, V> toWriteOnlyMap() {
+      return WriteOnlyMapImpl.create(params, this);
    }
 
    private static <K, V> long getFlagsBitSet(Cache<K, V> cache) {
@@ -123,11 +138,6 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    @Override
    public ComponentStatus getStatus() {
       return cache.getStatus();
-   }
-
-   @Override
-   public void close() throws Exception {
-      cache.stop();
    }
 
    @Override

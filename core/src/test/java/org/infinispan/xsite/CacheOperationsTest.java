@@ -14,13 +14,12 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.transaction.LockingMode;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -150,14 +149,14 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
    public void testDataGetsReplicated() {
       cache(LON, 0).put("k_lon", "v_lon");
       assertNull(cache(NYC, 0).get("k_lon"));
-      assertEquals(cache(LON, 1).get("k_lon"), "v_lon");
-      assertEquals(cache(NYC, "lonBackup", 0).get("k_lon"), "v_lon");
-      assertEquals(cache(NYC, "lonBackup", 1).get("k_lon"), "v_lon");
+      assertEquals("v_lon", cache(LON, 1).get("k_lon"));
+      assertEquals("v_lon", cache(NYC, "lonBackup", 0).get("k_lon"));
+      assertEquals("v_lon", cache(NYC, "lonBackup", 1).get("k_lon"));
 
       cache(NYC,1).put("k_nyc", "v_nyc");
-      assertEquals(cache(LON, 1).get("k_lon"), "v_lon");
-      assertEquals(cache(LON, "nycBackup", 0).get("k_nyc"), "v_nyc");
-      assertEquals(cache(LON, "nycBackup", 1).get("k_nyc"), "v_nyc");
+      assertEquals("v_lon", cache(LON, 1).get("k_lon"));
+      assertEquals("v_nyc", cache(LON, "nycBackup", 0).get("k_nyc"));
+      assertEquals("v_nyc", cache(LON, "nycBackup", 1).get("k_nyc"));
       assertNull(cache(LON, 0).get("k_nyc"));
 
       cache(LON, 1).remove("k_lon");
@@ -169,13 +168,13 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
    public void testPutWithLocality() {
       MagicKey remoteOwnedKey = new MagicKey(cache(LON, 1));
       cache(LON, 0).put(remoteOwnedKey, "v_LON");
-      assertEquals(cache(NYC, "lonBackup", 0).get(remoteOwnedKey), "v_LON");
-      assertEquals(cache(NYC, "lonBackup", 1).get(remoteOwnedKey), "v_LON");
+      assertEquals("v_LON", cache(NYC, "lonBackup", 0).get(remoteOwnedKey));
+      assertEquals("v_LON", cache(NYC, "lonBackup", 1).get(remoteOwnedKey));
 
       MagicKey localOwnedKey = new MagicKey(cache(LON, 0));
       cache(LON, 0).put(localOwnedKey, "v_LON");
-      assertEquals(cache(NYC, "lonBackup", 0).get(remoteOwnedKey), "v_LON");
-      assertEquals(cache(NYC, "lonBackup", 1).get(remoteOwnedKey), "v_LON");
+      assertEquals("v_LON", cache(NYC, "lonBackup", 0).get(remoteOwnedKey));
+      assertEquals("v_LON", cache(NYC, "lonBackup", 1).get(remoteOwnedKey));
    }
 
    public void testFunctional() throws Exception {
@@ -184,9 +183,9 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
    }
 
    private void testFunctional(String site) throws Exception {
-      FunctionalMapImpl<Object, Object> fmap = FunctionalMapImpl.create(cache(site, 0).getAdvancedCache());
-      WriteOnlyMap<Object, Object> wo = WriteOnlyMapImpl.create(fmap);
-      ReadWriteMap<Object, Object> rw = ReadWriteMapImpl.create(fmap);
+      FunctionalMap<Object, Object> fmap = FunctionalMap.create(cache(site, 0).getAdvancedCache());
+      WriteOnlyMap<Object, Object> wo = fmap.toWriteOnlyMap();
+      ReadWriteMap<Object, Object> rw = fmap.toReadWriteMap();
       Cache<Object, Object> backup = backup(site);
 
       Object[] keys = {
@@ -201,7 +200,7 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
 
       for (Object key : keys) {
          wo.eval(key, MarshallableFunctions.removeConsumer()).join();
-         assertEquals(null, backup.get(key));
+         assertNull(backup.get(key));
       }
 
       wo.evalMany(map(keys, "v1"), MarshallableFunctions.setValueConsumer()).join();
@@ -215,20 +214,20 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
       }
 
       rw.evalMany(Util.asSet(keys), view -> view.set(view.get() + "+3"))
-            .forEach(ret -> assertEquals(null, ret));
+            .forEach(AssertJUnit::assertNull);
       for (Object key : keys) {
          assertEquals("v1+2+3", backup.get(key));
       }
 
       wo.evalMany(Util.asSet(keys), MarshallableFunctions.removeConsumer()).join();
       for (Object key : keys) {
-         assertEquals(null, backup.get(key));
+         assertNull(backup.get(key));
       }
 
       rw.evalMany(Util.asSet(keys), view -> view.find().orElse("none"))
             .forEach(ret -> assertEquals("none", ret));
       for (Object key : keys) {
-         assertEquals(null, backup.get(key));
+         assertNull(backup.get(key));
       }
 
       if (transactional) {
@@ -240,8 +239,8 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
                .forEach(ret -> assertEquals("none", ret));
          tm.commit();
          assertEquals("v4", backup.get(keys[0]));
-         assertEquals(null, backup.get(keys[1]));
-         assertEquals(null, backup.get(keys[2]));
+         assertNull(backup.get(keys[1]));
+         assertNull(backup.get(keys[2]));
       }
    }
 

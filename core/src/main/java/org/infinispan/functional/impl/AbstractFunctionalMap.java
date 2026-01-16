@@ -62,17 +62,12 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
 
    @Override
    public String getName() {
-      return "";
+      return fmap.getName();
    }
 
    @Override
    public ComponentStatus getStatus() {
       return fmap.getStatus();
-   }
-
-   @Override
-   public void close() throws Exception {
-      fmap.close();
    }
 
    @Override
@@ -177,16 +172,31 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
    }
 
    protected Set<?> encodeKeys(Set<? extends K> keys) {
-      return keys.stream().map(k -> keyDataConversion.toStorage(k)).collect(Collectors.toSet());
+      return keys.stream().map(keyDataConversion::toStorage).collect(Collectors.toSet());
    }
 
    protected Map<?, ?> encodeEntries(Map<? extends K, ?> entries) {
-      Map encodedEntries = new HashMap<>();
-      entries.entrySet().forEach(e -> {
-         Object keyEncoded = keyDataConversion.toStorage(e.getKey());
-         Object valueEncoded = valueDataConversion.toStorage(e.getValue());
+      Map<Object, Object> encodedEntries = new HashMap<>();
+      entries.forEach((key, value) -> {
+         Object keyEncoded = keyDataConversion.toStorage(key);
+         Object valueEncoded = valueDataConversion.toStorage(value);
          encodedEntries.put(keyEncoded, valueEncoded);
       });
       return encodedEntries;
+   }
+
+   @Override
+   public ReadWriteMap<K, V> toReadWriteMap() {
+      return ReadWriteMapImpl.create(Params.from(fmap.params.params), fmap);
+   }
+
+   @Override
+   public ReadOnlyMap<K, V> toReadOnlyMap() {
+      return ReadOnlyMapImpl.create(Params.from(fmap.params.params), fmap);
+   }
+
+   @Override
+   public WriteOnlyMap<K, V> toWriteOnlyMap() {
+      return WriteOnlyMapImpl.create(Params.from(fmap.params.params), fmap);
    }
 }
