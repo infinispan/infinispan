@@ -46,6 +46,21 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
       return new FunctionalMapImpl<>(params, cache);
    }
 
+   @Override
+   public ReadWriteMap<K, V> toReadWriteMap() {
+      return ReadWriteMapImpl.create(params, this);
+   }
+
+   @Override
+   public ReadOnlyMap<K, V> toReadOnlyMap() {
+      return ReadOnlyMapImpl.create(params, this);
+   }
+
+   @Override
+   public WriteOnlyMap<K, V> toWriteOnlyMap() {
+      return WriteOnlyMapImpl.create(params, this);
+   }
+
    private static <K, V> long getFlagsBitSet(Cache<K, V> cache) {
       cache = SecurityActions.getUnwrappedCache(cache);
       long flagsBitSet = 0;

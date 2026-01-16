@@ -9,6 +9,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.functional.EntryView.ReadEntryView;
@@ -16,6 +17,8 @@ import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.Listeners.ReadWriteListeners;
 import org.infinispan.functional.Listeners.WriteListeners;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.util.function.SerializableBiConsumer;
@@ -53,11 +56,11 @@ import org.infinispan.util.function.SerializableFunction;
  * with other {@link CompletableFuture} instances.
  *
  * <p>For those operations that return multiple results, the API returns
- * instances of a {@link Traversable} interface which offers a lazy pull­style
- * API for working with multiple results. Although push­style interfaces for
+ * instances of a {@link Traversable} interface which offers a lazy pull-style
+ * API for working with multiple results. Although push-style interfaces for
  * handling multiple results, such as RxJava, are fully asynchronous, they're
- * harder to use from a user’s perspective. {@link Traversable},​ being a lazy
- * pull­style API, can still be asynchronous underneath since the user can
+ * harder to use from a user’s perspective. {@link Traversable}, being a lazy
+ * pull-style API, can still be asynchronous underneath since the user can
  * decide to work on the {@link Traversable} at a later stage, and the
  * implementation itself can decide when to compute those results.
  *
@@ -65,6 +68,20 @@ import org.infinispan.util.function.SerializableFunction;
  */
 @Experimental
 public interface FunctionalMap<K, V> extends AutoCloseable {
+
+   static <K, V> FunctionalMapImpl<K, V> create(Params params, AdvancedCache<K, V> cache) {
+      return FunctionalMapImpl.create(params, cache);
+   }
+
+   static <K, V> FunctionalMapImpl<K, V> create(AdvancedCache<K, V> cache) {
+      return FunctionalMapImpl.create(cache);
+   }
+
+   ReadWriteMap<K, V> toReadWriteMap();
+
+   ReadOnlyMap<K, V> toReadOnlyMap();
+
+   WriteOnlyMap<K,V> toWriteOnlyMap();
 
    /**
     * Tweak functional map executions providing {@link Param} instances.

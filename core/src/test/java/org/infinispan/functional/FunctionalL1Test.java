@@ -2,6 +2,7 @@ package org.infinispan.functional;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.function.Function;
 
@@ -9,9 +10,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.functional.EntryView.ReadEntryView;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.testng.annotations.Test;
 
@@ -42,9 +40,9 @@ public class FunctionalL1Test extends AbstractFunctionalOpTest {
       assertEntry(reader, KEY, "value", true);
       assertNoEntry(nonOwner, KEY);
 
-      FunctionalMapImpl<Object, String> functionalMap = FunctionalMapImpl.create(this.<Object, String>cache(0, DIST).getAdvancedCache());
-      FunctionalMap.WriteOnlyMap<Object, String> wo = WriteOnlyMapImpl.create(functionalMap);
-      FunctionalMap.ReadWriteMap<Object, String> rw = ReadWriteMapImpl.create(functionalMap);
+      FunctionalMap<Object, String> functionalMap = FunctionalMap.create(this.<Object, String>cache(0, DIST).getAdvancedCache());
+      FunctionalMap.WriteOnlyMap<Object, String> wo = functionalMap.toWriteOnlyMap();
+      FunctionalMap.ReadWriteMap<Object, String> rw = functionalMap.toReadWriteMap();
       Function<ReadEntryView<Object, String>, String> readFunc = MarshallableFunctions.returnReadOnlyFindOrNull();
       method.eval(KEY, wo, rw, readFunc, (view, nil) -> view.set("value2"), FunctionalL1Test.class);
 
@@ -55,7 +53,7 @@ public class FunctionalL1Test extends AbstractFunctionalOpTest {
    }
 
    private static void assertNoEntry(Cache<Object, String> cache, Object KEY) {
-      assertEquals(null, cache.getAdvancedCache().getDataContainer().peek(KEY));
+      assertNull(cache.getAdvancedCache().getDataContainer().peek(KEY));
    }
 
    private static void assertEntry(Cache<Object, String> cache, Object KEY, String expectedValue, boolean isL1) {

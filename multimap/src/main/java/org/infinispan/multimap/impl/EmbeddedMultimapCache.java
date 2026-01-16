@@ -14,8 +14,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.impl.function.multimap.ContainsFunction;
 import org.infinispan.multimap.impl.function.multimap.GetFunction;
@@ -73,8 +71,8 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    public EmbeddedMultimapCache(Cache<K, Bucket<V>> cache, boolean supportsDuplicates) {
       //TODO: ISPN-11452 Multimaps don't support transcoding, so disable data conversions
       this.cache = cache.getAdvancedCache();
-      FunctionalMapImpl<K, Bucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
-      this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
+      FunctionalMap<K, Bucket<V>> functionalMap = FunctionalMap.create(this.cache);
+      this.readWriteMap = functionalMap.toReadWriteMap();
       this.entryFactory = ComponentRegistry.of(this.cache).getInternalEntryFactory().running();
       this.supportsDuplicates = supportsDuplicates;
    }

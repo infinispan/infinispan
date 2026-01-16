@@ -189,4 +189,19 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       });
       return encodedEntries;
    }
+
+   @Override
+   public ReadWriteMap<K, V> toReadWriteMap() {
+      return new ReadWriteMapImpl<>(Params.from(fmap.params.params), fmap);
+   }
+
+   @Override
+   public ReadOnlyMap<K, V> toReadOnlyMap() {
+      return new ReadOnlyMapImpl<>(Params.from(fmap.params.params), fmap);
+   }
+
+   @Override
+   public WriteOnlyMap<K, V> toWriteOnlyMap() {
+      return new WriteOnlyMapImpl<>(Params.from(fmap.params.params), fmap);
+   }
 }

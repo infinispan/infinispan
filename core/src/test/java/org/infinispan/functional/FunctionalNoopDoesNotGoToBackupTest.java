@@ -10,9 +10,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -32,12 +29,12 @@ public class FunctionalNoopDoesNotGoToBackupTest extends MultipleCacheManagersTe
    @Override
    protected void createCacheManagers() throws Throwable {
       createCluster(TestDataSCI.INSTANCE, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC), 2);
-      FunctionalMapImpl<Object, Object> fmap0 = FunctionalMapImpl.create(cache(0).getAdvancedCache());
-      FunctionalMapImpl<Object, Object> fmap1 = FunctionalMapImpl.create(cache(1).getAdvancedCache());
-      rw0 = ReadWriteMapImpl.create(fmap0);
-      rw1 = ReadWriteMapImpl.create(fmap1);
-      wo0 = WriteOnlyMapImpl.create(fmap0);
-      wo1 = WriteOnlyMapImpl.create(fmap1);
+      FunctionalMap<Object, Object> fmap0 = FunctionalMap.create(cache(0).getAdvancedCache());
+      FunctionalMap<Object, Object> fmap1 = FunctionalMap.create(cache(1).getAdvancedCache());
+      rw0 = fmap0.toReadWriteMap();
+      rw1 = fmap1.toReadWriteMap();
+      wo0 = fmap0.toWriteOnlyMap();
+      wo1 = fmap1.toWriteOnlyMap();
       key = new MagicKey(cache(0));
       rpcManager0 = TestingUtil.wrapComponent(cache(0), RpcManager.class, CountingRpcManager::new);
       rpcManager1 = TestingUtil.wrapComponent(cache(1), RpcManager.class, CountingRpcManager::new);
