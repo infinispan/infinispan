@@ -9,14 +9,11 @@ import static org.infinispan.functional.FunctionalListenerAssertions.createModif
 import static org.infinispan.functional.FunctionalListenerAssertions.write;
 import static org.infinispan.functional.FunctionalListenerAssertions.writeModify;
 import static org.infinispan.functional.FunctionalListenerAssertions.writeRemove;
-import static org.infinispan.functional.FunctionalTestUtils.rw;
-import static org.infinispan.functional.FunctionalTestUtils.wo;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 import org.infinispan.functional.decorators.FunctionalListeners;
-import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -296,22 +293,17 @@ public class FunctionalMapEventsTest extends FunctionalMapTest {
       return events;
    }
 
-   private static final class LocalFunctionalListeners<K> implements FunctionalListeners<K, String> {
-      private final FunctionalMapImpl<K, String> fmap;
-
-      private LocalFunctionalListeners(FunctionalMapImpl<K, String> fmap) {
-         this.fmap = fmap;
-      }
+   private record LocalFunctionalListeners<K>(FunctionalMap<K, String> fmap) implements FunctionalListeners<K, String> {
 
       @Override
-      public Listeners.ReadWriteListeners<K, String> readWriteListeners() {
-         return rw(fmap).listeners();
-      }
+         public Listeners.ReadWriteListeners<K, String> readWriteListeners() {
+            return fmap.toReadWriteMap().listeners();
+         }
 
-      @Override
-      public Listeners.WriteListeners<K, String> writeOnlyListeners() {
-         return wo(fmap).listeners();
+         @Override
+         public Listeners.WriteListeners<K, String> writeOnlyListeners() {
+            return fmap.toWriteOnlyMap().listeners();
+         }
       }
-   }
 
 }

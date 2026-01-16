@@ -9,8 +9,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.security.actions.SecurityActions;
 
 /**
@@ -36,8 +34,8 @@ public class EmbeddedJsonCache {
 
    public EmbeddedJsonCache(Cache<byte[], JsonBucket> cache) {
       this.cache = cache.getAdvancedCache();
-      FunctionalMapImpl<byte[], JsonBucket> functionalMap = FunctionalMapImpl.create(this.cache);
-      this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
+      FunctionalMap<byte[], JsonBucket> functionalMap = FunctionalMap.create(this.cache);
+      this.readWriteMap = functionalMap.toReadWriteMap();
       this.entryFactory = SecurityActions.getCacheComponentRegistry(this.cache).getInternalEntryFactory().running();
    }
 
