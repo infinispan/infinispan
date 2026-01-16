@@ -37,7 +37,7 @@ import org.infinispan.rest.operations.CacheOperationsHelper;
 import org.infinispan.rest.resources.mcp.McpConstants;
 import org.infinispan.rest.resources.mcp.McpInputSchema;
 import org.infinispan.rest.resources.mcp.McpProperty;
-import org.infinispan.rest.resources.mcp.McpResourceItem;
+import org.infinispan.rest.resources.mcp.McpResource;
 import org.infinispan.rest.resources.mcp.McpResourceTemplate;
 import org.infinispan.rest.resources.mcp.McpTool;
 import org.infinispan.rest.resources.mcp.McpType;
@@ -50,25 +50,25 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 /**
  * @since 16.0
  */
-public class McpResource implements ResourceHandler {
+public class McpServerResource implements ResourceHandler {
    public static final String CACHE_NAME = "cacheName";
    public static final String COUNTER_NAME = "counterName";
    private final InvocationHelper invocationHelper;
    private final Map<String, McpTool> TOOLS;
-   private static final List<McpResourceItem> RESOURCES = List.of(
-         new McpResourceItem(
+   private static final List<McpResource> RESOURCES = List.of(
+         new McpResource(
                "infinispan+logs://server?lines=200",
                "server log",
                "CHECK THIS FIRST for server status, health, errors, warnings, exceptions, startup/shutdown events, and troubleshooting",
                "text/plain"
          ),
-         new McpResourceItem(
+         new McpResource(
                "infinispan+logs://audit?lines=200",
                "audit log",
                "Check for security events: authentication attempts, authorization failures, suspicious activity",
                "text/plain"
          ),
-         new McpResourceItem(
+         new McpResource(
                "infinispan+logs://rest-access?lines=200",
                "REST access log",
                "Check REST API usage patterns: request rates, errors (4xx/5xx), slow endpoints, client IPs",
@@ -96,7 +96,7 @@ public class McpResource implements ResourceHandler {
          )
    );
 
-   public McpResource(InvocationHelper invocationHelper) {
+   public McpServerResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
       this.TOOLS = Map.ofEntries(
             entry(
@@ -448,7 +448,7 @@ public class McpResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> mcpResourcesList(RestRequest request, Json json) {
       Json resources = Json.array();
-      for (McpResourceItem resource : RESOURCES) {
+      for (McpResource resource : RESOURCES) {
          resources.add(resource.toJson());
       }
       Json response = rpcResponse(json)

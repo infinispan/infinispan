@@ -3,7 +3,7 @@ package org.infinispan.rest.resources.mcp;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
-public record McpResourceItem(String uri, String name, String description, String mimeType) implements JsonSerialization {
+public record McpResource(String uri, String name, String description, String mimeType) implements JsonSerialization {
 
    @Override
    public Json toJson() {
