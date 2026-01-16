@@ -1,6 +1,6 @@
 package org.infinispan.functional;
 
-import static org.infinispan.commons.test.Exceptions.assertException;
+import static org.infinispan.testing.Exceptions.assertException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;

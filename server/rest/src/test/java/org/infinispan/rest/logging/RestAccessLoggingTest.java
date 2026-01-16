@@ -9,12 +9,12 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.test.skip.StringLogAppender;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.skip.StringLogAppender;
 import org.testng.annotations.Test;
 
 /**

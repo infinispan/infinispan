@@ -8,13 +8,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.server.test.core.CertificateAuthority;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.KeyCloakServerExtension;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.testing.Testing;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.utility.MountableFile;
@@ -35,7 +35,7 @@ public class AuthenticationKeyCloakSSLIT extends AbstractAuthenticationKeyCloak 
       ).addBeforeListener(k -> {
          try {
             certificateAuthority.getCertificate("server", getContainerNetworkGateway(ContainerInfinispanServerDriver.NETWORK.getId()));
-            Path serverCertificate = certificateAuthority.exportCertificateWithKey("server", Paths.get(CommonsTestingUtil.tmpDirectory(AuthenticationKeyCloakSSLIT.class.getName())), "secret".toCharArray(), CertificateAuthority.ExportType.PFX);
+            Path serverCertificate = certificateAuthority.exportCertificateWithKey("server", Paths.get(Testing.tmpDirectory(AuthenticationKeyCloakSSLIT.class.getName())), "secret".toCharArray(), CertificateAuthority.ExportType.PFX);
             k.getKeycloakContainer()
                .withCopyFileToContainer(MountableFile.forHostPath(serverCertificate), "/opt/keycloak/conf/server.pfx")
                .withCommand("start-dev", "--import-realm", "--hostname", KEYCLOAK_HOSTNAME, "--https-key-store-file=/opt/keycloak/conf/server.pfx", "--https-key-store-password=secret");

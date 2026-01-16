@@ -6,7 +6,6 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCac
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -16,6 +15,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
@@ -24,8 +24,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "expiration.impl.ExpirationFileStoreDistListenerFunctionalTest")
 public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationStoreListenerFunctionalTest {
 
-   private static final String PERSISTENT_LOCATION = CommonsTestingUtil.tmpDirectory(ExpirationFileStoreDistListenerFunctionalTest.class);
-   private static final String EXTRA_MANAGER_LOCATION = CommonsTestingUtil.tmpDirectory(ExpirationFileStoreDistListenerFunctionalTest.class + "2");
+   private static final String PERSISTENT_LOCATION = Testing.tmpDirectory(ExpirationFileStoreDistListenerFunctionalTest.class);
+   private static final String EXTRA_MANAGER_LOCATION = Testing.tmpDirectory(ExpirationFileStoreDistListenerFunctionalTest.class + "2");
 
    private EmbeddedCacheManager extraManager;
    private Cache<Object, Object> extraCache;

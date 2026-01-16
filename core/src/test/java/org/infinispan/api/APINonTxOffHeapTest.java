@@ -1,6 +1,6 @@
 package org.infinispan.api;
 
-import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;

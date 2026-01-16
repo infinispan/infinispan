@@ -1,16 +1,15 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.resp.configuration.RespServerConfiguration.DEFAULT_RESP_CACHE;
 import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.io.File;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -22,6 +21,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 
 import io.lettuce.core.RedisClient;

@@ -1,9 +1,9 @@
 package org.infinispan.persistence;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.file.SingleFileStoreConfigurationBuilder;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.Test;
 
 /**
@@ -17,7 +17,7 @@ public class SingleFileStoreParallelIterationTest extends ParallelIterationTest 
 
    @Override
    protected void configurePersistence(ConfigurationBuilder cb) {
-      location = CommonsTestingUtil.tmpDirectory(this.getClass());
+      location = Testing.tmpDirectory(this.getClass());
       cb.persistence().addStore(SingleFileStoreConfigurationBuilder.class).location(location);
    }
 

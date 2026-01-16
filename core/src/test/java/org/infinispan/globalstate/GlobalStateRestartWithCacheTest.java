@@ -1,6 +1,6 @@
 package org.infinispan.globalstate;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.File;

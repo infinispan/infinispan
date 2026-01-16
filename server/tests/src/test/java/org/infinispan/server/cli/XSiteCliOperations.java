@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 import org.aesh.terminal.utils.Config;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -26,6 +25,7 @@ import org.infinispan.server.functional.XSiteIT;
 import org.infinispan.server.test.api.TestClientXSiteDriver;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.testing.Testing;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ public class XSiteCliOperations {
 
    @BeforeAll
    public static void setup() {
-      workingDir = new File(CommonsTestingUtil.tmpDirectory(XSiteCliOperations.class));
+      workingDir = new File(Testing.tmpDirectory(XSiteCliOperations.class));
       Util.recursiveFileRemove(workingDir);
       //noinspection ResultOfMethodCallIgnored
       workingDir.mkdirs();

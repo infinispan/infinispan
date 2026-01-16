@@ -22,17 +22,17 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.testing.Testing;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class LargeBackupManagerIT extends AbstractMultiClusterIT {
 
-   private static final File WORKING_DIR = new File(CommonsTestingUtil.tmpDirectory(LargeBackupManagerIT.class));
+   private static final File WORKING_DIR = new File(Testing.tmpDirectory(LargeBackupManagerIT.class));
    private final String name = "testManagerBackupUploadLargeCache";
    private final String cacheName = "cache1";
    private final int size = 35_000;

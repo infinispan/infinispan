@@ -28,7 +28,6 @@ import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
@@ -67,6 +66,7 @@ import org.infinispan.test.data.Person;
 import org.infinispan.test.data.Sex;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
@@ -104,13 +104,13 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    @Override
    protected void teardown() {
       super.teardown();
-      Util.recursiveFileRemove(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      Util.recursiveFileRemove(Testing.tmpDirectory(this.getClass()));
    }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().enable().persistentLocation(Testing.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       global.cacheContainer().security().authorization().enable();
       return createCacheManager(true, global, new ConfigurationBuilder());
@@ -266,7 +266,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testRemoveCache() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass().getSimpleName(), "remove-cache"));
+      global.globalState().enable().persistentLocation(Testing.tmpDirectory(this.getClass().getSimpleName(), "remove-cache"));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       final String cacheName = "testRemoveCache";
@@ -287,7 +287,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testRemoveCacheWithPassivation() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass().getSimpleName(), "remove-cache-with-passivation"));
+      global.globalState().enable().persistentLocation(Testing.tmpDirectory(this.getClass().getSimpleName(), "remove-cache-with-passivation"));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       final String cacheName = "testRemoveCacheWithPassivation";

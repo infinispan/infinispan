@@ -9,12 +9,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.testing.TestResourceTracker;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

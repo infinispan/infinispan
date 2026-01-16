@@ -10,7 +10,6 @@ import java.util.Set;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.security.mappers.ClusterRoleMapper;
@@ -19,6 +18,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "security.SecurityXmlFileParsingTest")

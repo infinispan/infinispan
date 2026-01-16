@@ -1,7 +1,7 @@
 package org.infinispan.server.memcached.text;
 
-import static org.infinispan.commons.test.TestResourceTracker.getCurrentTestShortName;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
+import static org.infinispan.testing.TestResourceTracker.getCurrentTestShortName;
 
 import javax.management.JMException;
 import javax.management.ObjectName;

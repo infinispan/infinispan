@@ -25,7 +25,6 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.ConflictManager;
@@ -50,6 +49,7 @@ import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "conflict.resolution.ConflictManagerTest")

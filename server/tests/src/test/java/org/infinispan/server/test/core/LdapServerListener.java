@@ -1,10 +1,10 @@
 package org.infinispan.server.test.core;
 
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.server.test.core.ldap.ApacheLdapServer;
 import org.infinispan.server.test.core.ldap.LdapServer;
 import org.infinispan.server.test.core.ldap.RemoteLdapServer;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.ThreadLeakChecker;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

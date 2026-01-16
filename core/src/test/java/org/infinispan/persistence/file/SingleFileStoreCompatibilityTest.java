@@ -12,13 +12,13 @@ import java.util.Map;
 import java.util.concurrent.CompletionException;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.AbstractPersistenceCompatibilityTest;
 import org.infinispan.persistence.IdentityKeyValueWrapper;
 import org.infinispan.test.data.Value;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

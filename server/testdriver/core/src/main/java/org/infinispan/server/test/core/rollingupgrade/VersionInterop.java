@@ -6,8 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.infinispan.commons.maven.MavenArtifact;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.server.test.core.Unzip;
+import org.infinispan.testing.Testing;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -29,7 +29,7 @@ final class VersionInterop {
          }
 
          RollingUpgradeHandler.log.infof("Custom artifacts for version %s using %s", version, mavenArtifacts);
-         return Unzip.unzip(artifactsZip, Paths.get(CommonsTestingUtil.tmpDirectory(), version))
+         return Unzip.unzip(artifactsZip, Paths.get(Testing.tmpDirectory(), version))
                .stream().map(p -> ShrinkWrap.createFromZipFile(JavaArchive.class, p.toFile()))
                .toArray(i -> new Archive<?>[i]);
       } catch (IOException e) {
@@ -47,7 +47,7 @@ final class VersionInterop {
          }
 
          RollingUpgradeHandler.log.infof("Configurations for version %s using %s", version, mavenArtifacts);
-         Path target = Paths.get(CommonsTestingUtil.tmpDirectory(), version);
+         Path target = Paths.get(Testing.tmpDirectory(), version);
          Unzip.unzip(configurationsZip, target);
          return target;
       } catch (IOException e) {

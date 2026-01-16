@@ -1,7 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import static org.infinispan.commons.test.Exceptions.assertException;
-import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.testing.Exceptions.assertException;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;

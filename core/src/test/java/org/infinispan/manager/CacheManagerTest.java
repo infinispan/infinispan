@@ -2,7 +2,6 @@ package org.infinispan.manager;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
 import static org.infinispan.test.TestingUtil.getDefaultCacheName;
@@ -16,6 +15,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -41,7 +41,6 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -80,6 +79,7 @@ import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 /**

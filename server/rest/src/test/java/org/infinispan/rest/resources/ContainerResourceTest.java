@@ -8,11 +8,11 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TY
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.infinispan.partitionhandling.PartitionHandling.DENY_READ_WRITES;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;

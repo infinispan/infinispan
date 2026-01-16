@@ -1,6 +1,6 @@
 package org.infinispan.query.config;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;

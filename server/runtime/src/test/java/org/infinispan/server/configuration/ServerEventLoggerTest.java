@@ -1,9 +1,9 @@
 package org.infinispan.server.configuration;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -18,10 +18,6 @@ import java.util.function.Predicate;
 import org.infinispan.Cache;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.jdkspecific.CallerId;
-import org.infinispan.commons.test.Eventually;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -39,6 +35,10 @@ import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Eventually;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.junit.JUnitThreadTrackerRule;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.annotation.impl.Logged;

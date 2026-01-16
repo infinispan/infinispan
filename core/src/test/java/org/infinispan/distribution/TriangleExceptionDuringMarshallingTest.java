@@ -2,10 +2,10 @@ package org.infinispan.distribution;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 

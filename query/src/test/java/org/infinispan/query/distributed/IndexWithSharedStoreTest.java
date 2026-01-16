@@ -1,6 +1,6 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.io.File;
 

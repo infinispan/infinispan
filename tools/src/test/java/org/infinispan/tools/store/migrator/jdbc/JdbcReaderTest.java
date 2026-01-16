@@ -28,13 +28,13 @@ import java.util.Properties;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.Testing;
 import org.infinispan.tools.store.migrator.Element;
 import org.infinispan.tools.store.migrator.StoreMigrator;
 import org.testng.annotations.AfterClass;
@@ -50,7 +50,7 @@ public class JdbcReaderTest extends AbstractInfinispanTest {
    private static final int NUM_ENTRIES = 100;
    private static final String CACHE_NAME = "jdbc-cache";
    private static final String JDBC_URL = "jdbc:h2:mem:JdbcReaderTest;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
-   private static final String SIFS_LOCATION = CommonsTestingUtil.tmpDirectory(JdbcReaderTest.class);
+   private static final String SIFS_LOCATION = Testing.tmpDirectory(JdbcReaderTest.class);
 
    @AfterClass
    public void cleanup() {

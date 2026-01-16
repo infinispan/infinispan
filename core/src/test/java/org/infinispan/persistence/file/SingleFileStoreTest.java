@@ -5,8 +5,6 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -19,6 +17,8 @@ import org.infinispan.persistence.BaseNonBlockingStoreTest;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "persistence.SingleFile.SingleFileStoreTest")
 public class SingleFileStoreTest extends BaseNonBlockingStoreTest {
 
-   private final String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+   private final String tmpDirectory = Testing.tmpDirectory(this.getClass());
    private boolean segmented;
 
    @AfterClass(alwaysRun = true)

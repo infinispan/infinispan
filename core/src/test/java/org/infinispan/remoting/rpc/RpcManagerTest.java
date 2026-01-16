@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -25,6 +24,7 @@ import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.topology.CacheTopology;
 import org.jgroups.util.NameCache;
 import org.testng.annotations.Test;

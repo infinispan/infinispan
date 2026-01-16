@@ -19,8 +19,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -38,6 +36,8 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.TestResourceTracker;
 import org.infinispan.util.PersistenceMockUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;

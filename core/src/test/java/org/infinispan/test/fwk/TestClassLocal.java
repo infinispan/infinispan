@@ -6,10 +6,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.TestResourceTracker;
 
 /**
  * @author Dan Berindei

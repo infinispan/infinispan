@@ -11,7 +11,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -28,6 +27,7 @@ import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

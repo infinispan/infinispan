@@ -3,7 +3,6 @@ package org.infinispan.query.remote.impl;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.commons.internal.InternalCacheNames;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -12,6 +11,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.remote.impl.ProtobufMetadataCacheStartedTest")
@@ -24,7 +24,7 @@ public class ProtobufMetadataCacheStartedTest extends AbstractInfinispanTest {
    }
 
    public void testMetadataCacheStarted() throws Exception {
-      String persistentStateLocation = CommonsTestingUtil.tmpDirectory(getClass());
+      String persistentStateLocation = Testing.tmpDirectory(getClass());
       Util.recursiveFileRemove(persistentStateLocation);
 
       final String persistentStateLocation1 = persistentStateLocation + "/1";

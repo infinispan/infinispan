@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
@@ -28,6 +27,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterMethod;

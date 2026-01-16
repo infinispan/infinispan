@@ -11,9 +11,9 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.BasicClientIntelligenceTest")

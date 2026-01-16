@@ -7,7 +7,6 @@ import java.util.function.Consumer;
 import org.infinispan.api.Infinispan;
 import org.infinispan.api.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.HotRodURI;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -19,6 +18,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.testing.TestResourceTracker;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;

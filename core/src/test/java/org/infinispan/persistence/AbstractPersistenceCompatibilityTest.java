@@ -16,7 +16,6 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -27,6 +26,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Value;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.Test;
 
 /**
@@ -170,7 +170,7 @@ public abstract class AbstractPersistenceCompatibilityTest<T> extends SingleCach
 
    @Override
    protected void setup() throws Exception {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = Testing.tmpDirectory(this.getClass());
       Util.recursiveFileRemove(tmpDirectory);
       log.debugf("Using tmpDirectory=%s", tmpDirectory);
       super.setup();

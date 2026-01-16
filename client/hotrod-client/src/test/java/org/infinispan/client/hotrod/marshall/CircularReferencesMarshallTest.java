@@ -9,9 +9,9 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.company.FootballSc
 import org.infinispan.client.hotrod.query.testdomain.protobuf.company.FootballTeam;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.company.Player;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.exception.ProtoStreamException;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.marshall.CircularReferencesMarshallTest")

@@ -21,7 +21,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.assertj.core.api.SoftAssertions;
 import org.infinispan.Cache;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -29,6 +28,7 @@ import org.infinispan.server.resp.test.CommonRespTests;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.KeyScanCursor;

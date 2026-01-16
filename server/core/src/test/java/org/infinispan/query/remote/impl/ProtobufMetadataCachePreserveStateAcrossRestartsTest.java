@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.internal.InternalCacheNames;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -27,6 +26,7 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.remote.impl.ProtobufMetadataCachePreserveStateAcrossRestartsTest")
@@ -41,7 +41,7 @@ public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends Abstra
    }
 
    public void testStatePreserved1Node() throws Exception {
-      String persistentStateLocation = CommonsTestingUtil.tmpDirectory(this.getClass());
+      String persistentStateLocation = Testing.tmpDirectory(this.getClass());
       Util.recursiveFileRemove(persistentStateLocation);
 
       TestingUtil.withCacheManager(new CacheManagerCallable(createCacheManager(persistentStateLocation)) {
@@ -63,7 +63,7 @@ public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends Abstra
    }
 
    public void testStatePreserved2Nodes() throws Exception {
-      String persistentStateLocation = CommonsTestingUtil.tmpDirectory(this.getClass());
+      String persistentStateLocation = Testing.tmpDirectory(this.getClass());
       Util.recursiveFileRemove(persistentStateLocation);
 
       final String persistentStateLocation1 = persistentStateLocation + "/1";

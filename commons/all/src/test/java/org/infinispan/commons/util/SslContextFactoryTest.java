@@ -11,8 +11,8 @@ import java.time.Instant;
 import javax.security.auth.x500.X500Principal;
 
 import org.infinispan.commons.io.FileWatcher;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Eventually;
+import org.infinispan.testing.Eventually;
+import org.infinispan.testing.Testing;
 import org.junit.Test;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 
@@ -27,7 +27,7 @@ public class SslContextFactoryTest {
    @Test
    public void testSslContextFactoryWatch() throws IOException {
       try (FileWatcher watcher = new FileWatcher()) {
-         Path tmpDir = Paths.get(CommonsTestingUtil.tmpDirectory(SslContextFactoryTest.class));
+         Path tmpDir = Paths.get(Testing.tmpDirectory(SslContextFactoryTest.class));
          Files.createDirectories(tmpDir);
          Path keystore = createCertificateKeyStore("keystore", SECRET, tmpDir);
          Path truststore = createCertificateKeyStore("truststore", SECRET, tmpDir);

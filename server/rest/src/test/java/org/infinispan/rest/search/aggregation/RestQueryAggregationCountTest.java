@@ -21,7 +21,6 @@ import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
@@ -30,6 +29,7 @@ import org.infinispan.query.model.Sale;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.search.aggregation.RestQueryAggregationCountTest")

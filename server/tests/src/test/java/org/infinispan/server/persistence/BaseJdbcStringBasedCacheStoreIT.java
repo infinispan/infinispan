@@ -3,12 +3,12 @@ package org.infinispan.server.persistence;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.commons.test.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.testing.Eventually;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 

@@ -3,12 +3,12 @@ package org.infinispan.persistence.support;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
-import org.infinispan.commons.test.BlockHoundHelper;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
+import org.infinispan.testing.BlockHoundHelper;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;

@@ -17,8 +17,6 @@ import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -26,6 +24,8 @@ import org.infinispan.query.model.Game;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.search.RestHitCountAccuracyTest")

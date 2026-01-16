@@ -19,7 +19,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
@@ -31,6 +30,7 @@ import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.infinispan.util.concurrent.BlockingManagerTestUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -43,7 +43,7 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
 
    @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+      tmpDirectory = Testing.tmpDirectory(getClass());
    }
 
    @AfterClass(alwaysRun = true)
@@ -56,7 +56,7 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().enable().persistentLocation(Testing.tmpDirectory(this.getClass()));
       return TestCacheManagerFactory.newDefaultCacheManager(true, global, new ConfigurationBuilder());
    }
 

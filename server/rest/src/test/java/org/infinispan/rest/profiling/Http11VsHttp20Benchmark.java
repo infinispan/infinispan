@@ -4,8 +4,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.rest.helper.RestServerHelper;
+import org.infinispan.testing.security.TestCertificates;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OperationsPerInvocation;

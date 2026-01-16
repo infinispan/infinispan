@@ -2,13 +2,13 @@ package org.infinispan.container.versioning;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 

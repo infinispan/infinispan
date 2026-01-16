@@ -7,11 +7,11 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.model.Item;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

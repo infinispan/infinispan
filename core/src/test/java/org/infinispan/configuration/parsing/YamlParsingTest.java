@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "configuration.YamlParsingTest")

@@ -13,12 +13,12 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.Util;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.security.TestCertificates;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 

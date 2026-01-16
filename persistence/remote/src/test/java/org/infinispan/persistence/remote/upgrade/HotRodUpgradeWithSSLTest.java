@@ -1,8 +1,8 @@
 package org.infinispan.persistence.remote.upgrade;
 
-import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.testing.security.TestCertificates;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

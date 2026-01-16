@@ -6,12 +6,12 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 

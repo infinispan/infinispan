@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -34,6 +33,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestClassLocal;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.function.SerializableSupplier;
 import org.testng.annotations.Test;

@@ -1,8 +1,8 @@
 package org.infinispan.query.tx;
 
-import static org.infinispan.commons.test.Exceptions.assertException;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.infinispan.testing.Exceptions.assertException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 

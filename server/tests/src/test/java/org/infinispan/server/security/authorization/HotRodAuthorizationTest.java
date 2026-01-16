@@ -30,8 +30,6 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.skip.SkipJunit;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
@@ -43,6 +41,8 @@ import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.skip.SkipJunit;
 import org.junit.jupiter.api.Test;
 
 abstract class HotRodAuthorizationTest {

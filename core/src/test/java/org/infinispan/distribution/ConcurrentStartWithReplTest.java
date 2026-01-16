@@ -6,7 +6,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
@@ -15,6 +14,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 

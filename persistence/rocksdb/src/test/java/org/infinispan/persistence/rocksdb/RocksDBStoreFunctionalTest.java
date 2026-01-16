@@ -3,13 +3,13 @@ package org.infinispan.persistence.rocksdb;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.rocksdb.RocksDBStoreFunctionalTest")

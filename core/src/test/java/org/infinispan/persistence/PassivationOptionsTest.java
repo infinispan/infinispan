@@ -3,13 +3,13 @@ package org.infinispan.persistence;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.expiration.impl.CustomLoaderNonNullWithExpirationTest;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

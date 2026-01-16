@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.File;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,6 +11,7 @@ import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.testing.Testing;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -39,7 +39,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() {
-      tmpDir = new File(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      tmpDir = new File(Testing.tmpDirectory(this.getClass()));
       Util.recursiveFileRemove(tmpDir);
 
       globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();

@@ -12,7 +12,6 @@ import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.TimeoutException;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -25,6 +24,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
+import org.infinispan.testing.TestResourceTracker;
 import org.jgroups.conf.ConfiguratorFactory;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;

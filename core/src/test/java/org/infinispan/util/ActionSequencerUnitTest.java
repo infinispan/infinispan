@@ -3,7 +3,7 @@ package org.infinispan.util;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
-import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 

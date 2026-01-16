@@ -7,8 +7,8 @@ import java.util.function.Supplier;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 @Test(groups = {"functional", "smoke"}, testName = "security.CacheManagerAuthorizationTest")

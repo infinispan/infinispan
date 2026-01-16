@@ -12,7 +12,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -20,6 +19,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
 import org.testng.annotations.Test;

@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.net.URL;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -22,12 +21,13 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.rocksdb.configuration.ConfigurationTest")
 public class ConfigurationTest extends AbstractInfinispanTest {
-   private final String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+   private final String tmpDirectory = Testing.tmpDirectory(this.getClass());
    private final String tmpDataDirectory = tmpDirectory + "/data";
    private final String tmpExpiredDirectory = tmpDirectory + "/expired";
 

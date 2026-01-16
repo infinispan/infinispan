@@ -11,7 +11,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
 import org.infinispan.commons.util.NetworkAddress;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.configuration.security.LdapRealmConfiguration;
@@ -22,6 +21,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
+import org.infinispan.testing.junit.JUnitThreadTrackerRule;
 import org.junit.ClassRule;
 import org.junit.Test;
 

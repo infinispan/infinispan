@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.configuration.StringConfiguration;
-import org.infinispan.commons.test.Eventually;
+import org.infinispan.testing.Eventually;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -20,6 +19,7 @@ import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.testng.annotations.DataProvider;

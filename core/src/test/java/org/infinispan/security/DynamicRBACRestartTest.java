@@ -1,7 +1,7 @@
 package org.infinispan.security;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.testng.AssertJUnit.assertEquals;
 
 import javax.security.auth.Subject;

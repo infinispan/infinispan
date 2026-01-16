@@ -7,9 +7,9 @@ import java.util.Map;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.test.skip.StringLogAppender;
 import org.infinispan.server.resp.SingleNodeRespBaseTest;
+import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.skip.StringLogAppender;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 

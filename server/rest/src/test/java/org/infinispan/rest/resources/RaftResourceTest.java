@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.rest.RestResponseInfo.OK;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
-import static org.infinispan.commons.test.TestResourceTracker.getCurrentTestShortName;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.rest.helper.RestResponses.assertStatus;
+import static org.infinispan.testing.TestResourceTracker.getCurrentTestShortName;
 
 import java.util.ArrayList;
 import java.util.List;

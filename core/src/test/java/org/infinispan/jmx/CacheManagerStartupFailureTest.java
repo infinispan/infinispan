@@ -11,7 +11,6 @@ import javax.management.ObjectName;
 import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.annotations.Start;
@@ -20,6 +19,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 /**

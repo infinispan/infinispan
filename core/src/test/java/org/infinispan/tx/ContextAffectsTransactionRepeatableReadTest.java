@@ -1,9 +1,9 @@
 package org.infinispan.tx;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 

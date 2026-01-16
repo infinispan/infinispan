@@ -19,7 +19,6 @@ import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
@@ -34,6 +33,7 @@ import org.infinispan.expiration.TouchMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.skip.SkipTestNG;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;

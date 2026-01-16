@@ -1,13 +1,12 @@
 package org.infinispan.tx.locking;
 
-import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.TimeoutException;
-import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
@@ -17,6 +16,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.testing.ExceptionRunnable;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;

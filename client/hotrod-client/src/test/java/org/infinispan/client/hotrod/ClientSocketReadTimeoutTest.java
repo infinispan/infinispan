@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -26,6 +25,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 /**

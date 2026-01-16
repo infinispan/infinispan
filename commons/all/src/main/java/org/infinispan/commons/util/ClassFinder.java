@@ -78,7 +78,7 @@ public class ClassFinder {
          // Exclude the test utility classes in the commons-test module
          boolean isTargetDirectory = file.isDirectory() &&
                new File(file, "org/infinispan").isDirectory() &&
-               !new File(file, "org/infinispan/commons/test").isDirectory();
+               !new File(file, "org/infinispan/testing").isDirectory();
          if (isInfinispanJar || isTargetDirectory) {
             files.add(file);
          }

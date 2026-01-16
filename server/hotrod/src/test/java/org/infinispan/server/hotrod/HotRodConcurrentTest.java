@@ -7,8 +7,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.server.hotrod.test.HotRodClient;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**

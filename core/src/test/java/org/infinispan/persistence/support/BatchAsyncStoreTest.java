@@ -3,13 +3,13 @@ package org.infinispan.persistence.support;
 import java.util.HashMap;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -92,7 +92,7 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
 
    @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = Testing.tmpDirectory(this.getClass());
    }
 
    @AfterClass(alwaysRun = true)

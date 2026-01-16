@@ -26,9 +26,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Properties;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.Testing;
 import org.junit.Test;
 
 /**
@@ -39,7 +39,7 @@ public class PatchToolTest {
 
    @Test
    public void testPatchToolCreate() throws IOException {
-      Path tmp = Paths.get(CommonsTestingUtil.tmpDirectory(PatchToolTest.class));
+      Path tmp = Paths.get(Testing.tmpDirectory(PatchToolTest.class));
       Util.recursiveFileRemove(tmp.toFile());
       Files.createDirectories(tmp);
       Util.recursiveDirectoryCopy(new File("target/test-classes/patch").toPath(), tmp);

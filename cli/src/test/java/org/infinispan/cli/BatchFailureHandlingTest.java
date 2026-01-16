@@ -6,14 +6,14 @@ import java.io.File;
 import java.util.Properties;
 
 import org.infinispan.cli.commands.CLI;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.testing.Testing;
 import org.junit.Test;
 
 public class BatchFailureHandlingTest {
    @Test
    public void testBatchFailureHandling() {
-      File workingDir = new File(CommonsTestingUtil.tmpDirectory(BatchFailureHandlingTest.class));
+      File workingDir = new File(Testing.tmpDirectory(BatchFailureHandlingTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());

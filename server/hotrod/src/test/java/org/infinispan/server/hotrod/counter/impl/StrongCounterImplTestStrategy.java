@@ -1,11 +1,11 @@
 package org.infinispan.server.hotrod.counter.impl;
 
 import static java.util.Arrays.asList;
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.counter.api.CounterConfiguration.builder;
 import static org.infinispan.counter.api.CounterType.BOUNDED_STRONG;
 import static org.infinispan.counter.api.CounterType.UNBOUNDED_STRONG;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;

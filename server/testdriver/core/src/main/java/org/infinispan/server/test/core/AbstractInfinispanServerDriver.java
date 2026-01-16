@@ -24,8 +24,6 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.maven.Artifact;
 import org.infinispan.commons.maven.MavenSettings;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.NetworkAddress;
 import org.infinispan.commons.util.SslContextFactory;
@@ -33,6 +31,8 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.test.api.TestUser;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.Testing;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.junit.Assume;
@@ -109,7 +109,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       }
 
       String siteName = configuration.site() == null ? "" : configuration.site();
-      String testDir = CommonsTestingUtil.tmpDirectory(siteName + name);
+      String testDir = Testing.tmpDirectory(siteName + name);
       Util.recursiveFileRemove(testDir);
       rootDir = new File(testDir);
       confDir = new File(rootDir, ServerConstants.DEFAULT_SERVER_CONFIG);
