@@ -406,7 +406,26 @@ public class McpResource implements ResourceHandler {
    private CompletionStage<RestResponse> mcpResourcesList(RestRequest request, Json json) {
       Json response = rpcResponse(json)
             .set(McpConstants.RESULT, Json.object()
-                  .set("resources", Json.array())
+                  .set("resources", Json.array()
+                        .add(Json.object()
+                              .set("uri", "infinispan+logs://server?lines=200")
+                              .set(McpConstants.NAME, "server log")
+                              .set(McpConstants.DESCRIPTION, "CHECK THIS FIRST for server status, health, errors, warnings, exceptions, startup/shutdown events, and troubleshooting")
+                              .set("mimeType", "text/plain")
+                        )
+                        .add(Json.object()
+                              .set("uri", "infinispan+logs://audit?lines=200")
+                              .set(McpConstants.NAME, "audit log")
+                              .set(McpConstants.DESCRIPTION, "Check for security events: authentication attempts, authorization failures, suspicious activity")
+                              .set("mimeType", "text/plain")
+                        )
+                        .add(Json.object()
+                              .set("uri", "infinispan+logs://rest-access?lines=200")
+                              .set(McpConstants.NAME, "REST access log")
+                              .set(McpConstants.DESCRIPTION, "Check REST API usage patterns: request rates, errors (4xx/5xx), slow endpoints, client IPs")
+                              .set("mimeType", "text/plain")
+                        )
+                  )
             );
       return asJsonResponseFuture(invocationHelper.newResponse(request), response, false);
    }
@@ -424,6 +443,11 @@ public class McpResource implements ResourceHandler {
                               .set("uriTemplate", "infinispan+counter://{countername}")
                               .set(McpConstants.NAME, "counter value")
                               .set(McpConstants.DESCRIPTION, "Retrieves a value from a counter")
+                        ).add(Json.object()
+                              .set("uriTemplate", "infinispan+logs://{logType}?lines={lines}")
+                              .set(McpConstants.NAME, "server logs")
+                              .set(McpConstants.DESCRIPTION, "Read server logs to check health status, diagnose errors, warnings, exceptions, performance issues, and monitor server activity. Use this to answer questions about server health and troubleshooting.")
+                              .set("mimeType", "text/plain")
                         )
                   )
             );
@@ -431,7 +455,106 @@ public class McpResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> mcpResourcesRead(RestRequest request, Json json) {
-      return unimplemented(request, json, "resources/read not supported");
+      Json params = json.at(McpConstants.PARAMS);
+      String uri = params.at("uri").asString();
+
+      // Check if this is a log resource request
+      if (uri != null && uri.startsWith("infinispan+logs://")) {
+         return handleLogResourceRead(request, json, uri);
+      }
+
+      // For other resource types, return not supported
+      return unimplemented(request, json, "Resource type not supported: " + uri);
+   }
+
+   private CompletionStage<RestResponse> handleLogResourceRead(RestRequest request, Json json, String uri) {
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            // Parse URI: infinispan+logs://server?lines=200
+            java.net.URI parsedUri = java.net.URI.create(uri);
+            String logType = parsedUri.getHost();
+            Map<String, String> queryParams = parseQueryParameters(parsedUri.getQuery());
+
+            // Get lines parameter (default: 200, max: 10000)
+            int lines = 200;
+            if (queryParams.containsKey("lines")) {
+               try {
+                  lines = Integer.parseInt(queryParams.get("lines"));
+                  if (lines < 1) {
+                     lines = 1;
+                  } else if (lines > 10000) {
+                     lines = 10000;
+                  }
+               } catch (NumberFormatException e) {
+                  throw new IllegalArgumentException("Invalid lines parameter: " + queryParams.get("lines"));
+               }
+            }
+
+            // Get log file path
+            String logPath = System.getProperty("infinispan.server.log.path");
+            if (logPath == null) {
+               throw new IllegalStateException("Log path not configured (infinispan.server.log.path property not set)");
+            }
+
+            String fileName = getLogFileName(logType);
+            java.nio.file.Path logFile = java.nio.file.Paths.get(logPath, fileName);
+
+            // Read last N lines
+            String content = readLastLines(logFile, lines);
+
+            // Build MCP response
+            Json response = rpcResponse(json)
+                  .set(McpConstants.RESULT, Json.object()
+                        .set("contents", Json.array()
+                              .add(Json.object()
+                                    .set("uri", uri)
+                                    .set("mimeType", "text/plain")
+                                    .set("text", content)
+                              )
+                        )
+                  );
+
+            NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
+            return builder.entity(response.toString())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .status(HttpResponseStatus.OK)
+                  .build();
+
+         } catch (IllegalArgumentException e) {
+            // Invalid log type or parameters
+            Json response = rpcResponse(json)
+                  .set("error", Json.object()
+                        .set("code", McpConstants.INVALID_PARAMS)
+                        .set("message", e.getMessage()));
+            NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
+            return builder.entity(response.toString())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .status(HttpResponseStatus.BAD_REQUEST)
+                  .build();
+         } catch (java.io.IOException e) {
+            // File read error
+            Json response = rpcResponse(json)
+                  .set("error", Json.object()
+                        .set("code", McpConstants.INTERNAL_ERROR)
+                        .set("message", "Error reading log file: " + e.getMessage()));
+            NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
+            return builder.entity(response.toString())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .status(HttpResponseStatus.INTERNAL_SERVER_ERROR)
+                  .build();
+         } catch (Exception e) {
+            // Unexpected error
+            Json response = rpcResponse(json)
+                  .set("error", Json.object()
+                        .set("code", McpConstants.INTERNAL_ERROR)
+                        .set("message", "Unexpected error: " + e.getMessage()));
+            NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
+            return builder.entity(response.toString())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .status(HttpResponseStatus.INTERNAL_SERVER_ERROR)
+                  .build();
+         }
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> mcpResourcesUnubscribe(RestRequest request, Json json) {
@@ -575,5 +698,100 @@ public class McpResource implements ResourceHandler {
       return invocationHelper.getCounterManager().getWeakCounterAsync(counterName)
             .thenApply(WeakCounter::decrement)
             .thenApply(__ -> Json.array());
+   }
+
+   /**
+    * Parses query parameters from a URI query string.
+    * Example: "lines=200&level=ERROR" -> Map{lines=200, level=ERROR}
+    */
+   private Map<String, String> parseQueryParameters(String query) {
+      if (query == null || query.isEmpty()) {
+         return Map.of();
+      }
+      Map<String, String> params = new java.util.HashMap<>();
+      for (String param : query.split("&")) {
+         String[] pair = param.split("=", 2);
+         if (pair.length == 2) {
+            params.put(pair[0], pair[1]);
+         }
+      }
+      return params;
+   }
+
+   /**
+    * Maps log type to actual log file name.
+    */
+   private String getLogFileName(String logType) {
+      return switch (logType == null ? "server" : logType) {
+         case "server" -> "server.log";
+         case "audit" -> "audit.log";
+         case "rest-access" -> "rest-access.log";
+         case "hotrod-access" -> "hotrod-access.log";
+         case "memcached-access" -> "memcached-access.log";
+         case "resp-access" -> "resp-access.log";
+         default -> throw new IllegalArgumentException("Unknown log type: " + logType);
+      };
+   }
+
+   /**
+    * Reads the last N lines from a file efficiently using reverse file reading.
+    * This approach minimizes memory usage for large files.
+    */
+   private String readLastLines(java.nio.file.Path file, int maxLines) throws java.io.IOException {
+      if (!java.nio.file.Files.exists(file)) {
+         return ""; // Return empty string if file doesn't exist yet
+      }
+
+      long fileSize = java.nio.file.Files.size(file);
+      if (fileSize == 0) {
+         return "";
+      }
+
+      // For small files, just read the whole thing
+      if (fileSize < 8192) {
+         return java.nio.file.Files.readString(file);
+      }
+
+      // For larger files, read backwards in chunks
+      java.util.List<String> lines = new java.util.ArrayList<>();
+      try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(file.toFile(), "r")) {
+         long pos = fileSize - 1;
+         StringBuilder currentLine = new StringBuilder();
+         int chunkSize = 8192;
+         byte[] buffer = new byte[chunkSize];
+
+         while (pos >= 0 && lines.size() < maxLines) {
+            int bytesToRead = (int) Math.min(chunkSize, pos + 1);
+            pos = pos - bytesToRead + 1;
+            raf.seek(pos);
+            raf.readFully(buffer, 0, bytesToRead);
+
+            // Process bytes in reverse
+            for (int i = bytesToRead - 1; i >= 0; i--) {
+               char c = (char) buffer[i];
+               if (c == '\n') {
+                  if (currentLine.length() > 0) {
+                     lines.add(currentLine.reverse().toString());
+                     currentLine = new StringBuilder();
+                     if (lines.size() >= maxLines) {
+                        break;
+                     }
+                  }
+               } else if (c != '\r') {
+                  currentLine.append(c);
+               }
+            }
+            pos--;
+         }
+
+         // Add any remaining content as the first line
+         if (currentLine.length() > 0 && lines.size() < maxLines) {
+            lines.add(currentLine.reverse().toString());
+         }
+      }
+
+      // Reverse the list to get correct order (oldest to newest)
+      java.util.Collections.reverse(lines);
+      return String.join("\n", lines);
    }
 }
