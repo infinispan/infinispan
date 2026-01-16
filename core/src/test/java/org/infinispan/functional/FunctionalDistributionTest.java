@@ -13,8 +13,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -75,7 +73,7 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
    }
 
    private void doTestDistribution(Object key, AdvancedCache<Object, Integer> originator) throws Exception {
-      ReadWriteMap<Object, Integer> rw = ReadWriteMapImpl.create(FunctionalMapImpl.create(originator));
+      ReadWriteMap<Object, Integer> rw = FunctionalMap.create(originator).toReadWriteMap();
 
       // with empty cache:
       iterate(key, rw, 1);
@@ -87,7 +85,7 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
       List<AdvancedCache<Object, Object>> owners = cacheManagers
             .stream().map(cm -> cm.getCache(DIST).getAdvancedCache())
             .filter(cache -> cache.getDistributionManager().getCacheTopology().isWriteOwner(key))
-            .collect(Collectors.toList());
+            .toList();
 
       CyclicBarrier barrier = new CyclicBarrier(numDistOwners + 1);
       for (AdvancedCache cache : owners) {

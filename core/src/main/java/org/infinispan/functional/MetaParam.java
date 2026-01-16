@@ -13,7 +13,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * An easily extensible metadata parameter that's stored along with the value
- * in the the functional map.
+ * in the functional map.
  *
  * <p>Some metadata parameters can be provided by the user in which case they
  * need to implement {@link MetaParam.Writable}. Examples of writable metadata

@@ -29,9 +29,6 @@ import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -116,18 +113,18 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    protected void initMaps() {
       super.initMaps();
 
-      this.ro = ReadOnlyMapImpl.create(fmapD1);
-      this.lro = ReadOnlyMapImpl.create(fmapL1);
-      this.wo = WriteOnlyMapImpl.create(fmapD1);
-      this.rw = ReadWriteMapImpl.create(fmapD1);
+      this.ro = fmapD1.toReadOnlyMap();
+      this.lro = fmapL1.toReadOnlyMap();
+      this.wo = fmapD1.toWriteOnlyMap();
+      this.rw = fmapD1.toReadWriteMap();
       this.cache = cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache();
-      this.lwo = WriteOnlyMapImpl.create(fmapL1);
-      this.lrw = ReadWriteMapImpl.create(fmapL1);
+      this.lwo = fmapL1.toWriteOnlyMap();
+      this.lrw = fmapL1.toReadWriteMap();
 
       if (!isSkipSimpleCache()) {
-         this.sro = ReadOnlyMapImpl.create(fmapS1);
-         this.swo = WriteOnlyMapImpl.create(fmapS1);
-         this.srw = ReadWriteMapImpl.create(fmapS1);
+         this.sro = fmapS1.toReadOnlyMap();
+         this.swo = fmapS1.toWriteOnlyMap();
+         this.srw = fmapS1.toReadWriteMap();
       }
    }
 

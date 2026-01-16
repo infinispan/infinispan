@@ -33,14 +33,15 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
       super(params, functionalMap);
    }
 
-   public static <K, V> WriteOnlyMap<K, V> create(FunctionalMapImpl<K, V> functionalMap) {
-      return create(Params.from(functionalMap.params.params), functionalMap);
-   }
-
-   private static <K, V> WriteOnlyMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
+   static <K, V> WriteOnlyMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
       if (functionalMap.cache.getCacheConfiguration().simpleCache())
          return new SimpleWriteOnlyMapImpl<>(params, functionalMap);
       return new WriteOnlyMapImpl<>(params, functionalMap);
+   }
+
+   @Override
+   public WriteOnlyMap<K, V> toWriteOnlyMap() {
+      return this;
    }
 
    @Override

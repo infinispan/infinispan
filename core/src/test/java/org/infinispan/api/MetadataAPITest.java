@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -16,9 +17,8 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.MetaParam;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -48,7 +48,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 1;
       NumericVersion version = new NumericVersion(1);
       advCache.put(key, "v1", withVersion(version));
-      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> cacheEntry = advCache.getCacheEntry(key);
       assertEquals(EQUAL, version.compareTo(cacheEntry.getMetadata().version()));
    }
 
@@ -58,15 +58,15 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       advCache.put(key, "v1", withVersion(version));
       NumericVersion newVersion = new NumericVersion(2);
       advCache.replace(key, "v1", "v2", withVersion(newVersion));
-      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> cacheEntry = advCache.getCacheEntry(key);
       assertEquals(EQUAL, newVersion.compareTo(cacheEntry.getMetadata().version()));
    }
 
    public void testPutIfAbsentWithVersion() {
       final Integer key = 3;
       NumericVersion version = new NumericVersion(1);
-      assertEquals(null, advCache.putIfAbsent(key, "v1", withVersion(version)));
-      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      assertNull(advCache.putIfAbsent(key, "v1", withVersion(version)));
+      CacheEntry<Integer, String> cacheEntry = advCache.getCacheEntry(key);
       assertEquals(EQUAL, version.compareTo(cacheEntry.getMetadata().version()));
    }
 
@@ -78,7 +78,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       assertFalse(f.isCancelled());
       assertNull(f.get());
       assertTrue(f.isDone());
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals("v1", entry.getValue());
       assertEquals(EQUAL, version.compareTo(entry.getMetadata().version()));
    }
@@ -87,7 +87,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 1;
       int lifespan = 1_000_000;
       advCache.put(key, "v1", withLifespan(lifespan));
-      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> cacheEntry = advCache.getCacheEntry(key);
       assertEquals(lifespan, cacheEntry.getMetadata().lifespan());
    }
 
@@ -97,15 +97,15 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       advCache.put(key, "v1", withLifespan(lifespan));
       long newLifespan = 2_000_000;
       advCache.replace(key, "v1", "v2", withLifespan(newLifespan));
-      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> cacheEntry = advCache.getCacheEntry(key);
       assertEquals(newLifespan, cacheEntry.getMetadata().lifespan());
    }
 
    public void testPutIfAbsentWithLifespan() {
       final Integer key = 3;
       long lifespan = 1_000_000;
-      assertEquals(null, advCache.putIfAbsent(key, "v1", withLifespan(lifespan)));
-      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      assertNull(advCache.putIfAbsent(key, "v1", withLifespan(lifespan)));
+      CacheEntry<Integer, String> cacheEntry = advCache.getCacheEntry(key);
       assertEquals(lifespan, cacheEntry.getMetadata().lifespan());
    }
 
@@ -117,7 +117,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       assertFalse(f.isCancelled());
       assertNull(f.get());
       assertTrue(f.isDone());
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals("v1", entry.getValue());
       assertEquals(lifespan, entry.getMetadata().lifespan());
    }
@@ -125,13 +125,13 @@ public class MetadataAPITest extends SingleCacheManagerTest {
    public void testPutFunctionalWithLifespan() throws Exception {
       final Integer key = 4;
       long lifespan = 1_000_000;
-      CompletableFuture<Void> f = WriteOnlyMapImpl.create(FunctionalMapImpl.create(advCache))
+      CompletableFuture<Void> f = FunctionalMap.create(advCache).toWriteOnlyMap()
             .eval(key, view -> view.set("v1", new MetaParam.MetaLifespan(lifespan)));
       assertNotNull(f);
       assertFalse(f.isCancelled());
       assertNull(f.get());
       assertTrue(f.isDone());
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals("v1", entry.getValue());
       assertEquals(lifespan, entry.getMetadata().lifespan());
    }
@@ -139,20 +139,20 @@ public class MetadataAPITest extends SingleCacheManagerTest {
    public void testReplaceFunctionalWithLifespan() throws Exception {
       final Integer key = 4;
       long lifespan = 1_000_000;
-      CompletableFuture<Void> f = WriteOnlyMapImpl.create(FunctionalMapImpl.create(advCache))
+      CompletableFuture<Void> f = FunctionalMap.create(advCache).toWriteOnlyMap()
             .eval(key, view -> view.set("v1", new MetaParam.MetaLifespan(lifespan)));
       assertNotNull(f);
       assertFalse(f.isCancelled());
       assertNull(f.get());
       assertTrue(f.isDone());
       long newLifespan = 2_000_000;
-      f = WriteOnlyMapImpl.create(FunctionalMapImpl.create(advCache))
+      f = FunctionalMap.create(advCache).toWriteOnlyMap()
             .eval(key, view -> view.set("v2", new MetaParam.MetaLifespan(newLifespan)));
       assertNotNull(f);
       assertFalse(f.isCancelled());
       assertNull(f.get());
       assertTrue(f.isDone());
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals("v2", entry.getValue());
       assertEquals(newLifespan, entry.getMetadata().lifespan());
    }
@@ -165,13 +165,13 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       long lifespan = 1_000_000;
       advCache.put(key, "v1", withLifespan(lifespan));
       long newLifespan = 2_000_000;
-      CompletableFuture<Void> f = WriteOnlyMapImpl.create(FunctionalMapImpl.create(advCache))
+      CompletableFuture<Void> f = FunctionalMap.create(advCache).toWriteOnlyMap()
             .eval(key, view -> view.set("v2", new MetaParam.MetaLifespan(newLifespan)));
       assertNotNull(f);
       assertFalse(f.isCancelled());
       assertNull(f.get());
       assertTrue(f.isDone());
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals("v2", entry.getValue());
       assertEquals(newLifespan, entry.getMetadata().lifespan());
    }
@@ -180,7 +180,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 5;
       Metadata meta = new CustomMetadata(3000, -1);
       advCache.put(key, "v1", meta);
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals(meta, entry.getMetadata());
    }
 
@@ -188,7 +188,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 6;
       Metadata meta = new CustomMetadata(-1, 3000);
       advCache.put(key, "v1", meta);
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals(meta, entry.getMetadata());
    }
 
@@ -196,7 +196,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 6;
       Metadata meta = new CustomMetadata(3000, 3000);
       advCache.put(key, "v1", meta);
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals(meta, entry.getMetadata());
    }
 
@@ -206,7 +206,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       advCache.put(key, "v1", withVersion(version));
       NumericVersion newVersion = new NumericVersion(2);
       advCache.replace(key, "v2", withVersion(newVersion));
-      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> cacheEntry = advCache.getCacheEntry(key);
       assertEquals(EQUAL, newVersion.compareTo(cacheEntry.getMetadata().version()));
    }
 
@@ -214,7 +214,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 8;
       Metadata meta = new CustomMetadata(-1, -1);
       advCache.put(key, "v1", meta);
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals(meta, entry.getMetadata());
       Metadata newMeta = new CustomMetadata(120000, 60000);
       advCache.put(key, "v2", newMeta);
@@ -225,7 +225,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 9;
       Metadata meta = new CustomMetadata(120000, -1);
       advCache.put(key, "v1", meta);
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals(meta, entry.getMetadata());
       Metadata newMeta = new CustomMetadata(240000, -1);
       advCache.put(key, "v2", newMeta);
@@ -236,7 +236,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 10;
       Metadata meta = new CustomMetadata(-1, 120000);
       advCache.put(key, "v1", meta);
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals(meta, entry.getMetadata());
       Metadata newMeta = new CustomMetadata(-1, 240000);
       advCache.put(key, "v2", newMeta);
@@ -247,7 +247,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 10;
       Metadata meta = new CustomMetadata(60000, 120000);
       advCache.put(key, "v1", meta);
-      CacheEntry entry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> entry = advCache.getCacheEntry(key);
       assertEquals(meta, entry.getMetadata());
       Metadata newMeta = new CustomMetadata(120000, 240000);
       advCache.put(key, "v2", newMeta);
@@ -258,7 +258,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 11;
       NumericVersion version = new NumericVersion(1);
       advCache.putForExternalRead(key, "v1", withVersion(version));
-      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> cacheEntry = advCache.getCacheEntry(key);
       assertEquals(version, cacheEntry.getMetadata().version());
    }
 
@@ -268,7 +268,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       // Flag forces decorated cache, but doesn't affect processing
       AdvancedCache<Integer, String> decoratedCache = advCache.withFlags(Flag.SKIP_STATISTICS);
       decoratedCache.putForExternalRead(key, "v1", withVersion(version));
-      CacheEntry cacheEntry = decoratedCache.getCacheEntry(key);
+      CacheEntry<Integer, String> cacheEntry = decoratedCache.getCacheEntry(key);
       assertEquals(version, cacheEntry.getMetadata().version());
    }
 
@@ -276,7 +276,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       final Integer key = 11;
       long lifespan = 1_000_000;
       advCache.putForExternalRead(key, "v1", withLifespan(lifespan));
-      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      CacheEntry<Integer, String> cacheEntry = advCache.getCacheEntry(key);
       assertEquals(lifespan, cacheEntry.getMetadata().lifespan());
    }
 
@@ -286,7 +286,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       // Flag forces decorated cache, but doesn't affect processing
       AdvancedCache<Integer, String> decoratedCache = advCache.withFlags(Flag.SKIP_STATISTICS);
       decoratedCache.putForExternalRead(key, "v1", withLifespan(lifespan));
-      CacheEntry cacheEntry = decoratedCache.getCacheEntry(key);
+      CacheEntry<Integer, String> cacheEntry = decoratedCache.getCacheEntry(key);
       assertEquals(lifespan, cacheEntry.getMetadata().lifespan());
    }
 
@@ -370,22 +370,14 @@ public class MetadataAPITest extends SingleCacheManagerTest {
 
       @Override
       public boolean equals(Object o) {
-         if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
-
          CustomMetadata that = (CustomMetadata) o;
-
-         if (lifespan != that.lifespan) return false;
-         if (maxIdle != that.maxIdle) return false;
-
-         return true;
+         return lifespan == that.lifespan && maxIdle == that.maxIdle;
       }
 
       @Override
       public int hashCode() {
-         int result = (int) (lifespan ^ (lifespan >>> 32));
-         result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
-         return result;
+         return Objects.hash(lifespan, maxIdle);
       }
 
       @Override

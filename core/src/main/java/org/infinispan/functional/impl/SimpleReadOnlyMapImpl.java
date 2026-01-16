@@ -20,9 +20,9 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 /**
  * A {@link ReadOnlyMapImpl} that works with a simple cache.
  *
- * @since 15.0
  * @author José Bolina
  * @see ReadOnlyMapImpl
+ * @since 15.0
  */
 @Experimental
 public class SimpleReadOnlyMapImpl<K, V> extends ReadOnlyMapImpl<K, V> implements SimpleFunctionalMap<K, V> {
@@ -34,7 +34,7 @@ public class SimpleReadOnlyMapImpl<K, V> extends ReadOnlyMapImpl<K, V> implement
 
    SimpleReadOnlyMapImpl(Params params, FunctionalMapImpl<K, V> functionalMap) {
       super(params, functionalMap);
-      this.notifier = ComponentRegistry.componentOf(functionalMap. cache, CacheNotifier.class);
+      this.notifier = ComponentRegistry.componentOf(functionalMap.cache, CacheNotifier.class);
    }
 
    @Override

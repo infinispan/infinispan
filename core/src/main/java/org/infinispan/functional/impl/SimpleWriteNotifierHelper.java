@@ -15,7 +15,8 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  */
 final class SimpleWriteNotifierHelper {
 
-   private SimpleWriteNotifierHelper() { }
+   private SimpleWriteNotifierHelper() {
+   }
 
    static <K, V> void handleNotification(CacheNotifier<K, V> cacheNotifier, FunctionalNotifier<K, V> functionalNotifier,
                                          K key, EntryHolder<K, V> holder, boolean pre) {
@@ -45,7 +46,7 @@ final class SimpleWriteNotifierHelper {
                functionalNotifier.notifyOnWrite(e);
             }
 
-         // Entry was updated.
+            // Entry was updated.
          } else {
             CompletionStages.join(cacheNotifier.notifyCacheEntryModified(key, e.getValue(), e.getMetadata(), oldEntry.getValue(), oldEntry.getMetadata(), pre, ImmutableContext.INSTANCE, null));
 

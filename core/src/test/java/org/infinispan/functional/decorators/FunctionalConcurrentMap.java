@@ -23,15 +23,12 @@ import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.functional.Listeners.ReadWriteListeners;
 import org.infinispan.functional.Listeners.WriteListeners;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.stream.CacheCollectors;
 
 /**
@@ -47,14 +44,14 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    // Rudimentary constructor, we'll provide more idiomatic construction
    // via main Infinispan class which is still to be defined
-   private FunctionalConcurrentMap(FunctionalMapImpl<K, V> map) {
-      this.readOnly = ReadOnlyMapImpl.create(map);
-      this.writeOnly = WriteOnlyMapImpl.create(map);
-      this.readWrite = ReadWriteMapImpl.create(map);
+   private FunctionalConcurrentMap(FunctionalMap<K, V> map) {
+      this.readOnly = map.toReadOnlyMap();
+      this.writeOnly = map.toWriteOnlyMap();
+      this.readWrite = map.toReadWriteMap();
    }
 
    public static <K, V> FunctionalConcurrentMap<K, V> create(AdvancedCache<K, V> cache) {
-      return new FunctionalConcurrentMap<>(FunctionalMapImpl.create(cache));
+      return new FunctionalConcurrentMap<>(FunctionalMap.create(cache));
    }
 
    @Override
@@ -124,7 +121,7 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    @Override
    public Set<K> keySet() {
-      return readOnly.keys().collect(CacheCollectors.serializableCollector(() -> Collectors.toSet()));
+      return readOnly.keys().collect(CacheCollectors.serializableCollector(Collectors::toSet));
    }
 
    @Override

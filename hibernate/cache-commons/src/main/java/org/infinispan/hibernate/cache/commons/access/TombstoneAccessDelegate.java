@@ -3,20 +3,17 @@ package org.infinispan.hibernate.cache.commons.access;
 import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.cache.CacheException;
+import org.hibernate.cache.spi.access.SoftLock;
+import org.infinispan.AdvancedCache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Param;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
+import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.hibernate.cache.commons.util.TombstoneUpdate;
-import org.hibernate.cache.spi.access.SoftLock;
-
-import org.infinispan.AdvancedCache;
-import org.infinispan.configuration.cache.Configuration;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -35,11 +32,11 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 	public TombstoneAccessDelegate(InfinispanDataRegion region) {
 		this.region = region;
 		this.cache = region.getCache();
-		FunctionalMapImpl<Object, Object> fmap = FunctionalMapImpl.create(cache).withParams(Param.PersistenceMode.SKIP_LOAD);
-		writeMap = ReadWriteMapImpl.create(fmap);
+		FunctionalMap<Object, Object> fmap = FunctionalMap.create(cache).withParams(Param.PersistenceMode.SKIP_LOAD);
+		writeMap = fmap.toReadWriteMap();
 		// Note that correct behaviour of local and async writes depends on LockingInterceptor (see there for details)
-		asyncWriteMap = ReadWriteMapImpl.create(fmap).withParams(Param.ReplicationMode.ASYNC);
-		putFromLoadMap = ReadWriteMapImpl.create(fmap).withParams(Param.LockingMode.TRY_LOCK, Param.ReplicationMode.ASYNC);
+		asyncWriteMap = fmap.toReadWriteMap().withParams(Param.ReplicationMode.ASYNC);
+		putFromLoadMap = fmap.toReadWriteMap().withParams(Param.LockingMode.TRY_LOCK, Param.ReplicationMode.ASYNC);
 		Configuration configuration = this.cache.getCacheConfiguration();
 		if (configuration.clustering().cacheMode().isInvalidation()) {
 			throw new IllegalArgumentException("For tombstone-based caching, invalidation cache is not allowed.");

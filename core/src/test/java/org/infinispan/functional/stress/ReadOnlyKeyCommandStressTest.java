@@ -11,8 +11,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.GetAllCommandStressTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
@@ -21,11 +19,11 @@ import org.testng.annotations.Test;
 public class ReadOnlyKeyCommandStressTest extends GetAllCommandStressTest {
    @Override
    protected void workerLogic(Cache<Integer, Integer> cache, Set<Integer> threadKeys, int iteration) {
-      FunctionalMap.ReadOnlyMap<Integer, Integer> ro = ReadOnlyMapImpl.create(FunctionalMapImpl.create(cache.getAdvancedCache()));
-      List<CompletableFuture> futures = new ArrayList(threadKeys.size());
+      FunctionalMap.ReadOnlyMap<Integer, Integer> ro = FunctionalMap.create(cache.getAdvancedCache()).toReadOnlyMap();
+      List<CompletableFuture<Void>> futures = new ArrayList<>(threadKeys.size());
       for (Integer key : threadKeys) {
          futures.add(ro.eval(key, (view -> view.get() + 1)).thenAccept(value -> assertEquals(Integer.valueOf(key + 1), value)));
       }
-      futures.stream().forEach(f -> f.join());
+      futures.forEach(CompletableFuture::join);
    }
 }

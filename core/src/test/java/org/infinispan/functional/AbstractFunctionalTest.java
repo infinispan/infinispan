@@ -4,7 +4,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -27,18 +26,16 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    boolean persistence = true;
    boolean passivation = false;
 
-   FunctionalMapImpl<Integer, String> fmapS1;
-   FunctionalMapImpl<Integer, String> fmapS2;
-
-   FunctionalMapImpl<Integer, String> fmapL1;
-   FunctionalMapImpl<Integer, String> fmapL2;
-
-   FunctionalMapImpl<Object, String> fmapD1;
-   FunctionalMapImpl<Object, String> fmapD2;
+   FunctionalMap<Integer, String> fmapS1;
+   FunctionalMap<Integer, String> fmapS2;
+   FunctionalMap<Integer, String> fmapL1;
+   FunctionalMap<Integer, String> fmapL2;
+   FunctionalMap<Object, String> fmapD1;
+   FunctionalMap<Object, String> fmapD2;
 
    // TODO: we should not create all those maps in tests where we don't use them
-   FunctionalMapImpl<Object, String> fmapR1;
-   FunctionalMapImpl<Object, String> fmapR2;
+   FunctionalMap<Object, String> fmapR1;
+   FunctionalMap<Object, String> fmapR2;
 
    private boolean skipSimpleCache = false;
 
@@ -123,16 +120,16 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
 
    protected void initMaps() {
       if (!isSkipSimpleCache()) {
-         fmapS1 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), SIMPLE));
-         fmapS2 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), SIMPLE));
+         fmapS1 = FunctionalMap.create(getAdvancedCache(cacheManagers.get(0), SIMPLE));
+         fmapS2 = FunctionalMap.create(getAdvancedCache(cacheManagers.get(0), SIMPLE));
       }
 
-      fmapL1 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), null));
-      fmapL2 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), null));
-      fmapD1 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), DIST));
-      fmapD2 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(1), DIST));
-      fmapR1 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), REPL));
-      fmapR2 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(1), REPL));
+      fmapL1 = FunctionalMap.create(getAdvancedCache(cacheManagers.get(0), null));
+      fmapL2 = FunctionalMap.create(getAdvancedCache(cacheManagers.get(0), null));
+      fmapD1 = FunctionalMap.create(getAdvancedCache(cacheManagers.get(0), DIST));
+      fmapD2 = FunctionalMap.create(getAdvancedCache(cacheManagers.get(1), DIST));
+      fmapR1 = FunctionalMap.create(getAdvancedCache(cacheManagers.get(0), REPL));
+      fmapR2 = FunctionalMap.create(getAdvancedCache(cacheManagers.get(1), REPL));
    }
 
    protected <K, V> AdvancedCache<K, V> getAdvancedCache(EmbeddedCacheManager cm, String cacheName) {

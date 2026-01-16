@@ -46,14 +46,12 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.functional.MetaParam.MetaLifespan;
 import org.infinispan.functional.MetaParam.MetaMaxIdle;
 import org.infinispan.functional.Param.PersistenceMode;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -78,9 +76,9 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V>,
    private FunctionalAdvancedCache(ConcurrentMap<K, V> map, AdvancedCache<K, V> cache) {
       this.map = map;
       this.cache = cache;
-      FunctionalMapImpl<K, V> fmap = FunctionalMapImpl.create(cache);
-      this.rw = ReadWriteMapImpl.create(fmap);
-      this.wo = WriteOnlyMapImpl.create(fmap);
+      FunctionalMap<K, V> fmap = FunctionalMap.create(cache);
+      this.rw = fmap.toReadWriteMap();
+      this.wo = fmap.toWriteOnlyMap();
    }
 
    public static <K, V> AdvancedCache<K, V> create(AdvancedCache<K, V> cache) {

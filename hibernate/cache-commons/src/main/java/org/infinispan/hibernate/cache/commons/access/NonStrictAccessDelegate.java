@@ -4,20 +4,17 @@ import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.cache.CacheException;
+import org.hibernate.cache.spi.access.SoftLock;
+import org.hibernate.cache.spi.entry.CacheEntry;
+import org.infinispan.AdvancedCache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Param;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
+import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
-import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.cache.spi.entry.CacheEntry;
-
-import org.infinispan.AdvancedCache;
-import org.infinispan.configuration.cache.Configuration;
 
 /**
  * Access delegate that relaxes the consistency a bit: stale reads are prohibited only after the transaction
@@ -40,10 +37,10 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 	public NonStrictAccessDelegate(InfinispanDataRegion region, Comparator versionComparator) {
 		this.region = region;
 		this.cache = region.getCache();
-		FunctionalMapImpl fmap = FunctionalMapImpl.create(cache).withParams(Param.PersistenceMode.SKIP_LOAD);
-		this.writeMap = ReadWriteMapImpl.create(fmap);
+		FunctionalMap fmap = FunctionalMap.create(cache).withParams(Param.PersistenceMode.SKIP_LOAD);
+		this.writeMap = fmap.toReadWriteMap();
 		// Note that correct behaviour of local and async writes depends on LockingInterceptor (see there for details)
-		this.putFromLoadMap = ReadWriteMapImpl.create(fmap).withParams(Param.LockingMode.TRY_LOCK, Param.ReplicationMode.ASYNC);
+		this.putFromLoadMap = fmap.toReadWriteMap().withParams(Param.LockingMode.TRY_LOCK, Param.ReplicationMode.ASYNC);
 		Configuration configuration = cache.getCacheConfiguration();
 		if (configuration.clustering().cacheMode().isInvalidation()) {
 			throw new IllegalArgumentException("Nonstrict-read-write mode cannot use invalidation.");

@@ -17,8 +17,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
@@ -290,7 +288,7 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertTrue(cache0.isEmpty());
 
       try {
-         FunctionalMap.ReadWriteMap<String, String> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache0.getAdvancedCache()));
+         FunctionalMap.ReadWriteMap<String, String> rwMap = FunctionalMap.create(cache0.getAdvancedCache()).toReadWriteMap();
 
          rwMap.eval("test.proto", "val", (value, view) -> {
             view.set(value);
