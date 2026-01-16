@@ -59,19 +59,33 @@ public class McpServerResource implements ResourceHandler {
          new McpResource(
                "infinispan+logs://server?lines=200",
                "server log",
-               "CHECK THIS FIRST for server status, health, errors, warnings, exceptions, startup/shutdown events, and troubleshooting",
+               """
+               PRIMARY SOURCE OF INFORMATION FOR SERVER STATUS/HEALTH.
+               Returns info about server status, health, errors, warnings,
+               exceptions, startup/shutdown events, and troubleshooting
+               """,
                "text/plain"
          ),
          new McpResource(
                "infinispan+logs://audit?lines=200",
                "audit log",
-               "Check for security events: authentication attempts, authorization failures, suspicious activity",
+               """
+               PRIMARY SOURCE OF INFORMATION FOR SERVER STATUS/SECURITY.
+               Returns infor about security events: authentication attempts,
+               authorization failures, suspicious activity
+               """,
                "text/plain"
          ),
          new McpResource(
                "infinispan+logs://rest-access?lines=200",
                "REST access log",
-               "Check REST API usage patterns: request rates, errors (4xx/5xx), slow endpoints, client IPs",
+                """
+               PRIMARY SOURCE OF INFORMATION FOR SERVER STATUS/WORKLOAD.
+               Returns info about REST API usage patterns: request rates,
+               errors (4xx/5xx), slow endpoints, client IPs. Useful also
+               for security auditing, i.e. detecting DoS attacks or suspicious
+               activity
+               """,
                "text/plain"
          )
    );
@@ -79,19 +93,22 @@ public class McpServerResource implements ResourceHandler {
          new McpResourceTemplate(
                "infinispan+cache://{cacheName}/{key}",
                "cache value",
-               "Retrieves a value from a cache",
+               "Runtime data information: retrieves a value from a cache",
                null
          ),
          new McpResourceTemplate(
                "infinispan+counter://{countername}",
                "counter value",
-               "Retrieves a value from a counter",
+               "Runtime data information: retrieves a value from a counter",
                null
          ),
          new McpResourceTemplate(
                "infinispan+logs://{logType}?lines={lines}",
                "server logs",
-               "Read server logs to check health status, diagnose errors, warnings, exceptions, performance issues, and monitor server activity. Use this to answer questions about server health and troubleshooting.",
+               """
+               PRIMARY SOURCE OF INFORMATION FOR SERVER STATUS/HEALTH. Useful to retrieve different types of server logs. Primary source
+               of information to monitor server status, server health, troubleshoot
+               issues, and audit security-related events.""",
                "text/plain"
          )
    );
@@ -103,7 +120,7 @@ public class McpServerResource implements ResourceHandler {
                   "getCacheNames",
                   new McpTool(
                         "getCacheNames",
-                        "Retrieves all the available cache names",
+                        "Runtime data inventory: retrieves all the available cache names. For server status/health, use log resources instead.",
                         new McpInputSchema(McpType.OBJECT),
                         this::getCacheNames
                   )
@@ -112,7 +129,7 @@ public class McpServerResource implements ResourceHandler {
                   "createCache",
                   new McpTool(
                         "createCache",
-                        "Creates a cache",
+                        "Runtime data modification: creates a cache",
                         new McpInputSchema(
                               McpType.OBJECT,
                               new McpProperty(
@@ -129,7 +146,7 @@ public class McpServerResource implements ResourceHandler {
                   "getCacheEntry",
                   new McpTool(
                         "getCacheEntry",
-                        "Retrieves a value from a cache",
+                        "Runtime data retrieval: retrieves a value from a cache",
                         new McpInputSchema(
                               McpType.OBJECT,
                               new McpProperty(
@@ -152,7 +169,7 @@ public class McpServerResource implements ResourceHandler {
                   "setCacheEntry",
                   new McpTool(
                         "setCacheEntry",
-                        "Inserts/updates an entry in a cache",
+                        "Runtime data modification: inserts/updates an entry in a cache",
                         new McpInputSchema(
                               McpType.OBJECT,
                               new McpProperty(
@@ -193,7 +210,7 @@ public class McpServerResource implements ResourceHandler {
                   "deleteCacheEntry",
                   new McpTool(
                         "deleteCacheEntry",
-                        "Deletes an entry from a cache",
+                        "Runtime data modification: deletes an entry from a cache",
                         new McpInputSchema(
                               McpType.OBJECT,
                               new McpProperty(
@@ -216,7 +233,7 @@ public class McpServerResource implements ResourceHandler {
                   "queryCache",
                   new McpTool(
                         "queryCache",
-                        "Queries a cache",
+                        "Runtime data retrieval: queries a cache using Ickle query language",
                         new McpInputSchema(
                               McpType.OBJECT,
                               new McpProperty(
@@ -239,7 +256,7 @@ public class McpServerResource implements ResourceHandler {
                   "getSchemas",
                   new McpTool(
                         "getSchemas",
-                        "Retrieves all the available schemas",
+                        "Runtime data inventory: retrieves all the available schemas. For server status/health, use log resources instead.",
                         new McpInputSchema(McpType.OBJECT),
                         this::getSchemas
                   )
@@ -248,7 +265,7 @@ public class McpServerResource implements ResourceHandler {
                   "getCounterNames",
                   new McpTool(
                         "getCounterNames",
-                        "Retrieves all the available counter names",
+                        "Runtime data inventory: retrieves all the available counter names. For server status/health, use log resources instead.",
                         new McpInputSchema(McpType.OBJECT),
                         this::getCounterNames
                   )
@@ -257,7 +274,7 @@ public class McpServerResource implements ResourceHandler {
                   "getCounter",
                   new McpTool(
                         "getCounter",
-                        "Retrieves the value of a counter",
+                        "Runtime data retrieval: retrieves the value of a counter",
                         new McpInputSchema(
                               McpType.OBJECT,
                               new McpProperty(
@@ -274,7 +291,7 @@ public class McpServerResource implements ResourceHandler {
                   "increment",
                   new McpTool(
                         "increment",
-                        "Increments the value of a counter",
+                        "Runtime data modification: increments the value of a counter",
                         new McpInputSchema(
                               McpType.OBJECT,
                               new McpProperty(
@@ -291,7 +308,7 @@ public class McpServerResource implements ResourceHandler {
                   "decrement",
                   new McpTool(
                         "decrement",
-                        "Increments the value of a counter",
+                        "Runtime data modification: decrements the value of a counter",
                         new McpInputSchema(
                               McpType.OBJECT,
                               new McpProperty(
