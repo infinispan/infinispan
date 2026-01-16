@@ -25,7 +25,7 @@ import org.infinispan.rest.resources.CounterResource;
 import org.infinispan.rest.resources.CounterResourceV3;
 import org.infinispan.rest.resources.HealthCheckResource;
 import org.infinispan.rest.resources.LoggingResource;
-import org.infinispan.rest.resources.McpResource;
+import org.infinispan.rest.resources.McpServerResource;
 import org.infinispan.rest.resources.MetricsResource;
 import org.infinispan.rest.resources.OpenAPIResource;
 import org.infinispan.rest.resources.ProtobufResource;
@@ -192,7 +192,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          registerLoggingResource(resourceManager, restContext);
       }
       if (SecurityActions.getCacheManagerConfiguration(cacheManager).features().isAvailable(McpConstants.MCP_SERVER_FEATURE)) {
-         resourceManager.registerResource(restContext, new McpResource(invocationHelper));
+         resourceManager.registerResource(restContext, new McpServerResource(invocationHelper));
       }
       this.restDispatcher = new RestDispatcherImpl(resourceManager, restCacheManager.getAuthorizer());
    }
