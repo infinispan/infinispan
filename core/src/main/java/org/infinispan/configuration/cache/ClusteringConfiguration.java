@@ -109,4 +109,22 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
 
       return super.matches(other);
    }
+
+   @Override
+   public void update(String parentName, ClusteringConfiguration other) {
+      if (this.cacheMode == CacheMode.LOCAL && other.cacheMode == CacheMode.LOCAL) {
+         return;
+      }
+
+      super.update(parentName, other);
+   }
+
+   @Override
+   public void validateUpdate(String parentName, ClusteringConfiguration other) {
+      if (this.cacheMode == CacheMode.LOCAL && other.cacheMode == CacheMode.LOCAL) {
+         return;
+      }
+
+      super.validateUpdate(parentName, other);
+   }
 }
