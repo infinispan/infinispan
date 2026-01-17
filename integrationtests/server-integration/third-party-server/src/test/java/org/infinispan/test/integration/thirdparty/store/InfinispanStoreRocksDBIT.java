@@ -39,7 +39,7 @@ public class InfinispanStoreRocksDBIT extends AbstractInfinispanStoreRocksDBIT {
       addLibrary(war, "org.jgroups:jgroups");
       addLibrary(war, "org.infinispan:infinispan-core");
       addLibrary(war, "org.infinispan:infinispan-cachestore-rocksdb");
-      addLibrary(war, "org.infinispan:infinispan-commons-test");
+      addLibrary(war, "org.infinispan:infinispan-testing");
       return war;
    }
 }

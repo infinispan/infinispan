@@ -1,7 +1,7 @@
 package org.infinispan.test.hibernate.cache.commons.access;
 
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.hibernate.cache.commons.util.TestingUtil.withTx;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -24,12 +24,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
-
 import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
-import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.junit4.CustomRunner;
+import org.hibernate.testing.orm.junit.JiraKey;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
@@ -41,7 +40,7 @@ import org.infinispan.test.hibernate.cache.commons.functional.cluster.DualNodeJt
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
-import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.testing.TestResourceTracker;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;

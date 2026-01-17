@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;

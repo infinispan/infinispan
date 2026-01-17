@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.CachePublisher;
-import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
@@ -38,6 +37,7 @@ import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.testing.ExceptionRunnable;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;

@@ -12,13 +12,13 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.infinispan.xsite.statetransfer.AbstractStateTransferTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -48,7 +48,7 @@ public class SingleFileGracefulShutdownMigrationXsiteTest extends AbstractStateT
    @BeforeClass(alwaysRun = true)
    @Override
    public void createBeforeClass() {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = Testing.tmpDirectory(this.getClass());
       new File(tmpDirectory).mkdirs();
       File f = new File(tmpDirectory, LON);
       lonDirectory = f.getPath();

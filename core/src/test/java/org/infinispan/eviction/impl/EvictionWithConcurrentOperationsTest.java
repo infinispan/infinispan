@@ -25,7 +25,6 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -54,6 +53,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
@@ -70,7 +70,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    protected boolean passivation = false;
    protected final AtomicInteger storeNamePrefix = new AtomicInteger(0);
    public final String storeName = getClass().getSimpleName();
-   protected final String persistentLocation = CommonsTestingUtil.tmpDirectory(getClass());
+   protected final String persistentLocation = Testing.tmpDirectory(getClass());
 
    public EvictionWithConcurrentOperationsTest() {
       cleanup = CleanupPhase.AFTER_METHOD;

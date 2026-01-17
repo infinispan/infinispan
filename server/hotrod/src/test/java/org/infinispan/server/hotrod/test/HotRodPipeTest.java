@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Either;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.Test;
 
 import io.netty.bootstrap.Bootstrap;

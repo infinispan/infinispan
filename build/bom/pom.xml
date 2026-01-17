@@ -148,7 +148,7 @@
          <!-- TODO should be here? -->
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-commons-test</artifactId>
+            <artifactId>infinispan-testing</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>

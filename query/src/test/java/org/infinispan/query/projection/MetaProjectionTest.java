@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -15,6 +14,7 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.query.model.Developer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.projection.MetaProjectionTest")

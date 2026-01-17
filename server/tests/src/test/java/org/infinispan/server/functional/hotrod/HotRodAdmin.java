@@ -9,10 +9,10 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.configuration.StringConfiguration;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.testing.Exceptions;
 import org.junit.jupiter.api.Test;
 
 /**

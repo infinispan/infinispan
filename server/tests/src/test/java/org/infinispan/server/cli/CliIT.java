@@ -14,7 +14,6 @@ import java.util.Properties;
 import org.aesh.terminal.utils.Config;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.AeshTestConnection;
@@ -23,6 +22,7 @@ import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.testing.Testing;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ public class CliIT {
 
    @BeforeAll
    public static void setup() {
-      workingDir = new File(CommonsTestingUtil.tmpDirectory(CliIT.class));
+      workingDir = new File(Testing.tmpDirectory(CliIT.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       properties = new Properties(System.getProperties());

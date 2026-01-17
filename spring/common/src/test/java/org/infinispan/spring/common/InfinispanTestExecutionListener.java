@@ -1,6 +1,6 @@
 package org.infinispan.spring.common;
 
-import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.testing.TestResourceTracker;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.support.AbstractTestExecutionListener;
 

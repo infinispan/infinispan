@@ -1,12 +1,12 @@
 package org.infinispan.server.test.core;
 
-import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.test.core.Containers.DOCKER_CLIENT;
 import static org.infinispan.server.test.core.Containers.getContainerNetworkGateway;
 import static org.infinispan.server.test.core.Containers.imageArchitecture;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_ULIMIT;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
+import static org.infinispan.testing.Eventually.eventually;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -51,16 +51,16 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.test.Ansi;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.testcontainers.InfinispanGenericContainer;
+import org.infinispan.testing.Ansi;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.Testing;
+import org.infinispan.testing.ThreadLeakChecker;
 import org.infinispan.util.logging.LogFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -236,7 +236,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       configuration.properties().forEach((k, v) -> args.add("-D" + k + "=" + StringPropertyReplacer.replaceProperties((String) v, properties)));
       configureSite(args);
       boolean preserveImageAfterTest = Boolean.parseBoolean(configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_PRESERVE_IMAGE, "false"));
-      Path tmp = Paths.get(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      Path tmp = Paths.get(Testing.tmpDirectory(this.getClass()));
 
       File libDir = new File(rootDir, "lib");
       libDir.mkdirs();
@@ -252,10 +252,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             URI overlayUri = resource.toURI();
             if ("jar".equals(overlayUri.getScheme())) {
                try (FileSystem fileSystem = FileSystems.newFileSystem(overlayUri, Collections.emptyMap())) {
-                  Files.walkFileTree(fileSystem.getPath("/overlay"), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> f.setExecutable(true, false)));
+                  Files.walkFileTree(fileSystem.getPath("/overlay"), new Testing.CopyFileVisitor(tmp, true, f -> f.setExecutable(true, false)));
                }
             } else {
-               Files.walkFileTree(Paths.get(overlayUri), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> f.setExecutable(true, false)));
+               Files.walkFileTree(Paths.get(overlayUri), new Testing.CopyFileVisitor(tmp, true, f -> f.setExecutable(true, false)));
             }
          }
       } catch (Exception e) {

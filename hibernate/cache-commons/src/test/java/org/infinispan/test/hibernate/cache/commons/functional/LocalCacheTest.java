@@ -12,11 +12,11 @@ import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
 import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorBuilderImpl;
 import org.hibernate.testing.orm.junit.JiraKey;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.TestException;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
+import org.infinispan.testing.Exceptions;
 import org.junit.Test;
 
 public class LocalCacheTest extends SingleNodeTest {

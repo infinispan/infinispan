@@ -11,13 +11,13 @@ import javax.transaction.xa.XAException;
 
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commons.TimeoutException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;

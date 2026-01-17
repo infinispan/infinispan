@@ -2,10 +2,10 @@ package org.infinispan.persistence.remote.upgrade;
 
 import java.util.Properties;
 
-import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.global.RemoteContainersConfigurationBuilder;
+import org.infinispan.testing.security.TestCertificates;
 import org.testng.annotations.Test;
 
 @Test(testName = "upgrade.hotrod.HotRodUpgradeContainerSSLTest", groups = "functional")

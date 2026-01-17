@@ -12,8 +12,6 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
@@ -23,6 +21,8 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.model.Task;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Testing;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 @TestForIssue(githubKey = "13194")
 public class RemoteClusteredAggregationExpiringTest extends MultiHotRodServersTest {
 
-   private final String indexDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+   private final String indexDirectory = Testing.tmpDirectory(getClass());
    private final ControlledTimeService timeService = new ControlledTimeService();
 
    @Override

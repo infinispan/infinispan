@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.TransactionSynchronizerInterceptor;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionTable;

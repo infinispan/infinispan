@@ -8,10 +8,10 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedProtocol;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 

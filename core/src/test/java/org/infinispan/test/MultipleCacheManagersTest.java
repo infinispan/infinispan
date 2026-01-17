@@ -1,8 +1,8 @@
 package org.infinispan.test;
 
 import static java.util.Arrays.asList;
-import static org.infinispan.commons.test.TestResourceTracker.getCurrentTestShortName;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.infinispan.testing.TestResourceTracker.getCurrentTestShortName;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.annotation.Annotation;
@@ -27,7 +27,6 @@ import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -50,6 +49,7 @@ import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TestFrameworkFailure;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.testing.TestResourceTracker;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionTable;

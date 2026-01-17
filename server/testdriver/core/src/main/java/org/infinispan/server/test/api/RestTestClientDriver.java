@@ -9,10 +9,10 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
+import org.infinispan.testing.Exceptions;
 
 /**
  * REST operations for the testing framework

@@ -6,8 +6,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.configuration.StringConfiguration;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -18,13 +16,15 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 
 @Test(groups = "tracing", testName = "org.infinispan.client.hotrod.tracing.TracingAttributeChangeTest")
 @TestForIssue(jiraKey = "ISPN-16667")
 public class TracingAttributeChangeTest extends SingleHotRodServerTest {
 
-   private final String persistentLocation = CommonsTestingUtil.tmpDirectory(getClass());
+   private final String persistentLocation = Testing.tmpDirectory(getClass());
 
    private static final String CACHE_NAME = "bla";
 

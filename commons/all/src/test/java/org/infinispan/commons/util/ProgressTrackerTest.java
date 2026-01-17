@@ -1,6 +1,6 @@
 package org.infinispan.commons.util;
 
-import static org.infinispan.commons.test.Eventually.eventually;
+import static org.infinispan.testing.Eventually.eventually;
 import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.Executors;

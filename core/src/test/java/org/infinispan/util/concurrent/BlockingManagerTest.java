@@ -6,10 +6,10 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
-import org.infinispan.commons.test.BlockHoundHelper;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Mocks;
+import org.infinispan.testing.BlockHoundHelper;
 import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;

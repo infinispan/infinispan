@@ -10,7 +10,6 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Collections;
 import java.util.List;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
@@ -18,6 +17,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.topology.CacheTopology;
 import org.testng.annotations.Test;
 

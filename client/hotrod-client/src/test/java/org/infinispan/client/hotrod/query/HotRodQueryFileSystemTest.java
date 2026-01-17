@@ -4,10 +4,10 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.Test;
 
 /**
@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 @Test(testName = "client.hotrod.query.HotRodQueryFileSystemTest", groups = "functional")
 public class HotRodQueryFileSystemTest extends HotRodQueryIspnDirectoryTest {
 
-   private final String indexDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+   private final String indexDirectory = Testing.tmpDirectory(getClass());
 
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {

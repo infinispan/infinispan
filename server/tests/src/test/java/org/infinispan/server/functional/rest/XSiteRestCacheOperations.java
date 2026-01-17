@@ -3,7 +3,6 @@ package org.infinispan.server.functional.rest;
 import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
-import static org.infinispan.commons.test.Eventually.eventuallyEquals;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_CONFIG;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_CUSTOM_NAME_CONFIG;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_OFF_HEAP;
@@ -17,6 +16,7 @@ import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
+import static org.infinispan.testing.Eventually.eventuallyEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.stream.IntStream;

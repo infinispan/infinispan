@@ -10,8 +10,6 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.test.Eventually;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -19,6 +17,8 @@ import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.testing.Eventually;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 

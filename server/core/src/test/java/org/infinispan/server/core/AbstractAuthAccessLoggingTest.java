@@ -12,8 +12,6 @@ import javax.security.auth.Subject;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.test.skip.StringLogAppender;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
@@ -24,6 +22,8 @@ import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.skip.StringLogAppender;
 
 public abstract class AbstractAuthAccessLoggingTest extends SingleCacheManagerTest {
    public static final String LOG_FORMAT = "%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] \"%X{method} %m %X{protocol}\" %X{status} %X{requestSize} %X{responseSize} %X{duration} %X{h:User-Agent}";

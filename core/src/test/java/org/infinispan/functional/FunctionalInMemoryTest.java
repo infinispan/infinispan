@@ -1,7 +1,7 @@
 package org.infinispan.functional;
 
-import static org.infinispan.commons.test.Exceptions.assertException;
-import static org.infinispan.commons.test.Exceptions.assertExceptionNonStrict;
+import static org.infinispan.testing.Exceptions.assertException;
+import static org.infinispan.testing.Exceptions.assertExceptionNonStrict;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;

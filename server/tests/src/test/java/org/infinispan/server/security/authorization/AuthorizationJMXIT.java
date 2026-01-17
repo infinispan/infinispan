@@ -8,12 +8,12 @@ import javax.management.JMException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.testing.Exceptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

@@ -6,11 +6,11 @@ import static org.infinispan.hibernate.cache.spi.InfinispanProperties.DEF_TIMEST
 import java.util.Map;
 import java.util.Properties;
 
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.testing.TestResourceTracker;
 import org.infinispan.transaction.TransactionMode;
 
 public class TestConfigurationHook {

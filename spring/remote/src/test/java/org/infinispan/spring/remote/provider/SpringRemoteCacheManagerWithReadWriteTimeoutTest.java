@@ -13,7 +13,6 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -24,6 +23,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.springframework.cache.Cache;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

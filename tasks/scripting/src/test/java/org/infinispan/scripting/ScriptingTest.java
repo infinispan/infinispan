@@ -1,8 +1,8 @@
 package org.infinispan.scripting;
 
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
-import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
+import static org.infinispan.testing.Testing.loadFileAsString;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;

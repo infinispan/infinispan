@@ -1,8 +1,8 @@
 package org.infinispan.server.memcached.test;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMemcachedClient;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBuilder;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.io.File;
 import java.io.IOException;

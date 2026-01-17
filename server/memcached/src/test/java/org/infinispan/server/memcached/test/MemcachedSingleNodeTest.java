@@ -1,11 +1,11 @@
 package org.infinispan.server.memcached.test;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMemcachedClient;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.enableAuthentication;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.enableEncryption;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemcachedServer;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBuilder;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 

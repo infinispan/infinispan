@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -31,6 +30,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
+import org.infinispan.testing.Testing;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Factory;
@@ -41,7 +41,7 @@ import io.reactivex.rxjava3.core.Flowable;
 @Test(groups = "unit", testName = "persistence.rocksdb.RocksDBStoreTest")
 public class RocksDBStoreTest extends BaseNonBlockingStoreTest {
 
-   private final String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+   private final String tmpDirectory = Testing.tmpDirectory(this.getClass());
    private boolean segmented;
    public static final String KEY_1 = "key1";
    public static final String KEY_2 = "key2";

@@ -1,10 +1,10 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
-import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
+import org.infinispan.testing.security.TestCertificates;
 import org.testng.annotations.Test;
 
 /**

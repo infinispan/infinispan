@@ -27,7 +27,6 @@ import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -38,6 +37,7 @@ import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "jcache.JCacheConfigurationTest")
@@ -94,7 +94,7 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
       try {
          // given - creating sample jar file
-         String tmpDir = CommonsTestingUtil.tmpDirectory(JCacheConfigurationTest.class);
+         String tmpDir = Testing.tmpDirectory(JCacheConfigurationTest.class);
          File tmpDirFile = new File(tmpDir);
          if (!tmpDirFile.exists()) {
             tmpDirFile.mkdirs();

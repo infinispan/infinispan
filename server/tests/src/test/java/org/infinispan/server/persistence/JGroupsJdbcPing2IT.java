@@ -1,8 +1,8 @@
 package org.infinispan.server.persistence;
 
-import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_TYPES;
+import static org.infinispan.testing.Eventually.eventually;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

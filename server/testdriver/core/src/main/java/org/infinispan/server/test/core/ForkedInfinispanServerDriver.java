@@ -24,10 +24,10 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.Testing;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
@@ -58,10 +58,10 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
 
    private void copyServer(Path src, int maxServers) {
       for (int i = 0; i < maxServers; i++) {
-         Path dest = Paths.get(CommonsTestingUtil.tmpDirectory(), Util.threadLocalRandomUUID().toString());
+         Path dest = Paths.get(Testing.tmpDirectory(), Util.threadLocalRandomUUID().toString());
          try {
             Files.createDirectory(dest);
-            Files.walkFileTree(src, new CommonsTestingUtil.CopyFileVisitor(dest, true));
+            Files.walkFileTree(src, new Testing.CopyFileVisitor(dest, true));
          } catch (IOException e) {
             throw new UncheckedIOException("Cannot copy the server to temp folder", e);
          }

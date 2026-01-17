@@ -26,8 +26,6 @@ import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Eventually;
 import org.infinispan.commons.util.Util;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
@@ -35,6 +33,8 @@ import org.infinispan.server.test.api.JmxTestClient;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
+import org.infinispan.testing.Eventually;
+import org.infinispan.testing.Testing;
 
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
@@ -148,7 +148,7 @@ public class TestClient {
    public String addScript(RemoteCacheContainer remoteCacheManager, String script) {
       RemoteCache<String, String> scriptCache = remoteCacheManager.getCache(SCRIPT_CACHE_NAME);
       try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(script)) {
-         scriptCache.put(getMethodName(), CommonsTestingUtil.loadFileAsString(in));
+         scriptCache.put(getMethodName(), Testing.loadFileAsString(in));
       } catch (HotRodClientException e) {
          throw e;
       } catch (Exception e) {

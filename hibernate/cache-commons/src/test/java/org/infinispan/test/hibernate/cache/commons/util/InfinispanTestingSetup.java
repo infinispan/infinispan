@@ -1,7 +1,7 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
-import org.infinispan.commons.test.ThreadLeakChecker;
-import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.ThreadLeakChecker;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.TestRule;

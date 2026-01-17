@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.HitCount;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStartupMode;
@@ -15,6 +14,7 @@ import org.infinispan.query.model.Developer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -22,9 +22,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.startup.IndexStartupModeTest")
 public class IndexStartupModeTest extends AbstractInfinispanTest {
 
-   private final String fileStoreDataLocation = CommonsTestingUtil.tmpDirectory("IndexStartupModeTest", "fileStoreDataLocation");
-   private final String fileStoreIndexLocation = CommonsTestingUtil.tmpDirectory("IndexStartupModeTest", "fileStoreIndexLocation");
-   private final String indexesLocation = CommonsTestingUtil.tmpDirectory("IndexStartupModeTest", "indexes");
+   private final String fileStoreDataLocation = Testing.tmpDirectory("IndexStartupModeTest", "fileStoreDataLocation");
+   private final String fileStoreIndexLocation = Testing.tmpDirectory("IndexStartupModeTest", "fileStoreIndexLocation");
+   private final String indexesLocation = Testing.tmpDirectory("IndexStartupModeTest", "indexes");
 
    private EmbeddedCacheManager cacheManager;
    private Cache<String, Developer> cache;

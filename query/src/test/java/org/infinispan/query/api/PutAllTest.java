@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -18,6 +17,7 @@ import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 

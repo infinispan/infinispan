@@ -10,8 +10,6 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.commons.test.BlockHoundHelper;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -32,6 +30,8 @@ import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.BlockHoundHelper;
+import org.infinispan.testing.Testing;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.BlockingManagerImpl;
 import org.infinispan.util.concurrent.NonBlockingManager;
@@ -103,7 +103,7 @@ public class PersistenceMockUtil {
          Cache mockCache = mockCache(testClass.getSimpleName(), configuration, timeService, classAllowList, timeoutScheduledExecutor);
          MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(persistenceMarshaller);
          GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-         global.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory(testClass));
+         global.globalState().enable().persistentLocation(Testing.tmpDirectory(testClass));
          return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
                keyPartitioner, persistenceMarshaller, timeService, new ByteBufferFactoryImpl(), mef,
                new WithinThreadExecutor(), global.build(), blockingManager, nonBlockingManager);

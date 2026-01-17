@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.test;
 
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX;
-import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.extractField;
+import static org.infinispan.testing.Testing.loadFileAsString;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.IOException;
@@ -38,7 +38,6 @@ import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -53,6 +52,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.AssertJUnit;
 
 /**

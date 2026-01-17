@@ -6,13 +6,13 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.model.Game;
 import org.infinispan.query.model.NonIndexedGame;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.maxresult.EmbeddedDefaultMaxResultTest")

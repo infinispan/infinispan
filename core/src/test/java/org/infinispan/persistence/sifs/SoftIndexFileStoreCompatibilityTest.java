@@ -10,14 +10,14 @@ import java.util.Map;
 import java.util.concurrent.CompletionException;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.persistence.AbstractPersistenceCompatibilityTest;
 import org.infinispan.persistence.IdentityKeyValueWrapper;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.test.data.Value;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -44,7 +44,7 @@ public class SoftIndexFileStoreCompatibilityTest extends AbstractPersistenceComp
    @Override
    protected void amendGlobalConfigurationBuilder(GlobalConfigurationBuilder builder) {
       super.amendGlobalConfigurationBuilder(builder);
-      builder.globalState().enable().persistentLocation(CommonsTestingUtil.tmpDirectory());
+      builder.globalState().enable().persistentLocation(Testing.tmpDirectory());
    }
 
    @Override

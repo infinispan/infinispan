@@ -1,10 +1,10 @@
 package org.infinispan.expiration.impl;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "expiration.impl.ExpirationFileStoreListenerFunctionalTest")
 public class ExpirationFileStoreListenerFunctionalTest extends ExpirationStoreListenerFunctionalTest {
 
-   private final String location = CommonsTestingUtil.tmpDirectory(this.getClass());
+   private final String location = Testing.tmpDirectory(this.getClass());
 
    private FileStoreToUse fileStoreToUse;
 
@@ -59,6 +59,6 @@ public class ExpirationFileStoreListenerFunctionalTest extends ExpirationStoreLi
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      Util.recursiveFileRemove(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      Util.recursiveFileRemove(Testing.tmpDirectory(this.getClass()));
    }
 }

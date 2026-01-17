@@ -19,7 +19,6 @@ import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
@@ -33,6 +32,7 @@ import org.infinispan.filter.CompositeKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 

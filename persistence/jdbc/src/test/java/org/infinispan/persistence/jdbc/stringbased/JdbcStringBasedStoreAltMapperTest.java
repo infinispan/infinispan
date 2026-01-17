@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
@@ -27,6 +26,7 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.util.PersistenceMockUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;

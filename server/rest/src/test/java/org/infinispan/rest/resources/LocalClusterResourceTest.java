@@ -19,7 +19,6 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.TestClass;
@@ -32,6 +31,7 @@ import org.infinispan.server.core.DummyServerStateManager;
 import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 

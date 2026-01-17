@@ -1,11 +1,11 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
 import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.io.File;
 import java.time.Duration;
@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
@@ -32,6 +31,7 @@ import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.server.resp.test.TestSetup;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 
 import io.lettuce.core.AbstractRedisClient;

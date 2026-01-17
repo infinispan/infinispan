@@ -12,8 +12,6 @@ import javax.security.auth.Subject;
 import javax.security.sasl.Sasl;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.core.security.simple.SimpleAuthenticator;
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
@@ -26,6 +24,8 @@ import org.infinispan.server.memcached.configuration.MemcachedProtocol;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.server.memcached.logging.Log;
+import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.security.TestCertificates;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;

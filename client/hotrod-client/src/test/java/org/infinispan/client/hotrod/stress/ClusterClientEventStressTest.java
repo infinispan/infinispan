@@ -35,10 +35,10 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.Test;
 
 @Test(groups = "stress", testName = "client.hotrod.event.ClusterClientEventStressTest", timeOut = 15*60*1000)

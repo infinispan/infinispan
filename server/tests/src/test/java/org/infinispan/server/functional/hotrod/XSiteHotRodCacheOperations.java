@@ -1,7 +1,6 @@
 package org.infinispan.server.functional.hotrod;
 
 import static org.infinispan.client.rest.RestResponse.OK;
-import static org.infinispan.commons.test.Eventually.eventuallyEquals;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_CUSTOM_NAME_CONFIG;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_OFF_HEAP;
 import static org.infinispan.server.functional.XSiteIT.MAX_COUNT_KEYS;
@@ -10,6 +9,7 @@ import static org.infinispan.server.functional.XSiteIT.NYC_CACHE_CUSTOM_NAME_CON
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
+import static org.infinispan.testing.Eventually.eventuallyEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;

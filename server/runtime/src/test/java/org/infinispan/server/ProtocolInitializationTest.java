@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.hamcrest.Matchers;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -23,6 +22,7 @@ import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.junit.JUnitThreadTrackerRule;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.mockito.MockedStatic;

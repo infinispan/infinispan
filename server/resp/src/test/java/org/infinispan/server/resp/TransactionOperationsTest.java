@@ -8,8 +8,8 @@ import static org.infinispan.test.TestingUtil.v;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.testing.skip.SkipTestNG;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 

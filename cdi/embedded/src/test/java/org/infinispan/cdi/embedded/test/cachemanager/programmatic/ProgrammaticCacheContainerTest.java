@@ -4,7 +4,7 @@ import static org.testng.Assert.assertEquals;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.testutil.Deployments;
-import org.infinispan.commons.test.TestResourceTrackingListener;
+import org.infinispan.testing.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;

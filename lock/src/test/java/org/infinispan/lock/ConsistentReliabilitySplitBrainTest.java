@@ -1,8 +1,8 @@
 package org.infinispan.lock;
 
 import static java.util.Arrays.asList;
-import static org.infinispan.commons.test.Exceptions.expectCompletionException;
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.testing.Exceptions.expectCompletionException;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;

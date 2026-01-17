@@ -11,7 +11,6 @@ import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -25,6 +24,7 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;

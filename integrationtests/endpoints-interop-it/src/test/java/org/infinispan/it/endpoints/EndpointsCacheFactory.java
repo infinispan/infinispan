@@ -4,7 +4,6 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.server.core.test.ServerTestingUtil.startProtocolServer;
@@ -12,6 +11,7 @@ import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemc
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemcachedServer;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBuilder;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.io.File;
 import java.io.IOException;

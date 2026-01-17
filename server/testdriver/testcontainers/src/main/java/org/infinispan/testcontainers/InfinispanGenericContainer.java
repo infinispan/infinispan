@@ -93,7 +93,7 @@ public class InfinispanGenericContainer {
       return unchecked(() -> InetAddress.getByName(getNetworkIpAddress()));
    }
 
-   // Copied from org.infinispan.commons.test.Exceptions
+   // Copied from org.infinispan.testing.Exceptions
    <T> T unchecked(Callable<T> callable) {
       try {
          return callable.call();

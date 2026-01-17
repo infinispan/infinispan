@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.test.Exceptions;
+import org.infinispan.testing.Exceptions;
 
 
 /**

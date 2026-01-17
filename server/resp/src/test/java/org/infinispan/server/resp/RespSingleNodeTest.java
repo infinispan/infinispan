@@ -30,8 +30,6 @@ import java.util.stream.Stream;
 
 import org.assertj.core.api.SoftAssertions;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
@@ -40,6 +38,8 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.security.Security;
 import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.test.CommonRespTests;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.skip.SkipTestNG;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

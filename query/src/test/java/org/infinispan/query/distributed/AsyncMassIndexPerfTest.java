@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
@@ -27,6 +26,7 @@ import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.query.test.Transaction;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
 
 /**
  * Long running test for the async MassIndexer, specially regarding cancellation. Supposed to be run as a main class.

@@ -1,6 +1,6 @@
 package org.infinispan.functional;
 
-import static org.infinispan.commons.test.Exceptions.expectExceptionNonStrict;
+import static org.infinispan.testing.Exceptions.expectExceptionNonStrict;
 import static org.testng.Assert.assertEquals;
 
 import java.util.Collections;

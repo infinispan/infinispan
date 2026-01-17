@@ -2,7 +2,7 @@ package org.infinispan.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletionException;

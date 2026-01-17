@@ -3,9 +3,9 @@ package org.infinispan.server.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyContains;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.CompletionStage;
@@ -19,12 +19,12 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.ResponseAssertion;
 import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.testing.Exceptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

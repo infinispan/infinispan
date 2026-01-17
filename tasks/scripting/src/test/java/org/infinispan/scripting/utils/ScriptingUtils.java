@@ -1,6 +1,6 @@
 package org.infinispan.scripting.utils;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
+import static org.infinispan.testing.Testing.loadFileAsString;
 
 import java.io.BufferedReader;
 import java.io.IOException;

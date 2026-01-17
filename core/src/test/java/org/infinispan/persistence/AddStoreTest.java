@@ -11,7 +11,6 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -31,6 +30,7 @@ import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigura
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.Test;
 
 /**
@@ -97,7 +97,7 @@ public class AddStoreTest extends AbstractInfinispanTest {
       try {
          ConfigurationBuilder cacheBuilder = new ConfigurationBuilder();
          cacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
-         location = CommonsTestingUtil.tmpDirectory(this.getClass());
+         location = Testing.tmpDirectory(this.getClass());
          cacheBuilder.persistence().addStore(SoftIndexFileStoreConfigurationBuilder.class).dataLocation(location).indexLocation(location);
 
          ConfigurationBuilder toAddBuilder = new ConfigurationBuilder();
@@ -224,7 +224,7 @@ public class AddStoreTest extends AbstractInfinispanTest {
    private void testPassivation(ConfigurationBuilder cacheBuilder) {
       String location = null;
       try {
-         location = CommonsTestingUtil.tmpDirectory(this.getClass());
+         location = Testing.tmpDirectory(this.getClass());
 
          cacheBuilder.persistence().passivation(true).addStore(SoftIndexFileStoreConfigurationBuilder.class).dataLocation(location).indexLocation(location);
          cacheBuilder.memory().maxCount(1);

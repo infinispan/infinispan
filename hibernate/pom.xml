@@ -21,7 +21,7 @@
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-commons-test</artifactId>
+         <artifactId>infinispan-testing</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -110,7 +110,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
-                     <groups>org.infinispan.commons.test.categories.Smoke</groups>
+                     <groups>org.infinispan.testing.junit.categories.Smoke</groups>
                   </configuration>
                </plugin>
             </plugins>

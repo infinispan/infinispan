@@ -1,10 +1,10 @@
 package org.infinispan.partitionhandling;
 
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractJChannel;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.Assert.assertEquals;
 
 import java.lang.invoke.MethodHandles;
@@ -22,8 +22,6 @@ import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.EntryMergePolicy;
@@ -37,6 +35,8 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.TestResourceTracker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.Address;

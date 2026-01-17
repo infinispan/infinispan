@@ -15,10 +15,10 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.Test;
 
 import jakarta.transaction.Transaction;

@@ -11,13 +11,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.xsite.status.TakeOfflineManager;
 import org.testng.annotations.Test;
 

@@ -5,8 +5,8 @@ import static org.testng.Assert.assertNotNull;
 
 import javax.net.ssl.SSLContext;
 
-import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.SslContextFactory;
+import org.infinispan.testing.security.TestCertificates;
 import org.testng.annotations.Test;
 
 @Test(testName = "client.hotrod.configuration.SSLClassPathConfigurationTest", groups = "functional")

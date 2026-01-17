@@ -8,7 +8,7 @@ import org.aesh.readline.terminal.Key;
 import org.aesh.readline.util.Parser;
 import org.aesh.terminal.tty.Size;
 import org.aesh.terminal.utils.Config;
-import org.infinispan.commons.test.Eventually;
+import org.infinispan.testing.Eventually;
 import org.junit.ComparisonFailure;
 
 /**

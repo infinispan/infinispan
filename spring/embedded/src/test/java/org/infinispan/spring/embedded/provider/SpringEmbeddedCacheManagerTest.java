@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.Collection;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -19,6 +18,7 @@ import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.springframework.cache.Cache;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;

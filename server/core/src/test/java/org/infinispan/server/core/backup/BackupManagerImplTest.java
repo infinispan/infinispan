@@ -48,7 +48,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.internal.InternalCacheNames;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
@@ -63,6 +62,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.events.EventLogManager;
@@ -82,7 +82,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    void setup() {
-      workingDir = new File(CommonsTestingUtil.tmpDirectory(BackupManagerImplTest.class));
+      workingDir = new File(Testing.tmpDirectory(BackupManagerImplTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
    }

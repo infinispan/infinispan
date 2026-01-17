@@ -1,6 +1,6 @@
 package org.infinispan.manager;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.util.Util;

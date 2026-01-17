@@ -1,9 +1,9 @@
 package org.infinispan.persistence;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.Test;
 
 /**
@@ -18,8 +18,8 @@ public class SoftIndexFileStoreParallelIterationTest extends ParallelIterationTe
 
    @Override
    protected void configurePersistence(ConfigurationBuilder cb) {
-      dataLocation = CommonsTestingUtil.tmpDirectory(this.getClass().getSimpleName(), "data");
-      indexLocation = CommonsTestingUtil.tmpDirectory(this.getClass().getSimpleName(), "index");
+      dataLocation = Testing.tmpDirectory(this.getClass().getSimpleName(), "data");
+      indexLocation = Testing.tmpDirectory(this.getClass().getSimpleName(), "index");
       cb.persistence().addSoftIndexFileStore()
             .dataLocation(dataLocation)
             .indexLocation(indexLocation);

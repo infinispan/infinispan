@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -29,6 +28,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.XSiteNamedCache;
 import org.reactivestreams.Subscriber;
@@ -118,7 +118,7 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
    @BeforeClass(alwaysRun = true)
    @Override
    protected void createBeforeClass() throws Exception {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+      tmpDirectory = Testing.tmpDirectory(getClass());
       Util.recursiveFileRemove(tmpDirectory);
       boolean created = new File(tmpDirectory).mkdirs();
       log.debugf("Created temporary directory %s (exists? %s)", tmpDirectory, !created);

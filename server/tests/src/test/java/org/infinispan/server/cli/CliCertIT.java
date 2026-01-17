@@ -7,13 +7,13 @@ import java.util.Properties;
 
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.testing.Testing;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ public class CliCertIT {
 
    @BeforeAll
    public static void setup() {
-      workingDir = new File(CommonsTestingUtil.tmpDirectory(CliCertIT.class));
+      workingDir = new File(Testing.tmpDirectory(CliCertIT.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       properties = new Properties(System.getProperties());

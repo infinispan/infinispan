@@ -1,6 +1,6 @@
 package org.infinispan.server.test.core;
 
-import static org.infinispan.commons.test.Exceptions.unchecked;
+import static org.infinispan.testing.Exceptions.unchecked;
 
 import java.io.BufferedReader;
 import java.io.File;

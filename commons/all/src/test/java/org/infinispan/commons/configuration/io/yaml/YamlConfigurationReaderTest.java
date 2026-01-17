@@ -23,8 +23,8 @@ import org.infinispan.commons.configuration.io.ConfigurationReaderException;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.configuration.io.PropertyReplacer;
 import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Version;
+import org.infinispan.testing.Exceptions;
 import org.junit.Test;
 
 /**

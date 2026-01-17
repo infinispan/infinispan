@@ -9,7 +9,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
@@ -19,6 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.model.Game;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 
 @TestForIssue(jiraKey = "ISPN-14119")

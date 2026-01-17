@@ -18,7 +18,6 @@ import java.net.NetworkInterface;
 import java.util.EnumSet;
 import java.util.List;
 
-import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -28,6 +27,7 @@ import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.skip.SkipTestNG;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

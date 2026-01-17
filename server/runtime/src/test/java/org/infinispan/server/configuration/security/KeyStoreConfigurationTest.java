@@ -7,9 +7,9 @@ import java.util.Locale;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
 import org.infinispan.server.configuration.AbstractConfigurationParserTest;
 import org.infinispan.server.configuration.ServerConfigurationParserTest;
+import org.infinispan.testing.junit.JUnitThreadTrackerRule;
 import org.junit.ClassRule;
 import org.junit.Test;
 

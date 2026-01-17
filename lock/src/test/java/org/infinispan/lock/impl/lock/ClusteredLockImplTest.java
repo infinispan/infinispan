@@ -1,7 +1,7 @@
 package org.infinispan.lock.impl.lock;
 
-import static org.infinispan.commons.test.Exceptions.assertException;
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.testing.Exceptions.assertException;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 

@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.infinispan.api.protostream.builder.ProtoBuf;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ResourceUtils;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.marshall.protostream.builder.ProtoBufBuilderTest")

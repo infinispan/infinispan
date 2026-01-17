@@ -11,7 +11,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.test.Exceptions;
+import org.infinispan.testing.Exceptions;
 
 import net.spy.memcached.ClientMode;
 import net.spy.memcached.ConnectionFactoryBuilder;

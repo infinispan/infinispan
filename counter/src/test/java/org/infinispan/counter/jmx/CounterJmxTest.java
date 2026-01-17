@@ -1,9 +1,9 @@
 package org.infinispan.counter.jmx;
 
 import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.counter.api.CounterConfiguration.builder;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
+import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 

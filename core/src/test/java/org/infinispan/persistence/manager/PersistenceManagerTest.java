@@ -1,11 +1,11 @@
 package org.infinispan.persistence.manager;
 
-import static org.infinispan.commons.test.Exceptions.expectCompletionException;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getFirstStore;
 import static org.infinispan.test.TestingUtil.getStore;
+import static org.infinispan.testing.Exceptions.expectCompletionException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -30,6 +29,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestException;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 

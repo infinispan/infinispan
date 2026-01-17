@@ -10,13 +10,13 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -54,7 +54,7 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+      tmpDirectory = Testing.tmpDirectory(getClass());
    }
 
    @AfterClass(alwaysRun = true)

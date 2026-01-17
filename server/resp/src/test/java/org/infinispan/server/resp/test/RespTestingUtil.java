@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.core.logging.Log;
@@ -18,6 +17,7 @@ import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.TestResourceTracker;
 
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.RedisClient;

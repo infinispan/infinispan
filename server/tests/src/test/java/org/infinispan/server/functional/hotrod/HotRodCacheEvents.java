@@ -2,10 +2,10 @@ package org.infinispan.server.functional.hotrod;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.infinispan.server.test.core.Common.getSchemaContent;
 import static org.infinispan.test.TestingUtil.extractField;
+import static org.infinispan.testing.Eventually.eventually;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;

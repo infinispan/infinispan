@@ -1,7 +1,7 @@
 package org.infinispan.globalstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;

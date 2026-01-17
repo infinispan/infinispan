@@ -6,12 +6,12 @@ import static org.junit.Assert.assertEquals;
 import java.nio.file.Paths;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
+import org.infinispan.testing.Testing;
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.junit.InSequence;
@@ -67,7 +67,7 @@ public abstract class AbstractInfinispanStoreRocksDBIT {
    }
 
    protected DefaultCacheManager createCacheManager(int index) {
-      String baseDir = CommonsTestingUtil.tmpDirectory(this.getClass().getSimpleName(), "server-" + index);
+      String baseDir = Testing.tmpDirectory(this.getClass().getSimpleName(), "server-" + index);
       String dataDir = baseDir + separator + "data";
       String expiredDir = baseDir + separator + "expired";
       Util.recursiveFileRemove(Paths.get(baseDir));

@@ -12,8 +12,8 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Eventually;
 import org.infinispan.commons.util.Util;
+import org.infinispan.testing.Eventually;
 
 import io.netty.util.CharsetUtil;
 

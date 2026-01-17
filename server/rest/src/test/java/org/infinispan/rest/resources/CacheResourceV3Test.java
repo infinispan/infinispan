@@ -1,6 +1,6 @@
 package org.infinispan.rest.resources;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.util.Map;
 

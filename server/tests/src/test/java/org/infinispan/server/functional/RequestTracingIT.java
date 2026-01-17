@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.test.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerDriver;
@@ -25,6 +24,7 @@ import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.infinispan.telemetry.SpanCategory;
+import org.infinispan.testing.Eventually;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;

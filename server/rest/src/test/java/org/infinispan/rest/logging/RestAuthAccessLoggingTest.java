@@ -11,12 +11,12 @@ import java.util.Map;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.rest.authentication.impl.BasicAuthenticator;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.rest.resources.security.SimpleSecurityDomain;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.AbstractAuthAccessLoggingTest;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.RestAccessLoggingTest")

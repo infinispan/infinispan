@@ -5,13 +5,13 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.nio.file.Paths;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -25,7 +25,7 @@ public class SoftIndexFileStoreSplitInnerNodeTest extends MultipleCacheManagersT
 
    @BeforeSuite(alwaysRun = true)
    protected void setUpTempDir() {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+      tmpDirectory = Testing.tmpDirectory(getClass());
    }
 
    @AfterSuite(alwaysRun = true)

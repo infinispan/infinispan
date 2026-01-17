@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
@@ -21,6 +20,7 @@ import org.infinispan.query.impl.config.SearchPropertyExtractor;
 import org.infinispan.query.model.TypeA;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.indexing.DefaultIndexPathTest")

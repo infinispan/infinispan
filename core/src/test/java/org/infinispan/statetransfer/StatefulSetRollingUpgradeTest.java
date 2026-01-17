@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.infinispan.testing.Testing.tmpDirectory;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;

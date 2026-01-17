@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
@@ -14,6 +13,7 @@ import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "security.CustomAuditLoggerTest")

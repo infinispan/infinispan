@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-parent</artifactId>
+      <version>16.1.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+   <modelVersion>4.0.0</modelVersion>
+
+   <artifactId>infinispan-testing</artifactId>
+   <packaging>jar</packaging>
+   <name>Infinispan Testing</name>
+   <description>Infinispan Testing Helpers</description>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-core</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+      </dependency>
+
+      <!-- Add Micrometer dependencies to all tests -->
+      <dependency>
+         <groupId>io.micrometer</groupId>
+         <artifactId>micrometer-core</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>io.micrometer</groupId>
+         <artifactId>micrometer-registry-prometheus</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-x500-cert</artifactId>
+         <version>${version.org.wildfly.elytron}</version>
+      </dependency>
+   </dependencies>
+
+   <build>
+   </build>
+</project>

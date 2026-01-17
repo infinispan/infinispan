@@ -2,7 +2,7 @@ package org.infinispan.server.test.core;
 
 import java.net.InetAddress;
 
-import org.infinispan.commons.test.Exceptions;
+import org.infinispan.testing.Exceptions;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 

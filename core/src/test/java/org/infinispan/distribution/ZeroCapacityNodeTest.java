@@ -1,11 +1,11 @@
 package org.infinispan.distribution;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.commons.test.Exceptions.expectCompletionException;
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.installNewView;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
+import static org.infinispan.testing.Exceptions.expectCompletionException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;

@@ -1,6 +1,6 @@
 package org.infinispan.tx;
 
-import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.testing.Exceptions.expectException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.manager.EmbeddedCacheManager;

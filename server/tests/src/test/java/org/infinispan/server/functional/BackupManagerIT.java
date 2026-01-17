@@ -50,13 +50,13 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestTaskClient;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.Common;
+import org.infinispan.testing.Testing;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -67,7 +67,7 @@ import org.junit.jupiter.api.Test;
  */
 public class BackupManagerIT extends AbstractMultiClusterIT {
 
-   static final File WORKING_DIR = new File(CommonsTestingUtil.tmpDirectory(BackupManagerIT.class));
+   static final File WORKING_DIR = new File(Testing.tmpDirectory(BackupManagerIT.class));
    static final int NUM_ENTRIES = 10;
 
    public BackupManagerIT() {
@@ -478,7 +478,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       addSchema(client);
 
       try (InputStream is = BackupManagerIT.class.getResourceAsStream("/scripts/test.js")) {
-         String script = CommonsTestingUtil.loadFileAsString(is);
+         String script = Testing.loadFileAsString(is);
          assertStatus(OK, client.tasks().uploadScript("scripts/test.js", RestEntity.create(MediaType.APPLICATION_JAVASCRIPT, script)));
       }
    }

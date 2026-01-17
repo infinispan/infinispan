@@ -15,13 +15,13 @@ import javax.management.ObjectName;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.MockTransport;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 /**

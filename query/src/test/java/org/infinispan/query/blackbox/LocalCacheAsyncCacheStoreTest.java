@@ -1,6 +1,6 @@
 package org.infinispan.query.blackbox;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;

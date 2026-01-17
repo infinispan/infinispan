@@ -1,8 +1,8 @@
 package org.infinispan.topology;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.functional.FunctionalTestUtils.MAX_WAIT_SECS;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -14,8 +14,6 @@ import java.util.stream.IntStream;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.test.ExceptionRunnable;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -31,6 +29,8 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.testing.ExceptionRunnable;
+import org.infinispan.testing.Exceptions;
 import org.infinispan.upgrade.UnsupportedVersionException;
 import org.infinispan.util.ByteString;
 import org.testng.annotations.AfterClass;

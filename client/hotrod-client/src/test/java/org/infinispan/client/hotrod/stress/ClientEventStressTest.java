@@ -22,11 +22,11 @@ import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.Test;
 
 @Test(groups = "stress", testName = "client.hotrod.event.ClientEventStressTest", timeOut = 15*60*1000)

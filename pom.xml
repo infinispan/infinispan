@@ -45,9 +45,9 @@
       <module>build/component-processor</module>
       <module>build/logging-annotations</module>
       <module>build/logging-processor</module>
+      <module>testing</module>
       <module>api</module>
       <module>commons</module>
-      <module>commons-test</module>
       <module>build/infinispan-defaults-maven-plugin</module>
       <module>core</module>
       <module>jboss-marshalling</module>
@@ -110,7 +110,7 @@
       <bnd.provider.policy>$&lt;range;[==,=+)&gt;</bnd.provider.policy>
       <buildDirectory>target</buildDirectory>
       <commitProtoLockChanges>false</commitProtoLockChanges>
-      <defaultExcludedJUnitGroups>org.infinispan.commons.test.categories.Unstable,org.infinispan.commons.test.categories.Stress,org.infinispan.commons.test.categories.Profiling</defaultExcludedJUnitGroups>
+      <defaultExcludedJUnitGroups>org.infinispan.testing.categories.test.Unstable,org.infinispan.testing.categories.test.Stress,org.infinispan.testing.categories.test.Profiling</defaultExcludedJUnitGroups>
       <!-- unstable and stress because we can have them inside a functional class, for example -->
       <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
       <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
@@ -169,12 +169,12 @@
       <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
       <server.test.provisioning>thin</server.test.provisioning>
       <skipArtifactUpload>false</skipArtifactUpload>
-      <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
+      <junitListener>org.infinispan.testing.junit.JUnitTestListener</junitListener>
       <module.skipCopyDependencies>true</module.skipCopyDependencies>
       <packaging>jar</packaging>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-      <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListeners>
+      <testNGListeners>org.infinispan.testing.testng.TestNGTestListener,org.infinispan.testing.junit.PolarionJUnitXMLReporter</testNGListeners>
       <log4j.configurationFile>${infinispan.root}/etc/log4j2.xml</log4j.configurationFile>
       <uberjar.deps.optional>true</uberjar.deps.optional>
 
@@ -2657,14 +2657,14 @@
          <id>smoke</id>
          <properties>
             <defaultTestNGGroups>smoke</defaultTestNGGroups>
-            <defaultJUnitGroups>org.infinispan.commons.test.categories.Smoke</defaultJUnitGroups>
+            <defaultJUnitGroups>org.infinispan.testing.categories.test.Smoke</defaultJUnitGroups>
          </properties>
       </profile>
       <profile>
          <id>test-unstable</id>
          <properties>
             <defaultTestNGGroups>unstable</defaultTestNGGroups>
-            <defaultJUnitGroups>org.infinispan.commons.test.categories.Unstable</defaultJUnitGroups>
+            <defaultJUnitGroups>org.infinispan.testing.categories.test.Unstable</defaultJUnitGroups>
             <!-- empty since we are not going to exclude any group -->
             <defaultExcludedTestNGGroups/>
             <defaultExcludedJUnitGroups/>
@@ -2687,7 +2687,7 @@
          <id>test-stress</id>
          <properties>
             <defaultTestNGGroups>stress</defaultTestNGGroups>
-            <defaultJUnitGroups>org.infinispan.commons.test.categories.Stress</defaultJUnitGroups>
+            <defaultJUnitGroups>org.infinispan.testing.categories.test.Stress</defaultJUnitGroups>
             <defaultExcludedTestNGGroups/>
             <defaultExcludedJUnitGroups/>
             <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>

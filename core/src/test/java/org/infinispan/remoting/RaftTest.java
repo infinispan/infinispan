@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
@@ -31,6 +30,7 @@ import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.remoting.transport.raft.RaftStateMachine;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Exceptions;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 

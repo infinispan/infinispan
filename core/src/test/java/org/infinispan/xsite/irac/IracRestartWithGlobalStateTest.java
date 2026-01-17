@@ -1,7 +1,6 @@
 package org.infinispan.xsite.irac;
 
 import static java.lang.String.format;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.container.versioning.InequalVersionComparisonResult.BEFORE;
 import static org.infinispan.container.versioning.InequalVersionComparisonResult.EQUAL;
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
@@ -9,6 +8,7 @@ import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;

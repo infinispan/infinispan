@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -21,6 +20,7 @@ import org.infinispan.counter.configuration.StrongCounterConfiguration;
 import org.infinispan.counter.configuration.WeakCounterConfiguration;
 import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 /**

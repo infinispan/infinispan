@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -47,6 +45,8 @@ import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Numerics;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.data.Sex;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.Testing;
 import org.infinispan.transaction.TransactionMode;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
@@ -90,7 +90,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+      tmpDirectory = Testing.tmpDirectory(getClass());
       new File(tmpDirectory).mkdirs();
    }
 

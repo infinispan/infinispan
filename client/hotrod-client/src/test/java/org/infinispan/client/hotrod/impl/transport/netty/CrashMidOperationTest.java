@@ -13,10 +13,10 @@ import org.infinispan.client.hotrod.impl.operations.NoCachePingOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.retry.AbstractRetryTest;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
 import io.netty.buffer.ByteBuf;
