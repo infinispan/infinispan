@@ -31,15 +31,6 @@ public class SimpleWriteOnlyMapImpl<K, V> extends WriteOnlyMapImpl<K, V> impleme
             .getComponent(CacheNotifier.class);
    }
 
-   public static <K, V> WriteOnlyMap<K, V> create(FunctionalMapImpl<K, V> functionalMap) {
-      return create(Params.from(functionalMap.params.params), functionalMap);
-   }
-
-   private static <K, V> WriteOnlyMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
-      return new SimpleWriteOnlyMapImpl<>(params, functionalMap);
-   }
-
-
    @Override
    public CompletableFuture<Void> eval(K key, Consumer<EntryView.WriteEntryView<K, V>> f) {
       return eval(key, null, (ignore, e) -> f.accept(e));

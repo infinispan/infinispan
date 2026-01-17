@@ -21,8 +21,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.DelegatingStateConsumer;
@@ -106,15 +104,14 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       BlockingStateConsumer bsc2 = TestingUtil.wrapComponent(cache(2), StateConsumer.class, BlockingStateConsumer::new);
 
       tm(2).begin();
-      FunctionalMap.ReadWriteMap<String, Integer> rw = ReadWriteMapImpl.create(
-            FunctionalMapImpl.create(this.<String, Integer>cache(2).getAdvancedCache()));
+      FunctionalMap.ReadWriteMap<String, Integer> rw = FunctionalMap.create(this.<String, Integer>cache(2).getAdvancedCache()).toReadWriteMap();
       assertEquals(Integer.valueOf(1), op.apply(rw, "key"));
       Transaction tx = tm(2).suspend();
 
       chf.setOwnerIndexes(0, 2);
 
       EmbeddedCacheManager cm = createClusteredCacheManager(false, ControlledConsistentHashFactory.SCI.INSTANCE,
-                                                            cb, new TransportFlags());
+            cb, new TransportFlags());
       registerCacheManager(cm);
       Future<?> future = fork(() -> {
          cm.start();
@@ -149,7 +146,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
 
       chf.setOwnerIndexes(0, 2);
       EmbeddedCacheManager cm = createClusteredCacheManager(false, ControlledConsistentHashFactory.SCI.INSTANCE,
-                                                            cb, new TransportFlags());
+            cb, new TransportFlags());
       registerCacheManager(cm);
       Future<?> future = fork(() -> {
          cm.start();
@@ -159,14 +156,12 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       bsc2.await();
 
       DistributionInfo distributionInfo = cache(2).getAdvancedCache().getDistributionManager().getCacheTopology()
-                                                  .getDistribution("key");
+            .getDistribution("key");
       assertFalse(distributionInfo.isReadOwner());
       assertTrue(distributionInfo.isWriteBackup());
 
       withTx(tm(2), () -> {
-         FunctionalMap.ReadWriteMap<String, Integer> rw = ReadWriteMapImpl.create(
-               FunctionalMapImpl.create(this.<String, Integer>cache(2).getAdvancedCache()));
-
+         FunctionalMap.ReadWriteMap<String, Integer> rw = FunctionalMap.create(this.<String, Integer>cache(2).getAdvancedCache()).toReadWriteMap();
          assertEquals(Integer.valueOf(1), op.apply(rw, "key"));
          return null;
       });

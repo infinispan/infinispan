@@ -6,10 +6,7 @@ import static org.infinispan.functional.FunctionalTestUtils.assertReadOnlyViewEq
 import static org.infinispan.functional.FunctionalTestUtils.assertReadWriteViewEmpty;
 import static org.infinispan.functional.FunctionalTestUtils.assertReadWriteViewEquals;
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.infinispan.functional.FunctionalTestUtils.ro;
-import static org.infinispan.functional.FunctionalTestUtils.rw;
 import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
-import static org.infinispan.functional.FunctionalTestUtils.wo;
 import static org.infinispan.marshall.core.MarshallableFunctions.identity;
 import static org.infinispan.marshall.core.MarshallableFunctions.removeReturnPrevOrNull;
 import static org.infinispan.marshall.core.MarshallableFunctions.returnReadOnlyFindOrNull;
@@ -53,10 +50,6 @@ import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.functional.MetaParam.MetaEntryVersion;
 import org.infinispan.functional.MetaParam.MetaLifespan;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -84,27 +77,27 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
    public void testSimpleWriteConstantAndReadGetsValue() {
       checkSimpleCacheAvailable();
-      doWriteConstantAndReadGetsValue(supplyIntKey(), ro(fmapS1), wo(fmapS2));
+      doWriteConstantAndReadGetsValue(supplyIntKey(), fmapS1.toReadOnlyMap(), fmapS2.toWriteOnlyMap());
    }
 
    public void testLocalWriteConstantAndReadGetsValue() {
-      doWriteConstantAndReadGetsValue(supplyIntKey(), ro(fmapL1), wo(fmapL2));
+      doWriteConstantAndReadGetsValue(supplyIntKey(), fmapL1.toReadOnlyMap(), fmapL2.toWriteOnlyMap());
    }
 
    public void testReplWriteConstantAndReadGetsValueOnNonOwner() {
-      doWriteConstantAndReadGetsValue(supplyKeyForCache(0, REPL), ro(fmapR1), wo(fmapR2));
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(0, REPL), fmapR1.toReadOnlyMap(), fmapR2.toWriteOnlyMap());
    }
 
    public void testReplWriteConstantAndReadGetsValueOnOwner() {
-      doWriteConstantAndReadGetsValue(supplyKeyForCache(1, REPL), ro(fmapR1), wo(fmapR2));
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(1, REPL), fmapR1.toReadOnlyMap(), fmapR2.toWriteOnlyMap());
    }
 
    public void testDistWriteConstantAndReadGetsValueOnNonOwner() {
-      doWriteConstantAndReadGetsValue(supplyKeyForCache(0, DIST), ro(fmapD1), wo(fmapD2));
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(0, DIST), fmapD1.toReadOnlyMap(), fmapD2.toWriteOnlyMap());
    }
 
    public void testDistWriteConstantAndReadGetsValueOnOwner() {
-      doWriteConstantAndReadGetsValue(supplyKeyForCache(1, DIST), ro(fmapD1), wo(fmapD2));
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(1, DIST), fmapD1.toReadOnlyMap(), fmapD2.toWriteOnlyMap());
    }
 
    /**
@@ -141,27 +134,27 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
    public void testSimpleWriteValueAndReadValueAndMetadata() {
       checkSimpleCacheAvailable();
-      doWriteValueAndReadValueAndMetadata(supplyIntKey(), ro(fmapS1), wo(fmapS2));
+      doWriteValueAndReadValueAndMetadata(supplyIntKey(), fmapS1.toReadOnlyMap(), fmapS2.toWriteOnlyMap());
    }
 
    public void testLocalWriteValueAndReadValueAndMetadata() {
-      doWriteValueAndReadValueAndMetadata(supplyIntKey(), ro(fmapL1), wo(fmapL2));
+      doWriteValueAndReadValueAndMetadata(supplyIntKey(), fmapL1.toReadOnlyMap(), fmapL2.toWriteOnlyMap());
    }
 
    public void testReplWriteValueAndReadValueAndMetadataOnNonOwner() {
-      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(0, REPL), ro(fmapR1), wo(fmapR2));
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(0, REPL), fmapR1.toReadOnlyMap(), fmapR2.toWriteOnlyMap());
    }
 
    public void testReplWriteValueAndReadValueAndMetadataOnOwner() {
-      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(1, REPL), ro(fmapR1), wo(fmapR2));
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(1, REPL), fmapR1.toReadOnlyMap(), fmapR2.toWriteOnlyMap());
    }
 
    public void testDistWriteValueAndReadValueAndMetadataOnNonOwner() {
-      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(0, DIST), ro(fmapD1), wo(fmapD2));
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(0, DIST), fmapD1.toReadOnlyMap(), fmapD2.toWriteOnlyMap());
    }
 
    public void testDistWriteValueAndReadValueAndMetadataOnOwner() {
-      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(1, DIST), ro(fmapD1), wo(fmapD2));
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(1, DIST), fmapD1.toReadOnlyMap(), fmapD2.toWriteOnlyMap());
    }
 
    /**
@@ -203,27 +196,27 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
    public void testSimpleReadWriteGetsEmpty() {
       checkSimpleCacheAvailable();
-      doReadWriteGetsEmpty(supplyIntKey(), rw(fmapS1));
+      doReadWriteGetsEmpty(supplyIntKey(), fmapS1.toReadWriteMap());
    }
 
    public void testLocalReadWriteGetsEmpty() {
-      doReadWriteGetsEmpty(supplyIntKey(), rw(fmapL1));
+      doReadWriteGetsEmpty(supplyIntKey(), fmapL1.toReadWriteMap());
    }
 
    public void testReplReadWriteGetsEmptyOnNonOwner() {
-      doReadWriteGetsEmpty(supplyKeyForCache(0, REPL), rw(fmapR1));
+      doReadWriteGetsEmpty(supplyKeyForCache(0, REPL), fmapR1.toReadWriteMap());
    }
 
    public void testReplReadWriteGetsEmptyOnOwner() {
-      doReadWriteGetsEmpty(supplyKeyForCache(1, REPL), rw(fmapR1));
+      doReadWriteGetsEmpty(supplyKeyForCache(1, REPL), fmapR1.toReadWriteMap());
    }
 
    public void testDistReadWriteGetsEmptyOnNonOwner() {
-      doReadWriteGetsEmpty(supplyKeyForCache(0, DIST), rw(fmapD1));
+      doReadWriteGetsEmpty(supplyKeyForCache(0, DIST), fmapD1.toReadWriteMap());
    }
 
    public void testDistReadWriteGetsEmptyOnOwner() {
-      doReadWriteGetsEmpty(supplyKeyForCache(1, DIST), rw(fmapD1));
+      doReadWriteGetsEmpty(supplyKeyForCache(1, DIST), fmapD1.toReadWriteMap());
    }
 
    /**
@@ -236,27 +229,27 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
    public void testSimpleReadWriteValuesReturnPrevious() {
       checkSimpleCacheAvailable();
-      doReadWriteConstantReturnPrev(supplyIntKey(), rw(fmapS1), rw(fmapS2));
+      doReadWriteConstantReturnPrev(supplyIntKey(), fmapS1.toReadWriteMap(), fmapS2.toReadWriteMap());
    }
 
    public void testLocalReadWriteValuesReturnPrevious() {
-      doReadWriteConstantReturnPrev(supplyIntKey(), rw(fmapL1), rw(fmapL2));
+      doReadWriteConstantReturnPrev(supplyIntKey(), fmapL1.toReadWriteMap(), fmapL2.toReadWriteMap());
    }
 
    public void testReplReadWriteValuesReturnPreviousOnNonOwner() {
-      doReadWriteConstantReturnPrev(supplyKeyForCache(0, REPL), rw(fmapR1), rw(fmapR2));
+      doReadWriteConstantReturnPrev(supplyKeyForCache(0, REPL), fmapR1.toReadWriteMap(), fmapR2.toReadWriteMap());
    }
 
    public void testReplReadWriteValuesReturnPreviousOnOwner() {
-      doReadWriteConstantReturnPrev(supplyKeyForCache(1, REPL), rw(fmapR1), rw(fmapR2));
+      doReadWriteConstantReturnPrev(supplyKeyForCache(1, REPL), fmapR1.toReadWriteMap(), fmapR2.toReadWriteMap());
    }
 
    public void testDistReadWriteValuesReturnPreviousOnNonOwner() {
-      doReadWriteConstantReturnPrev(supplyKeyForCache(0, DIST), rw(fmapD1), rw(fmapD2));
+      doReadWriteConstantReturnPrev(supplyKeyForCache(0, DIST), fmapD1.toReadWriteMap(), fmapD2.toReadWriteMap());
    }
 
    public void testDistReadWriteValuesReturnPreviousOnOwner() {
-      doReadWriteConstantReturnPrev(supplyKeyForCache(1, DIST), rw(fmapD1), rw(fmapD2));
+      doReadWriteConstantReturnPrev(supplyKeyForCache(1, DIST), fmapD1.toReadWriteMap(), fmapD2.toReadWriteMap());
    }
 
    /**
@@ -300,33 +293,33 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       checkSimpleCacheAvailable();
       assumeNonTransactional();
       // Data does not replicate between simple caches.
-      doReadWriteForConditionalParamBasedReplace(supplyIntKey(), rw(fmapS1), rw(fmapS2));
+      doReadWriteForConditionalParamBasedReplace(supplyIntKey(), fmapS1.toReadWriteMap(), fmapS2.toReadWriteMap());
    }
 
    // Transactions use SimpleClusteredVersions, not NumericVersions, and user is not supposed to modify those
    public void testLocalReadWriteForConditionalParamBasedReplace() {
       assumeNonTransactional();
-      doReadWriteForConditionalParamBasedReplace(supplyIntKey(), rw(fmapL1), rw(fmapL2));
+      doReadWriteForConditionalParamBasedReplace(supplyIntKey(), fmapL1.toReadWriteMap(), fmapL2.toReadWriteMap());
    }
 
    public void testReplReadWriteForConditionalParamBasedReplaceOnNonOwner() {
       assumeNonTransactional();
-      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, REPL), rw(fmapR1), rw(fmapR2));
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, REPL), fmapR1.toReadWriteMap(), fmapR2.toReadWriteMap());
    }
 
    public void testReplReadWriteForConditionalParamBasedReplaceOnOwner() {
       assumeNonTransactional();
-      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, REPL), rw(fmapR1), rw(fmapR2));
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, REPL), fmapR1.toReadWriteMap(), fmapR2.toReadWriteMap());
    }
 
    public void testDistReadWriteForConditionalParamBasedReplaceOnNonOwner() {
       assumeNonTransactional();
-      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, DIST), rw(fmapD1), rw(fmapD2));
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, DIST), fmapD1.toReadWriteMap(), fmapD2.toReadWriteMap());
    }
 
    public void testDistReadWriteForConditionalParamBasedReplaceOnOwner() {
       assumeNonTransactional();
-      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, DIST), rw(fmapD1), rw(fmapD2));
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, DIST), fmapD1.toReadWriteMap(), fmapD2.toReadWriteMap());
    }
 
    /**
@@ -416,21 +409,21 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
             Configuration configBuilder = new ConfigurationBuilder().build();
             cm.defineConfiguration("read-only", configBuilder);
             AdvancedCache<?, ?> readOnlyCache = getAdvancedCache(cm, "read-only");
-            try (ReadOnlyMap<?, ?> ro = ReadOnlyMapImpl.create(FunctionalMapImpl.create(readOnlyCache))) {
+            try (ReadOnlyMap<?, ?> ro = FunctionalMap.create(readOnlyCache).toReadOnlyMap()) {
                assertNotNull(ro); // No-op, just verify that it implements AutoCloseable
             }
             assertTrue(readOnlyCache.getStatus().isTerminated());
 
             cm.defineConfiguration("write-only", configBuilder);
             AdvancedCache<?, ?> writeOnlyCache = getAdvancedCache(cm, "write-only");
-            try (WriteOnlyMap<?, ?> wo = WriteOnlyMapImpl.create(FunctionalMapImpl.create(writeOnlyCache))) {
+            try (WriteOnlyMap<?, ?> wo = FunctionalMap.create(writeOnlyCache).toWriteOnlyMap()) {
                assertNotNull(wo); // No-op, just verify that it implements AutoCloseable
             }
             assertTrue(writeOnlyCache.getStatus().isTerminated());
 
             cm.defineConfiguration("read-write", configBuilder);
             AdvancedCache<?, ?> readWriteCache = getAdvancedCache(cm, "read-write");
-            try (ReadWriteMap<?, ?> rw = ReadWriteMapImpl.create(FunctionalMapImpl.create(readWriteCache))) {
+            try (ReadWriteMap<?, ?> rw = FunctionalMap.create(readWriteCache).toReadWriteMap()) {
                assertNotNull(rw); // No-op, just verify that it implements AutoCloseable
             }
             assertTrue(readWriteCache.getStatus().isTerminated());
@@ -440,27 +433,27 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
    public void testSimpleReadOnlyEvalManyEmpty() {
       checkSimpleCacheAvailable();
-      doReadOnlyEvalManyEmpty(supplyIntKey(), ro(fmapS1));
+      doReadOnlyEvalManyEmpty(supplyIntKey(), fmapS1.toReadOnlyMap());
    }
 
    public void testLocalReadOnlyEvalManyEmpty() {
-      doReadOnlyEvalManyEmpty(supplyIntKey(), ro(fmapL1));
+      doReadOnlyEvalManyEmpty(supplyIntKey(), fmapL1.toReadOnlyMap());
    }
 
    public void testReplReadOnlyEvalManyEmptyOnNonOwner() {
-      doReadOnlyEvalManyEmpty(supplyKeyForCache(0, REPL), ro(fmapR1));
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(0, REPL), fmapR1.toReadOnlyMap());
    }
 
    public void testReplReadOnlyEvalManyEmptyOnOwner() {
-      doReadOnlyEvalManyEmpty(supplyKeyForCache(1, REPL), ro(fmapR1));
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(1, REPL), fmapR1.toReadOnlyMap());
    }
 
    public void testDistReadOnlyEvalManyEmptyOnNonOwner() {
-      doReadOnlyEvalManyEmpty(supplyKeyForCache(0, DIST), ro(fmapD1));
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(0, DIST), fmapD1.toReadOnlyMap());
    }
 
    public void testDistReadOnlyEvalManyEmptyOnOwner() {
-      doReadOnlyEvalManyEmpty(supplyKeyForCache(1, DIST), ro(fmapD1));
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(1, DIST), fmapD1.toReadOnlyMap());
    }
 
    private <K> void doReadOnlyEvalManyEmpty(Supplier<K> keySupplier, ReadOnlyMap<K, String> map) {
@@ -472,27 +465,27 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
    public void testSimpleUpdateSubsetAndReturnPrevs() {
       checkSimpleCacheAvailable();
-      doUpdateSubsetAndReturnPrevs(supplyIntKey(), ro(fmapS1), wo(fmapS2), rw(fmapS2));
+      doUpdateSubsetAndReturnPrevs(supplyIntKey(), fmapS1.toReadOnlyMap(), fmapS2.toWriteOnlyMap(), fmapS2.toReadWriteMap());
    }
 
    public void testLocalUpdateSubsetAndReturnPrevs() {
-      doUpdateSubsetAndReturnPrevs(supplyIntKey(), ro(fmapL1), wo(fmapL2), rw(fmapL2));
+      doUpdateSubsetAndReturnPrevs(supplyIntKey(), fmapL1.toReadOnlyMap(), fmapL2.toWriteOnlyMap(), fmapL2.toReadWriteMap());
    }
 
    public void testReplUpdateSubsetAndReturnPrevsOnNonOwner() {
-      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(0, REPL), ro(fmapR1), wo(fmapR2), rw(fmapR2));
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(0, REPL), fmapR1.toReadOnlyMap(), fmapR2.toWriteOnlyMap(), fmapR2.toReadWriteMap());
    }
 
    public void testReplUpdateSubsetAndReturnPrevsOnOwner() {
-      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(1, REPL), ro(fmapR1), wo(fmapR2), rw(fmapR2));
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(1, REPL), fmapR1.toReadOnlyMap(), fmapR2.toWriteOnlyMap(), fmapR2.toReadWriteMap());
    }
 
    public void testDistUpdateSubsetAndReturnPrevsOnNonOwner() {
-      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(0, DIST), ro(fmapD1), wo(fmapD2), rw(fmapD2));
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(0, DIST), fmapD1.toReadOnlyMap(), fmapD2.toWriteOnlyMap(), fmapD2.toReadWriteMap());
    }
 
    public void testDistUpdateSubsetAndReturnPrevsOnOwner() {
-      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(1, DIST), ro(fmapD1), wo(fmapD2), rw(fmapD2));
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(1, DIST), fmapD1.toReadOnlyMap(), fmapD2.toWriteOnlyMap(), fmapD2.toReadWriteMap());
    }
 
    private <K> void doUpdateSubsetAndReturnPrevs(Supplier<K> keySupplier,
@@ -529,27 +522,27 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
    public void testSimpleReadWriteToRemoveAllAndReturnPrevs() {
       checkSimpleCacheAvailable();
-      doReadWriteToRemoveAllAndReturnPrevs(supplyIntKey(), wo(fmapS1), rw(fmapS2));
+      doReadWriteToRemoveAllAndReturnPrevs(supplyIntKey(), fmapS1.toWriteOnlyMap(), fmapS2.toReadWriteMap());
    }
 
    public void testLocalReadWriteToRemoveAllAndReturnPrevs() {
-      doReadWriteToRemoveAllAndReturnPrevs(supplyIntKey(), wo(fmapL1), rw(fmapL2));
+      doReadWriteToRemoveAllAndReturnPrevs(supplyIntKey(), fmapL1.toWriteOnlyMap(), fmapL2.toReadWriteMap());
    }
 
    public void testReplReadWriteToRemoveAllAndReturnPrevsOnNonOwner() {
-      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(0, REPL), wo(fmapR1), rw(fmapR2));
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(0, REPL), fmapR1.toWriteOnlyMap(), fmapR2.toReadWriteMap());
    }
 
    public void testReplReadWriteToRemoveAllAndReturnPrevsOnOwner() {
-      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(1, REPL), wo(fmapR1), rw(fmapR2));
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(1, REPL), fmapR1.toWriteOnlyMap(), fmapR2.toReadWriteMap());
    }
 
    public void testDistReadWriteToRemoveAllAndReturnPrevsOnNonOwner() {
-      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(0, DIST), wo(fmapD1), rw(fmapD2));
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(0, DIST), fmapD1.toWriteOnlyMap(), fmapD2.toReadWriteMap());
    }
 
    public void testDistReadWriteToRemoveAllAndReturnPrevsOnOwner() {
-      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(1, DIST), wo(fmapD1), rw(fmapD2));
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(1, DIST), fmapD1.toWriteOnlyMap(), fmapD2.toReadWriteMap());
    }
 
    <K> void doReadWriteToRemoveAllAndReturnPrevs(Supplier<K> keySupplier,
@@ -567,27 +560,27 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
    public void testSimpleReturnViewFromReadOnlyEval() {
       checkSimpleCacheAvailable();
-      doReturnViewFromReadOnlyEval(supplyIntKey(), ro(fmapS1), wo(fmapS2));
+      doReturnViewFromReadOnlyEval(supplyIntKey(), fmapS1.toReadOnlyMap(), fmapS2.toWriteOnlyMap());
    }
 
    public void testLocalReturnViewFromReadOnlyEval() {
-      doReturnViewFromReadOnlyEval(supplyIntKey(), ro(fmapL1), wo(fmapL2));
+      doReturnViewFromReadOnlyEval(supplyIntKey(), fmapL1.toReadOnlyMap(), fmapL2.toWriteOnlyMap());
    }
 
    public void testReplReturnViewFromReadOnlyEvalOnNonOwner() {
-      doReturnViewFromReadOnlyEval(supplyKeyForCache(0, REPL), ro(fmapR1), wo(fmapR2));
+      doReturnViewFromReadOnlyEval(supplyKeyForCache(0, REPL), fmapR1.toReadOnlyMap(), fmapR2.toWriteOnlyMap());
    }
 
    public void testReplReturnViewFromReadOnlyEvalOnOwner() {
-      doReturnViewFromReadOnlyEval(supplyKeyForCache(1, REPL), ro(fmapR1), wo(fmapR2));
+      doReturnViewFromReadOnlyEval(supplyKeyForCache(1, REPL), fmapR1.toReadOnlyMap(), fmapR2.toWriteOnlyMap());
    }
 
    public void testDistReturnViewFromReadOnlyEvalOnNonOwner() {
-      doReturnViewFromReadOnlyEval(supplyKeyForCache(0, DIST), ro(fmapD1), wo(fmapD2));
+      doReturnViewFromReadOnlyEval(supplyKeyForCache(0, DIST), fmapD1.toReadOnlyMap(), fmapD2.toWriteOnlyMap());
    }
 
    public void testDistReturnViewFromReadOnlyEvalOnOwner() {
-      doReturnViewFromReadOnlyEval(supplyKeyForCache(1, DIST), ro(fmapD1), wo(fmapD2));
+      doReturnViewFromReadOnlyEval(supplyKeyForCache(1, DIST), fmapD1.toReadOnlyMap(), fmapD2.toWriteOnlyMap());
    }
 
    <K> void doReturnViewFromReadOnlyEval(Supplier<K> keySupplier,
@@ -600,27 +593,27 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
    public void testSimpleReturnViewFromReadWriteEval() {
       checkSimpleCacheAvailable();
-      doReturnViewFromReadWriteEval(supplyIntKey(), rw(fmapS1), rw(fmapS2));
+      doReturnViewFromReadWriteEval(supplyIntKey(), fmapS1.toReadWriteMap(), fmapS2.toReadWriteMap());
    }
 
    public void testLocalReturnViewFromReadWriteEval() {
-      doReturnViewFromReadWriteEval(supplyIntKey(), rw(fmapL1), rw(fmapL2));
+      doReturnViewFromReadWriteEval(supplyIntKey(), fmapL1.toReadWriteMap(), fmapL2.toReadWriteMap());
    }
 
    public void testReplReturnViewFromReadWriteEvalOnNonOwner() {
-      doReturnViewFromReadWriteEval(supplyKeyForCache(0, REPL), rw(fmapR1), rw(fmapR2));
+      doReturnViewFromReadWriteEval(supplyKeyForCache(0, REPL), fmapR1.toReadWriteMap(), fmapR2.toReadWriteMap());
    }
 
    public void testReplReturnViewFromReadWriteEvalOnOwner() {
-      doReturnViewFromReadWriteEval(supplyKeyForCache(1, REPL), rw(fmapR1), rw(fmapR2));
+      doReturnViewFromReadWriteEval(supplyKeyForCache(1, REPL), fmapR1.toReadWriteMap(), fmapR2.toReadWriteMap());
    }
 
    public void testDistReturnViewFromReadWriteEvalOnNonOwner() {
-      doReturnViewFromReadWriteEval(supplyKeyForCache(0, DIST), rw(fmapD1), rw(fmapD2));
+      doReturnViewFromReadWriteEval(supplyKeyForCache(0, DIST), fmapD1.toReadWriteMap(), fmapD2.toReadWriteMap());
    }
 
    public void testDistReturnViewFromReadWriteEvalOnOwner() {
-      doReturnViewFromReadWriteEval(supplyKeyForCache(1, DIST), rw(fmapD1), rw(fmapD2));
+      doReturnViewFromReadWriteEval(supplyKeyForCache(1, DIST), fmapD1.toReadWriteMap(), fmapD2.toReadWriteMap());
    }
 
    <K> void doReturnViewFromReadWriteEval(Supplier<K> keySupplier,
