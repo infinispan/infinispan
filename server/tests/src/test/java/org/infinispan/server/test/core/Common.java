@@ -72,16 +72,13 @@ public class Common {
          "",
          SaslMechanismInformation.Names.PLAIN,
 
-         SaslMechanismInformation.Names.DIGEST_MD5,
          SaslMechanismInformation.Names.DIGEST_SHA_512,
          SaslMechanismInformation.Names.DIGEST_SHA_384,
          SaslMechanismInformation.Names.DIGEST_SHA_256,
-         SaslMechanismInformation.Names.DIGEST_SHA,
 
          SaslMechanismInformation.Names.SCRAM_SHA_512,
          SaslMechanismInformation.Names.SCRAM_SHA_384,
-         SaslMechanismInformation.Names.SCRAM_SHA_256,
-         SaslMechanismInformation.Names.SCRAM_SHA_1
+         SaslMechanismInformation.Names.SCRAM_SHA_256
    );
    public static final Collection<Arguments> SASL_MECH_ARGUMENTS = SASL_MECHS.stream()
          .map(Arguments::of)

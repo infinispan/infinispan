@@ -54,6 +54,16 @@
          <artifactId>blockhound</artifactId>
          <optional>true</optional>
       </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-scram</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-password-impl</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>

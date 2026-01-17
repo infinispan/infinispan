@@ -211,7 +211,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
 
    private void parseAuthenticationDigest(ConfigurationReader reader, AuthenticationConfigurationBuilder authentication) {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName(), Attribute.REALM.getLocalName());
-      authentication.saslMechanism("DIGEST-MD5").username(attributes[0]).password(attributes[1]).realm(attributes[2]);
+      authentication.saslMechanism("DIGEST-SHA-256").username(attributes[0]).password(attributes[1]).realm(attributes[2]);
       ParseUtils.requireNoContent(reader);
    }
 

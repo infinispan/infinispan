@@ -9,7 +9,7 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
-import org.infinispan.commons.util.SslContextFactory;
+import org.infinispan.commons.util.SecurityProviders;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
 import org.infinispan.server.security.ServerSecurityRealm;
@@ -34,7 +34,7 @@ public class TrustStoreRealmConfiguration extends ConfigurationElement<TrustStor
 
    @Override
    public SecurityRealm build(SecurityConfiguration securityConfiguration, RealmConfiguration realm, SecurityDomain.Builder domainBuilder, Properties properties) {
-      Provider[] providers = SslContextFactory.discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
+      Provider[] providers = SecurityProviders.discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
       KeyStore keyStore = realm.serverIdentitiesConfiguration().sslConfiguration().trustStore().trustStore(providers, properties);
       return new KeyStoreBackedSecurityRealm(keyStore);
    }

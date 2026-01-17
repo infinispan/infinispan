@@ -11,9 +11,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.SSLContext;
@@ -216,15 +218,17 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    protected void createUserFile(String realm) {
       // Create users and groups for individual permissions
+      List<String> algorithms = new ArrayList<>(UserTool.DEFAULT_ALGORITHMS);
+      algorithms.add("digest-md5"); // TODO: we need to remove this once we stop upgrading from < 16.1 servers
       UserTool userTool = new UserTool(rootDir.getAbsolutePath());
       for (AuthorizationPermission permission : AuthorizationPermission.values()) {
          String name = permission.name().toLowerCase();
-         userTool.createUser(name + "_user", name, realm, UserTool.Encryption.DEFAULT, Collections.singletonList(name), null);
+         userTool.createUser(name + "_user", name, realm, UserTool.Encryption.DEFAULT, Collections.singletonList(name), algorithms);
       }
       // Create users with composite roles
       for (TestUser user : TestUser.values()) {
          if (user != TestUser.ANONYMOUS) {
-            userTool.createUser(user.getUser(), user.getPassword(), realm, UserTool.Encryption.DEFAULT, user.getRoles(), null);
+            userTool.createUser(user.getUser(), user.getPassword(), realm, UserTool.Encryption.DEFAULT, user.getRoles(), algorithms);
          }
       }
    }

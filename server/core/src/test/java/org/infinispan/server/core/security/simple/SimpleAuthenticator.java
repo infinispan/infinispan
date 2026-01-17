@@ -1,7 +1,12 @@
 package org.infinispan.server.core.security.simple;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.Provider;
+import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -26,12 +32,21 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.infinispan.commons.util.SaslUtils;
+import org.infinispan.commons.util.SecurityProviders;
 import org.infinispan.server.core.security.SubjectUserInfo;
 import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
 import org.infinispan.server.core.security.external.ExternalSaslServerFactory;
 import org.infinispan.server.core.security.sasl.AuthorizingCallbackHandler;
 import org.infinispan.server.core.security.sasl.SaslAuthenticator;
 import org.infinispan.server.core.security.sasl.SubjectSaslServer;
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.interfaces.ScramDigestPassword;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 
 /**
  * A server authentication handler which maintains a simple map of user names and passwords.
@@ -42,6 +57,7 @@ import org.infinispan.server.core.security.sasl.SubjectSaslServer;
 public final class SimpleAuthenticator implements SaslAuthenticator, UsernamePasswordAuthenticator {
 
    private final Map<String, Map<String, Entry>> map = new HashMap<>();
+   private static final Provider[] PROVIDERS = SecurityProviders.discoverSecurityProviders(SimpleAuthenticator.class.getClassLoader());
 
    public SaslServer createSaslServer(String mechanism, List<Principal> principals, String protocol, String serverName, Map<String, String> props) throws SaslException {
       AuthorizingCallbackHandler callbackHandler = getCallbackHandler();
@@ -56,7 +72,7 @@ public final class SimpleAuthenticator implements SaslAuthenticator, UsernamePas
          }
          throw new IllegalStateException("EXTERNAL mech requires X500Principal");
       } else {
-         for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), null, true)) {
+         for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), PROVIDERS, true)) {
             if (factory != null) {
                SaslServer saslServer = factory.createSaslServer(mechanism, protocol, serverName, props, callbackHandler);
                if (saslServer != null) {
@@ -93,25 +109,7 @@ public final class SimpleAuthenticator implements SaslAuthenticator, UsernamePas
                   realmChoiceCallback.setSelectedIndex(realmChoiceCallback.getDefaultChoice());
                } else if (callback instanceof PasswordCallback passwordCallback) {
                   // retrieve the record based on user and realm (if any)
-                  Entry entry = null;
-                  if (realmName == null) {
-                     // scan all realms
-                     synchronized (map) {
-                        for (Map<String, Entry> realmMap : map.values()) {
-                           if (realmMap.containsKey(userName)) {
-                              entry = realmMap.get(userName);
-                              break;
-                           }
-                        }
-                     }
-                  } else {
-                     synchronized (map) {
-                        final Map<String, Entry> realmMap = map.get(realmName);
-                        if (realmMap != null) {
-                           entry = realmMap.get(userName);
-                        }
-                     }
-                  }
+                  Entry entry = getEntry(realmName, userName);
                   if (entry == null) {
                      throw new AuthenticationException("Authentication failure");
                   }
@@ -119,6 +117,16 @@ public final class SimpleAuthenticator implements SaslAuthenticator, UsernamePas
                      subject.getPrincipals().add(new SimpleGroupPrincipal(group));
                   }
                   passwordCallback.setPassword(entry.password());
+               } else if (callback instanceof CredentialCallback credentialCallback) {
+                  // retrieve the record based on user and realm (if any)
+                  Entry entry = getEntry(realmName, subject.getPrincipals(SimpleUserPrincipal.class).iterator().next().getName());
+                  if (entry == null) {
+                     throw new AuthenticationMechanismException("Authentication failure");
+                  }
+                  for (String group : entry.groups()) {
+                     subject.getPrincipals().add(new SimpleGroupPrincipal(group));
+                  }
+                  credentialCallback.setCredential(getPasswordCredential(credentialCallback.getAlgorithm(), entry.password()));
                } else if (callback instanceof AuthorizeCallback authorizeCallback) {
                   authorizeCallback.setAuthorized(authorizeCallback.getAuthenticationID().equals(
                         authorizeCallback.getAuthorizationID()));
@@ -142,6 +150,44 @@ public final class SimpleAuthenticator implements SaslAuthenticator, UsernamePas
       };
    }
 
+   private Entry getEntry(String realmName, String userName) {
+      if (realmName == null) {
+         // scan all realms
+         synchronized (map) {
+            for (Map<String, Entry> realmMap : map.values()) {
+               if (realmMap.containsKey(userName)) {
+                  return realmMap.get(userName);
+               }
+            }
+         }
+      } else {
+         synchronized (map) {
+            final Map<String, Entry> realmMap = map.get(realmName);
+            if (realmMap != null) {
+               return realmMap.get(userName);
+            }
+         }
+      }
+      return null;
+   }
+
+   PasswordCredential getPasswordCredential(String algorithm, char[] password) {
+      try {
+         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm, WildFlyElytronPasswordProvider.getInstance());
+         AlgorithmParameterSpec spec = new IteratedSaltedPasswordAlgorithmSpec(ScramDigestPassword.DEFAULT_ITERATION_COUNT, salt(ScramDigestPassword.DEFAULT_SALT_SIZE));
+         KeySpec keySpec = new EncryptablePasswordSpec(password, spec);
+         return new PasswordCredential(passwordFactory.generatePassword(keySpec));
+      } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
+   private static byte[] salt(int size) {
+      byte[] salt = new byte[size];
+      ThreadLocalRandom.current().nextBytes(salt);
+      return salt;
+   }
+
    @Override
    public CompletionStage<Subject> authenticate(String userName, char[] password) {
       final String canonUserName = userName.toLowerCase().trim();
@@ -157,7 +203,7 @@ public final class SimpleAuthenticator implements SaslAuthenticator, UsernamePas
    /**
     * Add a user to the authentication table.
     *
-    * @param userName  the user name
+    * @param userName  the username
     * @param userRealm the user realm
     * @param password  the password
     * @param groups    the groups the user belongs to

@@ -1,6 +1,7 @@
 package org.infinispan.commons.util;
 
 import static org.infinispan.commons.logging.Log.SECURITY;
+import static org.infinispan.commons.util.SecurityProviders.findProvider;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -10,10 +11,6 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Provider;
-import java.security.Security;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -37,7 +34,6 @@ public class SslContextFactory {
    private static final String DEFAULT_KEYSTORE_TYPE = "PKCS12";
    private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.3";
    private static final String CLASSPATH_RESOURCE = "classpath:";
-   private static final ConcurrentHashMap<ClassLoader, Provider[]> PER_CLASSLOADER_PROVIDERS = new ConcurrentHashMap<>(2);
 
    private String keyStoreFileName;
    private char[] keyStorePassword;
@@ -238,34 +234,6 @@ public class SslContextFactory {
       } finally {
          Util.close(is);
       }
-   }
-
-   public static Provider findProvider(String providerName, String serviceType, String algorithm) {
-      Provider[] providers = discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
-      for (Provider provider : providers) {
-         if (providerName == null || providerName.equals(provider.getName())) {
-            Provider.Service providerService = provider.getService(serviceType, algorithm);
-            if (providerService != null) {
-               return provider;
-            }
-         }
-      }
-      return null;
-   }
-
-   public static Provider[] discoverSecurityProviders(ClassLoader classLoader) {
-      return PER_CLASSLOADER_PROVIDERS.computeIfAbsent(classLoader, cl -> {
-               // We need to keep them sorted by insertion order, since we want system providers first
-               Map<Class<? extends Provider>, Provider> providers = new LinkedHashMap<>();
-               for (Provider provider : Security.getProviders()) {
-                  providers.put(provider.getClass(), provider);
-               }
-               for (Provider provider : ServiceFinder.load(Provider.class, classLoader)) {
-                  providers.putIfAbsent(provider.getClass(), provider);
-               }
-               return providers.values().toArray(new Provider[0]);
-            }
-      );
    }
 
    public record Context(SSLContext sslContext, KeyManager keyManager, TrustManager trustManager) {
