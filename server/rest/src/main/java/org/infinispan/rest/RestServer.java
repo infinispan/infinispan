@@ -31,6 +31,7 @@ import org.infinispan.rest.resources.SearchAdminResource;
 import org.infinispan.rest.resources.SearchAdminResourceV3;
 import org.infinispan.rest.resources.SecurityResource;
 import org.infinispan.rest.resources.ServerResource;
+import org.infinispan.rest.resources.ServerResourceV3;
 import org.infinispan.rest.resources.StaticContentResource;
 import org.infinispan.rest.resources.SwaggerUIResource;
 import org.infinispan.rest.resources.TasksResource;
@@ -177,6 +178,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       }
       if (adminEndpoint) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
+         resourceManager.registerResource(restContext, new ServerResourceV3(invocationHelper));
          resourceManager.registerResource(restContext, new ClusterResource(invocationHelper));
          resourceManager.registerResource(restContext, new  SecurityResource(invocationHelper, rootContext + "console/", rootContext + "console/forbidden.html"));
          registerLoggingResource(resourceManager, restContext);
