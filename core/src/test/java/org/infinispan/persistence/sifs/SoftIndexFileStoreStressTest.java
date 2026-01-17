@@ -19,6 +19,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
+import org.infinispan.reactive.internal.subscriptions.AsyncSubscription;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestingUtil;
@@ -27,7 +28,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import io.reactivex.rxjava3.internal.subscriptions.AsyncSubscription;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 @Test(groups = "stress", testName = "persistence.sifs.SoftIndexFileStoreStressTest")

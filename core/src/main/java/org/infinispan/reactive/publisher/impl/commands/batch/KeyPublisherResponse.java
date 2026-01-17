@@ -32,8 +32,8 @@ public class KeyPublisherResponse extends PublisherResponse {
    final int keySize;
 
    public KeyPublisherResponse(Object[] results, IntSet completedSegments, IntSet lostSegments, int size,
-         boolean complete, List<PublisherHandler.SegmentResult> segmentResults, Object[] extraObjects, int extraSize,
-         Object[] keys, int keySize) {
+                               boolean complete, List<PublisherHandler.SegmentResult> segmentResults, Object[] extraObjects, int extraSize,
+                               Object[] keys, int keySize) {
       super(results, completedSegments, lostSegments, size, complete, segmentResults);
       this.extraObjects = extraObjects;
       this.extraSize = extraSize;
@@ -49,7 +49,7 @@ public class KeyPublisherResponse extends PublisherResponse {
       super(wrappedResults, completedSegmentsWrapped, lostSegmentsWrapped, complete, segmentResults);
       this.extraObjects = null;
       this.extraSize = 0;
-      this.keys = keys != null ? MarshallableArray.unwrap(keys) :  new Object[0];
+      this.keys = keys != null ? MarshallableArray.unwrap(keys) : new Object[0];
       this.keySize = this.keys.length;
    }
 

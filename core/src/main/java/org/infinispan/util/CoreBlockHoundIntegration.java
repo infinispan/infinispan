@@ -31,7 +31,6 @@ import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.util.TimeScheduler3;
 import org.kohsuke.MetaInfServices;
 
-import io.reactivex.rxjava3.internal.operators.flowable.BlockingFlowableIterable;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
@@ -83,7 +82,7 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside(DefaultCacheManager.class.getName(), "stop");
 
       // The blocking iterator locks to signal at the end - ignore (we can't reference class object as it is internal)
-      builder.allowBlockingCallsInside("io.reactivex.rxjava3.internal.operators.flowable.BlockingFlowableIterable" + "$BlockingFlowableIterator", "signalConsumer");
+      builder.allowBlockingCallsInside("io.reactivex.rxjava3.internal.operators.flowable.BlockingFlowableIterable$BlockingFlowableIterator", "signalConsumer");
 
       // Loading up the EnhancedQueueExecutor class loads org.jboss.threads.Version that reads a file to determine version
       builder.allowBlockingCallsInside(EnhancedQueueExecutorFactory.class.getName(), "createExecutor");
@@ -91,8 +90,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // Reads from a file during initialization which is during store startup
       builder.allowBlockingCallsInside("org.infinispan.persistence.sifs.Index", "checkForExistingIndexSizeFile");
 
-      // FlowableIterable may be completed on a non blocking thread, however this is very short
-      builder.allowBlockingCallsInside(BlockingFlowableIterable.class.getName() + "$FlowableSubscriber", "signalConsumer");
+      // FlowableIterable may be completed on a non-blocking thread, however this is very short
+      builder.allowBlockingCallsInside("io.reactivex.rxjava3.internal.operators.flowable.BlockingFlowableIterable$FlowableSubscriber", "signalConsumer");
 
       methodsToBeRemoved(builder);
 
