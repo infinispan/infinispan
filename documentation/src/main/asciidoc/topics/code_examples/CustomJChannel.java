@@ -1,6 +1,7 @@
-GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
 JChannel jchannel = new JChannel();
 // Configure the jchannel as needed.
-JGroupsTransport transport = new JGroupsTransport(jchannel);
-global.transport().transport(transport);
-new DefaultCacheManager(global.build());
+ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+holder.getGlobalConfigurationBuilder()
+    .transport().transport(new JGroupsTransport(jchannel));
+// Further configuration as needed.
+DefaultCacheManager cacheManager = new DefaultCacheManager(holder);
