@@ -16,7 +16,7 @@ import org.infinispan.server.resp.json.EmbeddedJsonCache;
  */
 public class JSONOBJLEN extends JSONLEN {
    public JSONOBJLEN() {
-      super("JSON.OBJLEN", true, AclCategory.JSON.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
+      super("JSON.OBJLEN", AclCategory.JSON.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
    }
 
    @Override
@@ -26,6 +26,6 @@ public class JSONOBJLEN extends JSONLEN {
 
    @Override
    protected void raiseTypeError(byte[] path) {
-      throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' does not exist or not an object");
+      throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' is not an object");
    }
 }

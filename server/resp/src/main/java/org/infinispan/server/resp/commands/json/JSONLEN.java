@@ -7,7 +7,6 @@ import java.util.function.BiConsumer;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.serialization.Resp3Type;
@@ -22,15 +21,8 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public abstract class JSONLEN extends RespCommand implements Resp3Command {
 
-    private final boolean includePathOnError;
-
     public JSONLEN(String commandName, long aclMask) {
-        this(commandName, false, aclMask);
-    }
-
-    public JSONLEN(String commandName, boolean includePathOnError, long aclMask) {
         super(commandName, -2, 1, 1, 1, aclMask);
-        this.includePathOnError = includePathOnError;
     }
 
     @Override
@@ -50,9 +42,6 @@ public abstract class JSONLEN extends RespCommand implements Resp3Command {
     BiConsumer<List<Long>, ResponseWriter> newArrayOrErrorWriter(byte[] path) {
         return (c, writer) -> {
             if (c == null) {
-                if (includePathOnError) {
-                    raiseTypeError(path);
-                }
                 throw new RuntimeException("could not perform this operation on a key that doesn't exist");
             }
             writer.array(c, Resp3Type.INTEGER);
@@ -63,10 +52,8 @@ public abstract class JSONLEN extends RespCommand implements Resp3Command {
 
     BiConsumer<List<Long>, ResponseWriter> legacyOutput(byte[] path) {
         return (c, writer) -> {
-            if (c == null) {
+            if (c == null || c.isEmpty()) {
                 writer.nulls();
-            } else if (c.isEmpty()) {
-                throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' does not exist");
             } else if (c.get(0) == null) {
                 raiseTypeError(path);
             } else {
