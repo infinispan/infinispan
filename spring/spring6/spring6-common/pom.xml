@@ -13,11 +13,10 @@
 
     <name>Infinispan Spring 6 Common</name>
 
-   <distributionManagement>
-      <relocation>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-spring-common</artifactId>
-         <message>Renamed to infinispan-spring-common</message>
-      </relocation>
-   </distributionManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-common</artifactId>
+        </dependency>
+    </dependencies>
 </project>
