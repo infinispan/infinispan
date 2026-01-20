@@ -43,7 +43,11 @@ public class SwaggerUIResource implements ResourceHandler {
               window.ui = SwaggerUIBundle({
                 url: "%s://%s/%s/v3/openapi",
                 dom_id: '#swagger-ui',
+                apisSorter: "alpha",
+                operationsSorter: "alpha",
+                tagsSorter: "alpha",
                 deepLinking: true,
+                filter: true,
                 presets: [
                   SwaggerUIBundle.presets.apis
                 ]
