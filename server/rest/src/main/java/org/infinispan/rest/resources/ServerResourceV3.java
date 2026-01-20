@@ -44,6 +44,7 @@ public class ServerResourceV3 extends ServerResource {
 
       // 1. Server Info
       builder.invocation()
+            .anonymous()
             .methods(GET).path("/v3/server")
             .name("Retrieve server information")
             .operationId("getServerInfo")

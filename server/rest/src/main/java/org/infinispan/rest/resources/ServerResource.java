@@ -97,6 +97,7 @@ public class ServerResource implements ResourceHandler {
       return new Invocations.Builder("server", "REST resource to manage the current server.")
             .invocation().methods(GET).path("/v2/server/")
                .handleWith(this::info)
+               .anonymous()
             .invocation().methods(GET).path("/v2/server/config")
                .permission(AuthorizationPermission.ADMIN)
                .auditContext(AuditContext.SERVER)
