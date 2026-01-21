@@ -39,7 +39,7 @@
    <inceptionYear>2009</inceptionYear>
 
    <properties>
-      <versionx.org.infinispan.infinispan-console>16.0.5.Final</versionx.org.infinispan.infinispan-console>
+      <versionx.org.infinispan.infinispan-console>16.1.0</versionx.org.infinispan.infinispan-console>
       <version.protostream>6.0.4</version.protostream>
 
       <!-- Maven plugins -->
