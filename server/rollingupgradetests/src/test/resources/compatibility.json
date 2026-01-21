@@ -1,8 +1,8 @@
 {
   "compatibility": [
     {
-      "version-from": "16.0.*",
-      "version-to": "16.1.*",
+      "version-from": "[16.0,16.1)",
+      "version-to": "[16.1,)",
       "properties": {
         "org.infinispan.test.server.resp.forceStandaloneMode": "true"
       },
