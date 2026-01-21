@@ -1,6 +1,6 @@
 <cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xsi:schemaLocation="urn:infinispan:config:16.1 https://infinispan.org/schemas/infinispan-config-fragment-16.1.xsd"
-                 xmlns="urn:infinispan:config:16.1"
+                 xsi:schemaLocation="urn:infinispan:config:16.2 https://infinispan.org/schemas/infinispan-config-fragment-16.2.xsd"
+                 xmlns="urn:infinispan:config:16.2"
                  name="default" statistics="true">
    <eviction-containers>
       <max-size-container name="size-container" size="2KB"/>

@@ -1,10 +1,10 @@
 <infinispan
-      xmlns="urn:infinispan:config:16.1"
-      xmlns:server="urn:infinispan:server:16.1">
+      xmlns="urn:infinispan:config:16.2"
+      xmlns:server="urn:infinispan:server:16.2">
    <cache-container>
       <transport server:security-realm="default"/>
    </cache-container>
-   <server xmlns="urn:infinispan:server:16.1">
+   <server xmlns="urn:infinispan:server:16.2">
       <interfaces>
          <interface name="default">
             <loopback/>
@@ -144,13 +144,13 @@
 
       <data-sources>
          <data-source name="database" jndi-name="jdbc/database" statistics="true">
-            <connection-factory driver="org.h2.Driver" username="test" password="test" url="jdbc:h2:tcp://${org.infinispan.test.host.address}:16.1/test" new-connection-sql="SELECT 1">
+            <connection-factory driver="org.h2.Driver" username="test" password="test" url="jdbc:h2:tcp://${org.infinispan.test.host.address}:16.2/test" new-connection-sql="SELECT 1">
                <connection-property name="someproperty">somevalue</connection-property>
             </connection-factory>
             <connection-pool max-size="10" min-size="1" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000" validate-on-acquisition="500"/>
          </data-source>
          <data-source name="database-with-credential" jndi-name="jdbc/database-with-credential" statistics="true">
-            <connection-factory driver="org.h2.Driver" username="test" url="jdbc:h2:tcp://${org.infinispan.test.host.address}:16.1/test" new-connection-sql="SELECT 1">
+            <connection-factory driver="org.h2.Driver" username="test" url="jdbc:h2:tcp://${org.infinispan.test.host.address}:16.2/test" new-connection-sql="SELECT 1">
                <credential-reference store="credentials" alias="db"/>
             </connection-factory>
             <connection-pool max-size="10" min-size="1" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
