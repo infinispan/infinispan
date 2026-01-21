@@ -9,6 +9,7 @@ import org.infinispan.commons.util.EntrySizeCalculator;
  * Size calculator that supports a {@link WrappedByteArray} by adding its size and the underlying byte[].
  * @author wburns
  * @since 9.0
+ * @deprecated since 16.1, use {@link org.infinispan.marshall.core.JOLEntrySizeCalculator}
  */
 public class WrappedByteArraySizeCalculator<K, V> extends AbstractEntrySizeCalculatorHelper<K, V> {
    private final EntrySizeCalculator chained;

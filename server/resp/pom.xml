@@ -14,10 +14,7 @@
    <description>Infinispan Resp Protocol Server</description>
 
    <dependencies>
-      <dependency>
-         <groupId>org.ehcache</groupId>
-         <artifactId>sizeof</artifactId>
-      </dependency>
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-core</artifactId>

@@ -1457,11 +1457,7 @@
             <artifactId>prometheus-metrics-exposition-formats</artifactId>
             <version>${version.io.prometheus.server}</version>
          </dependency>
-         <dependency>
-            <groupId>org.ehcache</groupId>
-            <artifactId>sizeof</artifactId>
-            <version>${version.ehcache.sizeof}</version>
-         </dependency>
+        
          <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
@@ -1485,6 +1481,11 @@
             <artifactId>howl</artifactId>
             <version>${versionx.org.objectweb.howl.howl}</version>
             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.openjdk.jol</groupId>
+            <artifactId>jol-core</artifactId>
+            <version>${version.org.openjdk.jol}</version>
          </dependency>
          <dependency>
             <groupId>org.openjdk.jmh</groupId>

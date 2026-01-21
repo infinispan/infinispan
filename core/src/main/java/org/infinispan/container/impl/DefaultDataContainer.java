@@ -15,9 +15,8 @@ import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
+import org.infinispan.marshall.core.JOLEntrySizeCalculator;
 import org.reactivestreams.Publisher;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -57,8 +56,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
       Caffeine<K, InternalCacheEntry<K, V>> caffeine = caffeineBuilder();
 
       if (memoryBound) {
-         CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
-               new PrimitiveEntrySizeCalculator()));
+         CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(JOLEntrySizeCalculator.getInstance());
          caffeine.weigher((k, v) -> (int) calc.calculateSize(k, v)).maximumWeight(thresholdSize);
       } else {
          caffeine.maximumSize(thresholdSize);

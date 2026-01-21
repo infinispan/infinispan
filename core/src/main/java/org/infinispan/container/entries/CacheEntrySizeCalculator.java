@@ -11,6 +11,8 @@ import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.openjdk.jol.info.ClassLayout;
+import org.openjdk.jol.info.GraphLayout;
 
 /**
  * Implementation of a size calculator that calculates only the size of the value assuming it is an InternalCacheEntry.
@@ -29,10 +31,17 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
 
    private final EntrySizeCalculator<? super K, ? super V> calculator;
 
+   private static final long IMMORTAL_ENTRY_SIZE = ClassLayout.parseInstance(new ImmortalCacheEntry(null, null)).instanceSize();
+   private static final long MORTAL_ENTRY_SIZE = ClassLayout.parseInstance(new MortalCacheEntry(null, null, 0, 0)).instanceSize();
+   private static final long TRANSIENT_ENTRY_SIZE = ClassLayout.parseInstance(new TransientCacheEntry(null, null, 0, 0)).instanceSize();
+   private static final long TRANSIENT_MORTAL_ENTRY_SIZE = ClassLayout.parseInstance(new TransientMortalCacheEntry(null, null, 0, 0, 0, 0)).instanceSize();
+   private static final long METADATA_IMMORTAL_ENTRY_SIZE = ClassLayout.parseInstance(new MetadataImmortalCacheEntry(null, null, null)).instanceSize();
+   private static final long METADATA_MORTAL_ENTRY_SIZE = ClassLayout.parseInstance(new MetadataMortalCacheEntry(null, null, null, 0)).instanceSize();
+   private static final long METADATA_TRANSIENT_ENTRY_SIZE = ClassLayout.parseInstance(new MetadataTransientCacheEntry(null, null, null, 0)).instanceSize();
+   private static final long METADATA_TRANSIENT_MORTAL_ENTRY_SIZE = ClassLayout.parseInstance(new MetadataTransientMortalCacheEntry(null, null, null, 0, 0)).instanceSize();
+
    @Override
    public long calculateSize(K key, InternalCacheEntry<K, V> ice) {
-      // This will be non zero when use expiration, but don't want to store the metadata
-      long noMetadataSize = 0;
       boolean metadataAware;
       // We want to put immortal entries first as they are very common.  Also MetadataImmortalCacheEntry extends
       // ImmortalCacheEntry so it has to come before
@@ -41,13 +50,10 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
       } else if (ice instanceof ImmortalCacheEntry) {
          metadataAware = false;
       } else if (ice instanceof MortalCacheEntry) {
-         noMetadataSize += 16;
          metadataAware = false;
       } else if (ice instanceof TransientCacheEntry) {
-         noMetadataSize += 16;
          metadataAware = false;
       } else if (ice instanceof TransientMortalCacheEntry) {
-         noMetadataSize += 32;
          metadataAware = false;
       } else if (ice instanceof MetadataMortalCacheEntry) {
          metadataAware = true;
@@ -66,79 +72,61 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
       } else {
          metadata = null;
       }
-      long keyValueMetadataSize = calculateSize(key, ice.getValue(), metadata, ice.getInternalMetadata());
-      return keyValueMetadataSize + noMetadataSize;
-   }
 
+      long keyValueSize = calculator.calculateSize(key, ice.getValue());
+
+      long metadataSize = 0;
+      if (metadata != null) {
+         if (InternalEntryFactoryImpl.isStoreMetadata(metadata, null)) {
+            metadataSize = GraphLayout.parseInstance(metadata).totalSize();
+         }
+      }
+
+      long internalMetadataSize = ice.getInternalMetadata() == null || ice.getInternalMetadata().isEmpty() ? 0 : GraphLayout.parseInstance(ice.getInternalMetadata()).totalSize();
+
+      return keyValueSize + ClassLayout.parseInstance(ice).instanceSize() + metadataSize + internalMetadataSize;
+   }
    @Override
    public long calculateSize(K key, V value, Metadata metadata, PrivateMetadata pvtMetadata) {
       long objSize = calculator.calculateSize(key, value);
 
-      // This is for the surrounding ICE
-      long iceSize = 0;
-      // ICE itself is an object and has a reference to it's class
-      iceSize += OBJECT_SIZE + POINTER_SIZE;
-      // Each ICE references key and value and private metadata
-      iceSize += 3 * POINTER_SIZE;
+      long iceOverhead = estimateIceOverhead(metadata);
 
       long metadataSize = 0;
       if (metadata != null) {
-         // Mortal uses 2 longs to keep track of created and lifespan
-         if (metadata.lifespan() != -1) {
-            iceSize += 16;
-         }
-         // Transient uses 2 longs to keep track of last access and max idle
-         if (metadata.maxIdle() != -1) {
-            iceSize += 16;
-         }
          if (InternalEntryFactoryImpl.isStoreMetadata(metadata, null)) {
-            // Assume it has a pointer for the metadata
-            iceSize += POINTER_SIZE;
-            // The metadata has itself and the class reference
-            metadataSize += OBJECT_SIZE + POINTER_SIZE;
-            // We only support embedded metadata that has a reference and NumericVersion instance
-            metadataSize += POINTER_SIZE;
-            metadataSize = roundUpToNearest8(metadataSize);
-            // This is for the NumericVersion and the long inside of it
-            metadataSize += numericVersionSize();
-            metadataSize = roundUpToNearest8(metadataSize);
+            metadataSize = GraphLayout.parseInstance(metadata).totalSize();
          }
       }
-      long pvtMetadataSize = pvtMetadata == null || pvtMetadata.isEmpty() ? 0 : privateMetadataSize(pvtMetadata);
+      long pvtMetadataSize = pvtMetadata == null || pvtMetadata.isEmpty() ? 0 : GraphLayout.parseInstance(pvtMetadata).totalSize();
 
-      return objSize + roundUpToNearest8(iceSize) + metadataSize + pvtMetadataSize;
+      return objSize + iceOverhead + metadataSize + pvtMetadataSize;
    }
 
-   private static long privateMetadataSize(PrivateMetadata metadata) {
-      long size = HEADER_AND_CLASS_REFERENCE;
-      size += 2 * POINTER_SIZE; //two fields, IracMetadata & EntryVersion
-      size = roundUpToNearest8(size);
-      if (metadata.iracMetadata() != null) {
-         size += iracMetadataSize();
+   private long estimateIceOverhead(Metadata metadata) {
+      long size = IMMORTAL_ENTRY_SIZE;
+      boolean lifespan = metadata != null && metadata.lifespan() != -1;
+      boolean maxIdle = metadata != null && metadata.maxIdle() != -1;
+
+      if (lifespan && maxIdle) {
+         size = TRANSIENT_MORTAL_ENTRY_SIZE;
+      } else if (lifespan) {
+         size = MORTAL_ENTRY_SIZE;
+      } else if (maxIdle) {
+         size = TRANSIENT_ENTRY_SIZE;
       }
-      if (metadata.getNumericVersion() != null) {
-         size += numericVersionSize();
-      } else if (metadata.getClusteredVersion() != null) {
-         size += simpleClusteredVersionSize();
+
+      if (InternalEntryFactoryImpl.isStoreMetadata(metadata, null)) {
+          if (lifespan && maxIdle) {
+             size = METADATA_TRANSIENT_MORTAL_ENTRY_SIZE;
+         } else if (lifespan) {
+             size = METADATA_MORTAL_ENTRY_SIZE;
+         } else if (maxIdle) {
+             size = METADATA_TRANSIENT_ENTRY_SIZE;
+         } else {
+             size = METADATA_IMMORTAL_ENTRY_SIZE;
+         }
       }
       return size;
-   }
-
-   private static long iracMetadataSize() {
-      //estimated
-      long size = HEADER_AND_CLASS_REFERENCE;
-      size += 2 * POINTER_SIZE; //site: String, version: IracEntryVersion
-      //go recursive?
-      return roundUpToNearest8(size);
-   }
-
-   private static long numericVersionSize() {
-      //only a long stored
-      return roundUpToNearest8(HEADER_AND_CLASS_REFERENCE + 8);
-   }
-
-   private static long simpleClusteredVersionSize() {
-      //only a int and long
-      return roundUpToNearest8(HEADER_AND_CLASS_REFERENCE + 4 + 8);
    }
 }
