@@ -179,7 +179,7 @@
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.6.0</version.checkstyle.maven-plugin>
-      <version.native.maven.plugin>0.11.3</version.native.maven.plugin>
+      <version.native.maven.plugin>0.11.4</version.native.maven.plugin>
       <version.maven>3.9.12</version.maven>
       <version.maven.antlr3>3.5.2</version.maven.antlr3>
       <version.maven.antrun>3.2.0</version.maven.antrun>
