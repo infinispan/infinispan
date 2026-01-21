@@ -296,6 +296,15 @@
    </dependencies>
 
    <build>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*.xml</include>
+            </includes>
+         </resource>
+      </resources>
       <testResources>
          <testResource>
             <directory>${project.basedir}/src/test/resources</directory>

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- N.B. This is *not* meant to be a usable cache configuration -->
-<!-- This file supplies the default server configuration templates -->
 <infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:16.1 https://infinispan.org/schemas/infinispan-config-16.1.xsd"
-        xmlns="urn:infinispan:config:16.1">
-    <cache-container>
-        <local-cache-configuration name="org.infinispan.RESP_LOCAL" statistics="true">
-            <encoding media-type="application/octet-stream"/>
-        </local-cache-configuration>
-        <distributed-cache-configuration name="org.infinispan.RESP_DIST" configuration="org.infinispan.RESP_LOCAL"
-                                         key-partitioner="org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner"/>
-    </cache-container>
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd"
+      xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
+   <!-- N.B. This is *not* meant to be a usable cache configuration -->
+   <!-- This file supplies the default server configuration templates -->
+   <cache-container>
+      <local-cache-configuration name="org.infinispan.RESP_LOCAL" statistics="true">
+         <encoding media-type="application/octet-stream"/>
+      </local-cache-configuration>
+      <distributed-cache-configuration name="org.infinispan.RESP_DIST" configuration="org.infinispan.RESP_LOCAL"
+                                       key-partitioner="org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner"/>
+   </cache-container>
 </infinispan>

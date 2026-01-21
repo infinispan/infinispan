@@ -108,7 +108,7 @@ while test $# -gt 0; do
     esac
 done
 
-DIR=$(dirname $0)
+DIR=$(dirname "$0")
 BASEDIR=$(readlink -f "$DIR")
 if [ -z "$POMLOCATION" ]; then
 	POMLOCATION='pom.xml'
