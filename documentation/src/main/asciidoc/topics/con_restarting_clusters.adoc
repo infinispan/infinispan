@@ -32,3 +32,37 @@ Local cache stores marked as `purge=false` will be available after a server rest
 If you shutdown clustered nodes with the [command]`shutdown server` command, you must restart each server in reverse order to avoid potential issues related to data loss and stale entries in the cache. +
 For example, if you shutdown `server1` and then shutdown `server2`, you should first start `server2` and then start `server1`.
 However, restarting clustered nodes in reverse order does not completely prevent data loss and stale entries.
+
+[discrete]
+== Stop container
+
+The `shutdown` command requires all shutdown nodes to be restarted after the graceful shutdown.
+This mechanism is recommended for maintenance operations, since it can incur downtime.
+The command can be utilized to perform an upgrade, for example.
+
+Additionally, {brandname} offers the option of stopping the caches in a cache container.
+The command `leave` stops all caches in the cache container the CLI is connected to.
+This command will immediately stop all caches in the container without waiting for pending operations.
+This is useful in cases where data loss is acceptable, and for performing operations like in-place rolling upgrades to avoid downtime.
+You can use the `leave` command to stop the caches and keep the server running while performing an upgrade.
+Data loss may occur in a distributed cache when more than num-owners nodes leave in sequence, without waiting for the state transfer to complete.
+In such a case, the `ISPN000312` message is logged as a warning, for example:
+[source,log]
+----
+WARN  [o.i.CLUSTER] [Context=cache-name]ISPN000312: Lost data because of graceful leaver node-4
+----
+
+The `leave` command also has an option for timeout, for example `leave --timeout=30s`, where the operation waits up to a given time for caches to complete any state transfer operation.
+This operation reduces the likelihood of data loss in distributed caches when stopping nodes in the cluster by waiting for the state transfer to complete.
+This is the recommended approach if you are performing an in-place rolling upgrade and want to keep your data.
+
+[WARNING]
+====
+The `leave` command with a timeout reduces the likelihood of losing data in distributed caches.
+However, data loss can still happen if multiple nodes execute the `leave` command simultaneously, even with the timeout option.
+====
+
+
+[role="_additional-resources"]
+.Additional resources
+* link:{cli_docs}#leave1[leave CLI command]

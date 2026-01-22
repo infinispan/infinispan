@@ -173,6 +173,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject TimeService timeService;
    @Inject ClusterPublisherManager<Object, Object> clusterPublisherManager;
    @Inject Transport transport;
+   @Inject StateTransferTracker stateTracker;
 
    protected String cacheName;
    protected long timeout;
@@ -730,6 +731,9 @@ public class StateConsumerImpl implements StateConsumer {
          if (innerTransfers != null && innerTransfers.remove(inboundTransfer) && innerTransfers.isEmpty()) {
             commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, segmentId);
             transfersBySegment.remove(segmentId);
+            if (log.isTraceEnabled()) {
+               log.tracef("Finished applying segment %d for %s, remaining %s segments", segmentId, cacheName, IntSets.from(transfersBySegment.keySet()));
+            }
             progressTracker.removeTasks(1);
          }
       } finally {
@@ -914,6 +918,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
          requestedTransactionalSegments.clear();
          stateRequestExecutor.shutdownNow();
+         stateTracker.completeStateConsumer(Integer.MIN_VALUE);
          progressTracker.finishedAllTasks();
       } catch (Throwable t) {
          log.errorf(t, "Failed to stop StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
@@ -967,8 +972,12 @@ public class StateConsumerImpl implements StateConsumer {
                } else {
                   completable = segmentFlowable.ignoreElements();
                }
-               completable.subscribe(this::notifyEndOfStateTransferIfNeeded, t ->
-                     log.debug("State iteration encountered exception!: ", t));
+               completable.subscribe(() -> {
+                  notifyEndOfStateTransferIfNeeded();
+                  stateTracker.completeStateConsumer(topologyId);
+               },
+                     t -> log.debug("State iteration encountered exception!: ", t)
+               );
             });
          }
       }
@@ -1040,7 +1049,7 @@ public class StateConsumerImpl implements StateConsumer {
                   // There is no easy way to cancel the flowable as it spans multiple destinations possibly
                }
             };
-            addTransfer(inboundTransfer, segmentsForTask);
+            addTransfer(inboundTransfer, segmentsForTask, topologyId);
          }
       } finally {
          transferMapsLock.unlock();
@@ -1478,7 +1487,7 @@ public class StateConsumerImpl implements StateConsumer {
 
          inboundTransfer = new InboundTransferTask(segmentsFromSource, source, cacheTopology.getTopologyId(),
                                                    rpcManager, commandsFactory, timeout, cacheName, true);
-         addTransfer(inboundTransfer, segmentsFromSource);
+         addTransfer(inboundTransfer, segmentsFromSource, stateTransferTopologyId.get());
       } finally {
          transferMapsLock.unlock();
       }
@@ -1490,7 +1499,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    @GuardedBy("transferMapsLock")
-   protected void addTransfer(InboundTransferTask inboundTransfer, IntSet segments) {
+   protected void addTransfer(InboundTransferTask inboundTransfer, IntSet segments, int topologyId) {
       if (!running)
          throw new IllegalLifecycleStateException("State consumer is not running for cache " + cacheName);
       progressTracker.addTasks(segments.size());
@@ -1501,7 +1510,11 @@ public class StateConsumerImpl implements StateConsumer {
          int segmentId = iter.nextInt();
          transfersBySegment.computeIfAbsent(segmentId, s -> new ArrayList<>()).add(inboundTransfer);
       }
+      boolean wasEmpty = transfersBySource.isEmpty();
       transfersBySource.computeIfAbsent(inboundTransfer.getSource(), s -> new ArrayList<>()).add(inboundTransfer);
+      if (wasEmpty) {
+         stateTracker.startStateConsumer(topologyId);
+      }
    }
 
    protected void removeTransfer(InboundTransferTask inboundTransfer) {
@@ -1526,6 +1539,7 @@ public class StateConsumerImpl implements StateConsumer {
 
          if (transfersBySource.isEmpty()) {
             progressTracker.finishedAllTasks();
+            stateTracker.completeStateConsumer(stateTransferTopologyId.get());
          }
       } finally {
          transferMapsLock.unlock();

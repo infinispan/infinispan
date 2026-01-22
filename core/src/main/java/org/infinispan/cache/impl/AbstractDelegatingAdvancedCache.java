@@ -545,4 +545,9 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    public CachePublisher<K, V> cachePublisher() {
       return cache.cachePublisher();
    }
+
+   @Override
+   public boolean stop(long timeout, TimeUnit unit) throws InterruptedException {
+      return cache.stop(timeout, unit);
+   }
 }
