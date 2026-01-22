@@ -314,6 +314,10 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    @Override
    void stop();
 
+   default void stop(boolean wait) {
+      stop();
+   }
+
    /**
     * Performs a controlled, clustered shutdown of the cache. When invoked, the following operations are performed:
     * <ul>

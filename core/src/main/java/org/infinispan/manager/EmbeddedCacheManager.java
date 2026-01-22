@@ -313,4 +313,6 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    Subject getSubject();
 
    EmbeddedCacheManager withSubject(Subject subject);
+
+   void stop(boolean wait);
 }

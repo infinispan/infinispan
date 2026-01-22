@@ -243,6 +243,11 @@ public class AbstractDelegatingEmbeddedCacheManager extends InternalCacheManager
    }
 
    @Override
+   public void stop(boolean wait) {
+      cm.stop(wait);
+   }
+
+   @Override
    public Subject getSubject() {
       return cm.getSubject();
    }
