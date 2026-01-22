@@ -38,6 +38,15 @@
             <module>jdk22</module>
          </modules>
       </profile>
+      <profile>
+         <id>jdk25</id>
+         <activation>
+            <jdk>[25,)</jdk>
+         </activation>
+         <modules>
+            <module>jdk25</module>
+         </modules>
+      </profile>
 
    </profiles>
 </project>

@@ -54,6 +54,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.jdkspecific.Vectors;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -1113,16 +1114,7 @@ public final class Util {
     * @return if the bytes in the two array ranges are equal
     */
    public static boolean arraysEqual(byte[] a, int aFromIndex, int aToIndex, byte[] b, int bFromIndex, int bToIndex) {
-      int totalAmount = aToIndex - aFromIndex;
-      if (totalAmount != bToIndex - bFromIndex) {
-         return false;
-      }
-      for (int i = 0; i < totalAmount; ++i) {
-         if (a[aFromIndex + i] != b[bFromIndex + i]) {
-            return false;
-         }
-      }
-      return true;
+      return Vectors.getInstance().arraysEqual(a, aFromIndex, aToIndex, b, bFromIndex, bToIndex);
    }
 
    public static byte[] concat(byte[] a, byte[] b) {

@@ -13,6 +13,7 @@ import java.util.PriorityQueue;
 import java.util.function.Function;
 
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.jdkspecific.Vectors;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -458,22 +459,8 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       private long nodeSegmentDistance(int nodeIndex, long segmentHash) {
          nodeDistanceUpdates++;
          long[] currentNodeHashes = nodeHashes[nodeIndex];
-         int hashIndex = Arrays.binarySearch(currentNodeHashes, segmentHash);
-         long scaledDistance;
-         if (hashIndex > 0) {
-            // Found an exact match
-            scaledDistance = 0L;
-         } else {
-            // Flip to get the insertion point
-            hashIndex = -(hashIndex + 1);
-
-            long hashBefore = hashIndex > 0 ? currentNodeHashes[hashIndex - 1] : currentNodeHashes[numNodeHashes - 1];
-            long hashAfter = hashIndex < numNodeHashes ? currentNodeHashes[hashIndex] : currentNodeHashes[0];
-
-            long distance = min(distance(hashBefore, segmentHash), distance(hashAfter, segmentHash));
-            scaledDistance = (long) (distance * distanceFactors[nodeIndex]);
-         }
-         return scaledDistance;
+         long minDistance = Vectors.getInstance().minDistance(segmentHash, currentNodeHashes);
+         return (long) (minDistance * distanceFactors[nodeIndex]);
       }
 
       protected void assignOwner(int segment, int ownerPosition, int nodeIndex, int[] nodeSegmentsWanted) {
