@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -72,7 +73,9 @@ import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.statetransfer.RebalanceType;
+import org.infinispan.statetransfer.StateTransferTracker;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.logging.Log;
@@ -297,7 +300,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    }
 
    @Override
-   public CompletionStage<Void> handleLeave(String cacheName, Address leaver) throws Exception {
+   public CompletionStage<Void> handleLeave(String cacheName, Address leaver, long timeout, TimeUnit unit) throws Exception {
       if (!clusterManagerStatus.isRunning()) {
          log.debugf("Ignoring leave request from %s for cache %s, the local cache manager is shutting down",
                     leaver, cacheName);
@@ -316,6 +319,26 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
          log.tracef("Ignoring leave request from %s for cache %s because it is graceful stopped",
                     leaver, cacheName);
          return CompletableFutures.completedNull();
+      }
+
+      if (timeout > 0) {
+         StateTransferTracker tracker = SecurityActions.getCacheComponent(cacheManager, cacheName, StateTransferTracker.class);
+
+         int initialId = cacheStatus.getCurrentTopology().getTopologyId();
+         CompletableFuture<Void> cf = tracker.onStateTransferCompleted((ct, t) -> {
+            if (t != null)
+               return false;
+
+            return ct.getTopologyId() >= initialId;
+         }).toCompletableFuture();
+
+         return CompletionStages.handleAndComposeAsync(cf.orTimeout(timeout, unit), (ignore, t) -> {
+            if (t != null) {
+               log.errorf(t, "Failed completing state transfer before leaving cache %s", cacheName);
+            }
+
+            return cacheStatus.doLeave(leaver);
+         }, nonBlockingExecutor);
       }
 
       return cacheStatus.doLeave(leaver);

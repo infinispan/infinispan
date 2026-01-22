@@ -314,7 +314,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             mock(PerCacheInboundInvocationHandler.class),
             mockXSiteStateTransferManager(),
             new ControlledTimeService(),
-            TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutorService)
+            TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutorService),
+            mock(StateTransferTracker.class)
             );
    }
 

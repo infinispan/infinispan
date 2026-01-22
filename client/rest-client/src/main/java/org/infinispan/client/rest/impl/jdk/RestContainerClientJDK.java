@@ -7,6 +7,7 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.rest.MultiPartRestEntity;
 import org.infinispan.client.rest.RestContainerClient;
@@ -32,6 +33,16 @@ public class RestContainerClientJDK implements RestContainerClient {
    public CompletionStage<RestResponse> shutdown() {
       return client.post(path + "?action=shutdown");
    }
+
+   @Override
+   public CompletionStage<RestResponse> leave(long timeout, TimeUnit unit) {
+      StringBuilder sb = new StringBuilder(path);
+      sb.append("?action=leave");
+      if (timeout > 0 && unit != null)
+         sb.append("&timeout=").append(unit.toMillis(timeout));
+      return client.post(sb.toString());
+   }
+
    @Override
    public CompletionStage<RestResponse> globalConfiguration(String mediaType) {
       return client.get(path + "/config", Map.of(RestHeaders.ACCEPT, mediaType));

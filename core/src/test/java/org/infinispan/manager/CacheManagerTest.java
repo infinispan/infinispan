@@ -309,7 +309,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cacheStartBlocked.get(10, SECONDS);
 
          // After we call stop in the manager, it should not block.
-         Future<?> managerStopFuture = fork(manager::stop);
+         Future<?> managerStopFuture = fork(() -> manager.stop());
          managerStopBlocked.get(1, SECONDS);
 
          Future<?> cacheStartFuture2 = fork(() -> manager.getCache(CACHE_NAME));
