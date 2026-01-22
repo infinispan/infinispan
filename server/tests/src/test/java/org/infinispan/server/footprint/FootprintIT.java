@@ -29,9 +29,9 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 public class FootprintIT {
    private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 11_700;
    private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 12_200;
-   private static final long HEAP_USAGE_LOWER_BOUND = 22_500_000L;
-   private static final long HEAP_USAGE_UPPER_BOUND = 26_000_000L;
-   private static final long DISK_USAGE_LOWER_BOUND = 77_500_000L;
+   private static final long HEAP_USAGE_LOWER_BOUND = 22_000_000L;
+   private static final long HEAP_USAGE_UPPER_BOUND = 24_000_000L;
+   private static final long DISK_USAGE_LOWER_BOUND = 85_000_000L;
    private static final long DISK_USAGE_UPPER_BOUND = 90_000_000L;
 
    private static final int JACOCO_CLASS_COUNT = 165;
@@ -96,6 +96,7 @@ public class FootprintIT {
          long size = stream.filter(p -> p.toFile().isFile())
                .mapToLong(p -> p.toFile().length())
                .sum();
+         Log.CONTAINER.infof("Disk footprint: %d (offset = %d)", size, diskCountOffset);
          assertThat(size - diskCountOffset).as("Disk footprint").isBetween(DISK_USAGE_LOWER_BOUND, DISK_USAGE_UPPER_BOUND);
       }
    }

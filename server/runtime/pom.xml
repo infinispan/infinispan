@@ -381,21 +381,11 @@
                            <version>${version.swagger-ui-dist}</version>
                            <outputDirectory>${server.output.dir}/static/swagger-ui</outputDirectory>
                            <includes>META-INF/resources/_static/**</includes>
+                           <excludes>**/*.map,**/*-es-*.js</excludes>
                            <fileMappers>
                               <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
                            </fileMappers>
                         </artifactItem>
-                        <!--artifactItem>
-                           <groupId>org.mvnpm</groupId>
-                           <artifactId>swagger-ui-themes</artifactId>
-                           <version>3.0.1</version>
-                           <outputDirectory>${server.output.dir}/static/swagger-ui</outputDirectory>
-                           <includes>META-INF/resources/_static/**</includes>
-                           <excludes>**/*.png</excludes>
-                           <fileMappers>
-                              <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
-                           </fileMappers>
-                        </artifactItem-->
                      </artifactItems>
                   </configuration>
                </execution>
