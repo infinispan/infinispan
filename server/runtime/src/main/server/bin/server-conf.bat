@@ -19,7 +19,7 @@ REM
 REM Specify options to pass to the Java VM.
 REM
 if "%JAVA_OPTS%" == "" (
-   set "JAVA_OPTS=-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -XX:+ExitOnOutOfMemoryError -XX:MetaspaceSize=64M -Xms64m -Xmx512m %JAVA_OPTIONS%"
+   set "JAVA_OPTS=-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -XX:+ExitOnOutOfMemoryError -XX:MetaspaceSize=64M -Xms64m -Xmx512m --add-modules jdk.incubator.vector %JAVA_OPTIONS%"
 ) else (
    echo "JAVA_OPTS already set in environment; overriding default settings with values: %JAVA_OPTS%"
 )
