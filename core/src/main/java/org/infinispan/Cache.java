@@ -315,6 +315,25 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    void stop();
 
    /**
+    * Stop the cache in the current node.
+    *
+    * <p>
+    * This method allows to wait for a given timeout for the node to safely leave the cluster. The stop procedure will
+    * wait for any pending cache topology change and state transfer to complete before leaving.
+    * </p>
+    *
+    * @param timeout Time to wait for the leave procedure to complete. Values {@code <= 0} will return without waiting.
+    * @param unit    The unit of the timeout value.
+    * @return {@code true} if stopped before the timeout elapses, {@code false}, otherwise.
+    * @throws InterruptedException if interrupted while waiting.
+    * @see #stop()
+    */
+   default boolean stop(long timeout, TimeUnit unit) throws InterruptedException {
+      stop();
+      return true;
+   }
+
+   /**
     * Performs a controlled, clustered shutdown of the cache. When invoked, the following operations are performed:
     * <ul>
     *    <li>rebalancing for the cache is disabled</li>

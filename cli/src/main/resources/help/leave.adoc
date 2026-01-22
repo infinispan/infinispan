@@ -1,0 +1,31 @@
+LEAVE(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+leave - stop all caches in a cache container instance.
+
+
+SYNOPSIS
+--------
+*leave* ['OPTIONS']
+
+LEAVE OPTIONS
+-------------
+*--timeout*='TIME'::
+The timeout to wait for caches to complete pending operations (e.g., 30s)
+
+EXAMPLES
+--------
+`leave` +
+Stops the caches in the container immediately without waiting pending operations.
+
+`leave --timeout=30s` +
+Stops the caches in the container and wait up to 30 seconds to complete pending operations.
+
+
+SEE ALSO
+--------
+shutdown(1)

@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 import javax.security.auth.Subject;
 
@@ -45,6 +47,8 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.internal.BlockHoundUtil;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Util;
@@ -741,7 +745,12 @@ public class DefaultCacheManager extends InternalCacheManager {
 
          if (performShutdown) {
             log.tracef("Stopping all caches first before global component registry");
-            stopCaches();
+            try {
+               stopAllCaches(0, TimeUnit.SECONDS);
+            } catch (Throwable t) {
+               CONTAINER.componentFailedToStop(t);
+            }
+
             try {
                globalComponentRegistry.componentFailed(e);
             } catch (Exception e1) {
@@ -792,7 +801,96 @@ public class DefaultCacheManager extends InternalCacheManager {
       }
    }
 
-   private void terminate(String cacheName) {
+   /*
+    * Shutdown cluster-wide resources of the CacheManager, calling {@link Cache#shutdown()} on both user and internal caches
+    * to ensure that they are safely terminated.
+    */
+   public void shutdownAllCaches() {
+      log.tracef("Attempting to shutdown cache manager: " + getAddress());
+      authorizer.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
+      try {
+         performOnCaches(Cache::shutdown);
+      } catch (Throwable t) {
+         CONTAINER.componentFailedToStop(t);
+      }
+   }
+
+   /**
+    * Stop all (user and internal) caches running in the current container.
+    *
+    * <p>
+    * This method can wait for any pending state transfer before stopping the cache. This reduces the likelihood of data
+    * loss when stopping your caches.
+    * </p>
+    *
+    * <p>
+    * This method blocks until all caches are stopped, or the timeout occurs, or the current thread is interrupted.
+    * Whichever happens first. There is no guarantee about the state of the caches in case a timeout happens.
+    * </p>
+    *
+    * @param timeout The timeout value to wait for all caches to stop. Values {@code <= 0} will leave without
+    *                waiting and will not time out.
+    * @param unit The unit of the timeout value.
+    * @return {@code true} if all caches leave in time. {@code false}, if at least one cache timeout.
+    * @throws InterruptedException if interrupted while waiting.
+    */
+   public boolean stopAllCaches(long timeout, TimeUnit unit) throws InterruptedException {
+      log.tracef("Attempting to stop cache manager: %s in (%d / %s)", getAddress(), timeout, unit);
+      log.stoppingAllCaches();
+      authorizer.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
+
+      // Only timeout if a value > 0 was provided.
+      TimeService ts = timeout > 0 ? globalComponentRegistry().getTimeService() : null;
+      final long endTime = ts != null ? ts.expectedEndTime(timeout, unit) : -1;
+      BooleanSupplier hasTimedOut = () -> endTime >= 0 && ts.remainingTime(endTime, TimeUnit.MILLISECONDS) <= 0;
+
+      ByRef.Boolean res = new ByRef.Boolean(true);
+      performOnCaches(c -> {
+         // After the operation timed out, we just proceed without trying to stop caches.
+         if (hasTimedOut.getAsBoolean()) {
+            res.set(false);
+            return;
+         }
+
+         try {
+            boolean curr = res.get();
+            long remaining = ts != null ? ts.remainingTime(endTime, unit) : -1;
+            res.set(curr && c.stop(remaining, unit));
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+      });
+
+      if (Thread.interrupted()) {
+         throw new InterruptedException();
+      }
+
+      return res.get();
+   }
+
+   private void performOnCaches(Consumer<Cache<?, ?>> runner) {
+      Set<String> cachesToShutdown = new LinkedHashSet<>(this.caches.size());
+      // stop ordered caches first
+      try {
+         List<String> ordered = cacheDependencyGraph.topologicalSort();
+         cachesToShutdown.addAll(ordered);
+      } catch (CyclicDependencyException e) {
+         CONTAINER.stopOrderIgnored();
+      }
+      // The caches map includes the default cache
+      cachesToShutdown.addAll(caches.keySet());
+
+      log.tracef("Cache operation order: %s", cachesToShutdown);
+      for (String cacheName : cachesToShutdown) {
+         if (Thread.currentThread().isInterrupted()) {
+            return;
+         }
+
+         terminateCache(runner, cacheName);
+      }
+   }
+
+   private void terminateCache(Consumer<Cache<?, ?>> runner, String cacheName) {
       CompletableFuture<Cache<?, ?>> cacheFuture = this.caches.get(cacheName);
       if (cacheFuture != null) {
          if (!cacheFuture.isDone()) {
@@ -806,59 +904,36 @@ public class DefaultCacheManager extends InternalCacheManager {
             log.tracef("Ignoring cache %s, it is already terminated.", cacheName);
             return;
          }
-         cache.stop();
-      }
-   }
-
-   /*
-    * Shutdown cluster-wide resources of the CacheManager, calling {@link Cache#shutdown()} on both user and internal caches
-    * to ensure that they are safely terminated.
-    */
-   public void shutdownAllCaches() {
-      log.tracef("Attempting to shutdown cache manager: " + getAddress());
-      authorizer.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
-      Set<String> cachesToShutdown = new LinkedHashSet<>(this.caches.size());
-      // stop ordered caches first
-      try {
-         List<String> ordered = cacheDependencyGraph.topologicalSort();
-         cachesToShutdown.addAll(ordered);
-      } catch (CyclicDependencyException e) {
-         CONTAINER.stopOrderIgnored();
-      }
-      // The caches map includes the default cache
-      cachesToShutdown.addAll(caches.keySet());
-
-      log.tracef("Cache shutdown order: %s", cachesToShutdown);
-      for (String cacheName : cachesToShutdown) {
-         try {
-            CompletableFuture<Cache<?, ?>> cacheFuture = this.caches.get(cacheName);
-            if (cacheFuture != null) {
-               Cache<?, ?> cache = cacheFuture.join();
-               if (cache.getStatus().isTerminated()) {
-                  log.tracef("Ignoring cache %s, it is already terminated.", cacheName);
-                  continue;
-               }
-               cache.shutdown();
-            }
-         } catch (Throwable t) {
-            CONTAINER.componentFailedToStop(t);
-         }
+         runner.accept(cache);
       }
    }
 
    @Override
    public void stop() {
       authorizer.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
+      try {
+         internalStop(-1, null);
+      } catch (InterruptedException e) {
+         throw new CacheException("Interrupted waiting for the cache manager to stop");
+      }
+   }
 
-      internalStop();
+   @Override
+   public boolean stop(long timeout, TimeUnit unit) throws InterruptedException {
+      authorizer.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
+      return internalStop(timeout, unit);
    }
 
    @Override
    public void stopCache(String cacheName) {
-      terminate(cacheName);
+      try {
+         terminateCache(Cache::stop, cacheName);
+      } catch (Throwable t) {
+         CONTAINER.componentFailedToStop(t);
+      }
    }
 
-   private void internalStop() {
+   private boolean internalStop(long timeout, TimeUnit unit) throws InterruptedException {
       lifecycleLock.lock();
       String identifierString = identifierString();
       try {
@@ -867,7 +942,7 @@ public class DefaultCacheManager extends InternalCacheManager {
          }
          if (!status.stopAllowed()) {
             log.trace("Ignore call to stop as the cache manager is not running");
-            return;
+            return true;
          }
 
          // We can stop the manager
@@ -879,9 +954,12 @@ public class DefaultCacheManager extends InternalCacheManager {
          lifecycleLock.unlock();
       }
 
+      boolean res = true;
       try {
          log.debugf("Starting shutdown of caches at %s", identifierString);
-         stopCaches();
+         res = stopAllCaches(timeout, unit);
+      } catch (InterruptedException e) {
+         throw e;
       } catch (Throwable t) {
          log.errorf(t, "Exception during shutdown of caches. Proceeding...");
       }
@@ -899,28 +977,8 @@ public class DefaultCacheManager extends InternalCacheManager {
       } finally {
          updateStatus(ComponentStatus.TERMINATED);
       }
-   }
 
-   private void stopCaches() {
-      Set<String> cachesToStop = new LinkedHashSet<>(this.caches.size());
-      // stop ordered caches first
-      try {
-         List<String> ordered = cacheDependencyGraph.topologicalSort();
-         cachesToStop.addAll(ordered);
-      } catch (CyclicDependencyException e) {
-         CONTAINER.stopOrderIgnored();
-      }
-      // The caches map includes the default cache
-      cachesToStop.addAll(caches.keySet());
-      log.tracef("Cache stop order: %s", cachesToStop);
-
-      for (String cacheName : cachesToStop) {
-         try {
-            stopCache(cacheName);
-         } catch (Throwable t) {
-            CONTAINER.componentFailedToStop(t);
-         }
-      }
+      return res;
    }
 
    @Override

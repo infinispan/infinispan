@@ -528,6 +528,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V>, Inte
    }
 
    @Override
+   public boolean stop(long timeout, TimeUnit unit) throws InterruptedException {
+      return cache.stop(timeout, unit);
+   }
+
+   @Override
    @ManagedOperation(
          description = "Shuts down the cache across the cluster",
          displayName = "Clustered cache shutdown"

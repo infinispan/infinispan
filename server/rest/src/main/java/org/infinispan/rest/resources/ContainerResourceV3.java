@@ -139,6 +139,19 @@ public class ContainerResourceV3 extends ContainerResource {
             .auditContext(AuditContext.CACHEMANAGER)
             .handleWith(this::shutdown);
 
+      // Stops the cache container.
+      builder.invocation()
+            .methods(POST).path("/v3/container/_leave")
+            .name("Stop container")
+            .operationId("leaveContainer")
+            .response(NO_CONTENT, "Performed stop container")
+            .response(ACCEPTED, "If stop did not complete within the given timeout")
+            .parameter("timeout", ParameterIn.QUERY, false, Schema.LONG,
+                  "Timeout in milliseconds to wait for cache operations to complete")
+            .permission(AuthorizationPermission.LIFECYCLE)
+            .auditContext(AuditContext.CACHEMANAGER)
+            .handleWith(this::leave);
+
       // ===== REBALANCING OPERATIONS =====
 
       // 9. Enable Rebalancing

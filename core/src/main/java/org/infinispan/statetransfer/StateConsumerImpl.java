@@ -160,6 +160,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
    @Inject TimeService timeService;
+   @Inject StateTransferTracker stateTracker;
 
    protected String cacheName;
    protected long timeout;
@@ -716,6 +717,9 @@ public class StateConsumerImpl implements StateConsumer {
          if (innerTransfers != null && innerTransfers.remove(inboundTransfer) && innerTransfers.isEmpty()) {
             commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, segmentId);
             transfersBySegment.remove(segmentId);
+            if (log.isTraceEnabled()) {
+               log.tracef("Finished applying segment %d for %s, remaining %s segments", segmentId, cacheName, IntSets.from(transfersBySegment.keySet()));
+            }
             progressTracker.removeTasks(1);
          }
       } finally {
@@ -899,6 +903,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
          requestedTransactionalSegments.clear();
          stateRequestExecutor.shutdownNow();
+         stateTracker.completeStateConsumer(Integer.MIN_VALUE);
          progressTracker.finishedAllTasks();
       } catch (Throwable t) {
          log.errorf(t, "Failed to stop StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
@@ -1276,7 +1281,11 @@ public class StateConsumerImpl implements StateConsumer {
 
          inboundTransfer = new InboundTransferTask(segmentsFromSource, source, cacheTopology.getTopologyId(),
                                                    rpcManager, commandsFactory, timeout, cacheName, true);
+         boolean wasEmpty = transfersBySource.isEmpty();
          addTransfer(inboundTransfer, segmentsFromSource);
+         if (wasEmpty) {
+            stateTracker.startStateConsumer(stateTransferTopologyId.get());
+         }
       } finally {
          transferMapsLock.unlock();
       }
@@ -1322,6 +1331,7 @@ public class StateConsumerImpl implements StateConsumer {
 
          if (transfersBySource.isEmpty()) {
             progressTracker.finishedAllTasks();
+            stateTracker.completeStateConsumer(stateTransferTopologyId.get());
          }
       } finally {
          transferMapsLock.unlock();

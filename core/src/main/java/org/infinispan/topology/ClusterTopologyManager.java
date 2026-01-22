@@ -2,6 +2,7 @@ package org.infinispan.topology;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -52,17 +53,23 @@ public interface ClusterTopologyManager {
    /**
     * Signals that a member is leaving the cache.
     * @param viewId is always ignored
-    * @deprecated since 16.0, use {@link #handleLeave(String, Address)} instead
+    * @deprecated since 16.0, use {@link #handleLeave(String, Address, long, TimeUnit)} instead
     */
    @Deprecated(since = "16.0", forRemoval = true)
    default CompletionStage<Void> handleLeave(String cacheName, Address leaver, int viewId) throws Exception {
-      return handleLeave(cacheName, leaver);
+      return handleLeave(cacheName, leaver, Long.MIN_VALUE, TimeUnit.SECONDS);
    }
 
    /**
     * Signals that a member is leaving the cache.
+    *
+    * @param cacheName The cache affected by the leaver.
+    * @param leaver The node who left the cache.
+    * @param timeout A timeout to wait for pending state transfer before leaving. Values {@code <= 0} leave
+    *                immediately without waiting.
+    * @param unit The unit of the timeout value.
     */
-   CompletionStage<Void> handleLeave(String cacheName, Address leaver) throws Exception;
+   CompletionStage<Void> handleLeave(String cacheName, Address leaver, long timeout, TimeUnit unit) throws Exception;
 
    /**
     * Marks the rebalance as complete on the sender.
