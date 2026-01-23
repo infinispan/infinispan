@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
@@ -85,6 +88,7 @@ public final class Util {
 
    private static final String HEX_VALUES = "0123456789ABCDEF";
    private static final char[] HEX_DUMP_CHARS = new char[256 * 2];
+   private static final VarHandle LONG_VH = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
 
    static {
       BASIC_TYPES = new HashSet<>();
@@ -735,12 +739,8 @@ public final class Util {
       data[6] |= 0x40; /* set to version 4 */
       data[8] &= 0x3f; /* clear variant */
       data[8] |= 0x80; /* set to IETF variant */
-      long msb = 0;
-      long lsb = 0;
-      for (int i = 0; i < 8; i++)
-         msb = (msb << 8) | (data[i] & 0xff);
-      for (int i = 8; i < 16; i++)
-         lsb = (lsb << 8) | (data[i] & 0xff);
+      long msb = (long) LONG_VH.get(data, 0);
+      long lsb = (long) LONG_VH.get(data, 8);
       return new UUID(msb, lsb);
    }
 
