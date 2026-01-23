@@ -741,23 +741,25 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    @Override
    public CompletionStage<Path> getServerReport() {
       SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
+      ProcessBuilder builder = new ProcessBuilder();
+      long pid = ProcessInfo.getInstance().getPid();
+      Path home = serverHome.toPath();
+      Path root = serverRoot.toPath();
+
       OS os = OS.getCurrentOs();
-      String reportFile = "bin/%s";
       switch (os) {
          case LINUX:
-            reportFile = String.format(reportFile, "report.sh");
+            builder.command("sh", "-c", String.format("%s %s %s", home.resolve("bin/report.sh"), pid, root));
             break;
          case MAC_OS:
-            reportFile = String.format(reportFile, "report-osx.sh");
+            builder.command("sh", "-c", String.format("%s %s %s", home.resolve("bin/report-osx.sh"), pid, root));
+            break;
+         case WINDOWS:
+            builder.command("cmd", "/c", String.format("%s %s %s", home.resolve("bin/report.bat"), pid, root));
             break;
          default:
             return CompletableFuture.failedFuture(log.serverReportUnavailable(os));
       }
-      long pid = ProcessInfo.getInstance().getPid();
-      Path home = serverHome.toPath();
-      Path root = serverRoot.toPath();
-      ProcessBuilder builder = new ProcessBuilder();
-      builder.command("sh", "-c", String.format("%s %s %s", home.resolve(reportFile), pid, root));
       return blockingManager.supplyBlocking(() -> {
          try {
             Process process = builder.start();
@@ -773,7 +775,8 @@ public class Server extends BaseServerManagement implements AutoCloseable {
             }
 
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            return Paths.get(reader.readLine());
+            String line = reader.readLine();
+            return Paths.get(line);
          } catch (IOException e) {
             throw new RuntimeException(e);
          } catch (InterruptedException e) {
