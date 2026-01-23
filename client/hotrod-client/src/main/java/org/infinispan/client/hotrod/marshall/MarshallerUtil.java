@@ -8,6 +8,9 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamConstants;
 import java.io.OutputStream;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 
 import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -30,6 +33,7 @@ import org.infinispan.protostream.SerializationContext;
 public final class MarshallerUtil {
 
    private static final Log log = LogFactory.getLog(MarshallerUtil.class);
+   private static final VarHandle SHORT_VH = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.BIG_ENDIAN);
 
    private MarshallerUtil() {
    }
@@ -117,7 +121,7 @@ public final class MarshallerUtil {
 
    private static boolean isJavaSerialized(byte[] bytes) {
       if (bytes.length > 2) {
-         short magic = (short) ((bytes[1] & 0xFF) + (bytes[0] << 8));
+         short magic = (short) SHORT_VH.get(bytes, 0);
          return magic == ObjectStreamConstants.STREAM_MAGIC;
       }
 
