@@ -31,8 +31,28 @@
 
    <repositories>
       <repository>
-         <id>jboss-repo</id>
+         <id>central</id>
+         <url>https://repo1.maven.org/maven2/</url>
+      </repository>
+      <repository>
+         <id>shibboleth</id>
+         <url>https://build.shibboleth.net/maven/releases/</url>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+      </repository>
+      <repository>
+         <id>jboss</id>
          <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
       </repository>
    </repositories>
 
