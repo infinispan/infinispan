@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.assertj.core.api.SoftAssertions;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -57,6 +58,10 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
    private void applyCacheManagerClusteringConfiguration(String id, ConfigurationBuilder builder) {
       // Utilize a persistence layer to keep entries after complete restart.
       builder.persistence().addSoftIndexFileStore();
+//      builder.persistence()
+//            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+//            .shared(false)
+//            .storeName("store-resiliency-" + id);
 
       builder.clustering()
             .cacheMode(CacheMode.DIST_SYNC)
@@ -121,9 +126,11 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       assertEventuallySingleCache(0);
 
       // Stopping many nodes concurrently might lead to data loss.
-      // We ensure the nodes keep at least <num owners> / <cluster size> of the data available.
+      // We check the nodes keep at least <num owners> / <cluster size> of the data available.
+      // Since the consistent hash is not perfect. That is, it is not guaranteed a node will own and be backup of the entries,
+      // we allow some wiggle room.
       Cache<?, ?> c = cache(0, CACHE_NAME);
-      float percentage = 1f * c.getAdvancedCache().getCacheConfiguration().clustering().hash().numOwners() / CLUSTER_SIZE;
+      float percentage = 1f * c.getAdvancedCache().getCacheConfiguration().clustering().hash().numOwners() / CLUSTER_SIZE - 0.05f;
       assertThat(c).hasSizeBetween((int) (percentage * DATA_SIZE), DATA_SIZE);
    }
 
@@ -162,33 +169,26 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       // Remove all stopped cache managers to create a new cluster.
       cacheManagers.clear();
 
+      log.info("------ RECREATING CLUSTER NOW");
       // Do not delete the previous data folders.
       for (int i = 0; i < CLUSTER_SIZE; i++) {
+         log.infof("---- CREATING CACHE MAN %s", Character.toString('A' + i));
          createStatefulCacheManager(Character.toString('A' + i), false);
          String address = manager(i).getAddress().toString();
+         log.infof("---- MANAGER %s joins cache", address);
          waitForClusterToForm(CACHE_NAME);
-         Cache<String, String> c = cache(i, CACHE_NAME);
-         int size = c.size();
-//         assertThat(c).hasSize(DATA_SIZE);
-         Set<String> keys = new HashSet<>(DATA_SIZE);
-         for (Map.Entry<String, String> entry : c.entrySet()) {
-            if (!keys.add(entry.getKey())) {
-               throw new AssertionError("Duplicated key: " + entry.getKey());
-            }
-         }
-         assertThat(keys)
-               .withFailMessage(() -> {
-                  StringBuilder sb = new StringBuilder();
-                  sb.append("Expected size: ").append(DATA_SIZE).append(System.lineSeparator());
-                  sb.append("Actual size: ").append(keys.size()).append(System.lineSeparator());
-                  sb.append("Missing keys: ").append(System.lineSeparator());
-                  for (int j = 0; j < DATA_SIZE; j++) {
-                     if (!keys.contains("key-" + j))
-                        sb.append("key-").append(j).append(System.lineSeparator());
-                  }
-                  return sb.toString();
-               })
-               .hasSize(DATA_SIZE);
+
+         // Utilizing the check below, the test will pass. It finds all entries.
+//         Cache<String, String> c = cache(i, CACHE_NAME);
+//         for (int j = 0; j < DATA_SIZE; j++) {
+//            assertThat(c.get("key-" + j)).isEqualTo("value-" + j);
+//         }
+
+         // The assert below will fail.
+         // There are some entries in memory.
+//         assertThat(c.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).keySet()).isEmpty();
+
+         assertDataIntegrity(i);
       }
 
       // Assert topology is correct.
@@ -197,6 +197,16 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       for (int i = 0; i < CLUSTER_SIZE; i++) {
          assertDataIntegrity(cache(i, CACHE_NAME));
       }
+   }
+
+   private int getKeySegment(String key) {
+      DistributionManager dm = TestingUtil.extractComponent(cache(0, CACHE_NAME), DistributionManager.class);
+      return dm.getCacheTopology().getSegment(key);
+   }
+
+   private String getSegmentOwnership(int segment) {
+      DistributionManager dm = TestingUtil.extractComponent(cache(0, CACHE_NAME), DistributionManager.class);
+      return dm.getCacheTopology().getSegmentDistribution(segment).toString();
    }
 
    private void populateCluster() {
@@ -208,6 +218,45 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       }
 
       assertThat(cache).hasSize(DATA_SIZE);
+   }
+
+   private void assertDataIntegrity(int clusterSize) {
+      final SoftAssertions sa = new SoftAssertions();
+      for (int i = 0; i < clusterSize; i++) {
+         Cache<String, String> c = cache(i, CACHE_NAME);
+         String address = c.getCacheManager().getAddress().toString();
+
+         Set<String> keys = new HashSet<>(DATA_SIZE);
+         log.infof("---- KEYSET FROM %s", address);
+         for (Map.Entry<String, String> entry : c.entrySet()) {
+            if (!keys.add(entry.getKey())) {
+               throw new AssertionError("Duplicated key: " + entry.getKey());
+            }
+         }
+
+         log.infof("---- ASSERTING KEY SET IS COMPLETE AT %s", address);
+         sa.assertThat(keys)
+               .withFailMessage(() -> {
+                  StringBuilder sb = new StringBuilder();
+                  sb.append("On node ").append(address).append(System.lineSeparator());
+                  sb.append("Expected size: ").append(DATA_SIZE).append(System.lineSeparator());
+                  sb.append("Actual size: ").append(keys.size()).append(System.lineSeparator());
+                  sb.append("Missing keys: ").append(System.lineSeparator());
+                  for (int j = 0; j < DATA_SIZE; j++) {
+                     String k = "key-" + j;
+                     if (!keys.contains(k)) {
+                        sb.append("KEY=").append(k);
+                        int segment = getKeySegment(k);
+                        sb.append(" // (").append(segment).append(") // ");
+                        sb.append(getSegmentOwnership(segment)).append(System.lineSeparator());
+                     }
+                  }
+                  return sb.toString();
+               })
+               .hasSize(DATA_SIZE);
+      }
+
+      sa.assertAll();
    }
 
    private void assertDataIntegrity(Cache<String, String> cache) {
