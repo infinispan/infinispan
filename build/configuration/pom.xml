@@ -142,7 +142,7 @@
       <version.reactivestreams>1.0.4</version.reactivestreams>
       <version.rocksdb>9.11.2</version.rocksdb>
       <version.rxjava>3.1.12</version.rxjava>
-      <version.sshd>2.16.0</version.sshd>
+      <version.sshd>2.17.0</version.sshd>
       <version.testng.engine>1.1.0</version.testng.engine>
 
       <!-- these versions must be kept in sync with ${version.micrometer}: -->
