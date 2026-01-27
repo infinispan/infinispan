@@ -105,7 +105,7 @@
       <version.jakarta.enterprise.cdi>4.1.0</version.jakarta.enterprise.cdi>
       <version.jakarta.persistence>3.1.0</version.jakarta.persistence>
       <version.javax.cache>1.1.1</version.javax.cache>
-      <version.jboss.logging>3.6.1.Final</version.jboss.logging>
+      <version.jboss.logging>3.6.2.Final</version.jboss.logging>
       <version.jboss.logging.processor>3.0.4.Final</version.jboss.logging.processor>
       <version.jboss.marshalling>2.2.3.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
