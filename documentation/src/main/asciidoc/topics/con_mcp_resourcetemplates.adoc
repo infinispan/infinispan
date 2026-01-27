@@ -2,3 +2,78 @@
 
 Resource templates allow servers to expose parameterized resources using URI templates.
 Arguments may be auto-completed through the completion API.
+
+== Available Resource Templates
+
+{brandname} provides the following resource templates that allow dynamic resource access:
+
+=== Cache Value Template
+*URI Template*: `infinispan+cache://{cacheName}/{key}`
+
+*Name*: cache value
+
+*Description*: Runtime data information: retrieves a value from a cache
+
+*Parameters*:
+- `{cacheName}`: The name of the cache to access
+- `{key}`: The key of the entry to retrieve
+
+*Usage*: This template allows you to retrieve individual cache entries by constructing a URI with the cache name and key. This provides direct access to cached data through the MCP resource mechanism.
+
+*Example URIs*:
+[source]
+----
+infinispan+cache://myCache/user123
+infinispan+cache://sessionCache/abc-def-ghi
+infinispan+cache://productCatalog/product-456
+----
+
+=== Counter Value Template
+*URI Template*: `infinispan+counter://{countername}`
+
+*Name*: counter value
+
+*Description*: Runtime data information: retrieves a value from a counter
+
+*Parameters*:
+- `{countername}`: The name of the counter to access
+
+*Usage*: This template allows you to retrieve the current value of a counter by constructing a URI with the counter name. Counters are distributed atomic values used for tracking metrics or coordinating operations across the cluster.
+
+*Example URIs*:
+[source]
+----
+infinispan+counter://requestCount
+infinispan+counter://activeUsers
+infinispan+counter://totalTransactions
+----
+
+=== Server Logs Template
+*URI Template*: `infinispan+logs://{logType}?lines={lines}`
+
+*Name*: server logs
+
+*MIME Type*: text/plain
+
+*Description*: PRIMARY SOURCE OF INFORMATION FOR SERVER STATUS/HEALTH. Useful to retrieve different types of server logs. Primary source of information to monitor server status, server health, troubleshoot issues, and audit security-related events.
+
+*Parameters*:
+- `{logType}`: The type of log to retrieve. Valid values:
+  * `server`: Main server log
+  * `audit`: Security audit log
+  * `rest-access`: REST API access log
+  * `hotrod-access`: Hot Rod protocol access log
+  * `memcached-access`: Memcached protocol access log
+  * `resp-access`: RESP protocol access log
+- `{lines}`: Number of lines to retrieve (default: 200, min: 1, max: 10000)
+
+*Usage*: This template provides flexible access to various server log files. By specifying the log type and number of lines, you can retrieve exactly the log data you need for monitoring, troubleshooting, or security auditing.
+
+*Example URIs*:
+[source]
+----
+infinispan+logs://server?lines=500
+infinispan+logs://audit?lines=100
+infinispan+logs://rest-access?lines=1000
+infinispan+logs://hotrod-access?lines=200
+----

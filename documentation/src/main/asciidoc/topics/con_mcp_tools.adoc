@@ -3,3 +3,225 @@
 {brandname}'s MCP tools expose operations that allows models to interact with various components, such as caches,
 counters, configurations and metrics.
 
+== Available Tools
+
+=== Cache Operations
+
+==== getCacheNames
+Retrieves all the available cache names.
+
+*Description*: Runtime data inventory: retrieves all the available cache names. For server status/health, use log resources instead.
+
+*Input Schema*: No parameters required
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getCacheNames",
+  "arguments": {}
+}
+----
+
+==== createCache
+Creates a new cache with default configuration.
+
+*Description*: Runtime data modification: creates a cache
+
+*Parameters*:
+- `cacheName` (string, required): The name of the cache
+
+*Example*:
+[source,json]
+----
+{
+  "name": "createCache",
+  "arguments": {
+    "cacheName": "myCache"
+  }
+}
+----
+
+==== getCacheEntry
+Retrieves a value from a cache.
+
+*Description*: Runtime data retrieval: retrieves a value from a cache
+
+*Parameters*:
+- `cacheName` (string, required): The name of the cache
+- `key` (string, required): The key of the entry
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getCacheEntry",
+  "arguments": {
+    "cacheName": "myCache",
+    "key": "myKey"
+  }
+}
+----
+
+==== setCacheEntry
+Inserts or updates an entry in a cache.
+
+*Description*: Runtime data modification: inserts/updates an entry in a cache
+
+*Parameters*:
+- `cacheName` (string, required): The name of the cache
+- `key` (string, required): The key of the entry
+- `value` (string, required): The value of the entry
+- `lifespan` (number, optional): The lifespan of the entry in milliseconds
+- `maxIdle` (number, optional): The maximum idle time of the entry in milliseconds
+
+*Example*:
+[source,json]
+----
+{
+  "name": "setCacheEntry",
+  "arguments": {
+    "cacheName": "myCache",
+    "key": "myKey",
+    "value": "myValue",
+    "lifespan": 60000,
+    "maxIdle": 30000
+  }
+}
+----
+
+==== deleteCacheEntry
+Deletes an entry from a cache.
+
+*Description*: Runtime data modification: deletes an entry from a cache
+
+*Parameters*:
+- `cacheName` (string, required): The name of the cache
+- `key` (string, required): The key of the entry
+
+*Example*:
+[source,json]
+----
+{
+  "name": "deleteCacheEntry",
+  "arguments": {
+    "cacheName": "myCache",
+    "key": "myKey"
+  }
+}
+----
+
+==== queryCache
+Queries a cache using Ickle query language.
+
+*Description*: Runtime data retrieval: queries a cache using Ickle query language
+
+*Parameters*:
+- `cacheName` (string, required): The name of the cache
+- `query` (string, required): The Ickle query
+
+*Example*:
+[source,json]
+----
+{
+  "name": "queryCache",
+  "arguments": {
+    "cacheName": "myCache",
+    "query": "FROM com.example.Person WHERE age > 18"
+  }
+}
+----
+
+=== Schema Operations
+
+==== getSchemas
+Retrieves all the available Protobuf schemas.
+
+*Description*: Runtime data inventory: retrieves all the available schemas. For server status/health, use log resources instead.
+
+*Input Schema*: No parameters required
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getSchemas",
+  "arguments": {}
+}
+----
+
+=== Counter Operations
+
+==== getCounterNames
+Retrieves all the available counter names.
+
+*Description*: Runtime data inventory: retrieves all the available counter names. For server status/health, use log resources instead.
+
+*Input Schema*: No parameters required
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getCounterNames",
+  "arguments": {}
+}
+----
+
+==== getCounter
+Retrieves the value of a counter.
+
+*Description*: Runtime data retrieval: retrieves the value of a counter
+
+*Parameters*:
+- `counterName` (string, required): The name of the counter
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getCounter",
+  "arguments": {
+    "counterName": "myCounter"
+  }
+}
+----
+
+==== increment
+Increments the value of a counter.
+
+*Description*: Runtime data modification: increments the value of a counter
+
+*Parameters*:
+- `counterName` (string, required): The name of the counter
+
+*Example*:
+[source,json]
+----
+{
+  "name": "increment",
+  "arguments": {
+    "counterName": "myCounter"
+  }
+}
+----
+
+==== decrement
+Decrements the value of a counter.
+
+*Description*: Runtime data modification: decrements the value of a counter
+
+*Parameters*:
+- `counterName` (string, required): The name of the counter
+
+*Example*:
+[source,json]
+----
+{
+  "name": "decrement",
+  "arguments": {
+    "counterName": "myCounter"
+  }
+}
+----
+
