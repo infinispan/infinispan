@@ -50,6 +50,7 @@ Use Infinispan caching capabilities to boost application performance with a faul
 * link:titles/memcached/memcached.html[Using the Memcached protocol endpoint with Infinispan]
 * link:titles/resp/resp-endpoint.html[Using the Redis-compatible RESP protocol endpoint with Infinispan]
 * link:titles/spring/spring.html[Spring Cache and Spring Sessions with Infinispan]
+* link:titles/mcp_server/mcp_server.html[Model Context Protocol (MCP) Server (experimental)]
 
 [discrete]
 == Reference documentation
@@ -59,3 +60,4 @@ Use Infinispan caching capabilities to boost application performance with a faul
 * link:logging/logs.html[Log messages]
 * link:titles/metrics/metrics.html[Metrics]
 * link:titles/openapi/openapi.html[OpenAPI]
+
