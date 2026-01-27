@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
@@ -243,8 +244,8 @@ public class AbstractDelegatingEmbeddedCacheManager extends InternalCacheManager
    }
 
    @Override
-   public void stop(boolean wait) {
-      cm.stop(wait);
+   public void stop(long timeout, TimeUnit unit) {
+      cm.stop(timeout, unit);
    }
 
    @Override

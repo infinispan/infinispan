@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -57,11 +58,11 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
 
    private void applyCacheManagerClusteringConfiguration(String id, ConfigurationBuilder builder) {
       // Utilize a persistence layer to keep entries after complete restart.
-      builder.persistence().addSoftIndexFileStore();
-//      builder.persistence()
-//            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-//            .shared(false)
-//            .storeName("store-resiliency-" + id);
+//      builder.persistence().addSoftIndexFileStore();
+      builder.persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .shared(false)
+            .storeName("store-resiliency-" + id);
 
       builder.clustering()
             .cacheMode(CacheMode.DIST_SYNC)
@@ -82,7 +83,7 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       // We scale the cluster down to 1 cache.
       for (int i = CLUSTER_SIZE - 1; i > 0; i--) {
          Cache<?, ?> c = cache(i, CACHE_NAME);
-         c.stop(true);
+         c.stop(30, TimeUnit.SECONDS);
       }
 
       assertEventuallySingleCache(0);
@@ -100,7 +101,7 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       // We scale the cluster down to 1 cache.
       for (int i = CLUSTER_SIZE - 1; i > 0; i--) {
          EmbeddedCacheManager ecm = cacheManagers.remove(i);
-         ecm.stop(true);
+         ecm.stop(30, TimeUnit.SECONDS);
       }
 
       assertEventuallySingleCache(0);
@@ -119,7 +120,7 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       CompletableFuture<?>[] cfs = new CompletableFuture[CLUSTER_SIZE - 1];
       for (int i = CLUSTER_SIZE - 1; i > 0; i--) {
          Cache<?, ?> c = cache(i, CACHE_NAME);
-         cfs[i - 1] = CompletableFuture.runAsync(() -> c.stop(true), testExecutor());
+         cfs[i - 1] = CompletableFuture.runAsync(() -> c.stop(30, TimeUnit.SECONDS), testExecutor());
       }
 
       CompletableFuture.allOf(cfs).get(30, TimeUnit.SECONDS);
@@ -153,7 +154,7 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       waitForClusterToForm(CACHE_NAME);
    }
 
-   public void testFullClusterRestartKeepsData() throws Throwable {
+   public void testFullClusterRestartKeepsData() {
       waitForClusterToForm(CACHE_NAME);
       populateCluster();
 
@@ -163,31 +164,17 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
 
       for (int i = CLUSTER_SIZE - 1; i >= 0; i--) {
          EmbeddedCacheManager ecm = manager(i);
-         ecm.stop(true);
+         ecm.stop(30, TimeUnit.SECONDS);
       }
 
       // Remove all stopped cache managers to create a new cluster.
       cacheManagers.clear();
 
-      log.info("------ RECREATING CLUSTER NOW");
       // Do not delete the previous data folders.
       for (int i = 0; i < CLUSTER_SIZE; i++) {
-         log.infof("---- CREATING CACHE MAN %s", Character.toString('A' + i));
          createStatefulCacheManager(Character.toString('A' + i), false);
-         String address = manager(i).getAddress().toString();
-         log.infof("---- MANAGER %s joins cache", address);
+
          waitForClusterToForm(CACHE_NAME);
-
-         // Utilizing the check below, the test will pass. It finds all entries.
-//         Cache<String, String> c = cache(i, CACHE_NAME);
-//         for (int j = 0; j < DATA_SIZE; j++) {
-//            assertThat(c.get("key-" + j)).isEqualTo("value-" + j);
-//         }
-
-         // The assert below will fail.
-         // There are some entries in memory.
-//         assertThat(c.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).keySet()).isEmpty();
-
          assertDataIntegrity(i);
       }
 
@@ -199,16 +186,6 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       }
    }
 
-   private int getKeySegment(String key) {
-      DistributionManager dm = TestingUtil.extractComponent(cache(0, CACHE_NAME), DistributionManager.class);
-      return dm.getCacheTopology().getSegment(key);
-   }
-
-   private String getSegmentOwnership(int segment) {
-      DistributionManager dm = TestingUtil.extractComponent(cache(0, CACHE_NAME), DistributionManager.class);
-      return dm.getCacheTopology().getSegmentDistribution(segment).toString();
-   }
-
    private void populateCluster() {
       Cache<String, String> cache = cache(0, CACHE_NAME);
 
@@ -218,6 +195,34 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       }
 
       assertThat(cache).hasSize(DATA_SIZE);
+   }
+
+   private void assertDataIntegrity(Cache<String, String> cache) {
+      assertThat(cache).hasSize(DATA_SIZE);
+
+      for (int i = 0; i < DATA_SIZE; i++) {
+         assertThat(cache.get("key-" + i)).isEqualTo("value-" + i);
+      }
+   }
+
+   private void assertEventuallySingleCache(int index) {
+      eventually(() -> {
+         DistributionManager dm2 = TestingUtil.extractComponent(cache(index, CACHE_NAME), DistributionManager.class);
+         if (dm2.isRehashInProgress())
+            return false;
+
+         return dm2.getCacheTopology().getMembersSet().size() == 1;
+      });
+   }
+
+   private int getKeySegment(String key) {
+      DistributionManager dm = TestingUtil.extractComponent(cache(0, CACHE_NAME), DistributionManager.class);
+      return dm.getCacheTopology().getSegment(key);
+   }
+
+   private String getSegmentOwnership(int segment) {
+      DistributionManager dm = TestingUtil.extractComponent(cache(0, CACHE_NAME), DistributionManager.class);
+      return dm.getCacheTopology().getSegmentDistribution(segment).toString();
    }
 
    private void assertDataIntegrity(int clusterSize) {
@@ -257,23 +262,5 @@ public class DataResiliencyScalingTest extends MultipleCacheManagersTest {
       }
 
       sa.assertAll();
-   }
-
-   private void assertDataIntegrity(Cache<String, String> cache) {
-      assertThat(cache).hasSize(DATA_SIZE);
-
-      for (int i = 0; i < DATA_SIZE; i++) {
-         assertThat(cache.get("key-" + i)).isEqualTo("value-" + i);
-      }
-   }
-
-   private void assertEventuallySingleCache(int index) {
-      eventually(() -> {
-         DistributionManager dm2 = TestingUtil.extractComponent(cache(index, CACHE_NAME), DistributionManager.class);
-         if (dm2.isRehashInProgress())
-            return false;
-
-         return dm2.getCacheTopology().getMembersSet().size() == 1;
-      });
    }
 }

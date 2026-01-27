@@ -11,6 +11,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -49,6 +50,7 @@ public class StateTransferTracker {
 
    private String address;
 
+   @Start
    protected void start() {
       address = rpcManager.running().getAddress().toString();
    }
@@ -81,7 +83,7 @@ public class StateTransferTracker {
    public void cacheTopologyUpdated(CacheTopology cacheTopology) {
       boolean isStableTopology = cacheTopology.getPendingCH() == null;
       if (isStableTopology) {
-         log.tracef("Installed stable topology for %s with %s, state transfer is done now", cacheName, cacheTopology);
+         log.tracef("%s: Installed stable topology for %s with %s, state transfer is done now", address, cacheName, cacheTopology);
          int previousTopologyId = currentTopology != null ? currentTopology.getTopologyId() : Integer.MIN_VALUE;
          this.currentTopology = cacheTopology;
 
@@ -167,6 +169,7 @@ public class StateTransferTracker {
    }
 
    private void notifyListeners(CacheTopology topology, Throwable t) {
+      log.tracef("%s: notifying all listeners topology installed: %s (%s)", address, topology, t);
       listeners.removeIf(bf -> invokeListener(topology, t, bf));
    }
 

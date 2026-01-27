@@ -3,6 +3,7 @@ package org.infinispan.manager;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
@@ -314,5 +315,5 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
 
    EmbeddedCacheManager withSubject(Subject subject);
 
-   void stop(boolean wait);
+   void stop(long timeout, TimeUnit unit);
 }

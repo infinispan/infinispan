@@ -547,7 +547,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    }
 
    @Override
-   public void stop(boolean wait) {
-      cache.stop(wait);
+   public void stop(long timeout, TimeUnit unit) {
+      cache.stop(timeout, unit);
    }
 }

@@ -314,7 +314,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    @Override
    void stop();
 
-   default void stop(boolean wait) {
+   default void stop(long timeout, TimeUnit unit) {
       stop();
    }
 
