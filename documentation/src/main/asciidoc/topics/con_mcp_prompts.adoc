@@ -1,3 +1,93 @@
 = MCP Prompts
 
 The Model Context Protocol (MCP) provides a standardized way for servers to expose prompt templates to clients. Prompts allow servers to provide structured messages and instructions for interacting with language models. Clients can discover available prompts, retrieve their contents, and provide arguments to customize them.
+
+== Available Prompts
+
+{brandname} provides the following prompts to help users find relevant documentation:
+
+=== find-documentation
+Helps find relevant {brandname} documentation on the official website for a specific topic.
+
+*Name*: find-documentation
+
+*Description*: Helps find relevant Infinispan documentation on the official website for a specific topic. Primary source of information MUST BE https://infinispan.org/documentation
+
+*Arguments*:
+- `topic` (required): What to search for in the documentation (e.g., 'cache configuration', 'Hot Rod client')
+- `context` (optional): Additional context about your goal or use case
+
+*Usage*: This prompt guides the language model to search the official {brandname} documentation for information about a specific topic. When invoked, it provides a structured search request along with a comprehensive list of documentation URLs organized by topic area.
+
+*Example*:
+[source,json]
+----
+{
+  "name": "find-documentation",
+  "arguments": {
+    "topic": "cache configuration",
+    "context": "I need to configure a distributed cache with persistence"
+  }
+}
+----
+
+*Documentation Areas Covered*:
+The prompt provides direct links to documentation for:
+
+- Configuring caches
+- Encoding and marshalling data
+- Querying caches
+- Embedded mode
+- Hot Rod Java client
+- REST API
+- RESP (Redis clients)
+- Memcached clients
+- Hibernate ORM cache provider
+- Quarkus integration
+- Spring Boot integration
+- Server administration
+- Operator (Kubernetes/OpenShift)
+- Helm Chart
+- Ansible Collection
+- Command-Line Interface (CLI)
+- Planning and Tuning
+- Cross-site replication
+- Integration with AI/ML frameworks (Quarkus Langchain, Langchain, Langchain4j)
+- Integration with other frameworks (Vert.x, Keycloak, Apache Camel, WildFly)
+
+=== find-documentation-guided
+Helps find relevant {brandname} documentation with topic suggestions for common areas.
+
+*Name*: find-documentation-guided
+
+*Description*: Helps find relevant Infinispan documentation with topic suggestions for common areas
+
+*Arguments*:
+- `topic` (required): What to search for in the documentation (e.g., 'cache configuration', 'Hot Rod client')
+- `context` (optional): Additional context about your goal or use case
+
+*Usage*: This is a variation of the `find-documentation` prompt that provides auto-completion suggestions for common documentation topics. When using MCP clients that support completion, this prompt will offer a list of frequently accessed topic areas to choose from.
+
+*Available Topic Completions*:
+- Cache Configuration
+- Cross-Site Replication
+- Hot Rod Client
+- Query API
+- REST API
+- Persistence
+- Security
+- Clustering
+- Transactions
+- Server Management
+
+*Example*:
+[source,json]
+----
+{
+  "name": "find-documentation-guided",
+  "arguments": {
+    "topic": "Hot Rod client",
+    "context": "Setting up a Java client application"
+  }
+}
+----

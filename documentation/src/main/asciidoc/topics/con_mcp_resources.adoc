@@ -4,3 +4,75 @@ The Model Context Protocol (MCP) provides a standardized way for servers to expo
 Resources allow servers to share data that provides context to language models, such as files, database schemas,
 or application-specific information.
 Each resource is uniquely identified by a URI.
+
+== Available Resources
+
+{brandname} exposes the following predefined resources through the MCP server:
+
+=== Server Log
+*URI*: `infinispan+logs://server?lines=200`
+
+*Name*: server log
+
+*MIME Type*: text/plain
+
+*Description*: PRIMARY SOURCE OF INFORMATION FOR SERVER STATUS/HEALTH. Returns info about server status, health, errors, warnings, exceptions, startup/shutdown events, and troubleshooting.
+
+*Usage*: This resource provides access to the main server log file, which contains comprehensive information about the {brandname} server's operations, including startup sequences, configuration details, error messages, warnings, and general operational events. It is the primary resource for monitoring server health and troubleshooting issues.
+
+*Example URI*:
+[source]
+----
+infinispan+logs://server?lines=200
+----
+
+=== Audit Log
+*URI*: `infinispan+logs://audit?lines=200`
+
+*Name*: audit log
+
+*MIME Type*: text/plain
+
+*Description*: PRIMARY SOURCE OF INFORMATION FOR SERVER STATUS/SECURITY. Returns info about security events: authentication attempts, authorization failures, suspicious activity.
+
+*Usage*: This resource provides access to the audit log, which tracks all security-related events on the server. Use this resource to monitor authentication attempts, detect authorization failures, and identify potential security threats or suspicious activities.
+
+*Example URI*:
+[source]
+----
+infinispan+logs://audit?lines=200
+----
+
+=== REST Access Log
+*URI*: `infinispan+logs://rest-access?lines=200`
+
+*Name*: REST access log
+
+*MIME Type*: text/plain
+
+*Description*: PRIMARY SOURCE OF INFORMATION FOR SERVER STATUS/WORKLOAD. Returns info about REST API usage patterns: request rates, errors (4xx/5xx), slow endpoints, client IPs. Useful also for security auditing, i.e. detecting DoS attacks or suspicious activity.
+
+*Usage*: This resource provides access to the REST API access log, which records all HTTP requests to the {brandname} REST endpoint. Analyze this log to understand API usage patterns, identify performance bottlenecks, detect errors, and monitor client activity. It's also valuable for security auditing to detect denial-of-service attacks or unusual access patterns.
+
+*Example URI*:
+[source]
+----
+infinispan+logs://rest-access?lines=200
+----
+
+== Resource Parameters
+
+=== lines Parameter
+The `lines` parameter controls how many lines to retrieve from log resources.
+
+*Default*: 200
+
+*Minimum*: 1
+
+*Maximum*: 10000
+
+*Example*:
+[source]
+----
+infinispan+logs://server?lines=500
+----
