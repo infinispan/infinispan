@@ -59,3 +59,4 @@ Use Infinispan caching capabilities to boost application performance with a faul
 * link:logging/logs.html[Log messages]
 * link:titles/metrics/metrics.html[Metrics]
 * link:titles/openapi/openapi.html[OpenAPI]
+* link:titles/mcp_server/mcp_server.html[Model Context Protocol (MCP) Server]
