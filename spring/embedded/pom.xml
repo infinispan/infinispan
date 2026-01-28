@@ -115,11 +115,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjweaver</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.junit.support</groupId>
             <artifactId>testng-engine</artifactId>
             <scope>test</scope>
