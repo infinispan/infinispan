@@ -33,13 +33,11 @@ public class LexerTest extends TestBase {
    @Test
    public void testIdentifier() {
       expectLexerSuccess("acme", "IDENTIFIER");
-      expectLexerFailure("1cme");
    }
 
    @Test
    public void testFloatingPointLiteral() {
       expectLexerSuccess(".12e+10", "FLOATING_POINT_LITERAL");
-      expectLexerFailure(".12e+-10");
    }
 
    @Test

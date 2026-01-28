@@ -21,7 +21,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    @Test
    public void testWhereTautology() {
       String queryString = "FROM org.infinispan.query.objectfilter.test.model.Person WHERE true";
-      IckleParsingResult<TypeMetadata> result = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<TypeMetadata> result = IckleQueryStringParser.parse(queryString, propertyHelper);
       assertEquals(ConstantBooleanExpr.TRUE, result.getWhereClause());
       assertNull(result.getHavingClause());
    }
@@ -29,7 +29,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    @Test
    public void testWhereContradiction() {
       String queryString = "FROM org.infinispan.query.objectfilter.test.model.Person WHERE false";
-      IckleParsingResult<TypeMetadata> result = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<TypeMetadata> result = IckleQueryStringParser.parse(queryString, propertyHelper);
       assertEquals(ConstantBooleanExpr.FALSE, result.getWhereClause());
       assertNull(result.getHavingClause());
    }
@@ -39,7 +39,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       //expectedException.expect(ParsingException.class);
       //expectedException.expectMessage("ISPN028526");
       String queryString = "FROM IndexedEntity u WHERE u.name = 'John' blah blah blah";
-      IckleParser.parse(queryString, propertyHelper);
+      IckleQueryStringParser.parse(queryString, propertyHelper);
    }
 
    @Test
@@ -47,7 +47,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       //expectedException.expect(ParsingException.class);
       //expectedException.expectMessage("ISPN028505");
       String queryString = "from org.infinispan.query.objectfilter.test.model.Person where age = 'xyz'";
-      IckleParser.parse(queryString, propertyHelper);
+      IckleQueryStringParser.parse(queryString, propertyHelper);
    }
 
    @Test
@@ -55,7 +55,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       //expectedException.expect(ParsingException.class);
       //expectedException.expectMessage("ISPN028506");
       String queryString = "from org.infinispan.query.objectfilter.test.model.Person where lastUpdate = '20140101zzzzzzzz'";
-      IckleParser.parse(queryString, propertyHelper);
+      IckleQueryStringParser.parse(queryString, propertyHelper);
    }
 
    @Test
@@ -63,7 +63,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       //expectedException.expect(ParsingException.class);
       //expectedException.expectMessage("ISPN028508");
       String queryString = "from org.infinispan.query.objectfilter.test.model.Person where gender = 'SomeUndefinedValue'";
-      IckleParser.parse(queryString, propertyHelper);
+      IckleQueryStringParser.parse(queryString, propertyHelper);
    }
 
    @Test
@@ -71,7 +71,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       //expectedException.expect(ParsingException.class);
       //expectedException.expectMessage("ISPN028507");
       String queryString = "from org.infinispan.query.objectfilter.test.model.Person where deleted = 'maybe'";
-      IckleParser.parse(queryString, propertyHelper);
+      IckleQueryStringParser.parse(queryString, propertyHelper);
    }
 
    @Test
@@ -79,7 +79,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       //expectedException.expect(ParsingException.class);
       //expectedException.expectMessage("ISPN028504");
       String queryString = "from org.infinispan.query.objectfilter.test.model.Person where address = 5";
-      IckleParser.parse(queryString, propertyHelper);
+      IckleQueryStringParser.parse(queryString, propertyHelper);
    }
 
    @Test
@@ -87,7 +87,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       //expectedException.expect(ParsingException.class);
       //expectedException.expectMessage("ISPN028504");
       String queryString = "from org.infinispan.query.objectfilter.test.model.Person where phoneNumbers = 5";
-      IckleParser.parse(queryString, propertyHelper);
+      IckleQueryStringParser.parse(queryString, propertyHelper);
    }
 
    @Test
@@ -95,7 +95,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       //expectedException.expect(ParsingException.class);
       //expectedException.expectMessage("ISPN028521");
       String queryString = "from org.infinispan.query.objectfilter.test.model.Person where name : 'Joe'";
-      IckleParser.parse(queryString, propertyHelper);
+      IckleQueryStringParser.parse(queryString, propertyHelper);
    }
 
    @Test
@@ -105,6 +105,6 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       String queryString = "FROM org.infinispan.query.objectfilter.test.model.Person p where p.location within circle(44, 55, 66)";
 
       // Must observe a parsing exception caused by spatial queries referencing a non-spatial property
-      IckleParser.parse(queryString, propertyHelper);
+      IckleQueryStringParser.parse(queryString, propertyHelper);
    }
 }

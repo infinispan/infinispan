@@ -1,6 +1,6 @@
 package org.infinispan.query.objectfilter.impl.syntax;
 
-import org.infinispan.query.objectfilter.impl.ql.QueryRendererDelegate;
+import org.infinispan.query.objectfilter.impl.syntax.parser.VirtualExpressionBuilder;
 
 /**
  * @author anistor@redhat.com
@@ -10,14 +10,14 @@ public final class FullTextOccurExpr implements BooleanExpr {
 
    private final BooleanExpr child;
 
-   private final QueryRendererDelegate.Occur occur;
+   private final VirtualExpressionBuilder.Occur occur;
 
-   public FullTextOccurExpr(BooleanExpr child, QueryRendererDelegate.Occur occur) {
+   public FullTextOccurExpr(BooleanExpr child, VirtualExpressionBuilder.Occur occur) {
       this.child = child;
       this.occur = occur;
    }
 
-   public QueryRendererDelegate.Occur getOccur() {
+   public VirtualExpressionBuilder.Occur getOccur() {
       return occur;
    }
 
@@ -37,7 +37,7 @@ public final class FullTextOccurExpr implements BooleanExpr {
 
    @Override
    public void appendQueryString(StringBuilder sb) {
-      sb.append(occur.getOperator());
+      sb.append(((VirtualExpressionBuilder.Occur) occur).getOperator());
       child.appendQueryString(sb);
    }
 }
