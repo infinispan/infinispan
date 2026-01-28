@@ -12,6 +12,12 @@ public class BaseJdbcDeploy {
         addLibrary(war, "org.infinispan:infinispan-cachestore-jdbc");
         addLibrary(war, "org.infinispan:infinispan-core");
         addLibrary(war, "com.h2database:h2");
+        addLibrary(war, "org.postgresql:postgresql");
+        addLibrary(war, "com.mysql:mysql-connector-j");
+        addLibrary(war, "com.oracle.database.jdbc:ojdbc11");
+        addLibrary(war, "org.mariadb.jdbc:mariadb-java-client");
+        addLibrary(war, "com.ibm.db2:jcc");
+        addLibrary(war, "com.microsoft.sqlserver:mssql-jdbc");
         addLibrary(war, "org.jgroups:jgroups");
         war.addAsResource("connection.properties");
         String driverPath = System.getProperty("driver.path");
