@@ -12,6 +12,7 @@ import sun.misc.Unsafe;
  *
  * @author wburns
  * @since 8.0
+ * @deprecated since 16.1, use {@link org.infinispan.marshall.core.JOLEntrySizeCalculator}
  */
 public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHelper<Object, Object> {
    public long calculateSize(Object key, Object value) {
