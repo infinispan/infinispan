@@ -1,0 +1,188 @@
+name: Nightly Alt JDK Matrix Test
+
+on:
+  schedule:
+    - cron: '42 1 * * *' # Runs every day at 01:42 UTC on main branch only
+  push:
+    branches:
+      - '16.1.x'
+  workflow_dispatch:
+    inputs:
+      jdk-versions:
+        description: 'JDK versions to test (comma-separated, e.g., "17,21")'
+        required: false
+        default: '17,21'
+        type: string
+      modules:
+        description: 'Maven modules to test (comma-separated paths, or "default" for predefined list)'
+        required: false
+        default: 'default'
+        type: string
+      baseline-jdk:
+        description: 'Baseline JDK version for building'
+        required: false
+        default: '25'
+        type: string
+      skip-build:
+        description: 'Skip the build step and only run tests'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      jdk-matrix: ${{ steps.set-matrix.outputs.jdk-matrix }}
+      modules: ${{ steps.set-matrix.outputs.modules }}
+      baseline-jdk: ${{ steps.set-matrix.outputs.baseline-jdk }}
+    steps:
+      - name: Prepare matrix
+        id: set-matrix
+        shell: bash
+        run: |
+          # Get input values or use defaults
+          JDK_VERSIONS="${{ github.event.inputs.jdk-versions }}"
+          JDK_VERSIONS="${JDK_VERSIONS:-17,21}"
+          
+          MODULES="${{ github.event.inputs.modules }}"
+          MODULES="${MODULES:-default}"
+          
+          BASELINE_JDK="${{ github.event.inputs.baseline-jdk }}"
+          BASELINE_JDK="${BASELINE_JDK:-25}"
+          
+          # Convert comma-separated JDK versions to JSON array
+          IFS=',' read -ra JDK_ARRAY <<< "$JDK_VERSIONS"
+          JDK_JSON="["
+          for jdk in "${JDK_ARRAY[@]}"; do
+            jdk_trimmed=$(echo "$jdk" | xargs)
+            if [ -z "$JDK_JSON" ] || [ "$JDK_JSON" = "[" ]; then
+              JDK_JSON="$JDK_JSON\"$jdk_trimmed\""
+            else
+              JDK_JSON="$JDK_JSON,\"$jdk_trimmed\""
+            fi
+          done
+          JDK_JSON="$JDK_JSON]"
+          
+          # Use default modules if not specified
+          if [ "$MODULES" = "default" ]; then
+            MODULES="server/tests,"
+            MODULES+="counter,"
+            MODULES+="lock,"
+            MODULES+="multimap,"
+            MODULES+="cdi/embedded,"
+            MODULES+="archetypes/embedded,"
+            MODULES+="jcache/embedded,"
+            MODULES+="jcache/tck-runner-embedded,"
+            MODULES+="spring/embedded,"
+            MODULES+="spring/spring6/spring6-embedded,"
+            MODULES+="spring/spring7/spring7-embedded,"
+            MODULES+="spring/spring-boot-3/embedded,"
+            MODULES+="spring/spring-boot-3/it-tests/embedded-tests,"
+            MODULES+="spring/spring-boot-4/embedded,"
+            MODULES+="spring/spring-boot-4/it-tests/embedded-tests"
+          fi
+          
+          {
+            echo "jdk-matrix=$JDK_JSON"
+            echo "modules=$MODULES"
+            echo "baseline-jdk=$BASELINE_JDK"
+          } >> "$GITHUB_OUTPUT"
+
+  build-and-test-alternate-jdk:
+    permissions:
+      checks: write
+    needs: prepare-matrix
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
+    strategy:
+      fail-fast: false
+      matrix:
+        jdk: ${{ fromJson(needs.prepare-matrix.outputs.jdk-matrix) }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Java (baseline JDK ${{ needs.prepare-matrix.outputs.baseline-jdk }})
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ needs.prepare-matrix.outputs.baseline-jdk }}
+          distribution: 'zulu'
+
+      - name: Build Infinispan with baseline JDK
+        if: ${{ github.event.inputs.skip-build != 'true' }}
+        run: ./mvnw -q clean install -Pdistribution -DskipTests -Dcheckstyle.skip
+
+      - name: Setup alternate JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ matrix.jdk }}
+          distribution: 'zulu'
+
+      - name: Run tests with alternate JDK ${{ matrix.jdk }}
+        shell: bash
+        run: |
+          # Set JAVA_ALT_HOME to the alternate JDK path
+          export JAVA_ALT_HOME=$JAVA_HOME
+          ./mvnw -q verify \
+            -pl ${{ needs.prepare-matrix.outputs.modules }} \
+            -Pjava-alt-test \
+            -Denforcer.skip=true \
+            -Dmaven.test.failure.ignore=true \
+            -Dansi.strip=true \
+            -B -e
+
+      - name: Upload surefire test report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: surefire-test-report-JDK${{ matrix.jdk }}
+          path: |
+            **/target/*-reports*/**/TEST-*.xml
+            !**/target/*-reports*/**/TEST-*FLAKY.xml
+            !**/ignored*reports*
+            **/*.dump*
+            **/hs_err_*
+            **/*.hprof
+
+      - name: Upload log files
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-files-JDK${{ matrix.jdk }}
+          compression-level: 9
+          path: |
+            **/*.log
+            !**/*[:"<>\*\?]*/**/*.log
+            !**/*[:"<>\*\?]*.log
+      - name: Publish Test Report
+        if: always()
+        uses: ctrf-io/github-test-reporter@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          report-path: '**/*-reports*/**/TEST-*.xml'
+          failed-folded-report: 'true'
+          write-ctrf-to-file: './ctrf-reports/ctrf-report.json'
+          exit-on-fail: 'true'
+          status-check: 'true'
+          status-check-name: 'Nightly Alt JDK ${{ matrix.jdk }} Test'
+          integrations-config: |
+            {
+              "junit-to-ctrf": {
+                "enabled": true,
+                "action": "convert",
+                "options": {
+                  "output": "./ctrf-reports/ctrf-report.json",
+                  "toolname": "junit-to-ctrf",
+                  "useSuiteName": false,
+                  "env": {
+                    "appName": "my-app"
+                  }
+                }
+              }
+            }
