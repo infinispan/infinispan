@@ -14,7 +14,6 @@ import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.test.TestException;
 import org.testng.annotations.Test;
@@ -234,7 +233,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "readMethods")
    public void testOnMissingValueLocal(ReadMethod method) {
-      testReadOnMissingValue(0, ReadOnlyMapImpl.create(fmapL1), method);
+      testReadOnMissingValue(0, fmapL1.toReadOnlyMap(), method);
    }
 
    protected boolean cacheContainsKey(Object key, Cache<Object, Object> cache) {

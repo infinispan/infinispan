@@ -13,8 +13,6 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.OwnershipLevel;
 import org.infinispan.lock.exception.ClusteredLockException;
@@ -77,7 +75,7 @@ public class ClusteredLockImpl implements ClusteredLock {
       this.clusteredLockCache = clusteredLockCache;
       this.clusteredLockManager = clusteredLockManager;
       this.pendingRequests = new ConcurrentLinkedQueue<>();
-      this.readWriteMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(clusteredLockCache));
+      this.readWriteMap = FunctionalMap.create(clusteredLockCache).toReadWriteMap();
       this.originator = clusteredLockCache.getCacheManager().getAddress();
       this.requestExpirationScheduler = new RequestExpirationScheduler(clusteredLockManager.getScheduledExecutorService());
       this.clusterChangeListener = new ClusterChangeListener();

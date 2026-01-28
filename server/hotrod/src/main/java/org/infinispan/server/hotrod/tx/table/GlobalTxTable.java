@@ -33,8 +33,6 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -99,7 +97,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
    @Start
    public void start() {
       storage = cacheManager.getCache(GLOBAL_TX_TABLE_CACHE_NAME);
-      rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(storage.getAdvancedCache()));
+      rwMap = FunctionalMap.create(storage.getAdvancedCache()).toReadWriteMap();
    }
 
    @Stop

@@ -185,8 +185,8 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    public static MetaParamsInternalMetadata.Builder getBuilder(MetaParamsInternalMetadata metadata) {
       return metadata == null ?
-             new MetaParamsInternalMetadata.Builder() :
-             metadata.builder();
+            new MetaParamsInternalMetadata.Builder() :
+            metadata.builder();
    }
 
    public static MetaParamsInternalMetadata empty() {

@@ -14,48 +14,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 
 public final class FunctionalTestUtils {
 
    public static final int MAX_WAIT_SECS = 30;
    private static final Random R = new Random();
-
-   public static <K> FunctionalMap.ReadOnlyMap<K, String> ro(FunctionalMapImpl<K, String> fmap) {
-      return ReadOnlyMapImpl.create(fmap);
-   }
-
-   public static <K> FunctionalMap.WriteOnlyMap<K, String> wo(FunctionalMapImpl<K, String> fmap) {
-      return WriteOnlyMapImpl.create(fmap);
-   }
-
-   public static <K> FunctionalMap.ReadWriteMap<K, String> rw(FunctionalMapImpl<K, String> fmap) {
-      return ReadWriteMapImpl.create(fmap);
-   }
-
-   public static <K, V> FunctionalMap.ReadOnlyMap<K, V> ro(AdvancedCache<K, V> cache) {
-      FunctionalMapImpl<K, V> impl = FunctionalMapImpl.create(cache);
-      return ReadOnlyMapImpl.create(impl);
-   }
-
-   public static <K, V> FunctionalMap.ReadWriteMap<K, V> rw(Cache<K, V> cache) {
-      FunctionalMapImpl<K, V> impl = FunctionalMapImpl.create(cache.getAdvancedCache());
-      return ReadWriteMapImpl.create(impl);
-   }
-
-   public static <K, V> FunctionalMap.WriteOnlyMap<K, V> wo(Cache<K, V> cache) {
-      FunctionalMapImpl<K, V> impl = FunctionalMapImpl.create(cache.getAdvancedCache());
-      return WriteOnlyMapImpl.create(impl);
-   }
 
    static Supplier<Integer> supplyIntKey() {
       return () -> R.nextInt(Integer.MAX_VALUE);

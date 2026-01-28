@@ -34,9 +34,6 @@ import org.infinispan.counter.impl.listener.CounterEventImpl;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
 import org.infinispan.counter.impl.manager.InternalCounterAdmin;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 
 import com.google.errorprone.annotations.concurrent.GuardedBy;
 
@@ -70,11 +67,11 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
    AbstractStrongCounter(String counterName, AdvancedCache<StrongCounterKey, CounterValue> cache,
                          CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {
       this.notificationManager = notificationManager;
-      FunctionalMapImpl<StrongCounterKey, CounterValue> functionalMap = FunctionalMapImpl.create(cache)
+      FunctionalMap<StrongCounterKey, CounterValue> functionalMap = FunctionalMap.create(cache)
             .withParams(getPersistenceMode(configuration.storage()));
       key = new StrongCounterKey(counterName);
-      readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
+      readWriteMap = functionalMap.toReadWriteMap();
+      readOnlyMap = functionalMap.toReadOnlyMap();
       weakCounter = null;
       this.configuration = configuration;
    }
