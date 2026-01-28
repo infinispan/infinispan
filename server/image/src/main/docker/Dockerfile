@@ -5,7 +5,7 @@ ARG OPENJDK_PACKAGE=""
 # Packages needed by the builder
 ARG BUILDER_PACKAGES="file unzip wget"
 # Packages to be installed in the target image
-ARG MAIN_PACKAGES="coreutils-single curl grep iproute libstdc++ lsof procps-ng sed tar vim-minimal ${OPENJDK_PACKAGE}"
+ARG MAIN_PACKAGES="coreutils-single curl grep gzip iproute libstdc++ lsof procps-ng sed tar vim-minimal ${OPENJDK_PACKAGE}"
 # Packages to be removed
 ARG REMOVE_PACKAGES="alsa-lib avahi-libs cups-filesystem cups-libs gawk p11-kit"
 # The path to the root filesystem in the builder
