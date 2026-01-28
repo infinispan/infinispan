@@ -100,4 +100,31 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    public StateTransferConfiguration stateTransfer() {
       return stateTransferConfiguration;
    }
+
+   @Override
+   public boolean matches(ClusteringConfiguration other) {
+      if (this.cacheMode == CacheMode.LOCAL) {
+         return other.cacheMode == CacheMode.LOCAL;
+      }
+
+      return super.matches(other);
+   }
+
+   @Override
+   public void update(String parentName, ClusteringConfiguration other) {
+      if (this.cacheMode == CacheMode.LOCAL && other.cacheMode == CacheMode.LOCAL) {
+         return;
+      }
+
+      super.update(parentName, other);
+   }
+
+   @Override
+   public void validateUpdate(String parentName, ClusteringConfiguration other) {
+      if (this.cacheMode == CacheMode.LOCAL && other.cacheMode == CacheMode.LOCAL) {
+         return;
+      }
+
+      super.validateUpdate(parentName, other);
+   }
 }

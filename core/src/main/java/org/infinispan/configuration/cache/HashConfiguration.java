@@ -94,4 +94,36 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    public GroupsConfiguration groups() {
       return groupsConfiguration;
    }
+
+   @Override
+   public boolean matches(HashConfiguration other, ConfigurationElement<?> parent) {
+      if (parent instanceof ClusteringConfiguration clustering) {
+         if (clustering.cacheMode().isReplicated()) {
+            return super.matches(other, ConfigurationElement.extractAttributes(attributes, NUM_OWNERS));
+         }
+      }
+      return super.matches(other, parent);
+   }
+
+   @Override
+   public void update(String parentName, HashConfiguration other, ConfigurationElement<?> parent) {
+      if (parent instanceof ClusteringConfiguration clustering) {
+         if (clustering.cacheMode().isReplicated()) {
+            update(parentName, other, ConfigurationElement.extractAttributes(attributes, NUM_OWNERS));
+            return;
+         }
+      }
+      super.update(parentName, other);
+   }
+
+   @Override
+   public void validateUpdate(String parentName, HashConfiguration other, ConfigurationElement<?> parent) {
+      if (parent instanceof ClusteringConfiguration clustering) {
+         if (clustering.cacheMode().isReplicated()) {
+            validateUpdate(parentName, other, ConfigurationElement.extractAttributes(attributes, NUM_OWNERS));
+            return;
+         }
+      }
+      super.validateUpdate(parentName, other);
+   }
 }
