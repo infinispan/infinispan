@@ -11,6 +11,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
+import org.infinispan.commons.reactive.Functions;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.persistence.jdbc.common.TableOperations;
@@ -25,7 +26,6 @@ import org.infinispan.util.concurrent.BlockingManager;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.internal.functions.Functions;
 import jakarta.transaction.Transaction;
 
 public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfiguration> implements NonBlockingStore<K, V> {

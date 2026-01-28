@@ -10,11 +10,13 @@ import org.reactivestreams.Publisher;
 /**
  * Static factory method class to provide various transformers for use with distributed Publisher. Note
  * that these functions are all serializable by Infinispan assuming that any passed arguments are as well.
+ *
  * @author wburns
  * @since 11.0
  */
 public class PublisherTransformers {
-   private PublisherTransformers() { }
+   private PublisherTransformers() {
+   }
 
    public static <I> Function<Publisher<I>, Publisher<I>> identity() {
       return IdentityTransformer.INSTANCE;
