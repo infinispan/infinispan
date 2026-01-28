@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Configuration name="CommandLineConfig" packages="org.infinispan.commons.logging.log4j">
+<Configuration name="CommandLineConfig" packages="org.infinispan.testing.log4j">
    <Properties>
       <Property name="infinispan.module-suffix"/>
       <Property name="infinispan.log.path">target</Property>
