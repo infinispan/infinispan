@@ -12,6 +12,12 @@
    <name>Infinispan Server Parent</name>
    <packaging>pom</packaging>
 
+   <properties>
+      <maven.compiler.source>25</maven.compiler.source>
+      <maven.compiler.target>25</maven.compiler.target>
+      <maven.compiler.release>25</maven.compiler.release>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
