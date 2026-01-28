@@ -26,8 +26,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 public abstract class AbstractAuthAccessLoggingTest extends SingleCacheManagerTest {
-   public static final String LOG_FORMAT = "%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] \"%X{method} %m %X{protocol}\" %X{status} %X{requestSize} %X{responseSize} %X{duration} %X{h:User-Agent}";
-   public static Pattern LOG_PATTERN = Pattern.compile("^(?<IP>\\d+\\.\\d+\\.\\d+\\.\\d+) (?<WHO>\\p{Graph}+) (?<WHEN>\\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d+]) \"(?<METHOD>\\p{Graph}+) (?<PATH>\\p{Graph}+) (?<PROTOCOL>\\p{Graph}+)\" (?<STATUS>\\d+|\\w+|\"[^\"]*\") \\d+ \\d+ \\d+\\s?(?<CLIENT>\\p{Graph}+)?$");
+   public static final String LOG_FORMAT = "%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] \"%X{method} %m %X{protocol}\" %X{status} %X{requestSize} %X{responseSize} %X{duration} \"%X{h:User-Agent}\"";
+   public static Pattern LOG_PATTERN = Pattern.compile("(?<IP>\\d+\\.\\d+\\.\\d+\\.\\d+) (?<WHO>\\p{Graph}+) (?<WHEN>\\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d+]) \"(?<METHOD>\\p{Graph}+) (?<PATH>\\p{Graph}+) (?<PROTOCOL>\\p{Graph}+)\" (?<STATUS>\\d+|\\w+|\"[^\"]*\") \\d+ \\d+ \\d+\\s\"?(?<CLIENT>[\\p{Graph}\\p{Zs}]+)?\"$");
    public static final String REALM = "realm";
    public static final Subject ADMIN = TestingUtil.makeSubject("admin");
    public static final Subject READER = TestingUtil.makeSubject("reader");
