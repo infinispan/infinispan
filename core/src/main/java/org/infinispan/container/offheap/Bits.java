@@ -1,5 +1,9 @@
 package org.infinispan.container.offheap;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
+
 /**
  * Utility method for inserting and retrieving values from to/from a byte[]
  *
@@ -7,40 +11,22 @@ package org.infinispan.container.offheap;
  * @since 9.0
  */
 public class Bits {
+   private static final VarHandle INT_VH = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.BIG_ENDIAN);
+   private static final VarHandle LONG_VH = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
 
    static int getInt(byte[] b, int off) {
-      return ((b[off + 3] & 0xFF)) +
-            ((b[off + 2] & 0xFF) << 8) +
-            ((b[off + 1] & 0xFF) << 16) +
-            ((b[off]) << 24);
+      return (int) INT_VH.get(b, off);
    }
 
    static long getLong(byte[] b, int off) {
-      return ((b[off + 7] & 0xFFL)) +
-            ((b[off + 6] & 0xFFL) << 8) +
-            ((b[off + 5] & 0xFFL) << 16) +
-            ((b[off + 4] & 0xFFL) << 24) +
-            ((b[off + 3] & 0xFFL) << 32) +
-            ((b[off + 2] & 0xFFL) << 40) +
-            ((b[off + 1] & 0xFFL) << 48) +
-            (((long) b[off]) << 56);
+      return (long) LONG_VH.get(b, off);
    }
 
    static void putInt(byte[] b, int off, int val) {
-      b[off + 3] = (byte) (val);
-      b[off + 2] = (byte) (val >>> 8);
-      b[off + 1] = (byte) (val >>> 16);
-      b[off] = (byte) (val >>> 24);
+      INT_VH.set(b, off, val);
    }
 
    static void putLong(byte[] b, int off, long val) {
-      b[off + 7] = (byte) (val);
-      b[off + 6] = (byte) (val >>> 8);
-      b[off + 5] = (byte) (val >>> 16);
-      b[off + 4] = (byte) (val >>> 24);
-      b[off + 3] = (byte) (val >>> 32);
-      b[off + 2] = (byte) (val >>> 40);
-      b[off + 1] = (byte) (val >>> 48);
-      b[off] = (byte) (val >>> 56);
+      LONG_VH.set(b, off, val);
    }
 }
