@@ -44,6 +44,7 @@ import org.infinispan.rest.resources.mcp.McpResource;
 import org.infinispan.rest.resources.mcp.McpResourceTemplate;
 import org.infinispan.rest.resources.mcp.McpTool;
 import org.infinispan.rest.resources.mcp.McpType;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.query.ProtobufMetadataManager;
 import org.infinispan.server.core.query.impl.RemoteQueryManager;
@@ -604,6 +605,18 @@ public class McpServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> handleLogResourceRead(RestRequest request, Json json, String uri) {
+      // Check ADMIN permission for log access
+      try {
+         invocationHelper.getRestCacheManager().getAuthorizer()
+               .checkPermission(AuthorizationPermission.ADMIN);
+      } catch (SecurityException e) {
+         Json response = rpcResponse(json)
+               .set("error", Json.object()
+                     .set("code", McpConstants.FORBIDDEN)
+                     .set("message", "Admin permission required to access log resources"));
+         return asJsonResponseFuture(invocationHelper.newResponse(request), response, false);
+      }
+
       return CompletableFuture.supplyAsync(() -> {
          try {
             // Parse URI: infinispan+logs://server?lines=200
