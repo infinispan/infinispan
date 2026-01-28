@@ -71,7 +71,7 @@
       <version.arquillian>1.8.1.Final</version.arquillian>
       <version.awaitility>4.3.0</version.awaitility>
       <version.blockhound>1.0.16.RELEASE</version.blockhound>
-      <version.bouncycastle>1.70</version.bouncycastle>
+      <version.bouncycastle>1.83</version.bouncycastle>
       <version.byteman>4.0.26</version.byteman>
       <version.caffeine>3.2.3</version.caffeine>
       <version.checker-qual>3.53.0</version.checker-qual>
