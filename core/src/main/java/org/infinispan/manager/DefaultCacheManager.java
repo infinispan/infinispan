@@ -741,7 +741,7 @@ public class DefaultCacheManager extends InternalCacheManager {
 
          if (performShutdown) {
             log.tracef("Stopping all caches first before global component registry");
-            stopCaches();
+            stopCaches(Long.MIN_VALUE, null);
             try {
                globalComponentRegistry.componentFailed(e);
             } catch (Exception e1) {
@@ -792,7 +792,7 @@ public class DefaultCacheManager extends InternalCacheManager {
       }
    }
 
-   private void terminate(String cacheName) {
+   private void terminate(String cacheName, long timeout, TimeUnit unit) {
       CompletableFuture<Cache<?, ?>> cacheFuture = this.caches.get(cacheName);
       if (cacheFuture != null) {
          if (!cacheFuture.isDone()) {
@@ -806,7 +806,7 @@ public class DefaultCacheManager extends InternalCacheManager {
             log.tracef("Ignoring cache %s, it is already terminated.", cacheName);
             return;
          }
-         cache.stop();
+         cache.stop(timeout, unit);
       }
    }
 
@@ -850,15 +850,25 @@ public class DefaultCacheManager extends InternalCacheManager {
    public void stop() {
       authorizer.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
 
-      internalStop();
+      internalStop(Long.MIN_VALUE, null);
+   }
+
+   @Override
+   public void stop(long timeout, TimeUnit unit) {
+      authorizer.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
+      internalStop(timeout, unit);
    }
 
    @Override
    public void stopCache(String cacheName) {
-      terminate(cacheName);
+      stopCache(cacheName, Long.MIN_VALUE, null);
    }
 
-   private void internalStop() {
+   private void stopCache(String cacheName, long timeout, TimeUnit unit) {
+      terminate(cacheName, timeout, unit);
+   }
+
+   private void internalStop(long timeout, TimeUnit unit) {
       lifecycleLock.lock();
       String identifierString = identifierString();
       try {
@@ -881,7 +891,7 @@ public class DefaultCacheManager extends InternalCacheManager {
 
       try {
          log.debugf("Starting shutdown of caches at %s", identifierString);
-         stopCaches();
+         stopCaches(timeout, unit);
       } catch (Throwable t) {
          log.errorf(t, "Exception during shutdown of caches. Proceeding...");
       }
@@ -901,7 +911,7 @@ public class DefaultCacheManager extends InternalCacheManager {
       }
    }
 
-   private void stopCaches() {
+   private void stopCaches(long timeout, TimeUnit unit) {
       Set<String> cachesToStop = new LinkedHashSet<>(this.caches.size());
       // stop ordered caches first
       try {
@@ -916,7 +926,7 @@ public class DefaultCacheManager extends InternalCacheManager {
 
       for (String cacheName : cachesToStop) {
          try {
-            stopCache(cacheName);
+            stopCache(cacheName, timeout, unit);
          } catch (Throwable t) {
             CONTAINER.componentFailedToStop(t);
          }

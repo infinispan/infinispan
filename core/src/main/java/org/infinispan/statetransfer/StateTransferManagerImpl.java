@@ -9,6 +9,7 @@ import java.util.function.Function;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.internal.InternalCacheNames;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -78,6 +79,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Inject PerCacheInboundInvocationHandler inboundInvocationHandler;
    @Inject IracManager iracManager;
    @Inject IracVersionGenerator iracVersionGenerator;
+   @Inject StateTransferTracker stateTracker;
 
    private final CompletableFuture<Void> initialStateTransferComplete = new CompletableFuture<>();
 
@@ -117,6 +119,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
          @Override
          public CompletionStage<Void> rebalance(CacheTopology cacheTopology) {
             return doTopologyUpdate(cacheTopology, true);
+         }
+
+         @Override
+         public void onTopologyReceived(CacheTopology cacheTopology) {
+            stateTracker.cacheTopologyUpdated(cacheTopology);
          }
       }, partitionHandlingManager);
 
@@ -243,14 +250,29 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
    }
 
-   @Stop
    @Override
-   public void stop() {
+   public void stop(long timeout, TimeUnit unit) {
+      // Replicated caches don't need to wait state transfer as all nodes have the full data set.
+      if (configuration.clustering().cacheMode().isDistributed()) {
+         CompletionStage<Void> cf = stateTracker.onStateTransferCompleted((ignore, t) -> {
+            if (t != null)
+               log.errorf(t, "Failed waiting state transfer to complete for %s", cacheName);
+
+            return true;
+         });
+
+         CompletableFutures.uncheckedAwait(cf.toCompletableFuture(), timeout, unit);
+         localTopologyManager.leave(cacheName, unit.toMillis(timeout), true);
+      }
+   }
+
+   @Stop
+   protected void internalStop() {
       if (log.isTraceEnabled()) {
          log.tracef("Shutting down StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
       initialStateTransferComplete.complete(null);
-      localTopologyManager.leave(cacheName, configuration.clustering().remoteTimeout());
+      localTopologyManager.leave(cacheName, configuration.clustering().remoteTimeout(), false);
    }
 
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.", displayName = "Is join completed?", dataType = DataType.TRAIT)
