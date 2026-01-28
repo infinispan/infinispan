@@ -254,16 +254,14 @@ public class StateTransferManagerImpl implements StateTransferManager {
    public void stop(long timeout, TimeUnit unit) {
       // Replicated caches don't need to wait state transfer as all nodes have the full data set.
       if (configuration.clustering().cacheMode().isDistributed()) {
-         CompletableFuture<Void> cf = new CompletableFuture<>();
-         stateTracker.onStateTransferCompleted((ignore, t) -> {
+         CompletionStage<Void> cf = stateTracker.onStateTransferCompleted((ignore, t) -> {
             if (t != null)
                log.errorf(t, "Failed waiting state transfer to complete for %s", cacheName);
 
-            cf.complete(null);
             return true;
          });
 
-         CompletableFutures.uncheckedAwait(cf, timeout, unit);
+         CompletableFutures.uncheckedAwait(cf.toCompletableFuture(), timeout, unit);
          localTopologyManager.leave(cacheName, unit.toMillis(timeout), true);
       }
    }

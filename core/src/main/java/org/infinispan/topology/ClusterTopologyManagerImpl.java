@@ -329,17 +329,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
                .getNamedComponentRegistry(cacheName)
                .getComponent(StateTransferTracker.class);
 
-         CompletableFuture<Void> cf = new CompletableFuture<>();
-         tracker.onStateTransferCompleted((ct, t) -> {
+         int initialId = cacheStatus.getCurrentTopology().getTopologyId();
+         CompletableFuture<Void> cf = tracker.onStateTransferCompleted((ct, t) -> {
             if (t != null)
                return false;
 
-            if (ct.getTopologyId() != cacheStatus.getCurrentTopology().getTopologyId())
-               return false;
-
-            cf.complete(null);
-            return true;
-         });
+            return ct.getTopologyId() >= initialId;
+         }).toCompletableFuture();
 
          return CompletionStages.handleAndComposeAsync(cf.orTimeout(timeout, unit), (ignore, t) -> {
             if (t != null) {

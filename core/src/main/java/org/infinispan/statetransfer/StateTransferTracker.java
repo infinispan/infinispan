@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
@@ -11,11 +12,8 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -27,10 +25,10 @@ import com.google.errorprone.annotations.ThreadSafe;
 @Scope(Scopes.NAMED_CACHE)
 public class StateTransferTracker {
    private static final Log log = LogFactory.getLog(StateTransferTracker.class);
+
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject
    protected String cacheName;
-   @Inject protected ComponentRef<RpcManager> rpcManager;
 
    private final ReentrantLock lock = new ReentrantLock();
 
@@ -46,14 +44,7 @@ public class StateTransferTracker {
    @GuardedBy("lock")
    private CacheTopology currentTopology = null;
 
-   private final List<BiFunction<CacheTopology, Throwable, Boolean>> listeners = new CopyOnWriteArrayList<>();
-
-   private String address;
-
-   @Start
-   protected void start() {
-      address = rpcManager.running().getAddress().toString();
-   }
+   private final List<Entry> listeners = new CopyOnWriteArrayList<>();
 
    public boolean isStateTransferInProgress() {
       lock.lock();
@@ -64,17 +55,21 @@ public class StateTransferTracker {
       }
    }
 
-   public void onStateTransferCompleted(BiFunction<CacheTopology, Throwable, Boolean> listener) {
+   public CompletionStage<Void> onStateTransferCompleted(BiFunction<CacheTopology, Throwable, Boolean> listener) {
       lock.lock();
       try {
-         log.tracef("%s: waiting state completion %s (consumer=%s) (provider=%s)%n", address, cacheName, consumer.isPending(), provider.isPending());
+         if (log.isTraceEnabled())
+            log.tracef("waiting state completion %s (consumer=%s) (provider=%s)%n", cacheName, consumer.isPending(), provider.isPending());
+
          if (!isStateTransferInProgress()
                && currentTopology != null
-               && invokeListener(currentTopology, null, listener)) {
-               return;
+               && listener.apply(currentTopology, null)) {
+               return CompletableFutures.completedNull();
          }
 
-         listeners.add(listener);
+         CompletableFuture<Void> cf = new CompletableFuture<>();
+         listeners.add(new Entry(cf, listener));
+         return cf;
       } finally {
          lock.unlock();
       }
@@ -83,7 +78,7 @@ public class StateTransferTracker {
    public void cacheTopologyUpdated(CacheTopology cacheTopology) {
       boolean isStableTopology = cacheTopology.getPendingCH() == null;
       if (isStableTopology) {
-         log.tracef("%s: Installed stable topology for %s with %s, state transfer is done now", address, cacheName, cacheTopology);
+         log.tracef("Installed stable topology for %s with %s, state transfer is done now", cacheName, cacheTopology);
          int previousTopologyId = currentTopology != null ? currentTopology.getTopologyId() : Integer.MIN_VALUE;
          this.currentTopology = cacheTopology;
 
@@ -102,7 +97,7 @@ public class StateTransferTracker {
    public void startStateConsumer(int topologyId) {
       lock.lock();
       try {
-         log.tracef("%s: starting state consumer %s", address, cacheName);
+         log.tracef("starting state consumer %s", cacheName);
          checkTopologyId(topologyId);
       } finally {
          lock.unlock();
@@ -112,7 +107,7 @@ public class StateTransferTracker {
    public void completeStateConsumer(int topologyId) {
       lock.lock();
       try {
-         log.tracef("%s: stopping state consumer %s", address, cacheName);
+         log.tracef("stopping state consumer %s", cacheName);
          consumer.complete(topologyId, null);
       } finally {
         lock.unlock();
@@ -122,7 +117,7 @@ public class StateTransferTracker {
    public void startStateProvider(int topologyId) {
       lock.lock();
       try {
-         log.tracef("%s: starting state provider %s", address, cacheName);
+         log.tracef("starting state provider %s", cacheName);
          checkTopologyId(topologyId);
       } finally {
          lock.unlock();
@@ -132,7 +127,7 @@ public class StateTransferTracker {
    public void completeStateProvider(int topologyId) {
       lock.lock();
       try {
-         log.tracef("%s: stopping state provider %s", address, cacheName);
+         log.tracef("stopping state provider %s", cacheName);
          provider.complete(topologyId, null);
       } finally {
          lock.unlock();
@@ -169,16 +164,22 @@ public class StateTransferTracker {
    }
 
    private void notifyListeners(CacheTopology topology, Throwable t) {
-      log.tracef("%s: notifying all listeners topology installed: %s (%s)", address, topology, t);
-      listeners.removeIf(bf -> invokeListener(topology, t, bf));
+      log.tracef("notifying all listeners topology installed: %s (%s)", topology, t);
+      listeners.removeIf(e -> e.invokeListener(topology, t));
    }
 
-   private boolean invokeListener(CacheTopology ct, Throwable t, BiFunction<CacheTopology, Throwable, Boolean> listener) {
-      try {
-         return listener.apply(ct, t);
-      } catch (Throwable t2) {
-         log.errorf(t2, "Failed handling state transfer listener of %s, discarded", cacheName);
-         return true;
+   record Entry(CompletableFuture<Void> future, BiFunction<CacheTopology, Throwable, Boolean> listener) {
+
+      public boolean invokeListener(CacheTopology ct, Throwable t) {
+         try {
+            boolean v = listener.apply(ct, t);
+            if (v) future.complete(null);
+            return v;
+         } catch (Throwable t2) {
+            log.errorf(t2, "Failed handling state transfer listener, discarded");
+            future.completeExceptionally(t2);
+            return true;
+         }
       }
    }
 

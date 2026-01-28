@@ -206,6 +206,12 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    @Override
+   public void stop(long timeout, TimeUnit unit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.LIFECYCLE);
+      delegate.stop(timeout, unit);
+   }
+
+   @Override
    public CompletableFuture<V> putAsync(K key, V value) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.putAsync(key, value);
