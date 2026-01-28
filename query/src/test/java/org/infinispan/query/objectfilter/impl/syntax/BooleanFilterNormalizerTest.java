@@ -2,8 +2,8 @@ package org.infinispan.query.objectfilter.impl.syntax;
 
 import static org.junit.Assert.assertEquals;
 
-import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleQueryStringParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.testng.annotations.Test;
@@ -20,7 +20,7 @@ public class BooleanFilterNormalizerTest {
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
    private void assertExpectedTree(String queryString, String expectedExprStr) {
-      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<Class<?>> parsingResult = IckleQueryStringParser.parse(queryString, propertyHelper);
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       assertEquals(expectedExprStr, expr.toString());
    }

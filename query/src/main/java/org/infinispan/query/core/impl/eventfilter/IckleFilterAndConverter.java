@@ -1,6 +1,7 @@
 package org.infinispan.query.core.impl.eventfilter;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import org.infinispan.commons.CacheException;
@@ -60,9 +61,8 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
    private ObjectFilter objectFilter;
 
    public IckleFilterAndConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
-      if (queryString == null || matcherImplClass == null) {
-         throw new IllegalArgumentException("Arguments cannot be null");
-      }
+      Objects.requireNonNull(queryString, "queryString cannot be null");
+      Objects.requireNonNull(queryString, "matcherImplClass cannot be null");
       this.queryString = queryString;
       this.namedParameters = namedParameters;
       this.matcherImplClass = matcherImplClass;

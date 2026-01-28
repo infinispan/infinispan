@@ -40,13 +40,25 @@ public final class OrExpr extends BooleanOperatorExpr {
 
    @Override
    public void appendQueryString(StringBuilder sb) {
-      for (int i = 0; i < children.size(); i++) {
-         if (i != 0) {
-            sb.append(" OR ");
+      String commonField = getCommonFullTextField();
+      if (commonField != null) {
+         sb.append(commonField).append(" : (");
+         for (int i = 0; i < children.size(); i++) {
+            if (i != 0) {
+               sb.append(" || ");
+            }
+            appendFullTextInner(sb, children.get(i));
          }
-         sb.append('(');
-         children.get(i).appendQueryString(sb);
          sb.append(')');
+      } else {
+         for (int i = 0; i < children.size(); i++) {
+            if (i != 0) {
+               sb.append(" OR ");
+            }
+            sb.append('(');
+            children.get(i).appendQueryString(sb);
+            sb.append(')');
+         }
       }
    }
 }

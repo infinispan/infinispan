@@ -1,6 +1,7 @@
 package org.infinispan.query.objectfilter.impl.syntax.parser;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -12,7 +13,7 @@ import org.infinispan.query.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 
 /**
- * @param <TypeMetadata> is either {@link java.lang.Class} or {@link org.infinispan.protostream.descriptors.Descriptor}
+ * @param <TypeMetadata> is either {@link Class} or {@link org.infinispan.protostream.descriptors.Descriptor}
  * @author anistor@redhat.com
  * @since 7.0
  */
@@ -70,7 +71,105 @@ public final class IckleParsingResult<TypeMetadata> {
    private final PropertyPath<?>[] groupBy;
    private final SortField[] sortFields;
 
-   //todo [anistor] make package local
+   public static class Builder<TypeMetadata> {
+      private String queryString;
+      private StatementType statementType;
+      private Set<String> parameterNames = new HashSet<>();
+      private BooleanExpr whereClause;
+      private BooleanExpr havingClause;
+      private BooleanExpr filteringClause;
+      private String targetEntityName;
+      private TypeMetadata targetEntityMetadata;
+      private PropertyPath<?>[] projectedPaths;
+      private Class<?>[] projectedTypes;
+      private Object[] projectedNullMarkers;
+      private PropertyPath<?>[] groupBy;
+      private SortField[] sortFields;
+
+      public Builder<TypeMetadata> setQueryString(String queryString) {
+         this.queryString = queryString;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setStatementType(StatementType statementType) {
+         this.statementType = statementType;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setParameterNames(Set<String> parameterNames) {
+         this.parameterNames.addAll(parameterNames);
+         return this;
+      }
+
+      public Builder<TypeMetadata> setWhereClause(BooleanExpr whereClause) {
+         this.whereClause = whereClause;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setHavingClause(BooleanExpr havingClause) {
+         this.havingClause = havingClause;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setFilteringClause(BooleanExpr filteringClause) {
+         this.filteringClause = filteringClause;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setTargetEntityName(String targetEntityName) {
+         this.targetEntityName = targetEntityName;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setTargetEntityMetadata(TypeMetadata targetEntityMetadata) {
+         this.targetEntityMetadata = targetEntityMetadata;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setProjectedPaths(PropertyPath<?>[] projectedPaths) {
+         this.projectedPaths = projectedPaths;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setProjectedTypes(Class<?>[] projectedTypes) {
+         this.projectedTypes = projectedTypes;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setProjectedNullMarkers(Object[] projectedNullMarkers) {
+         this.projectedNullMarkers = projectedNullMarkers;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setGroupBy(PropertyPath<?>[] groupBy) {
+         this.groupBy = groupBy;
+         return this;
+      }
+
+      public Builder<TypeMetadata> setSortFields(SortField[] sortFields) {
+         this.sortFields = sortFields;
+         return this;
+      }
+
+      public IckleParsingResult<TypeMetadata> build() {
+         return new IckleParsingResult<>(
+               queryString,
+               statementType,
+               parameterNames,
+               whereClause,
+               havingClause,
+               filteringClause,
+               targetEntityName,
+               targetEntityMetadata,
+               projectedPaths,
+               projectedTypes,
+               projectedNullMarkers,
+               groupBy,
+               sortFields
+         );
+      }
+   }
+
    public IckleParsingResult(String queryString,
                              StatementType statementType,
                              Set<String> parameterNames,
@@ -212,18 +311,20 @@ public final class IckleParsingResult<TypeMetadata> {
 
    @Override
    public String toString() {
-      return "IckleParsingResult [" +
-            " queryString=" + queryString
-            + ", statementType=" + statementType
-            + ", targetEntityName=" + targetEntityName
-            + ", parameterNames=" + parameterNames
-            + ", whereClause=" + whereClause
-            + ", havingClause=" + havingClause
-            + ", projectedPaths=" + Arrays.toString(projectedPaths)
-            + ", projectedTypes=" + Arrays.toString(projectedTypes)
-            + ", projectedNullMarkers=" + Arrays.toString(projectedNullMarkers)
-            + ", groupBy=" + Arrays.toString(groupBy)
-            + ", sortFields=" + Arrays.toString(sortFields)
-            + "]";
+      return "IckleParsingResult{" +
+            "queryString='" + queryString + '\'' +
+            ", statementType=" + statementType +
+            ", parameterNames=" + parameterNames +
+            ", whereClause=" + whereClause +
+            ", havingClause=" + havingClause +
+            ", filteringClause=" + filteringClause +
+            ", targetEntityName='" + targetEntityName + '\'' +
+            ", targetEntityMetadata=" + targetEntityMetadata +
+            ", projectedPaths=" + Arrays.toString(projectedPaths) +
+            ", projectedTypes=" + Arrays.toString(projectedTypes) +
+            ", projectedNullMarkers=" + Arrays.toString(projectedNullMarkers) +
+            ", groupBy=" + Arrays.toString(groupBy) +
+            ", sortFields=" + Arrays.toString(sortFields) +
+            '}';
    }
 }

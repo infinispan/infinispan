@@ -11,7 +11,6 @@ import java.util.Map;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.objectfilter.impl.logging.Log;
 import org.infinispan.query.objectfilter.impl.ql.PropertyPath;
-import org.infinispan.query.objectfilter.impl.ql.QueryRendererDelegate;
 import org.infinispan.query.objectfilter.impl.syntax.AggregationExpr;
 import org.infinispan.query.objectfilter.impl.syntax.AndExpr;
 import org.infinispan.query.objectfilter.impl.syntax.BetweenExpr;
@@ -187,7 +186,7 @@ final class ExpressionBuilder<TypeMetadata> {
       push(new LazyFTBoostExpr(boost));
    }
 
-   public void pushFullTextOccur(QueryRendererDelegate.Occur occur) {
+   public void pushFullTextOccur(VirtualExpressionBuilder.Occur occur) {
       push(new LazyFTOccurExpr(occur));
    }
 
@@ -396,9 +395,9 @@ final class ExpressionBuilder<TypeMetadata> {
 
       private LazyBooleanExpr child;
 
-      private final QueryRendererDelegate.Occur occur;
+      private final VirtualExpressionBuilder.Occur occur;
 
-      LazyFTOccurExpr(QueryRendererDelegate.Occur occur) {
+      LazyFTOccurExpr(VirtualExpressionBuilder.Occur occur) {
          this.occur = occur;
       }
 

@@ -226,21 +226,6 @@ public class GrammarTest extends TestBase {
    }
 
    @Test
-   public void testParamsNotAllowedInSelect() {
-      expectParserFailure("select :paramX from Bar b");
-   }
-
-   @Test
-   public void testParamsNotAllowedInOrderBy() {
-      expectParserFailure("from Bar order by :paramX");
-   }
-
-   @Test
-   public void testParamsNotAllowedInGroupBy() {
-      expectParserFailure("select max(b.diameter) from Bar b group by :paramX");
-   }
-
-   @Test
    public void testConstantBooleanInWhere() {
       expectParserSuccess("from example.EntityName e where true");
       expectParserSuccess("from example.EntityName e where false");
@@ -756,11 +741,6 @@ public class GrammarTest extends TestBase {
    @Test
    public void testSelect_189() {
       expectParserSuccess("select f from eg.mypackage.Cat qat, com.toadstool.Foo f join net.sf.blurb.Blurb");
-   }
-
-   @Test
-   public void testSelect_189_() {
-      expectParserFailure("from eg.mypackage.Cat order by :what");
    }
 
    @Test
@@ -4253,5 +4233,25 @@ public class GrammarTest extends TestBase {
    @Test
    public void testHQLPARSER_71_1550() {
       expectParserSuccess("select a from eg.Animal a where FALSE");
+   }
+
+   // ===================================
+   // These 3 tests changed with ANTLR4.
+   // Parsing works now, validation is
+   // done in the Visitor.
+   // ====================================
+   @Test
+   public void testParamsNotAllowedInOrderBy() {
+      expectParserSuccess("from Bar order by :paramX");
+   }
+
+   @Test
+   public void testParamsNotAllowedInGroupBy() {
+      expectParserSuccess("select max(b.diameter) from Bar b group by :paramX");
+   }
+
+   @Test
+   public void testParamsNotAllowedInSelect() {
+      expectParserSuccess("select :paramX from Bar b");
    }
 }

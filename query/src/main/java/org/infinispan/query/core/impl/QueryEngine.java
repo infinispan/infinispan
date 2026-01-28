@@ -39,8 +39,8 @@ import org.infinispan.query.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.query.objectfilter.impl.syntax.SyntaxTreePrinter;
 import org.infinispan.query.objectfilter.impl.syntax.ValueExpr;
 import org.infinispan.query.objectfilter.impl.syntax.parser.AggregationPropertyPath;
-import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleQueryStringParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.objectfilter.impl.syntax.parser.RowPropertyHelper;
 import org.infinispan.security.actions.SecurityActions;
@@ -480,8 +480,8 @@ public class QueryEngine<TypeMetadata> {
 
    protected IckleParsingResult<TypeMetadata> parse(String queryString) {
       return queryCache != null
-            ? queryCache.get(cache.getName(), queryString, null, IckleParsingResult.class, (qs, accumulators) -> IckleParser.parse(qs, propertyHelper))
-            : IckleParser.parse(queryString, propertyHelper);
+            ? queryCache.get(cache.getName(), queryString, null, IckleParsingResult.class, (qs, accumulators) -> IckleQueryStringParser.parse(qs, propertyHelper))
+            : IckleQueryStringParser.parse(queryString, propertyHelper);
    }
 
    protected final ObjectFilter getObjectFilter(Matcher matcher, String queryString, Map<String, Object> namedParameters, List<FieldAccumulator> accumulators) {

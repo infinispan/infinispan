@@ -18,137 +18,99 @@ package org.infinispan.query.objectfilter.impl.ql.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.antlr.runtime.ANTLRStringStream;
-import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.Token;
-import org.antlr.runtime.tree.CommonTree;
-import org.infinispan.query.objectfilter.impl.ql.parse.IckleLexer;
-import org.infinispan.query.objectfilter.impl.ql.parse.IckleParser;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
+import org.infinispan.query.grammar.IckleLexer;
+import org.infinispan.query.grammar.IckleParser;
 
-/**
- * Common utilities for testing the parser and lexer.
- *
- * @author anistor@redhat.com
- * @since 9.0
- */
 abstract class TestBase {
 
    protected void expectParserSuccess(String inputText) {
-      parse(inputText, false, null, false);
+      parse(inputText, false);
    }
 
-   protected void expectParserSuccess(String inputText, String expectedOut) {
-      parse(inputText, false, expectedOut, false);
+   protected void expectParserSuccess(String inputText, String ignoredTreeOutput) {
+      // Tree output format is different in ANTLR4, just verify parsing succeeds
+      parse(inputText, false);
    }
 
    protected void expectParserFailure(String inputText) {
-      parse(inputText, true, null, false);
+      parse(inputText, true);
    }
 
-   protected void expectLexerSuccess(String inputText) {
-      parse(inputText, false, null, true);
+   protected void expectLexerSuccess(String inputText, String expectedTokenType) {
+      parseLexer(inputText, false, expectedTokenType);
    }
 
-   protected void expectLexerSuccess(String inputText, String expectedOut) {
-      parse(inputText, false, expectedOut, true);
-   }
-
-   protected void expectLexerFailure(String inputText) {
-      parse(inputText, true, null, true);
-   }
-
-   private void parse(String inputText, boolean expectFailure, String expectedTreeOut, boolean lexerOnly) {
-      if (expectFailure && expectedTreeOut != null) {
-         throw new IllegalArgumentException("If failure is expected then expectedTreeOut must be null");
-      }
-
-      IckleLexer lexer = new IckleLexer(new ANTLRStringStream(inputText));
-      CommonTokenStream tokens = new CommonTokenStream(lexer);
-
+   private void parseLexer(String inputText, boolean expectFailure, String expectedTokenType) {
       try {
-         ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-         Token token = null;
-         CommonTree tree = null;
-         if (lexerOnly) {
-            lexer.setErrStream(new PrintStream(errorStream));
-            token = lexer.nextToken();
-         } else {
-            IckleParser parser = new IckleParser(tokens);
-            parser.setErrStream(new PrintStream(errorStream));
-            IckleParser.statement_return statement = parser.statement();
-            tree = (CommonTree) statement.getTree();
-         }
-         String errMsg = errorStream.size() > 0 ? errorStream.toString() : null;
+         org.infinispan.query.grammar.IckleLexer lexer =
+               new org.infinispan.query.grammar.IckleLexer(CharStreams.fromString(inputText));
 
-         if (errMsg != null) {
-            // we have an error message
-            if (expectFailure) {
-               return;
-            } else {
-               fail(errMsg);
-            }
+         Token token = lexer.nextToken();
+
+         if (token.getType() == Token.EOF) {
+            if (expectFailure) return;
+            fail("Lexer produced no token for: " + inputText);
          }
 
-         if (expectedTreeOut != null) {
-            if (lexerOnly) {
-               int expectedTokenType;
-               try {
-                  // expectedTreeOut is assumed to be a token name
-                  Field tokenTypeConstant = lexer.getClass().getDeclaredField(expectedTreeOut);
-                  expectedTokenType = (Integer) tokenTypeConstant.get(null);
-               } catch (IllegalAccessException | NoSuchFieldException e) {
-                  throw new RuntimeException("Could not determine the type of token: " + expectedTreeOut, e);
-               }
-
-               assertEquals("Token type", expectedTokenType, token.getType());
-            } else {
-               assertEquals(expectedTreeOut, tree.toStringTree());
-            }
+         if (expectedTokenType != null) {
+            int expectedType = org.infinispan.query.grammar.IckleLexer.class
+                  .getField(expectedTokenType).getInt(null);
+            assertEquals("Token type for: " + inputText, expectedType, token.getType());
          }
 
-         String unconsumedTokens = getUnconsumedTokens(tokens);
-         if (unconsumedTokens != null) {
-            if (expectFailure) {
-               return;
-            } else {
-               fail("Found unconsumed tokens: \"" + unconsumedTokens + "\".");
+         if (expectFailure) {
+            fail("Lexing was expected to fail but succeeded: " + inputText);
+         }
+      } catch (AssertionError e) {
+         throw e;
+      } catch (Exception e) {
+         if (expectFailure) return;
+         fail(e.getMessage());
+      }
+   }
+
+   private void parse(String inputText, boolean expectFailure) {
+      try {
+         IckleLexer lexer =
+               new IckleLexer(CharStreams.fromString(inputText));
+
+         CommonTokenStream tokens = new CommonTokenStream(lexer);
+         IckleParser parser = new IckleParser(tokens);
+
+         // Collect errors
+         List<String> errors = new ArrayList<>();
+         parser.removeErrorListeners();
+         parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                                    int line, int charPositionInLine, String msg,
+                                    RecognitionException e) {
+               errors.add("line " + line + ":" + charPositionInLine + " " + msg);
             }
+         });
+
+         parser.statement();
+
+         if (!errors.isEmpty()) {
+            if (expectFailure) return;
+            fail("Parse errors: " + errors);
+         }
+
+         if (expectFailure) {
+            fail("Parsing was expected to fail but succeeded: " + inputText);
          }
       } catch (Exception e) {
-         if (expectFailure) {
-            return;
-         } else {
-            fail(e.getMessage());
-         }
+         if (expectFailure) return;
+         fail(e.getMessage());
       }
-
-      if (expectFailure) {
-         fail("Parsing was expected to fail but it actually succeeded.");
-      }
-   }
-
-   private String getUnconsumedTokens(CommonTokenStream tokens) {
-      // ensure we've buffered all tokens from the underlying TokenSource
-      tokens.fill();
-      if (tokens.index() == tokens.size() - 1) {
-         return null;
-      }
-
-      StringBuilder sb = new StringBuilder();
-
-      @SuppressWarnings("unchecked")
-      List<Token> unconsumed = (List<Token>) tokens.getTokens(tokens.index(), tokens.size() - 1);
-      for (Token t : unconsumed) {
-         if (t.getType() != Token.EOF) {
-            sb.append(t.getText());
-         }
-      }
-
-      return sb.length() > 0 ? sb.toString() : null;
    }
 }

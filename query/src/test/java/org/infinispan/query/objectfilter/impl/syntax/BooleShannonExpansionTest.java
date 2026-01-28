@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleQueryStringParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.testng.annotations.Test;
@@ -88,7 +88,7 @@ public class BooleShannonExpansionTest {
     * @param expectedQuery   the expected equivalent Ickle query string of the AST
     */
    private void assertExpectedTree(String queryString, String expectedExprStr, String expectedQuery) {
-      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<Class<?>> parsingResult = IckleQueryStringParser.parse(queryString, propertyHelper);
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       expr = booleShannonExpansion.expand(expr);
       if (expectedExprStr != null) {
