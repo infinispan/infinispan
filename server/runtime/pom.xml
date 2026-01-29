@@ -304,6 +304,14 @@
                <include>**/*.xml</include>
             </includes>
          </resource>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>false</filtering>
+            <includes>
+               <include>**/Log.i18n*.properties</include>
+               <include>**/Messages.i18n*.properties</include>
+            </includes>
+         </resource>
       </resources>
       <testResources>
          <testResource>
