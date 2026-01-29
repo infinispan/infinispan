@@ -91,6 +91,50 @@ public class McpServerResource implements ResourceHandler {
                activity
                """,
                "text/plain"
+         ),
+         new McpResource(
+               "infinispan+logs://gc?lines=200",
+               "gc log",
+               """
+               PRIMARY SOURCE OF INFORMATION FOR VM STATUS/MEMORY.
+               Returns info about JVM garbage collection events, heap usage,
+               memory allocation, GC pauses, and overall memory pressure on
+               the running JVM instance
+               """,
+               "text/plain"
+         ),
+         new McpResource(
+               "infinispan+logs://hotrod-access?lines=200",
+               "Hot Rod access log",
+               """
+               PRIMARY SOURCE OF INFORMATION FOR HOTROD PROTOCOL WORKLOAD.
+               Returns info about Hot Rod client connections and requests:
+               request rates, response times, errors, connection patterns,
+               and client IPs
+               """,
+               "text/plain"
+         ),
+         new McpResource(
+               "infinispan+logs://memcached-access?lines=200",
+               "Memcached access log",
+               """
+               PRIMARY SOURCE OF INFORMATION FOR MEMCACHED PROTOCOL WORKLOAD.
+               Returns info about Memcached client connections and requests:
+               request rates, response times, errors, connection patterns,
+               and client IPs
+               """,
+               "text/plain"
+         ),
+         new McpResource(
+               "infinispan+logs://resp-access?lines=200",
+               "RESP access log",
+               """
+               PRIMARY SOURCE OF INFORMATION FOR REDIS PROTOCOL WORKLOAD.
+               Returns info about RESP (Redis) client connections and requests:
+               request rates, response times, errors, connection patterns,
+               and client IPs
+               """,
+               "text/plain"
          )
    );
    private static final List<McpResourceTemplate> RESOURCE_TEMPLATES = List.of(
@@ -927,6 +971,7 @@ public class McpServerResource implements ResourceHandler {
          case "hotrod-access" -> "hotrod-access.log";
          case "memcached-access" -> "memcached-access.log";
          case "resp-access" -> "resp-access.log";
+         case "gc" -> "gc.log";
          default -> throw new IllegalArgumentException("Unknown log type: " + logType);
       };
    }
