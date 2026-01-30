@@ -6,10 +6,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ehcache.sizeof.SizeOf;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.marshall.core.JOLEntrySizeCalculator;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -23,7 +23,8 @@ import com.jayway.jsonpath.JsonPath;
 public class JsonDebugMemoryFunction
       implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<Long>> {
    public static final String ERR_PATH_CAN_T_BE_NULL = "path can't be null";
-   private static SizeOf sizeof = SizeOf.newInstance();
+   private static final JOLEntrySizeCalculator<?, byte[]> jol = JOLEntrySizeCalculator.getInstance();
+
 
    @ProtoField(1)
    byte[] path;
@@ -44,7 +45,7 @@ public class JsonDebugMemoryFunction
       var pathStr = new String(path, StandardCharsets.UTF_8);
       try {
          if (JSONUtil.isRoot(path)) {
-            return List.of(sizeof.deepSizeOf(doc.value()));
+            return List.of(jol.deepSizeOf(doc.value()));
          }
          var rootNode = JSONUtil.objectMapper.readTree(doc.value());
          var jpCtx = JSONUtil.parserForGet.parse(rootNode);
