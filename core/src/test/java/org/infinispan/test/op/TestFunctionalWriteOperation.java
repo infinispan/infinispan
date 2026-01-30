@@ -1,7 +1,6 @@
 package org.infinispan.test.op;
 
 import static org.infinispan.container.versioning.InequalVersionComparisonResult.EQUAL;
-import static org.infinispan.functional.FunctionalTestUtils.rw;
 
 import java.util.concurrent.CompletionStage;
 
@@ -88,7 +87,7 @@ public enum TestFunctionalWriteOperation implements TestOperation {
    public void insertPreviousValue(AdvancedCache<Object, Object> cache, Object key) {
       switch (this) {
          case REPLACE_META_FUNCTIONAL:
-            FunctionalMap.WriteOnlyMap<Object, Object> woMap = FunctionalTestUtils.wo(cache);
+            FunctionalMap.WriteOnlyMap<Object, Object> woMap = FunctionalMap.create(cache).toWriteOnlyMap();
             FunctionalTestUtils.await(woMap.eval(key, wo -> {
                wo.set("v0", new MetaParam.MetaEntryVersion(new NumericVersion(1)));
             }));
@@ -103,64 +102,39 @@ public enum TestFunctionalWriteOperation implements TestOperation {
    @Override
    public Object perform(AdvancedCache<Object, Object> cache, Object key) {
       AdvancedCache<Object, Object> functionalCache = FunctionalAdvancedCache.create(cache);
-      switch (this) {
-         case PUT_CREATE_FUNCTIONAL:
-            return functionalCache.put(key, value);
-         case PUT_OVERWRITE_FUNCTIONAL:
-            return functionalCache.put(key, value);
-         case PUT_IF_ABSENT_FUNCTIONAL:
-            return functionalCache.putIfAbsent(key, value);
-         case REPLACE_FUNCTIONAL:
-            return functionalCache.replace(key, value);
-         case REPLACE_EXACT_FUNCTIONAL:
-            return functionalCache.replace(key, previousValue, value);
-         case REMOVE_FUNCTIONAL:
-            return functionalCache.remove(key);
-         case REMOVE_EXACT_FUNCTIONAL:
-            return functionalCache.remove(key, previousValue);
-         case REPLACE_META_FUNCTIONAL:
-            return FunctionalTestUtils.await(rw(cache).eval(key, "v1", (v, rw) -> {
-               return rw.findMetaParam(MetaParam.MetaEntryVersion.class)
-                        .filter(ver -> ver.get().compareTo(new NumericVersion(1)) == EQUAL)
-                        .map(ver -> {
-                           rw.set(v, new MetaParam.MetaEntryVersion(new NumericVersion(2)));
-                           return true;
-                        }).orElse(false);
-            }));
-         default:
-            throw new IllegalArgumentException("Unsupported operation: " + this);
-      }
+      return switch (this) {
+         case PUT_CREATE_FUNCTIONAL, PUT_OVERWRITE_FUNCTIONAL -> functionalCache.put(key, value);
+         case PUT_IF_ABSENT_FUNCTIONAL -> functionalCache.putIfAbsent(key, value);
+         case REPLACE_FUNCTIONAL -> functionalCache.replace(key, value);
+         case REPLACE_EXACT_FUNCTIONAL -> functionalCache.replace(key, previousValue, value);
+         case REMOVE_FUNCTIONAL -> functionalCache.remove(key);
+         case REMOVE_EXACT_FUNCTIONAL -> functionalCache.remove(key, previousValue);
+         case REPLACE_META_FUNCTIONAL -> FunctionalTestUtils.await(FunctionalMap.create(cache).toReadWriteMap().eval(key, "v1", (v, rw) -> rw.findMetaParam(MetaParam.MetaEntryVersion.class)
+               .filter(ver -> ver.get().compareTo(new NumericVersion(1)) == EQUAL)
+               .map(ver -> {
+                  rw.set(v, new MetaParam.MetaEntryVersion(new NumericVersion(2)));
+                  return true;
+               }).orElse(false)));
+      };
    }
 
    @Override
    public CompletionStage<?> performAsync(AdvancedCache<Object, Object> cache, Object key) {
       AdvancedCache<Object, Object> functionalCache = FunctionalAdvancedCache.create(cache);
-      switch (this) {
-         case PUT_CREATE_FUNCTIONAL:
-         case PUT_OVERWRITE_FUNCTIONAL:
-            return functionalCache.putAsync(key, value);
-         case PUT_IF_ABSENT_FUNCTIONAL:
-            return functionalCache.putIfAbsentAsync(key, value);
-         case REPLACE_FUNCTIONAL:
-            return functionalCache.replaceAsync(key, value);
-         case REPLACE_EXACT_FUNCTIONAL:
-            return functionalCache.replaceAsync(key, previousValue, value);
-         case REMOVE_FUNCTIONAL:
-            return functionalCache.removeAsync(key);
-         case REMOVE_EXACT_FUNCTIONAL:
-            return functionalCache.removeAsync(key, previousValue);
-         case REPLACE_META_FUNCTIONAL:
-            return rw(cache).eval(key, "v1", (v, rw) -> {
-               return rw.findMetaParam(MetaParam.MetaEntryVersion.class)
-                        .filter(ver -> ver.get().compareTo(new NumericVersion(1)) == EQUAL)
-                        .map(ver -> {
-                           rw.set(v, new MetaParam.MetaEntryVersion(new NumericVersion(2)));
-                           return true;
-                        }).orElse(false);
-            });
-         default:
-            throw new IllegalArgumentException("Unsupported operation: " + this);
-      }
+      return switch (this) {
+         case PUT_CREATE_FUNCTIONAL, PUT_OVERWRITE_FUNCTIONAL -> functionalCache.putAsync(key, value);
+         case PUT_IF_ABSENT_FUNCTIONAL -> functionalCache.putIfAbsentAsync(key, value);
+         case REPLACE_FUNCTIONAL -> functionalCache.replaceAsync(key, value);
+         case REPLACE_EXACT_FUNCTIONAL -> functionalCache.replaceAsync(key, previousValue, value);
+         case REMOVE_FUNCTIONAL -> functionalCache.removeAsync(key);
+         case REMOVE_EXACT_FUNCTIONAL -> functionalCache.removeAsync(key, previousValue);
+         case REPLACE_META_FUNCTIONAL -> FunctionalMap.create(cache).toReadWriteMap().eval(key, "v1", (v, rw) -> rw.findMetaParam(MetaParam.MetaEntryVersion.class)
+               .filter(ver -> ver.get().compareTo(new NumericVersion(1)) == EQUAL)
+               .map(ver -> {
+                  rw.set(v, new MetaParam.MetaEntryVersion(new NumericVersion(2)));
+                  return true;
+               }).orElse(false));
+      };
    }
 
    @Override

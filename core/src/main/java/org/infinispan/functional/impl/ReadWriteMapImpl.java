@@ -36,15 +36,16 @@ public class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
       super(params, functionalMap);
    }
 
-   public static <K, V> ReadWriteMap<K, V> create(FunctionalMapImpl<K, V> functionalMap) {
-      return create(Params.from(functionalMap.params.params), functionalMap);
-   }
-
-   private static <K, V> ReadWriteMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
+   static <K, V> ReadWriteMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
       if (SecurityActions.getCacheConfiguration(functionalMap.cache().getAdvancedCache()).simpleCache()) {
          return new SimpleReadWriteMapImpl<>(params, functionalMap);
       }
       return new ReadWriteMapImpl<>(params, functionalMap);
+   }
+
+   @Override
+   public ReadWriteMap<K, V> toReadWriteMap() {
+      return this;
    }
 
    @Override

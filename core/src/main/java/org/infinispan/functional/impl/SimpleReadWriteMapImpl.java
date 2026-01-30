@@ -28,9 +28,9 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 /**
  * A {@link ReadWriteMapImpl} that works with a simple cache.
  *
- * @since 15.0
  * @author José Bolina
  * @see ReadWriteMapImpl
+ * @since 15.0
  */
 @Experimental
 public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> implements SimpleFunctionalMap<K, V> {
@@ -62,7 +62,7 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> impleme
          expired = toLocalExecution(expiration.toCompletableFuture());
 
          if (expired && notifier.hasListener(CacheEntryExpired.class)) {
-            CompletionStages.join(notifier.notifyCacheEntryExpired(ice.getKey(), ice.getValue(), ice.getMetadata(),   ImmutableContext.INSTANCE));
+            CompletionStages.join(notifier.notifyCacheEntryExpired(ice.getKey(), ice.getValue(), ice.getMetadata(), ImmutableContext.INSTANCE));
          }
       }
 
@@ -120,7 +120,7 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> impleme
                                                    InternalCacheEntry<K, V> oldEntry, InternalEntryFactory factory,
                                                    ByRef<R> result, ByRef<SimpleWriteNotifierHelper.EntryHolder<K, V>> holder) {
       MVCCEntry<K, V> e = readCacheEntry(key, oldEntry);
-      EntryViews.AccessLoggingReadWriteView<K, V> view =  EntryViews.readWrite(e, fmap.cache.getKeyDataConversion(), fmap.cache.getValueDataConversion());
+      EntryViews.AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(e, fmap.cache.getKeyDataConversion(), fmap.cache.getValueDataConversion());
       result.set(EntryViews.snapshot(f.apply(argument, view)));
 
       if (!e.isChanged()) return oldEntry;

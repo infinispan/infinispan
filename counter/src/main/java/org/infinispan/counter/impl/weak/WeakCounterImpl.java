@@ -37,9 +37,6 @@ import org.infinispan.counter.impl.listener.TopologyChangeListener;
 import org.infinispan.counter.impl.manager.InternalCounterAdmin;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.util.ByteString;
 
 /**
@@ -78,10 +75,10 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
          CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {
       this.cache = cache;
       this.notificationManager = notificationManager;
-      FunctionalMapImpl<WeakCounterKey, CounterValue> functionalMap = FunctionalMapImpl.create(cache)
+      FunctionalMap<WeakCounterKey, CounterValue> functionalMap = FunctionalMap.create(cache)
             .withParams(getPersistenceMode(configuration.storage()));
-      this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
+      this.readWriteMap = functionalMap.toReadWriteMap();
+      this.readOnlyMap = functionalMap.toReadOnlyMap();
       this.entries = initKeys(counterName, configuration.concurrencyLevel());
       this.selector = cache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
             new ClusteredKeySelector(entries) :

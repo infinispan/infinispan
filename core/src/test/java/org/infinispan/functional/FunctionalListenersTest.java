@@ -1,8 +1,6 @@
 package org.infinispan.functional;
 
-import static org.infinispan.functional.FunctionalTestUtils.rw;
 import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
-import static org.infinispan.functional.FunctionalTestUtils.wo;
 import static org.infinispan.marshall.core.MarshallableFunctions.removeConsumer;
 import static org.infinispan.marshall.core.MarshallableFunctions.removeReturnPrevOrNull;
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueConsumer;
@@ -44,23 +42,23 @@ public class FunctionalListenersTest extends AbstractFunctionalTest {
    }
 
    public void testSimpleLambdaReadWriteListeners() throws Exception {
-      doLambdaReadWriteListeners(supplyIntKey(), wo(fmapS1), rw(fmapS2), true);
+      doLambdaReadWriteListeners(supplyIntKey(), fmapS1.toWriteOnlyMap(), fmapS2.toReadWriteMap(), true);
    }
 
 
    public void testLocalLambdaReadWriteListeners() throws Exception {
-      doLambdaReadWriteListeners(supplyIntKey(), wo(fmapL1), rw(fmapL2), true);
+      doLambdaReadWriteListeners(supplyIntKey(), fmapL1.toWriteOnlyMap(), fmapL2.toReadWriteMap(), true);
    }
 
    public void testReplLambdaReadWriteListeners() throws Exception {
-      doLambdaReadWriteListeners(supplyKeyForCache(0, REPL), wo(fmapR1), rw(fmapR2), true);
-      doLambdaReadWriteListeners(supplyKeyForCache(1, REPL), wo(fmapR1), rw(fmapR2), true);
+      doLambdaReadWriteListeners(supplyKeyForCache(0, REPL), fmapR1.toWriteOnlyMap(), fmapR2.toReadWriteMap(), true);
+      doLambdaReadWriteListeners(supplyKeyForCache(1, REPL), fmapR1.toWriteOnlyMap(), fmapR2.toReadWriteMap(), true);
    }
 
    @Test
    public void testDistLambdaReadWriteListeners() throws Exception {
-      doLambdaReadWriteListeners(supplyKeyForCache(0, DIST), wo(fmapD1), rw(fmapD2), false);
-      doLambdaReadWriteListeners(supplyKeyForCache(1, DIST), wo(fmapD1), rw(fmapD2), true);
+      doLambdaReadWriteListeners(supplyKeyForCache(0, DIST), fmapD1.toWriteOnlyMap(), fmapD2.toReadWriteMap(), false);
+      doLambdaReadWriteListeners(supplyKeyForCache(1, DIST), fmapD1.toWriteOnlyMap(), fmapD2.toReadWriteMap(), true);
    }
 
    private <K> void doLambdaReadWriteListeners(Supplier<K> keySupplier,
@@ -118,23 +116,23 @@ public class FunctionalListenersTest extends AbstractFunctionalTest {
    }
 
    public void testSimpleLambdaWriteListeners() throws Exception {
-      doLambdaWriteListeners(supplyIntKey(), wo(fmapS1), true);
+      doLambdaWriteListeners(supplyIntKey(), fmapS1.toWriteOnlyMap(), true);
    }
 
    public void testLocalLambdaWriteListeners() throws Exception {
-      doLambdaWriteListeners(supplyIntKey(), wo(fmapL1), true);
+      doLambdaWriteListeners(supplyIntKey(), fmapL1.toWriteOnlyMap(), true);
    }
 
    @Test
    public void testReplLambdaWriteListeners() throws Exception {
-      doLambdaWriteListeners(supplyKeyForCache(0, REPL), wo(fmapR1), true);
-      doLambdaWriteListeners(supplyKeyForCache(1, REPL), wo(fmapR2), true);
+      doLambdaWriteListeners(supplyKeyForCache(0, REPL), fmapR1.toWriteOnlyMap(), true);
+      doLambdaWriteListeners(supplyKeyForCache(1, REPL), fmapR2.toWriteOnlyMap(), true);
    }
 
    @Test
    public void testDistLambdaWriteListeners() throws Exception {
-      doLambdaWriteListeners(supplyKeyForCache(0, DIST), wo(fmapD1), true);
-      doLambdaWriteListeners(supplyKeyForCache(0, DIST), wo(fmapD2), false);
+      doLambdaWriteListeners(supplyKeyForCache(0, DIST), fmapD1.toWriteOnlyMap(), true);
+      doLambdaWriteListeners(supplyKeyForCache(0, DIST), fmapD2.toWriteOnlyMap(), false);
    }
 
    private <K> void doLambdaWriteListeners(Supplier<K> keySupplier,

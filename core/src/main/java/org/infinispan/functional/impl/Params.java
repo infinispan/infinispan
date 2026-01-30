@@ -62,7 +62,7 @@ public final class Params {
             && replicationMode == ReplicationMode.defaultValue()) {
          return DEFAULT_INSTANCE;
       } else {
-         Param[] params = Arrays.copyOf(DEFAULTS, DEFAULTS.length);
+         Param<?>[] params = Arrays.copyOf(DEFAULTS, DEFAULTS.length);
          params[PersistenceMode.ID] = persistenceMode;
          params[LockingMode.ID] = lockingMode;
          params[ExecutionMode.ID] = executionMode;

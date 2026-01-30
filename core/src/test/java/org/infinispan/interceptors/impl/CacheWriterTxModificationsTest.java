@@ -7,9 +7,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -40,10 +37,10 @@ public class CacheWriterTxModificationsTest extends SingleCacheManagerTest {
    }
 
    public void testCommit() throws Throwable {
-      FunctionalMapImpl<Object, Object> functionalMap = FunctionalMapImpl.create(cache.getAdvancedCache());
-      FunctionalMap.WriteOnlyMap<Object, Object> woMap = WriteOnlyMapImpl.create(functionalMap);
-      FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(functionalMap);
-      DummyInMemoryStore store = TestingUtil.getFirstStore(cache);
+      FunctionalMap<Object, Object> functionalMap = FunctionalMap.create(cache.getAdvancedCache());
+      FunctionalMap.WriteOnlyMap<Object, Object> woMap = functionalMap.toWriteOnlyMap();
+      FunctionalMap.ReadWriteMap<Object, Object> rwMap = functionalMap.toReadWriteMap();
+      DummyInMemoryStore<Object, Object> store = TestingUtil.getFirstStore(cache);
 
       cache.putAll(mapOf("remove", "initial",
                          "replace", "initial",
@@ -71,7 +68,7 @@ public class CacheWriterTxModificationsTest extends SingleCacheManagerTest {
 
       DataContainer<Object, Object> dataContainer = cache.getAdvancedCache().getDataContainer();
       dataContainer.forEach(entry -> {
-         MarshallableEntry storeEntry = store.loadEntry(entry.getKey());
+         MarshallableEntry<Object, Object> storeEntry = store.loadEntry(entry.getKey());
          assertNotNull("Missing store entry: " + entry.getKey(), storeEntry);
          assertEquals(entry.getValue(), storeEntry.getValue());
       });

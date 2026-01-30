@@ -37,8 +37,6 @@ import org.infinispan.LockedStream;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -860,7 +858,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
             NamedLambdas.of("put", (c, e) -> assertEquals("value" + e.getKey(), c.put(e.getKey(), e.getValue() + "-other"))),
             // Functional Command
             NamedLambdas.of("functional-command", (c, e) -> {
-               FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(c.getAdvancedCache()));
+               FunctionalMap.ReadWriteMap<Object, Object> rwMap = FunctionalMap.create(c.getAdvancedCache()).toReadWriteMap();
                try {
                   assertEquals("value" + e.getKey(), rwMap.eval(e.getKey(), view -> {
                      Object prev = view.get();

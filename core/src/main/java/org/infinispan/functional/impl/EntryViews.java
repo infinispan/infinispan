@@ -130,8 +130,7 @@ public final class EntryViews {
       @Override
       public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
          Metadata metadata = entry.getMetadata();
-         if (metadata instanceof MetaParamsInternalMetadata) {
-            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+         if (metadata instanceof MetaParamsInternalMetadata metaParamsMetadata) {
             return metaParamsMetadata.findMetaParam(type);
          }
 
@@ -307,8 +306,7 @@ public final class EntryViews {
          if (type == MetaParam.MetaLoadedFromPersistence.class) {
             return Optional.of((T) MetaParam.MetaLoadedFromPersistence.of(entry.isLoaded()));
          }
-         if (metadata instanceof MetaParamsInternalMetadata) {
-            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+         if (metadata instanceof MetaParamsInternalMetadata metaParamsMetadata) {
             return metaParamsMetadata.findMetaParam(type);
          }
 
@@ -434,9 +432,8 @@ public final class EntryViews {
          if (type == MetaParam.MetaLoadedFromPersistence.class) {
             return Optional.of((T) MetaParam.MetaLoadedFromPersistence.of(entry.isLoaded()));
          }
-         Metadata metadata = prevMetadata; // Use previous metadata
-         if (metadata instanceof MetaParamsInternalMetadata) {
-            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+         // Use previous metadata
+         if (prevMetadata instanceof MetaParamsInternalMetadata metaParamsMetadata) {
             return metaParamsMetadata.findMetaParam(type);
          }
 
@@ -562,8 +559,7 @@ public final class EntryViews {
 
       @Override
       public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
-         if (metadata instanceof MetaParamsInternalMetadata) {
-            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+         if (metadata instanceof MetaParamsInternalMetadata metaParamsMetadata) {
             return metaParamsMetadata.findMetaParam(type);
          }
 
@@ -581,7 +577,7 @@ public final class EntryViews {
 
       @ProtoFactory
       ReadWriteSnapshotView(MarshallableObject<K> key, MarshallableObject<V> value,
-                           MarshallableObject<Metadata> metadata) {
+                            MarshallableObject<Metadata> metadata) {
          this(MarshallableObject.unwrap(key), MarshallableObject.unwrap(value), MarshallableObject.unwrap(metadata));
       }
 

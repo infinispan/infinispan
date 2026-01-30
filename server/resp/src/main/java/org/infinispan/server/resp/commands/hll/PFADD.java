@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -32,8 +30,7 @@ public class PFADD extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       byte[] key = arguments.get(0);
-      FunctionalMap.ReadWriteMap<byte[], Object> cache =
-            ReadWriteMapImpl.create(FunctionalMapImpl.create(handler.typedCache(null)));
+      FunctionalMap.ReadWriteMap<byte[], Object> cache = FunctionalMap.create(handler.typedCache(null)).toReadWriteMap();
 
       List<byte[]> elements = new ArrayList<>(arguments.subList(1, arguments.size()));
       CompletionStage<UpdateStatus> cs = cache.eval(key, view -> {
