@@ -144,7 +144,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    public void start() {
       maxSegment = cacheConfiguration.clustering().hash().numSegments();
       // Only optimize for replicated caches when the node is not zero capacity.
-      replicatedCache = cacheConfiguration.clustering().cacheMode().isReplicated() && !nodeConfiguration.isZeroCapacityNode();
+      replicatedCache = cacheConfiguration.clustering().cacheMode().isReplicated()
+            && !nodeConfiguration.isZeroCapacityNode()
+            && cacheConfiguration.clustering().hash().capacityFactor() == 1f;
       updateStoreInfo(cacheConfiguration.persistence());
       persistenceManager.addStoreListener(storeChangeListener);
 
