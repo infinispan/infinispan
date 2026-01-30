@@ -345,15 +345,18 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    @Override
-   public void leave(String cacheName, long timeout) {
+   public void leave(String cacheName, long timeout, boolean wait) {
       log.debugf("Node %s leaving cache %s", transport.getAddress(), cacheName);
-      runningCaches.remove(cacheName);
+      if (!wait)
+         runningCaches.remove(cacheName);
 
-      ReplicableCommand command = new CacheLeaveCommand(cacheName, transport.getAddress());
+      ReplicableCommand command = new CacheLeaveCommand(cacheName, transport.getAddress(), wait ? timeout : -1);
       try {
          CompletionStages.join(helper.executeOnCoordinator(transport, command, timeout));
       } catch (Exception e) {
          log.debugf(e, "Error sending the leave request for cache %s to coordinator", cacheName);
+      } finally {
+         runningCaches.remove(cacheName);
       }
    }
 
@@ -395,7 +398,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                      final String name = cacheName;
                      join(name, cacheStatus)
                            .whenComplete((ignore, t) -> {
-                              if (t != null) leave(name, getGlobalTimeout());
+                              if (t != null) leave(name, getGlobalTimeout(), false);
                            });
                   }
                   continue;
@@ -1025,6 +1028,7 @@ class LocalCacheStatus {
 
    void setCurrentTopology(CacheTopology currentTopology) {
       this.currentTopology = currentTopology;
+      handler.onTopologyReceived(currentTopology);
    }
 
    CacheTopology getStableTopology() {
@@ -1037,6 +1041,7 @@ class LocalCacheStatus {
       if (stableTopology != null) {
          LocalTopologyManagerImpl.log.debugf("Cache %s stable topology complete %s", name, stableTopology);
          stable.complete(stableTopology.wasTopologyRestoredFromState());
+         handler.onTopologyReceived(stableTopology);
       }
    }
 

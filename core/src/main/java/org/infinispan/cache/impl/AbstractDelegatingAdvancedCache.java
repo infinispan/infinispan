@@ -545,4 +545,9 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    public CachePublisher<K, V> cachePublisher() {
       return cache.cachePublisher();
    }
+
+   @Override
+   public void stop(long timeout, TimeUnit unit) {
+      cache.stop(timeout, unit);
+   }
 }

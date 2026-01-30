@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.configuration.cache.StateTransferConfiguration;
@@ -49,7 +50,7 @@ public interface StateTransferManager {
     */
    void waitForInitialStateTransferToComplete();
 
-   void stop();
+   void stop(long timeout, TimeUnit unit);
 
    /**
     * If there is an state transfer happening at the moment, this method forwards the supplied command to the nodes that

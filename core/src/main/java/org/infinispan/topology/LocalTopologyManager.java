@@ -27,7 +27,7 @@ public interface LocalTopologyManager {
    /**
     * Forwards the leave request to the coordinator.
     */
-   void leave(String cacheName, long timeout);
+   void leave(String cacheName, long timeout, boolean wait);
 
    /**
     * Confirm that the local cache {@code cacheName} has finished receiving the new data for topology

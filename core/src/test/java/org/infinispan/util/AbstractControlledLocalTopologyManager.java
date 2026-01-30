@@ -62,8 +62,8 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
-   public final void leave(String cacheName, long timeout) {
-      delegate.leave(cacheName, timeout);
+   public final void leave(String cacheName, long timeout, boolean wait) {
+      delegate.leave(cacheName, timeout, wait);
    }
 
    @Override

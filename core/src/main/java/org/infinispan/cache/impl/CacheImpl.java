@@ -1024,7 +1024,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
          displayName = "Stops cache."
    )
    public void stop() {
-      performImmediateShutdown();
+      performImmediateShutdown(-1, null);
+   }
+
+   @Override
+   public void stop(long timeout, TimeUnit unit) {
+      performImmediateShutdown(timeout, unit);
    }
 
    @Override
@@ -1052,11 +1057,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
             throw new CacheException(e);
          }
       }
-      performImmediateShutdown();
+      performImmediateShutdown(-1, null);
    }
 
-   private void performImmediateShutdown() {
+   private void performImmediateShutdown(long timeout, TimeUnit unit) {
       log.debugf("Stopping cache %s on %s", getName(), managerIdentifier());
+      if (timeout > 0) {
+         log.debugf("Waiting cache %s finish any pending state transfer on %s", getName(), managerIdentifier());
+         stateTransferManager.stop(timeout, unit);
+      }
+
       componentRegistry.stop();
    }
 
