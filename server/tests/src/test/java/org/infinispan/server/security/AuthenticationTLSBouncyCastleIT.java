@@ -27,7 +27,7 @@ public class AuthenticationTLSBouncyCastleIT {
          InfinispanServerExtensionBuilder.config("configuration/AuthenticationServerTLSBouncyCastleTest.xml")
                .runMode(ServerRunMode.CONTAINER)
                .numServers(1)
-               .mavenArtifacts("org.bouncycastle:bcprov-jdk18on:1.78.1")
+               .mavenArtifacts("org.bouncycastle:bcprov-jdk18on:" + System.getProperty("version.bouncycastle"))
                .build();
 
    @ParameterizedTest
