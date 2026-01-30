@@ -8,6 +8,7 @@ import org.infinispan.commons.util.IntSet;
  * A PublisherResult that was performed due to included keys. Note that this response is only ever created on the
  * originator node. This is because we can't have a partial response with key based publishers. Either all results
  * are returned or the node crashes or has an exception.
+ *
  * @author wburns
  * @since 10.0
  */
