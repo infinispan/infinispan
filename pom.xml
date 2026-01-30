@@ -187,7 +187,7 @@
       <versionx.com.ibm.db2>11.5.9.0</versionx.com.ibm.db2>
       <versionx.com.microsoft.azure.azure-storage>8.6.6</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.microsoft.sqlserver>12.10.2.jre11</versionx.com.microsoft.sqlserver>
-      <versionx.com.mysqldatabase.mysql>9.5.0</versionx.com.mysqldatabase.mysql>
+      <versionx.com.mysqldatabase.mysql>9.6.0</versionx.com.mysqldatabase.mysql>
       <versionx.com.postgresqldatabase.postgresql>42.7.3</versionx.com.postgresqldatabase.postgresql>
       <versionx.com.oracle.database.jdbc.ojdbc11>23.26.0.0.0</versionx.com.oracle.database.jdbc.ojdbc11>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
