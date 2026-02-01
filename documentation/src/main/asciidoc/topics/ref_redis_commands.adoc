@@ -8,6 +8,16 @@ The {brandname} RESP endpoint implements the following Redis commands:
 
 * link:https://redis.io/commands/auth[AUTH]
 
+* link:https://redis.io/commands/bitcount[BITCOUNT]
+
+* link:https://redis.io/commands/bitfield[BITFIELD]
+
+* link:https://redis.io/commands/bitfield_ro[BITFIELD_RO]
+
+* link:https://redis.io/commands/bitop[BITOP]
+
+* link:https://redis.io/commands/bitpos[BITPOS]
+
 * link:https://redis.io/commands/blpop[BLPOP]
 
 * link:https://redis.io/docs/latest/commands/blmpop[BLMPOP]
@@ -83,6 +93,8 @@ NOTE: This command behaves like `FLUSHDB` and flushes only the current database.
 * link:https://redis.io/commands/flushdb[FLUSHDB]
 
 * link:https://redis.io/commands/get[GET]
+
+* link:https://redis.io/commands/getbit[GETBIT]
 
 * link:https://redis.io/commands/getdel[GETDEL]
 
@@ -325,6 +337,8 @@ NOTE: Cursors are reaped in case they have not been used within a timeout. The t
 NOTE: {brandname} allows the SELECT command both in local and clustered mode, unlike Redis Cluster which forbids use of this command and only supports database zero.
 
 * link:https://redis.io/commands/set[SET]
+
+* link:https://redis.io/commands/setbit[SETBIT]
 
 * link:https://redis.io/commands/setex[SETEX]
 +
