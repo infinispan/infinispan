@@ -13,13 +13,15 @@ import org.testng.annotations.AfterClass;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.ProtocolVersion;
 
 public abstract class SingleNodeRespBaseTest extends AbstractRespTest {
    protected RedisClient client;
    protected RespServer server;
    protected StatefulRedisConnection<String, String> redisConnection;
-   private final List<StatefulRedisConnection<String, String>> connections = new ArrayList<>();
+   private final List<StatefulRedisConnection<?, ?>> connections = new ArrayList<>();
    protected Cache<Object, Object> cache;
 
    @Override
@@ -36,8 +38,12 @@ public abstract class SingleNodeRespBaseTest extends AbstractRespTest {
       return TestSetup.singleNodeTestSetup();
    }
 
+   protected RedisCodec<String, String> newCodec() {
+      return StringCodec.UTF8;
+   }
+
    protected final StatefulRedisConnection<String, String> newConnection() {
-      StatefulRedisConnection<String, String> conn = client.connect();
+      StatefulRedisConnection<String, String> conn = client.connect(newCodec());
       connections.add(conn);
       return conn;
    }
@@ -45,8 +51,8 @@ public abstract class SingleNodeRespBaseTest extends AbstractRespTest {
    @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
-      for (StatefulRedisConnection<String, String> connection : connections) {
-         if (connection instanceof StatefulRedisConnectionImpl<?,?> srci) {
+      for (StatefulRedisConnection<?, ?> connection : connections) {
+         if (connection instanceof StatefulRedisConnectionImpl<?, ?> srci) {
             assertThat(srci.getConnectionState().getNegotiatedProtocolVersion())
                   .isEqualTo(ProtocolVersion.RESP3);
          }
