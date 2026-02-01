@@ -2,12 +2,14 @@ package org.infinispan.server.resp.logging;
 
 import static org.jboss.logging.Messages.getBundle;
 
+import java.lang.invoke.MethodHandles;
+
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
 
 @MessageBundle(projectCode = "ISPN")
 public interface Messages {
-   Messages MESSAGES = getBundle(Messages.class);
+   Messages MESSAGES = getBundle(MethodHandles.lookup(), Messages.class);
 
    @Message(value = "-NOPROTO sorry this protocol version is not supported")
    String unsupportedProtocol();
@@ -17,4 +19,10 @@ public interface Messages {
 
    @Message(value = "Lua engine is not active")
    String scriptEngineDisabled();
+
+   @Message(value = "Invalid bitfield type. Use something like i16 u8. Note that u64 is not supported but i64 is.")
+   String invalidBitfieldType();
+
+   @Message(value = "bit offset is not an integer or out of range")
+   String invalidBitOffset();
 }
