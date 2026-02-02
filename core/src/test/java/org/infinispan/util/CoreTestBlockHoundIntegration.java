@@ -6,7 +6,6 @@ import java.io.IOException;
 import org.apache.logging.log4j.core.util.internal.InternalLoggerRegistry;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
-import org.infinispan.conflict.impl.ConflictManagerTest;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
 import org.infinispan.functional.FunctionalTestUtils;
@@ -111,8 +110,6 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
 
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, BlockingLocalTopologyManager.class);
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, AbstractControlledLocalTopologyManager.class);
-
-      CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, ConflictManagerTest.DelayStateResponseCommandHandler.class);
 
       // The join is used to allow for a sync API for test simplicity - where as the actual store invocation
       // must be non blocking

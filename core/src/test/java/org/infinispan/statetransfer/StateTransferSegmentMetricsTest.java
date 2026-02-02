@@ -2,8 +2,9 @@ package org.infinispan.statetransfer;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
@@ -21,7 +22,12 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.RequestRepository;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
@@ -166,19 +172,19 @@ public class StateTransferSegmentMetricsTest extends BaseDistFunctionalTest<Stri
    }
 
    private void waitApplyingSegmentBatch(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      StateConsumer sc = TestingUtil.extractComponent(cache, StateConsumer.class);
-      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(sc);
-      StateConsumer mockConsumer = mock(StateConsumer.class, withSettings().defaultAnswer(forwardedAnswer));
+      Transport transport = TestingUtil.extractComponent(cache, Transport.class);
+      RequestRepository requestRepository = Mocks.replaceFieldWithSpy(transport, "requests");
+
       doAnswer(invocation -> {
          // Sync with main thread
          checkPoint.trigger("state_installed_invoked_" + cache);
          // Proceed when main thread allows
          checkPoint.awaitStrict("state_installed_invoked_release_" + cache, 10, TimeUnit.SECONDS);
 
-         // Apply the whole batch of segments and then issue a signal back to main thread.
-         return ((CompletionStage<?>) forwardedAnswer.answer(invocation))
-               .thenRun(() -> checkPoint.trigger("state_applied_" + cache));
-      }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyCollection());
-      TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
+         Object result = invocation.callRealMethod();
+         checkPoint.trigger("state_applied_" + cache);
+         return result;
+      }).when(requestRepository).addResponse(anyLong(), any(), argThat(r ->
+            r.isSuccessful() && r instanceof ValidResponse<?> vr && vr.getResponseValue() instanceof PublisherResponse));
    }
 }
