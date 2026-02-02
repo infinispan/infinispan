@@ -13,7 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 @org.infinispan.server.test.core.tags.Database
-public class BaseJdbcStringBasedCacheStoreIT {
+public class BaseJdbcStringBasedCacheStore {
 
    @InfinispanServer(PersistenceIT.class)
    public static TestClientDriver SERVERS;
