@@ -279,6 +279,11 @@ public class MockTransport implements Transport {
       return EmptyRaftManager.INSTANCE;
    }
 
+   @Override
+   public NodeVersion getOldestMember() {
+      return NodeVersion.INSTANCE;
+   }
+
    private <T> CompletableFuture<T> blockRequest(Collection<Address> targets, ReplicableCommand command, ResponseCollector<Address, T> collector) {
       log.debugf("Intercepted command %s to %s", command, targets);
       BlockedRequest request = new BlockedRequest(command, collector);

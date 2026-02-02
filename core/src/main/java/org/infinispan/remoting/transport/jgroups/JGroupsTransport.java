@@ -327,6 +327,7 @@ public class JGroupsTransport implements Transport {
       return clusterView.isMixedVersionCluster();
    }
 
+   @Override
    public NodeVersion getOldestMember() {
       return clusterView.getOldestMember();
    }

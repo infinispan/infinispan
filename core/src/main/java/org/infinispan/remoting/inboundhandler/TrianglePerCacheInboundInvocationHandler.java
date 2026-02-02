@@ -9,7 +9,6 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.statetransfer.StateTransferCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
@@ -59,7 +58,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             bmkac.ack(commandAckCollector);
          } else if (command instanceof ExceptionAckCommand eac) {
             eac.ack(commandAckCollector);
-         } else if (command instanceof StateTransferCommand) {
+         } else if (noRequireTxData(command)) {
             handleStateRequestCommand(command, reply, order);
          } else {
          handleDefaultCommand(command, reply, order);

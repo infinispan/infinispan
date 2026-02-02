@@ -68,6 +68,10 @@ public class InboundTransferTask {
 
    private final RpcOptions rpcOptions;
 
+   public InboundTransferTask(IntSet segments, Address source) {
+      this(segments, source, -1, null, null, -1, null, true);
+   }
+
    public InboundTransferTask(IntSet segments, Address source, int topologyId, RpcManager rpcManager,
                               CommandsFactory commandsFactory, long timeout, String cacheName, boolean applyState) {
       if (segments == null || segments.isEmpty()) {
@@ -227,7 +231,7 @@ public class InboundTransferTask {
       return isCancelled;
    }
 
-   private void sendCancelCommand(IntSet cancelledSegments) {
+   protected void sendCancelCommand(IntSet cancelledSegments) {
       CacheRpcCommand cmd = commandsFactory.buildStateTransferCancelCommand(topologyId, cancelledSegments);
       try {
          rpcManager.sendTo(source, cmd, DeliverOrder.NONE);
@@ -238,9 +242,9 @@ public class InboundTransferTask {
       }
    }
 
-   public void onStateReceived(int segmentId, boolean isLastChunk) {
+   public boolean onStateReceived(int segmentId, boolean isLastChunk) {
+      boolean isCompleted = false;
       if (!isCancelled && isLastChunk) {
-         boolean isCompleted = false;
          synchronized (segments) {
             if (segments.contains(segmentId)) {
                unfinishedSegments.remove(segmentId);
@@ -254,6 +258,7 @@ public class InboundTransferTask {
             notifyCompletion(true);
          }
       }
+      return isCompleted;
    }
 
    private void notifyCompletion(boolean success) {

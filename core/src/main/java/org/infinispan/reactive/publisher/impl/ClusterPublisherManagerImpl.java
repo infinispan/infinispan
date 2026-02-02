@@ -25,6 +25,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -133,7 +134,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    // Make sure we don't create one per invocation
    private final EntryComposedType ENTRY_COMPOSED = new EntryComposedType<>();
 
-   private <R> EntryComposedType<R> entryComposedType() {
+   protected <R> EntryComposedType<R> entryComposedType() {
       return ENTRY_COMPOSED;
    }
 
@@ -690,7 +691,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    private Map<Address, IntSet> determineSegmentTargets(LocalizedCacheTopology topology, IntSet segments, Address localAddress, long explicitFlags) {
-      if (skipRemoteInvocation(explicitFlags)) {
+      if (topology.isAllLocal() && skipRemoteInvocation(explicitFlags)) {
          // A shared store without write behind will have all values available on all nodes, so just do local lookup
          var map = new HashMap<Address, IntSet>();
          map.put(localAddress, segments == null ? IntSets.immutableRangeSet(maxSegment) : segments);
@@ -968,6 +969,19 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             sizeComposedType(), null, PublisherReducers.add());
    }
 
+   @Override
+   public Publisher<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> entryPublisherForTopology(int topologyId, int batchSize, Map<Address, IntSet> targets) {
+      return entryPublisherForTopology(topologyId, batchSize, targets, MarshallableFunctions.identity());
+   }
+
+   protected Publisher<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> entryPublisherForTopology(int topologyId, int batchSize, Map<Address, IntSet> targets,
+                                                                                                           Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<CacheEntry<K, V>>> transformer) {
+      // Have to make a copy as we remove from the map and remove from the IntSet
+      Map<Address, IntSet> targetsCopy = targets.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+            e -> IntSets.mutableCopyFrom(e.getValue())));
+      return new TopologySegmentAwarePublisherImpl(topologyId, batchSize, targetsCopy, transformer).publisherWithSegments();
+   }
+
    private static final AtomicInteger requestCounter = new AtomicInteger();
 
    private static final Function<ValidResponse, PublisherResponse> responseHandler = vr -> {
@@ -1002,13 +1016,17 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       // Variable used to ensure we only read the context once - so it is not read again during a retry
       volatile int currentTopology = -1;
 
-      SubscriberHandler(AbstractSegmentAwarePublisher<I, R> publisher, boolean withSegments) {
+      SubscriberHandler(AbstractSegmentAwarePublisher<I, R> publisher) {
          this.publisher = publisher;
          this.requestId = rpcManager.getAddress() + "#" + requestCounter.incrementAndGet();
 
          this.keysBySegment = publisher.deliveryGuarantee == DeliveryGuarantee.EXACTLY_ONCE ?
                new AtomicReferenceArray<>(maxSegment) : null;
-         this.segmentsToComplete = IntSets.concurrentCopyFrom(publisher.segments, maxSegment);
+         if (publisher.targets == null) {
+            this.segmentsToComplete = IntSets.concurrentCopyFrom(publisher.segments, maxSegment);
+         } else {
+            this.segmentsToComplete = null;
+         }
       }
 
       /**
@@ -1025,26 +1043,35 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
        * the entire process again with the segments that haven't yet completed.
        */
       private <E> Flowable<E> getValuesFlowable(BiFunction<InnerPublisherSubscription.InnerPublisherSubscriptionBuilder<K, I, R>, Map.Entry<Address, IntSet>, Publisher<E>> subToFlowableFunction) {
-         return Flowable.defer(() -> {
-            if (!componentRegistry.getStatus().allowInvocations() && !componentRegistry.getStatus().startingUp()) {
-               return Flowable.error(new IllegalLifecycleStateException());
-            }
-            LocalizedCacheTopology topology = distributionManager.getCacheTopology();
-            int previousTopology = currentTopology;
-            // Store the current topology in case if we have to retry
-            int currentTopology = topology.getTopologyId();
-            this.currentTopology = currentTopology;
+         Flowable<E> flowable = Flowable.defer(() -> {
+            Map<Address, IntSet> targets = publisher.targets;
             Address localAddress = rpcManager.getAddress();
-            Map<Address, IntSet> targets = determineSegmentTargets(topology, segmentsToComplete, localAddress, publisher.explicitFlags);
-            if (previousTopology != -1 && previousTopology == currentTopology || targets.isEmpty()) {
-               int nextTopology = currentTopology + 1;
-               if (log.isTraceEnabled()) {
-                  log.tracef("Request id %s needs a new topology to retry segments %s. Current topology is %d, with targets %s",
-                        requestId, segmentsToComplete, currentTopology, targets);
+            LocalizedCacheTopology topology = null;
+            if (targets == null) {
+               if (!componentRegistry.getStatus().allowInvocations() && !componentRegistry.getStatus().startingUp()) {
+                  return Flowable.error(new IllegalLifecycleStateException());
                }
-               // When this is complete - the retry below will kick in again and we will have a new topology
-               return RxJavaInterop.voidCompletionStageToFlowable(stateTransferLock.topologyFuture(nextTopology), true);
+               topology = distributionManager.getCacheTopology();
+               int previousTopology = currentTopology;
+               // Store the current topology in case if we have to retry
+               int currentTopology = topology.getTopologyId();
+               this.currentTopology = currentTopology;
+               targets = determineSegmentTargets(topology, segmentsToComplete, localAddress, publisher.explicitFlags);
+
+               if (previousTopology != -1 && previousTopology == currentTopology || targets.isEmpty()) {
+                  int nextTopology = currentTopology + 1;
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Request id %s needs a new topology to retry segments %s. Current topology is %d, with targets %s",
+                           requestId, segmentsToComplete, currentTopology, targets);
+                  }
+                  // When this is complete - the retry below will kick in again and we will have a new topology
+                  return RxJavaInterop.voidCompletionStageToFlowable(stateTransferLock.topologyFuture(nextTopology), true);
+               }
+            } else {
+               // Effectively ignores the topology check and lets it be processed
+               currentTopology = publisher.topologyId;
             }
+
             IntSet localSegments = targets.remove(localAddress);
             Iterator<Map.Entry<Address, IntSet>> iterator = targets.entrySet().iterator();
             Supplier<Map.Entry<Address, IntSet>> targetSupplier = () -> {
@@ -1087,17 +1114,21 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             }
 
             return Flowable.mergeArray(publisherArray);
-         }).repeatUntil(() -> {
-            boolean complete = segmentsToComplete.isEmpty();
-            if (log.isTraceEnabled()) {
-               if (complete) {
-                  log.tracef("All segments complete for %s", requestId);
-               } else {
-                  log.tracef("Segments %s not completed - retrying", segmentsToComplete);
-               }
-            }
-            return complete;
          });
+         if (publisher.deliveryGuarantee != DeliveryGuarantee.AT_MOST_ONCE) {
+            flowable = flowable.repeatUntil(() -> {
+               boolean complete = segmentsToComplete.isEmpty();
+               if (log.isTraceEnabled()) {
+                  if (complete) {
+                     log.tracef("All segments complete for %s", requestId);
+                  } else {
+                     log.tracef("Segments %s not completed - retrying", segmentsToComplete);
+                  }
+               }
+               return complete;
+            });
+         }
+         return flowable;
       }
 
       public Flowable<R> start() {
@@ -1109,7 +1140,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       void completeSegment(int segment) {
-         segmentsToComplete.remove(segment);
+         if (segmentsToComplete != null) {
+            segmentsToComplete.remove(segment);
+         }
          if (keysBySegment != null) {
             keysBySegment.set(segment, null);
          }
@@ -1270,30 +1303,42 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       final DeliveryGuarantee deliveryGuarantee;
       final int batchSize;
       final Function<? super Publisher<I>, ? extends Publisher<R>> transformer;
+      final Map<Address, IntSet> targets;
       final boolean shouldTrackKeys;
+      final int topologyId;
 
       // Prevents the context from being applied for every segment - only the first
       final AtomicBoolean usedContext = new AtomicBoolean();
 
       private AbstractSegmentAwarePublisher(ComposedType<K, I, R> composedType, IntSet segments, InvocationContext invocationContext,
-                                            long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
-                                            Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+            long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
+            Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
          this.composedType = composedType;
-         this.segments = segments != null ? segments : IntSets.immutableRangeSet(maxSegment);
          this.invocationContext = invocationContext;
          this.explicitFlags = explicitFlags;
          this.deliveryGuarantee = deliveryGuarantee;
          this.batchSize = batchSize;
          this.transformer = transformer;
+         this.targets = targets;
+         if (targets != null) {
+            assert composedType == ClusterPublisherManagerImpl.this.entryComposedType() : "composedType must be entry, was: " + composedType;
+            assert segments == null :  "segments must be null,  was: " + segments;
+            assert invocationContext == null : "invocationContext must be null,  was: " + invocationContext;
+            assert deliveryGuarantee == DeliveryGuarantee.AT_MOST_ONCE : "deliveryGuarantee must be AT_MOST_ONCE, was: " + deliveryGuarantee;
+            assert explicitFlags == FlagBitSets.STATE_TRANSFER_PROGRESS : "explicitFlags must be " + FlagBitSets.STATE_TRANSFER_PROGRESS + ", was: " + explicitFlags;
+            this.segments = null;
+         } else {
+            this.segments = segments != null ? segments : IntSets.immutableRangeSet(maxSegment);
+         }
          this.shouldTrackKeys = shouldTrackKeys(deliveryGuarantee, transformer);
       }
 
       public Publisher<Notification<R>> publisherWithSegments() {
-         return new SubscriberHandler<I, R>(this, true).startWithSegments();
+         return new SubscriberHandler<I, R>(this).startWithSegments();
       }
 
       public Publisher<R> publisherWithoutSegments() {
-         return new SubscriberHandler<I, R>(this, false).start();
+         return new SubscriberHandler<I, R>(this).start();
       }
 
       abstract InitialPublisherCommand buildInitialCommand(Address target, String requestId, IntSet segments,
@@ -1301,6 +1346,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       NextPublisherCommand buildNextCommand(String requestId) {
          return commandsFactory.buildNextPublisherCommand(requestId);
+      }
+
+      boolean ignoreTopology() {
+         return (explicitFlags & FlagBitSets.STATE_TRANSFER_PROGRESS) != 0;
       }
    }
 
@@ -1310,7 +1359,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       private KeyAwarePublisherImpl(Set<K> keysToInclude, ComposedType<K, I, R> composedType, IntSet segments,
                                     InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
                                     int batchSize, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
-         super(composedType, segments, invocationContext, explicitFlags, deliveryGuarantee, batchSize, transformer);
+         super(0, composedType, segments, invocationContext, explicitFlags, deliveryGuarantee, batchSize, transformer, null);
          this.keysToInclude = Objects.requireNonNull(keysToInclude);
       }
 
@@ -1364,11 +1413,31 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
    }
 
-   private class SegmentAwarePublisherImpl<I, R> extends AbstractSegmentAwarePublisher<I, R> {
-      private SegmentAwarePublisherImpl(IntSet segments, ComposedType<K, I, R> composedType,
+   // This class isn't really needed, but it is here for proper typing checks
+   protected class TopologySegmentAwarePublisherImpl extends SegmentAwarePublisherImpl<CacheEntry<K, V>, CacheEntry<K, V>> {
+      protected TopologySegmentAwarePublisherImpl(int topologyId, int batchSize, Map<Address, IntSet> targets) {
+         this(topologyId, batchSize, targets, MarshallableFunctions.identity());
+      }
+
+      protected TopologySegmentAwarePublisherImpl(int topologyId, int batchSize, Map<Address, IntSet> targets,
+                                                  Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<CacheEntry<K, V>>> transformer) {
+         super(topologyId, null, ClusterPublisherManagerImpl.this.entryComposedType(), null,
+               FlagBitSets.STATE_TRANSFER_PROGRESS, DeliveryGuarantee.AT_MOST_ONCE, batchSize,
+               transformer, targets);
+      }
+   }
+
+   protected class SegmentAwarePublisherImpl<I, R> extends AbstractSegmentAwarePublisher<I, R> {
+      protected SegmentAwarePublisherImpl(IntSet segments, ComposedType<K, I, R> composedType,
                                         InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
                                         int batchSize, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
-         super(composedType, segments, invocationContext, explicitFlags, deliveryGuarantee, batchSize, transformer);
+         super(0, composedType, segments, invocationContext, explicitFlags, deliveryGuarantee, batchSize, transformer, null);
+      }
+
+      protected SegmentAwarePublisherImpl(int topologyId, IntSet segments, ComposedType<K, I, R> composedType,
+                                          InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                          int batchSize, Function<? super Publisher<I>, ? extends Publisher<R>> transformer, Map<Address, IntSet> targets) {
+         super(topologyId, composedType, segments, invocationContext, explicitFlags, deliveryGuarantee, batchSize, transformer, targets);
       }
 
       @Override

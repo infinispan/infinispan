@@ -536,11 +536,10 @@ public class Mocks {
     * this most likely happens between method runs in the same test file.
     * @param parentObject The parent object that contains the field
     * @param fieldName The name of the field to replace in the parent Object
-    * @param fieldClass The field's class
     * @return The spied object to add mock invocations on
     * @param <C> The field type
     */
-   public static <C> C replaceFieldWithSpy(Object parentObject, String fieldName, Class<? extends C> fieldClass) {
+   public static <C> C replaceFieldWithSpy(Object parentObject, String fieldName) {
       ByRef<C> ref = new ByRef<>(null);
       TestingUtil.replaceField(parentObject, fieldName, c -> {
          C fieldObject = TestingUtil.extractField(parentObject, fieldName);

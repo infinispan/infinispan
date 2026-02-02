@@ -455,7 +455,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       TestingUtil.join(store.stop());
 
       // We replace the index so we can verify what happened during startup
-      Index index = performWhileStarting(() -> Mocks.replaceFieldWithSpy(store.delegate(), "index", Index.class));
+      Index index = performWhileStarting(() -> Mocks.replaceFieldWithSpy(store.delegate(), "index"));
 
       verify(index).load();
       verify(index, never()).reset();
@@ -468,7 +468,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       TestingUtil.join(store.stop());
 
       // We replace the index so we can verify what happened during startup
-      Index index = performWhileStarting(() -> Mocks.replaceFieldWithSpy(store.delegate(), "index", Index.class));
+      Index index = performWhileStarting(() -> Mocks.replaceFieldWithSpy(store.delegate(), "index"));
 
       verify(index).load();
       verify(index).getMaxSeqId();

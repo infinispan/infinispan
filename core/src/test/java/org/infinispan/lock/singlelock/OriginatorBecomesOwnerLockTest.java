@@ -21,6 +21,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -106,7 +107,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
    private void testLockMigrationDuringPrepare(final Object key) throws Exception {
       ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(originatorCache);
-      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, StateTransferGetTransactionsCommand.class, StateResponseCommand.class);
+      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, StateTransferGetTransactionsCommand.class, StateResponseCommand.class, InitialPublisherCommand.class);
       final EmbeddedTransactionManager tm = embeddedTm(ORIGINATOR_INDEX);
 
       Future<EmbeddedTransaction> f = fork(() -> {
@@ -203,7 +204,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
    private void testLockMigrationDuringCommit(final Object key) throws Exception {
       ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(originatorCache);
-      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, StateTransferGetTransactionsCommand.class, StateResponseCommand.class);
+      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, StateTransferGetTransactionsCommand.class, StateResponseCommand.class, InitialPublisherCommand.class);
       final EmbeddedTransactionManager tm = embeddedTm(ORIGINATOR_INDEX);
 
       Future<EmbeddedTransaction> f = fork(() -> {

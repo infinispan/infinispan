@@ -1,5 +1,6 @@
 package org.infinispan.reactive.publisher.impl;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -20,6 +21,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
+import org.infinispan.remoting.transport.Address;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -213,5 +215,11 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
    @Override
    public CompletionStage<Long> sizePublisher(IntSet segments, InvocationContext ctx, long flags) {
       return localPublisherManager.sizePublisher(segments, flags);
+   }
+
+   @Override
+   public Publisher<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> entryPublisherForTopology(int topologyId, int batchSize, Map<Address, IntSet> targets) {
+      return entryPublisher(null, null, null, 0, null, 0, Function.identity())
+            .publisherWithSegments();
    }
 }

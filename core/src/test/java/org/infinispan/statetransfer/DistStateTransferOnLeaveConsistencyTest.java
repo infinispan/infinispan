@@ -1,13 +1,15 @@
 package org.infinispan.statetransfer;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -16,17 +18,17 @@ import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
+import org.infinispan.remoting.responses.SuccessfulObjResponse;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.RequestRepository;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -34,7 +36,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -275,45 +276,20 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
    }
 
    private static void blockStateTransfer(Cache<?,?> cache, CountDownLatch started, CountDownLatch proceed) {
-      TestingUtil.wrapComponent(cache, StateConsumer.class, (current) -> {
-         BlockingStateConsumer stateConsumer;
-         if (current instanceof BlockingStateConsumer) {
-            stateConsumer = (BlockingStateConsumer) current;
-         } else {
-            stateConsumer = new BlockingStateConsumer(current);
-         }
-         stateConsumer.startedLatch = started;
-         stateConsumer.proceedLatch = proceed;
-         return stateConsumer;
-      });
-   }
+      Transport transport = TestingUtil.extractComponent(cache, Transport.class);
+      RequestRepository requestRepository = Mocks.replaceFieldWithSpy(transport, "requests");
 
-   @Scope(Scopes.NAMED_CACHE)
-   public static class BlockingStateConsumer extends DelegatingStateConsumer {
-
-      @Inject BlockingManager blockingManager;
-      volatile CountDownLatch startedLatch;
-      volatile CountDownLatch proceedLatch;
-
-      BlockingStateConsumer(StateConsumer delegate) {
-         super(delegate);
-      }
-
-      @Override
-      public CompletionStage<?> applyState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
-         return blockingManager.runBlocking(() -> {
-            // signal we encounter a state transfer PUT
-            startedLatch.countDown();
-            // wait until it is ok to apply state
-            try {
-               if (!proceedLatch.await(15, TimeUnit.SECONDS)) {
-                  throw CompletableFutures.asCompletionException(new TimeoutException());
-               }
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
+      doAnswer(invocation -> {
+         started.countDown();
+         try {
+            if (!proceed.await(15, TimeUnit.SECONDS)) {
+               throw CompletableFutures.asCompletionException(new TimeoutException());
             }
-            CompletionStages.join(super.applyState(sender, topologyId, stateChunks));
-         }, "state-" + sender);
-      }
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+         return invocation.callRealMethod();
+      }).when(requestRepository).addResponse(anyLong(), any(), argThat(r ->
+            r.isSuccessful() && r instanceof SuccessfulObjResponse<?> sor && sor.getResponseValue() instanceof PublisherResponse));
    }
 }

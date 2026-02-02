@@ -11,10 +11,12 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.statetransfer.StateTransferCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -22,6 +24,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -72,6 +76,12 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
 
    private static int topology(ReplicableCommand cmd) {
       return cmd instanceof TopologyAffectedCommand tac ? tac.getTopologyId() : NO_TOPOLOGY_COMMAND;
+   }
+
+   protected boolean noRequireTxData(CacheRpcCommand command) {
+      return command instanceof StateTransferCommand ||
+            (command instanceof InitialPublisherCommand<?,?,?> ipc && (ipc.getExplicitFlags() & FlagBitSets.STATE_TRANSFER_PROGRESS) != 0) ||
+            command instanceof NextPublisherCommand;
    }
 
    @Start

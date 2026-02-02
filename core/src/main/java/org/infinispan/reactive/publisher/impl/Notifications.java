@@ -224,7 +224,7 @@ public class Notifications {
       public String toString() {
          return "ValueNotification{" +
                (value != null ? "value=" + value : "") +
-               (value != null ? ", segment=" : (segment > 0 ? "completed segment=" : "lost segment")) + segment +
+               (value != null ? ", segment=" : (segment >= 0 ? "completed segment=" : "lost segment")) + segment +
                '}';
       }
    }

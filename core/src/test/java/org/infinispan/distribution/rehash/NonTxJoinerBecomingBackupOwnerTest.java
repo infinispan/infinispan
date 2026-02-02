@@ -1,8 +1,9 @@
 package org.infinispan.distribution.rehash;
 
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnOutboundRpc;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.Future;
@@ -10,12 +11,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.statetransfer.StateTransferInterceptor;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -93,7 +95,12 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       final AdvancedCache<Object, Object> cache1 = advancedCache(1);
 
       // We only block the StateResponseCommand on cache0, because that's the node cache2 will ask for the magic key
-      advanceOnOutboundRpc(sequencer, cache0, matchCommand(StateResponseCommand.class).build()).before("st:cache0_before_send_state");
+      PublisherHandler publisherHandler = Mocks.replaceComponentWithSpy(cache0, PublisherHandler.class);
+      doAnswer(invocation -> {
+         log.error("Advancing sequence");
+         sequencer.advance("st:cache0_before_send_state");
+         return invocation.callRealMethod();
+      }).when(publisherHandler).register(any());
 
       // Prohibit any remote get from cache2 to either cache0 or cache1
       advanceOnInterceptor(sequencer, cache0, StateTransferInterceptor.class, matchCommand(GetKeyValueCommand.class).build()).before("remote_get_cache0");

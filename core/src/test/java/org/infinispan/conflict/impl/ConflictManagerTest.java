@@ -1,6 +1,10 @@
 package org.infinispan.conflict.impl;
 
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotSame;
 import static org.testng.AssertJUnit.assertTrue;
@@ -23,7 +27,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -35,18 +38,24 @@ import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.statetransfer.InboundTransferTask;
-import org.infinispan.statetransfer.StateChunk;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.testing.Exceptions;
@@ -287,35 +296,28 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
    }
 
    private void delayStateTransferCompletion(CountDownLatch latch) {
-      IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), delegate -> new DelayStateResponseCommandHandler(latch, delegate)));
-   }
-
-   private void cancelStateTransfer(CountDownLatch latch) {
-      IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), delegate -> new StateTransferCancellation(latch, delegate)));
-   }
-
-   public static class DelayStateResponseCommandHandler extends AbstractDelegatingHandler {
-      final CountDownLatch latch;
-
-      DelayStateResponseCommandHandler(CountDownLatch latch, PerCacheInboundInvocationHandler delegate) {
-         super(delegate);
-         this.latch = latch;
-      }
-
-      @Override
-      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof StateResponseCommand) {
-            StateResponseCommand stc = (StateResponseCommand) command;
-            boolean isLastChunk = stc.getStateChunks().stream().anyMatch(StateChunk::isLastChunk);
-            if (isLastChunk) {
+      IntStream.range(0, numMembersInCluster).forEach(i -> {
+         RequestRepository spy = spyRequestRepository(manager(i));
+         doAnswer(invocation -> {
+            Response response = invocation.getArgument(2);
+            if (response instanceof ValidResponse && ((ValidResponse) response).getResponseValue() instanceof PublisherResponse) {
                try {
                   latch.await(60, TimeUnit.MILLISECONDS);
                } catch (InterruptedException ignore) {
                }
             }
-         }
-         delegate.handle(command, reply, order);
-      }
+            return invocation.callRealMethod();
+         }).when(spy).addResponse(anyLong(), any(), any());
+      });
+   }
+
+   private RequestRepository spyRequestRepository(EmbeddedCacheManager cm) {
+      Transport transport = TestingUtil.extractGlobalComponent(cm, Transport.class);
+      return Mocks.replaceFieldWithSpy(transport, "requests");
+   }
+
+   private void cancelStateTransfer(CountDownLatch latch) {
+      IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), delegate -> new StateTransferCancellation(latch, delegate)));
    }
 
    public class StateTransferCancellation extends AbstractDelegatingHandler {
