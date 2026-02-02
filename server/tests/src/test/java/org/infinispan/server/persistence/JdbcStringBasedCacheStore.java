@@ -29,7 +29,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  *
  */
 @org.infinispan.server.test.core.tags.Database
-public class JdbcStringBasedCacheStoreIT {
+public class JdbcStringBasedCacheStore {
 
     @RegisterExtension
     public static InfinispanServerExtension SERVERS = PersistenceIT.SERVERS;

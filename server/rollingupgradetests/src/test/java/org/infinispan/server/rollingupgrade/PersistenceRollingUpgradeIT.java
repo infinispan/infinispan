@@ -1,7 +1,7 @@
 package org.infinispan.server.rollingupgrade;
 
 import org.infinispan.server.persistence.AsyncJdbcStringBasedCacheStore;
-import org.infinispan.server.persistence.BaseJdbcStringBasedCacheStoreIT;
+import org.infinispan.server.persistence.BaseJdbcStringBasedCacheStore;
 import org.infinispan.server.persistence.BasePooledConnectionOperations;
 import org.infinispan.server.persistence.ManagedConnectionOperations;
 import org.infinispan.server.persistence.PersistenceIT;
@@ -15,7 +15,7 @@ import org.junit.platform.suite.api.Suite;
 @SelectClasses({
       BasePooledConnectionOperations.class,
       ManagedConnectionOperations.class,
-      BaseJdbcStringBasedCacheStoreIT.class,
+      BaseJdbcStringBasedCacheStore.class,
       AsyncJdbcStringBasedCacheStore.class
 })
 public class PersistenceRollingUpgradeIT extends InfinispanSuite {
