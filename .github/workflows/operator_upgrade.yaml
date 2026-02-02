@@ -49,7 +49,7 @@ jobs:
           echo "version=${OPERAND_VERSION}" >> ${GITHUB_OUTPUT}
 
       - name: Upload
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: operand-image
           path: /tmp/operand-image.tar
