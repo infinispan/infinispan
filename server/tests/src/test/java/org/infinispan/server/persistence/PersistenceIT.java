@@ -41,8 +41,8 @@ import org.junit.platform.suite.api.Suite;
       BasePooledConnectionOperations.class,
       PooledConnectionOperations.class,
       ManagedConnectionOperations.class,
-      BaseJdbcStringBasedCacheStoreIT.class,
-      JdbcStringBasedCacheStoreIT.class,
+      BaseJdbcStringBasedCacheStore.class,
+      JdbcStringBasedCacheStore.class,
       AsyncJdbcStringBasedCacheStore.class
 })
 public class PersistenceIT extends InfinispanSuite {
