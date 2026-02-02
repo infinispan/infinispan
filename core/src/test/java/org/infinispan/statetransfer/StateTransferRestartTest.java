@@ -1,24 +1,24 @@
 package org.infinispan.statetransfer;
 
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollector;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
+import org.infinispan.remoting.responses.ValidResponse;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.RequestRepository;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -45,30 +45,6 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
    private ConfigurationBuilder cfgBuilder;
    private GlobalConfigurationBuilder gcfgBuilder;
 
-   static class MockTransport extends JGroupsTransport {
-      volatile Callable<Void> callOnStateResponseCommand;
-
-      @Override
-      public <T> CompletionStage<T> invokeCommand(Address target,
-                                                  ReplicableCommand command,
-                                                  ResponseCollector<Address, T> collector,
-                                                  DeliverOrder deliverOrder, long timeout,
-                                                  TimeUnit unit) {
-         if (callOnStateResponseCommand != null && command.getClass() == StateResponseCommand.class) {
-            log.trace("Ignoring StateResponseCommand");
-            try {
-               callOnStateResponseCommand.call();
-            } catch (Exception e) {
-               log.error("Error in callOnStateResponseCommand", e);
-            }
-            return CompletableFuture.completedFuture(null);
-         }
-         return super.invokeCommand(target, command, collector, deliverOrder, timeout, unit);
-      }
-   }
-
-   private final MockTransport mockTransport = new MockTransport();
-
    @Override
    protected void createCacheManagers() throws Throwable {
       cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
@@ -77,8 +53,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       cfgBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       cfgBuilder.clustering().stateTransfer().timeout(20000);
 
-      gcfgBuilder = new GlobalConfigurationBuilder();
-      gcfgBuilder.transport().transport(mockTransport);
+      gcfgBuilder = new GlobalConfigurationBuilder().clusteredDefault();
    }
 
    @Override
@@ -86,10 +61,10 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       NoOpGlobalConfigurationManager.amendCacheManager(cm);
    }
 
-   public void testStateTransferRestart() throws Throwable {
+   public void testStateTransferRestart() {
       final int numKeys = 100;
 
-      addClusterEnabledCacheManager(cfgBuilder, new TransportFlags().withFD(true));
+      addClusterEnabledCacheManager(gcfgBuilder, cfgBuilder, new TransportFlags().withFD(true));
       addClusterEnabledCacheManager(gcfgBuilder, cfgBuilder, new TransportFlags().withFD(true));
       log.info("waiting for cluster { c0, c1 }");
       waitForClusterToForm();
@@ -105,7 +80,10 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       assertEquals(numKeys, c0.entrySet().size());
       assertEquals(numKeys, c1.entrySet().size());
 
-      mockTransport.callOnStateResponseCommand = () -> {
+      log.info("adding cache c2");
+      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(cfgBuilder, new TransportFlags().withFD(true), false);
+      RequestRepository spyRequests = spyRequestRepository(cm2);
+      doAnswer(invocation -> {
          fork((Callable<Void>) () -> {
             log.info("KILLING the c1 cache");
             try {
@@ -117,18 +95,11 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
             }
             return null;
          });
-         try {
-            // sleep and wait to be killed
-            Thread.sleep(25000);
-         } catch (InterruptedException e) {
-            log.info("Interrupted as expected.");
-            Thread.currentThread().interrupt();
-         }
-         return null;
-      };
+         return invocation.callRealMethod();
+      }).when(spyRequests).addResponse(anyLong(), eq(address(1)), argThat(r ->
+            r.isSuccessful() && r instanceof ValidResponse<?> vr && vr.getResponseValue() instanceof PublisherResponse));
+      cm2.start();
 
-      log.info("adding cache c2");
-      addClusterEnabledCacheManager(cfgBuilder, new TransportFlags().withFD(true));
       log.info("get c2");
       final Cache<Object, Object> c2 = cache(2);
 
@@ -142,5 +113,10 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       eventuallyEquals(numKeys, () -> c2.entrySet().size());
 
       log.info("Ending the test");
+   }
+
+   private RequestRepository spyRequestRepository(EmbeddedCacheManager cm) {
+      Transport transport = TestingUtil.extractGlobalComponent(cm, Transport.class);
+      return Mocks.replaceFieldWithSpy(transport, "requests");
    }
 }
