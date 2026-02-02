@@ -20,6 +20,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.openjdk.jol</groupId>
+         <artifactId>jol-core</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-counter-api</artifactId>
       </dependency>

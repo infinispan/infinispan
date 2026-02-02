@@ -3,16 +3,15 @@ package org.infinispan.container.impl;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.commons.util.AbstractEntrySizeCalculatorHelper;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
+import org.infinispan.marshall.core.JOLEntrySizeCalculator;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.openjdk.jol.info.ClassLayout;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -22,6 +21,8 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
 public class SharedCaffeineMap<K, V> {
    private final Cache<KeyValuePair<String, K>, InternalCacheEntry<K, V>> cache;
    private final ConcurrentMap<String, EvictionListener<K, V>> listenerMap;
+
+   private static final long KEY_VALUE_PAIR_SIZE = ClassLayout.parseInstance(new KeyValuePair<>(null, null)).instanceSize();
 
    static <K, V> Caffeine<K, V> caffeineBuilder() {
       //noinspection unchecked
@@ -40,16 +41,10 @@ public class SharedCaffeineMap<K, V> {
       Caffeine<KeyValuePair<String, K>, InternalCacheEntry<K, V>> caffeine = caffeineBuilder();
 
       if (memoryBased) {
-         CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
-               new PrimitiveEntrySizeCalculator()));
-         // Have to include an overhead for the KVP and the cacheName. Note the cache name is a refernce so it only costs
-         // the object reference and not the actual String contents.
+         CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(JOLEntrySizeCalculator.getInstance());
+         // Note the cache name is a reference so it only costs the object reference and not the actual String contents.
          caffeine.weigher((k, v) ->
-                     // KeyValuePair header
-                     AbstractEntrySizeCalculatorHelper.OBJECT_SIZE +
-                           // KVP key and value
-                           AbstractEntrySizeCalculatorHelper.POINTER_SIZE * 2 +
-                           (int) calc.calculateSize(k.getValue(), v))
+               (int) KEY_VALUE_PAIR_SIZE + (int) calc.calculateSize(k.getValue(), v))
                .maximumWeight(thresholdSize);
       } else {
          caffeine.maximumSize(thresholdSize);
