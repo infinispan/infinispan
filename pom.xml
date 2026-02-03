@@ -1980,6 +1980,8 @@
                <version>${version.maven.surefire}</version>
                <configuration>
                   <systemPropertyVariables>
+                     <!-- Ensure we set auto-commit correctly in any JDBC connection. -->
+                     <h2.forceAutoCommitOffOnCommit>true</h2.forceAutoCommitOffOnCommit>
                      <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                      <!-- Force all loggers to use a single context -->
                      <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>

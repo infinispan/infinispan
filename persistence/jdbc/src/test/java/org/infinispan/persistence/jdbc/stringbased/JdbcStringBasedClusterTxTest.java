@@ -1,5 +1,8 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.configuration.cache.IsolationLevel.REPEATABLE_READ;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -11,14 +14,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.distribution.BaseDistStoreTest;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -26,13 +31,18 @@ import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.testing.skip.SkipTestNG;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.testng.annotations.Test;
 
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
+import jakarta.transaction.Transaction;
 import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "persistence.jdbc.JdbcStringBasedClusterTxTest")
@@ -112,9 +122,9 @@ public class JdbcStringBasedClusterTxTest extends BaseDistStoreTest<Integer, Str
 
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
 
-      storeBuilder
-            .locking()
-            .isolationLevel(IsolationLevel.REPEATABLE_READ);
+      storeBuilder.locking()
+            .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
+            .isolationLevel(REPEATABLE_READ);
 
       storeBuilder
             .transactional(true)
@@ -127,6 +137,57 @@ public class JdbcStringBasedClusterTxTest extends BaseDistStoreTest<Integer, Str
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
 
       return storeBuilder;
+   }
+
+   public void testWriteSkew() throws Throwable {
+      SkipTestNG.skipIf(lockingMode == LockingMode.PESSIMISTIC, "Should only run for optimistic locking");
+      final String key = getStringKeyForCache(cache(0, cacheName));
+      final Cache<String, String> c = cache(0, cacheName);
+      final TransactionManager tm = TestingUtil.extractComponent(c, TransactionManager.class);
+
+      tm.begin();
+
+      try {
+         c.put(key, "init");
+      } catch (Exception e) {
+         tm.setRollbackOnly();
+         throw e;
+      } finally {
+         if (tm.getStatus() == Status.STATUS_ACTIVE)
+            tm.commit();
+         else
+            tm.rollback();
+      }
+
+      tm.begin();
+      c.put(key, "v1");
+      final Transaction tx1 = tm.suspend();
+
+      tm.begin();
+      c.put(key, "v2");
+      final Transaction tx2 = tm.suspend();
+
+      // First transaction commits successfully.
+      tm.resume(tx1);
+      tm.commit();
+
+      // Second transaction will abort due to write skew.
+      tm.resume(tx2);
+      assertThatThrownBy(tm::commit).isInstanceOf(RollbackException.class)
+            .rootCause()
+            .isInstanceOfSatisfying(WriteSkewException.class, wse -> assertThat(wse).hasMessageStartingWith(String.format("Write skew detected on key %s", key)));
+
+      assertThat(c.get(key)).isEqualTo("v1");
+
+      // Assert the entry match also when retrieving from the store.
+      DistributionManager dm = TestingUtil.extractComponent(c, DistributionManager.class);
+      JdbcStringBasedStore<String, String> store = TestingUtil.extractComponent(c, PersistenceManager.class).getStores(JdbcStringBasedStore.class).iterator().next();
+      CompletionStage<MarshallableEntry<String, String>> cs = store.load(dm.getCacheTopology().getSegment(key), key);
+      MarshallableEntry<?, ?> me = cs.toCompletableFuture().get(10, TimeUnit.SECONDS);
+      assertThat(me.getValue()).isEqualTo("v1");
+
+      assertThat(tx1.getStatus()).isEqualTo(Status.STATUS_COMMITTED);
+      assertThat(tx2.getStatus()).isEqualTo(Status.STATUS_ROLLEDBACK);
    }
 
    public void testWriteCount() {
