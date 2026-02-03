@@ -207,7 +207,7 @@ public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfigurati
          Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
       return blockingManager.runBlocking(() -> {
          try {
-            Connection connection = getTxConnection(tx);
+            Connection connection = getOrCreateTxConnection(tx);
             connection.setAutoCommit(false);
             tableOperations.batchUpdates(connection, publisherCount, Flowable.fromPublisher(removePublisher)
                   .concatMapEager(Functions.identity(), publisherCount, publisherCount), writePublisher);
@@ -224,7 +224,7 @@ public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfigurati
       return blockingManager.runBlocking(() -> {
          Connection connection;
          try {
-            connection = getTxConnection(tx);
+            connection = getOrCreateTxConnection(tx);
             connection.commit();
          } catch (SQLException e) {
             PERSISTENCE.sqlFailureTxCommit(e);
@@ -240,8 +240,9 @@ public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfigurati
       return blockingManager.runBlocking(() -> {
          Connection connection;
          try {
-            connection = getTxConnection(tx);
-            connection.rollback();
+            connection = findTxConnection(tx);
+            if (connection != null)
+               connection.rollback();
          } catch (SQLException e) {
             PERSISTENCE.sqlFailureTxRollback(e);
             throw new PersistenceException(String.format("Error during rollback of JDBC transaction (%s)", tx), e);
@@ -251,13 +252,17 @@ public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfigurati
       }, "jdbcstore-rollback");
    }
 
-   protected Connection getTxConnection(Transaction tx) {
-      Connection connection = transactionConnectionMap.get(tx);
+   protected Connection getOrCreateTxConnection(Transaction tx) {
+      Connection connection = findTxConnection(tx);
       if (connection == null) {
          connection = connectionFactory.getConnection();
          transactionConnectionMap.put(tx, connection);
       }
       return connection;
+   }
+
+   private Connection findTxConnection(Transaction tx) {
+      return transactionConnectionMap.get(tx);
    }
 
    protected void destroyTxConnection(Transaction tx) {
