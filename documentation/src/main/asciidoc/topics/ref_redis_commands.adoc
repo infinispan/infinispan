@@ -184,7 +184,7 @@ NOTE: This command is non atomic
 
 * link:https://redis.io/commands/json.objlen[JSON.OBJLEN]
 
-* link:https://redis.io/docs/latest/commands/json.resp/[JSON_RESP]
+* link:https://redis.io/docs/latest/commands/json.resp[JSON.RESP]
 
 * link:https://redis.io/commands/json.set[JSON.SET]
 
