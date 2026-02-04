@@ -19,7 +19,7 @@ public interface NamespaceMappingParser {
     *
     * @param reader the configuration stream reader
     * @param holder a configuration holder
-    * @throws ConfigurationReaderException
+    * @throws ConfigurationReaderException if there is an error during configuration parsing
     */
    void parseElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) throws ConfigurationReaderException;
 
@@ -28,7 +28,7 @@ public interface NamespaceMappingParser {
     * @param reader the configuration stream reader
     * @param i the index of the attribute
     * @param holder a configuration holder
-    * @throws ConfigurationReaderException
+    * @throws ConfigurationReaderException if there is an error during configuration parsing
     */
    void parseAttribute(ConfigurationReader reader, int i, ConfigurationBuilderHolder holder) throws ConfigurationReaderException;
 }

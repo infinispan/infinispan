@@ -376,7 +376,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
       /**
        * Removes the address node and updates previous and next lru node pointers properly
        * The {@link BoundedOffHeapDataContainer#lruLock} <b>must</b> be held when invoking this
-       * @param address
+       * @param address the address of the node to remove
        */
       private void removeNode(long address) {
          boolean middleNode = true;

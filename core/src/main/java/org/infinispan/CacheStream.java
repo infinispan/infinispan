@@ -347,7 +347,7 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *              .collect(Collectors.toList());
     * </pre>
     *
-    * @param collector
+    * @param collector the collector to perform the reduction
     * @param <R1> collected type
     * @param <A> intermediate collected type if applicable
     * @return the collected value
@@ -835,7 +835,7 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
 
    /**
     * {@inheritDoc}
-    * @param closeHandler
+    * @param closeHandler the close handler to be invoked when the stream is closed
     * @return a cache stream with the handler applied
     */
    @Override

@@ -117,7 +117,7 @@ public interface RemoteSchemasAdmin {
     * If force=true, the update is done on every case.
     *
     * @param schema the schema to update
-    * @param force, if true checks the version of the schema
+    * @param force if true checks the version of the schema
     * @return {@link SchemaOpResult} containing the op result {@link SchemaOpResultType#UPDATED}, {@link SchemaOpResultType#NONE}
     * and the schema validation error, if such exists
     */

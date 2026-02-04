@@ -20,7 +20,7 @@ public interface PrincipalRoleMapper {
     * might use the Distinguished Name format (DN). The mapper should
     * return null if it does not recognize the principal.
     *
-    * @param principal
+    * @param principal the principal to map
     * @return list of roles the principal belongs to
     */
    Set<String> principalToRoles(Principal principal);
@@ -28,7 +28,7 @@ public interface PrincipalRoleMapper {
    /**
     * Sets the context for this {@link PrincipalRoleMapper}
     *
-    * @param context
+    * @param context the principal role mapper context
     */
    default void setContext(PrincipalRoleMapperContext context) {}
 }

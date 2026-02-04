@@ -66,12 +66,12 @@ public interface CacheOperationsFactory {
    /**
     * This method should not be invoked by callers normally as it bypasses other factory checks.
     * Please use {@link PutAllBulkOperation(Set)} instead, passing this method as the Function
-    * @param map
-    * @param lifespan
-    * @param lifespanUnit
-    * @param maxIdleTime
-    * @param maxIdleTimeUnit
-    * @return
+    * @param map a map of keys and values to put
+    * @param lifespan the lifespan of the entry
+    * @param lifespanUnit the time unit for the lifespan
+    * @param maxIdleTime the maximum idle time of the entry
+    * @param maxIdleTimeUnit the time unit for the maximum idle time
+    * @return a HotRodOperation
     */
    HotRodOperation<Void> newPutAllBytesOperation(Map<byte[], byte[]> map, long lifespan, TimeUnit lifespanUnit,
                                            long maxIdleTime, TimeUnit maxIdleTimeUnit);
@@ -79,10 +79,10 @@ public interface CacheOperationsFactory {
    /**
     * This method should not be invoked by callers normally as it bypasses other factory checks.
     * Please use {@link GetAllBulkOperation(Set)} instead, passing this method as the Function
-    * @param keys
-    * @return
-    * @param <K>
-    * @param <V>
+    * @param keys the keys to retrieve
+    * @return a HotRodOperation
+    * @param <K> the key type
+    * @param <V> the value type
     */
    <K, V> HotRodOperation<Map<K, V>> newGetAllBytesOperation(Set<byte[]> keys);
 

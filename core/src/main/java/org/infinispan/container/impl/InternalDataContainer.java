@@ -70,7 +70,7 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     * @param k key under which to store entry
     * @param v value to store
     * @param metadata metadata of the entry
-    * @param internalMetadata
+    * @param internalMetadata the internal metadata of the entry
     * @param createdTimestamp creation timestamp, or {@code -1} to use the current time
     * @param lastUseTimestamp last use timestamp, or {@code -1} to use the current time
     *

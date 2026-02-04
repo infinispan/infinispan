@@ -54,7 +54,7 @@ public class GlobalJmxConfigurationBuilder extends AbstractGlobalConfigurationBu
     * If JMX is enabled then all 'published' JMX objects will appear under this name. This is optional, if not specified
     * a default domain name will be set by default.
     *
-    * @param domain
+    * @param domain the JMX domain name
     */
    public GlobalJmxConfigurationBuilder domain(String domain) {
       attributes.attribute(DOMAIN).set(domain);

@@ -32,6 +32,13 @@ public class CounterParser implements ConfigurationParser {
       readElement(reader, builder.addModule(CounterManagerConfigurationBuilder.class), Element.forName(reader.getLocalName()), null);
    }
 
+   /**
+    * Reads an element from the configuration.
+    * @param reader The configuration reader.
+    * @param builder The counter manager configuration builder.
+    * @param element The element to read.
+    * @param name The name of the counter.
+    */
    public void readElement(ConfigurationReader reader, CounterManagerConfigurationBuilder builder, Element element, String name) {
       switch (element) {
          case STRONG_COUNTER:
@@ -62,6 +69,11 @@ public class CounterParser implements ConfigurationParser {
       return Schema.fromNamespaceURI(namespaceURI);
    }
 
+   /**
+    * Parses a weak counter configuration.
+    * @param reader The configuration reader.
+    * @param builder The weak counter configuration builder.
+    */
    private void parseWeakCounter(ConfigurationReader reader, WeakCounterConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -76,6 +88,11 @@ public class CounterParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
+   /**
+    * Parses a strong counter configuration from a legacy schema.
+    * @param reader The configuration reader.
+    * @param builder The strong counter configuration builder.
+    */
    private void parseStrongCounterLegacy(ConfigurationReader reader, StrongCounterConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -98,6 +115,11 @@ public class CounterParser implements ConfigurationParser {
       }
    }
 
+   /**
+    * Parses the upper bound of a strong counter.
+    * @param reader The configuration reader.
+    * @param builder The strong counter configuration builder.
+    */
    private void parseUpperBound(ConfigurationReader reader, StrongCounterConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -111,6 +133,11 @@ public class CounterParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
+   /**
+    * Parses the lower bound of a strong counter.
+    * @param reader The configuration reader.
+    * @param builder The strong counter configuration builder.
+    */
    private void parseLowerBound(ConfigurationReader reader, StrongCounterConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -125,6 +152,11 @@ public class CounterParser implements ConfigurationParser {
    }
 
 
+   /**
+    * Parses a strong counter configuration.
+    * @param reader The configuration reader.
+    * @param builder The strong counter configuration builder.
+    */
    private void parseStrongCounter(ConfigurationReader reader, StrongCounterConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -147,6 +179,14 @@ public class CounterParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
+   /**
+    * Parses common counter attributes.
+    * @param reader The configuration reader.
+    * @param builder The counter configuration builder.
+    * @param index The attribute index.
+    * @param attribute The attribute.
+    * @param value The attribute value.
+    */
    private void parserCommonCounterAttributes(ConfigurationReader reader, CounterConfigurationBuilder<?,?> builder,
                                               int index, Attribute attribute, String value) {
       switch (attribute) {

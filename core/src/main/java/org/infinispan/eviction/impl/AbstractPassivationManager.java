@@ -23,7 +23,7 @@ import com.google.errorprone.annotations.ThreadSafe;
 public abstract class AbstractPassivationManager implements PassivationManager {
    /**
     * Passivates all entries that are in memory. This method does not notify listeners of passivation.
-    * @throws PersistenceException
+    * @throws PersistenceException if a problem occurs with the persistence layer
     */
    @Stop
    @ManagedOperation(

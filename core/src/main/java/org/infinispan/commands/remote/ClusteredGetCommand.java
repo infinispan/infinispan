@@ -86,7 +86,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
 
    /**
     * Invokes a logical "get(key)" on a remote cache and returns results.
-    * @return
+    * @return a {@link CompletionStage} with the result of the invocation
     */
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {

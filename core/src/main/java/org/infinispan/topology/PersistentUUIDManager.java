@@ -52,17 +52,19 @@ public interface PersistentUUIDManager {
    /**
     * Returns a list of {@link UUID}s for the supplied {@link Address}es
     * @param addresses
-    * @return
+    * @return a list of persistent UUIDs corresponding to the given addresses
     */
    List<UUID> mapAddresses(List<Address> addresses);
 
    /**
     * Provides a remapping operator which translates addresses to persistentuuids
+    * @return a function that maps an address to its persistent UUID
     */
    Function<Address, UUID> addressToPersistentUUID();
 
    /**
     * Provides a remapping operator which translates persistentuuids to addresses
+    * @return a function that maps a persistent UUID to its address
     */
    Function<UUID, Address> persistentUUIDToAddress();
 }

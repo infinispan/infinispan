@@ -126,11 +126,11 @@ public interface ClusteringDependentLogic {
    /**
     * Determines what type of commit this is. Whether we shouldn't commit, or if this is a commit due to owning the key
     * or not
-    * @param command
-    * @param ctx
+    * @param command the command that initiated the commit
+    * @param ctx the invocation context
     * @param segment if 0 or greater assumes the underlying container is segmented.
-    * @param removed
-    * @return
+    * @param removed whether the entry was removed
+    * @return the commit type
     */
    Commit commitType(FlagAffectedCommand command, InvocationContext ctx, int segment, boolean removed);
 

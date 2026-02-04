@@ -134,18 +134,15 @@ public class IdleStateHandlerNoUnvoid extends ChannelDuplexHandler {
    /**
     * Creates a new instance firing {@link IdleStateEvent}s.
     *
-    * @param readerIdleTimeSeconds
-    *        an {@link IdleStateEvent} whose state is {@link IdleState#READER_IDLE}
-    *        will be triggered when no read was performed for the specified
-    *        period of time.  Specify {@code 0} to disable.
-    * @param writerIdleTimeSeconds
-    *        an {@link IdleStateEvent} whose state is {@link IdleState#WRITER_IDLE}
-    *        will be triggered when no write was performed for the specified
-    *        period of time.  Specify {@code 0} to disable.
-    * @param allIdleTimeSeconds
-    *        an {@link IdleStateEvent} whose state is {@link IdleState#ALL_IDLE}
-    *        will be triggered when neither read nor write was performed for
-    *        the specified period of time.  Specify {@code 0} to disable.
+    * @param readerIdleTimeSeconds an {@link IdleStateEvent} whose state is {@link IdleState#READER_IDLE}
+    *                              will be triggered when no read was performed for the specified
+    *                              period of time. Specify {@code 0} to disable.
+    * @param writerIdleTimeSeconds an {@link IdleStateEvent} whose state is {@link IdleState#WRITER_IDLE}
+    *                              will be triggered when no write was performed for the specified
+    *                              period of time. Specify {@code 0} to disable.
+    * @param allIdleTimeSeconds    an {@link IdleStateEvent} whose state is {@link IdleState#ALL_IDLE}
+    *                              will be triggered when neither read nor write was performed for
+    *                              the specified period of time. Specify {@code 0} to disable.
     */
    public IdleStateHandlerNoUnvoid(
          int readerIdleTimeSeconds,
@@ -168,24 +165,19 @@ public class IdleStateHandlerNoUnvoid extends ChannelDuplexHandler {
    /**
     * Creates a new instance firing {@link IdleStateEvent}s.
     *
-    * @param observeOutput
-    *        whether or not the consumption of {@code bytes} should be taken into
-    *        consideration when assessing write idleness. The default is {@code false}.
-    * @param readerIdleTime
-    *        an {@link IdleStateEvent} whose state is {@link IdleState#READER_IDLE}
-    *        will be triggered when no read was performed for the specified
-    *        period of time.  Specify {@code 0} to disable.
-    * @param writerIdleTime
-    *        an {@link IdleStateEvent} whose state is {@link IdleState#WRITER_IDLE}
-    *        will be triggered when no write was performed for the specified
-    *        period of time.  Specify {@code 0} to disable.
-    * @param allIdleTime
-    *        an {@link IdleStateEvent} whose state is {@link IdleState#ALL_IDLE}
-    *        will be triggered when neither read nor write was performed for
-    *        the specified period of time.  Specify {@code 0} to disable.
-    * @param unit
-    *        the {@link TimeUnit} of {@code readerIdleTime},
-    *        {@code writeIdleTime}, and {@code allIdleTime}
+    * @param observeOutput whether or not the consumption of {@code bytes} should be taken into
+    *                      consideration when assessing write idleness. The default is {@code false}.
+    * @param readerIdleTime an {@link IdleStateEvent} whose state is {@link IdleState#READER_IDLE}
+    *                       will be triggered when no read was performed for the specified
+    *                       period of time. Specify {@code 0} to disable.
+    * @param writerIdleTime an {@link IdleStateEvent} whose state is {@link IdleState#WRITER_IDLE}
+    *                       will be triggered when no write was performed for the specified
+    *                       period of time. Specify {@code 0} to disable.
+    * @param allIdleTime an {@link IdleStateEvent} whose state is {@link IdleState#ALL_IDLE}
+    *                    will be triggered when neither read nor write was performed for
+    *                    the specified period of time. Specify {@code 0} to disable.
+    * @param unit the {@link TimeUnit} of {@code readerIdleTime},
+    *             {@code writeIdleTime}, and {@code allIdleTime}
     */
    public IdleStateHandlerNoUnvoid(boolean observeOutput,
                            long readerIdleTime, long writerIdleTime, long allIdleTime,

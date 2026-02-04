@@ -47,10 +47,10 @@ public class RequestExpirationScheduler {
    /**
     * Schedules a request for completion
     *
-    * @param requestId, the unique identifier if the request
-    * @param request,   the request
-    * @param time,      time expressed in long
-    * @param unit,      {@link TimeUnit}
+    * @param requestId the unique identifier if the request
+    * @param request   the request
+    * @param time      time expressed in long
+    * @param unit      {@link TimeUnit}
     */
    public void scheduleForCompletion(String requestId, CompletableFuture<Boolean> request, long time, TimeUnit unit) {
       if (request.isDone()) {
@@ -81,7 +81,7 @@ public class RequestExpirationScheduler {
    /**
     * Aborts the scheduled request if the request is already completed
     *
-    * @param requestId, unique identifier of the request
+    * @param requestId unique identifier of the request
     */
    public void abortScheduling(String requestId) {
       abortScheduling(requestId, false);
@@ -90,8 +90,8 @@ public class RequestExpirationScheduler {
    /**
     * Aborts the scheduled request. If force is true, it will abort even if the request is not completed
     *
-    * @param requestId, unique identifier of the request
-    * @param force,     force abort
+    * @param requestId unique identifier of the request
+    * @param force     force abort
     */
    public void abortScheduling(String requestId, boolean force) {
       if (log.isTraceEnabled()) {
@@ -116,7 +116,7 @@ public class RequestExpirationScheduler {
    /**
     * Get scheduled request reference by id if such exist
     *
-    * @param requestId, the id of the scheduled request
+    * @param requestId the id of the scheduled request
     * @return {@link ScheduledRequest} the request
     */
    public ScheduledRequest get(String requestId) {
