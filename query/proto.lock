@@ -1,5 +1,50 @@
 {
   "definitions" : [ {
+    "protopath" : "org:/:infinispan:/:query:/:objectfilter:/:global.objectfilter.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "StatementType",
+        "type_id" : 4218,
+        "enum_fields" : [ {
+          "name" : "SELECT"
+        }, {
+          "name" : "DELETE",
+          "integer" : 1
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "FilterResultImpl",
+        "type_id" : 4217,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "key",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "projection",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "instance",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "sortProjection",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "global.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.objectfilter"
+      }
+    }
+  }, {
     "protopath" : "org:/:infinispan:/:query:/:core:/:global.query.core.proto",
     "def" : {
       "enums" : [ {
@@ -94,48 +139,172 @@
       }
     }
   }, {
-    "protopath" : "org:/:infinispan:/:query:/:objectfilter:/:global.objectfilter.proto",
+    "protopath" : "org:/:infinispan:/:query:/:core:/:persistence.query.core.proto",
     "def" : {
-      "enums" : [ {
-        "name" : "StatementType",
-        "type_id" : 4218,
-        "enum_fields" : [ {
-          "name" : "SELECT"
-        }, {
-          "name" : "DELETE",
-          "integer" : 1
-        } ]
-      } ],
+      "enums" : [ ],
       "messages" : [ {
-        "name" : "FilterResultImpl",
-        "type_id" : 4217,
+        "name" : "StatsTask",
+        "type_id" : 4207,
         "fields" : [ {
           "id" : 1,
-          "name" : "key",
-          "type" : "org.infinispan.global.core.MarshallableObject",
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IndexStatisticsSnapshotImpl",
+        "type_id" : 4203,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "entries",
+          "type" : "IndexEntry",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "reindexing",
+          "type" : "bool",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "false"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "genericIndexingFailures",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "entityIndexingFailures",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      }, {
+        "name" : "QueryMetrics",
+        "type_id" : 4201,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "totalTime",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "maxTime",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "slowest",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SearchStatisticsSnapshotImpl",
+        "type_id" : 4206,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "queryStatistics",
+          "type" : "LocalQueryStatistics",
           "optional" : true
         }, {
           "id" : 2,
-          "name" : "projection",
-          "type" : "org.infinispan.global.core.MarshallableArray",
+          "name" : "indexStatistics",
+          "type" : "IndexStatisticsSnapshotImpl",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IndexInfo",
+        "type_id" : 4204,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "size",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      }, {
+        "name" : "IndexEntry",
+        "type_id" : 4205,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "name",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "indexInfo",
+          "type" : "IndexInfo",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "LocalQueryStatistics",
+        "type_id" : 4202,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "localIndexedQueries",
+          "type" : "QueryMetrics",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "distIndexedQueries",
+          "type" : "QueryMetrics",
           "optional" : true
         }, {
           "id" : 3,
-          "name" : "instance",
-          "type" : "org.infinispan.global.core.MarshallableObject",
+          "name" : "hybridQueries",
+          "type" : "QueryMetrics",
           "optional" : true
         }, {
           "id" : 4,
-          "name" : "sortProjection",
-          "type" : "org.infinispan.global.core.MarshallableArray",
+          "name" : "nonIndexedQueries",
+          "type" : "QueryMetrics",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "loads",
+          "type" : "QueryMetrics",
           "optional" : true
         } ]
       } ],
-      "imports" : [ {
-        "path" : "global.core.proto"
-      } ],
       "package" : {
-        "name" : "org.infinispan.global.objectfilter"
+        "name" : "org.infinispan.persistence.query.core"
       }
     }
   }, {
@@ -514,175 +683,6 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.query"
-      }
-    }
-  }, {
-    "protopath" : "org:/:infinispan:/:query:/:core:/:persistence.query.core.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "StatsTask",
-        "type_id" : 4207,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "cacheName",
-          "type" : "string",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "IndexStatisticsSnapshotImpl",
-        "type_id" : 4203,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "entries",
-          "type" : "IndexEntry",
-          "is_repeated" : true
-        }, {
-          "id" : 2,
-          "name" : "reindexing",
-          "type" : "bool",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "false"
-          } ]
-        }, {
-          "id" : 3,
-          "name" : "genericIndexingFailures",
-          "type" : "int32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 4,
-          "name" : "entityIndexingFailures",
-          "type" : "int32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        } ]
-      }, {
-        "name" : "QueryMetrics",
-        "type_id" : 4201,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "count",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 2,
-          "name" : "totalTime",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 3,
-          "name" : "maxTime",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 4,
-          "name" : "slowest",
-          "type" : "string",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "SearchStatisticsSnapshotImpl",
-        "type_id" : 4206,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "queryStatistics",
-          "type" : "LocalQueryStatistics",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "indexStatistics",
-          "type" : "IndexStatisticsSnapshotImpl",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "IndexInfo",
-        "type_id" : 4204,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "count",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 2,
-          "name" : "size",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        } ]
-      }, {
-        "name" : "IndexEntry",
-        "type_id" : 4205,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "name",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "indexInfo",
-          "type" : "IndexInfo",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "LocalQueryStatistics",
-        "type_id" : 4202,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "localIndexedQueries",
-          "type" : "QueryMetrics",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "distIndexedQueries",
-          "type" : "QueryMetrics",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "hybridQueries",
-          "type" : "QueryMetrics",
-          "optional" : true
-        }, {
-          "id" : 4,
-          "name" : "nonIndexedQueries",
-          "type" : "QueryMetrics",
-          "optional" : true
-        }, {
-          "id" : 5,
-          "name" : "loads",
-          "type" : "QueryMetrics",
-          "optional" : true
-        } ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.query.core"
       }
     }
   } ]
