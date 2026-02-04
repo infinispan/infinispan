@@ -23,6 +23,26 @@ updates:
       interval: daily
     open-pull-requests-limit: 10
 
+  # 16.1.x Security Updates Only
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 0
+    rebase-strategy: disabled
+    target-branch: "16.1.x"
+    commit-message:
+      prefix: "[16.1] "
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    rebase-strategy: disabled
+    target-branch: "16.1.x"
+    commit-message:
+      prefix: "[16.1] "
+
   # 16.0.x Security Updates Only
   - package-ecosystem: maven
     directory: "/"
