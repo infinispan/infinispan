@@ -37,7 +37,7 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
    /**
     * Provides an api to manipulate key/values with lists.
     *
-    * @param cacheName, name of the cache
+    * @param cacheName name of the cache
     * @return EmbeddedMultimapListCache
     */
    public EmbeddedMultimapListCache<K, V> getMultimapList(String cacheName) {
@@ -51,7 +51,7 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
    /**
     * Provides an api to manipulate key/values with sorted sets.
     *
-    * @param cacheName, name of the cache
+    * @param cacheName name of the cache
     * @return EmbeddedMultimapSortedSetCache
     */
    public EmbeddedMultimapSortedSetCache<K, V> getMultimapSortedSet(String cacheName) {

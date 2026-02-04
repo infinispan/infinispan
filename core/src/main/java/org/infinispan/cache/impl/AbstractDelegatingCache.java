@@ -631,10 +631,10 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V>, Inte
 
    /**
     * Fully unwraps a given cache returning the base cache.  Will unwrap all <b>AbstractDelegatingCache</b> wrappers.
-    * @param cache
-    * @param <K>
-    * @param <V>
-    * @return
+    * @param cache the cache instance
+    * @param <K> the key type
+    * @param <V> the value type
+    * @return the unwrapped cache instance
     */
    public static <K, V> Cache<K, V> unwrapCache(Cache<K, V> cache) {
       if (cache instanceof AbstractDelegatingCache) {

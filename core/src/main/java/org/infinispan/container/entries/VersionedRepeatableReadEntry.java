@@ -36,7 +36,7 @@ public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V
     * @param ctx the invocation context
     * @param versionSeen what version has been seen for this entry
     * @param versionGenerator generator to generate a new version if needed
-    * @param rollingUpgrade
+    * @param rollingUpgrade whether a rolling upgrade is in progress
     * @return whether a write skew occurred for this entry
     */
    public CompletionStage<Boolean> performWriteSkewCheck(EntryLoader<K, V> entryLoader, int segment,

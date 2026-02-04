@@ -94,7 +94,7 @@ public class StatisticsConfigurationBuilder extends AbstractConfigurationChildBu
 
    /**
     * Sets the name of the MBean. Defaults to "Default" ({@link StatisticsConfiguration#JMX_NAME})
-    * @param jmxName
+    * @param jmxName the name of the MBean
     */
    public StatisticsConfigurationBuilder jmxName(String jmxName) {
       attributes.attribute(JMX_NAME).set(jmxName);

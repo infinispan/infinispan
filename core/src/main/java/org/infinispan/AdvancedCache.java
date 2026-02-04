@@ -106,7 +106,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * Apply the <code>transformation</code> on each {@link AdvancedCache} instance in a delegation chain, starting
     * with the innermost implementation.
     *
-    * @param transformation
+    * @param transformation the transformation function to apply
     * @return The outermost transformed cache.
     */
    default AdvancedCache<K, V> transform(Function<AdvancedCache<K, V>, ? extends AdvancedCache<K, V>> transformation) {
@@ -117,7 +117,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * Performs any cache operations using the specified {@link Subject}. Only applies to caches with authorization
     * enabled (see {@link ConfigurationBuilder#security()}).
     *
-    * @param subject
+    * @param subject the subject to use for authorization
     * @return an {@link AdvancedCache} instance on which a real operation is to be invoked, using the specified subject
     */
    AdvancedCache<K, V> withSubject(Subject subject);
@@ -454,12 +454,12 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
     * value...etc. The {@link Metadata} is only stored if the call is successful.
     *
-    * @param key,               key with which the resulting value is to be associated
-    * @param value,             the non-null value to be merged with the existing value associated with the key or, if
+    * @param key               key with which the resulting value is to be associated
+    * @param value             the non-null value to be merged with the existing value associated with the key or, if
     *                           no existing value or a null value is associated with the key, to be associated with the
     *                           key
-    * @param remappingFunction, the function to recompute a value if present
-    * @param metadata,          information to store alongside the new value
+    * @param remappingFunction the function to recompute a value if present
+    * @param metadata          information to store alongside the new value
     * @return the new value associated with the specified key, or null if no value is associated with the key
     * @since 9.2
     */
@@ -571,12 +571,12 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
     * value...etc. The {@link Metadata} is only stored if the call is successful.
     *
-    * @param key,               key with which the resulting value is to be associated
-    * @param value,             the non-null value to be merged with the existing value associated with the key or, if
+    * @param key               key with which the resulting value is to be associated
+    * @param value             the non-null value to be merged with the existing value associated with the key or, if
     *                           no existing value or a null value is associated with the key, to be associated with the
     *                           key
-    * @param remappingFunction, the function to recompute a value if present
-    * @param metadata,          information to store alongside the new value
+    * @param remappingFunction the function to recompute a value if present
+    * @param metadata          information to store alongside the new value
     * @return the new value associated with the specified key, or null if no value is associated with the key
     * @since 9.4
     */

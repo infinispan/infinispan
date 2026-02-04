@@ -72,7 +72,7 @@ public class InternalCacheFactory<K, V> {
     * @param globalComponentRegistry global component registry to attach the cache to
     * @param cacheName               name of the cache
     * @return a cache
-    * @throws CacheConfigurationException if there are problems with the cfg
+    * @throws CacheConfigurationException if there are problems with the cache configuration
     */
    public Cache<K, V> createCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
                                   String cacheName) throws CacheConfigurationException {
@@ -215,7 +215,7 @@ public class InternalCacheFactory<K, V> {
        * new delegating cache is created due to methods like {@link AdvancedCache#withFlags(Flag...)}. This method will
        * call {@link #wireRealCache()} at the very end - so all methods should be initialized before.
        *
-       * @param cache
+       * @param cache the delegating cache instance
        */
       protected void internalWire(T cache) {
          componentRegistry = cache.componentRegistry;

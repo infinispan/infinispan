@@ -85,8 +85,8 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
 
    /**
     * Whether this role should be implicitly inherited by secure caches which don't define their roles.
-    * @param inheritable
-    * @return
+    * @param inheritable whether the role is inheritable
+    * @return a reference to this builder
     */
    @Override
    public GlobalRoleConfigurationBuilder inheritable(boolean inheritable) {
@@ -96,8 +96,8 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
 
    /**
     * A description for the role
-    * @param description
-    * @return
+    * @param description the role description
+    * @return a reference to this builder
     */
    @Override
    public GlobalRoleConfigurationBuilder description(String description) {

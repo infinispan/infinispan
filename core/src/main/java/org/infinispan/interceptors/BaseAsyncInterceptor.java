@@ -314,10 +314,10 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    /**
     * This method should be used instead of {@link #delayedValue(CompletionStage, Object)} when a
     * {@link InvocationFinallyFunction} is used to properly handle the exception if any is present.
-    * @param stage
-    * @param syncValue
-    * @param throwable
-    * @return
+    * @param stage the completion stage
+    * @param syncValue the synchronous value to return
+    * @param throwable the throwable if any
+    * @return the result of the invocation
     */
    public static Object delayedValue(CompletionStage<?> stage, Object syncValue, Throwable throwable) {
       if (throwable == null) {

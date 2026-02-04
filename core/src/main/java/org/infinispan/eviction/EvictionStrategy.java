@@ -35,7 +35,7 @@ public enum EvictionStrategy {
 
    /**
     * Whether or not the cache will do something due to the strategy
-    * @return
+    * @return {@code true} if the strategy is enabled, {@code false} otherwise
     */
    public boolean isEnabled() {
       return this != NONE && this != MANUAL;
@@ -43,7 +43,7 @@ public enum EvictionStrategy {
 
    /**
     * The cache will throw exceptions to prevent memory growth
-    * @return
+    * @return {@code true} if the strategy is exception-based, {@code false} otherwise
     */
    public boolean isExceptionBased() {
       return exception;
@@ -51,7 +51,7 @@ public enum EvictionStrategy {
 
    /**
     * The cache will remove other entries to make room to limit memory growth
-    * @return
+    * @return {@code true} if the strategy is removal-based, {@code false} otherwise
     */
    public boolean isRemovalBased() {
       return removal;

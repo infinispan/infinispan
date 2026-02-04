@@ -20,7 +20,7 @@ public interface Mutation<K, V, R> extends InjectableComponent {
 
    /**
     * Mutate the view
-    *  @param view
+    * @param view the entry view to mutate
     * */
    R apply(EntryView.ReadWriteEntryView<K, V> view);
 
