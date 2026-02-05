@@ -47,12 +47,7 @@ public abstract class AbstractAuthAccessLoggingTest extends SingleCacheManagerTe
       globalBuilder.defaultCacheName("default");
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.security().authorization().enable();
-      customCacheConfiguration(builder);
       return Security.doAs(ADMIN, () -> TestCacheManagerFactory.createCacheManager(globalBuilder, builder));
-   }
-
-   protected void customCacheConfiguration(ConfigurationBuilder builder) {
-      // Overridden by other classes.
    }
 
    @Override
