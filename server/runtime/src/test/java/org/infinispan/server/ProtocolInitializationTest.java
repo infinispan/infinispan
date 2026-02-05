@@ -10,10 +10,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.hamcrest.Matchers;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -24,7 +22,6 @@ import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.testing.junit.JUnitThreadTrackerRule;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -45,10 +42,7 @@ public class ProtocolInitializationTest {
    @Test
    public void testRespServerStartWithLua() {
       RespServer respServer = new RespServer();
-      ConfigurationBuilder b = new ConfigurationBuilder();
-      b.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner());
-      b.encoding().mediaType(MediaType.APPLICATION_OCTET_STREAM);
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(b, new TransportFlags())) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager()) {
          @Override
          public void call() {
             RespServerConfigurationBuilder builder = new RespServerConfigurationBuilder();
@@ -64,10 +58,7 @@ public class ProtocolInitializationTest {
                .thenThrow(new SharedLibraryLoadRuntimeException("Unable to locate the library path"));
 
          RespServer respServer = new RespServer();
-         ConfigurationBuilder b = new ConfigurationBuilder();
-         b.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner());
-         b.encoding().mediaType(MediaType.APPLICATION_OCTET_STREAM);
-         withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(b, new TransportFlags())) {
+         withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager()) {
             @Override
             public void call() {
                RespServerConfigurationBuilder builder = new RespServerConfigurationBuilder();
