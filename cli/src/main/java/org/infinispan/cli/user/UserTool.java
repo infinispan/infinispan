@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.commons.FIPS;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.password.Password;
@@ -55,8 +56,16 @@ public class UserTool {
    private static final String COMMENT_SUFFIX = "$";
    private static final String ALGORITHM_COMMENT_PREFIX = "$ALGORITHM=";
 
-
-   public static final List<String> DEFAULT_ALGORITHMS = List.of(
+   public static final List<String> DEFAULT_ALGORITHMS = FIPS.isFipsEnabled() ?
+      List.of(
+         ScramDigestPassword.ALGORITHM_SCRAM_SHA_256,
+         ScramDigestPassword.ALGORITHM_SCRAM_SHA_384,
+         ScramDigestPassword.ALGORITHM_SCRAM_SHA_512,
+         DigestPassword.ALGORITHM_DIGEST_SHA_256,
+         DigestPassword.ALGORITHM_DIGEST_SHA_384,
+         DigestPassword.ALGORITHM_DIGEST_SHA_512
+      ) :
+      List.of(
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_1,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_256,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_384,
@@ -66,7 +75,7 @@ public class UserTool {
          DigestPassword.ALGORITHM_DIGEST_SHA_256,
          DigestPassword.ALGORITHM_DIGEST_SHA_384,
          DigestPassword.ALGORITHM_DIGEST_SHA_512
-   );
+      );
 
    private final Path usersFile;
    private final Path groupsFile;
@@ -81,8 +90,8 @@ public class UserTool {
 
    public UserTool(String serverRoot, String usersFile, String groupsFile) {
       this(serverRoot != null ? Paths.get(serverRoot) : null,
-            usersFile != null ? Paths.get(usersFile) : null,
-            groupsFile != null ? Paths.get(groupsFile) : null);
+         usersFile != null ? Paths.get(usersFile) : null,
+         groupsFile != null ? Paths.get(groupsFile) : null);
    }
 
    public UserTool(Path serverRoot, Path usersFile, Path groupsFile) {
@@ -344,13 +353,13 @@ public class UserTool {
 
    public List<String> listGroups() {
       return groups.values().stream()
-            .map(o -> (String) o)
-            .map(s -> s.split("\\s*,\\s*"))
-            .flatMap(Arrays::stream)
-            .filter(g -> !g.isEmpty())
-            .sorted()
-            .distinct()
-            .collect(Collectors.toList());
+         .map(o -> (String) o)
+         .map(s -> s.split("\\s*,\\s*"))
+         .flatMap(Arrays::stream)
+         .filter(g -> !g.isEmpty())
+         .sorted()
+         .distinct()
+         .collect(Collectors.toList());
    }
 
    public enum Encryption {

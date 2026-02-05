@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.FIPS;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -197,14 +198,18 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
                   SaslMechanismInformation.Names.SCRAM_SHA_512,
                   SaslMechanismInformation.Names.SCRAM_SHA_384,
                   SaslMechanismInformation.Names.SCRAM_SHA_256,
-                  SaslMechanismInformation.Names.SCRAM_SHA_1,
                   SaslMechanismInformation.Names.DIGEST_SHA_512,
                   SaslMechanismInformation.Names.DIGEST_SHA_384,
-                  SaslMechanismInformation.Names.DIGEST_SHA_256,
+                  SaslMechanismInformation.Names.DIGEST_SHA_256
+            );
+            if (!FIPS.isFipsEnabled()) {
+               sasl.addMechanisms(
+                  SaslMechanismInformation.Names.SCRAM_SHA_1,
                   SaslMechanismInformation.Names.DIGEST_SHA,
                   SaslMechanismInformation.Names.CRAM_MD5,
                   SaslMechanismInformation.Names.DIGEST_MD5
-            );
+               );
+            }
             Server.log.debugf("Enabled SCRAM, DIGEST and CRAM mechanisms for %s", name);
 
             // Only enable PLAIN if encryption is on
@@ -253,7 +258,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
          if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_HASHED)) {
             authentication
                   .enable()
-                  .addMechanisms("DIGEST");
+                  .addMechanisms(FIPS.isFipsEnabled() ? "DIGEST-SHA-256" : "DIGEST");
             Server.log.debug("Enabled DIGEST for HTTP");
 
             // Only enable PLAIN if encryption is on
