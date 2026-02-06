@@ -97,6 +97,8 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.topology.CacheTopology;
@@ -166,6 +168,7 @@ public class StateConsumerImpl implements StateConsumer {
    ScheduledExecutorService timeoutExecutor;
    @Inject TimeService timeService;
    @Inject ClusterPublisherManager<Object, Object> clusterPublisherManager;
+   @Inject Transport transport;
 
    protected String cacheName;
    protected long timeout;
@@ -937,21 +940,30 @@ public class StateConsumerImpl implements StateConsumer {
       }
 
       if (isFetchEnabled) {
-         stage = stage.thenRun(() -> {
-            Flowable<Integer> segmentFlowable = doDataPortionOfStateTransfer(topologyId, addedSegments, sources, excludedSources)
-                  .doOnNext(completedSegment -> completeSegmentForTask(completedSegment, sources));
-            Completable completable;
-            if (log.isTraceEnabled()) {
-               completable = segmentFlowable.collect(IntSets::mutableEmptySet, IntSet::set)
-                     .doOnSuccess(segments -> log.tracef("Completed segments %s", segments))
-                     .ignoreElement();
-            } else {
-               completable = segmentFlowable.ignoreElements();
-            }
-            completable.subscribe(this::notifyEndOfStateTransferIfNeeded, t ->
-                  log.debug("State iteration encountered exception!: ", t));
-         });
-//         stage = stage.thenRun(() -> requestSegments(addedSegments, sources, excludedSources));
+         // As of 16.2 we use the new method of ST to use pull based ClusterPublisherManager. If at least one
+         // node is before this version we have to use the old method
+         if (transport.getOldestMember().compareTo(NodeVersion.from((byte) 16, (byte) 2, (byte) 0)) < 0) {
+            stage = stage.thenRun(() -> {
+               log.tracef("Using old state transfer method as a version before 16.2 was encountered");
+               requestSegments(addedSegments, sources, excludedSources);
+            });
+         } else {
+            stage = stage.thenRun(() -> {
+               log.tracef("Using pull based state transfer");
+               Flowable<Integer> segmentFlowable = doDataPortionOfStateTransfer(topologyId, addedSegments, sources, excludedSources)
+                     .doOnNext(completedSegment -> completeSegmentForTask(completedSegment, sources));
+               Completable completable;
+               if (log.isTraceEnabled()) {
+                  completable = segmentFlowable.collect(IntSets::mutableEmptySet, IntSet::set)
+                        .doOnSuccess(segments -> log.tracef("Completed segments %s", segments))
+                        .ignoreElement();
+               } else {
+                  completable = segmentFlowable.ignoreElements();
+               }
+               completable.subscribe(this::notifyEndOfStateTransferIfNeeded, t ->
+                     log.debug("State iteration encountered exception!: ", t));
+            });
+         }
       }
 
       return stage;
