@@ -6,6 +6,7 @@ import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.server.test.core.Common.assertResponse;
 import static org.infinispan.server.test.core.Common.assertStatus;
+import static org.infinispan.server.test.core.ServerConstants.DEFAULT_RESP_CACHE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -78,6 +79,23 @@ public class RestOperations {
       });
       assertResponse(NO_CONTENT, cache.remove("k1"), r -> assertEquals(protocol, r.protocol()));
       assertResponse(NOT_FOUND, cache.get("k1"), r -> assertEquals(protocol, r.protocol()));
+   }
+
+   @ParameterizedTest
+   @EnumSource(Protocol.class)
+   public void testRespCacheNotDefinedByDefault(Protocol protocol) {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.protocol(protocol);
+      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
+      RestCacheClient cache = client.cache(DEFAULT_RESP_CACHE);
+      assertStatus(NO_CONTENT, cache.exists());
+
+      // You can still update it.
+      String defaultRespConfiguration = """
+{"respCache":{"distributed-cache":{"aliases":["0"],"key-partitioner":"org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner","mode":"SYNC","statistics":true,"encoding":{"key":{"media-type":"application/octet-stream"},"value":{"media-type":"application/octet-stream"}}}}}
+""";
+      assertStatus(OK, cache.createWithConfiguration(RestEntity.create(defaultRespConfiguration)));
+      assertStatus(NO_CONTENT, cache.exists());
    }
 
    @ParameterizedTest
