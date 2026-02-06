@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.HotRodURI;
@@ -25,6 +26,7 @@ import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec30;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
@@ -37,6 +39,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -131,6 +134,13 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       } else {
          rcmStage = blockingManager.supplyBlocking(() -> {
             ConfigurationBuilder builder = buildRemoteConfiguration(configuration, marshaller);
+
+            // The Hot Rod client always utilizes the MurmurHash algorithm.
+            // If the key partitioner utilizes a different hash, we fallback to basic intelligence.
+            if (ctx.getCache().getCacheConfiguration().clustering().hash().keyPartitioner() instanceof HashFunctionPartitioner hfp) {
+               if (!(hfp.getHash() instanceof MurmurHash3))
+                  builder.clientIntelligence(ClientIntelligence.BASIC);
+            }
             return new RemoteCacheManager(builder.build());
          }, "RemoteCacheManager-create");
       }
