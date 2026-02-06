@@ -3,6 +3,7 @@ package org.infinispan.distribution.rehash;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
@@ -19,10 +20,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
-import org.infinispan.commands.triangle.BackupWriteCommand;
-import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.ExceptionAckCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -34,17 +32,27 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CacheEntryDelegator;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.ClusteringDependentLogicDelegator;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.ControlledRpcManager;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
@@ -124,22 +132,46 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
 
       int preJoinTopologyId = cache0.getDistributionManager().getCacheTopology().getTopologyId();
 
-      // Block any state response commands on cache0
-      // So that we can install the spy ClusteringDependentLogic on cache1 before state transfer is applied
-      final CheckPoint checkPoint = new CheckPoint();
-      ControlledRpcManager blockingRpcManager0 = ControlledRpcManager.replaceRpcManager(cache0);
-      blockingRpcManager0.excludeCommands(BackupWriteCommand.class, BackupMultiKeyAckCommand.class, ExceptionAckCommand.class);
-
       // Block the rebalance confirmation on coordinator (to avoid the retrying of commands)
+      final CheckPoint checkPoint = new CheckPoint();
       blockRebalanceConfirmation(manager(0), checkPoint, preJoinTopologyId + 1);
 
       // Start the joiner
       log.tracef("Starting the cache on the joiner");
       ConfigurationBuilder c = getConfigurationBuilder();
       c.clustering().stateTransfer().awaitInitialTransfer(false);
-      addClusterEnabledCacheManager(c);
 
-      final AdvancedCache<Object,Object> cache1 = advancedCache(1);
+      // Block the state request on cache0 to ensure we can spy on cache1
+      PerCacheInboundInvocationHandler spyHandler0 = Mocks.replaceComponentWithSpy(cache0, PerCacheInboundInvocationHandler.class);
+      doAnswer(invocation -> {
+         Object command = invocation.getArgument(0);
+         if (command instanceof InitialPublisherCommand) {
+            checkPoint.trigger("state_request_received_at_0");
+            checkPoint.awaitStrict("resume_state_request_at_0", 10, SECONDS);
+         }
+         return invocation.callRealMethod();
+      }).when(spyHandler0).handle(any(CacheRpcCommand.class), any(Reply.class), any(DeliverOrder.class));
+
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(c, new TransportFlags());
+      registerCacheManager(cm1);
+
+      // Wait for cache0 to receive the state request from cache1
+      checkPoint.awaitStrict("state_request_received_at_0", 10, SECONDS);
+
+      RequestRepository spyRequests = spyRequestRepository(cm1);
+      doAnswer(invocation -> {
+         Response response = invocation.getArgument(2);
+         if (response instanceof ValidResponse && ((ValidResponse) response).getResponseValue() instanceof PublisherResponse) {
+            checkPoint.trigger("state_response_received");
+            checkPoint.awaitStrict("resume_state_response", 10, SECONDS);
+         }
+         return invocation.callRealMethod();
+      }).when(spyRequests).addResponse(anyLong(), any(), any());
+
+      // Resume state request on cache0, which will send the response to cache1
+      checkPoint.trigger("resume_state_request_at_0");
+
+      final AdvancedCache<Object,Object> cache1 = cm1.getCache().getAdvancedCache();
 
       // Wait for the write CH to contain the joiner everywhere
       eventually(() -> cache0.getRpcManager().getMembers().size() == 2 &&
@@ -149,10 +181,10 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       blockEntryCommit(checkPoint, cache1);
 
       // Wait for cache0 to collect the state to send to cache1 (including our previous value).
-      ControlledRpcManager.BlockedRequest blockedStateResponse =
-         blockingRpcManager0.expectCommand(StateResponseCommand.class);
+      checkPoint.awaitStrict("state_response_received", 10, SECONDS);
+
       // Allow the state to be applied on cache1 (writing the old value for our entry)
-      ControlledRpcManager.SentRequest sentStateResponse = blockedStateResponse.send();
+      checkPoint.trigger("resume_state_response");
 
       // Wait for state transfer tx/operation to call commitEntry on cache1 and block
       checkPoint.awaitStrict("pre_commit_entry_" + key + "_from_" + null, 5, SECONDS);
@@ -183,9 +215,6 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       assertEquals(op.getReturnValue(), result);
       log.tracef("%s operation is done", op);
 
-      // Receive the response for the state response command (only after all commits have finished)
-      sentStateResponse.receiveAll();
-
       // Allow the rebalance confirmation to proceed and wait for the topology to change everywhere
       int rebalanceTopologyId = preJoinTopologyId + 1;
       checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + address(0));
@@ -195,8 +224,11 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       // Check the value on all the nodes
       assertEquals(op.getValue(), cache0.get(key));
       assertEquals(op.getValue(), cache1.get(key));
+   }
 
-      blockingRpcManager0.stopBlocking();
+   private RequestRepository spyRequestRepository(EmbeddedCacheManager cm) {
+      Transport transport = TestingUtil.extractGlobalComponent(cm, Transport.class);
+      return Mocks.replaceFieldWithSpy(transport, "requests");
    }
 
    private void blockEntryCommit(final CheckPoint checkPoint, AdvancedCache<Object, Object> cache) {

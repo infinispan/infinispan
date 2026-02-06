@@ -49,6 +49,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -59,6 +60,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.conflict.impl.InternalConflictManager;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
@@ -84,7 +86,9 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -93,6 +97,8 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.topology.CacheTopology;
@@ -114,6 +120,7 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import jakarta.transaction.Transaction;
 import jakarta.transaction.TransactionManager;
 
@@ -160,12 +167,15 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
    @Inject TimeService timeService;
+   @Inject ClusterPublisherManager<Object, Object> clusterPublisherManager;
+   @Inject Transport transport;
 
    protected String cacheName;
    protected long timeout;
    protected boolean isFetchEnabled;
    protected boolean isTransactional;
    protected boolean isInvalidationMode;
+   protected int chunkSize;
    protected volatile KeyInvalidationListener keyInvalidationListener; //for test purpose only!
 
    protected volatile CacheTopology cacheTopology;
@@ -443,7 +453,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
 
          IntSet transactionOnlySegments = computeTransactionOnlySegments(cacheTopology, address);
-         return handleSegments(addedSegments, transactionOnlySegments);
+         return handleSegments(cacheTopology.getTopologyId(), addedSegments, transactionOnlySegments);
       });
       stage = stage.thenCompose(ignored -> {
          int stateTransferTopologyId = this.stateTransferTopologyId.get();
@@ -799,9 +809,9 @@ public class StateConsumerImpl implements StateConsumer {
       return interceptorChain.invokeAsync(ctx, prepareCommand);
    }
 
-   private CompletableFuture<?> invokePut(int segmentId, InvocationContext ctx, InternalCacheEntry<?, ?> e) {
+   private CompletableFuture<?> invokePut(int segmentId, InvocationContext ctx, CacheEntry<?, ?> e) {
       // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
-      InternalMetadataImpl metadata = new InternalMetadataImpl(e);
+      InternalMetadataImpl metadata = new InternalMetadataImpl((InternalCacheEntry<?, ?>) e);
       PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), segmentId,
                                                                        metadata, STATE_TRANSFER_FLAGS);
       put.setInternalMetadata(e.getInternalMetadata());
@@ -858,6 +868,7 @@ public class StateConsumerImpl implements StateConsumer {
       isTransactional = configuration.transaction().transactionMode().isTransactional();
       timeout = configuration.clustering().stateTransfer().timeout();
       numSegments = configuration.clustering().hash().numSegments();
+      chunkSize = configuration.clustering().stateTransfer().chunkSize();
 
       isFetchEnabled = isFetchEnabled();
 
@@ -909,7 +920,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.keyInvalidationListener = keyInvalidationListener;
    }
 
-   protected CompletionStage<Void> handleSegments(IntSet addedSegments, IntSet transactionOnlySegments) {
+   protected CompletionStage<Void> handleSegments(int topologyId, IntSet addedSegments, IntSet transactionOnlySegments) {
       if (addedSegments.isEmpty() && transactionOnlySegments.isEmpty()) {
          return CompletableFutures.completedNull();
       }
@@ -929,10 +940,195 @@ public class StateConsumerImpl implements StateConsumer {
       }
 
       if (isFetchEnabled) {
-         stage = stage.thenRun(() -> requestSegments(addedSegments, sources, excludedSources));
+         // As of 16.2 we use the new method of ST to use pull based ClusterPublisherManager. If at least one
+         // node is before this version we have to use the old method
+         if (transport.getOldestMember().compareTo(NodeVersion.from((byte) 16, (byte) 2, (byte) 0)) < 0) {
+            stage = stage.thenRun(() -> {
+               log.tracef("Using old state transfer method as a version before 16.2 was encountered");
+               requestSegments(addedSegments, sources, excludedSources);
+            });
+         } else {
+            stage = stage.thenRun(() -> {
+               log.tracef("Using pull based state transfer");
+               Flowable<Integer> segmentFlowable = doDataPortionOfStateTransfer(topologyId, addedSegments, sources, excludedSources)
+                     .doOnNext(completedSegment -> completeSegmentForTask(completedSegment, sources));
+               Completable completable;
+               if (log.isTraceEnabled()) {
+                  completable = segmentFlowable.collect(IntSets::mutableEmptySet, IntSet::set)
+                        .doOnSuccess(segments -> log.tracef("Completed segments %s", segments))
+                        .ignoreElement();
+               } else {
+                  completable = segmentFlowable.ignoreElements();
+               }
+               completable.subscribe(this::notifyEndOfStateTransferIfNeeded, t ->
+                     log.debug("State iteration encountered exception!: ", t));
+            });
+         }
       }
 
       return stage;
+   }
+
+   private void completeSegmentForTask(int segment, Map<Address, IntSet> sources) {
+      transferMapsLock.lock();
+      try {
+         // TODO: should we have tracing here somewhere?
+         List<InboundTransferTask> innerTransfers = transfersBySegment.get(segment);
+         if (innerTransfers != null) {
+            if (innerTransfers.removeIf(inboundTransferTask -> {
+               IntSet segments = sources.get(inboundTransferTask.getSource());
+               if (segments != null && segments.contains(segment)) {
+                  if (inboundTransferTask.onStateReceived(segment, true)) {
+                     List<InboundTransferTask> list = transfersBySource.get(inboundTransferTask.getSource());
+                     if (list != null && list.remove(inboundTransferTask) && list.isEmpty()) {
+                        transfersBySource.remove(inboundTransferTask.getSource());
+                     }
+                  }
+                  return true;
+               }
+               return false;
+            })) {
+               if (innerTransfers.isEmpty()) {
+                  commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, segment);
+                  transfersBySegment.remove(segment);
+                  progressTracker.removeTasks(1);
+                  if (transfersBySource.isEmpty()) {
+                     progressTracker.finishedAllTasks();
+                  }
+               }
+            }
+         }
+      } finally {
+         transferMapsLock.unlock();
+      }
+   }
+
+   private Flowable<Integer> doDataPortionOfStateTransfer(int topologyId, IntSet segmentsToProcess, Map<Address, IntSet> sources, Set<Address> excludedSources) {
+      if (cache.wired().getStatus().isTerminated())
+         return Flowable.empty();
+
+      if (sources.isEmpty()) {
+         findSources(segmentsToProcess, sources, excludedSources, true);
+      }
+
+      transferMapsLock.lock();
+      try {
+         if (log.isTraceEnabled()) {
+            log.tracef("Adding transfer for segments %s", segmentsToProcess);
+         }
+         segmentsToProcess.removeAll(transfersBySegment.keySet());
+         if (segmentsToProcess.isEmpty()) {
+            if (log.isTraceEnabled()) {
+               log.tracef("All segments are already in progress, skipping");
+            }
+            return Flowable.empty();
+         }
+
+         for (Map.Entry<Address, IntSet> entry : sources.entrySet()) {
+            IntSet segmentsForTask = entry.getValue();
+            InboundTransferTask inboundTransfer = new InboundTransferTask(segmentsForTask, entry.getKey()) {
+               @Override
+               protected void sendCancelCommand(IntSet cancelledSegments) {
+                  // There is no easy way to cancel the flowable as it spans multiple destinations possibly
+               }
+            };
+            addTransfer(inboundTransfer, segmentsForTask);
+         }
+      } finally {
+         transferMapsLock.unlock();
+      }
+
+      log.tracef("Starting state transfer iteration for segments %s", segmentsToProcess);
+      Flowable<SegmentPublisherSupplier.Notification<CacheEntry<Object, Object>>> notificationFlowable =
+            Flowable.fromPublisher(clusterPublisherManager.entryPublisherForTopology(topologyId, chunkSize, sources));
+
+      // TODO: to remove this later
+//      notificationFlowable = notificationFlowable.doOnNext(n -> log.info("Received notification: " + n));
+
+      int concurrency = 20;
+      if (transactionManager == null) {
+         Map<Integer, AggregateCompletionStage<Integer>> segmentCompletions = new HashMap<>();
+
+         return notificationFlowable
+               // This relies upon the fact that flatMapCompletable is only invoked sequentially but the results
+               // can finish asynchronously. The AggregateCompletionStage will have all writes for the given
+               // segment mapped to it when the segment completion event comes it will work properly.
+               .flatMapMaybe(n -> {
+                  if (n.isSegmentComplete()) {
+                     int segment = n.completedSegment();
+                     AggregateCompletionStage<Integer> agg = segmentCompletions.remove(segment);
+                     if (agg == null) {
+                        return Maybe.just(segment);
+                     }
+                     return Maybe.fromCompletionStage(agg.freeze());
+                  }
+                  int segment = n.valueSegment();
+                  InvocationContext ctx = icf.createSingleKeyNonTxInvocationContext();
+                  CompletionStage<?> stage = invokePut(segment, ctx, n.value()).exceptionally(t -> {
+                     logApplyException(t, n.value().getKey());
+                     return null;
+                  });
+
+                  segmentCompletions.computeIfAbsent(segment, ___ -> CompletionStages.aggregateCompletionStage(segment))
+                        .dependsOn(stage);
+                  return Completable.fromCompletionStage(stage).toMaybe();
+               }, false, concurrency);
+      }
+
+      // This has to be a ByRef because the commit is async with this and we have to use a reference
+      // for inner classes - the value should always be non null
+      ByRef<IntSet> commitSegmentsRef = ByRef.create(IntSets.mutableEmptySet(numSegments));
+
+      return notificationFlowable
+            .filter(n -> {
+               if (n.isSegmentComplete()) {
+                  commitSegmentsRef.get().set(n.completedSegment());
+                  return false;
+               }
+               return true;
+            })
+            .buffer(concurrency)
+            .concatMap(l -> {
+               Object key = NO_KEY;
+               Transaction transaction = new FakeJTATransaction();
+               InvocationContext ctx = icf.createInvocationContext(transaction, false);
+               LocalTransaction localTransaction = ((LocalTxInvocationContext) ctx).getCacheTransaction();
+               try {
+                  localTransaction.setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
+                  for (SegmentPublisherSupplier.Notification<CacheEntry<Object, Object>> n : l) {
+                     CacheEntry<?, ?> e = n.value();
+                     key = e.getKey();
+                     CompletableFuture<?> future = invokePut(n.valueSegment(), ctx, e);
+                     if (!future.isDone()) {
+                        throw new IllegalStateException("State transfer in-tx put should always be synchronous");
+                     }
+                  }
+               } catch (Throwable t) {
+                  logApplyException(t, key);
+                  return Completable.fromCompletionStage(invokeRollback(localTransaction).handle((rv, t1) -> {
+                     transactionTable.removeLocalTransaction(localTransaction);
+                     if (t1 != null) {
+                        t.addSuppressed(t1);
+                     }
+                     return null;
+                  })).toFlowable();
+               }
+               CompletionStage<?> stage = invoke1PCPrepare(localTransaction);
+               Publisher<Integer> publisher;
+               IntSet commitSegments = commitSegmentsRef.get();
+               if (!commitSegments.isEmpty()) {
+                  publisher = Flowable.fromIterable(commitSegments);
+               } else {
+                  publisher = Flowable.empty();
+               }
+
+               return Completable.fromCompletionStage(stage.whenComplete((rv, t) -> {
+                  transactionTable.removeLocalTransaction(localTransaction);
+                  if (t != null) {
+                     logApplyException(t, NO_KEY);
+                  }
+               })).andThen(publisher);
+            }).concatWith(Flowable.defer(() -> Flowable.fromIterable(commitSegmentsRef.get())));
    }
 
    private void findSources(IntSet segments, Map<Address, IntSet> sources, Set<Address> excludedSources,
@@ -1292,6 +1488,8 @@ public class StateConsumerImpl implements StateConsumer {
       if (!running)
          throw new IllegalLifecycleStateException("State consumer is not running for cache " + cacheName);
       progressTracker.addTasks(segments.size());
+
+      log.tracef("Adding transfer task %s for segments %s", inboundTransfer, segments);
 
       for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
          int segmentId = iter.nextInt();

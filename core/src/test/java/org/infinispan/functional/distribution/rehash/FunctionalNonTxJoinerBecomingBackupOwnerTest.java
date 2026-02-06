@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.rehash.FunctionalNonTxJoinerBecomingBackupOwnerTest")
 @CleanupAfterMethod
-public class FunctionalNonTxJoinerBecomingBackupOwnerTest extends NonTxJoinerBecomingBackupOwnerTest {
+   public class FunctionalNonTxJoinerBecomingBackupOwnerTest extends NonTxJoinerBecomingBackupOwnerTest {
 
    @Override
    protected <A, B> AdvancedCache<A, B> advancedCache(int i) {

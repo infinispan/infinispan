@@ -95,6 +95,7 @@ import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.Notifications;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
@@ -2086,6 +2087,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
       @Override
       public CompletionStage<Long> sizePublisher(IntSet segments, InvocationContext ctx, long flags) {
          return CompletableFuture.completedFuture((long) dataContainer.size());
+      }
+
+      @Override
+      public Publisher<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> entryPublisherForTopology(int topologyId, int batchSize, Map<Address, IntSet> targets) {
+         return entryPublisher(null, null, null, 0, null, 0, Function.identity())
+               .publisherWithSegments();
       }
    }
 

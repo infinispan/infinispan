@@ -79,6 +79,11 @@ public interface Transport extends Lifecycle {
    }
 
    /**
+    * @return Provides the version of the oldest member in the current cluster
+    */
+   NodeVersion getOldestMember();
+
+   /**
     * Sends a cross-site request to a remote site.
     * <p>
     * Currently, no reply values are supported. Or the request completes successfully or it throws an {@link
