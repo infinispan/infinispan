@@ -180,7 +180,7 @@
 
       <!-- dependencies version -->
       <versionx.org.infinispan.memcached-client>1.2.3</versionx.org.infinispan.memcached-client>
-      <versionx.com.google.errorprone.error_prone_annotations>2.46.0</versionx.com.google.errorprone.error_prone_annotations>
+      <versionx.com.google.errorprone.error_prone_annotations>2.47.0</versionx.com.google.errorprone.error_prone_annotations>
       <versionx.com.google.guava.guava>33.5.0-jre</versionx.com.google.guava.guava>
       <versionx.com.h2database.h2>2.4.240</versionx.com.h2database.h2>
       <versionx.com.ibm.db2>11.5.9.0</versionx.com.ibm.db2>
