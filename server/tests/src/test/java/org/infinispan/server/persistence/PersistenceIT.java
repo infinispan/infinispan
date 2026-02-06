@@ -57,7 +57,7 @@ public class PersistenceIT extends InfinispanSuite {
 
    public static final InfinispanServerExtensionBuilder EXTENSION_BUILDER =
          InfinispanServerExtensionBuilder.config(System.getProperty(PersistenceIT.class.getName(), "configuration/PersistenceTest.xml"))
-               .numServers(2)
+               .numServers(1)
                .runMode(ServerRunMode.CONTAINER)
                .mavenArtifacts(getJdbcDrivers())
                .artifacts(getJavaArchive())
