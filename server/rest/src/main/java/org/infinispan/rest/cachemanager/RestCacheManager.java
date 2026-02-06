@@ -20,6 +20,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionInfo;
@@ -85,6 +86,10 @@ public class RestCacheManager<V> {
    }
 
    public AdvancedCache<Object, V> getCache(String name, MediaType keyContentType, MediaType valueContentType, RestRequest request) {
+      return getOrCreateCache(name, keyContentType, valueContentType, request, false);
+   }
+
+   private AdvancedCache<Object, V> getOrCreateCache(String name, MediaType keyContentType, MediaType valueContentType, RestRequest request, boolean create) {
       Subject subject = request.getSubject();
       Flag[] flags = request.getFlags();
       if (isCacheIgnored.test(name)) {
@@ -93,12 +98,18 @@ public class RestCacheManager<V> {
       if (keyContentType == null || valueContentType == null) {
          throw logger.missingRequiredMediaType(name);
       }
-      checkCacheAvailable(name);
+      checkCacheAvailable(name, create);
       CacheInfo<Object, V> cacheInfo = knownCaches.get(name);
       if (cacheInfo == null) {
-         AdvancedCache<Object, V> cache = instance.<Object, V>getCache(name).getAdvancedCache()
-               .withFlags(Flag.IGNORE_RETURN_VALUES);
-         cacheInfo = new CacheInfo<>(cache);
+         Cache<Object, V> cache;
+         if (create && !instance.isRunning(name)) {
+            Configuration c = SecurityActions.getCacheConfiguration(instance, name);
+            cache = SecurityActions.getOrCreateCache(instance, name, c);
+         } else {
+            cache = instance.getCache(name);
+         }
+         cacheInfo = new CacheInfo<>(cache.getAdvancedCache()
+               .withFlags(Flag.IGNORE_RETURN_VALUES));
          knownCaches.putIfAbsent(name, cacheInfo);
       }
       AdvancedCache<Object, V> cache = cacheInfo.getCache(new KeyValuePair<>(keyContentType, valueContentType), subject);
@@ -117,17 +128,22 @@ public class RestCacheManager<V> {
       return getCache(name, MATCH_ALL, MATCH_ALL, restRequest);
    }
 
+   public AdvancedCache<Object, V> getOrCreateCache(String name, RestRequest request) {
+      return getOrCreateCache(name, MATCH_ALL, MATCH_ALL, request, true);
+   }
+
    public boolean cacheExists(String name) {
       return instance.cacheExists(name);
    }
 
-   private void checkCacheAvailable(String cacheName) {
+   private void checkCacheAvailable(String cacheName, boolean create) {
       if (!instance.isRunning(cacheName)) {
          GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(instance);
          LocalTopologyManager ltm = gcr.getLocalTopologyManager();
          if (ltm != null) ltm.assertTopologyStable(cacheName);
 
-         throw logger.cacheNotFound(cacheName);
+         if (!create || !getInstance().cacheConfigurationExists(cacheName))
+            throw logger.cacheNotFound(cacheName);
       } else if (icr.isInternalCache(cacheName)) {
          if (icr.isPrivateCache(cacheName)) {
             throw logger.requestNotAllowedToInternalCaches(cacheName);

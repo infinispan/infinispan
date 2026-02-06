@@ -487,6 +487,7 @@ public class DefaultCacheManager extends InternalCacheManager {
 
    @Override
    public boolean cacheExists(String cacheName) {
+      cacheName = configurationManager.selectCache(cacheName);
       return caches.containsKey(cacheName);
    }
 

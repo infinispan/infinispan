@@ -547,9 +547,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       ContentSource contents = request.contents();
       byte[] config = contents.rawContent();
 
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-
-      if (cache == null) {
+      EmbeddedCacheManager ecm = invocationHelper.getRestCacheManager().getInstance();
+      if (!ecm.cacheConfigurationExists(cacheName)) {
          return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
       }
 
@@ -565,6 +564,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
 
       return CompletableFuture.supplyAsync(() -> {
+         Cache<?, ?> cache = invocationHelper.getRestCacheManager().getOrCreateCache(cacheName, request);
          RollingUpgradeManager upgradeManager = ComponentRegistry.componentOf(cache, RollingUpgradeManager.class);
          try {
             RemoteStoreConfiguration storeConfiguration = SerializationUtils.fromJson(read.toString());
@@ -831,7 +831,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       String cacheName = request.variables().get("cacheName");
 
-      if (!invocationHelper.getRestCacheManager().getInstance().cacheConfigurationExists(cacheName)) {
+      if (!invocationHelper.getRestCacheManager().getInstance().cacheExists(cacheName)) {
          responseBuilder.status(NOT_FOUND);
       } else {
          responseBuilder.status(NO_CONTENT);
