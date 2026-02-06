@@ -24,6 +24,9 @@ public interface CounterConfigurationBuilder<T extends AbstractCounterConfigurat
     */
    S name(String name);
 
+   /**
+    * @return The name of the counter.
+    */
    String name();
 
    /**

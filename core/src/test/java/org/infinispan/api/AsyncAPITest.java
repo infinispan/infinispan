@@ -642,8 +642,8 @@ public class AsyncAPITest extends SingleCacheManagerTest {
    /**
     * Verifies the common assertions for the obtained Future object
     *
-    * @param f,        the future
-    * @param expected, expected result after get
+    * @param f        the future
+    * @param expected expected result after get
     * @throws Exception
     */
    private void assertFutureResult(Future<?> f, Object expected) throws Exception {

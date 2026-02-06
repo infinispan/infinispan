@@ -48,28 +48,23 @@ public interface InternalCacheRegistry {
    /**
     * Registers an internal cache. The cache will be marked as private and volatile
     *
-    * @param name
-    *           The name of the cache
-    * @param configuration
-    *           The configuration for the cache
+    * @param name          the name of the cache
+    * @param configuration the configuration for the cache
     */
    void registerInternalCache(String name, Configuration configuration);
 
    /**
     * Registers an internal cache with the specified flags.
     *
-    * @param name
-    *           The name of the cache
-    * @param configuration
-    *           The configuration for the cache
-    * @param flags
-    *           The flags which determine the behaviour of the cache. See {@link Flag}
+    * @param name          the name of the cache
+    * @param configuration the configuration for the cache
+    * @param flags         the flags which determine the behaviour of the cache. See {@link Flag}
     */
    void registerInternalCache(String name, Configuration configuration, EnumSet<Flag> flags);
 
    /**
-    * Unregisters  an internal cache
-    * @param name The name of the cache
+    * Unregisters an internal cache
+    * @param name the name of the cache
     */
    void unregisterInternalCache(String name);
 

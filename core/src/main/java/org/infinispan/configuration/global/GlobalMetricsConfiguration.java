@@ -92,7 +92,7 @@ public class GlobalMetricsConfiguration {
 
    /**
     * Whether cache sizes should be computed
-    * @return
+    * @return {@code true} if accurate cache sizes should be computed, {@code false} otherwise
     */
    public boolean accurateSize() {
       return accurateSize.get();
@@ -108,7 +108,7 @@ public class GlobalMetricsConfiguration {
 
    /**
     * Whether legacy metrics should be reported.
-    * @return
+    * @return {@code true} if legacy metrics should be reported, {@code false} otherwise
     */
    public boolean legacy() {
       return legacy.get();

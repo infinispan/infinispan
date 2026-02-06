@@ -15,12 +15,12 @@ public interface RolePermissionMapper {
    /**
     * Sets the context for this {@link RolePermissionMapper}
     *
-    * @param context
+    * @param context the authorization mapper context
     */
    default void setContext(AuthorizationMapperContext context) {}
 
    /**
-    * @param name the name of the role
+    * @param name the name of the role the name of the role
     * @return the {@link Role}
     */
    Role getRole(String name);
@@ -31,7 +31,7 @@ public interface RolePermissionMapper {
    Map<String, Role> getAllRoles();
 
    /**
-    * @param name
+    * @param name the name of the role
     * @return whether this permission mapper contains the named role
     */
    boolean hasRole(String name);

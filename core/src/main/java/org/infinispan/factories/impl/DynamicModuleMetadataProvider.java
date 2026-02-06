@@ -19,8 +19,8 @@ public interface DynamicModuleMetadataProvider {
     * Use the provided builder to add additional component metadata. Use the GlobalConfiguration to access configuration,
     * global or per-module (see GlobalConfiguration.module)
     *
-    * @param moduleBuilder
-    * @param globalConfiguration
+    * @param moduleBuilder the module metadata builder
+    * @param globalConfiguration the global configuration
     */
    void registerDynamicMetadata(ModuleMetadataBuilder.ModuleBuilder moduleBuilder, GlobalConfiguration globalConfiguration);
 }

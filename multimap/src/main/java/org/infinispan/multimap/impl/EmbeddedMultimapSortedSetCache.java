@@ -66,8 +66,8 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Adds and/or updates, depending on the provided options, the value and the associated score.
     *
-    * @param key, the name of the sorted set
-    * @param scoredValues, scores and values pair list to be added
+    * @param key the name of the sorted set
+    * @param scoredValues scores and values pair list to be added
     * @param args to provide different options:
     *       addOnly -> adds new elements only, ignore existing ones.
     *       updateOnly -> updates existing elements only, ignore new elements.
@@ -95,8 +95,8 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
 
    /**
     * Retieves the size of the sorted set value
-    * @param key, the name of the sorted set
-    * @return, the size
+    * @param key the name of the sorted set
+    * @return the size
     */
    public CompletionStage<Long> size(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
@@ -106,7 +106,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Get the value as a collection
     *
-    * @param key, the name of the list
+    * @param key the name of the list
     * @return the collection with values if such exist, or an empty collection if the key is not present
     */
    public CompletionStage<Collection<ScoredValue<V>>> get(K key) {
@@ -133,7 +133,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Returns the sorted set value if such exists.
     *
-    * @param key, the name of the sorted set
+    * @param key the name of the sorted set
     * @return the value of the Sorted Set
     */
    public CompletionStage<SortedSet<ScoredValue<V>>> getValue(K key) {
@@ -149,7 +149,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Returns the sorted set value if such exists.
     *
-    * @param key, the name of the sorted set
+    * @param key the name of the sorted set
     * @return the value of the Sorted Set
     */
    public CompletionStage<List<ScoredValue<V>>> getValueAsList(K key) {
@@ -165,7 +165,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Returns the set values if such exists.
     *
-    * @param key, the name of the sorted set
+    * @param key the name of the sorted set
     * @return the values in the sorted set as a set
     */
    public CompletionStage<Set<MultimapObjectWrapper<V>>> getValuesSet(K key) {
@@ -183,11 +183,11 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Counts the number of elements between the given min and max scores.
     *
-    * @param key, the name of the sorted set
-    * @param min, the min score
-    * @param max, the max score
-    * @param includeMin, include elements with the min score in the count
-    * @param includeMax, include elements with the max score in the count
+    * @param key the name of the sorted set
+    * @param min the min score
+    * @param max the max score
+    * @param includeMin include elements with the min score in the count
+    * @param includeMax include elements with the max score in the count
     * @return the number of elements in between min and max scores
     */
    public CompletionStage<Long> count(K key, double min, boolean includeMin, double max, boolean includeMax) {
@@ -199,11 +199,11 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Counts the number of elements between the given min and max scores.
     *
-    * @param key, the name of the sorted set
-    * @param min, the min value
-    * @param max, the max value
-    * @param includeMin, include elements with the min value in the count
-    * @param includeMax, include elements with the max value in the count
+    * @param key the name of the sorted set
+    * @param min the min value
+    * @param max the max value
+    * @param includeMin include elements with the min value in the count
+    * @param includeMax include elements with the max value in the count
     * @return the number of elements in between min and max values
     */
    public CompletionStage<Long> count(K key, V min, boolean includeMin, V max, boolean includeMax) {
@@ -215,10 +215,10 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Pops the number of elements provided by the count parameter.
     * Elements are pop from the head or the tail, depending on the min parameter.
-    * @param key, the sorted set name
-    * @param min, if true pops lower scores, if false pops higher scores
-    * @param count, number of values
-    * @return, empty if the sorted set does not exist
+    * @param key the sorted set name
+    * @param min if true pops lower scores, if false pops higher scores
+    * @param count number of values
+    * @return empty if the sorted set does not exist
     */
    public CompletionStage<Collection<ScoredValue<V>>> pop(K key, boolean min, long count) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
@@ -228,8 +228,8 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Returns the score of member in the sorted.
     *
-    * @param key, the name of the sorted set
-    * @param member, the score value to be retrieved
+    * @param key the name of the sorted set
+    * @param member the score value to be retrieved
     * @return {@link CompletionStage} with the score, or null if the score of the member does not exist.
     */
    public CompletionStage<Double> score(K key, V member) {
@@ -246,8 +246,8 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Returns the scores of members in the sorted.
     *
-    * @param key, the name of the sorted set
-    * @param members, the scores to be retrieved
+    * @param key the name of the sorted set
+    * @param members the scores to be retrieved
     * @return {@link CompletionStage} with the list of the scores, with null values if the score does not exist.
     */
    public CompletionStage<List<Double>> scores(K key, List<V> members) {
@@ -265,8 +265,8 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Subset elements in the sorted set by index. Indexes can be explained as negative numbers.
     * Subset can be reversed, depending on args.
-    * @param key, the name of the sorted set
-    * @param args, options for the operation
+    * @param key the name of the sorted set
+    * @param args options for the operation
     * @return resulting collection
     */
    public CompletionStage<Collection<ScoredValue<V>>> subsetByIndex(K key, SortedSetSubsetArgs<Long> args) {
@@ -280,8 +280,8 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Subset elements using the score.
     * Subset can be reversed, depending on args.
-    * @param key, the name of the sorted set
-    * @param args, options for the operation
+    * @param key the name of the sorted set
+    * @param args options for the operation
     * @return resulting collection
     */
    public CompletionStage<Collection<ScoredValue<V>>> subsetByScore(K key, SortedSetSubsetArgs<Double> args) {
@@ -294,8 +294,8 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * Subset elements using the natural ordering of the values.
     * All the elements in the sorted set must have the same score, so they are ordered by natural ordering.
     * Subset can be reversed, depending on args.
-    * @param key, the name of the sorted set
-    * @param args, options for the operation
+    * @param key the name of the sorted set
+    * @param args options for the operation
     * @return resulting collection
     */
    public CompletionStage<Collection<ScoredValue<V>>> subsetByLex(K key, SortedSetSubsetArgs<V> args) {
@@ -309,9 +309,9 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * Index is 0-based.
     * When isRev is false, the member with the lowest score has index 0.
     * When isRev is true, the member with the highest score has index 0
-    * @param key, the name of the sorted set
-    * @param member, the member to be found
-    * @param isRev, perform the operation in reverse order
+    * @param key the name of the sorted set
+    * @param member the member to be found
+    * @param isRev perform the operation in reverse order
     * @return the index of the member and the score
     */
    public CompletionStage<SortedSetBucket.IndexValue> indexOf(K key, V member, boolean isRev) {
@@ -323,12 +323,12 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Computes the union of the collection and the given sorted sets key, if such exist.
     *
-    * @param key, the name of the sorted set
-    * @param scoredValues, collection of scored values
-    * @param weight, specify a multiplication factor for each input sorted set. Every element in the
+    * @param key the name of the sorted set
+    * @param scoredValues collection of scored values
+    * @param weight specify a multiplication factor for each input sorted set. Every element in the
     *                sorted set is multiplied by this factor.
-    * @param aggFunction, how the results of the union are aggregated. Defaults to SUM.
-    * @return, union collection, sorted by score
+    * @param aggFunction how the results of the union are aggregated. Defaults to SUM.
+    * @return union collection, sorted by score
     */
    public CompletionStage<Collection<ScoredValue<V>>> union(K key, Collection<ScoredValue<V>> scoredValues,
                                                                       double weight,
@@ -342,12 +342,12 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Computes the intersection of the collection and the given sorted sets key, if such exist.
     *
-    * @param key, the name of the sorted set
-    * @param scoredValues, collection of scored values
-    * @param weight, specify a multiplication factor for each input sorted set. Every element in the
+    * @param key the name of the sorted set
+    * @param scoredValues collection of scored values
+    * @param weight specify a multiplication factor for each input sorted set. Every element in the
     *                sorted set is multiplied by this factor.
-    * @param aggFunction, how the results of the union are aggregated. Defaults to SUM.
-    * @return, intersected collection, sorted by score
+    * @param aggFunction how the results of the union are aggregated. Defaults to SUM.
+    * @return intersected collection, sorted by score
     */
    public CompletionStage<Collection<ScoredValue<V>>> inter(K key, Collection<ScoredValue<V>> scoredValues,
                                                                             double weight,
@@ -358,8 +358,8 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    }
    /**
     * Removes the given elements from the sorted set, if such exist.
-    * @param key, the name of the sorted set
-    * @param members, members to be removed
+    * @param key the name of the sorted set
+    * @param members members to be removed
     * @return removed members count
     */
    public CompletionStage<Long> removeAll(K key, List<V> members) {
@@ -371,9 +371,9 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Removes range from index from to index to.
     *
-    * @param key, the name of the sorted set
-    * @param min, index from. Index can't be null and must be provided
-    * @param max, index to. Index can't be null and must be provided
+    * @param key the name of the sorted set
+    * @param min index from. Index can't be null and must be provided
+    * @param max index to. Index can't be null and must be provided
     * @return long representing the number of members removed
     */
    public CompletionStage<Long> removeAll(K key, Long min, Long max) {
@@ -385,11 +385,11 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    /**
     * Removes elements from a range of scores.
     *
-    * @param key, the sorted set name
-    * @param min, smallest score value to be removed. If null, removes from the head of the sorted set
-    * @param includeMin, indicates if the min score is included in the remove range
-    * @param max, greatest score value to be removed. If null, removes to the tail of the sorted set
-    * @param includeMax, indicates if the max score is included in the remove range
+    * @param key the sorted set name
+    * @param min smallest score value to be removed. If null, removes from the head of the sorted set
+    * @param includeMin indicates if the min score is included in the remove range
+    * @param max greatest score value to be removed. If null, removes to the tail of the sorted set
+    * @param includeMax indicates if the max score is included in the remove range
     *
     * @return the number of removed elements
     */
@@ -401,11 +401,11 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * When the elements have the same score, removes elements from a range of elements ordered by elements
     * natural ordering.
     *
-    * @param key, the sorted set name
-    * @param min, smallest element to be removed. If null, removes from the head of the sorted set
-    * @param includeMin, indicates if the smallest element is included in the remove range
-    * @param max, greatest element to be removed. If null, removes to the tail of the sorted set
-    * @param includeMax, indicates if the greater element is included in the remove range
+    * @param key the sorted set name
+    * @param min smallest element to be removed. If null, removes from the head of the sorted set
+    * @param includeMin indicates if the smallest element is included in the remove range
+    * @param max greatest element to be removed. If null, removes to the tail of the sorted set
+    * @param includeMax indicates if the greater element is included in the remove range
     *
     * @return the number of removed elements
     */
@@ -425,9 +425,9 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * If the count argument is positive, return an array of distinct elements. The
     * If the count argument is negative, it is allowed to return the same element multiple times.
     * In this case, the number of returned elements is the absolute value of the specified count.
-    * @param key, the sorted set name
-    * @param count, number of random members to retrieve
-    * @return, collection of the random scored entries
+    * @param key the sorted set name
+    * @param count number of random members to retrieve
+    * @return collection of the random scored entries
     */
    public CompletionStage<List<ScoredValue<V>>> randomMembers(K key, int count) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);

@@ -60,8 +60,8 @@ public class StatsImpl implements Stats {
    /**
     * Use this factory to create Stats object from configuration and the interceptor chain.
     *
-    * @param configuration
-    * @param chain
+    * @param configuration the cache configuration
+    * @param chain the interceptor chain
     * @return Stats object
     */
    public static Stats create(Configuration configuration, AsyncInterceptorChain chain) {
@@ -71,8 +71,8 @@ public class StatsImpl implements Stats {
    /**
     * Use this factory to create Stats object from {@link StatsCollector}.
     *
-    * @param collector
-    * @return
+    * @param collector the stats collector
+    * @return a new Stats object
     */
    public static Stats create(StatsCollector collector) {
       if (collector == null || !collector.getStatisticsEnabled()) {

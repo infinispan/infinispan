@@ -85,7 +85,7 @@ public interface BasicComponentRegistry {
     * {@linkplain org.infinispan.factories.annotations.Start} and {@linkplain org.infinispan.factories.annotations.Stop}
     *
     * @throws IllegalLifecycleStateException If the registry is stopping/stopped
-    * @throws org.infinispan.commons.CacheConfigurationException If a component/alias is already registered with that
+    * @throws org.infinispan.commons.CacheConfigurationException If a component/alias is already registered with that name or type.
     *         name, or if a dependency cannot be resolved
     */
    <T> ComponentRef<T> registerComponent(String componentName, T instance, boolean manageLifecycle);
@@ -105,7 +105,7 @@ public interface BasicComponentRegistry {
     * <p>Components that depend on the alias will behave as if they depended on the original component directly.</p>
     *
     * @throws IllegalLifecycleStateException If the registry is stopping/stopped
-    * @throws org.infinispan.commons.CacheConfigurationException If a component/alias is already registered with that
+    * @throws org.infinispan.commons.CacheConfigurationException If a component/alias is already registered with that name or type.
     *         name
     */
    void registerAlias(String aliasName, String targetComponentName, Class<?> targetComponentType);

@@ -43,6 +43,7 @@ public class CounterConfigurationSerializer implements ConfigurationSerializer<C
     * It serializes a {@link List} of {@link AbstractCounterConfiguration} to an {@link OutputStream}.
     * @param os the {@link OutputStream} to write to.
     * @param configs the {@link List} if {@link AbstractCounterConfiguration}.
+    * @throws IOException if an I/O error occurs.
     */
    public void serializeConfigurations(OutputStream os, Collection<AbstractCounterConfiguration> configs) {
       BufferedOutputStream output = new BufferedOutputStream(os);
@@ -56,9 +57,9 @@ public class CounterConfigurationSerializer implements ConfigurationSerializer<C
    }
 
    /**
-    * Serializes a single counter configuration
-    * @param writer
-    * @param c
+    * Serializes a single counter configuration.
+    * @param writer The {@link ConfigurationWriter} to write to.
+    * @param c The {@link AbstractCounterConfiguration} to serialize.
     */
    public void serializeConfiguration(ConfigurationWriter writer, AbstractCounterConfiguration c) {
       writer.writeStartDocument();

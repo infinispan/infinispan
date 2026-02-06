@@ -32,7 +32,7 @@ public interface InternalEntryFactory {
     * Creates a new {@link InternalCacheEntry} instance based on the version and timestamp/lifespan
     * information reflected in the {@link CacheEntry} instance passed in.  Key and value are both passed in
     * explicitly.
-    * @param key key to use
+    * @param key the key to use
     * @param value value to use
     * @param cacheEntry cache entry to retrieve version and timestamp/lifespan information from
     * @param <K> The key type for the entry
@@ -43,7 +43,7 @@ public interface InternalEntryFactory {
 
    /**
     * Creates a new {@link InternalCacheEntry} instance
-    * @param key key to use
+    * @param key the key to use
     * @param value value to use
     * @param metadata metadata for entry
     * @param <K> The key type for the entry
@@ -54,7 +54,7 @@ public interface InternalEntryFactory {
 
    /**
     * Creates a new {@link InternalCacheEntry} instance
-    * @param key key to use
+    * @param key the key to use
     * @param value value to use
     * @param metadata metadata for entry
     * @param lifespan lifespan to use
@@ -67,7 +67,7 @@ public interface InternalEntryFactory {
 
    /**
     * Creates a new {@link InternalCacheEntry} instance
-    * @param key key to use
+    * @param key the key to use
     * @param value value to use
     * @param metadata metadata for entry
     * @param created creation timestamp to use
@@ -82,7 +82,7 @@ public interface InternalEntryFactory {
 
    /**
     * Creates a new {@link InternalCacheEntry} instance
-    * @param key key to use
+    * @param key the key to use
     * @param value value to use
     * @param version version to use
     * @param created creation timestamp to use
@@ -149,7 +149,7 @@ public interface InternalEntryFactory {
     *
     * @param <K> The key type for the entry
     * @param <V> The value type for the entry
-    * @param key
+    * @param key the key to use
     *@param value @return a new {@link org.infinispan.container.entries.InternalCacheEntry}
     */
    <K, V> InternalCacheEntry<K, V> createL1(K key, V value, Metadata metadata);
@@ -159,7 +159,7 @@ public interface InternalEntryFactory {
     * exists, otherwise create {@link InternalCacheEntry} from the context's {@link CacheEntry} and return its value.
     * <p>
     * If the entry is not in the context a <b>null</b> value is returned
-    * @param key the key of the entry to be retrieved
+    * @param key the key to use the key of the entry to be retrieved
     * @param ctx the invocation context from which the value should be retrieved
     * @param <K> The key type for the entry
     * @param <V> The value type for the entry

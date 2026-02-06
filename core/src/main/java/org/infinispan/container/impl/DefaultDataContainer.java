@@ -69,9 +69,9 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
 
    /**
     * Method invoked when memory policy is used. This calculator only calculates the given key and value.
-    * @param concurrencyLevel
-    * @param thresholdSize
-    * @param sizeCalculator
+    * @param concurrencyLevel the concurrency level of the map
+    * @param thresholdSize the maximum number of entries or total memory size
+    * @param sizeCalculator a calculator for the entry size
     */
    protected DefaultDataContainer(int concurrencyLevel, long thresholdSize,
                                   EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
@@ -80,8 +80,8 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
 
    /**
     * Constructor that allows user to provide a size calculator that also handles the cache entry and metadata.
-    * @param thresholdSize
-    * @param sizeCalculator
+    * @param thresholdSize the maximum number of entries or total memory size
+    * @param sizeCalculator a calculator for the entry size
     */
    protected DefaultDataContainer(long thresholdSize,
          EntrySizeCalculator<? super K, ? super InternalCacheEntry<K, V>> sizeCalculator) {

@@ -17,7 +17,7 @@ public interface ClusteredLockManager {
     * existing configurations. Returns true if successfully defined or false if the lock is already defined or any other
     * failure.
     *
-    * @param name, the name of the lock
+    * @param name the name of the lock
     * @return true if the lock was successfully defined
     */
    boolean defineLock(String name);
@@ -27,8 +27,8 @@ public interface ClusteredLockManager {
     * configurations. Returns true if successfully defined or false if the lock is already defined or any other
     * failure.
     *
-    * @param name,          the name of the lock
-    * @param configuration, a {@link ClusteredLockConfiguration} object with the configuration of the lock
+    * @param name          the name of the lock
+    * @param configuration a {@link ClusteredLockConfiguration} object with the configuration of the lock
     * @return true if the lock was successfully defined
     */
    boolean defineLock(String name, ClusteredLockConfiguration configuration);
@@ -41,7 +41,7 @@ public interface ClusteredLockManager {
     * If the {@link OwnershipLevel} is {@link OwnershipLevel#NODE}, it wll return the same instance per {@link ClusteredLockManager}
     * If the {@link OwnershipLevel} is {@link OwnershipLevel#INSTANCE}, it wll return a new instance per call.
     *
-    * @param name, the name of the lock
+    * @param name the name of the lock
     * @return {@link ClusteredLock} instance
     * @throws ClusteredLockException when the lock is not defined
     */
@@ -52,7 +52,7 @@ public interface ClusteredLockManager {
     * ClusteredLockException} if the lock is not not defined. A call of {@link #defineLock} must be done at least once
     * in the cluster.
     *
-    * @param name, the name of the lock
+    * @param name the name of the lock
     * @return {@link ClusteredLockConfiguration} for this lock
     * @throws ClusteredLockException when the lock is not defined
     */
@@ -61,7 +61,7 @@ public interface ClusteredLockManager {
    /**
     * Checks if a lock is already defined.
     *
-    * @param name, the lock name
+    * @param name the lock name
     * @return {@code true} if this lock is defined
     */
    boolean isDefined(String name);
@@ -69,7 +69,7 @@ public interface ClusteredLockManager {
    /**
     * Removes a {@link ClusteredLock} if such exists.
     *
-    * @param name, the name of the lock
+    * @param name the name of the lock
     * @return {@code true} if the lock is removed
     */
    CompletableFuture<Boolean> remove(String name);
@@ -79,7 +79,7 @@ public interface ClusteredLockManager {
     * This method is used when we just want to force the release the lock no matter who is holding it at a given time.
     * Calling this method may cause concurrency issues and has to be used in exceptional situations.
     *
-    * @param name, the name of the lock
+    * @param name the name of the lock
     * @return {@code true} if the lock has been released
     */
    CompletableFuture<Boolean> forceRelease(String name);

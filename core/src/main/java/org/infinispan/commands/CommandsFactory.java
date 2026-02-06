@@ -358,7 +358,7 @@ public interface CommandsFactory {
     *
     * @param gtx global transaction associated with the prepare
     * @param modifications list of modifications
-    * @param onePhase
+    * @param onePhase is this a one-phase or two-phase transaction?
     * @return a VersionedPrepareCommand
     */
    VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase);
@@ -406,7 +406,7 @@ public interface CommandsFactory {
     *
     * @param keys keys to lock
     * @param flagsBitSet Command flags provided by cache
-    * @param gtx
+    * @param gtx the global transaction
     * @return a LockControlCommand
     */
    LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet, GlobalTransaction gtx);

@@ -37,7 +37,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    /**
     * Set the marshaller instance that will marshall and unmarshall cache entries.
     *
-    * @param marshaller
+    * @param marshaller the marshaller to use
     */
    public SerializationConfigurationBuilder marshaller(Marshaller marshaller) {
       attributes.attribute(MARSHALLER).set(marshaller);

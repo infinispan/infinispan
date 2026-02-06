@@ -78,8 +78,8 @@ public interface ClusteredLock {
     * If the specified waiting time elapses then the {@link CompletableFuture} will complete with the value {@code false}.
     * If the time is less than or equal to zero, the method will not wait at all.
     *
-    * @param time, the maximum time to wait for the lock
-    * @param unit, the time unit of the {@code time} argument
+    * @param time the maximum time to wait for the lock
+    * @param unit the time unit of the {@code time} argument
     * @return {@code CompletableFuture(true)} if the lock was acquired and {@code CompletableFuture(false)} if the waiting time elapsed before the lock was acquired
     * @throws ClusteredLockException when the lock does not exist
     */

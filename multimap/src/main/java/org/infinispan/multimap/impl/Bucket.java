@@ -61,8 +61,8 @@ public class Bucket<V> {
    }
 
    /**
-    * @return {@code null} if the element exists and supportsDuplicates in this {@link Bucket}, otherwise, it returns a new {@link Bucket}
-    * instance.
+    * @param value the value to add
+    * @return {@code null} if the element already exists and duplicates are not supported in this {@link Bucket}, otherwise, a new {@link Bucket} instance with the added value.
     */
    public Bucket<V> add(V value, boolean supportsDuplicates) {
       List<V> newBucket = new ArrayList<>(values.size() + 1);

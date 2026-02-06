@@ -53,7 +53,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    /**
     * Defines the name of the cluster. Nodes only connect to clusters sharing the same name.
     *
-    * @param clusterName
+    * @param clusterName the name of the cluster
     */
    public TransportConfigurationBuilder clusterName(String clusterName) {
       attributes.attribute(CLUSTER_NAME).set(clusterName);
@@ -95,8 +95,8 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    /**
     * Timeout for coordinating cluster formation when nodes join or leave the cluster.
     *
-    * @param distributedSyncTimeout
-    * @return
+    * @param distributedSyncTimeout the distributed sync timeout
+    * @return a reference to this builder
     */
    public TransportConfigurationBuilder distributedSyncTimeout(long distributedSyncTimeout) {
       attributes.attribute(DISTRIBUTED_SYNC_TIMEOUT).set(TimeQuantity.valueOf(distributedSyncTimeout));
@@ -114,8 +114,8 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    /**
     * Timeout for coordinating cluster formation when nodes join or leave the cluster.
     *
-    * @param distributedSyncTimeout
-    * @return
+    * @param distributedSyncTimeout the distributed sync timeout
+    * @return a reference to this builder
     */
    public TransportConfigurationBuilder distributedSyncTimeout(long distributedSyncTimeout, TimeUnit unit) {
       return distributedSyncTimeout(unit.toMillis(distributedSyncTimeout));
@@ -163,7 +163,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * Defaults to a combination of host name and a random number (to differentiate multiple nodes
     * on the same host)
     *
-    * @param nodeName
+    * @param nodeName the name of the node
     */
    public TransportConfigurationBuilder nodeName(String nodeName) {
       attributes.attribute(NODE_NAME).set(nodeName);
@@ -173,7 +173,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    /**
     * Sets transport properties
     *
-    * @param properties
+    * @param properties the transport properties
     * @return this TransportConfig
     */
    public TransportConfigurationBuilder withProperties(Properties properties) {

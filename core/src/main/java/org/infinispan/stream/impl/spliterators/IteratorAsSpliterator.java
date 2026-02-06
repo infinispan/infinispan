@@ -47,8 +47,8 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
       /**
        * Sets the characteristics the subsequent spliterator will have.
        *
-       * @param characteristics
-       * @return
+       * @param characteristics the characteristics
+       * @return a reference to this builder
        */
       public Builder<T> setCharacteristics(int characteristics) {
          this.characteristics = characteristics;

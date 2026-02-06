@@ -103,7 +103,7 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * Performs any cache manager operations using the specified {@link Subject}. Only applies to cache managers with authorization
     * enabled (see {@link GlobalConfigurationBuilder#security()}).
     *
-    * @param subject
+    * @param subject the subject associated with the operation
     * @return an {@link EmbeddedCacheManagerAdmin} instance on which a real operation is to be invoked, using the specified subject
     */
    EmbeddedCacheManagerAdmin withSubject(Subject subject);

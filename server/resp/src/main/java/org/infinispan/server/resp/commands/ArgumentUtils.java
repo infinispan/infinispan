@@ -22,7 +22,7 @@ public final class ArgumentUtils {
    /**
     * Numbers are always ASCII.
     *
-    * @param argument, byte[]
+    * @param argument byte[]
     * @return String
     */
    public static String toNumberString(byte[] argument) {
@@ -32,7 +32,7 @@ public final class ArgumentUtils {
    /**
     * Parse Double, removing an offset from the argument
     * @param argument
-    * @param offset, starting from
+    * @param offset starting from
     * @return double value
     */
    public static double toDouble(byte[] argument, int offset) {

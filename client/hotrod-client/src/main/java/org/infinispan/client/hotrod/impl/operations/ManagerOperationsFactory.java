@@ -26,8 +26,8 @@ public class ManagerOperationsFactory {
    /**
     * A ping operation for a specific cache to ensure it is running and receive its configuration details. This command
     * will be retried on another server if it encounters connectivity issues.
-    * @param cacheName
-    * @return
+    * @param cacheName the name of the cache
+    * @return a HotRodOperation to perform the ping
     */
    public HotRodOperation<PingResponse> newPingOperation(String cacheName) {
       return new CachePingOperation(cacheName);

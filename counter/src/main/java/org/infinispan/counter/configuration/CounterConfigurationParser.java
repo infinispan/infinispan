@@ -55,6 +55,7 @@ public class CounterConfigurationParser extends CounterParser {
     *
     * @param is the {@link InputStream} to read.
     * @return a {@link List} of {@link AbstractCounterConfiguration} read.
+    * @throws IOException if an I/O error occurs.
     */
    public Map<String, AbstractCounterConfiguration> parseConfigurations(InputStream is) throws IOException {
       BufferedInputStream input = new BufferedInputStream(is);

@@ -72,8 +72,8 @@ public interface Codec {
 
    /**
     *
-    * @param buf, buffer which supportsDuplicates info will be written to.
-    * @param supportsDuplicates, to see whether multimap cache supports duplicates or not.
+    * @param buf buffer which supportsDuplicates info will be written to.
+    * @param supportsDuplicates to see whether multimap cache supports duplicates or not.
     */
    void writeMultimapSupportDuplicates(ByteBuf buf, boolean supportsDuplicates);
 

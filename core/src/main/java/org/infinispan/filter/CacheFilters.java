@@ -103,10 +103,10 @@ public final class CacheFilters {
     * value and metadata are all used to determine whether the value is returned and the converted value.
     * @param stream stream to perform the operations on
     * @param filterConverter converter to apply
-    * @param <K>
-    * @param <V>
-    * @param <C>
-    * @return
+    * @param <K> the key type
+    * @param <V> the value type
+    * @param <C> the converted value type
+    * @return a new stream with the filter and conversion applied
     */
    public static <K, V, C> Stream<CacheEntry<K, C>> filterAndConvert(Stream<CacheEntry<K, V>> stream,
            KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {

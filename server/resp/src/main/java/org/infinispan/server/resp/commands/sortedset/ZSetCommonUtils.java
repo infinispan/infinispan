@@ -97,8 +97,8 @@ public final class ZSetCommonUtils {
     * - return scores
     * - limit results
     *
-    * @param scoredValues, scoresValues retrieved
-    * @param withScores,   return with scores
+    * @param scoredValues scoresValues retrieved
+    * @param withScores   return with scores
     * @return The Z operation response object to serialize in the RESP3 format.
     */
    public static ZOperationResponse response(Collection<ScoredValue<byte[]>> scoredValues, boolean withScores) {

@@ -26,7 +26,7 @@ public interface IntermediateOperation<InputType, InputStream extends BaseStream
     * Performs the intermediate operation on a Flowable. This is an interop method to allow Distributed
     * Streams to actually use Distributed Publisher
     * @param input the input flowable
-    * @return
+    * @return the resulting flowable
     */
    Flowable<OutputType> mapFlowable(Flowable<InputType> input);
 

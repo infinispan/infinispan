@@ -239,7 +239,6 @@ public class GlobalConfiguration {
 
    /**
     * @return The container memory configuration.
-    * @param containerName The name of the container.
     */
    public Map<String, ContainerMemoryConfiguration> getMemoryContainer() {
       return cacheContainerConfiguration.containerMemoryConfiguration();

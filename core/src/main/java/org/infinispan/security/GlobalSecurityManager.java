@@ -22,7 +22,7 @@ public interface GlobalSecurityManager {
 
    /**
     * Flushes the ACL cache for this node
-    * @return
+    * @return a CompletionStage that completes when the cache is flushed
     */
    CompletionStage<Void> flushGlobalACLCache();
 

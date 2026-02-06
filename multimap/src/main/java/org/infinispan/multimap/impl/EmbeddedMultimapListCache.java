@@ -50,7 +50,7 @@ public class EmbeddedMultimapListCache<K, V> {
    /**
     * Get the value as a collection
     *
-    * @param key, the name of the list
+    * @param key the name of the list
     * @return the collection with values if such exist, or an empty collection if
     *         the key is not present
     */
@@ -78,8 +78,8 @@ public class EmbeddedMultimapListCache<K, V> {
    /**
     * Inserts the specified element at the front of the specified list.
     *
-    * @param key,   the name of the list
-    * @param value, the element to be inserted
+    * @param key   the name of the list
+    * @param value the element to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
    public CompletionStage<Void> offerFirst(K key, V value) {
@@ -91,8 +91,8 @@ public class EmbeddedMultimapListCache<K, V> {
    /**
     * Inserts the specified element at the end of the specified list.
     *
-    * @param key,   the name of the list
-    * @param value, the element to be inserted
+    * @param key   the name of the list
+    * @param value the element to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
    public CompletionStage<Void> offerLast(K key, V value) {
@@ -106,8 +106,8 @@ public class EmbeddedMultimapListCache<K, V> {
     * will be inserted as first one by one: i.e. elements in the list will be in
     * revers order
     *
-    * @param key,   the name of the list
-    * @param value, collection to be inserted
+    * @param key   the name of the list
+    * @param value collection to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
    public CompletionStage<Void> offerFirst(K key, Collection<V> value) {
@@ -119,8 +119,8 @@ public class EmbeddedMultimapListCache<K, V> {
    /**
     * Inserts the specified collection at the end of the specified list.
     *
-    * @param key,   the name of the list
-    * @param value, collection to be inserted
+    * @param key   the name of the list
+    * @param value collection to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
    public CompletionStage<Void> offerLast(K key, Collection<V> value) {
@@ -132,7 +132,7 @@ public class EmbeddedMultimapListCache<K, V> {
    /**
     * Returns true if the list associated with the key exists.
     *
-    * @param key, the name of the list
+    * @param key the name of the list
     * @return {@link CompletionStage} containing a {@link Boolean}
     */
    public CompletionStage<Boolean> containsKey(K key) {
@@ -144,7 +144,7 @@ public class EmbeddedMultimapListCache<K, V> {
     * Returns the number of elements in the list.
     * If the entry does not exit, returns size 0.
     *
-    * @param key, the name of the list
+    * @param key the name of the list
     * @return {@link CompletionStage} containing a {@link Long}
     */
    public CompletionStage<Long> size(K key) {
@@ -157,8 +157,8 @@ public class EmbeddedMultimapListCache<K, V> {
     * 0 means fist element. Negative index counts index from the tail. For example
     * -1 is the last element.
     *
-    * @param key,   the name of the list
-    * @param index, the position of the element.
+    * @param key   the name of the list
+    * @param index the position of the element.
     * @return The existing value. Returns null if the key does not exist or the
     *         index is out of bounds.
     */
@@ -173,9 +173,9 @@ public class EmbeddedMultimapListCache<K, V> {
     * For example 0 is the first element, 1 is the second element, -1 the last
     * element.
     *
-    * @param key,  the name of the list
-    * @param from, the starting offset
-    * @param to,   the final offset
+    * @param key  the name of the list
+    * @param from the starting offset
+    * @param to   the final offset
     * @return The subList. Returns null if the key does not exist.
     */
    public CompletionStage<Collection<V>> subList(K key, long from, long to) {
@@ -186,8 +186,8 @@ public class EmbeddedMultimapListCache<K, V> {
    /**
     * Removes the given count of elements from the head of the list.
     *
-    * @param key,   the name of the list
-    * @param count, the number of elements. Must be positive.
+    * @param key   the name of the list
+    * @param count the number of elements. Must be positive.
     * @return {@link CompletionStage} containing a {@link Collection<V>} of values
     *         removed,
     *         or null if the key does not exit
@@ -199,8 +199,8 @@ public class EmbeddedMultimapListCache<K, V> {
    /**
     * Removes the given count of elements from the tail of the list.
     *
-    * @param key,   the name of the list
-    * @param count, the number of elements. Must be positive.
+    * @param key   the name of the list
+    * @param count the number of elements. Must be positive.
     * @return {@link CompletionStage} containing a {@link Collection<V>} of values
     *         removed,
     *         or null if the key does not exit
@@ -212,9 +212,9 @@ public class EmbeddedMultimapListCache<K, V> {
    /**
     * Removes the given count of elements from the tail or the head of the list
     *
-    * @param key,   the name of the list
-    * @param count, the number of elements
-    * @param first, true if it's the head, false for the tail
+    * @param key   the name of the list
+    * @param count the number of elements
+    * @param first true if it's the head, false for the tail
     * @return {@link CompletionStage} containing a {@link Collection<V>} of values
     *         removed,
     *         or null if the key does not exit
@@ -230,9 +230,9 @@ public class EmbeddedMultimapListCache<K, V> {
     * 0 means fist element. Negative index counts index from the tail. For example
     * -1 is the last element.
     *
-    * @param key,   the name of the list
-    * @param index, the position of the element to be inserted. Can be negative
-    * @param value, the element to be inserted in the index position
+    * @param key   the name of the list
+    * @param index the position of the element to be inserted. Can be negative
+    * @param value the element to be inserted in the index position
     * @return {@link CompletionStage} with true if the value was set, false if the
     *         key does not exist
     * @throws org.infinispan.commons.CacheException when the index is out of range
@@ -246,17 +246,17 @@ public class EmbeddedMultimapListCache<K, V> {
     * Retrieves indexes of matching elements inside a list.
     * Scans the list looking for the elements that match the provided element.
     *
-    * @param key,     the name of the list, can't be null.
-    * @param element, the element to compare, can't be null.
-    * @param count,   number of matches. If null, count is 1 by default. Can't be
+    * @param key     the name of the list, can't be null.
+    * @param element the element to compare, can't be null.
+    * @param count   number of matches. If null, count is 1 by default. Can't be
     *                 negative.
     *                 If count is 0, means all the matches.
-    * @param rank,    the "rank" of the first element to return, in case there are
+    * @param rank    the "rank" of the first element to return, in case there are
     *                 multiple matches.
     *                 A rank of 1 means the first match, 2 the second match, and so
     *                 forth. Negative rank iterates
     *                 from the tail. If null, rank is 1 by default. Can't be 0.
-    * @param maxlen,  compares the provided element only with a given maximum
+    * @param maxlen  compares the provided element only with a given maximum
     *                 number of list items.
     *                 If null, defaults to 0 that means all the elements. Can't be
     *                 negative.
@@ -296,11 +296,11 @@ public class EmbeddedMultimapListCache<K, V> {
     * The list is traversed from head to tail, the insertion is done before or
     * after the first element found.
     *
-    * @param key,      the name of the list
-    * @param isBefore, insert before true, after false
-    * @param pivot,    the element to compare
-    * @param element,  the element to insert
-    *                  @return, the size of the list after insertion, 0 or -1
+    * @param key      the name of the list
+    * @param isBefore insert before true, after false
+    * @param pivot    the element to compare
+    * @param element  the element to insert
+    * @return the size of the list after insertion, 0 or -1
     */
    public CompletionStage<Long> insert(K key, boolean isBefore, V pivot, V element) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
@@ -322,9 +322,9 @@ public class EmbeddedMultimapListCache<K, V> {
     * count = 1, removes one match, starts iteration from the head
     * count = -1, removed one match, starts iteration from the tail
     *
-    * @param key,     the name of the list
-    * @param count,   number of elements to remove
-    * @param element, the element to remove
+    * @param key     the name of the list
+    * @param count   number of elements to remove
+    * @param element the element to remove
     * @return how many elements have actually been removed, 0 if the list does not
     *         exist
     */
@@ -342,9 +342,9 @@ public class EmbeddedMultimapListCache<K, V> {
     * element.
     * Iteration is done from head to tail.
     *
-    * @param key,  the name of the list
-    * @param from, the starting offset
-    * @param to,   the final offset
+    * @param key  the name of the list
+    * @param from the starting offset
+    * @param to   the final offset
     * @return {@link CompletionStage<Boolean>} true when the list exist and the
     *         trim has been done.
     */
@@ -357,8 +357,8 @@ public class EmbeddedMultimapListCache<K, V> {
     * Adds a collection to a key. The collection replaces the current list content
     * if such exist.
     *
-    * @param key,  the name of the list
-    * @param list, content. If the list is null or empty, and the list exists, will
+    * @param key  the name of the list
+    * @param list content. If the list is null or empty, and the list exists, will
     *              be removed
     *
     * @return how many elements have actually been replaced
@@ -372,8 +372,8 @@ public class EmbeddedMultimapListCache<K, V> {
     * Rotates an element in the list from head to tail or tail to head, depending
     * on the rotateRight parameter.
     *
-    * @param key,         the name of the list
-    * @param rotateRight, true to rotate an element from the left to the right
+    * @param key         the name of the list
+    * @param rotateRight true to rotate an element from the left to the right
     *                     (head -> tail)
     * @return the rotated element value, null if the list does not exist
     */

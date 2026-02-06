@@ -35,7 +35,7 @@ public interface EntryLookup {
     *
     * @param <K> key type provided from user
     * @param <V> value type provided from user
-    * @return
+    * @return a Publisher that provides all values that have a value in the given context
     */
    <K, V> Publisher<CacheEntry<K, V>> publisher();
 

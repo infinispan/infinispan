@@ -15,8 +15,8 @@ public interface ChannelOperation {
 
    /**
     * Invoked when the callback cannot be invoked due to timeout or terminated pool.
-    * @param address
-    * @param cause
+    * @param address the address of the server
+    * @param cause the cause of the cancellation
     */
    void cancel(SocketAddress address, Throwable cause);
 

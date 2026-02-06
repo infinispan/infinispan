@@ -35,7 +35,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationCh
    /**
     * Specify factory class for executor
     *
-    * @param factoryClass
+    * @param factoryClass the factory class
     *           clazz
     * @return this ExecutorFactoryConfig
     */
@@ -57,10 +57,8 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationCh
    /**
     * Add key/value property pair to this executor factory configuration
     *
-    * @param key
-    *           property key
-    * @param value
-    *           property value
+    * @param key the property key
+    * @param value the property value
     * @return previous value if exists, null otherwise
     */
    public ExecutorFactoryConfigurationBuilder addExecutorProperty(String key, String value) {

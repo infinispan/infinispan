@@ -39,7 +39,7 @@ public class GroupsConfiguration extends ConfigurationElement<GroupsConfiguratio
     * If grouping support is enabled, then {@link Group} annotations are honored and any configured
     * groupers will be invoked
     *
-    * @return
+    * @return {@code true} if grouping support is enabled, {@code false} otherwise
     */
    public boolean enabled() {
       return enabled.get();

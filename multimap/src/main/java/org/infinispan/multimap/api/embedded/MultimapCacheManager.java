@@ -21,7 +21,7 @@ public interface MultimapCacheManager<K, V> {
    /**
     * Retrieves a named multimap cache from the system.
     *
-    * @param name, name of multimap cache to retrieve
+    * @param name name of multimap cache to retrieve
     * @return null if no configuration exists as per rules set above, otherwise returns a multimap cache instance
     * identified by cacheName and doesn't support duplicates
     */
@@ -32,8 +32,8 @@ public interface MultimapCacheManager<K, V> {
    /**
     * Retrieves a named multimap cache from the system.
     *
-    * @param name, name of multimap cache to retrieve
-    * @param supportsDuplicates, boolean check to see whether duplicates are supported or not
+    * @param name name of multimap cache to retrieve
+    * @param supportsDuplicates boolean check to see whether duplicates are supported or not
     * @return null if no configuration exists as per rules set above, otherwise returns a multimap cache instance
     * identified by cacheName
     */

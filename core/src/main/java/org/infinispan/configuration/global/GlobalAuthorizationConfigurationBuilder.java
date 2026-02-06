@@ -66,7 +66,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
    /**
     * The instance of an {@link AuditLogger} to be used to track operations performed on caches and cachemanagers. The default logger is
     * the {@link NullAuditLogger}. You can also use the {@link LoggingAuditLogger} which will send audit messages to the log.
-    * @param auditLogger
+    * @param auditLogger the audit logger
     */
    public GlobalAuthorizationConfigurationBuilder auditLogger(AuditLogger auditLogger) {
       attributes.attribute(AUDIT_LOGGER).set(auditLogger);
@@ -75,7 +75,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
 
    /**
     * Determines whether role mapping applies to group principals only or also to user principals. Defaults to true.
-    * @param groupOnlyMapping
+    * @param groupOnlyMapping whether to map only groups
     */
    public GlobalAuthorizationConfigurationBuilder groupOnlyMapping(boolean groupOnlyMapping) {
       attributes.attribute(GROUP_ONLY_MAPPING).set(groupOnlyMapping);
@@ -85,7 +85,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
    /**
     * The class of a mapper which converts the {@link Principal}s associated with a {@link Subject} into a set of roles
     *
-    * @param principalRoleMapper
+    * @param principalRoleMapper the principal role mapper
     */
    public GlobalAuthorizationConfigurationBuilder principalRoleMapper(PrincipalRoleMapper principalRoleMapper) {
       roleMapper.mapper(principalRoleMapper);
@@ -95,7 +95,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
    /**
     * The class of a mapper which maps {@link Role}s to {@link org.infinispan.security.AuthorizationPermission}s
     *
-    * @param rolePermissionMapper
+    * @param rolePermissionMapper the role permission mapper
     */
    public GlobalAuthorizationConfigurationBuilder rolePermissionMapper(RolePermissionMapper rolePermissionMapper) {
       permissionMapper.mapper(rolePermissionMapper);

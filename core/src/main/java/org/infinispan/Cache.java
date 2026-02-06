@@ -348,8 +348,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * Overloaded {@link Cache#computeIfAbsent(Object, Function)} with Infinispan {@link SerializableFunction}.
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
-    * @param key, the key to be computed
-    * @param mappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param mappingFunction mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    @SecureMethod
@@ -361,8 +361,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * Overloaded {@link Cache#computeIfAbsent(Object, Function, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
-    * @param key, the key to be computed
-    * @param mappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param mappingFunction mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    @SecureMethod
@@ -374,8 +374,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * Overloaded {@link Cache#computeIfAbsent(Object, Function, long, TimeUnit, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
-    * @param key, the key to be computed
-    * @param mappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param mappingFunction mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    @SecureMethod
@@ -387,8 +387,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * Overloaded {@link Cache#computeIfAbsentAsync(Object, Function)} with Infinispan {@link SerializableFunction}.
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
-    * @param key, the key to be computed
-    * @param mappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param mappingFunction mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    @SecureMethod
@@ -400,8 +400,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * Overloaded {@link Cache#computeIfAbsentAsync(Object, Function, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
-    * @param key, the key to be computed
-    * @param mappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param mappingFunction mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    @SecureMethod
@@ -414,8 +414,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * Overloaded {@link Cache#computeIfAbsentAsync(Object, Function, long, TimeUnit, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
-    * @param key, the key to be computed
-    * @param mappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param mappingFunction mapping function to be appliyed to the key
     * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    @SecureMethod
@@ -443,8 +443,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     *
-    * @param key, the key to be computed
-    * @param remappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param remappingFunction mapping function to be appliyed to the key
     * @return computed value or null if nothing is computed or computation result is null
     */
    @SecureMethod
@@ -458,8 +458,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     *
-    * @param key, the key to be computed
-    * @param remappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param remappingFunction mapping function to be appliyed to the key
     * @return computed value or null if nothing is computed or computation result is null
     */
    @SecureMethod
@@ -487,8 +487,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     *
-    * @param key, the key to be computed
-    * @param remappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param remappingFunction mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
    @SecureMethod
@@ -501,8 +501,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     *
-    * @param key, the key to be computed
-    * @param remappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param remappingFunction mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
    @SecureMethod
@@ -515,8 +515,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     *
-    * @param key, the key to be computed
-    * @param remappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param remappingFunction mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
    @SecureMethod
@@ -529,8 +529,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     *
-    * @param key, the key to be computed
-    * @param remappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param remappingFunction mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
    @SecureMethod
@@ -543,8 +543,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     *
-    * @param key, the key to be computed
-    * @param remappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param remappingFunction mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
    @SecureMethod
@@ -557,8 +557,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     *
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     *
-    * @param key, the key to be computed
-    * @param remappingFunction, mapping function to be appliyed to the key
+    * @param key the key to be computed
+    * @param remappingFunction mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
    @SecureMethod

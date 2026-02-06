@@ -19,7 +19,7 @@ public interface KeyPartitioner extends Matchable<KeyPartitioner>, ToIntFunction
     * This method will be called before any other injection methods.</p>
     *
     * <p>Does not need to be thread-safe (Infinispan safely publishes the instance after initialization).</p>
-    * @param configuration
+    * @param configuration the hash configuration
     */
    default void init(HashConfiguration configuration) {
       // Do nothing

@@ -80,7 +80,7 @@ public final class EntryView {
 
       /**
        * The same as {@link #find()} but does not update any hit/miss statistics.
-       * @return
+       * @return an {@code Optional} describing the value of this entry, or an empty {@code Optional} if there is no value
        */
       default Optional<V> peek() {
          return find();

@@ -124,6 +124,7 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
     * Initializes the key set.
     * <p>
     * Only one key will have the initial value and the remaining is zero.
+    * @return A CompletionStage that completes when the counter is initialized.
     */
    public CompletionStage<InternalCounterAdmin> init() {
       registerListener();
@@ -436,7 +437,7 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
          }
          this.preferredKeys = preferredKeys.isEmpty() ?
                null :
-               preferredKeys.toArray(new WeakCounterKey[preferredKeys.size()]);
+               preferredKeys.toArray(new WeakCounterKey[0]);
       }
 
       @Override

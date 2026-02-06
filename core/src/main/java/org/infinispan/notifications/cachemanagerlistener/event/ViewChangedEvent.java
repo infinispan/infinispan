@@ -31,7 +31,7 @@ public interface ViewChangedEvent extends Event {
 
    /**
     * Get JGroups view id.
-    * @return
+    * @return the JGroups view id
     */
    int getViewId();
 

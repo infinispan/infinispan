@@ -45,7 +45,7 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Get the entry by key and return it as a set
     *
-    * @param key, the name of the set
+    * @param key the name of the set
     * @return the set with values if such exist, or null if the key is not present
     */
    public CompletionStage<SetBucket<V>> get(K key) {
@@ -55,7 +55,7 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Get the entry by key and return it as a set
     *
-    * @param key, the name of the set
+    * @param key the name of the set
     * @return the set with values if such exist, or null if the key is not present
     */
    public CompletionStage<Set<V>> getAsSet(K key) {
@@ -76,8 +76,8 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Add the specified element to the set, creates the set in case
     *
-    * @param key,   the name of the set
-    * @param value, the element to be inserted
+    * @param key   the name of the set
+    * @param value the element to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
    public CompletionStage<Long> add(K key, V value) {
@@ -89,8 +89,8 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Add the specified elements to the set, creates the set in case
     *
-    * @param key,   the name of the set
-    * @param values, the element to be inserted
+    * @param key   the name of the set
+    * @param values the element to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
    public CompletionStage<Long> add(K key, Collection<V> values) {
@@ -102,8 +102,8 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Remove the specified element to the set, removes the set if empty
     *
-    * @param key,   the name of the set
-    * @param value, the element to be inserted
+    * @param key   the name of the set
+    * @param value the element to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
    public CompletionStage<Long> remove(K key, V value) {
@@ -115,8 +115,8 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Remove the specified elements from the set, remove the set if empty
     *
-    * @param key,   the name of the set
-    * @param values, the element to be inserted
+    * @param key   the name of the set
+    * @param values the element to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
    public CompletionStage<Long> remove(K key, Collection<V> values) {
@@ -128,7 +128,7 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Get all the entries specified in the keys collection
     *
-    * @param keys, collection of keys to be get
+    * @param keys collection of keys to be get
     * @return {@link CompletionStage} containing a {@link Map} with the values for the requested keys
     */
    public CompletableFuture<Map<K, SetBucket<V>>> getAll(Set<K> keys) {
@@ -140,7 +140,7 @@ public class EmbeddedSetCache<K, V> {
     * Returns the number of elements in the set.
     * If the entry does not exit, returns size 0.
     *
-    * @param key, the name of the set
+    * @param key the name of the set
     * @return {@link CompletionStage} containing a {@link Long}
     */
    public CompletionStage<Long> size(K key) {
@@ -151,8 +151,8 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Create the set with given values
     *
-    * @param key,    the name of the set
-    * @param values, the elements to be inserted
+    * @param key    the name of the set
+    * @param values the elements to be inserted
     * @return {@link CompletionStage} containing the number of elements
     */
    public CompletionStage<Long> set(K key, Collection<V> values) {
@@ -164,8 +164,8 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Return a collection representign a subset of the set
     *
-    * @param key,    the name of the set
-    * @param count, the number of elements to return
+    * @param key    the name of the set
+    * @param count the number of elements to return
     * @return {@link CompletionStage} the random subset elements
     */
    public CompletionStage<Collection<V>> pop(K key, Long count, boolean remove) {
@@ -176,8 +176,8 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Returns a list L of 0/1. L(i) = 1 if the set contains elements(i)
     *
-    * @param key,      the name of the set
-    * @param elements, list of elements
+    * @param key      the name of the set
+    * @param elements list of elements
     * @return {@link CompletionStage} containing a List&lt;Long&gt; or null if elements
     *         null or empty
     */

@@ -119,7 +119,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
     *
     * @param component component to register
     * @param type      type of component
-    * @throws org.infinispan.commons.CacheConfigurationException If a component is already registered with that
+    * @throws org.infinispan.commons.CacheConfigurationException If a component is already registered with that name or type.
     *         name, or if a dependency cannot be resolved
     */
    public final void registerComponent(Object component, Class<?> type) {

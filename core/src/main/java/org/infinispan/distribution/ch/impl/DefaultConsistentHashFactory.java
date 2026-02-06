@@ -70,7 +70,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
     *
     * @param baseCH An existing consistent hash instance, should not be {@code null}
     * @param actualMembers A list of addresses representing the new cache members.
-    * @return
+    * @return a new consistent hash with the updated members
     */
    @Override
    public DefaultConsistentHash updateMembers(DefaultConsistentHash baseCH, List<Address> actualMembers,
