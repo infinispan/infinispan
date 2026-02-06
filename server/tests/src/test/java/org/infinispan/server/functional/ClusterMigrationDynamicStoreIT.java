@@ -3,6 +3,7 @@ package org.infinispan.server.functional;
 import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.server.resp.configuration.RespServerConfiguration.DEFAULT_RESP_CACHE;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -63,9 +64,11 @@ public class ClusterMigrationDynamicStoreIT extends AbstractMultiClusterIT {
       // Register proto schema
       addSchema(restClientSource);
 
-      // Create and populate cache in the source cluster
+      // Create and populate caches in the source cluster
       createSourceClusterCache(CACHE_NAME);
       populateCache(CACHE_NAME, restClientSource);
+      createRespSourceCache();
+      populateCache(DEFAULT_RESP_CACHE, restClientSource);
 
       // Migrate the schemas first
       assertSourceDisconnected(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME);
@@ -83,6 +86,9 @@ public class ClusterMigrationDynamicStoreIT extends AbstractMultiClusterIT {
       assertSourceConnected(CACHE_NAME);
       assertEquals("name-13", getPersonName("13", restClientTarget));
       migrate(CACHE_NAME, restClientTarget);
+      connectTargetCluster(DEFAULT_RESP_CACHE);
+      assertSourceConnected(DEFAULT_RESP_CACHE);
+      migrate(DEFAULT_RESP_CACHE, restClientTarget);
 
       // Do a second migration, should be harmless and simply override the data
       migrate(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME, restClientTarget);
@@ -91,8 +97,10 @@ public class ClusterMigrationDynamicStoreIT extends AbstractMultiClusterIT {
       // Disconnect source from the remote store
       disconnectSource(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME, restClientTarget);
       disconnectSource(CACHE_NAME, restClientTarget);
+      disconnectSource(DEFAULT_RESP_CACHE, restClientTarget);
       assertSourceDisconnected(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME);
       assertSourceDisconnected(CACHE_NAME);
+      assertSourceDisconnected(DEFAULT_RESP_CACHE);
 
       // Stop source cluster
       stopSourceCluster();
@@ -101,6 +109,7 @@ public class ClusterMigrationDynamicStoreIT extends AbstractMultiClusterIT {
       for (int i = 0; i < target.getMembers().size(); i++) {
          RestClient restClient = target.getClient(i);
          assertEquals(ENTRIES, getCacheSize(CACHE_NAME, restClient));
+         assertEquals(ENTRIES, getCacheSize(DEFAULT_RESP_CACHE, restClient));
          assertEquals("name-35", getPersonName("35", restClient));
          assertStatus(NO_CONTENT, restClient.cache(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME).exists());
       }
@@ -108,6 +117,7 @@ public class ClusterMigrationDynamicStoreIT extends AbstractMultiClusterIT {
 
    private void createTargetClusterCache(String cacheName) {
       createCache(cacheName, indexedCacheBuilder(), target.getClient());
+      createRespCache(target.getClient());
    }
 
    protected void connectTargetCluster(String cacheName) throws IOException {
@@ -128,6 +138,19 @@ public class ClusterMigrationDynamicStoreIT extends AbstractMultiClusterIT {
       RemoteServerConfiguration initialConfig = remoteStore.servers().iterator().next();
       assertEquals(initialConfig.host(), servers.get(0).host());
       assertEquals(initialConfig.port(), servers.get(0).port());
+   }
+
+   private void assertNonExistentCache() {
+      String name = "this-cache-doesnt-exist";
+      RestCacheClient client = target.getClient().cache(name);
+      assertStatus(NOT_FOUND, client.exists());
+
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      addRemoteStore(name, builder);
+      RemoteStoreConfiguration remoteStore = (RemoteStoreConfiguration) builder.build().persistence().stores().iterator().next();
+      RestEntity restEntity = RestEntity.create(MediaType.APPLICATION_JSON, SerializationUtils.toJson(remoteStore));
+      assertStatus(NOT_FOUND, client.connectSource(restEntity));
+      assertStatus(NOT_FOUND, client.sourceConnection());
    }
 
    protected void assertSourceConnected(String cacheName) {
@@ -189,6 +212,17 @@ public class ClusterMigrationDynamicStoreIT extends AbstractMultiClusterIT {
 
    void createSourceClusterCache(String cacheName) {
       createCache(cacheName, indexedCacheBuilder(), source.getClient());
+   }
+
+   private void createRespSourceCache() {
+      createRespCache(source.getClient());
+   }
+
+   private void createRespCache(RestClient client) {
+      String defaultRespConfiguration = """
+{"respCache":{"distributed-cache":{"aliases":["0"],"key-partitioner":"org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner","mode":"SYNC","statistics":true,"encoding":{"key":{"media-type":"application/octet-stream"},"value":{"media-type":"application/octet-stream"}}}}}
+""";
+      assertStatus(OK, client.cache(DEFAULT_RESP_CACHE).createWithConfiguration(RestEntity.create(defaultRespConfiguration)));
    }
 
    ConfigurationBuilder indexedCacheBuilder() {
