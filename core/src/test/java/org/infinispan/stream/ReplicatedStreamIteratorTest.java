@@ -30,6 +30,36 @@ public class ReplicatedStreamIteratorTest extends BaseClusteredStreamIteratorTes
       super(false, CacheMode.REPL_SYNC);
    }
 
+   protected boolean zeroCapacity;
+
+   protected ReplicatedStreamIteratorTest withZeroCapacity() {
+      this.zeroCapacity = true;
+      return this;
+   }
+
+   protected ReplicatedStreamIteratorTest withCapacityFactoryZero() {
+      this.zeroCapacity = false;
+      return this;
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "zero-capacity", "capacity-factor-zero");
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), zeroCapacity, !zeroCapacity);
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new ReplicatedStreamIteratorTest().withZeroCapacity(),
+            new ReplicatedStreamIteratorTest().withCapacityFactoryZero(),
+      };
+   }
+
    @Override
    protected Object getKeyTiedToCache(Cache<?, ?> cache) {
       return new MagicKey(cache);
@@ -38,7 +68,12 @@ public class ReplicatedStreamIteratorTest extends BaseClusteredStreamIteratorTes
    @Override
    protected void afterCacheCreated(ConfigurationBuilder builder) {
       GlobalConfigurationBuilder global = defaultGlobalConfigurationBuilder();
-      global.zeroCapacityNode(true);
+      if (zeroCapacity) {
+         global.zeroCapacityNode(true);
+      } else {
+         builder.clustering().hash().capacityFactor(0f);
+      }
+
       global.serialization().addContextInitializer(sci);
       createClusteredCaches(1, global, builder, false, new TransportFlags().withFD(true), CACHE_NAME);
    }
@@ -73,7 +108,7 @@ public class ReplicatedStreamIteratorTest extends BaseClusteredStreamIteratorTes
 
    private int getZeroCapacityIndex() {
       for (int i = 0; i < managers().length; i++) {
-         if (manager(i).getCacheManagerConfiguration().isZeroCapacityNode())
+         if (manager(i).getCacheManagerConfiguration().isZeroCapacityNode() || advancedCache(i, CACHE_NAME).getCacheConfiguration().clustering().hash().capacityFactor() != 1f)
             return i;
       }
 
