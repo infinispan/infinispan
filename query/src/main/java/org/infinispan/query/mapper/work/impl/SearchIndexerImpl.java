@@ -12,6 +12,7 @@ import org.hibernate.search.engine.backend.work.execution.OperationSubmitter;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.route.DocumentRoutesDescriptor;
 import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
+import org.infinispan.commons.reactive.Functions;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -25,7 +26,6 @@ import org.infinispan.util.concurrent.BlockingManager;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.internal.functions.Functions;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 
