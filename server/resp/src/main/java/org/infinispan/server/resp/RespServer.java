@@ -124,7 +124,10 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             builder.encoding().key().mediaType(RESP_KEY_MEDIA_TYPE);
             builder.encoding().value().mediaType(configuredValueType);
          }
-         builder.statistics().enable().aliases("0");
+         builder.statistics().enable();
+         if (!cacheManager.cacheConfigurationExists(RespServerConfiguration.DEFAULT_RESP_CACHE_ALIAS))
+            builder.aliases(RespServerConfiguration.DEFAULT_RESP_CACHE_ALIAS);
+
          explicitConfiguration = builder.build();
          SecurityActions.defineConfiguration(cacheManager, cacheName, explicitConfiguration);
       } else {
