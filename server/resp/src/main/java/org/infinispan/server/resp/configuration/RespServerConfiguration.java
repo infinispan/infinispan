@@ -21,6 +21,7 @@ public class RespServerConfiguration extends ProtocolServerConfiguration<RespSer
 
    public static final int DEFAULT_RESP_PORT = 6379;
    public static final String DEFAULT_RESP_CACHE = "respCache";
+   public static final String DEFAULT_RESP_CACHE_ALIAS = "0";
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RespServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet());
