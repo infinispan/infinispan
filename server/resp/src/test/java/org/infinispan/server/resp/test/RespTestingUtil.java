@@ -6,6 +6,8 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.core.logging.Log;
@@ -42,6 +44,13 @@ public class RespTestingUtil {
    static {
       Map<AuthorizationPermission, Subject> subjects = TestingUtil.makeAllSubjects();
       ADMIN = subjects.get(AuthorizationPermission.ALL);
+   }
+
+   public static ConfigurationBuilder defaultRespConfiguration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
+      builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner()).numSegments(256);
+      return builder;
    }
 
    public static RedisClient createClient(long timeout, int port) {
