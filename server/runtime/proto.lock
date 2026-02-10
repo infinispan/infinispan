@@ -1,106 +1,5 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:persistence.event_logger.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "ServerEventImpl",
-        "type_id" : 5200,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "when",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 2,
-          "name" : "level",
-          "type" : "org.infinispan.persistence.core.EventLogLevel",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "category",
-          "type" : "org.infinispan.persistence.core.EventLogCategory",
-          "optional" : true
-        }, {
-          "id" : 4,
-          "name" : "message",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 5,
-          "name" : "detail",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 6,
-          "name" : "who",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 7,
-          "name" : "context",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 8,
-          "name" : "scope",
-          "type" : "string",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "persistence.core.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.event_logger"
-      }
-    }
-  }, {
-    "protopath" : "generated:/:persistence.server_state.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "IgnoredCaches",
-        "type_id" : 5400,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "caches",
-          "type" : "string",
-          "is_repeated" : true
-        } ]
-      }, {
-        "name" : "IpFilterRules",
-        "type_id" : 5403,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "rules",
-          "type" : "IpFilterRule",
-          "is_repeated" : true
-        } ]
-      }, {
-        "name" : "IpFilterRule",
-        "type_id" : 5404,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "cidr",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "type",
-          "type" : "string",
-          "optional" : true
-        } ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.server_state"
-      }
-    }
-  }, {
     "protopath" : "generated:/:persistence.servertasks.proto",
     "def" : {
       "enums" : [ ],
@@ -163,6 +62,107 @@
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.servertasks"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:persistence.server_state.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "IgnoredCaches",
+        "type_id" : 5400,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "caches",
+          "type" : "string",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "IpFilterRules",
+        "type_id" : 5403,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "rules",
+          "type" : "IpFilterRule",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "IpFilterRule",
+        "type_id" : 5404,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cidr",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "type",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.server_state"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:persistence.event_logger.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "ServerEventImpl",
+        "type_id" : 5200,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "when",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "level",
+          "type" : "org.infinispan.persistence.core.EventLogLevel",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "category",
+          "type" : "org.infinispan.persistence.core.EventLogCategory",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "message",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "detail",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "who",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "context",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "scope",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.event_logger"
       }
     }
   } ]
