@@ -219,7 +219,7 @@
       <version.weld-servlet>5.1.7.Final</version.weld-servlet>
 
       <!-- versionx -->
-      <versionx.com.puppycrawl.tools.checkstyle>13.0.0</versionx.com.puppycrawl.tools.checkstyle>
+      <versionx.com.puppycrawl.tools.checkstyle>13.2.0</versionx.com.puppycrawl.tools.checkstyle>
 
       <!-- configuration properties -->
       <org.infinispan.attachServerZip>true</org.infinispan.attachServerZip>
