@@ -110,6 +110,7 @@ public class JGroupsConfigBuilder {
          throw new IllegalStateException("Currently we only support " + MAX_SITES_PER_THREAD + " ranges/sites!");
       }
       replaceTcpStartPort(jgroupsCfg, siteIndex);
+      configurePortRange(jgroupsCfg, siteIndex);
       replaceMCastAddressAndPort(jgroupsCfg, fullTestName, siteIndex);
       configureGMSTimeout(jgroupsCfg, flags);
       return jgroupsCfg.toString();
@@ -191,17 +192,28 @@ public class JGroupsConfigBuilder {
       Map<String, String> props = jgroupsCfg.getProtocol(transportProtocol).getProperties();
       Integer threadIndex = threadTcpIndex.get();
       int startPort;
-      int portRange;
       if (siteIndex >= 0) {
          // Site index set
          startPort = BASE_TCP_PORT + threadIndex * MAX_NODES_PER_THREAD + siteIndex * MAX_NODES_PER_SITE;
-         portRange = MAX_NODES_PER_SITE;
       } else {
          // Site index not set, use the thread's full range
          startPort = BASE_TCP_PORT + threadIndex * MAX_NODES_PER_THREAD;
-         portRange = MAX_NODES_PER_THREAD;
       }
       props.put("bind_port", String.valueOf(startPort));
+      replaceProperties(jgroupsCfg, props, transportProtocol);
+   }
+
+   private static void configurePortRange(JGroupsProtocolCfg jgroupsCfg, int siteIndex) {
+      ProtocolType transportProtocol = jgroupsCfg.transportType;
+      Map<String, String> props = jgroupsCfg.getProtocol(transportProtocol).getProperties();
+      int portRange;
+      if (siteIndex >= 0) {
+         // Site index set
+         portRange = MAX_NODES_PER_SITE;
+      } else {
+         portRange = MAX_NODES_PER_THREAD;
+      }
+
       // In JGroups, the port_range is inclusive
       props.put("port_range", String.valueOf(portRange - 1));
       replaceProperties(jgroupsCfg, props, transportProtocol);
