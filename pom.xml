@@ -2458,6 +2458,7 @@
                   <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
+                  <jgroups.port_range>50</jgroups.port_range>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
 
                   <build.directory>${project.build.directory}</build.directory>
