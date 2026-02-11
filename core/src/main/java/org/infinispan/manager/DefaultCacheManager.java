@@ -967,6 +967,7 @@ public class DefaultCacheManager extends InternalCacheManager {
    @Override
    public Configuration getCacheConfiguration(String name) {
       authorizer.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
+      name = configurationManager.selectCache(name);
       Configuration configuration = configurationManager.getConfiguration(name, true);
       if (configuration == null && cacheExists(name)) {
          return getDefaultCacheConfiguration();

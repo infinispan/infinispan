@@ -131,6 +131,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    /**
     * Returns the configuration for the given cache.
     *
+    * @param name The cache name or alias.
     * @return the configuration for the given cache or null if no such cache is defined
     */
    Configuration getCacheConfiguration(String name);
