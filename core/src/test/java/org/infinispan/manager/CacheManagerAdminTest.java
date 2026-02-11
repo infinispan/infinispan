@@ -1,9 +1,12 @@
 package org.infinispan.manager;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
+
+import java.lang.reflect.Method;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -63,6 +66,21 @@ public class CacheManagerAdminTest extends MultipleCacheManagersTest {
 
       addClusterEnabledCacheManager();
       checkCacheExistenceAcrossCluster("a", false);
+   }
+
+   public void testGetCacheConfiguration(Method m) {
+      EmbeddedCacheManager ecm = manager(0);
+
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+
+      String alias = "alias-" + this.hashCode();
+      builder.aliases(alias);
+      ecm.defineConfiguration(m.getName(), builder.build());
+
+      assertThat(ecm.getCacheConfiguration(m.getName())).isNotNull();
+      assertThat(ecm.getCacheConfiguration(alias)).isNotNull();
+      assertThat(ecm.getCacheConfiguration("something-that-doesnt-exist")).isNull();
    }
 
    protected void checkCacheExistenceAcrossCluster(String cacheName, boolean exists) {
