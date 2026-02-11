@@ -29,6 +29,7 @@ public class ManagedConnectionOperations {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+            .shared(true)
             .table()
             .dropOnExit(true)
             .tableNamePrefix("TBL")
