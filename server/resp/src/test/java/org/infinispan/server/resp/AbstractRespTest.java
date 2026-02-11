@@ -14,14 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
@@ -151,10 +149,7 @@ public abstract class AbstractRespTest extends MultipleCacheManagersTest {
    }
 
    protected final ConfigurationBuilder defaultRespConfiguration() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
-      builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner()).numSegments(256);
-      return builder;
+      return RespTestingUtil.defaultRespConfiguration();
    }
 
    protected final boolean isAuthorizationEnabled() {
