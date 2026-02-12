@@ -14,17 +14,15 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.test.Eventually;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.server.test.api.TestUser;
-import org.infinispan.server.test.core.compatibility.Compatibility;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfiguration;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
-import org.infinispan.testing.Eventually;
 import org.jspecify.annotations.NonNull;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 public class RollingUpgradeIndexingIT {
@@ -67,7 +65,6 @@ public class RollingUpgradeIndexingIT {
             );
 
       RollingUpgradeConfiguration configuration = builder.build();
-      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(configuration));
       RollingUpgradeHandler.performUpgrade(configuration);
    }
 
