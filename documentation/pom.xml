@@ -21,14 +21,8 @@
         <jdk.root>https://docs.oracle.com/en/java/javase/${maven.compiler.release}</jdk.root>
         <jdk.docroot>${jdk.root}/docs/api</jdk.docroot>
         <javaee.docroot>https://jakarta.ee/specifications/platform/9/apidocs</javaee.docroot>
-        <maven.min.version>3.8</maven.min.version>
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
-        <asciidoctorj.version>3.0.1</asciidoctorj.version>
-        <asciidoctor.maven.plugin.version>3.2.0</asciidoctor.maven.plugin.version>
-        <asciidoctorj.pdf.version>2.3.23</asciidoctorj.pdf.version>
-        <jruby.version>9.4.14.0</jruby.version>
-        <asciidoctorj.tabbed.code.version>0.3</asciidoctorj.tabbed.code.version>
         <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
         <schemaVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</schemaVersion>
         <protostream.api.docs>https://www.javadoc.io/doc/org.infinispan.protostream/protostream/${version.protostream}</protostream.api.docs>
@@ -192,27 +186,26 @@
             <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>${asciidoctor.maven.plugin.version}</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.asciidoctor</groupId>
                         <artifactId>asciidoctorj</artifactId>
-                        <version>${asciidoctorj.version}</version>
+                        <version>${version.asciidoctorj}</version>
                     </dependency>
                     <dependency>
                         <groupId>org.asciidoctor</groupId>
                         <artifactId>asciidoctorj-pdf</artifactId>
-                        <version>${asciidoctorj.pdf.version}</version>
+                        <version>${version.asciidoctorj.pdf}</version>
                     </dependency>
                     <dependency>
                         <groupId>org.jruby</groupId>
                         <artifactId>jruby-complete</artifactId>
-                        <version>${jruby.version}</version>
+                        <version>${version.jruby}</version>
                     </dependency>
                     <dependency>
                       <groupId>com.bmuschko</groupId>
                       <artifactId>asciidoctorj-tabbed-code-extension</artifactId>
-                      <version>${asciidoctorj.tabbed.code.version}</version>
+                      <version>${version.asciidoctorj.tabbed.code}</version>
                     </dependency>
                 </dependencies>
                 <executions>
@@ -279,17 +272,16 @@
                     <plugin>
                         <groupId>org.asciidoctor</groupId>
                         <artifactId>asciidoctor-maven-plugin</artifactId>
-                        <version>${asciidoctor.maven.plugin.version}</version>
                         <dependencies>
                             <dependency>
                                 <groupId>org.asciidoctor</groupId>
                                 <artifactId>asciidoctorj</artifactId>
-                                <version>${asciidoctorj.version}</version>
+                                <version>${version.asciidoctorj}</version>
                             </dependency>
                             <dependency>
                                 <groupId>org.asciidoctor</groupId>
                                 <artifactId>asciidoctorj-pdf</artifactId>
-                                <version>${asciidoctorj.pdf.version}</version>
+                                <version>${version.asciidoctorj.pdf}</version>
                             </dependency>
                         </dependencies>
                         <executions>
