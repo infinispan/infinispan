@@ -2017,6 +2017,16 @@
                <version>${version.maven.assembly}</version>
             </plugin>
             <plugin>
+               <groupId>org.asciidoctor</groupId>
+               <artifactId>asciidoctor-maven-plugin</artifactId>
+               <version>${version.asciidoctor.maven.plugin}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.openapitools</groupId>
+               <artifactId>openapi-generator-maven-plugin</artifactId>
+               <version>${version.openapi.generator}</version>
+            </plugin>
+            <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-dependency-plugin</artifactId>
                <version>${version.maven.dependency}</version>

@@ -185,6 +185,11 @@
       <version.maven.antrun>3.2.0</version.maven.antrun>
       <version.maven.archetype>3.4.1</version.maven.archetype>
       <version.maven.assembly>3.8.0</version.maven.assembly>
+      <version.asciidoctor.maven.plugin>3.2.0</version.asciidoctor.maven.plugin>
+      <version.asciidoctorj>3.0.1</version.asciidoctorj>
+      <version.asciidoctorj.pdf>2.3.23</version.asciidoctorj.pdf>
+      <version.asciidoctorj.tabbed.code>0.3</version.asciidoctorj.tabbed.code>
+      <version.jruby>9.4.14.0</version.jruby>
       <version.maven.buildhelper>3.6.1</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
       <version.maven.clean>3.5.0</version.maven.clean>
@@ -216,7 +221,8 @@
       <version.pmd.plugin>3.28.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.2.0</version.owasp-dependency-check-plugin>
       <version.spotbugs.plugin>4.9.8.2</version.spotbugs.plugin>
-      <version.weld-servlet>5.1.3.Final</version.weld-servlet>
+      <version.openapi.generator>7.19.0</version.openapi.generator>
+      <version.weld-servlet>5.1.7.Final</version.weld-servlet>
 
       <!-- versionx -->
       <versionx.com.puppycrawl.tools.checkstyle>12.3.1</versionx.com.puppycrawl.tools.checkstyle>
