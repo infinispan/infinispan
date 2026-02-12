@@ -21,7 +21,7 @@ import org.junit.jupiter.api.BeforeAll;
 /**
  * @since 13.0
  */
-public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreIT {
+public class ClusterMigrationDynamicStoreCliIT extends ClusterMigrationDynamicStoreIT {
 
    private static Path workingDir;
    private static Properties properties;
@@ -31,11 +31,11 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
 
    @BeforeAll
    public static void setup() {
-      workingDir = Path.of(CommonsTestingUtil.tmpDirectory(RollingUpgradeDynamicStoreCliIT.class));
+      workingDir = Path.of(Testing.tmpDirectory(ClusterMigrationDynamicStoreCliIT.class));
       Util.recursiveFileRemove(workingDir);
       properties = new Properties(System.getProperties());
       properties.put("cli.dir", workingDir.toAbsolutePath());
-      try (InputStream is = RollingUpgradeDynamicStoreCliIT.class.getResourceAsStream("/cli/" + REMOTE_STORE_CFG_FILE)) {
+      try (InputStream is = ClusterMigrationDynamicStoreCliIT.class.getResourceAsStream("/cli/" + REMOTE_STORE_CFG_FILE)) {
          assert is != null;
          try (InputStreamReader isr = new InputStreamReader(is)) {
             BufferedReader reader = new BufferedReader(isr);
@@ -102,7 +102,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
    }
 
    @Override
-   protected void doRollingUpgrade(String cacheName, RestClient client) {
+   protected void migrate(String cacheName, RestClient client) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
          connectToCluster(terminal, target);
