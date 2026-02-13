@@ -412,7 +412,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = cacheClient.configurationAttributes(true);
       assertThat(response).isOk();
       Json attributes = Json.read(join(response).body());
-      assertEquals(17, attributes.asJsonMap().size());
+      assertEquals(18, attributes.asJsonMap().size());
       assertEquals("timequantity", attributes.at("clustering.remote-timeout").at("type").asString());
       assertEquals("15s", attributes.at("clustering.remote-timeout").at("value").asString());
       assertThat(attributes.at("indexing.indexed-entities").at("type").asString()).isEqualTo("set");

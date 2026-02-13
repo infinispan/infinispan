@@ -43,8 +43,10 @@ When setting a custom value, ensure that there are no conflicts between caches u
 == Index startup mode
 
 When {brandname} starts caches it can perform operations to ensure the index is consistent with data in the cache.
-By default it:
+By default, it:
 
+* Checks the existing index file format.
+** If it is incompatible or corrupt, it is deleted and the cache is automatically reindexed.
 * Automatically clear (purge) or reindex the cache.
 ** If data is volatile and the index is persistent then {brandname} performs the clear (purge) the indexes when it starts.
 ** If data is persistent and the index is volatile then {brandname} reindex the cache when it starts.

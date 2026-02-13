@@ -31,9 +31,9 @@ import org.junit.jupiter.api.Test;
 /**
  * @since 13.0
  */
-public class RollingUpgradeDynamicStoreIT extends AbstractMultiClusterIT {
+public class ClusterMigrationDynamicStoreIT extends AbstractMultiClusterIT {
 
-   protected static final String CACHE_NAME = "rolling";
+   protected static final String CACHE_NAME = "migrate";
    protected static final int ENTRIES = 50;
    static final String PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME = InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
 
@@ -56,41 +56,37 @@ public class RollingUpgradeDynamicStoreIT extends AbstractMultiClusterIT {
    }
 
    @Test
-   public void testRollingUpgrade() throws Exception {
+   public void testClusterMigration() throws Exception {
       RestClient restClientSource = source.getClient();
       RestClient restClientTarget = target.getClient();
-
-      // Create cache in the source cluster
-      createSourceClusterCache(CACHE_NAME);
-
-      // Create cache in the target cluster identical to the source, without any store
-      createTargetClusterWithoutStore();
 
       // Register proto schema
       addSchema(restClientSource);
 
-      // Populate source cluster
+      // Create and populate cache in the source cluster
+      createSourceClusterCache(CACHE_NAME);
       populateCache(CACHE_NAME, restClientSource);
 
-      // Connect target cluster to the source cluster
+      // Migrate the schemas first
       assertSourceDisconnected(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME);
-      assertSourceDisconnected(CACHE_NAME);
       connectTargetCluster(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME);
-      connectTargetCluster(CACHE_NAME);
       assertSourceConnected(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME);
-      assertSourceConnected(CACHE_NAME);
-
-      // Make sure data is accessible from the target cluster
       assertStatus(NO_CONTENT, restClientTarget.cache(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME).exists());
+      migrate(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME, restClientTarget);
+
+      // Create the cache in the taarget cluster
+      createTargetClusterCache(CACHE_NAME);
+
+      // Migrate the cache data
+      assertSourceDisconnected(CACHE_NAME);
+      connectTargetCluster(CACHE_NAME);
+      assertSourceConnected(CACHE_NAME);
       assertEquals("name-13", getPersonName("13", restClientTarget));
+      migrate(CACHE_NAME, restClientTarget);
 
-      // Do a rolling upgrade from the target
-      doRollingUpgrade(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME, restClientTarget);
-      doRollingUpgrade(CACHE_NAME, restClientTarget);
-
-      // Do a second rolling upgrade, should be harmless and simply override the data
-      doRollingUpgrade(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME, restClientTarget);
-      doRollingUpgrade(CACHE_NAME, restClientTarget);
+      // Do a second migration, should be harmless and simply override the data
+      migrate(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME, restClientTarget);
+      migrate(CACHE_NAME, restClientTarget);
 
       // Disconnect source from the remote store
       disconnectSource(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME, restClientTarget);
@@ -110,8 +106,8 @@ public class RollingUpgradeDynamicStoreIT extends AbstractMultiClusterIT {
       }
    }
 
-   private void createTargetClusterWithoutStore() {
-      createCache(CACHE_NAME, indexedCacheBuilder(), target.getClient());
+   private void createTargetClusterCache(String cacheName) {
+      createCache(cacheName, indexedCacheBuilder(), target.getClient());
    }
 
    protected void connectTargetCluster(String cacheName) throws IOException {
@@ -146,7 +142,7 @@ public class RollingUpgradeDynamicStoreIT extends AbstractMultiClusterIT {
       assertStatus(NO_CONTENT, client.cache(cacheName).disconnectSource());
    }
 
-   protected void doRollingUpgrade(String cacheName, RestClient client) {
+   protected void migrate(String cacheName, RestClient client) {
       assertStatus(OK, client.cache(cacheName).synchronizeData());
    }
 

@@ -101,12 +101,14 @@ public class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      GlobalConfiguration globalConfiguration = cr.getGlobalComponentRegistry().getGlobalConfiguration();
+      ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(globalConfiguration.classLoader());
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
          cr.registerComponent(new IndexStatisticsSnapshotImpl(), IndexStatistics.class);
          cr.registerComponent(new LocalQueryStatistics(), LocalQueryStatistics.class);
          cr.registerComponent(new SearchStatsRetriever(), SearchStatsRetriever.class);
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-         ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
+
          cr.registerComponent(new ReflectionMatcher(aggregatedClassLoader), ReflectionMatcher.class);
          org.infinispan.query.core.impl.QueryEngine<Object> engine = new org.infinispan.query.core.impl.QueryEngine<>(cache);
          cr.registerComponent(engine, org.infinispan.query.core.impl.QueryEngine.class);
@@ -118,8 +120,6 @@ public class LifecycleManager implements ModuleLifecycle {
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
          SecurityActions.addCacheDependency(cache.getCacheManager(), cacheName, QueryCache.QUERY_CACHE_NAME);
-
-         ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
          boolean isIndexed = cfg.indexing().enabled();
 
          SearchMapping searchMapping = null;
@@ -151,8 +151,7 @@ public class LifecycleManager implements ModuleLifecycle {
                BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
                bcr.replaceComponent(IndexStatistics.class.getName(), new LocalIndexStatistics(), true);
                bcr.rewire();
-
-               IndexStartupRunner.run(searchMapping, massIndexer, cfg);
+               new IndexStartupRunner(cache).run();
             }
          }
 

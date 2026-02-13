@@ -294,4 +294,10 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       //NO-OP
       return path;
    }
+
+   @Override
+   public String syncFilesToServer(int server, String path, String destination) {
+      //NO-OP
+      return path;
+   }
 }

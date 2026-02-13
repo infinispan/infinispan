@@ -6,7 +6,7 @@ import org.infinispan.util.KeyValuePair;
 /**
  * @since 15.0
  */
-public class RollingUpgradeAuthorizationIT extends RollingUpgradeDynamicStoreIT {
+public class ClusterMigrationAuthorizationIT extends ClusterMigrationDynamicStoreIT {
 
    @Override
    protected String configFile() {
