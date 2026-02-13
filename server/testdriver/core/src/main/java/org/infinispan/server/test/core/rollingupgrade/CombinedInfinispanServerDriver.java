@@ -166,7 +166,7 @@ public class CombinedInfinispanServerDriver implements InfinispanServerDriver {
    }
 
    @Override
-   public String syncFilesToServer(int server, String path) {
+   public String syncFilesToServer(int server, String path, String destination) {
       throw new UnsupportedOperationException();
    }
 

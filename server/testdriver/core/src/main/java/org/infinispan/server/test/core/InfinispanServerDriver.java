@@ -190,7 +190,11 @@ public interface InfinispanServerDriver {
     */
    String syncFilesFromServer(int server, String dir);
 
-   String syncFilesToServer(int server, String path);
+   default String syncFilesToServer(int server, String path) {
+      return syncFilesToServer(server, path, "/tmp");
+   }
+
+   String syncFilesToServer(int server, String path, String destination);
 
    InetAddress getTestHostAddress();
 }

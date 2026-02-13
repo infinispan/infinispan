@@ -298,7 +298,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    }
 
    @Override
-   public String syncFilesToServer(int server, String path) {
+   public String syncFilesToServer(int server, String path, String destination) {
       //NO-OP
       return path;
    }

@@ -24,6 +24,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -853,12 +854,7 @@ public final class Util {
     * @param directoryName Directory to be deleted
     */
    public static void recursiveFileRemove(String directoryName) {
-      File file = new File(directoryName);
-      recursiveFileRemove(file);
-   }
-
-   public static void recursiveFileRemove(Path path) {
-      recursiveFileRemove(path.toFile());
+      recursiveFileRemove(Paths.get(directoryName));
    }
 
    /**
@@ -867,38 +863,43 @@ public final class Util {
     * @param directory Directory to be deleted
     */
    public static void recursiveFileRemove(File directory) {
-      if (directory.exists()) {
-         log.tracef("Deleting file %s", directory);
-         recursiveDelete(directory);
-      }
+      recursiveFileRemove(directory.toPath());
    }
 
-   private static void recursiveDelete(File f) {
-      try {
-         Files.walkFileTree(f.toPath(), new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-               Files.delete(file);
-               return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-               if (e == null) {
-                  Files.delete(dir);
+   /**
+    * Deletes directory recursively.
+    *
+    * @param path path to be deleted
+    */
+   public static void recursiveFileRemove(Path path) {
+      if (Files.isDirectory(path)) {
+         log.tracef("Deleting path %s", path);
+         try {
+            Files.walkFileTree(path, new SimpleFileVisitor<>() {
+               @Override
+               public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                  Files.delete(file);
                   return FileVisitResult.CONTINUE;
-               } else {
-                  throw e;
                }
-            }
-         });
-      } catch (Exception e) {
-         throw new IllegalStateException(e);
+
+               @Override
+               public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+                  if (e == null) {
+                     Files.delete(dir);
+                     return FileVisitResult.CONTINUE;
+                  } else {
+                     throw e;
+                  }
+               }
+            });
+         } catch (Exception e) {
+            throw new IllegalStateException(e);
+         }
       }
    }
 
    public static void recursiveDirectoryCopy(Path source, Path target) throws IOException {
-      Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new FileVisitor<Path>() {
+      Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new FileVisitor<>() {
          @Override
          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
             try {

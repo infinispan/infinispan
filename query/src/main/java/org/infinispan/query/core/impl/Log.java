@@ -6,6 +6,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.lang.invoke.MethodHandles;
+import java.nio.file.Path;
 
 import org.hibernate.search.engine.environment.classpath.spi.ClassLoadingException;
 import org.hibernate.search.util.common.SearchException;
@@ -287,4 +288,8 @@ public interface Log extends BasicLogger {
          "this setting could lead to some inconsistency between the indexes and the data " +
          "in case of restarting the nodes.")
    void logIndexStartupModeMismatch(String data, String index, String startupMode);
+
+   @LogMessage(level = WARN)
+   @Message(id = 14508, value = "Incompatible or corrupt index detected. Wiping directory: %s")
+   void incompatibleIndexes(Path indexPath);
 }
