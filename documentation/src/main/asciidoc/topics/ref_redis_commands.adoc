@@ -169,7 +169,7 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 3. Filtering an array returns all matching elements and all nested arrays containing matching elements.
 
 =====
-
+* link:https://redis.io/docs/latest/commands/json.merge [JSON.MERGE]
 * link:https://redis.io/commands/json.mset[JSON.MSET]
 +
 NOTE: This command is non atomic
