@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
-import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -35,6 +34,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -472,8 +472,9 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       );
    }
 
-   protected <K> void blockStateTransfer(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      Mocks.blockInboundCacheRpcCommand(cache, checkPoint, command -> command instanceof StateTransferStartCommand);
+   protected void blockStateTransfer(final Cache<?, ?> cache, final CheckPoint checkPoint) {
+      Mocks.blockInboundCacheRpcCommand(cache, checkPoint, command -> command instanceof InitialPublisherCommand<?,?,?>
+            && (((InitialPublisherCommand<?, ?, ?>) command).getExplicitFlags() & FlagBitSets.STATE_TRANSFER_PROGRESS) != 0);
    }
 
    protected void waitUntilDataContainerWillBeIteratedOn(final Cache<?, ?> cache, final CheckPoint checkPoint) {
