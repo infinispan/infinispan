@@ -7,7 +7,7 @@
                           password="${org.infinispan.server.test.database.h2.password:test}"
                           url="${org.infinispan.server.test.database.h2.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
-      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1m" initial-size="1" leak-detection="10000"/>
    </data-source>
    <data-source name="mssql" jndi-name="jdbc/mssql" statistics="true">
       <connection-factory driver="${org.infinispan.server.test.database.mssql.driver:com.microsoft.sqlserver.jdbc.SQLServerDriver}"
@@ -15,7 +15,7 @@
                           password="${org.infinispan.server.test.database.mssql.password:test}"
                           url="${org.infinispan.server.test.database.mssql.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
-      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1m" initial-size="1" leak-detection="10000"/>
    </data-source>
    <data-source name="mysql" jndi-name="jdbc/mysql" statistics="true">
       <connection-factory driver="${org.infinispan.server.test.database.mysql.driver:com.mysql.cj.jdbc.Driver}"
@@ -23,7 +23,7 @@
                           password="${org.infinispan.server.test.database.mysql.password:test}"
                           url="${org.infinispan.server.test.database.mysql.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
-      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1m" initial-size="1" leak-detection="10000"/>
    </data-source>
    <data-source name="postgres" jndi-name="jdbc/postgres" statistics="true">
       <connection-factory driver="${org.infinispan.server.test.database.postgres.driver:org.postgresql.Driver}"
@@ -31,7 +31,7 @@
                           password="${org.infinispan.server.test.database.postgres.username:test}"
                           url="${org.infinispan.server.test.database.postgres.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
-      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1m" initial-size="1" leak-detection="10000"/>
    </data-source>
    <data-source name="mariadb" jndi-name="jdbc/mariadb" statistics="true">
       <connection-factory driver="${org.infinispan.server.test.database.mariadb.driver:org.mariadb.jdbc.Driver}"
@@ -39,7 +39,7 @@
                           password="${org.infinispan.server.test.database.mariadb.password}"
                           url="${org.infinispan.server.test.database.mariadb.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
-      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1m" initial-size="1" leak-detection="10000"/>
    </data-source>
    <data-source name="oracle" jndi-name="jdbc/oracle" statistics="true">
       <connection-factory driver="${org.infinispan.server.test.database.oracle.driver:oracle.jdbc.OracleDriver}"
@@ -47,7 +47,7 @@
                           password="${org.infinispan.server.test.database.oracle.password}"
                           url="${org.infinispan.server.test.database.oracle.jdbcUrl}"
                           new-connection-sql="SELECT 1" />
-      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1m" initial-size="1" leak-detection="10000"/>
    </data-source>
    <data-source name="db2" jndi-name="jdbc/db2" statistics="true">
       <connection-factory driver="${org.infinispan.server.test.database.db2.driver:com.ibm.db2.jcc.DB2Driver}"
@@ -55,6 +55,6 @@
                           password="${org.infinispan.server.test.database.db2.password}"
                           url="${org.infinispan.server.test.database.db2.jdbcUrl}"
                           new-connection-sql="VALUES 1" />
-      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1m" initial-size="1" leak-detection="10000"/>
    </data-source>
 </data-sources>
