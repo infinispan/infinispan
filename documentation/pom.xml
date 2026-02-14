@@ -34,6 +34,7 @@
         <protostream.api.docs>https://www.javadoc.io/doc/org.infinispan.protostream/protostream/${version.protostream}</protostream.api.docs>
         <logging.html.tmp>${project.build.directory}/report/tmp</logging.html.tmp>
         <postgresql.database.version>${versionx.com.postgresqldatabase.postgresql}</postgresql.database.version>
+        <openapi.generator.version>7.19.0</openapi.generator.version>
     </properties>
 
     <dependencies>
@@ -157,6 +158,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi.generator.version}</version>
                 <executions>
                     <execution>
                         <phase>generate-sources</phase>
