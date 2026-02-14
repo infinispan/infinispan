@@ -2443,4 +2443,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Shared container not available: %s", id = 718)
    IllegalStateException sharedContainerNotFound(String containerMapName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Stopping all caches in cache container", id = 719)
+   void stoppingAllCaches();
 }
