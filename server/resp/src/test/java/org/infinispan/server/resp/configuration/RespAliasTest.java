@@ -13,6 +13,7 @@ import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.RedisClient;
@@ -45,6 +46,28 @@ public class RespAliasTest extends SingleCacheManagerTest {
    public void testRespCache() {
       RespServer server = RespTestingUtil.startServer(cacheManager);
 
+      assertSimpleOperations(server);
+      RespTestingUtil.killServer(server);
+   }
+
+   public void testConnectorUseAlias() {
+      String serverName = TestResourceTracker.getCurrentTestShortName();
+      String alias = "alias-" + serverName;
+
+      ConfigurationBuilder cb = RespTestingUtil.defaultRespConfiguration();
+      cb.aliases(alias);
+      cacheManager.defineConfiguration("cache-" + serverName, cb.build());
+
+      RespServerConfigurationBuilder rscb = new RespServerConfigurationBuilder().name(serverName)
+            .defaultCacheName(alias)
+            .host(RespTestingUtil.HOST).port(RespTestingUtil.port());
+      RespServer server = RespTestingUtil.startServer(cacheManager, rscb.build());
+
+      assertSimpleOperations(server);
+      RespTestingUtil.killServer(server);
+   }
+
+   private static void assertSimpleOperations(RespServer server) {
       RedisClient c = RespTestingUtil.createClient(10_000, server.getPort());
       try (StatefulRedisConnection<String, String> conn = c.connect()) {
          RedisCommands<String, String> redis = conn.sync();
@@ -54,6 +77,5 @@ public class RespAliasTest extends SingleCacheManagerTest {
       }
 
       RespTestingUtil.killClient(c);
-      RespTestingUtil.killServer(server);
    }
 }
