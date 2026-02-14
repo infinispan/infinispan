@@ -206,13 +206,3 @@ jobs:
       image: quay.io/infinispan/server:${{ inputs.version }}
       ref: main
       repository: infinispan/infinispan-operator
-
-  operator-2-4-x:
-    needs: images-legacy
-    if: contains(inputs.version, '.Final') && (startsWith(inputs.version, '15.'))
-    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@2.5.1
-    secrets: inherit
-    with:
-      image: quay.io/infinispan/server:${{ inputs.version }}
-      ref: 2.4.x
-      repository: infinispan/infinispan-operator
