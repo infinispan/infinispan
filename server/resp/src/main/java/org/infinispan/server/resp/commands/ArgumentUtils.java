@@ -82,15 +82,19 @@ public final class ArgumentUtils {
    }
 
    public static long toLong(byte[] argument) {
+      return toLong(argument, 0);
+   }
+
+   public static long toLong(byte[] argument, int offset) {
       if (argument == null || argument.length == 0)
          throw new NumberFormatException("Empty argument");
 
       boolean negative = false;
-      int i = 0;
-      if (argument[0] < '0') {
-         if ((argument[0] != '-' && argument[0] != '+') || argument.length == 1)
+      int i = offset;
+      if (argument[i] < '0') {
+         if ((argument[i] != '-' && argument[i] != '+') || argument.length == 1)
             throw new NumberFormatException("Invalid character: " + argument[0]);
-         if (argument[0] == '-') {
+         if (argument[i] == '-') {
             negative = true;
          }
          i = 1;
@@ -101,7 +105,7 @@ public final class ArgumentUtils {
       if (b < '0' || b > '9')
          throw new NumberFormatException("Invalid character: " + b);
       // Summing negative number (48-b) so we can handle -9223372036854775808
-      result = (result << 3) + (result << 1) + (48 - b);
+      result = (48 - b);
 
       for (; i < argument.length; i++) {
          b = argument[i];
@@ -117,11 +121,18 @@ public final class ArgumentUtils {
       if (negative) {
          return result;
       }
-      // Check if can't change sign
+      // Check if we can't change sign
       if (result == Long.MIN_VALUE) {
          throw new NumberFormatException("Value out of range: " + ArgumentUtils.toNumberString(argument));
       }
       return -result;
+   }
+
+   public static int toInt(byte[] argument, int offset) {
+      long v = toLong(argument, offset);
+      if (v > Integer.MAX_VALUE || v < Integer.MIN_VALUE)
+         throw new NumberFormatException("Value out of range: " + v);
+      return (int) v;
    }
 
    public static int toInt(byte[] argument) {
