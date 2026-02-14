@@ -13,6 +13,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A PublisherResult that was performed due to segments only
+ *
  * @author wburns
  * @since 10.0
  */

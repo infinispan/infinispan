@@ -48,6 +48,7 @@ import io.reactivex.rxjava3.core.Single;
 
 /**
  * Handler for holding publisher results between requests of data
+ *
  * @since 10.1
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -57,10 +58,13 @@ public class PublisherHandler {
 
    private final ConcurrentMap<Object, PublisherState> currentRequests = new ConcurrentHashMap<>();
 
-   @Inject CacheManagerNotifier managerNotifier;
-   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   @Inject
+   CacheManagerNotifier managerNotifier;
+   @Inject
+   @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    ExecutorService nonBlockingExecutor;
-   @Inject LocalPublisherManager localPublisherManager;
+   @Inject
+   LocalPublisherManager localPublisherManager;
 
    @ViewChanged
    public void viewChange(ViewChangedEvent event) {
@@ -94,9 +98,10 @@ public class PublisherHandler {
    /**
     * Registers a publisher given the initial command arguments. The value returned will eventually contain the
     * first batched response for the publisher of the given id.
+    *
     * @param command the command with arguments to start a publisher with
-    * @param <I> input type
-    * @param <R> output type
+    * @param <I>     input type
+    * @param <R>     output type
     * @return future that will or eventually will contain the first response
     */
    public <I, R> CompletableFuture<PublisherResponse> register(InitialPublisherCommand<?, I, R> command) {
@@ -130,6 +135,7 @@ public class PublisherHandler {
    /**
     * Retrieves the next response for the same request id that was configured on the command when invoking
     * {@link #register(InitialPublisherCommand)}.
+    *
     * @param requestId the unique request id to continue the response with
     * @return future that will or eventually will contain the next response
     */
@@ -143,6 +149,7 @@ public class PublisherHandler {
 
    /**
     * Returns how many publishers are currently open
+    *
     * @return how many publishers are currently open
     */
    public int openPublishers() {
@@ -151,6 +158,7 @@ public class PublisherHandler {
 
    /**
     * Closes the publisher that maps to the given request id
+    *
     * @param requestId unique identifier for the request
     */
    public void closePublisher(String requestId) {
@@ -165,8 +173,9 @@ public class PublisherHandler {
 
    /**
     * Optionally closes the state if this state is still registered for the given requestId
+    *
     * @param requestId unique identifier for the given request
-    * @param state state to cancel if it is still registered
+    * @param state     state to cancel if it is still registered
     */
    private void closePublisher(String requestId, PublisherState state) {
       if (currentRequests.remove(requestId, state)) {
@@ -269,10 +278,10 @@ public class PublisherHandler {
          SegmentAwarePublisherSupplier<Object> sap;
          if (command.isEntryStream()) {
             sap = localPublisherManager.entryPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
-                                                       command.getExplicitFlags(), command.getDeliveryGuarantee(), command.getTransformer());
+                  command.getExplicitFlags(), command.getDeliveryGuarantee(), command.getTransformer());
          } else {
             sap = localPublisherManager.keyPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
-                                                     command.getExplicitFlags(), command.getDeliveryGuarantee(), command.getTransformer());
+                  command.getExplicitFlags(), command.getDeliveryGuarantee(), command.getTransformer());
          }
 
          Flowable.fromPublisher(sap.publisherWithLostSegments(true))
@@ -455,6 +464,7 @@ public class PublisherHandler {
       /**
        * Retrieves the either already completed result or registers a new future to be completed. This also prestarts
        * the next batch to be ready for the next request as it comes, which is submitted on the {@link #nonBlockingExecutor}.
+       *
        * @return future that will contain the publisher response with the data
        */
       CompletableFuture<PublisherResponse> results() {
@@ -554,11 +564,11 @@ public class PublisherHandler {
          io.reactivex.rxjava3.functions.Function<Object, Object> toKeyFunction;
          if (command.isEntryStream()) {
             sap = localPublisherManager.entryPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
-                                                       command.getExplicitFlags(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
+                  command.getExplicitFlags(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
             toKeyFunction = (io.reactivex.rxjava3.functions.Function) RxJavaInterop.entryToKeyFunction();
          } else {
             sap = localPublisherManager.keyPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
-                                                     command.getExplicitFlags(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
+                  command.getExplicitFlags(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
             toKeyFunction = RxJavaInterop.identityFunction();
          }
 

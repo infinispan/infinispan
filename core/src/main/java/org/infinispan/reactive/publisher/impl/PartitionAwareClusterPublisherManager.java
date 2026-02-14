@@ -34,7 +34,8 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
    volatile AvailabilityMode currentMode = AvailabilityMode.AVAILABLE;
 
    protected final PartitionListener listener = new PartitionListener();
-   @Inject protected ComponentRef<Cache<?, ?>> cache;
+   @Inject
+   protected ComponentRef<Cache<?, ?>> cache;
 
    private final Set<AtomicBoolean> pendingOperations = ConcurrentHashMap.newKeySet();
 
@@ -60,9 +61,9 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
 
    @Override
    public <R> CompletionStage<R> keyReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-         InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                                              InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                              Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
+                                              Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       checkPartitionStatus();
       CompletionStage<R> original = super.keyReduction(parallelPublisher, segments, keysToInclude, ctx, explicitFlags,
             deliveryGuarantee, transformer, finalizer);
@@ -71,9 +72,9 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
 
    @Override
    public <R> CompletionStage<R> entryReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-         InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                                                InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                                Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
+                                                Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       checkPartitionStatus();
       CompletionStage<R> original = super.entryReduction(parallelPublisher, segments, keysToInclude, ctx, explicitFlags,
             deliveryGuarantee, transformer, finalizer);
@@ -106,8 +107,8 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
 
    @Override
    public <R> SegmentPublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
-         InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
-         Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
+                                                       InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
+                                                       Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
       checkPartitionStatus();
       SegmentPublisherSupplier<R> original = super.keyPublisher(segments, keysToInclude, invocationContext,
             explicitFlags, deliveryGuarantee, batchSize, transformer);
@@ -116,8 +117,8 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
 
    @Override
    public <R> SegmentPublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
-         InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
-         Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
+                                                         InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
+                                                         Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
       checkPartitionStatus();
       SegmentPublisherSupplier<R> original = super.entryPublisher(segments, keysToInclude, invocationContext,
             explicitFlags, deliveryGuarantee, batchSize, transformer);
@@ -140,9 +141,9 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
             AtomicBoolean ab = registerOperation();
 
             return Flowable.fromPublisher(function.apply(original))
-                           .doOnNext(s -> checkPendingOperation(ab))
-                           .doOnComplete(() -> checkPendingOperation(ab))
-                           .doFinally(() -> pendingOperations.remove(ab));
+                  .doOnNext(s -> checkPendingOperation(ab))
+                  .doOnComplete(() -> checkPendingOperation(ab))
+                  .doFinally(() -> pendingOperations.remove(ab));
          }
       };
    }

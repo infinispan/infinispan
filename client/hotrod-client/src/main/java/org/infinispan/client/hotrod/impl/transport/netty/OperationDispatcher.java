@@ -53,6 +53,7 @@ import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.reactive.Functions;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.time.TimeService;
@@ -65,7 +66,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.DecoderException;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.internal.functions.Functions;
 
 /**
  * This class handles dispatching various HotRodOperations to the appropriate server.
