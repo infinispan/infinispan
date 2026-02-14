@@ -74,4 +74,8 @@ abstract class ObjectFilterBase<TypeMetadata> implements ObjectFilter {
    public Map<String, Object> getParameters() {
       return namedParameters;
    }
+
+   public IckleParsingResult<TypeMetadata> getParsingResult() {
+      return parsingResult;
+   }
 }

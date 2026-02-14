@@ -68,8 +68,8 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
 
    private final RowMetadata rowMetadata;
 
-   public RowPropertyHelper(RowPropertyHelper.ColumnMetadata[] columns) {
-      this.rowMetadata = new RowPropertyHelper.RowMetadata(columns);
+   public RowPropertyHelper(ColumnMetadata[] columns) {
+      this.rowMetadata = new RowMetadata(columns);
    }
 
    public RowMetadata getRowMetadata() {
@@ -89,7 +89,7 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
       }
 
       String columnName = propertyPath[0];
-      for (RowPropertyHelper.ColumnMetadata c : rowMetadata.getColumns()) {
+      for (ColumnMetadata c : rowMetadata.getColumns()) {
          if (c.getColumnName().equals(columnName)) {
             return Collections.singletonList(c.getColumnIndex());
          }
@@ -99,7 +99,7 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
    }
 
    @Override
-   public Class<?> getPrimitivePropertyType(RowPropertyHelper.RowMetadata entityType, String[] propertyPath) {
+   public Class<?> getPrimitivePropertyType(RowMetadata entityType, String[] propertyPath) {
       // entityType is ignored in this case!
 
       Class<?> propType = getColumnAccessor(propertyPath).getPropertyType();
@@ -115,7 +115,7 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
       }
 
       String columnName = propertyPath[0];
-      for (RowPropertyHelper.ColumnMetadata c : rowMetadata.getColumns()) {
+      for (ColumnMetadata c : rowMetadata.getColumns()) {
          if (c.getColumnName().equals(columnName)) {
             return c;
          }
@@ -125,13 +125,13 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
    }
 
    @Override
-   public boolean hasProperty(RowPropertyHelper.RowMetadata entityType, String[] propertyPath) {
+   public boolean hasProperty(RowMetadata entityType, String[] propertyPath) {
       if (propertyPath.length > 1) {
          throw new IllegalStateException("Nested attributes are not supported");
       }
 
       String columnName = propertyPath[0];
-      for (RowPropertyHelper.ColumnMetadata c : rowMetadata.getColumns()) {
+      for (ColumnMetadata c : rowMetadata.getColumns()) {
          if (c.getColumnName().equals(columnName)) {
             return true;
          }
@@ -140,12 +140,12 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
    }
 
    @Override
-   public boolean hasEmbeddedProperty(RowPropertyHelper.RowMetadata entityType, String[] propertyPath) {
+   public boolean hasEmbeddedProperty(RowMetadata entityType, String[] propertyPath) {
       return false;
    }
 
    @Override
-   public boolean isRepeatedProperty(RowPropertyHelper.RowMetadata entityType, String[] propertyPath) {
+   public boolean isRepeatedProperty(RowMetadata entityType, String[] propertyPath) {
       return false;
    }
 

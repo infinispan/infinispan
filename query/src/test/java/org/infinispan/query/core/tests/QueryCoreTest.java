@@ -3,6 +3,7 @@ package org.infinispan.query.core.tests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;
@@ -65,6 +66,17 @@ public class QueryCoreTest extends SingleCacheManagerTest {
       return cm;
    }
 
+   public void testMostSimpleQuery() {
+      Person spidey = new Person();
+      spidey.setName("Hombre");
+      spidey.setSurname("Araña");
+      cache.put("key1", spidey);
+
+      Query<Person> query = cache.query("from " + Person.class.getName());
+      List<Person> results = query.execute().list();
+      assertEquals(1, results.size());
+   }
+
    public void testQuery() {
       Person spidey = new Person();
       spidey.setName("Hombre");
@@ -80,7 +92,7 @@ public class QueryCoreTest extends SingleCacheManagerTest {
 
       Query<Person> query = cache.query("from " + Person.class.getName() + " where name='Hombre'");
       List<Person> results = query.execute().list();
-
+      assertFalse("results should not be empty", results.isEmpty());
       assertEquals("Araña", results.get(0).getSurname());
    }
 

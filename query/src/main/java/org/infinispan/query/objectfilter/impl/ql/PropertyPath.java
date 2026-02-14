@@ -239,7 +239,7 @@ public class PropertyPath<TypeDescriptor> {
       String[] splinters = propertyPath.split("[.]");
       List<PropertyReference<TypeDescriptor>> nodes = new ArrayList<>(splinters.length);
       for (String name : splinters) {
-         nodes.add(new PropertyPath.PropertyReference<>(name, null, false));
+         nodes.add(new PropertyReference<>(name, null, false));
       }
       return new PropertyPath<>(nodes);
    }

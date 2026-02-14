@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.infinispan.query.objectfilter.impl.logging.Log;
 import org.infinispan.query.objectfilter.impl.ql.PropertyPath;
-import org.infinispan.query.objectfilter.impl.ql.QueryRendererDelegate;
 import org.infinispan.query.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.query.objectfilter.impl.syntax.ConstantValueExpr;
 import org.jboss.logging.Logger;
@@ -14,8 +13,6 @@ import org.jboss.logging.Logger;
 public class VirtualExpressionBuilder<TypeMetadata> {
 
    private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, VirtualExpressionBuilder.class.getName());
-
-   private final QueryRendererDelegateImpl<TypeMetadata> owner;
 
    private final ExpressionBuilder<TypeMetadata> whereBuilder;
 
@@ -25,7 +22,35 @@ public class VirtualExpressionBuilder<TypeMetadata> {
 
    private final Map<String, PropertyPath<TypeDescriptor<TypeMetadata>>> joinAliasPropertyPath;
 
-   public VirtualExpressionBuilder(QueryRendererDelegateImpl<TypeMetadata> owner,
+   public interface PhaseProvider {
+      Phase getPhase();
+      boolean isFiltering();
+   }
+
+   public enum Phase {
+      WHERE, HAVING, SELECT, FROM, GROUP_BY, ORDER_BY
+   }
+
+   public enum Occur {
+      MUST("+"),
+      FILTER("#"),
+      SHOULD(""),
+      MUST_NOT("-");
+
+      private final String operator;
+
+      Occur(String operator) {
+         this.operator = operator;
+      }
+
+      public String getOperator() {
+         return operator;
+      }
+   }
+
+   private final PhaseProvider owner;
+
+   public VirtualExpressionBuilder(PhaseProvider owner,
                                    ObjectPropertyHelper<TypeMetadata> propertyHelper,
                                    Map<String, PropertyPath<TypeDescriptor<TypeMetadata>>> joinAliasPropertyPath) {
       this.owner = owner;
@@ -117,7 +142,7 @@ public class VirtualExpressionBuilder<TypeMetadata> {
       fullTextBuilder().pop();
    }
 
-   public void pushFullTextOccur(QueryRendererDelegate.Occur occur) {
+   public void pushFullTextOccur(Occur occur) {
       fullTextBuilder().pushFullTextOccur(occur);
    }
 
@@ -134,9 +159,9 @@ public class VirtualExpressionBuilder<TypeMetadata> {
    }
 
    private ExpressionBuilder<TypeMetadata> builder() {
-      if (phase() == QueryRendererDelegateImpl.Phase.WHERE) {
+      if (phase() == Phase.WHERE) {
          return (filtering()) ? filteringBuilder : whereBuilder;
-      } else if (phase() == QueryRendererDelegateImpl.Phase.HAVING) {
+      } else if (phase() == Phase.HAVING) {
          return havingBuilder;
       } else {
          throw new IllegalStateException();
@@ -144,9 +169,9 @@ public class VirtualExpressionBuilder<TypeMetadata> {
    }
 
    private ExpressionBuilder<TypeMetadata> fullTextBuilder() {
-      if (phase() == QueryRendererDelegateImpl.Phase.WHERE) {
+      if (phase() == Phase.WHERE) {
          return (filtering()) ? filteringBuilder : whereBuilder;
-      } else if (phase() == QueryRendererDelegateImpl.Phase.HAVING) {
+      } else if (phase() == Phase.HAVING) {
          throw log.getFullTextQueriesNotAllowedInHavingClauseException();
       } else {
          throw new IllegalStateException();
@@ -154,23 +179,23 @@ public class VirtualExpressionBuilder<TypeMetadata> {
    }
 
    private ExpressionBuilder<TypeMetadata> knnBuilder() {
-      if (phase() == QueryRendererDelegateImpl.Phase.WHERE) {
+      if (phase() == Phase.WHERE) {
          if (filtering()) {
             throw log.knnPredicateOnFilteringClause();
          }
          return whereBuilder;
-      } else if (phase() == QueryRendererDelegateImpl.Phase.HAVING) {
+      } else if (phase() == Phase.HAVING) {
          throw log.knnPredicateOnHavingClause();
       } else {
          throw new IllegalStateException();
       }
    }
 
-   private QueryRendererDelegateImpl.Phase phase() {
-      return owner.phase;
+   private Phase phase() {
+      return owner.getPhase();
    }
 
    private boolean filtering() {
-      return owner.filtering;
+      return owner.isFiltering();
    }
 }

@@ -32,7 +32,7 @@ public class ProtobufParsingTest extends AbstractParsingTest<Descriptor> {
    @Test
    public void testParsingResult() {
       String queryString = "from org.infinispan.query.objectfilter.test.model.Person p where p.name is not null";
-      IckleParsingResult<Descriptor> result = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<Descriptor> result = IckleQueryStringParser.parse(queryString, propertyHelper);
 
       assertNotNull(result.getWhereClause());
 

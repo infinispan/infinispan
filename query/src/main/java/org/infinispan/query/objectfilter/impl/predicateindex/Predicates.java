@@ -122,7 +122,7 @@ public final class Predicates<AttributeDomain extends Comparable<AttributeDomain
       }
    }
 
-   public Predicates.Subscription<AttributeId> addPredicateSubscription(PredicateNode predicateNode, FilterSubscriptionImpl filterSubscription) {
+   public Subscription<AttributeId> addPredicateSubscription(PredicateNode predicateNode, FilterSubscriptionImpl filterSubscription) {
       Subscriptions subscriptions;
       Predicate<AttributeDomain> predicate = predicateNode.getPredicate();
       if (useIntervals && predicate instanceof IntervalPredicate) {
@@ -178,7 +178,7 @@ public final class Predicates<AttributeDomain extends Comparable<AttributeDomain
       } else {
          if (unorderedPredicates != null) {
             for (int i = 0; i < unorderedPredicates.size(); i++) {
-               Predicates.Subscriptions subscriptions = unorderedPredicates.get(i);
+               Subscriptions subscriptions = unorderedPredicates.get(i);
                if (subscriptions.predicate.equals(predicate)) {
                   subscriptions.remove(subscription);
                   if (subscriptions.isEmpty()) {

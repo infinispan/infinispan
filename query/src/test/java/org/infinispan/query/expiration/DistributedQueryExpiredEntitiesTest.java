@@ -42,7 +42,7 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
       config.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
       config.expiration()
             .lifespan(TIME, TimeUnit.MILLISECONDS)
-            .maxIdle(TIME, TimeUnit.MILLISECONDS);
+            .maxIdle(TIME -1, TimeUnit.MILLISECONDS);
       config.indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity("org.infinispan.query.model.Game");

@@ -72,7 +72,8 @@
 
       <dependency>
          <groupId>org.antlr</groupId>
-         <artifactId>antlr-runtime</artifactId>
+         <artifactId>antlr4-runtime</artifactId>
+         <version>${version.antlr4}</version>
          <!--  This gets shaded, so we mark it optional in order not to propagate this dependency any further -->
          <optional>true</optional>
       </dependency>
@@ -195,19 +196,22 @@
       <plugins>
          <plugin>
             <groupId>org.antlr</groupId>
-            <artifactId>antlr3-maven-plugin</artifactId>
+            <artifactId>antlr4-maven-plugin</artifactId>
+            <version>${version.antlr4}</version>
             <executions>
                <execution>
-                  <id>antlr3</id>
+                  <id>antlr4</id>
                   <phase>generate-sources</phase>
                   <goals>
-                     <goal>antlr</goal>
+                     <goal>antlr4</goal>
                   </goals>
                </execution>
             </executions>
             <configuration>
-               <sourceDirectory>${basedir}/src/main/antlr3</sourceDirectory>
-               <outputDirectory>${project.build.directory}/generated-sources/antlr3</outputDirectory>
+               <visitor>true</visitor>
+               <listener>false</listener>
+               <sourceDirectory>${basedir}/src/main/antlr4</sourceDirectory>
+               <outputDirectory>${project.build.directory}/generated-sources/antlr4</outputDirectory>
             </configuration>
          </plugin>
 
@@ -226,13 +230,13 @@
                      <minimizeJar>true</minimizeJar>
                      <artifactSet>
                         <includes>
-                           <include>org.antlr:antlr-runtime</include>
+                           <include>org.antlr:antlr4-runtime</include>
                         </includes>
                      </artifactSet>
                      <relocations>
                         <relocation>
-                           <pattern>org.antlr.runtime</pattern>
-                           <shadedPattern>org.infinispan.query.objectfilter.impl.antlr.runtime</shadedPattern>
+                           <pattern>org.antlr.v4.runtime</pattern>
+                           <shadedPattern>org.infinispan.query.objectfilter.impl.antlr4.runtime</shadedPattern>
                         </relocation>
                      </relocations>
                   </configuration>

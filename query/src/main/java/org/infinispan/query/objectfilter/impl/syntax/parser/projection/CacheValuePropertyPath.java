@@ -9,6 +9,6 @@ public class CacheValuePropertyPath<TypeDescriptor> extends PropertyPath<TypeDes
    public static final String VALUE_PROPERTY_NAME = "__HSearch_This";
 
    public CacheValuePropertyPath() {
-      super(Collections.singletonList(new PropertyPath.PropertyReference<>(VALUE_PROPERTY_NAME, null, true)));
+      super(Collections.singletonList(new PropertyReference<>(VALUE_PROPERTY_NAME, null, true)));
    }
 }

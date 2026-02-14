@@ -17,8 +17,8 @@ import org.infinispan.query.objectfilter.impl.logging.Log;
 import org.infinispan.query.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.query.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.infinispan.query.objectfilter.impl.syntax.IndexedSearchPredicateDetector;
-import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleQueryStringParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.jboss.logging.Logger;
 
@@ -133,7 +133,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(String queryString, List<FieldAccumulator> acc) {
-      final IckleParsingResult<TypeMetadata> parsingResult = IckleParser.parse(queryString, propertyHelper);
+      final IckleParsingResult<TypeMetadata> parsingResult = IckleQueryStringParser.parse(queryString, propertyHelper);
       disallowGroupingAndAggregations(parsingResult);
 
       // if the query is a contradiction just return an ObjectFilter that rejects everything
@@ -190,7 +190,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters,
                                             FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
-      IckleParsingResult<TypeMetadata> parsingResult = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<TypeMetadata> parsingResult = IckleQueryStringParser.parse(queryString, propertyHelper);
       disallowGroupingAndAggregations(parsingResult);
       disallowFullText(parsingResult);
 

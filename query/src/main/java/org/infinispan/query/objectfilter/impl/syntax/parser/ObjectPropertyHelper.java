@@ -30,8 +30,8 @@ public abstract class ObjectPropertyHelper<TypeMetadata> {
    protected static final Map<Class<?>, Class<?>> primitives = new HashMap<>();
 
    static {
-      primitives.put(java.util.Date.class, java.util.Date.class);
-      primitives.put(java.time.Instant.class, java.time.Instant.class);
+      primitives.put(Date.class, Date.class);
+      primitives.put(Instant.class, Instant.class);
       primitives.put(String.class, String.class);
       primitives.put(Character.class, Character.class);
       primitives.put(char.class, Character.class);
