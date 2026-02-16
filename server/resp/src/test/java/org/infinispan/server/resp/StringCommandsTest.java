@@ -24,6 +24,10 @@ import io.lettuce.core.SetArgs;
 import io.lettuce.core.StrAlgoArgs;
 import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.ValueOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
 
 @Test(groups = "functional", testName = "server.resp.StringCommandsTest")
 public class StringCommandsTest extends SingleNodeRespBaseTest {
@@ -690,5 +694,55 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       expected.add(KeyValue.just("k4", "v4"));
       expected.add(KeyValue.empty("k5"));
       assertThat(results).containsExactlyElementsOf(expected);
+   }
+
+   @Test
+   public void testDigest() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Test with existing key
+      redis.set("digest-key", "Hello world");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-key");
+      String result = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNotNull();
+      assertThat(result).hasSize(16); // 64-bit hash = 16 hex characters
+      assertThat(result).matches("[0-9a-f]{16}");
+
+      // Test with non-existing key
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("nonexistent-key");
+      result = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+
+      // Test same value produces same hash
+      redis.set("digest-key2", "Hello world");
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-key2");
+      String result2 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-key");
+      String result1 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result1).isEqualTo(result2);
+
+      // Test different values produce different hashes
+      redis.set("digest-key3", "Different value");
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-key3");
+      String result3 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result3).isNotEqualTo(result1);
+   }
+
+   private static class SimpleCommand implements ProtocolKeyword {
+      private final String name;
+
+      SimpleCommand(String name) {
+         this.name = name;
+      }
+
+      @Override
+      public byte[] getBytes() {
+         return name.getBytes(StandardCharsets.UTF_8);
+      }
+
+      @Override
+      public String name() {
+         return name;
+      }
    }
 }
