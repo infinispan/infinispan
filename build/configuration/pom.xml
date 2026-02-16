@@ -113,7 +113,7 @@
       <version.jboss.security>3.0.6.Final</version.jboss.security>
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
-      <version.jboss.shrinkwrap.resolver>3.3.4</version.jboss.shrinkwrap.resolver>
+      <version.jboss.shrinkwrap.resolver>3.3.5</version.jboss.shrinkwrap.resolver>
       <version.jboss.threads>3.9.2</version.jboss.threads>
       <version.jgroups>5.5.2.Final</version.jgroups>
       <version.jgroups.raft>1.1.4.Final</version.jgroups.raft>
