@@ -836,6 +836,606 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.get("delex-ifdne")).isNull();
    }
 
+   @Test
+   public void testSetIfeq() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Test IFEQ - value matches, should set
+      redis.set("set-ifeq", "oldvalue");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifeq").add("newvalue").add("IFEQ").add("oldvalue");
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifeq")).isEqualTo("newvalue");
+
+      // Test IFEQ - value doesn't match, should not set
+      redis.set("set-ifeq2", "actualvalue");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifeq2").add("newvalue").add("IFEQ").add("wrongvalue");
+      result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.get("set-ifeq2")).isEqualTo("actualvalue");
+
+      // Test IFEQ - key doesn't exist, should not create
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifeq-nonexistent").add("newvalue").add("IFEQ").add("anyvalue");
+      result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.get("set-ifeq-nonexistent")).isNull();
+   }
+
+   @Test
+   public void testSetIfne() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Test IFNE - value doesn't match, should set
+      redis.set("set-ifne", "currentvalue");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifne").add("newvalue").add("IFNE").add("othervalue");
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifne")).isEqualTo("newvalue");
+
+      // Test IFNE - value matches, should not set
+      redis.set("set-ifne2", "samevalue");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifne2").add("newvalue").add("IFNE").add("samevalue");
+      result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.get("set-ifne2")).isEqualTo("samevalue");
+
+      // Test IFNE - key doesn't exist, should create
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifne-new").add("newvalue").add("IFNE").add("anyvalue");
+      result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifne-new")).isEqualTo("newvalue");
+   }
+
+   @Test
+   public void testSetIfdeq() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // First get the digest of a value
+      redis.set("set-ifdeq", "Hello world");
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-ifdeq");
+      String digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+
+      // Test IFDEQ - digest matches, should set
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdeq").add("newvalue").add("IFDEQ").add(digest);
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifdeq")).isEqualTo("newvalue");
+
+      // Test IFDEQ - digest doesn't match, should not set
+      redis.set("set-ifdeq2", "Different value");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdeq2").add("newvalue").add("IFDEQ").add(digest);
+      result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.get("set-ifdeq2")).isEqualTo("Different value");
+
+      // Test IFDEQ - key doesn't exist, should not create
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdeq-nonexistent").add("newvalue").add("IFDEQ").add(digest);
+      result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.get("set-ifdeq-nonexistent")).isNull();
+   }
+
+   @Test
+   public void testSetIfdne() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // First get the digest of a value
+      redis.set("set-ifdne", "Hello world");
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-ifdne");
+      String digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+
+      // Test IFDNE - digest matches, should NOT set
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdne").add("newvalue").add("IFDNE").add(digest);
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.get("set-ifdne")).isEqualTo("Hello world");
+
+      // Test IFDNE - digest doesn't match, should set
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdne").add("newvalue").add("IFDNE").add("0000000000000000");
+      result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifdne")).isEqualTo("newvalue");
+
+      // Test IFDNE - key doesn't exist, should create
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdne-new").add("newvalue").add("IFDNE").add(digest);
+      result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifdne-new")).isEqualTo("newvalue");
+   }
+
+   @Test
+   public void testSetIfeqWithGet() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Test IFEQ with GET - value matches, should set and return old value
+      redis.set("set-ifeq-get", "oldvalue");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifeq-get").add("newvalue").add("IFEQ").add("oldvalue").add("GET");
+      String result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("oldvalue");
+      assertThat(redis.get("set-ifeq-get")).isEqualTo("newvalue");
+
+      // Test IFEQ with GET - value doesn't match, should not set but still return old value
+      redis.set("set-ifeq-get2", "actualvalue");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifeq-get2").add("newvalue").add("IFEQ").add("wrongvalue").add("GET");
+      result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("actualvalue");
+      assertThat(redis.get("set-ifeq-get2")).isEqualTo("actualvalue");
+   }
+
+   // ======== DIGEST additional tests ========
+
+   @Test
+   public void testDigestEmptyString() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set("digest-empty", "");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-empty");
+      String result = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNotNull().hasSize(16).matches("[0-9a-f]{16}");
+   }
+
+   @Test
+   public void testDigestVeryLongString() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String longStr = "Lorem ipsum dolor sit amet. ".repeat(1000);
+      redis.set("digest-long", longStr);
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-long");
+      String result = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNotNull().hasSize(16).matches("[0-9a-f]{16}");
+   }
+
+   @Test
+   public void testDigestConsistencyAcrossSetOperations() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set("digest-cons", "original");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-cons");
+      String digest1 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+
+      redis.set("digest-cons", "changed");
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-cons");
+      String digest2 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(digest1).isNotEqualTo(digest2);
+
+      redis.set("digest-cons", "original");
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-cons");
+      String digest3 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(digest1).isEqualTo(digest3);
+   }
+
+   @Test
+   public void testDigestAlways16HexChars() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // Verify the digest always returns exactly 16 hex characters (including leading zeros)
+      for (int i = 0; i < 100; i++) {
+         redis.set("digest-lz", "test-value-" + i);
+         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-lz");
+         String result = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args);
+         assertThat(result).hasSize(16).matches("[0-9a-f]{16}");
+      }
+   }
+
+   // ======== DELEX additional tests ========
+
+   @Test
+   public void testDelexNonExistingKeyWithConditions() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.del("delex-nokey");
+
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-nokey").add("IFEQ").add("hello");
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(0L);
+
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-nokey").add("IFNE").add("hello");
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(0L);
+
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-nokey").add("IFDEQ").add("0000000000000000");
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(0L);
+
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-nokey").add("IFDNE").add("0000000000000000");
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(0L);
+   }
+
+   @Test
+   public void testDelexEmptyStringIfeq() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("delex-empty", "");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-empty").add("IFEQ").add("");
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(1L);
+      assertThat(redis.exists("delex-empty")).isEqualTo(0);
+
+      redis.set("delex-empty2", "");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-empty2").add("IFEQ").add("notempty");
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(0L);
+      assertThat(redis.exists("delex-empty2")).isEqualTo(1);
+   }
+
+   @Test
+   public void testDelexDigestConsistencySameContent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("delex-dc1", "identical");
+      redis.set("delex-dc2", "identical");
+
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("delex-dc1");
+      String digest1 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("delex-dc2");
+      String digest2 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      assertThat(digest1).isEqualTo(digest2);
+
+      // Cross-key: use digest of key2 to delete key1 and vice versa
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-dc1").add("IFDEQ").add(digest2);
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(1L);
+
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-dc2").add("IFDEQ").add(digest1);
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(1L);
+   }
+
+   @Test
+   public void testDelexDigestDifferentContent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("delex-dd1", "value1");
+      redis.set("delex-dd2", "value2");
+
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("delex-dd1");
+      String digest1 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("delex-dd2");
+      String digest2 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      assertThat(digest1).isNotEqualTo(digest2);
+
+      // Wrong digest should not delete
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-dd1").add("IFDEQ").add(digest2);
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(0L);
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-dd2").add("IFDEQ").add(digest1);
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(0L);
+
+      // Correct digest should delete
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-dd1").add("IFDEQ").add(digest1);
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(1L);
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-dd2").add("IFDEQ").add(digest2);
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(1L);
+   }
+
+   // ======== SET + GET combination tests ========
+
+   @Test
+   public void testSetIfeqWithGetKeyMissing() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.del("set-ifeq-get-miss");
+
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifeq-get-miss").add("newvalue").add("IFEQ").add("hello").add("GET");
+      String result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.exists("set-ifeq-get-miss")).isEqualTo(0);
+   }
+
+   @Test
+   public void testSetIfneWithGet() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // IFNE + GET - value doesn't match, should set, return old value
+      redis.set("set-ifne-get1", "hello");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifne-get1").add("world").add("IFNE").add("different").add("GET");
+      String result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("hello");
+      assertThat(redis.get("set-ifne-get1")).isEqualTo("world");
+
+      // IFNE + GET - value matches, should not set, return old value
+      redis.set("set-ifne-get2", "hello");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifne-get2").add("world").add("IFNE").add("hello").add("GET");
+      result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("hello");
+      assertThat(redis.get("set-ifne-get2")).isEqualTo("hello");
+
+      // IFNE + GET - key doesn't exist, should create, return nil
+      redis.del("set-ifne-get3");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifne-get3").add("world").add("IFNE").add("hello").add("GET");
+      result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.get("set-ifne-get3")).isEqualTo("world");
+   }
+
+   @Test
+   public void testSetIfdeqWithGet() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // IFDEQ + GET - digest matches, should set, return old value
+      redis.set("set-ifdeq-get1", "hello");
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-ifdeq-get1");
+      String digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdeq-get1").add("world").add("IFDEQ").add(digest).add("GET");
+      String result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("hello");
+      assertThat(redis.get("set-ifdeq-get1")).isEqualTo("world");
+
+      // IFDEQ + GET - digest doesn't match, should not set, return old value
+      redis.set("set-ifdeq-get2", "hello");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdeq-get2").add("world").add("IFDEQ").add("0000000000000000").add("GET");
+      result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("hello");
+      assertThat(redis.get("set-ifdeq-get2")).isEqualTo("hello");
+
+      // IFDEQ + GET - key doesn't exist, should not create, return nil
+      redis.del("set-ifdeq-get3");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdeq-get3").add("world").add("IFDEQ").add(digest).add("GET");
+      result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.exists("set-ifdeq-get3")).isEqualTo(0);
+   }
+
+   @Test
+   public void testSetIfdneWithGet() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // IFDNE + GET - digest doesn't match, should set, return old value
+      redis.set("set-ifdne-get1", "hello");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdne-get1").add("world").add("IFDNE").add("0000000000000000").add("GET");
+      String result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("hello");
+      assertThat(redis.get("set-ifdne-get1")).isEqualTo("world");
+
+      // IFDNE + GET - digest matches, should not set, return old value
+      redis.set("set-ifdne-get2", "hello");
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-ifdne-get2");
+      String digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdne-get2").add("world").add("IFDNE").add(digest).add("GET");
+      result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("hello");
+      assertThat(redis.get("set-ifdne-get2")).isEqualTo("hello");
+
+      // IFDNE + GET - key doesn't exist, should create, return nil
+      redis.del("set-ifdne-get3");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdne-get3").add("world").add("IFDNE").add("0000000000000000").add("GET");
+      result = redis.dispatch(new SimpleCommand("SET"), new ValueOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.get("set-ifdne-get3")).isEqualTo("world");
+   }
+
+   // ======== SET + expiration tests ========
+
+   @Test
+   public void testSetIfeqWithExpiration() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("set-ifeq-ex", "hello");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifeq-ex").add("world").add("IFEQ").add("hello").add("EX").add("10");
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifeq-ex")).isEqualTo("world");
+      assertThat(redis.ttl("set-ifeq-ex")).isEqualTo(10);
+   }
+
+   @Test
+   public void testSetIfneWithExpiration() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("set-ifne-ex", "hello");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifne-ex").add("world").add("IFNE").add("different").add("EX").add("10");
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifne-ex")).isEqualTo("world");
+      assertThat(redis.ttl("set-ifne-ex")).isEqualTo(10);
+   }
+
+   @Test
+   public void testSetIfdeqWithExpiration() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("set-ifdeq-ex", "hello");
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-ifdeq-ex");
+      String digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdeq-ex").add("world").add("IFDEQ").add(digest).add("EX").add("10");
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifdeq-ex")).isEqualTo("world");
+      assertThat(redis.ttl("set-ifdeq-ex")).isEqualTo(10);
+   }
+
+   @Test
+   public void testSetIfdneWithExpiration() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("set-ifdne-ex", "hello");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifdne-ex").add("world").add("IFDNE").add("0000000000000000").add("EX").add("10");
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifdne-ex")).isEqualTo("world");
+      assertThat(redis.ttl("set-ifdne-ex")).isEqualTo(10);
+   }
+
+   // ======== SET edge case tests ========
+
+   @Test
+   public void testSetIfeqEmptyString() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("set-ifeq-empty", "");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifeq-empty").add("world").add("IFEQ").add("");
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-ifeq-empty")).isEqualTo("world");
+   }
+
+   @Test
+   public void testSetIfneEmptyString() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("set-ifne-empty", "");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-ifne-empty").add("world").add("IFNE").add("");
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.get("set-ifne-empty")).isEqualTo("");
+   }
+
+   @Test
+   public void testSetConditionCaseInsensitive() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("set-case", "hello");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-case").add("world1").add("ifeq").add("hello");
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-case")).isEqualTo("world1");
+   }
+
+   @Test
+   public void testSetDigestUppercaseHex() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // IFDEQ should accept uppercase hex digest
+      redis.set("set-upper", "hello");
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-upper");
+      String digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      String upperDigest = digest.toUpperCase();
+
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-upper").add("world").add("IFDEQ").add(upperDigest);
+      String result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo("OK");
+      assertThat(redis.get("set-upper")).isEqualTo("world");
+
+      // IFDNE with matching uppercase digest should NOT set
+      redis.set("set-upper2", "hello");
+      digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-upper2");
+      digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      upperDigest = digest.toUpperCase();
+
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-upper2").add("world").add("IFDNE").add(upperDigest);
+      result = redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isNull();
+      assertThat(redis.get("set-upper2")).isEqualTo("hello");
+   }
+
+   @Test
+   public void testSetDigestConsistencyCrossKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("set-dc1", "identical");
+      redis.set("set-dc2", "identical");
+
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-dc1");
+      String digest1 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-dc2");
+      String digest2 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      assertThat(digest1).isEqualTo(digest2);
+
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-dc1").add("new1").add("IFDEQ").add(digest1);
+      assertThat(redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args)).isEqualTo("OK");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-dc2").add("new2").add("IFDEQ").add(digest2);
+      assertThat(redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args)).isEqualTo("OK");
+
+      assertThat(redis.get("set-dc1")).isEqualTo("new1");
+      assertThat(redis.get("set-dc2")).isEqualTo("new2");
+   }
+
+   @Test
+   public void testSetDigestDifferentContent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("set-dd1", "value1");
+      redis.set("set-dd2", "value2");
+
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-dd1");
+      String digest1 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("set-dd2");
+      String digest2 = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      assertThat(digest1).isNotEqualTo(digest2);
+
+      // Wrong digest should not set
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-dd1").add("new1").add("IFDEQ").add(digest2);
+      assertThat(redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args)).isNull();
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-dd2").add("new2").add("IFDEQ").add(digest1);
+      assertThat(redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args)).isNull();
+      assertThat(redis.get("set-dd1")).isEqualTo("value1");
+      assertThat(redis.get("set-dd2")).isEqualTo("value2");
+
+      // Correct digest should set
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-dd1").add("new1").add("IFDEQ").add(digest1);
+      assertThat(redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args)).isEqualTo("OK");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("set-dd2").add("new2").add("IFDEQ").add(digest2);
+      assertThat(redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args)).isEqualTo("OK");
+      assertThat(redis.get("set-dd1")).isEqualTo("new1");
+      assertThat(redis.get("set-dd2")).isEqualTo("new2");
+   }
+
+   @Test
+   public void testDelexUppercaseHex() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.set("delex-upper", "hello");
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("delex-upper");
+      String digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      String upperDigest = digest.toUpperCase();
+
+      // IFDEQ with uppercase hex should match
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-upper").add("IFDEQ").add(upperDigest);
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(1L);
+      assertThat(redis.exists("delex-upper")).isEqualTo(0);
+
+      // IFDNE with uppercase matching digest should NOT delete
+      redis.set("delex-upper2", "hello");
+      digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("delex-upper2");
+      digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+      upperDigest = digest.toUpperCase();
+
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-upper2").add("IFDNE").add(upperDigest);
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(0L);
+      assertThat(redis.exists("delex-upper2")).isEqualTo(1);
+   }
+
    private static class SimpleCommand implements ProtocolKeyword {
       private final String name;
 

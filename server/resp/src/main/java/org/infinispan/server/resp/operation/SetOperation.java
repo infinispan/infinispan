@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.operation;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -12,6 +13,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.ArgumentUtils;
+import org.infinispan.server.resp.commands.string.XXH3;
 import org.infinispan.server.resp.response.SetResponse;
 
 public class SetOperation {
@@ -20,6 +22,10 @@ public class SetOperation {
    public static final byte[] NX_BYTES = "NX".getBytes(StandardCharsets.US_ASCII);
    private static final byte[] XX_BYTES = "XX".getBytes(StandardCharsets.US_ASCII);
    private static final byte[] KEEP_TTL_BYTES = "KEEPTTL".getBytes(StandardCharsets.US_ASCII);
+   private static final byte[] IFEQ_BYTES = "IFEQ".getBytes(StandardCharsets.US_ASCII);
+   private static final byte[] IFNE_BYTES = "IFNE".getBytes(StandardCharsets.US_ASCII);
+   private static final byte[] IFDEQ_BYTES = "IFDEQ".getBytes(StandardCharsets.US_ASCII);
+   private static final byte[] IFDNE_BYTES = "IFDNE".getBytes(StandardCharsets.US_ASCII);
    private static final CompletionStage<SetResponse> MISSING_ARGUMENTS = CompletableFuture.failedFuture(new IllegalStateException("Missing arguments"));
 
    public static CompletionStage<SetResponse> performOperation(AdvancedCache<byte[], byte[]> cache, List<byte[]> arguments, TimeService timeService, String command) {
@@ -29,6 +35,11 @@ public class SetOperation {
          SetOperationOptions options = new SetOperationOptions(arguments, timeService, command);
          if (options.operationType == XX_BYTES) {
             return performOperationWithXX(cache, options, timeService);
+         }
+
+         // Handle conditional operations: IFEQ, IFNE, IFDEQ, IFDNE
+         if (options.hasConditionalMatch()) {
+            return performOperationWithCondition(cache, options, timeService);
          }
 
          CompletionStage<byte[]> cacheOperation;
@@ -88,6 +99,71 @@ public class SetOperation {
             });
    }
 
+   private static CompletionStage<SetResponse> performOperationWithCondition(AdvancedCache<byte[], byte[]> cache, SetOperationOptions options, TimeService timeService) {
+      byte[] key = options.key;
+      byte[] value = options.value;
+
+      return cache.getCacheEntryAsync(key)
+            .thenCompose(e -> {
+               byte[] currentValue = (e != null && !e.isNull()) ? e.getValue() : null;
+               boolean shouldSet = evaluateCondition(options, currentValue);
+
+               if (!shouldSet) {
+                  // Condition not met - return the previous value if GET was specified
+                  return CompletableFuture.completedFuture(new SetResponse(currentValue, options.isReturningPrevious(), false));
+               }
+
+               long exp = options.expirationMs;
+               if (options.isKeepingTtl() && e != null && !e.isNull()) {
+                  exp = extractCurrentTTL(e, timeService);
+               }
+
+               if (currentValue == null) {
+                  // Key doesn't exist - create it
+                  return cache.putAsync(key, value, exp, TimeUnit.MILLISECONDS)
+                        .thenApply(prev -> new SetResponse(prev, options.isReturningPrevious(), true));
+               } else {
+                  // Key exists - replace it
+                  return cache.replaceAsync(key, currentValue, value, exp, TimeUnit.MILLISECONDS)
+                        .thenApply(b -> new SetResponse(currentValue, options.isReturningPrevious(), b));
+               }
+            });
+   }
+
+   private static boolean evaluateCondition(SetOperationOptions options, byte[] currentValue) {
+      ConditionType conditionType = options.conditionType;
+      byte[] conditionValue = options.conditionValue;
+
+      switch (conditionType) {
+         case IFEQ:
+            // Set only if current value equals conditionValue; don't create if missing
+            if (currentValue == null) return false;
+            return Arrays.equals(currentValue, conditionValue);
+         case IFNE:
+            // Set only if current value doesn't equal conditionValue; create if missing
+            if (currentValue == null) return true;
+            return !Arrays.equals(currentValue, conditionValue);
+         case IFDEQ:
+            // Set only if current value's digest equals conditionValue; don't create if missing
+            if (currentValue == null) return false;
+            long currentDigest = XXH3.hash64(currentValue);
+            long targetDigest = XXH3.parseHexDigest(new String(conditionValue, StandardCharsets.US_ASCII));
+            return currentDigest == targetDigest;
+         case IFDNE:
+            // Set only if current value's digest doesn't equal conditionValue; create if missing
+            if (currentValue == null) return true;
+            long currentDigest2 = XXH3.hash64(currentValue);
+            long targetDigest2 = XXH3.parseHexDigest(new String(conditionValue, StandardCharsets.US_ASCII));
+            return currentDigest2 != targetDigest2;
+         default:
+            return true;
+      }
+   }
+
+   enum ConditionType {
+      NONE, IFEQ, IFNE, IFDEQ, IFDNE
+   }
+
    private static long extractCurrentTTL(CacheEntry<?, ?> entry, TimeService timeService) {
       long lifespan = entry.getLifespan();
       long delta = timeService.instant().toEpochMilli() - entry.getCreated();
@@ -102,6 +178,8 @@ public class SetOperation {
       private boolean keepTtl;
       private boolean setAndReturnPrevious;
       private byte[] operationType;
+      private ConditionType conditionType;
+      private byte[] conditionValue;
 
       public SetOperationOptions(List<byte[]> arguments, TimeService timeService, String command) {
          this.arguments = arguments;
@@ -111,6 +189,8 @@ public class SetOperation {
          this.keepTtl = false;
          this.setAndReturnPrevious = false;
          this.operationType = null;
+         this.conditionType = ConditionType.NONE;
+         this.conditionValue = null;
          parseAndLoadOptions(timeService, command);
       }
 
@@ -150,6 +230,15 @@ public class SetOperation {
          return expirationMs > 0 || isKeepingTtl();
       }
 
+      public boolean hasConditionalMatch() {
+         return conditionType != ConditionType.NONE;
+      }
+
+      public void withCondition(ConditionType type, byte[] value) {
+         this.conditionType = type;
+         this.conditionValue = value;
+      }
+
       private void parseAndLoadOptions(TimeService timeService, String command) {
          withKey(arguments.get(0));
          withValue(arguments.get(1));
@@ -158,6 +247,7 @@ public class SetOperation {
          //
          // * `GET`: return the previous value with this key or nil;
          // * `NX` or `XX`: putIfAbsent or putIfPresent. Returns nil if failed, if `GET` is present, it takes precedence.
+         // * `IFEQ`, `IFNE`, `IFDEQ`, `IFDNE`: conditional set based on value or digest comparison.
          //
          // And expiration related parameters:
          //
@@ -178,13 +268,13 @@ public class SetOperation {
                   case 'N':
                   case 'n':
                      if (!RespUtil.caseInsensitiveAsciiCheck('X', arg[1])) break;
-                     if (operationType != null) throw new IllegalArgumentException("NX and XX options are mutually exclusive");
+                     if (operationType != null || hasConditionalMatch()) throw new IllegalArgumentException("NX, XX, IFEQ, IFNE, IFDEQ, IFDNE options are mutually exclusive");
                      withOperationType(NX_BYTES);
                      continue;
                   case 'X':
                   case 'x':
                      if (!RespUtil.caseInsensitiveAsciiCheck('X', arg[1])) break;
-                     if (operationType != null) throw new IllegalArgumentException("NX and XX options are mutually exclusive");
+                     if (operationType != null || hasConditionalMatch()) throw new IllegalArgumentException("NX, XX, IFEQ, IFNE, IFDEQ, IFDNE options are mutually exclusive");
                      withOperationType(XX_BYTES);
                      continue;
                   case 'E':
@@ -203,8 +293,43 @@ public class SetOperation {
                      withExpiration(expiration.convert(time, timeService));
                      i++;
                      continue;
+                  case 'I':
+                  case 'i':
+                     // IFEQ or IFNE (4 chars)
+                     if (RespUtil.isAsciiBytesEquals(IFEQ_BYTES, arg)) {
+                        if (operationType != null || hasConditionalMatch()) throw new IllegalArgumentException("NX, XX, IFEQ, IFNE, IFDEQ, IFDNE options are mutually exclusive");
+                        if (i + 1 >= arguments.size()) throw new IllegalArgumentException("IFEQ requires a value argument");
+                        withCondition(ConditionType.IFEQ, arguments.get(i + 1));
+                        i++;
+                        continue;
+                     } else if (RespUtil.isAsciiBytesEquals(IFNE_BYTES, arg)) {
+                        if (operationType != null || hasConditionalMatch()) throw new IllegalArgumentException("NX, XX, IFEQ, IFNE, IFDEQ, IFDNE options are mutually exclusive");
+                        if (i + 1 >= arguments.size()) throw new IllegalArgumentException("IFNE requires a value argument");
+                        withCondition(ConditionType.IFNE, arguments.get(i + 1));
+                        i++;
+                        continue;
+                     }
+                     break;
                }
 
+               throw new IllegalArgumentException("Unknown argument for SET operation");
+            }
+
+            // IFDEQ or IFDNE (5 chars)
+            if (arg.length == 5) {
+               if (RespUtil.isAsciiBytesEquals(IFDEQ_BYTES, arg)) {
+                  if (operationType != null || hasConditionalMatch()) throw new IllegalArgumentException("NX, XX, IFEQ, IFNE, IFDEQ, IFDNE options are mutually exclusive");
+                  if (i + 1 >= arguments.size()) throw new IllegalArgumentException("IFDEQ requires a digest argument");
+                  withCondition(ConditionType.IFDEQ, arguments.get(i + 1));
+                  i++;
+                  continue;
+               } else if (RespUtil.isAsciiBytesEquals(IFDNE_BYTES, arg)) {
+                  if (operationType != null || hasConditionalMatch()) throw new IllegalArgumentException("NX, XX, IFEQ, IFNE, IFDEQ, IFDNE options are mutually exclusive");
+                  if (i + 1 >= arguments.size()) throw new IllegalArgumentException("IFDNE requires a digest argument");
+                  withCondition(ConditionType.IFDNE, arguments.get(i + 1));
+                  i++;
+                  continue;
+               }
                throw new IllegalArgumentException("Unknown argument for SET operation");
             }
 
