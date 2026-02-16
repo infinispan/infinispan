@@ -728,6 +728,114 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(result3).isNotEqualTo(result1);
    }
 
+   @Test
+   public void testDelex() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Test unconditional delete
+      redis.set("delex-key1", "value1");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addKey("delex-key1");
+      Long result = redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo(1L);
+      assertThat(redis.get("delex-key1")).isNull();
+
+      // Test delete non-existing key
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("nonexistent");
+      result = redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo(0L);
+   }
+
+   @Test
+   public void testDelexIfeq() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Test IFEQ - value matches
+      redis.set("delex-ifeq", "matchme");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-ifeq").add("IFEQ").add("matchme");
+      Long result = redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo(1L);
+      assertThat(redis.get("delex-ifeq")).isNull();
+
+      // Test IFEQ - value doesn't match
+      redis.set("delex-ifeq2", "actualvalue");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-ifeq2").add("IFEQ").add("differentvalue");
+      result = redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo(0L);
+      assertThat(redis.get("delex-ifeq2")).isEqualTo("actualvalue");
+   }
+
+   @Test
+   public void testDelexIfne() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Test IFNE - value doesn't match (should delete)
+      redis.set("delex-ifne", "currentvalue");
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-ifne").add("IFNE").add("othervalue");
+      Long result = redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo(1L);
+      assertThat(redis.get("delex-ifne")).isNull();
+
+      // Test IFNE - value matches (should not delete)
+      redis.set("delex-ifne2", "samevalue");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-ifne2").add("IFNE").add("samevalue");
+      result = redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo(0L);
+      assertThat(redis.get("delex-ifne2")).isEqualTo("samevalue");
+   }
+
+   @Test
+   public void testDelexIfdeq() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // First get the digest of a value
+      redis.set("delex-ifdeq", "Hello world");
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("delex-ifdeq");
+      String digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+
+      // Test IFDEQ - digest matches (should delete)
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-ifdeq").add("IFDEQ").add(digest);
+      Long result = redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo(1L);
+      assertThat(redis.get("delex-ifdeq")).isNull();
+
+      // Test IFDEQ - digest doesn't match (should not delete)
+      redis.set("delex-ifdeq2", "Different value");
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-ifdeq2").add("IFDEQ").add(digest);
+      result = redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo(0L);
+      assertThat(redis.get("delex-ifdeq2")).isEqualTo("Different value");
+   }
+
+   @Test
+   public void testDelexIfdne() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // First get the digest of a value
+      redis.set("delex-ifdne", "Hello world");
+      CommandArgs<String, String> digestArgs = new CommandArgs<>(StringCodec.UTF8).addKey("delex-ifdne");
+      String digest = redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), digestArgs);
+
+      // Test IFDNE - digest matches (should NOT delete)
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-ifdne").add("IFDNE").add(digest);
+      Long result = redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo(0L);
+      assertThat(redis.get("delex-ifdne")).isEqualTo("Hello world");
+
+      // Test IFDNE - digest doesn't match (should delete)
+      args = new CommandArgs<>(StringCodec.UTF8)
+            .addKey("delex-ifdne").add("IFDNE").add("0000000000000000");
+      result = redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args);
+      assertThat(result).isEqualTo(1L);
+      assertThat(redis.get("delex-ifdne")).isNull();
+   }
+
    private static class SimpleCommand implements ProtocolKeyword {
       private final String name;
 
