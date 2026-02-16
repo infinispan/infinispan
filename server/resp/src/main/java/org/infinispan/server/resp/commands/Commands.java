@@ -178,6 +178,7 @@ import org.infinispan.server.resp.commands.string.APPEND;
 import org.infinispan.server.resp.commands.string.DECR;
 import org.infinispan.server.resp.commands.string.DECRBY;
 import org.infinispan.server.resp.commands.string.DEL;
+import org.infinispan.server.resp.commands.string.DIGEST;
 import org.infinispan.server.resp.commands.string.GET;
 import org.infinispan.server.resp.commands.string.GETDEL;
 import org.infinispan.server.resp.commands.string.GETEX;
@@ -220,7 +221,7 @@ public final class Commands {
       ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP(), new BLMPOP(), new BITFIELD(), new BITFIELD_RO(), new BITCOUNT(), new BITOP(), new BITPOS()};
       ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT()};
       // DEL should always be first here
-      ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DISCARD()};
+      ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DIGEST(), new DISCARD()};
       ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC(), new EVAL(), new EVAL_RO(), new EVALSHA(), new EVALSHA_RO()};
       ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL(), new FT_LIST()};
       // GET should always be first here
