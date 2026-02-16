@@ -103,20 +103,40 @@ public record BitfieldOperation(Type type, int offset, long value, boolean signe
 
    private Long set(byte[] value, int byteIndex, int bitIndex, long val) {
       if (overflow != BitfieldOperation.Overflow.NONE) {
-         long maxVal = (1L << (bits - (signed ? 1 : 0))) - 1;
+         long minVal, maxVal;
+         if (signed) {
+            // For signed: min = -2^(bits-1), max = 2^(bits-1) - 1
+            // e.g., i8: min = -128, max = 127
+            minVal = -(1L << (bits - 1));
+            maxVal = (1L << (bits - 1)) - 1;
+         } else {
+            // For unsigned: min = 0, max = 2^bits - 1
+            // e.g., u8: min = 0, max = 255
+            minVal = 0;
+            maxVal = (1L << bits) - 1;
+         }
+
          switch (overflow) {
             case WRAP:
-               val &= maxVal;
+               // Proper two's complement wrapping
+               long mask = (1L << bits) - 1;
+               val = val & mask;
+               // Convert to signed if needed
+               if (signed && (val & (1L << (bits - 1))) != 0) {
+                  val |= (-1L << bits);
+               }
                break;
             case SAT:
+               // Saturate to min/max bounds
                if (val > maxVal) {
                   val = maxVal;
-               } else if (val < -maxVal - 1) {
-                  val = -maxVal - 1;
+               } else if (val < minVal) {
+                  val = minVal;
                }
                break;
             case FAIL:
-               if (val > maxVal || val < 0) {
+               // Fail if outside bounds
+               if (val > maxVal || val < minVal) {
                   return null;
                }
                break;
