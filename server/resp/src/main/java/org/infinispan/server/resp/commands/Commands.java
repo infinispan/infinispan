@@ -35,6 +35,12 @@ import org.infinispan.server.resp.commands.connection.READONLY;
 import org.infinispan.server.resp.commands.connection.READWRITE;
 import org.infinispan.server.resp.commands.connection.RESET;
 import org.infinispan.server.resp.commands.connection.SELECT;
+import org.infinispan.server.resp.commands.countmin.CMSINCRBY;
+import org.infinispan.server.resp.commands.countmin.CMSINFO;
+import org.infinispan.server.resp.commands.countmin.CMSINITBYDIM;
+import org.infinispan.server.resp.commands.countmin.CMSINITBYPROB;
+import org.infinispan.server.resp.commands.countmin.CMSMERGE;
+import org.infinispan.server.resp.commands.countmin.CMSQUERY;
 import org.infinispan.server.resp.commands.cuckoo.CFADD;
 import org.infinispan.server.resp.commands.cuckoo.CFADDNX;
 import org.infinispan.server.resp.commands.cuckoo.CFCOUNT;
@@ -246,7 +252,7 @@ public final class Commands {
       // in this array as they are looked up sequentially for matches
       ALL_COMMANDS[0] = new RespCommand[]{new APPEND(), new AUTH()};
       ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP(), new BLMPOP(), new BFADD(), new BFMADD(), new BFEXISTS(), new BFMEXISTS(), new BFRESERVE(), new BFINSERT(), new BFINFO(), new BFCARD(), new BITFIELD(), new BITFIELD_RO(), new BITCOUNT(), new BITOP(), new BITPOS()};
-      ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT(), new CFADD(), new CFADDNX(), new CFEXISTS(), new CFMEXISTS(), new CFRESERVE(), new CFINSERT(), new CFINSERTNX(), new CFDEL(), new CFCOUNT(), new CFINFO()};
+      ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT(), new CFADD(), new CFADDNX(), new CFEXISTS(), new CFMEXISTS(), new CFRESERVE(), new CFINSERT(), new CFINSERTNX(), new CFDEL(), new CFCOUNT(), new CFINFO(), new CMSINITBYDIM(), new CMSINITBYPROB(), new CMSINCRBY(), new CMSQUERY(), new CMSINFO(), new CMSMERGE()};
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DELEX(), new DIGEST(), new DISCARD()};
       ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC(), new EVAL(), new EVAL_RO(), new EVALSHA(), new EVALSHA_RO()};
