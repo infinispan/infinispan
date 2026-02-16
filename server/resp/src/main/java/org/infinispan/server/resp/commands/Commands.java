@@ -232,6 +232,20 @@ import org.infinispan.server.resp.commands.string.SETRANGE;
 import org.infinispan.server.resp.commands.string.STRALGO;
 import org.infinispan.server.resp.commands.string.STRLEN;
 import org.infinispan.server.resp.commands.string.SUBSTR;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTADD;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTBYRANK;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTBYREVRANK;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTCDF;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTCREATE;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTINFO;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTMAX;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTMERGE;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTMIN;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTQUANTILE;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTRANK;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTRESET;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTREVRANK;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTTRIMMED_MEAN;
 import org.infinispan.server.resp.commands.topk.TOPKADD;
 import org.infinispan.server.resp.commands.topk.TOPKCOUNT;
 import org.infinispan.server.resp.commands.topk.TOPKINCRBY;
@@ -283,7 +297,7 @@ public final class Commands {
             new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(),
             new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(),
             new SORT(), new SORT_RO(), new SUBSTR(), new SCRIPT(), new SETBIT()};
-      ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME(), new TOPKRESERVE(), new TOPKADD(), new TOPKINCRBY(), new TOPKQUERY(), new TOPKLIST(), new TOPKINFO(), new TOPKCOUNT()};
+      ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME(), new TOPKRESERVE(), new TOPKADD(), new TOPKINCRBY(), new TOPKQUERY(), new TOPKLIST(), new TOPKINFO(), new TOPKCOUNT(), new TDIGESTCREATE(), new TDIGESTADD(), new TDIGESTRESET(), new TDIGESTQUANTILE(), new TDIGESTCDF(), new TDIGESTRANK(), new TDIGESTREVRANK(), new TDIGESTBYRANK(), new TDIGESTBYREVRANK(), new TDIGESTMIN(), new TDIGESTMAX(), new TDIGESTTRIMMED_MEAN(), new TDIGESTINFO(), new TDIGESTMERGE()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE(), new UNWATCH()};
       ALL_COMMANDS[22] = new RespCommand[]{new WATCH()};
       ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZLEXCOUNT(), new ZDIFF(),
