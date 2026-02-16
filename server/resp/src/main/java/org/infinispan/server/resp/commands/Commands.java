@@ -12,6 +12,14 @@ import org.infinispan.server.resp.commands.bitmap.BITOP;
 import org.infinispan.server.resp.commands.bitmap.BITPOS;
 import org.infinispan.server.resp.commands.bitmap.GETBIT;
 import org.infinispan.server.resp.commands.bitmap.SETBIT;
+import org.infinispan.server.resp.commands.bloom.BFADD;
+import org.infinispan.server.resp.commands.bloom.BFCARD;
+import org.infinispan.server.resp.commands.bloom.BFEXISTS;
+import org.infinispan.server.resp.commands.bloom.BFINFO;
+import org.infinispan.server.resp.commands.bloom.BFINSERT;
+import org.infinispan.server.resp.commands.bloom.BFMADD;
+import org.infinispan.server.resp.commands.bloom.BFMEXISTS;
+import org.infinispan.server.resp.commands.bloom.BFRESERVE;
 import org.infinispan.server.resp.commands.cluster.CLUSTER;
 import org.infinispan.server.resp.commands.connection.AUTH;
 import org.infinispan.server.resp.commands.connection.CLIENT;
@@ -227,7 +235,7 @@ public final class Commands {
       // NOTE that the order within the sub array matters, commands we want to have the lowest latency should be first
       // in this array as they are looked up sequentially for matches
       ALL_COMMANDS[0] = new RespCommand[]{new APPEND(), new AUTH()};
-      ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP(), new BLMPOP(), new BITFIELD(), new BITFIELD_RO(), new BITCOUNT(), new BITOP(), new BITPOS()};
+      ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP(), new BLMPOP(), new BFADD(), new BFMADD(), new BFEXISTS(), new BFMEXISTS(), new BFRESERVE(), new BFINSERT(), new BFINFO(), new BFCARD(), new BITFIELD(), new BITFIELD_RO(), new BITCOUNT(), new BITOP(), new BITPOS()};
       ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT()};
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DELEX(), new DIGEST(), new DISCARD()};
