@@ -121,8 +121,8 @@
       <version.json-smart>2.6.0</version.json-smart>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
-      <version.junit5>5.14.1</version.junit5>
-      <version.junit6>6.0.0</version.junit6>
+      <version.junit5>5.14.3</version.junit5>
+      <version.junit6>5.14.3</version.junit6>
       <version.log4j>2.25.3</version.log4j>
       <!-- version.lucene is defined in the lucene profiles below -->
       <version.lucene9>9.12.3</version.lucene9>
