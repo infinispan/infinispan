@@ -110,6 +110,11 @@
          <artifactId>assertj-core</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-slf4j-impl</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
@@ -155,7 +160,11 @@
                      <argLine>-Dorg.infinispan.test.server.driver=CONTAINER</argLine>
                      <systemPropertyVariables>
                         <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
+                        <infinispan.server.log.path>${project.build.directory}</infinispan.server.log.path>
                         <org.infinispan.test.server.dir>${project.basedir}/../../server/runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
+                        <log4j.configurationFile>${project.basedir}/../../server/tests/target/test-classes/configuration/log4j2.xml</log4j.configurationFile>
+                        <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
+                        <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                      </systemPropertyVariables>
                   </configuration>
                </plugin>
