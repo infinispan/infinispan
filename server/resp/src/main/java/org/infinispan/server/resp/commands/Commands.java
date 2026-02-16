@@ -232,6 +232,13 @@ import org.infinispan.server.resp.commands.string.SETRANGE;
 import org.infinispan.server.resp.commands.string.STRALGO;
 import org.infinispan.server.resp.commands.string.STRLEN;
 import org.infinispan.server.resp.commands.string.SUBSTR;
+import org.infinispan.server.resp.commands.topk.TOPKADD;
+import org.infinispan.server.resp.commands.topk.TOPKCOUNT;
+import org.infinispan.server.resp.commands.topk.TOPKINCRBY;
+import org.infinispan.server.resp.commands.topk.TOPKINFO;
+import org.infinispan.server.resp.commands.topk.TOPKLIST;
+import org.infinispan.server.resp.commands.topk.TOPKQUERY;
+import org.infinispan.server.resp.commands.topk.TOPKRESERVE;
 import org.infinispan.server.resp.commands.tx.DISCARD;
 import org.infinispan.server.resp.commands.tx.EXEC;
 import org.infinispan.server.resp.commands.tx.MULTI;
@@ -276,7 +283,7 @@ public final class Commands {
             new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(),
             new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(),
             new SORT(), new SORT_RO(), new SUBSTR(), new SCRIPT(), new SETBIT()};
-      ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME()};
+      ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME(), new TOPKRESERVE(), new TOPKADD(), new TOPKINCRBY(), new TOPKQUERY(), new TOPKLIST(), new TOPKINFO(), new TOPKCOUNT()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE(), new UNWATCH()};
       ALL_COMMANDS[22] = new RespCommand[]{new WATCH()};
       ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZLEXCOUNT(), new ZDIFF(),
