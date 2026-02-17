@@ -2009,7 +2009,7 @@
                <artifactId>maven-javadoc-plugin</artifactId>
                <version>${version.maven.javadoc}</version>
                <configuration>
-                  <excludePackageNames>*.impl.*</excludePackageNames>
+                  <excludePackageNames>*.impl.*:*.logging:*.logging.*</excludePackageNames>
                   <sourcepath>${sourcepath}</sourcepath>
                   <archive>
                      <index>true</index>

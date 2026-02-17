@@ -43,7 +43,6 @@ public class CounterConfigurationSerializer implements ConfigurationSerializer<C
     * It serializes a {@link List} of {@link AbstractCounterConfiguration} to an {@link OutputStream}.
     * @param os the {@link OutputStream} to write to.
     * @param configs the {@link List} if {@link AbstractCounterConfiguration}.
-    * @throws IOException if an I/O error occurs.
     */
    public void serializeConfigurations(OutputStream os, Collection<AbstractCounterConfiguration> configs) {
       BufferedOutputStream output = new BufferedOutputStream(os);
