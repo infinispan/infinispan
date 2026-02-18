@@ -1,5 +1,6 @@
 package org.infinispan.server.resp.commands.sortedset;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -11,7 +12,8 @@ import org.infinispan.server.resp.serialization.JavaObjectSerializer;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 public final class ZSetCommonUtils {
-   public static final byte[] WITHSCORES = "WITHSCORES".getBytes();
+   public static final byte[] WITHSCORE = "WITHSCORE".getBytes(StandardCharsets.US_ASCII);
+   public static final byte[] WITHSCORES = "WITHSCORES".getBytes(StandardCharsets.US_ASCII);
    public static final byte EXCLUDE = ((byte) '(');
 
    private ZSetCommonUtils() {

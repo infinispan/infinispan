@@ -1,5 +1,6 @@
 package org.infinispan.server.resp.commands.list;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -29,9 +30,9 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class LMPOP extends RespCommand implements Resp3Command {
 
-   public static final byte[] COUNT = "COUNT".getBytes();
-   public static final byte[] LEFT = "LEFT".getBytes();
-   public static final byte[] RIGHT = "RIGHT".getBytes();
+   public static final byte[] COUNT = "COUNT".getBytes(StandardCharsets.US_ASCII);
+   public static final byte[] LEFT = "LEFT".getBytes(StandardCharsets.US_ASCII);
+   public static final byte[] RIGHT = "RIGHT".getBytes(StandardCharsets.US_ASCII);
 
    public LMPOP() {
       super(-4, 0, 0, 0, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask());
