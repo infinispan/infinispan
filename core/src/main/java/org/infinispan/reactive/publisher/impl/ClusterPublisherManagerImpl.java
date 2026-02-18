@@ -120,7 +120,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    // Make sure we don't create one per invocation
    private final EntryComposedType ENTRY_COMPOSED = new EntryComposedType<>();
 
-   private <R> EntryComposedType<R> entryComposedType() {
+   protected <R> EntryComposedType<R> entryComposedType() {
       return ENTRY_COMPOSED;
    }
 
@@ -955,10 +955,15 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    @Override
    public Publisher<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> entryPublisherForTopology(int topologyId, int batchSize, Map<Address, IntSet> targets) {
+      return entryPublisherForTopology(topologyId, batchSize, targets, MarshallableFunctions.identity());
+   }
+
+   protected Publisher<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> entryPublisherForTopology(int topologyId, int batchSize, Map<Address, IntSet> targets,
+                                                                                                           Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<CacheEntry<K, V>>> transformer) {
       // Have to make a copy as we remove from the map and remove from the IntSet
       Map<Address, IntSet> targetsCopy = targets.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
             e -> IntSets.mutableCopyFrom(e.getValue())));
-      return new TopologySegmentAwarePublisherImpl(topologyId, batchSize, targetsCopy).publisherWithSegments();
+      return new TopologySegmentAwarePublisherImpl(topologyId, batchSize, targetsCopy, transformer).publisherWithSegments();
    }
 
    private static final AtomicInteger requestCounter = new AtomicInteger();
@@ -1304,7 +1309,6 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             assert segments == null :  "segments must be null,  was: " + segments;
             assert invocationContext == null : "invocationContext must be null,  was: " + invocationContext;
             assert deliveryGuarantee == DeliveryGuarantee.AT_MOST_ONCE : "deliveryGuarantee must be AT_MOST_ONCE, was: " + deliveryGuarantee;
-            assert transformer == (Function) MarshallableFunctions.identity() : "transformer must be identity, was: " + transformer;
             assert explicitFlags == FlagBitSets.STATE_TRANSFER_PROGRESS : "explicitFlags must be " + FlagBitSets.STATE_TRANSFER_PROGRESS + ", was: " + explicitFlags;
             this.segments = null;
          } else {
@@ -1394,24 +1398,29 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    // This class isn't really needed, but it is here for proper typing checks
-   private class TopologySegmentAwarePublisherImpl extends SegmentAwarePublisherImpl<CacheEntry<K, V>, CacheEntry<K, V>> {
-      private TopologySegmentAwarePublisherImpl(int topologyId, int batchSize, Map<Address, IntSet> targets) {
+   protected class TopologySegmentAwarePublisherImpl extends SegmentAwarePublisherImpl<CacheEntry<K, V>, CacheEntry<K, V>> {
+      protected TopologySegmentAwarePublisherImpl(int topologyId, int batchSize, Map<Address, IntSet> targets) {
+         this(topologyId, batchSize, targets, MarshallableFunctions.identity());
+      }
+
+      protected TopologySegmentAwarePublisherImpl(int topologyId, int batchSize, Map<Address, IntSet> targets,
+                                                  Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<CacheEntry<K, V>>> transformer) {
          super(topologyId, null, ClusterPublisherManagerImpl.this.entryComposedType(), null,
                FlagBitSets.STATE_TRANSFER_PROGRESS, DeliveryGuarantee.AT_MOST_ONCE, batchSize,
-               MarshallableFunctions.identity(), targets);
+               transformer, targets);
       }
    }
 
-   private class SegmentAwarePublisherImpl<I, R> extends AbstractSegmentAwarePublisher<I, R> {
-      private SegmentAwarePublisherImpl(IntSet segments, ComposedType<K, I, R> composedType,
+   protected class SegmentAwarePublisherImpl<I, R> extends AbstractSegmentAwarePublisher<I, R> {
+      protected SegmentAwarePublisherImpl(IntSet segments, ComposedType<K, I, R> composedType,
             InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
             int batchSize, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
          super(0, composedType, segments, invocationContext, explicitFlags, deliveryGuarantee, batchSize, transformer, null);
       }
 
-      private SegmentAwarePublisherImpl(int topologyId, IntSet segments, ComposedType<K, I, R> composedType,
-                                        InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-                                        int batchSize, Function<? super Publisher<I>, ? extends Publisher<R>> transformer, Map<Address, IntSet> targets) {
+      protected SegmentAwarePublisherImpl(int topologyId, IntSet segments, ComposedType<K, I, R> composedType,
+                                          InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                          int batchSize, Function<? super Publisher<I>, ? extends Publisher<R>> transformer, Map<Address, IntSet> targets) {
          super(topologyId, composedType, segments, invocationContext, explicitFlags, deliveryGuarantee, batchSize, transformer, targets);
       }
 
