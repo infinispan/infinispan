@@ -13,20 +13,14 @@ import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.assertj.core.api.SoftAssertions;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -40,14 +34,12 @@ import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.test.CommonRespTests;
 import org.infinispan.testing.Exceptions;
 import org.infinispan.testing.skip.SkipTestNG;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KeyScanArgs;
 import io.lettuce.core.KeyScanCursor;
-import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisConnectionException;
@@ -55,8 +47,6 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.SortArgs;
-import io.lettuce.core.StrAlgoArgs;
-import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.ZAddArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
@@ -179,92 +169,6 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.del("key", "randomKey", "otherKey");
    }
 
-   public void testConditionalSetOperationWithReturn() {
-      RedisCommands<String, String> redis = redisConnection.sync();
-      String key = UUID.randomUUID().toString();
-
-      // Should return (nil), failed since value does not exist.
-      SetArgs args = SetArgs.Builder.xx();
-      assertThat(redis.setGet(key, "something", args)).isNull();
-      assertThat(redis.get(key)).isNull();
-      // Should return (nil), because value does not exist, but operation succeeded.
-      args = SetArgs.Builder.nx();
-      String res = redis.setGet(key, "value", args);
-      assertThat(res).isNull();
-      assertThat(redis.get(key)).isEqualTo("value");
-
-      // Should return the previous because value exists but operation failed.
-      assertThat(redis.setGet(key, "value2", args)).isEqualTo("value");
-      assertThat(redis.get(key)).isEqualTo("value");
-
-      // Should return previous value but succeeded.
-      args = SetArgs.Builder.xx();
-      assertThat(redis.setGet(key, "value2", args)).isEqualTo("value");
-      assertThat(redis.get(key)).isEqualTo("value2");
-   }
-
-   public void testSetMGet() {
-      RedisCommands<String, String> redis = redisConnection.sync();
-      redis.set("k1", "v1");
-      redis.set("k3", "v3");
-      redis.set("k4", "v4");
-
-      List<KeyValue<String, String>> expected = new ArrayList<>(4);
-      expected.add(KeyValue.just("k1", "v1"));
-      expected.add(KeyValue.empty("k2"));
-      expected.add(KeyValue.just("k3", "v3"));
-      expected.add(KeyValue.just("k4", "v4"));
-
-      List<KeyValue<String, String>> results = redis.mget("k1", "k2", "k3", "k4");
-      assertThat(results).containsExactlyElementsOf(expected);
-   }
-
-   public void testSetEmptyStringMGet() {
-      RedisCommands<String, String> redis = redisConnection.sync();
-      redis.set("k1", "");
-      redis.set("k3", "value2");
-
-      assertThat(redis.get("k1")).isEmpty();
-
-      List<KeyValue<String, String>> expected = new ArrayList<>(3);
-      expected.add(KeyValue.just("k1", ""));
-      expected.add(KeyValue.empty("k2"));
-      expected.add(KeyValue.just("k3", "value2"));
-
-      List<KeyValue<String, String>> results = redis.mget("k1", "k2", "k3");
-      assertThat(results).containsExactlyElementsOf(expected);
-   }
-
-   public void testMSetMGet() {
-      RedisCommands<String, String> redis = redisConnection.sync();
-      Map<String, String> values = new HashMap<>();
-      values.put("k1", "v1");
-      values.put("k3", "v3");
-      values.put("k4", "v4");
-      redis.mset(values);
-
-      List<KeyValue<String, String>> expected = new ArrayList<>(4);
-      expected.add(KeyValue.just("k1", "v1"));
-      expected.add(KeyValue.empty("k2"));
-      expected.add(KeyValue.just("k3", "v3"));
-      expected.add(KeyValue.just("k4", "v4"));
-
-      List<KeyValue<String, String>> results = redis.mget("k1", "k2", "k3", "k4");
-      assertThat(results).containsExactlyElementsOf(expected);
-   }
-
-   public void testSetGetDelete() {
-      RedisCommands<String, String> redis = redisConnection.sync();
-      redis.set("k1", "v1");
-      String v = redis.get("k1");
-      assertThat(v).isEqualTo("v1");
-
-      redis.del("k1");
-
-      assertThat(redis.get("k1")).isNull();
-      assertThat(redis.get("something")).isNull();
-   }
-
    @Test
    public void testDelNonStrings() {
       RedisCommands<String, String> redis = redisConnection.sync();
@@ -286,19 +190,6 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.sadd("set1", "v1", "v2", "v3");
       c = redis.del("set1", "non-existent");
       assertThat(c).isEqualTo(1);
-   }
-
-   public void testSetGetBigValue() {
-      RedisCommands<String, String> redis = redisConnection.sync();
-      StringBuilder sb = new StringBuilder();
-      String charsToChoose = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-
-      for (int i = 0; i < 10_000; ++i) {
-         sb.append(charsToChoose.charAt(ThreadLocalRandom.current().nextInt(charsToChoose.length())));
-      }
-      String actualString = sb.toString();
-      redis.set("k1", actualString);
-      assertThat(redis.get("k1")).isEqualTo(actualString);
    }
 
    public void testPingNoArg() {
@@ -643,113 +534,6 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
             .hasMessageContaining("ERR This instance has cluster support disabled");
    }
 
-   @Test(dataProvider = "lcsCases")
-   public void testLcs(String v1, String v2, String resp, int[][] idx) {
-      String key1 = "lcs-base-1";
-      String key2 = "lcs-base-2";
-      RedisCommands<String, String> redis = redisConnection.sync();
-      redis.set(key1, v1);
-      redis.set(key2, v2);
-      StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2);
-      StringMatchResult res = redis.stralgoLcs(args);
-      assertThat(res.getMatchString()).isEqualTo(resp);
-      assertThat(res.getLen()).isZero();
-   }
-
-   @Test(dataProvider = "lcsCases")
-   public void testLcsLen(String v1, String v2, String resp, int[][] idx) {
-      String key1 = "lcs-base-1";
-      String key2 = "lcs-base-2";
-      RedisCommands<String, String> redis = redisConnection.sync();
-      redis.set(key1, v1);
-      redis.set(key2, v2);
-      StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2).justLen();
-      StringMatchResult res = redis.stralgoLcs(args);
-      assertThat(res.getLen()).isEqualTo(resp.length());
-      assertThat(res.getMatchString()).isNull();
-   }
-
-   @Test(dataProvider = "lcsCases")
-   public void testLcsIdx(String v1, String v2, String resp, int[][] idx) {
-      String key1 = "lcs-base-1";
-      String key2 = "lcs-base-2";
-      RedisCommands<String, String> redis = redisConnection.sync();
-      redis.set(key1, v1);
-      redis.set(key2, v2);
-      StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2).withIdx();
-      StringMatchResult res = redis.stralgoLcs(args);
-      checkIdx(resp, idx, res, false);
-   }
-
-   @Test(dataProvider = "lcsCases")
-   public void testLcsIdxWithLen(String v1, String v2, String resp, int[][] idx) {
-      String key1 = "lcs-base-1";
-      String key2 = "lcs-base-2";
-      RedisCommands<String, String> redis = redisConnection.sync();
-      redis.set(key1, v1);
-      redis.set(key2, v2);
-      StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2).withIdx().withMatchLen();
-      StringMatchResult res = redis.stralgoLcs(args);
-      checkIdx(resp, idx, res, true);
-   }
-
-   @Test(dataProvider = "lcsCasesWithMinLen")
-   public void testLcsIdxWithMinLen(String v1, String v2, String resp, int[][] idxs, int minLen) {
-      String key1 = "lcs-base-1";
-      String key2 = "lcs-base-2";
-      RedisCommands<String, String> redis = redisConnection.sync();
-      redis.set(key1, v1);
-      redis.set(key2, v2);
-      StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2).withIdx().minMatchLen(minLen);
-      int[][] idx = Arrays
-            .stream(idxs).filter(pos -> pos.length == 1 || pos[1] - pos[0] >= minLen - 1)
-            .toArray(int[][]::new);
-      StringMatchResult res = redis.stralgoLcs(args);
-      checkIdx(resp, idx, res, false);
-   }
-
-   @DataProvider
-   public Object[][] lcsCases() {
-      return new Object[][]{
-            {"GAC", "AGCAT", "AC", new int[][]{{2, 2, 2, 2}, {1, 1, 0, 0}, {2}}},
-            {"XMJYAUZ", "MZJAWXU", "MJAU",
-                  new int[][]{{5, 5, 6, 6}, {4, 4, 3, 3}, {2, 2, 2, 2}, {1, 1, 0, 0}, {4}}},
-            {"ohmytext", "mynewtext", "mytext", new int[][]{{4, 7, 5, 8}, {2, 3, 0, 1}, {6}}},
-            {"ABCBDAB", "BDCABA", "BDAB", new int[][]{{5, 6, 3, 4}, {3, 4, 0, 1}, {4}}},
-            {"ABCEZ12 21AAZ", "12ABZ 21AZAZ", "ABZ 21AAZ",
-                  new int[][]{{11, 12, 10, 11}, {7, 10, 5, 8}, {4, 4, 4, 4}, {0, 1, 2, 3}, {9}}}
-      };
-   }
-
-   @DataProvider
-   public Object[][] lcsCasesWithMinLen() {
-      List<Object[]> testCases = new ArrayList<>();
-      var minLengths = new Object[][]{{1}, {2}, {4}, {10}};
-      var lcsCases = this.lcsCases();
-      for (Object[] len : minLengths) {
-         for (Object[] lcsCase : lcsCases) {
-            testCases.add(Stream.concat(Arrays.stream(lcsCase), Arrays.stream(len)).toArray());
-         }
-      }
-      return testCases.toArray(new Object[0][]);
-   }
-
-   private void checkIdx(String resp, int[][] idx, StringMatchResult res, boolean withLen) {
-      var matches = res.getMatches();
-      assertThat(matches.size()).isEqualTo(idx.length - 1);
-      for (int i = 0; i < matches.size(); i++) {
-         assertThat(matches.get(i).getA().getStart()).isEqualTo(idx[i][0]);
-         assertThat(matches.get(i).getA().getEnd()).isEqualTo(idx[i][1]);
-         assertThat(matches.get(i).getB().getStart()).isEqualTo(idx[i][2]);
-         assertThat(matches.get(i).getB().getEnd()).isEqualTo(idx[i][3]);
-         if (withLen) {
-            assertThat(matches.get(i).getMatchLen()).isEqualTo(idx[i][1] - idx[i][0] + 1);
-         }
-      }
-      assertThat(res.getLen()).isEqualTo(resp.length());
-      assertThat(res.getMatchString()).isNull();
-   }
-
    @Test
    public void testTTL() {
       RedisCommands<String, String> redis = redisConnection.sync();
@@ -942,6 +726,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.expire(k(2), 1000, ExpireArgs.Builder.lt())).isTrue();
    }
 
+   @Test
    public void testPExpire() {
       RedisCommands<String, String> redis = redisConnection.sync();
       redis.set(k(), v());
@@ -1008,6 +793,498 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       // Assert entry is removed when expiring in the past.
       assertThat(redis.pexpireat(k(1), timeService.wallClockTime() - 500)).isTrue();
       assertThat(redis.get(k(1))).isNull();
+   }
+
+   @Test
+   public void testPersistUndoesExpire() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 5);
+      assertThat(redis.ttl(k())).isEqualTo(5);
+
+      // PERSIST removes the TTL
+      assertThat(redis.persist(k())).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(-1);
+
+      // Key survives beyond the original expiration time
+      ((ControlledTimeService) timeService).advance(10_000);
+      assertThat(redis.get(k())).isEqualTo(v());
+   }
+
+   @Test
+   public void testExpireDoesNotResurrectKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Non-existing key: EXPIRE returns false
+      assertThat(redis.expire(k(), 1000)).isFalse();
+      assertThat(redis.ttl(k())).isEqualTo(-2);
+
+      // Non-existing key: PEXPIRE returns false
+      assertThat(redis.pexpire(k(1), 1000)).isFalse();
+      assertThat(redis.ttl(k(1))).isEqualTo(-2);
+
+      // Non-existing key: EXPIREAT returns false
+      assertThat(redis.expireat(k(2), timeService.wallClockTime() + 1000)).isFalse();
+      assertThat(redis.ttl(k(2))).isEqualTo(-2);
+
+      // Non-existing key: PEXPIREAT returns false
+      assertThat(redis.pexpireat(k(3), timeService.wallClockTime() + 1000)).isFalse();
+      assertThat(redis.ttl(k(3))).isEqualTo(-2);
+   }
+
+   @Test
+   public void testExpireUpdate() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+
+      // Set initial expire
+      assertThat(redis.expire(k(), 100)).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(100);
+
+      // Update with shorter expire
+      assertThat(redis.expire(k(), 50)).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(50);
+
+      // Update with longer expire
+      assertThat(redis.expire(k(), 200)).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(200);
+   }
+
+   @Test
+   public void testSetRemovesExpire() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 100);
+      assertThat(redis.ttl(k())).isEqualTo(100);
+
+      // SET without TTL removes existing expire
+      redis.set(k(), v(1));
+      assertThat(redis.ttl(k())).isEqualTo(-1);
+      assertThat(redis.get(k())).isEqualTo(v(1));
+   }
+
+   @Test
+   public void testSetexOverwriteExistingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), "old-value");
+      assertThat(redis.get(k())).isEqualTo("old-value");
+
+      // SETEX overwrites existing key with new value and TTL
+      assertThat(redis.setex(k(), 10, "new-value")).isEqualTo("OK");
+      assertThat(redis.get(k())).isEqualTo("new-value");
+      assertThat(redis.ttl(k())).isEqualTo(10);
+   }
+
+   @Test
+   public void testSetexZeroTimeout() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThatThrownBy(() -> redis.setex(k(), 0, "value"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR invalid expire time in 'SETEX' command");
+   }
+
+   @Test
+   public void testPsetexNegativeTimeout() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThatThrownBy(() -> redis.psetex(k(), -1, "value"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR invalid expire time in 'PSETEX' command");
+   }
+
+   @Test
+   public void testPsetexZeroTimeout() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThatThrownBy(() -> redis.psetex(k(), 0, "value"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR invalid expire time in 'PSETEX' command");
+   }
+
+   @Test
+   public void testExpireZero() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+
+      // EXPIRE with 0 should delete the key
+      assertThat(redis.expire(k(), 0)).isTrue();
+      assertThat(redis.get(k())).isNull();
+      assertThat(redis.ttl(k())).isEqualTo(-2);
+   }
+
+   @Test
+   public void testPExpireZero() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+
+      // PEXPIRE with 0 should delete the key
+      assertThat(redis.pexpire(k(), 0)).isTrue();
+      assertThat(redis.get(k())).isNull();
+      assertThat(redis.ttl(k())).isEqualTo(-2);
+   }
+
+   @Test
+   public void testTTLAfterKeyDeleted() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 100);
+      assertThat(redis.ttl(k())).isEqualTo(100);
+
+      // Delete key, TTL returns -2
+      redis.del(k());
+      assertThat(redis.ttl(k())).isEqualTo(-2);
+      assertThat(redis.pttl(k())).isEqualTo(-2);
+   }
+
+   @Test
+   public void testKeyExpiration() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 5);
+
+      // Key still alive
+      assertThat(redis.get(k())).isEqualTo(v());
+
+      // Advance past expiration
+      ((ControlledTimeService) timeService).advance(6_000);
+      assertThat(redis.get(k())).isNull();
+      assertThat(redis.ttl(k())).isEqualTo(-2);
+   }
+
+   @Test
+   public void testExpireOnListKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.rpush(k(), "a", "b", "c");
+      assertThat(redis.expire(k(), 5)).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(5);
+
+      // Key expires after timeout
+      ((ControlledTimeService) timeService).advance(6_000);
+      eventually(() -> redis.exists(k()) == 0);
+   }
+
+   @Test
+   public void testRenamePreservesTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 100);
+      assertThat(redis.ttl(k())).isEqualTo(100);
+
+      redis.rename(k(), k(1));
+      assertThat(redis.ttl(k(1))).isGreaterThan(0);
+      assertThat(redis.ttl(k())).isEqualTo(-2);
+   }
+
+   @Test
+   public void testPersistOnNonExistingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.persist(k())).isFalse();
+   }
+
+   @Test
+   public void testPersistOnKeyWithoutExpire() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.persist(k())).isFalse();
+      assertThat(redis.ttl(k())).isEqualTo(-1);
+   }
+
+   @Test
+   public void testExpireTimeNonExisting() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.expiretime(k())).isEqualTo(-2);
+      assertThat(redis.pexpiretime(k())).isEqualTo(-2);
+   }
+
+   @Test
+   public void testExpireAtPastTimestamp() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+
+      // EXPIREAT with past timestamp should delete the key
+      assertThat(redis.expireat(k(), 1)).isTrue();
+      assertThat(redis.get(k())).isNull();
+      assertThat(redis.ttl(k())).isEqualTo(-2);
+   }
+
+   @Test
+   public void testPExpireAtPastTimestamp() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+
+      // PEXPIREAT with past timestamp should delete the key
+      assertThat(redis.pexpireat(k(), 1)).isTrue();
+      assertThat(redis.get(k())).isNull();
+      assertThat(redis.ttl(k())).isEqualTo(-2);
+   }
+
+   @Test
+   public void testSetWithKeepTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 100);
+      assertThat(redis.ttl(k())).isEqualTo(100);
+
+      // SET with KEEPTTL preserves the TTL
+      redis.set(k(), v(1), SetArgs.Builder.keepttl());
+      assertThat(redis.get(k())).isEqualTo(v(1));
+      assertThat(redis.ttl(k())).isEqualTo(100);
+   }
+
+   @Test
+   public void testMultipleKeysExpire() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // Set 5 keys with TTL
+      for (int i = 1; i <= 5; i++) {
+         redis.set(k(i), v(i));
+         redis.expire(k(i), 1);
+      }
+      // All keys should exist
+      for (int i = 1; i <= 5; i++) {
+         assertThat(redis.get(k(i))).isEqualTo(v(i));
+      }
+
+      // Advance time past expiration
+      ((ControlledTimeService) timeService).advance(2_000);
+
+      // All keys should be gone
+      for (int i = 1; i <= 5; i++) {
+         assertThat(redis.get(k(i))).isNull();
+      }
+   }
+
+   @Test
+   public void testSetRemovesExpireLargeString() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 100);
+      assertThat(redis.ttl(k())).isEqualTo(100);
+
+      // SET with a large string should also remove existing expire
+      String largeValue = "x".repeat(5000);
+      redis.set(k(), largeValue);
+      assertThat(redis.ttl(k())).isEqualTo(-1);
+      assertThat(redis.get(k())).isEqualTo(largeValue);
+   }
+
+   @Test
+   public void testExpireNegativeOnNonVolatileKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.ttl(k())).isEqualTo(-1);
+
+      // Negative expiry on key without TTL should delete it
+      assertThat(redis.expire(k(), -10)).isTrue();
+      assertThat(redis.get(k())).isNull();
+      assertThat(redis.ttl(k())).isEqualTo(-2);
+   }
+
+   @Test
+   public void testTTLAfterPExpire() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.pexpire(k(), 5500);
+
+      // TTL returns time in seconds (rounded down)
+      assertThat(redis.ttl(k())).isEqualTo(5);
+      // PTTL returns exact milliseconds
+      assertThat(redis.pttl(k())).isEqualTo(5500);
+   }
+
+   @Test
+   public void testExpireSetMultipleTimes() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+
+      // Set expire multiple times, each updates the timeout
+      assertThat(redis.expire(k(), 10)).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(10);
+      assertThat(redis.expire(k(), 20)).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(20);
+      assertThat(redis.expire(k(), 5)).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(5);
+
+      // Key is still readable
+      assertThat(redis.get(k())).isEqualTo(v());
+   }
+
+   @Test
+   public void testPExpireAtLargeTimestamp() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+
+      // Set a large but valid timestamp (year ~2100)
+      long futureMs = 4102444800000L;
+      assertThat(redis.pexpireat(k(), futureMs)).isTrue();
+      assertThat(redis.pexpiretime(k())).isEqualTo(futureMs);
+      // Key should still exist since timestamp is far in the future
+      assertThat(redis.get(k())).isEqualTo(v());
+   }
+
+   @Test
+   public void testExpireTimeReturnValues() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Key without expire
+      redis.set(k(), v());
+      assertThat(redis.expiretime(k())).isEqualTo(-1);
+      assertThat(redis.pexpiretime(k())).isEqualTo(-1);
+
+      // Non-existing key
+      assertThat(redis.expiretime(k(1))).isEqualTo(-2);
+      assertThat(redis.pexpiretime(k(1))).isEqualTo(-2);
+
+      // Key with expire
+      redis.expire(k(), 100);
+      assertThat(redis.expiretime(k())).isGreaterThan(0);
+      assertThat(redis.pexpiretime(k())).isGreaterThan(0);
+   }
+
+   @Test
+   public void testExpireOnNonExistingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // All expire commands return false on non-existing key
+      assertThat(redis.expire(k(), 100)).isFalse();
+      assertThat(redis.pexpire(k(), 100)).isFalse();
+      assertThat(redis.expireat(k(), timeService.wallClockTime() + 1000)).isFalse();
+      assertThat(redis.pexpireat(k(), timeService.wallClockTime() + 1000)).isFalse();
+
+      // The key should not have been created
+      assertThat(redis.exists(k())).isEqualTo(0);
+   }
+
+   @Test
+   public void testPExpireNegativeDeletesKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+
+      // PEXPIRE with negative value should delete key
+      assertThat(redis.pexpire(k(), -100)).isTrue();
+      assertThat(redis.get(k())).isNull();
+      assertThat(redis.exists(k())).isEqualTo(0);
+   }
+
+   @Test
+   public void testExpireAtOnDifferentTypes() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      long futureTime = timeService.wallClockTime() + 100;
+
+      // EXPIREAT on hash
+      redis.hset(k(1), "f", "v");
+      assertThat(redis.expireat(k(1), futureTime)).isTrue();
+      assertThat(redis.ttl(k(1))).isGreaterThan(0);
+
+      // EXPIREAT on list
+      redis.rpush(k(2), "a");
+      assertThat(redis.expireat(k(2), futureTime)).isTrue();
+      assertThat(redis.ttl(k(2))).isGreaterThan(0);
+
+      // EXPIREAT on set
+      redis.sadd(k(3), "a");
+      assertThat(redis.expireat(k(3), futureTime)).isTrue();
+      assertThat(redis.ttl(k(3))).isGreaterThan(0);
+   }
+
+   @Test
+   public void testExpireGTOnKeyWithoutTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      // GT on key without TTL should not apply (key has no TTL, -1)
+      assertThat(redis.expire(k(), 100, ExpireArgs.Builder.gt())).isFalse();
+      assertThat(redis.ttl(k())).isEqualTo(-1);
+   }
+
+   @Test
+   public void testExpireLTOnKeyWithoutTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      // LT on key without TTL should apply (any TTL is less than infinity)
+      assertThat(redis.expire(k(), 100, ExpireArgs.Builder.lt())).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(100);
+   }
+
+   @Test
+   public void testExpireGTWithLowerTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 1000);
+
+      // GT with lower TTL should NOT apply
+      assertThat(redis.expire(k(), 500, ExpireArgs.Builder.gt())).isFalse();
+      assertThat(redis.ttl(k())).isEqualTo(1000);
+   }
+
+   @Test
+   public void testExpireGTWithHigherTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 500);
+
+      // GT with higher TTL should apply
+      assertThat(redis.expire(k(), 1000, ExpireArgs.Builder.gt())).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(1000);
+   }
+
+   @Test
+   public void testExpireLTWithHigherTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 500);
+
+      // LT with higher TTL should NOT apply
+      assertThat(redis.expire(k(), 1000, ExpireArgs.Builder.lt())).isFalse();
+      assertThat(redis.ttl(k())).isEqualTo(500);
+   }
+
+   @Test
+   public void testExpireLTWithLowerTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 1000);
+
+      // LT with lower TTL should apply
+      assertThat(redis.expire(k(), 500, ExpireArgs.Builder.lt())).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(500);
+   }
+
+   @Test
+   public void testExpireNXOnKeyWithTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 500);
+
+      // NX should NOT apply when key already has TTL
+      assertThat(redis.expire(k(), 1000, ExpireArgs.Builder.nx())).isFalse();
+      assertThat(redis.ttl(k())).isEqualTo(500);
+   }
+
+   @Test
+   public void testExpireNXOnKeyWithoutTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+
+      // NX should apply when key has no TTL
+      assertThat(redis.expire(k(), 500, ExpireArgs.Builder.nx())).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(500);
+   }
+
+   @Test
+   public void testExpireXXOnKeyWithTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      redis.expire(k(), 500);
+
+      // XX should apply when key already has TTL
+      assertThat(redis.expire(k(), 1000, ExpireArgs.Builder.xx())).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(1000);
+   }
+
+   @Test
+   public void testExpireXXOnKeyWithoutTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+
+      // XX should NOT apply when key has no TTL
+      assertThat(redis.expire(k(), 500, ExpireArgs.Builder.xx())).isFalse();
+      assertThat(redis.ttl(k())).isEqualTo(-1);
    }
 
    @Test

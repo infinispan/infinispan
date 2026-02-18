@@ -249,7 +249,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    public void testLPOS() {
       redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio", "ryan", "michael", "ryan");
 
-  /*    assertThat(redis.lpos("not_existing", "ryan")).isNull();
+      assertThat(redis.lpos("not_existing", "ryan")).isNull();
       assertThat(redis.lpos("leads", "ramona")).isNull();
       assertThat(redis.lpos("leads", "ryan")).isEqualTo(2);
       assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.rank(1))).isEqualTo(2);
@@ -258,7 +258,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.rank(2))).isEqualTo(5);
       assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.maxlen(3))).isEqualTo(2);
       assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.maxlen(2))).isNull();
-*/
+
       assertThat(redis.lpos("leads", "ryan", 0)).containsExactly(2L, 5L, 7L);
       assertThat(redis.lpos("leads", "ryan", 1)).containsExactly(2L);
       assertThat(redis.lpos("leads", "ryan", 2)).containsExactly(2L, 5L);
@@ -453,5 +453,438 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
                       .add("left")
                       .add("count")
                       .add(1));
+   }
+
+   public void testLPOSMaxlen() {
+      redis.rpush("mylist", "a", "b", "c", "d", "a", "b");
+      // MAXLEN limits scan to first N elements
+      assertThat(redis.lpos("mylist", "a", 0, LPosArgs.Builder.maxlen(4))).containsExactly(0L);
+      assertThat(redis.lpos("mylist", "b", 0, LPosArgs.Builder.maxlen(5))).containsExactly(1L);
+      assertThat(redis.lpos("mylist", "b", 0, LPosArgs.Builder.maxlen(6))).containsExactly(1L, 5L);
+      // MAXLEN too small to find the element
+      assertThat(redis.lpos("mylist", "a", 0, LPosArgs.Builder.maxlen(1))).containsExactly(0L);
+      assertThat(redis.lpos("mylist", "d", 0, LPosArgs.Builder.maxlen(2))).isEmpty();
+   }
+
+   public void testLPOSCountPlusRank() {
+      redis.rpush("mylist", "a", "b", "c", "d", "a", "b");
+      // COUNT + RANK combined
+      assertThat(redis.lpos("mylist", "a", 0, LPosArgs.Builder.rank(2))).containsExactly(4L);
+      assertThat(redis.lpos("mylist", "a", 0, LPosArgs.Builder.rank(-1))).containsExactly(4L, 0L);
+   }
+
+   public void testLPOSRankGreaterThanMatches() {
+      redis.rpush("mylist", "a", "b", "c", "a");
+      // RANK 3 but only 2 'a' matches -> nil
+      assertThat(redis.lpos("mylist", "a", LPosArgs.Builder.rank(3))).isNull();
+   }
+
+   public void testLRANGEInvertedIndexes() {
+      redis.rpush("mylist", "a", "b", "c", "d", "e");
+      // start > end yields empty
+      assertThat(redis.lrange("mylist", 3, 1)).isEmpty();
+   }
+
+   public void testLRANGEOutOfRangeIndexes() {
+      redis.rpush("mylist", "a", "b", "c");
+      // Out of range indexes return full list
+      assertThat(redis.lrange("mylist", -100, 100)).containsExactly("a", "b", "c");
+      assertThat(redis.lrange("mylist", 0, -1)).containsExactly("a", "b", "c");
+   }
+
+   public void testLRANGEWrongType() {
+      assertWrongType(() -> redis.set("strkey", "value"), () -> redis.lrange("strkey", 0, -1));
+   }
+
+   public void testLTRIMOutOfRangeNegativeEndIndex() {
+      redis.rpush("mylist", "a", "b", "c", "d", "e");
+      // LTRIM with out of range negative end: keep nothing
+      assertThat(redis.ltrim("mylist", 0, -100)).isEqualTo("OK");
+      assertThat(redis.exists("mylist")).isEqualTo(0);
+   }
+
+   public void testDelList() {
+      redis.rpush("mylist", "a", "b", "c");
+      assertThat(redis.exists("mylist")).isEqualTo(1);
+      assertThat(redis.del("mylist")).isEqualTo(1);
+      assertThat(redis.exists("mylist")).isEqualTo(0);
+      assertThat(redis.llen("mylist")).isEqualTo(0);
+   }
+
+   public void testRPOPLPUSHNonListSrc() {
+      redis.set("strkey", "value");
+      assertThatThrownBy(() -> redis.rpoplpush("strkey", "dst"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+   }
+
+   public void testRPOPLPUSHNonListDst() {
+      redis.rpush("src", "a", "b");
+      redis.set("strkey", "value");
+      assertThatThrownBy(() -> redis.rpoplpush("src", "strkey"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+   }
+
+   public void testRPOPLPUSHNonExistingSrc() {
+      assertThat(redis.rpoplpush("nokey", "dst")).isNull();
+      // dst should not be created
+      assertThat(redis.exists("dst")).isEqualTo(0);
+   }
+
+   public void testLINSERTBadSyntax() {
+      redis.rpush("mylist", "a", "b", "c");
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      // LINSERT with invalid position (not BEFORE/AFTER)
+      assertThatThrownBy(() -> redis.dispatch(CommandType.LINSERT, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).addKey("mylist").add("INVALID").add("b").add("x")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+   }
+
+   public void testLINSERTNonExistingKey() {
+      // LINSERT on non-existing key returns 0
+      assertThat(redis.linsert("nokey", true, "pivot", "value")).isEqualTo(0);
+      assertThat(redis.exists("nokey")).isEqualTo(0);
+   }
+
+   public void testLREMIntEncodedObjects() {
+      redis.rpush("mylist", "1", "2", "3", "2", "1", "2", "3");
+      assertThat(redis.lrem("mylist", 2, "2")).isEqualTo(2);
+      assertThat(redis.lrange("mylist", 0, -1)).containsExactly("1", "3", "1", "2", "3");
+   }
+
+   public void testMassRpopLpop() {
+      // Push 1000 elements and verify mass pop
+      String[] values = new String[1000];
+      for (int i = 0; i < 1000; i++) {
+         values[i] = String.valueOf(i);
+      }
+      redis.rpush("biglist", values);
+      assertThat(redis.llen("biglist")).isEqualTo(1000);
+
+      // Pop all from left
+      for (int i = 0; i < 500; i++) {
+         assertThat(redis.lpop("biglist")).isEqualTo(String.valueOf(i));
+      }
+      // Pop all from right
+      for (int i = 999; i >= 500; i--) {
+         assertThat(redis.rpop("biglist")).isEqualTo(String.valueOf(i));
+      }
+      assertThat(redis.llen("biglist")).isEqualTo(0);
+   }
+
+   public void testLMPOPIllegalArguments() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+
+      // numkeys = 0
+      assertThatThrownBy(() -> redis.dispatch(CommandType.LMPOP, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).add(0).addKey("mylist").add("LEFT")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+
+      // Invalid direction
+      assertThatThrownBy(() -> redis.dispatch(CommandType.LMPOP, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).add(1).addKey("mylist").add("UP")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+
+      // Negative count
+      assertThatThrownBy(() -> redis.dispatch(CommandType.LMPOP, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).add(1).addKey("mylist").add("LEFT").add("COUNT").add(-1)))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   public void testLMPOPMultipleExistingLists() {
+      redis.rpush("list1", "a", "b", "c");
+      redis.rpush("list2", "d", "e", "f");
+
+      // Should pop from first non-empty list
+      KeyValue<String, List<String>> result = redis.lmpop(left().count(2), "list1", "list2");
+      assertThat(result.getKey()).isEqualTo("list1");
+      assertThat(result.getValue()).containsExactly("a", "b");
+
+      result = redis.lmpop(right().count(1), "list1", "list2");
+      assertThat(result.getKey()).isEqualTo("list1");
+      assertThat(result.getValue()).containsExactly("c");
+
+      // list1 is now empty, should pop from list2
+      assertThat(redis.exists("list1")).isEqualTo(0);
+      result = redis.lmpop(left().count(1), "list1", "list2");
+      assertThat(result.getKey()).isEqualTo("list2");
+      assertThat(result.getValue()).containsExactly("d");
+   }
+
+   public void testLPOPCountNonExistingKey() {
+      // Lettuce returns empty list for count variant on non-existing key
+      assertThat(redis.lpop("nokey", 5)).isEmpty();
+      assertThat(redis.rpop("nokey", 5)).isEmpty();
+   }
+
+   public void testVariadicRPUSHLPUSH() {
+      // Test that variadic push maintains order
+      redis.rpush("mylist", "a", "b", "c");
+      assertThat(redis.lrange("mylist", 0, -1)).containsExactly("a", "b", "c");
+
+      redis.lpush("mylist", "d", "e", "f");
+      // LPUSH pushes each element to head, so f is first
+      assertThat(redis.lrange("mylist", 0, -1)).containsExactly("f", "e", "d", "a", "b", "c");
+   }
+
+   public void testLMOVENonExistingSrc() {
+      // LMOVE with non-existing source should return nil and not create dst
+      assertThat(redis.lmove("nokey", "dst", LMoveArgs.Builder.leftRight())).isNull();
+      assertThat(redis.exists("dst")).isEqualTo(0);
+   }
+
+   public void testLPOPRPOPCountZero() {
+      redis.rpush("mylist", "a", "b", "c");
+      // count 0 returns empty list
+      assertThat(redis.lpop("mylist", 0)).isEmpty();
+      assertThat(redis.rpop("mylist", 0)).isEmpty();
+      // List should be unchanged
+      assertThat(redis.llen("mylist")).isEqualTo(3);
+   }
+
+   public void testLPOPRPOPCountMoreThanLen() {
+      redis.rpush("mylist", "a", "b", "c");
+      // Pop more than available returns all
+      assertThat(redis.lpop("mylist", 10)).containsExactly("a", "b", "c");
+      assertThat(redis.llen("mylist")).isEqualTo(0);
+   }
+
+   public void testLSETOutOfRange() {
+      redis.rpush("mylist", "a", "b", "c");
+      assertThatThrownBy(() -> redis.lset("mylist", 3, "d"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR index out of range");
+      assertThatThrownBy(() -> redis.lset("mylist", -4, "d"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR index out of range");
+   }
+
+   public void testLSETNonExistingKey() {
+      assertThatThrownBy(() -> redis.lset("nokey", 0, "value"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR no such key");
+   }
+
+   public void testLINDEXConsistency() {
+      // Push 1000 elements and verify random access
+      for (int i = 0; i < 1000; i++) {
+         redis.rpush("mylist", String.valueOf(i));
+      }
+      assertThat(redis.llen("mylist")).isEqualTo(1000);
+      assertThat(redis.lindex("mylist", 0)).isEqualTo("0");
+      assertThat(redis.lindex("mylist", 999)).isEqualTo("999");
+      assertThat(redis.lindex("mylist", -1)).isEqualTo("999");
+      assertThat(redis.lindex("mylist", 500)).isEqualTo("500");
+   }
+
+   public void testLLENNonExistingKey() {
+      assertThat(redis.llen("nokey")).isEqualTo(0);
+   }
+
+   public void testLINDEXNonExistingKey() {
+      assertThat(redis.lindex("nokey", 0)).isNull();
+   }
+
+   public void testRPOPLPUSHSameListRotate() {
+      redis.rpush("mylist", "a", "b", "c");
+      assertThat(redis.rpoplpush("mylist", "mylist")).isEqualTo("c");
+      assertThat(redis.lrange("mylist", 0, -1)).containsExactly("c", "a", "b");
+      assertThat(redis.rpoplpush("mylist", "mylist")).isEqualTo("b");
+      assertThat(redis.lrange("mylist", 0, -1)).containsExactly("b", "c", "a");
+   }
+
+   public void testLMOVESameListAllDirections() {
+      redis.rpush("mylist", "a", "b", "c");
+      // LEFT LEFT = rotate left to left (no change)
+      assertThat(redis.lmove("mylist", "mylist", LMoveArgs.Builder.leftLeft())).isEqualTo("a");
+      assertThat(redis.lrange("mylist", 0, -1)).containsExactly("a", "b", "c");
+      // RIGHT RIGHT = rotate right to right (no change)
+      assertThat(redis.lmove("mylist", "mylist", LMoveArgs.Builder.rightRight())).isEqualTo("c");
+      assertThat(redis.lrange("mylist", 0, -1)).containsExactly("a", "b", "c");
+      // LEFT RIGHT = move head to tail
+      assertThat(redis.lmove("mylist", "mylist", LMoveArgs.Builder.leftRight())).isEqualTo("a");
+      assertThat(redis.lrange("mylist", 0, -1)).containsExactly("b", "c", "a");
+      // RIGHT LEFT = move tail to head
+      assertThat(redis.lmove("mylist", "mylist", LMoveArgs.Builder.rightLeft())).isEqualTo("a");
+      assertThat(redis.lrange("mylist", 0, -1)).containsExactly("a", "b", "c");
+   }
+
+   public void testLMOVEWrongTypeDst() {
+      redis.rpush("lmove-src", "a", "b");
+      assertWrongType(() -> redis.set("lmove-strdst", "value"),
+            () -> redis.lmove("lmove-src", "lmove-strdst", LMoveArgs.Builder.leftRight()));
+   }
+
+   public void testLREMCountLargerThanOccurrences() {
+      redis.rpush("lrem-over", "a", "b", "a", "c", "a");
+      // LREM with count=10 but only 3 occurrences of "a" - removes all, returns 3
+      assertThat(redis.lrem("lrem-over", 10, "a")).isEqualTo(3);
+      assertThat(redis.lrange("lrem-over", 0, -1)).containsExactly("b", "c");
+   }
+
+   public void testLREMNegativeCountLargerThanOccurrences() {
+      redis.rpush("lrem-neg", "a", "b", "a", "c", "a");
+      // LREM with count=-10 but only 3 occurrences - removes all from tail, returns 3
+      assertThat(redis.lrem("lrem-neg", -10, "a")).isEqualTo(3);
+      assertThat(redis.lrange("lrem-neg", 0, -1)).containsExactly("b", "c");
+   }
+
+   public void testLPOPEmptiesListRemovesKey() {
+      redis.rpush("lpop-empty", "a");
+      assertThat(redis.lpop("lpop-empty")).isEqualTo("a");
+      assertThat(redis.exists("lpop-empty")).isEqualTo(0);
+   }
+
+   public void testRPOPEmptiesListRemovesKey() {
+      redis.rpush("rpop-empty", "a");
+      assertThat(redis.rpop("rpop-empty")).isEqualTo("a");
+      assertThat(redis.exists("rpop-empty")).isEqualTo(0);
+   }
+
+   public void testLPOPCountEmptiesListRemovesKey() {
+      redis.rpush("lpop-cnt-empty", "a", "b");
+      assertThat(redis.lpop("lpop-cnt-empty", 5)).containsExactly("a", "b");
+      assertThat(redis.exists("lpop-cnt-empty")).isEqualTo(0);
+   }
+
+   public void testLRANGENegativeEndIndex() {
+      redis.rpush("lr-neg", "a", "b", "c", "d", "e");
+      // -2 means exclude last element
+      assertThat(redis.lrange("lr-neg", 0, -2)).containsExactly("a", "b", "c", "d");
+      // -3 means exclude last 2
+      assertThat(redis.lrange("lr-neg", 0, -3)).containsExactly("a", "b", "c");
+      // Negative start and end
+      assertThat(redis.lrange("lr-neg", -3, -1)).containsExactly("c", "d", "e");
+   }
+
+   public void testLTRIMKeepsSubset() {
+      redis.rpush("ltrim-sub", "a", "b", "c", "d", "e");
+      assertThat(redis.ltrim("ltrim-sub", 1, 3)).isEqualTo("OK");
+      assertThat(redis.lrange("ltrim-sub", 0, -1)).containsExactly("b", "c", "d");
+   }
+
+   public void testLTRIMNegativeIndexes() {
+      redis.rpush("ltrim-neg", "a", "b", "c", "d", "e");
+      assertThat(redis.ltrim("ltrim-neg", -3, -1)).isEqualTo("OK");
+      assertThat(redis.lrange("ltrim-neg", 0, -1)).containsExactly("c", "d", "e");
+   }
+
+   public void testLTRIMEmptiesListRemovesKey() {
+      redis.rpush("ltrim-empty", "a", "b", "c");
+      // Start > end empties the list
+      assertThat(redis.ltrim("ltrim-empty", 3, 1)).isEqualTo("OK");
+      assertThat(redis.exists("ltrim-empty")).isEqualTo(0);
+   }
+
+   public void testLINSERTBeforeFirstAfterLast() {
+      redis.rpush("lins-edge", "b", "c", "d");
+      // Insert before the first element
+      assertThat(redis.linsert("lins-edge", true, "b", "a")).isEqualTo(4);
+      assertThat(redis.lrange("lins-edge", 0, -1)).containsExactly("a", "b", "c", "d");
+      // Insert after the last element
+      assertThat(redis.linsert("lins-edge", false, "d", "e")).isEqualTo(5);
+      assertThat(redis.lrange("lins-edge", 0, -1)).containsExactly("a", "b", "c", "d", "e");
+   }
+
+   public void testLMOVESourceBecomesEmpty() {
+      redis.rpush("lmove-single", "only");
+      assertThat(redis.lmove("lmove-single", "lmove-dst", LMoveArgs.Builder.leftRight())).isEqualTo("only");
+      // Source should be deleted
+      assertThat(redis.exists("lmove-single")).isEqualTo(0);
+      // Destination should have the element
+      assertThat(redis.lrange("lmove-dst", 0, -1)).containsExactly("only");
+   }
+
+   public void testRPOPLPUSHSourceBecomesEmpty() {
+      redis.rpush("rpoplpush-single", "only");
+      assertThat(redis.rpoplpush("rpoplpush-single", "rpoplpush-dst")).isEqualTo("only");
+      assertThat(redis.exists("rpoplpush-single")).isEqualTo(0);
+      assertThat(redis.lrange("rpoplpush-dst", 0, -1)).containsExactly("only");
+   }
+
+   public void testLMOVECreatesDst() {
+      redis.rpush("lmove-csrc", "a", "b", "c");
+      // LMOVE to non-existing dst should create it
+      assertThat(redis.lmove("lmove-csrc", "lmove-cdst", LMoveArgs.Builder.rightLeft())).isEqualTo("c");
+      assertThat(redis.lrange("lmove-cdst", 0, -1)).containsExactly("c");
+   }
+
+   public void testLPUSHXRPUSHXGeneric() {
+      // LPUSHX/RPUSHX return 0 and don't create key when key doesn't exist
+      assertThat(redis.lpushx("pushx-ne", "a")).isEqualTo(0);
+      assertThat(redis.rpushx("pushx-ne", "a")).isEqualTo(0);
+      assertThat(redis.exists("pushx-ne")).isEqualTo(0);
+
+      // Wrong type
+      assertWrongType(() -> redis.set("pushx-str", "value"), () -> redis.lpushx("pushx-str", "a"));
+      assertWrongType(() -> redis.set("pushx-str2", "value"), () -> redis.rpushx("pushx-str2", "a"));
+   }
+
+   public void testLREMRemovesKeyWhenEmpty() {
+      redis.rpush("lrem-delkey", "a", "a", "a");
+      assertThat(redis.lrem("lrem-delkey", 0, "a")).isEqualTo(3);
+      assertThat(redis.exists("lrem-delkey")).isEqualTo(0);
+   }
+
+   public void testLPOSCountZeroMaxlen() {
+      redis.rpush("lpos-cm", "a", "b", "a", "c", "a", "d", "a");
+      // COUNT 0 with MAXLEN: find all within first 5 elements
+      assertThat(redis.lpos("lpos-cm", "a", 0, LPosArgs.Builder.maxlen(5))).containsExactly(0L, 2L, 4L);
+      assertThat(redis.lpos("lpos-cm", "a", 0, LPosArgs.Builder.maxlen(3))).containsExactly(0L, 2L);
+   }
+
+   public void testLMPOPSingleExistingList() {
+      redis.rpush("lmpop-single", "a", "b", "c", "d");
+
+      // Pop from left
+      KeyValue<String, List<String>> result = redis.lmpop(left().count(2), "lmpop-single");
+      assertThat(result.getKey()).isEqualTo("lmpop-single");
+      assertThat(result.getValue()).containsExactly("a", "b");
+
+      // Pop from right
+      result = redis.lmpop(right().count(2), "lmpop-single");
+      assertThat(result.getKey()).isEqualTo("lmpop-single");
+      assertThat(result.getValue()).containsExactly("d", "c");
+
+      // List should be empty and removed
+      assertThat(redis.exists("lmpop-single")).isEqualTo(0);
+   }
+
+   public void testLMPOPEmptiesKeyRemovesIt() {
+      redis.rpush("lmpop-del", "a");
+      KeyValue<String, List<String>> result = redis.lmpop(left(), "lmpop-del");
+      assertThat(result.getValue()).containsExactly("a");
+      assertThat(redis.exists("lmpop-del")).isEqualTo(0);
+   }
+
+   public void testRPOPLPUSHToExistingDst() {
+      redis.rpush("rpoplpush-src2", "a", "b", "c");
+      redis.rpush("rpoplpush-dst2", "x", "y");
+      assertThat(redis.rpoplpush("rpoplpush-src2", "rpoplpush-dst2")).isEqualTo("c");
+      assertThat(redis.lrange("rpoplpush-dst2", 0, -1)).containsExactly("c", "x", "y");
+      assertThat(redis.lrange("rpoplpush-src2", 0, -1)).containsExactly("a", "b");
+   }
+
+   public void testLSETWrongType() {
+      assertWrongType(() -> redis.set("lset-str", "value"), () -> redis.lset("lset-str", 0, "x"));
+   }
+
+   public void testLREMWrongType() {
+      assertWrongType(() -> redis.set("lrem-str", "value"), () -> redis.lrem("lrem-str", 0, "x"));
+   }
+
+   public void testLTRIMWrongType() {
+      assertWrongType(() -> redis.set("ltrim-str", "value"), () -> redis.ltrim("ltrim-str", 0, 1));
+   }
+
+   public void testLLENWrongType() {
+      assertWrongType(() -> redis.set("llen-str", "value"), () -> redis.llen("llen-str"));
+   }
+
+   public void testLINDEXWrongType() {
+      assertWrongType(() -> redis.set("lindex-str", "value"), () -> redis.lindex("lindex-str", 0));
    }
 }
