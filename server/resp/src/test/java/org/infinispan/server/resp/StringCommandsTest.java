@@ -34,9 +34,9 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
 
    @Override
    public Object[] factory() {
-      return new Object[] {
-         new StringCommandsTest(),
-         new StringCommandsTest().withAuthorization()
+      return new Object[]{
+            new StringCommandsTest(),
+            new StringCommandsTest().withAuthorization()
       };
    }
 
@@ -99,6 +99,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(nextValue.longValue()).isEqualTo(10L);
    }
 
+   @Test
    public void testIncrResultsNan() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "incr-to-nan";
@@ -231,6 +232,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(val).isEqualTo(expect);
    }
 
+   @Test
    public void testGetdel() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "getdel";
@@ -356,7 +358,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       redis.set(key1, v1);
       redis.set(key2, v2);
       StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2).withIdx().minMatchLen(minLen);
-      int[][] idx = Arrays.stream(idxs).filter(pos -> pos.length == 1 || pos[1] - pos[0] >= minLen)
+      int[][] idx = Arrays.stream(idxs).filter(pos -> pos.length == 1 || pos[1] - pos[0] >= minLen - 1)
             .toArray(int[][]::new);
       StringMatchResult res = redis.stralgoLcs(args);
       checkIdx(resp, idx, res, false);
@@ -364,28 +366,28 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
 
    @DataProvider
    public Object[][] lcsCases() {
-      return new Object[][] {
-            { "GAC", "AGCAT", "AC", new int[][] { { 2, 2, 2, 2 }, { 1, 1, 0, 0 }, { 2 } } },
-            { "XMJYAUZ", "MZJAWXU", "MJAU",
-                  new int[][] { { 5, 5, 6, 6 }, { 4, 4, 3, 3 }, { 2, 2, 2, 2 }, { 1, 1, 0, 0 }, { 4 } } },
-            { "ohmytext", "mynewtext", "mytext", new int[][] { { 4, 7, 5, 8 }, { 2, 3, 0, 1 }, { 6 } } },
-            { "ABCBDAB", "BDCABA", "BDAB", new int[][] { { 5, 6, 3, 4 }, { 3, 4, 0, 1 }, { 4 } } },
-            { "ABCEZ12 21AAZ", "12ABZ 21AZAZ", "ABZ 21AAZ",
-                  new int[][] { { 11, 12, 10, 11 }, { 7, 10, 5, 8 }, { 4, 4, 4, 4 }, { 0, 1, 2, 3 }, { 9 } } }
+      return new Object[][]{
+            {"GAC", "AGCAT", "AC", new int[][]{{2, 2, 2, 2}, {1, 1, 0, 0}, {2}}},
+            {"XMJYAUZ", "MZJAWXU", "MJAU",
+                  new int[][]{{5, 5, 6, 6}, {4, 4, 3, 3}, {2, 2, 2, 2}, {1, 1, 0, 0}, {4}}},
+            {"ohmytext", "mynewtext", "mytext", new int[][]{{4, 7, 5, 8}, {2, 3, 0, 1}, {6}}},
+            {"ABCBDAB", "BDCABA", "BDAB", new int[][]{{5, 6, 3, 4}, {3, 4, 0, 1}, {4}}},
+            {"ABCEZ12 21AAZ", "12ABZ 21AZAZ", "ABZ 21AAZ",
+                  new int[][]{{11, 12, 10, 11}, {7, 10, 5, 8}, {4, 4, 4, 4}, {0, 1, 2, 3}, {9}}}
       };
    }
 
    @DataProvider
    public Object[][] lcsCasesWithMinLen() {
-      var minLengths = new Object[][] { { 1 }, { 2 }, { 4 }, { 10 } };
+      List<Object[]> testCases = new ArrayList<>();
+      var minLengths = new Object[][]{{1}, {2}, {4}, {10}};
       var lcsCases = this.lcsCases();
-      var result = new Object[lcsCases.length][];
       for (Object[] len : minLengths) {
-         for (int i = 0; i < lcsCases.length; i++) {
-            result[i] = Stream.concat(Arrays.stream(lcsCases[i]), Arrays.stream(len)).toArray();
+         for (Object[] lcsCase : lcsCases) {
+            testCases.add(Stream.concat(Arrays.stream(lcsCase), Arrays.stream(len)).toArray());
          }
       }
-      return result;
+      return testCases.toArray(new Object[0][]);
    }
 
    private void checkIdx(String resp, int[][] idx, StringMatchResult res, boolean withLen) {
@@ -575,7 +577,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    @Test
    public void testMsetnx() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      Map<String, String> values = new HashMap<String,String>();
+      Map<String, String> values = new HashMap<String, String>();
       values.put("k1", "v1");
       values.put("k3", "v3");
       values.put("k4", "v4");
@@ -609,7 +611,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    public void testMsetnxSameKey() {
       // Needs custom command to allow byte[] args
       CustomStringCommands commands = CustomStringCommands.instance(redisConnection);
-      Long l = commands.msetnxSameKey(new byte[]{'k','1'}, new byte[]{'v','1'}, new byte[]{'v','2'}, new byte[]{'v','3'}, new byte[]{'v','4'});
+      Long l = commands.msetnxSameKey(new byte[]{'k', '1'}, new byte[]{'v', '1'}, new byte[]{'v', '2'}, new byte[]{'v', '3'}, new byte[]{'v', '4'});
       assertThat(l).isEqualTo(1);
       String actual = redisConnection.sync().get("k1");
       assertThat(actual).isEqualTo("v4");
@@ -654,8 +656,9 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    @Test
    public void testGetsetWrongType() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      assertWrongType(() -> redis.lpush("key","value"), () -> redis.getset("key", "shouldfail"));
-      assertWrongType(() -> {} , () -> redis.get("key"));
+      assertWrongType(() -> redis.lpush("key", "value"), () -> redis.getset("key", "shouldfail"));
+      assertWrongType(() -> {
+      }, () -> redis.get("key"));
       assertThat(redis.lrange("key", 0, -1)).containsExactly("value");
    }
 
@@ -686,7 +689,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       redis.sadd("k2", "s1", "s2", "s3");
       redis.set("k3", "v3");
       redis.set("k4", "v4");
-      var results = redis.mget("k1", "k2", "k3", "k4","k5");
+      var results = redis.mget("k1", "k2", "k3", "k4", "k5");
       List<KeyValue<String, String>> expected = new ArrayList<>(5);
       expected.add(KeyValue.just("k1", "v1"));
       expected.add(KeyValue.empty("k2"));
@@ -1436,21 +1439,544 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.exists("delex-upper2")).isEqualTo(1);
    }
 
-   private static class SimpleCommand implements ProtocolKeyword {
-      private final String name;
-
-      SimpleCommand(String name) {
-         this.name = name;
-      }
-
+   private record SimpleCommand(String name) implements ProtocolKeyword {
       @Override
       public byte[] getBytes() {
          return name.getBytes(StandardCharsets.UTF_8);
       }
+   }
 
-      @Override
-      public String name() {
-         return name;
-      }
+   @Test
+   public void testSetAndGetEmptyItem() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "empty-item";
+      redis.set(key, "");
+      assertThat(redis.get(key)).isEqualTo("");
+      assertThat(redis.strlen(key)).isEqualTo(0);
+   }
+
+   @Test
+   public void testSetNxOption() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "set-nx";
+
+      // NX on non-existing key should succeed
+      assertThat(redis.set(key, "value", new SetArgs().nx())).isEqualTo("OK");
+      assertThat(redis.get(key)).isEqualTo("value");
+
+      // NX on existing key should fail
+      assertThat(redis.set(key, "new-value", new SetArgs().nx())).isNull();
+      assertThat(redis.get(key)).isEqualTo("value");
+   }
+
+   @Test
+   public void testSetGetOption() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "set-get";
+
+      // SET with GET on non-existing key returns nil
+      assertThat(redis.setGet(key, "value")).isNull();
+
+      // SET with GET on existing key returns old value
+      assertThat(redis.setGet(key, "new-value")).isEqualTo("value");
+      assertThat(redis.get(key)).isEqualTo("new-value");
+   }
+
+   @Test
+   public void testSetGetWithXX() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "set-get-xx";
+
+      // SET GET XX on non-existing key returns nil and doesn't set
+      assertThat(redis.setGet(key, "value", new SetArgs().xx())).isNull();
+      assertThat(redis.get(key)).isNull();
+
+      // Create the key, then SET GET XX should return old value
+      redis.set(key, "first");
+      assertThat(redis.setGet(key, "second", new SetArgs().xx())).isEqualTo("first");
+      assertThat(redis.get(key)).isEqualTo("second");
+   }
+
+   @Test
+   public void testSetGetWithNX() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "set-get-nx";
+
+      // SET GET NX on non-existing key should set and return nil
+      assertThat(redis.setGet(key, "value", new SetArgs().nx())).isNull();
+      assertThat(redis.get(key)).isEqualTo("value");
+
+      // SET GET NX on existing key should not set and return old value
+      assertThat(redis.setGet(key, "new-value", new SetArgs().nx())).isEqualTo("value");
+      assertThat(redis.get(key)).isEqualTo("value");
+   }
+
+   @Test
+   public void testSetGetWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "set-get-wrongtype";
+      redis.lpush(key, "listvalue");
+
+      assertThatThrownBy(() -> redis.setGet(key, "value"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+   }
+
+   @Test
+   public void testSetWithPX() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "set-px";
+      redis.set(key, "value", new SetArgs().px(500));
+      assertThat(redis.get(key)).isEqualTo("value");
+      ((ControlledTimeService) this.timeService).advance(1000);
+      assertThat(redis.get(key)).isNull();
+   }
+
+   @Test
+   public void testSetWithEXAT() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "set-exat";
+      // Set with EXAT = current time + 2 seconds
+      long exat = this.timeService.wallClockTime() / 1000 + 2;
+      redis.set(key, "value", new SetArgs().exAt(exat));
+      assertThat(redis.get(key)).isEqualTo("value");
+      ((ControlledTimeService) this.timeService).advance(3000);
+      assertThat(redis.get(key)).isNull();
+   }
+
+   @Test
+   public void testSetWithPXAT() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "set-pxat";
+      // Set with PXAT = current time + 2000 milliseconds
+      long pxat = this.timeService.wallClockTime() + 2000;
+      redis.set(key, "value", new SetArgs().pxAt(pxat));
+      assertThat(redis.get(key)).isEqualTo("value");
+      ((ControlledTimeService) this.timeService).advance(3000);
+      assertThat(redis.get(key)).isNull();
+   }
+
+   @Test
+   public void testGetexWithEXAT() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "getex-exat";
+      redis.set(key, "value");
+      long exat = this.timeService.wallClockTime() / 1000 + 2;
+      redis.getex(key, GetExArgs.Builder.exAt(exat));
+      assertThat(redis.get(key)).isEqualTo("value");
+      ((ControlledTimeService) this.timeService).advance(3000);
+      assertThat(redis.get(key)).isNull();
+   }
+
+   @Test
+   public void testGetexWithPXAT() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "getex-pxat";
+      redis.set(key, "value");
+      long pxat = this.timeService.wallClockTime() + 2000;
+      redis.getex(key, GetExArgs.Builder.pxAt(pxat));
+      assertThat(redis.get(key)).isEqualTo("value");
+      ((ControlledTimeService) this.timeService).advance(3000);
+      assertThat(redis.get(key)).isNull();
+   }
+
+   @Test
+   public void testGetexNoOption() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "getex-nooption";
+      redis.set(key, "value");
+
+      // GETEX with no option should return value without modifying TTL
+      assertThat(redis.getex(key, new GetExArgs())).isEqualTo("value");
+      assertThat(redis.get(key)).isEqualTo("value");
+   }
+
+   @Test
+   public void testSetrangeWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "setrange-wrongtype";
+      redis.lpush(key, "listvalue");
+
+      assertThatThrownBy(() -> redis.setrange(key, 0, "value"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+   }
+
+   @Test
+   public void testGetrangeWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "getrange-wrongtype";
+      redis.lpush(key, "listvalue");
+
+      assertThatThrownBy(() -> redis.getrange(key, 0, -1))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+   }
+
+   @Test
+   public void testSubstr() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "substr-test";
+      redis.set(key, "Hello, World!");
+      // SUBSTR is equivalent to GETRANGE
+      assertThat(redis.getrange(key, 0, 4)).isEqualTo("Hello");
+      assertThat(redis.getrange(key, 7, 11)).isEqualTo("World");
+      // Verify SUBSTR command directly via dispatch
+      io.lettuce.core.protocol.ProtocolKeyword substrCmd = new io.lettuce.core.protocol.ProtocolKeyword() {
+         @Override
+         public byte[] getBytes() {
+            return "SUBSTR".getBytes();
+         }
+
+         @Override
+         public String name() {
+            return "SUBSTR";
+         }
+      };
+      String result = redis.dispatch(substrCmd,
+            new io.lettuce.core.output.StatusOutput<>(io.lettuce.core.codec.StringCodec.UTF8),
+            new io.lettuce.core.protocol.CommandArgs<>(io.lettuce.core.codec.StringCodec.UTF8)
+                  .addKey(key).add(0).add(4));
+      assertThat(result).isEqualTo("Hello");
+   }
+
+   @Test
+   public void testStrlenIntegerEncoded() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "strlen-integer";
+      redis.set(key, "12345");
+      assertThat(redis.strlen(key)).isEqualTo(5);
+      redis.set(key, "-1");
+      assertThat(redis.strlen(key)).isEqualTo(2);
+   }
+
+   @Test
+   public void testSetnxAgainstExpiredKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "setnx-expired";
+
+      // Set with TTL
+      redis.setex(key, 1, "old-value");
+      assertThat(redis.get(key)).isEqualTo("old-value");
+
+      // Wait for expiration
+      ((ControlledTimeService) this.timeService).advance(2000);
+      assertThat(redis.get(key)).isNull();
+
+      // SETNX on expired key should succeed
+      assertThat(redis.setnx(key, "new-value")).isTrue();
+      assertThat(redis.get(key)).isEqualTo("new-value");
+   }
+
+   @Test
+   public void testSetnxAgainstNotExpiredVolatileKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "setnx-volatile";
+
+      redis.setex(key, 100, "old-value");
+      assertThat(redis.setnx(key, "new-value")).isFalse();
+      assertThat(redis.get(key)).isEqualTo("old-value");
+   }
+
+   @Test
+   public void testMsetBaseCase() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Map<String, String> values = new HashMap<>();
+      values.put("mset-k1", "v1");
+      values.put("mset-k2", "v2");
+      values.put("mset-k3", "v3");
+      assertThat(redis.mset(values)).isEqualTo("OK");
+
+      assertThat(redis.get("mset-k1")).isEqualTo("v1");
+      assertThat(redis.get("mset-k2")).isEqualTo("v2");
+      assertThat(redis.get("mset-k3")).isEqualTo("v3");
+   }
+
+   @Test
+   public void testMsetSameKeyTwice() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // When same key appears twice, last value wins
+      redis.dispatch(io.lettuce.core.protocol.CommandType.MSET,
+            new io.lettuce.core.output.StatusOutput<>(io.lettuce.core.codec.StringCodec.UTF8),
+            new io.lettuce.core.protocol.CommandArgs<>(io.lettuce.core.codec.StringCodec.UTF8)
+                  .addKey("mset-dup").addValue("first")
+                  .addKey("mset-dup").addValue("second"));
+      assertThat(redis.get("mset-dup")).isEqualTo("second");
+   }
+
+   @Test
+   public void testMsetOverwritesExisting() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set("mset-ow", "old");
+      Map<String, String> values = new HashMap<>();
+      values.put("mset-ow", "new");
+      redis.mset(values);
+      assertThat(redis.get("mset-ow")).isEqualTo("new");
+   }
+
+   @Test
+   public void testMgetNonExistingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set("mget-k1", "v1");
+      List<KeyValue<String, String>> results = redis.mget("mget-k1", "mget-nonexist", "mget-k1");
+      assertThat(results).hasSize(3);
+      assertThat(results.get(0).getValue()).isEqualTo("v1");
+      assertThat(results.get(1).hasValue()).isFalse();
+      assertThat(results.get(2).getValue()).isEqualTo("v1");
+   }
+
+   @Test
+   public void testMgetAgainstNonStringKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set("mget-str", "v1");
+      redis.lpush("mget-list", "item");
+      // MGET returns empty for non-string keys
+      List<KeyValue<String, String>> results = redis.mget("mget-str", "mget-list");
+      assertThat(results).hasSize(2);
+      assertThat(results.get(0).getValue()).isEqualTo("v1");
+      assertThat(results.get(1).hasValue()).isFalse();
+   }
+
+   @Test
+   public void testGetdelWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "getdel-wrongtype";
+      assertWrongType(() -> redis.lpush(key, "list"), () -> redis.getdel(key));
+   }
+
+   @Test
+   public void testSetrangeIntegerEncodedKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "setrange-int";
+      redis.set(key, "12345");
+      assertThat(redis.setrange(key, 1, "XX")).isEqualTo(5);
+      assertThat(redis.get(key)).isEqualTo("1XX45");
+   }
+
+   @Test
+   public void testGetrangeIntegerEncodedValue() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "getrange-int";
+      redis.set(key, "12345");
+      assertThat(redis.getrange(key, 0, 2)).isEqualTo("123");
+      assertThat(redis.getrange(key, -3, -1)).isEqualTo("345");
+   }
+
+   @Test
+   public void testSetMultipleOptionsAtOnce() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "set-multi-opts";
+      // SET with NX and EX
+      assertThat(redis.set(key, "value", new SetArgs().nx().ex(100))).isEqualTo("OK");
+      assertThat(redis.get(key)).isEqualTo("value");
+      assertThat(redis.ttl(key)).isEqualTo(100);
+
+      // SET with XX and PX (update existing)
+      assertThat(redis.set(key, "new-value", new SetArgs().xx().px(50000))).isEqualTo("OK");
+      assertThat(redis.get(key)).isEqualTo("new-value");
+      assertThat(redis.pttl(key)).isGreaterThan(0);
+   }
+
+   @Test
+   public void testAppendCreatesKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "append-creates";
+      // APPEND on non-existing key creates it
+      assertThat(redis.append(key, "hello")).isEqualTo(5);
+      assertThat(redis.get(key)).isEqualTo("hello");
+   }
+
+   @Test
+   public void testAppendIntToRaw() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "append-int2raw";
+      redis.set(key, "123");
+      redis.append(key, "abc");
+      assertThat(redis.get(key)).isEqualTo("123abc");
+      assertThat(redis.strlen(key)).isEqualTo(6);
+   }
+
+   @Test
+   public void testIncrOnLargeValue() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incr-large";
+      redis.set(key, "999999999999");
+      assertThat(redis.incr(key)).isEqualTo(1000000000000L);
+   }
+
+   @Test
+   public void testDecrOnLargeValue() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "decr-large";
+      redis.set(key, "-999999999999");
+      assertThat(redis.decr(key)).isEqualTo(-1000000000000L);
+   }
+
+   @Test
+   public void testIncrWithSpacesInValue() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incr-spaces";
+      redis.set(key, " 10 ");
+      assertThatThrownBy(() -> redis.incr(key))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("value is not an integer or out of range");
+   }
+
+   @Test
+   public void testStrlenWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "strlen-wrongtype";
+      assertWrongType(() -> redis.lpush(key, "list"), () -> redis.strlen(key));
+   }
+
+   @Test
+   public void testAppendWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "append-wrongtype";
+      assertWrongType(() -> redis.lpush(key, "list"), () -> redis.append(key, "val"));
+   }
+
+   @Test
+   public void testIncrWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incr-wrongtype";
+      assertWrongType(() -> redis.lpush(key, "list"), () -> redis.incr(key));
+   }
+
+   @Test
+   public void testDecrWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "decr-wrongtype";
+      assertWrongType(() -> redis.lpush(key, "list"), () -> redis.decr(key));
+   }
+
+   @Test
+   public void testIncrbyWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incrby-wrongtype";
+      assertWrongType(() -> redis.lpush(key, "list"), () -> redis.incrby(key, 5));
+   }
+
+   @Test
+   public void testDecrbyWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "decrby-wrongtype";
+      assertWrongType(() -> redis.lpush(key, "list"), () -> redis.decrby(key, 5));
+   }
+
+   @Test
+   public void testIncrbyFloatWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incrbyfloat-wrongtype";
+      assertWrongType(() -> redis.lpush(key, "list"), () -> redis.incrbyfloat(key, 1.5));
+   }
+
+   @Test
+   public void testSetAndGetLargePayload() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "large-payload";
+      // 1MB payload
+      char[] chars = new char[1024 * 1024];
+      Arrays.fill(chars, 'x');
+      String largeValue = new String(chars);
+      redis.set(key, largeValue);
+      assertThat(redis.get(key)).isEqualTo(largeValue);
+      assertThat(redis.strlen(key)).isEqualTo(1024 * 1024);
+   }
+
+   @Test
+   public void testGetexOnExpiredKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "getex-expired";
+      redis.setex(key, 1, "value");
+      ((ControlledTimeService) this.timeService).advance(2000);
+      // GETEX on expired key returns nil
+      assertThat(redis.getex(key, new GetExArgs())).isNull();
+   }
+
+   @Test
+   public void testSetGetWithExpiration() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "setget-expire";
+      redis.set(key, "old-value");
+
+      // SET GET with EX returns old value and sets new TTL
+      assertThat(redis.setGet(key, "new-value", new SetArgs().ex(100))).isEqualTo("old-value");
+      assertThat(redis.get(key)).isEqualTo("new-value");
+      assertThat(redis.ttl(key)).isEqualTo(100);
+   }
+
+   @Test
+   public void testIncrbyFloatScientificNotation() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incrbyfloat-sci";
+      redis.set(key, "10");
+      // Redis supports scientific notation for INCRBYFLOAT
+      Double result = redis.incrbyfloat(key, 1.0e2);
+      assertThat(result).isEqualTo(110.0);
+   }
+
+   @Test
+   public void testGetNonExistingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.get("totally-nonexistent")).isNull();
+   }
+
+   @Test
+   public void testSetWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "set-wrongtype";
+      redis.lpush(key, "item");
+      // Infinispan returns WRONGTYPE for SET on non-string keys
+      assertThatThrownBy(() -> redis.set(key, "value"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+   }
+
+   @Test
+   public void testMsetnxWithExistentKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set("msetnx-exists", "existing");
+
+      Map<String, String> values = new HashMap<>();
+      values.put("msetnx-exists", "new");
+      values.put("msetnx-new", "value");
+      // MSETNX fails atomically - neither key should be set
+      assertThat(redis.msetnx(values)).isFalse();
+      assertThat(redis.get("msetnx-exists")).isEqualTo("existing");
+      assertThat(redis.get("msetnx-new")).isNull();
+   }
+
+   @Test
+   public void testDecrbyNegativeAmount() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "decrby-neg";
+      redis.set(key, "10");
+      // DECRBY with negative = effectively increment
+      assertThat(redis.decrby(key, -5)).isEqualTo(15);
+   }
+
+   @Test
+   public void testIncrbyNegativeAmount() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incrby-neg";
+      redis.set(key, "10");
+      // INCRBY with negative = effectively decrement
+      assertThat(redis.incrby(key, -3)).isEqualTo(7);
+   }
+
+   @Test
+   public void testSetrangeEmptyValueOnNonExisting() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "setrange-empty-ne";
+      // SETRANGE with empty value on non-existing key doesn't create it
+      assertThat(redis.setrange(key, 0, "")).isEqualTo(0);
+      assertThat(redis.exists(key)).isEqualTo(0);
+   }
+
+   @Test
+   public void testGetrangeNonExistingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.getrange("nonexist-getrange", 0, -1)).isEqualTo("");
    }
 }

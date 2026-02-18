@@ -34,6 +34,7 @@ import io.lettuce.core.ZStoreArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.ArrayOutput;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
@@ -1935,5 +1936,445 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
                   just(Double.NEGATIVE_INFINITY, "anna"),
                   just(Double.POSITIVE_INFINITY, "galder")
             );
+   }
+
+   public void testZADDNaNScore() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      assertThatThrownBy(() -> redis.dispatch(CommandType.ZADD, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("nan").addValue("member")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   public void testZINCRBYNonExistingMember() {
+      // ZINCRBY creates the member if it doesn't exist
+      assertThat(redis.zincrby(k(), 5, "newmember")).isEqualTo(5);
+      assertThat(redis.zscore(k(), "newmember")).isEqualTo(5);
+   }
+
+   public void testZINCRBYNonExistingKey() {
+      // ZINCRBY creates the key and member
+      assertThat(redis.zincrby(k(), 10, "member")).isEqualTo(10);
+      assertThat(redis.zcard(k())).isEqualTo(1);
+      assertThat(redis.zscore(k(), "member")).isEqualTo(10);
+   }
+
+   public void testZRANDMEMBERCountZero() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"));
+      assertThat(redis.zrandmember(k(), 0)).isEmpty();
+      assertThat(redis.zrandmemberWithScores(k(), 0)).isEmpty();
+   }
+
+   public void testZRANDMEMBERNoDuplicatesPositive() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"));
+      // Positive count: distinct elements
+      List<String> result = redis.zrandmember(k(), 3);
+      assertThat(result).hasSize(3).doesNotHaveDuplicates();
+      assertThat(result).containsExactlyInAnyOrder("a", "b", "c");
+   }
+
+   public void testZRANDMEMBERNegativeCountDuplicates() {
+      redis.zadd(k(), just(1, "only"));
+      // Negative count with single element should have duplicates
+      List<String> result = redis.zrandmember(k(), -5);
+      assertThat(result).hasSize(5);
+      assertThat(new java.util.HashSet<>(result)).containsExactly("only");
+   }
+
+   public void testZPOPMINCountZero() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"));
+      assertThat(redis.zpopmin(k(), 0)).isEmpty();
+      assertThat(redis.zcard(k())).isEqualTo(2);
+   }
+
+   public void testZPOPMAXCountZero() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"));
+      assertThat(redis.zpopmax(k(), 0)).isEmpty();
+      assertThat(redis.zcard(k())).isEqualTo(2);
+   }
+
+   public void testZREMNonExistingMember() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"));
+      assertThat(redis.zrem(k(), "nonexist")).isEqualTo(0);
+      assertThat(redis.zcard(k())).isEqualTo(2);
+   }
+
+   public void testZREMNonExistingKey() {
+      assertThat(redis.zrem(k(), "a", "b")).isEqualTo(0);
+   }
+
+   public void testZDIFFNonExistingKey() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"));
+      // ZDIFF with non-existing second key returns original set
+      assertThat(redis.zdiff("nokey", k())).isEmpty();
+      assertThat(redis.zdiffWithScores(k(), "nokey"))
+            .containsExactly(just(1, "a"), just(2, "b"));
+   }
+
+   public void testZDIFFSTORENonExistingKeys() {
+      assertThat(redis.zdiffstore("dst", "nokey1", "nokey2")).isEqualTo(0);
+      assertThat(redis.exists("dst")).isEqualTo(0);
+   }
+
+   public void testZSCANCount() {
+      // Add many elements and verify scan with COUNT
+      for (int i = 0; i < 50; i++) {
+         redis.zadd(k(), i, "member" + i);
+      }
+      java.util.HashSet<String> scanned = new java.util.HashSet<>();
+      ScanArgs args = ScanArgs.Builder.limit(10);
+      for (var cursor = redis.zscan(k(), args); ; cursor = redis.zscan(k(), cursor, args)) {
+         for (ScoredValue<String> sv : cursor.getValues()) {
+            scanned.add(sv.getValue());
+         }
+         if (cursor.isFinished()) break;
+      }
+      assertThat(scanned).hasSize(50);
+   }
+
+   public void testZRANGESTORENonExistingSrc() {
+      assertThat(redis.zrangestorebylex("dst", "nokey",
+            Range.unbounded(), Limit.unlimited())).isEqualTo(0);
+      assertThat(redis.exists("dst")).isEqualTo(0);
+   }
+
+   public void testZINTERCARDIllegalArgs() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      // numkeys 0
+      assertThatThrownBy(() -> redis.dispatch(CommandType.ZINTERCARD, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).add(0).addKey("a")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+
+      // Negative LIMIT
+      assertThatThrownBy(() -> redis.zintercard(-1, "a", "b"))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   public void testZUNIONSTOREDestCleanup() {
+      // ZUNIONSTORE should overwrite existing destination
+      redis.zadd("zu-dst", just(99, "old"));
+      redis.zadd("zu-src", just(1, "new"));
+      assertThat(redis.zunionstore("zu-dst", "zu-src")).isEqualTo(1);
+      assertThat(redis.zrangeWithScores("zu-dst", 0, -1)).containsExactly(just(1, "new"));
+   }
+
+   public void testZINTERSTOREDestCleanup() {
+      // ZINTERSTORE should overwrite existing destination
+      redis.zadd("zi-dst", just(99, "old"));
+      redis.zadd("zi-s1", just(1, "a"), just(2, "b"));
+      redis.zadd("zi-s2", just(3, "b"), just(4, "c"));
+      assertThat(redis.zinterstore("zi-dst", "zi-s1", "zi-s2")).isEqualTo(1);
+      assertThat(redis.zrangeWithScores("zi-dst", 0, -1)).containsExactly(just(5, "b"));
+   }
+
+   public void testZRANGENonExistingKey() {
+      assertThat(redis.zrange(k(), 0, -1)).isEmpty();
+      assertThat(redis.zrangeWithScores(k(), 0, -1)).isEmpty();
+   }
+
+   public void testZREVRANGENonExistingKey() {
+      assertThat(redis.zrevrange(k(), 0, -1)).isEmpty();
+      assertThat(redis.zrevrangeWithScores(k(), 0, -1)).isEmpty();
+   }
+
+   public void testZMSCORENonExistingKey() {
+      assertThat(redis.zmscore(k(), "a", "b")).containsExactly(null, null);
+   }
+
+   public void testZMSCOREPartialMissing() {
+      redis.zadd(k(), just(1.5, "a"), just(2.5, "b"));
+      assertThat(redis.zmscore(k(), "a", "nonexist", "b"))
+            .containsExactly(1.5, null, 2.5);
+   }
+
+   public void testZCOUNTNonExistingKey() {
+      assertThat(redis.zcount(k(), Range.unbounded())).isEqualTo(0);
+   }
+
+   public void testZLEXCOUNTNonExistingKey() {
+      assertThat(redis.zlexcount(k(), Range.unbounded())).isEqualTo(0);
+   }
+
+   public void testZRankNonExistingKeyOrMember() {
+      assertThat(redis.zrank(k(), "a")).isNull();
+      redis.zadd(k(), just(1, "a"));
+      assertThat(redis.zrank(k(), "nonexist")).isNull();
+   }
+
+   @Test
+   public void testZRankWithScore() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      redis.zadd(k(), just(1.5, "a"), just(2.0, "b"), just(3.5, "c"));
+
+      // ZRANK key member WITHSCORE
+      List<Object> result = redis.dispatch(CommandType.ZRANK,
+            new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).addValue("a").add("WITHSCORE"));
+      assertThat(result).hasSize(2);
+      assertThat(((Number) result.get(0)).longValue()).isEqualTo(0); // rank
+      assertThat(Double.parseDouble(result.get(1).toString())).isEqualTo(1.5); // score
+
+      result = redis.dispatch(CommandType.ZRANK,
+            new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).addValue("c").add("WITHSCORE"));
+      assertThat(result).hasSize(2);
+      assertThat(((Number) result.get(0)).longValue()).isEqualTo(2); // rank
+      assertThat(Double.parseDouble(result.get(1).toString())).isEqualTo(3.5); // score
+
+      // Non-existing member returns nil
+      result = redis.dispatch(CommandType.ZRANK,
+            new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).addValue("nonexist").add("WITHSCORE"));
+      assertThat(result).containsExactly((Object) null);
+   }
+
+   @Test
+   public void testZRevRankWithScore() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      redis.zadd(k(), just(1.5, "a"), just(2.0, "b"), just(3.5, "c"));
+
+      // ZREVRANK key member WITHSCORE
+      List<Object> result = redis.dispatch(CommandType.ZREVRANK,
+            new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).addValue("a").add("WITHSCORE"));
+      assertThat(result).hasSize(2);
+      assertThat(((Number) result.get(0)).longValue()).isEqualTo(2); // reverse rank
+      assertThat(Double.parseDouble(result.get(1).toString())).isEqualTo(1.5); // score
+
+      result = redis.dispatch(CommandType.ZREVRANK,
+            new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).addValue("c").add("WITHSCORE"));
+      assertThat(result).hasSize(2);
+      assertThat(((Number) result.get(0)).longValue()).isEqualTo(0); // reverse rank
+      assertThat(Double.parseDouble(result.get(1).toString())).isEqualTo(3.5); // score
+   }
+
+   public void testZADDVariadicParseError() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      // ZADD with one valid and one bad score in variadic form should not add anything
+      assertThatThrownBy(() -> redis.dispatch(CommandType.ZADD, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("10").add("a").add("notanumber").add("b")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+      // Neither element should have been added
+      assertThat(redis.zcard(k())).isEqualTo(0);
+   }
+
+   public void testZADDEmptyStringScore() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      assertThatThrownBy(() -> redis.dispatch(CommandType.ZADD, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("").add("member")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   public void testZADDVariadicMissingArg() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      // ZADD with incomplete pair (score without member)
+      assertThatThrownBy(() -> redis.dispatch(CommandType.ZADD, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("10").add("a").add("20")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   public void testZADDIncrLTGTWithInf() {
+      // ZADD INCR GT with inf: when current is finite, incrementing by inf should succeed
+      redis.zadd(k(), just(10, "a"));
+      assertThat(redis.zaddincr(k(), ZAddArgs.Builder.gt(), Double.POSITIVE_INFINITY, "a"))
+            .isEqualTo(Double.POSITIVE_INFINITY);
+      // ZADD INCR LT with -inf: when current is finite, incrementing by -inf should succeed
+      redis.zadd(k(), just(10, "b"));
+      assertThat(redis.zaddincr(k(), ZAddArgs.Builder.lt(), Double.NEGATIVE_INFINITY, "b"))
+            .isEqualTo(Double.NEGATIVE_INFINITY);
+   }
+
+   public void testZDIFFSubtractSelf() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"));
+      // ZDIFF of a set from itself should return empty
+      assertThat(redis.zdiff(k(), k())).isEmpty();
+      assertThat(redis.zdiffWithScores(k(), k())).isEmpty();
+   }
+
+   public void testZPOPMINNegativeCount() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"));
+      assertThatThrownBy(() -> redis.dispatch(CommandType.ZPOPMIN, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add(-1)))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   public void testZPOPMAXNegativeCount() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"));
+      assertThatThrownBy(() -> redis.dispatch(CommandType.ZPOPMAX, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add(-1)))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   public void testZRankAfterDeletion() {
+      redis.zadd(k(), just(10, "x"), just(20, "y"), just(30, "z"));
+      assertThat(redis.zrank(k(), "y")).isEqualTo(1);
+      redis.zrem(k(), "x");
+      // After deleting "x", "y" should now be rank 0
+      assertThat(redis.zrank(k(), "y")).isEqualTo(0);
+      assertThat(redis.zrank(k(), "z")).isEqualTo(1);
+   }
+
+   public void testZRANGESTOREWrongTypeSrc() {
+      redis.set(k(), "notazset");
+      assertThatThrownBy(() -> redis.zrangestore("dst", k(), create(0L, -1L)))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+   }
+
+   public void testZRANGESTOREEmptyRangeRemovesDst() {
+      // Setup destination with existing data
+      redis.zadd("zrs-dst", just(1, "old"));
+      redis.zadd("zrs-src", just(1, "a"), just(2, "b"), just(3, "c"));
+      // Store an empty range - should remove destination
+      assertThat(redis.zrangestore("zrs-dst", "zrs-src", create(5L, 10L))).isEqualTo(0);
+      assertThat(redis.exists("zrs-dst")).isEqualTo(0);
+   }
+
+   public void testZRANGESTOREByScoreRevLimit() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"), just(4, "d"), just(5, "e"));
+      // ZRANGESTORE dst src 5 2 BYSCORE REV LIMIT 1 2
+      assertThat(redis.zrangestorebyscore("zrs-dst2", k(),
+            from(including(2.0), including(5.0)), Limit.create(1, 2))).isEqualTo(2);
+      assertThat(redis.zrangeWithScores("zrs-dst2", 0, -1))
+            .containsExactly(just(3, "c"), just(4, "d"));
+   }
+
+   public void testZUNIONSTOREWithEmptySet() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"));
+      // Union with one empty set should equal the non-empty set
+      assertThat(redis.zunionstore("zu-empty-dst", k(), "nonexistent"))
+            .isEqualTo(3);
+      assertThat(redis.zrangeWithScores("zu-empty-dst", 0, -1))
+            .containsExactly(just(1, "a"), just(2, "b"), just(3, "c"));
+   }
+
+   public void testZUNIONSTORENonExistingDoesntSetDest() {
+      // ZUNIONSTORE against all non-existing keys should not set destination
+      assertThat(redis.zunionstore("zu-noset-dst", "nokey1", "nokey2")).isEqualTo(0);
+      assertThat(redis.exists("zu-noset-dst")).isEqualTo(0);
+   }
+
+   public void testZREMRANGEBYSCOREInfBounds() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"), just(4, "d"), just(5, "e"));
+      // ZREMRANGEBYSCORE with -inf to 2 (exclusive)
+      assertThat(redis.zremrangebyscore(k(), from(unbounded(), excluding(2.0)))).isEqualTo(1);
+      assertThat(redis.zrange(k(), 0, -1)).containsExactly("b", "c", "d", "e");
+      // ZREMRANGEBYSCORE with 4 (exclusive) to +inf
+      assertThat(redis.zremrangebyscore(k(), from(excluding(4.0), unbounded()))).isEqualTo(1);
+      assertThat(redis.zrange(k(), 0, -1)).containsExactly("b", "c", "d");
+      // ZREMRANGEBYSCORE with -inf to +inf removes all
+      assertThat(redis.zremrangebyscore(k(), Range.unbounded())).isEqualTo(3);
+      assertThat(redis.exists(k())).isEqualTo(0);
+   }
+
+   public void testZREMRANGEBYRANKRemovesKey() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"));
+      assertThat(redis.zremrangebyrank(k(), 0, -1)).isEqualTo(2);
+      assertThat(redis.exists(k())).isEqualTo(0);
+   }
+
+   @SuppressWarnings("unchecked")
+   public void testZRANGEByScoreRevLimit() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"), just(4, "d"), just(5, "e"));
+      // ZRANGE key 5 2 BYSCORE REV LIMIT 0 3
+      List<Object> result = redis.dispatch(CommandType.ZRANGE, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("5").add("2")
+                  .add("BYSCORE").add("REV").add("LIMIT").add("0").add("3"));
+      assertThat(result).containsExactly("e", "d", "c");
+
+      // ZRANGE key 5 2 BYSCORE REV LIMIT 1 2
+      result = redis.dispatch(CommandType.ZRANGE, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("5").add("2")
+                  .add("BYSCORE").add("REV").add("LIMIT").add("1").add("2"));
+      assertThat(result).containsExactly("d", "c");
+   }
+
+   @SuppressWarnings("unchecked")
+   public void testZRANGEByLex() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      redis.zadd(k(), just(0, "a"), just(0, "b"), just(0, "c"), just(0, "d"), just(0, "e"));
+      // ZRANGE key [b [d BYLEX
+      List<Object> result = redis.dispatch(CommandType.ZRANGE, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("[b").add("[d").add("BYLEX"));
+      assertThat(result).containsExactly("b", "c", "d");
+
+      // ZRANGE key (b [d BYLEX
+      result = redis.dispatch(CommandType.ZRANGE, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("(b").add("[d").add("BYLEX"));
+      assertThat(result).containsExactly("c", "d");
+
+      // ZRANGE key - + BYLEX
+      result = redis.dispatch(CommandType.ZRANGE, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("-").add("+").add("BYLEX"));
+      assertThat(result).containsExactly("a", "b", "c", "d", "e");
+
+      // ZRANGE key [d [b BYLEX REV
+      result = redis.dispatch(CommandType.ZRANGE, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("[d").add("[b").add("BYLEX").add("REV"));
+      assertThat(result).containsExactly("d", "c", "b");
+   }
+
+   public void testZDIFFSTOREOverwritesDst() {
+      redis.zadd("zds-dst", just(99, "old"));
+      redis.zadd("zds-s1", just(1, "a"), just(2, "b"), just(3, "c"));
+      redis.zadd("zds-s2", just(1, "a"));
+      assertThat(redis.zdiffstore("zds-dst", "zds-s1", "zds-s2")).isEqualTo(2);
+      assertThat(redis.zrangeWithScores("zds-dst", 0, -1))
+            .containsExactly(just(2, "b"), just(3, "c"));
+   }
+
+   public void testZMPOPIllegalArg() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      // ZMPOP with numkeys 0
+      assertThatThrownBy(() -> redis.dispatch(CommandType.ZMPOP, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).add(0).addKey(k()).add("MIN")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   @SuppressWarnings("unchecked")
+   public void testZRANGEBYLEXInvalidSpecifier() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      redis.zadd(k(), just(0, "a"), just(0, "b"), just(0, "c"));
+      // Invalid lex range specifier (no [ or ( prefix, just raw value)
+      assertThatThrownBy(() -> redis.dispatch(CommandType.ZRANGEBYLEX, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(k()).add("a").add("c")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   public void testZSCOREAfterUpdate() {
+      redis.zadd(k(), just(10, "member"));
+      assertThat(redis.zscore(k(), "member")).isEqualTo(10);
+      // Update score
+      redis.zadd(k(), just(20, "member"));
+      assertThat(redis.zscore(k(), "member")).isEqualTo(20);
+      // ZINCRBY also changes the score
+      redis.zincrby(k(), 5, "member");
+      assertThat(redis.zscore(k(), "member")).isEqualTo(25);
+   }
+
+   public void testZINTERWithEmptySet() {
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"));
+      // ZINTER with one empty set should return empty
+      assertThat(redis.zinter(k(), "nonexistent")).isEmpty();
+      assertThat(redis.zinterWithScores(k(), "nonexistent")).isEmpty();
+   }
+
+   public void testZCARDAfterOperations() {
+      assertThat(redis.zcard(k())).isEqualTo(0);
+      redis.zadd(k(), just(1, "a"), just(2, "b"), just(3, "c"));
+      assertThat(redis.zcard(k())).isEqualTo(3);
+      // Add existing member with different score doesn't change cardinality
+      redis.zadd(k(), just(10, "a"));
+      assertThat(redis.zcard(k())).isEqualTo(3);
+      // ZREM reduces cardinality
+      redis.zrem(k(), "a");
+      assertThat(redis.zcard(k())).isEqualTo(2);
+      // Remove all
+      redis.zrem(k(), "b", "c");
+      assertThat(redis.zcard(k())).isEqualTo(0);
+      assertWrongType(() -> redis.set(k(), "str"), () -> redis.zcard(k()));
    }
 }
