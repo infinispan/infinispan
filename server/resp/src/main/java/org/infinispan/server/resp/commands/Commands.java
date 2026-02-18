@@ -50,6 +50,14 @@ import org.infinispan.server.resp.commands.generic.TIME;
 import org.infinispan.server.resp.commands.generic.TOUCH;
 import org.infinispan.server.resp.commands.generic.TTL;
 import org.infinispan.server.resp.commands.generic.TYPE;
+import org.infinispan.server.resp.commands.geo.GEOADD;
+import org.infinispan.server.resp.commands.geo.GEODIST;
+import org.infinispan.server.resp.commands.geo.GEOHASH;
+import org.infinispan.server.resp.commands.geo.GEOPOS;
+import org.infinispan.server.resp.commands.geo.GEORADIUS;
+import org.infinispan.server.resp.commands.geo.GEORADIUSBYMEMBER;
+import org.infinispan.server.resp.commands.geo.GEOSEARCH;
+import org.infinispan.server.resp.commands.geo.GEOSEARCHSTORE;
 import org.infinispan.server.resp.commands.hash.HDEL;
 import org.infinispan.server.resp.commands.hash.HEXISTS;
 import org.infinispan.server.resp.commands.hash.HGET;
@@ -226,7 +234,9 @@ public final class Commands {
       ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC(), new EVAL(), new EVAL_RO(), new EVALSHA(), new EVALSHA_RO()};
       ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL(), new FT_LIST()};
       // GET should always be first here
-      ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE(), new GETSET(), new GETBIT()};
+      ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE(), new GETSET(), new GETBIT(),
+            new GEOADD(), new GEODIST(), new GEOHASH(), new GEOPOS(), new GEORADIUS(), new GEORADIUSBYMEMBER(),
+            new GEOSEARCH(), new GEOSEARCHSTORE()};
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HSETNX(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD(), new HSTRLEN()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[9] = new RespCommand[]{new JSONGET(), new JSONSET(), new JSONARRLEN(), new JSONOBJLEN(), new JSONSTRLEN(), new JSONTYPE(), new JSONDEL(), new JSONSTRAPPEND(), new JSONARRAPPEND(), new JSONTOGGLE(), new JSONOBJKEYS(), new JSONNUMINCRBY(), new JSONNUMMULTBY(), new JSONFORGET(), new JSONARRINDEX(), new JSONARRINSERT(), new JSONARRTRIM(), new JSONCLEAR(), new JSONARRPOP(), new JSONMSET(), new JSONMERGE(), new JSONMGET(), new JSONRESP(), new JSONDEBUG()};
