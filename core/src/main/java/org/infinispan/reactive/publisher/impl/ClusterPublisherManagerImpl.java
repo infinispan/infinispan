@@ -1022,13 +1022,13 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
        */
       private <E> Flowable<E> getValuesFlowable(BiFunction<InnerPublisherSubscription.InnerPublisherSubscriptionBuilder<K, I, R>, Map.Entry<Address, IntSet>, Publisher<E>> subToFlowableFunction) {
          Flowable<E> flowable = Flowable.defer(() -> {
-            if (!componentRegistry.getStatus().allowInvocations() && !componentRegistry.getStatus().startingUp()) {
-               return Flowable.error(new IllegalLifecycleStateException());
-            }
             Map<Address, IntSet> targets = publisher.targets;
             Address localAddress = rpcManager.getAddress();
             LocalizedCacheTopology topology = null;
             if (targets == null) {
+               if (!componentRegistry.getStatus().allowInvocations() && !componentRegistry.getStatus().startingUp()) {
+                  return Flowable.error(new IllegalLifecycleStateException());
+               }
                topology = distributionManager.getCacheTopology();
                int previousTopology = currentTopology;
                // Store the current topology in case if we have to retry

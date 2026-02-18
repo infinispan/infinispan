@@ -74,6 +74,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -299,6 +300,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
    private void injectComponents(StateConsumer stateConsumer, AsyncInterceptorChain interceptorChain, RpcManager rpcManager,
                                  ClusterPublisherManager clusterPublisherManager) {
+      Transport transport = mock(Transport.class);
+      when(transport.getOldestMember()).thenReturn(NodeVersion.INSTANCE);
       TestingUtil.inject(stateConsumer,
             mockCache(),
             TestingUtil.named(NON_BLOCKING_EXECUTOR, pooledExecutorService),
@@ -322,7 +325,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             mockXSiteStateTransferManager(),
             new ControlledTimeService(),
             TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutorService),
-            clusterPublisherManager
+            clusterPublisherManager,
+            transport
             );
    }
 
