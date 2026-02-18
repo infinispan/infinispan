@@ -15,17 +15,12 @@ jobs:
   targetlabel:
     runs-on: ubuntu-latest
     steps:
-      - name: Get Labels Action
+      - name: Add target label
         run: |
-         labels=$(gh api repos/${GH_REPO}/labels -q 'map(.name)' --paginate)
-         echo "LABELS=$labels" >> $GITHUB_ENV
+          TARGET="target/${{ github.event.pull_request.base.ref }}"
+          if gh api repos/${GH_REPO}/labels -q '.[].name' --paginate | grep -qxF "$TARGET"; then
+            gh pr edit ${{ github.event.pull_request.number }} --add-label "$TARGET"
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-      - if: ${{ contains(fromJSON(env.LABELS), env.TARGET) }}
-        run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label ${TARGET}
-        env:
-         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-         GH_REPO: ${{ github.repository }}
-         TARGET: target/${{ github.event.pull_request.base.ref }}
