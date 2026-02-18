@@ -23,18 +23,28 @@ public record BitfieldOperation(Type type, int offset, long value, boolean signe
    }
 
    public static BitfieldOperation GET(byte[] encoding, byte[] offset) {
-      return new BitfieldOperation(Type.GET, toOffset(offset), 0, isSigned(encoding), toBits(encoding), Overflow.NONE);
+      int bits = toBits(encoding);
+      return new BitfieldOperation(Type.GET, toOffset(offset, bits), 0, isSigned(encoding), bits, Overflow.NONE);
    }
 
    public static BitfieldOperation SET(byte[] encoding, byte[] offset, byte[] value, Overflow overflow) {
-      return new BitfieldOperation(Type.SET, toOffset(offset), toLong(value), isSigned(encoding), toBits(encoding), overflow);
+      int bits = toBits(encoding);
+      return new BitfieldOperation(Type.SET, toOffset(offset, bits), toLong(value), isSigned(encoding), bits, overflow);
    }
 
    public static BitfieldOperation INCRBY(byte[] encoding, byte[] offset, byte[] increment, Overflow overflow) {
-      return new BitfieldOperation(Type.INCRBY, toOffset(offset), toLong(increment), isSigned(encoding), toBits(encoding), overflow);
+      int bits = toBits(encoding);
+      return new BitfieldOperation(Type.INCRBY, toOffset(offset, bits), toLong(increment), isSigned(encoding), bits, overflow);
    }
 
-   private static int toOffset(byte[] value) {
+   private static int toOffset(byte[] value, int bits) {
+      if (value.length > 0 && value[0] == '#') {
+         int idx = toInt(value, 1);
+         if (idx < 0) {
+            throw new IllegalArgumentException(Messages.MESSAGES.invalidBitOffset());
+         }
+         return idx * bits;
+      }
       int offset = toInt(value);
       if (offset < 0) {
          throw new IllegalArgumentException(Messages.MESSAGES.invalidBitOffset());
