@@ -65,7 +65,7 @@ public class SMOVE extends RespCommand implements Resp3Command {
             .thenCompose(removed -> {
                if (removed == 0) return CompletableFuture.completedFuture(0L);
 
-               return cache.add(destKey, element);
+               return cache.add(destKey, element).thenApply(ignore -> 1L);
             });
    }
 }
