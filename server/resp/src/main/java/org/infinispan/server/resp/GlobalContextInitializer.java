@@ -15,6 +15,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.server.resp.commands.tx.WATCH.TxEventConverterEmpty.class,
             org.infinispan.server.resp.filter.ComposedFilterConverter.class,
             org.infinispan.server.resp.filter.EventListenerConverter.class,
+            org.infinispan.server.resp.filter.EventListenerGlobFilter.class,
             org.infinispan.server.resp.filter.EventListenerKeysFilter.class,
             org.infinispan.server.resp.filter.GlobMatchFilterConverter.class,
             org.infinispan.server.resp.filter.RespTypeFilterConverter.class,

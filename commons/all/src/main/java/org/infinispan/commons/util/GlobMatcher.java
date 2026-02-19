@@ -22,13 +22,13 @@ public final class GlobMatcher {
     * Checks whether the given string matches the glob pattern.
     *
     * <p>
-    * <b>Warning:</b> This methods does not accept multi-byte strings.
+    * <b>Warning:</b> This method does not accept multibyte strings.
     * </p>
     *
     * @param pattern: Glob pattern to check against.
     * @param string: String to check for matching.
     * @return <code>true</code> if a match is found, <code>false</code>, otherwise.
-    * @throws AssertionError If the {@param string} is a multi-byte string.
+    * @throws AssertionError If the {@param string} is a multibyte string.
     */
    public static boolean match(String pattern, String string) {
       assertSingleByte(string);
@@ -39,7 +39,7 @@ public final class GlobMatcher {
     * Checks whether the given byte sequence matches the glob pattern describe as a byte sequence.
     *
     * <p>
-    * <b>Warning</b>: This method does not accept multi-byte characters.
+    * <b>Warning</b>: This method does not accept multibyte characters.
     * </p>
     *
     * @param pattern: The glob pattern represented as a byte sequence.

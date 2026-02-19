@@ -72,15 +72,29 @@ public class SubscriberHandler extends CacheRespRequestHandler {
          byte[] key = KeyChannelUtils.channelToKey(unwrap(entryEvent.getKey()));
          byte[] value = entryEvent.getValue();
          if (key.length > 0 && value != null && value.length > 0) {
-            // *3 + \r\n + $7 + \r\n + message + \r\n + $ + keylength + \r\n + key + \r\n +
-            // $ + valuelength + \r\n + value + \r\n
-            int byteSize = 2 + 2 + 2 + 2 + 7 + 2 + 1 + ByteBufferUtils.stringSize(key.length)
-                  + 2 + key.length + 2 + 1 + ByteBufferUtils.stringSize(value.length) + 2 + value.length + 2;
+            List<Object> elements;
+            int byteSize;
+
+            if (pattern != null) {
+               // *4\r\n + $8\r\npmessage\r\n + $<patlen>\r\n<pattern>\r\n + $<keylen>\r\n<key>\r\n + $<vallen>\r\n<value>\r\n
+               elements = List.of(PubSubEvents.PMESSAGE, pattern, key, value);
+               byteSize = 2 + 2 + 2 + 2 + 8 + 2
+                     + 1 + ByteBufferUtils.stringSize(pattern.length) + 2 + pattern.length + 2
+                     + 1 + ByteBufferUtils.stringSize(key.length) + 2 + key.length + 2
+                     + 1 + ByteBufferUtils.stringSize(value.length) + 2 + value.length + 2;
+            } else {
+               // *3\r\n + $7\r\nmessage\r\n + $<keylen>\r\n<key>\r\n + $<vallen>\r\n<value>\r\n
+               elements = List.of(PubSubEvents.MESSAGE, key, value);
+               byteSize = 2 + 2 + 2 + 2 + 7 + 2
+                     + 1 + ByteBufferUtils.stringSize(key.length) + 2 + key.length + 2
+                     + 1 + ByteBufferUtils.stringSize(value.length) + 2 + value.length + 2;
+            }
+
             // TODO: this is technically an issue with concurrent events before/after register/unregister message
             ByteBuf byteBuf = channel.alloc().buffer(byteSize, byteSize);
             ByteBufPool allocator = ignore -> byteBuf;
             ByteBufResponseWriter w = new ByteBufResponseWriter(allocator);
-            w.array(List.of(PubSubEvents.MESSAGE, key, value), Resp3Type.BULK_STRING);
+            w.array(elements, Resp3Type.BULK_STRING);
             assert byteBuf.writerIndex() == byteSize;
             // TODO: add some back pressure? - something like ClientListenerRegistry?
             channel.writeAndFlush(byteBuf, channel.voidPromise());
@@ -106,9 +120,14 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    }
 
    private final Map<WrappedByteArray, RespCacheListener> specificChannelSubscribers = new HashMap<>();
+   private final Map<WrappedByteArray, RespCacheListener> patternSubscribers = new HashMap<>();
 
    public Map<WrappedByteArray, RespCacheListener> specificChannelSubscribers() {
       return specificChannelSubscribers;
+   }
+
+   public Map<WrappedByteArray, RespCacheListener> patternSubscribers() {
+      return patternSubscribers;
    }
 
    public Resp3Handler resp3Handler() {
@@ -142,19 +161,33 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    }
 
    public void removeAllListeners() {
-      for (Iterator<Map.Entry<WrappedByteArray, RespCacheListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
+      removeAllFrom(specificChannelSubscribers);
+      removeAllFrom(patternSubscribers);
+   }
+
+   private void removeAllFrom(Map<WrappedByteArray, RespCacheListener> subscribers) {
+      for (Iterator<Map.Entry<WrappedByteArray, RespCacheListener>> iterator = subscribers.entrySet().iterator(); iterator.hasNext(); ) {
          Map.Entry<WrappedByteArray, RespCacheListener> entry = iterator.next();
-         RespCacheListener listener = entry.getValue();
-         cache().removeListenerAsync(listener);
+         cache().removeListenerAsync(entry.getValue());
          iterator.remove();
       }
    }
 
    public CompletionStage<RespRequestHandler> unsubscribeAll(ChannelHandlerContext ctx) {
+      return unsubscribeAllFrom(ctx, specificChannelSubscribers, false);
+   }
+
+   public CompletionStage<RespRequestHandler> punsubscribeAll(ChannelHandlerContext ctx) {
+      return unsubscribeAllFrom(ctx, patternSubscribers, true);
+   }
+
+   private CompletionStage<RespRequestHandler> unsubscribeAllFrom(ChannelHandlerContext ctx,
+                                                                   Map<WrappedByteArray, RespCacheListener> subscribers,
+                                                                   boolean isPattern) {
       ClientMetadata metadata = respServer().metadataRepository().client();
       var aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-      List<byte[]> channels = new ArrayList<>(specificChannelSubscribers.size());
-      for (Iterator<Map.Entry<WrappedByteArray, RespCacheListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
+      List<byte[]> channels = new ArrayList<>(subscribers.size());
+      for (Iterator<Map.Entry<WrappedByteArray, RespCacheListener>> iterator = subscribers.entrySet().iterator(); iterator.hasNext(); ) {
          Map.Entry<WrappedByteArray, RespCacheListener> entry = iterator.next();
          RespCacheListener listener = entry.getValue();
          CompletionStage<Void> stage = cache().removeListenerAsync(listener);
@@ -164,11 +197,16 @@ public class SubscriberHandler extends CacheRespRequestHandler {
          iterator.remove();
          metadata.decrementPubSubClients();
       }
-      return sendSubscriptions(ctx, aggregateCompletionStage.freeze(), channels, false);
+      return sendSubscriptions(ctx, aggregateCompletionStage.freeze(), channels, false, isPattern);
    }
 
    public CompletionStage<RespRequestHandler> sendSubscriptions(ChannelHandlerContext ctx, CompletionStage<Void> stageToWaitFor,
                                                                 Collection<byte[]> keyChannels, boolean isSubscribe) {
+      return sendSubscriptions(ctx, stageToWaitFor, keyChannels, isSubscribe, false);
+   }
+
+   public CompletionStage<RespRequestHandler> sendSubscriptions(ChannelHandlerContext ctx, CompletionStage<Void> stageToWaitFor,
+                                                                Collection<byte[]> keyChannels, boolean isSubscribe, boolean isPattern) {
       return stageToReturn(stageToWaitFor, ctx, (__, alloc) -> {
          assert ctx.executor().inEventLoop();
 
@@ -176,7 +214,12 @@ public class SubscriberHandler extends CacheRespRequestHandler {
          if (counter == null) counter = 0L;
 
          // PubSub events require the object type to be a bulk string.
-         byte[] type = isSubscribe ? PubSubEvents.SUBSCRIBE : PubSubEvents.UNSUBSCRIBE;
+         byte[] type;
+         if (isSubscribe) {
+            type = isPattern ? PubSubEvents.PSUBSCRIBE : PubSubEvents.SUBSCRIBE;
+         } else {
+            type = isPattern ? PubSubEvents.PUNSUBSCRIBE : PubSubEvents.UNSUBSCRIBE;
+         }
          for (byte[] keyChannel : keyChannels) {
             counter = Math.max(0, counter + (isSubscribe ? 1 : -1));
             long c = counter;
@@ -203,9 +246,12 @@ public class SubscriberHandler extends CacheRespRequestHandler {
     * The type of event is the first element in the array. It <b>must</b> be a bulk string.
     * </p>
     */
-   private static final class PubSubEvents {
-      private static final byte[] SUBSCRIBE = "subscribe".getBytes(StandardCharsets.US_ASCII);
-      private static final byte[] UNSUBSCRIBE = "unsubscribe".getBytes(StandardCharsets.US_ASCII);
-      private static final byte[] MESSAGE = "message".getBytes(StandardCharsets.US_ASCII);
+   static final class PubSubEvents {
+      static final byte[] SUBSCRIBE = "subscribe".getBytes(StandardCharsets.US_ASCII);
+      static final byte[] UNSUBSCRIBE = "unsubscribe".getBytes(StandardCharsets.US_ASCII);
+      static final byte[] MESSAGE = "message".getBytes(StandardCharsets.US_ASCII);
+      static final byte[] PSUBSCRIBE = "psubscribe".getBytes(StandardCharsets.US_ASCII);
+      static final byte[] PUNSUBSCRIBE = "punsubscribe".getBytes(StandardCharsets.US_ASCII);
+      static final byte[] PMESSAGE = "pmessage".getBytes(StandardCharsets.US_ASCII);
    }
 }
