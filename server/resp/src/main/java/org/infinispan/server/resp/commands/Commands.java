@@ -67,6 +67,8 @@ import org.infinispan.server.resp.commands.hash.HSETNX;
 import org.infinispan.server.resp.commands.hash.HSTRLEN;
 import org.infinispan.server.resp.commands.hash.HVALS;
 import org.infinispan.server.resp.commands.hll.PFADD;
+import org.infinispan.server.resp.commands.hll.PFCOUNT;
+import org.infinispan.server.resp.commands.hll.PFMERGE;
 import org.infinispan.server.resp.commands.json.JSONARRAPPEND;
 import org.infinispan.server.resp.commands.json.JSONARRINDEX;
 import org.infinispan.server.resp.commands.json.JSONARRINSERT;
@@ -229,7 +231,7 @@ public final class Commands {
       ALL_COMMANDS[10] = new RespCommand[]{new KEYS()};
       ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP(), new LCS(), new LOLWUT()};
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MSETNX(), new MULTI(), new MODULE(), new MEMORY()};
-      ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PUBSUB(), new PTTL(), new PEXPIREAT(), new PEXPIRE(), new PEXPIRETIME(), new PERSIST(), new PFADD(), new PSETEX()};
+      ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PUBSUB(), new PTTL(), new PEXPIREAT(), new PEXPIRE(), new PEXPIRETIME(), new PERSIST(), new PFADD(), new PFCOUNT(), new PFMERGE(), new PSETEX()};
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH(), new RENAME(), new RENAMENX(), new RANDOMKEY()};
       // SET should always be first here
