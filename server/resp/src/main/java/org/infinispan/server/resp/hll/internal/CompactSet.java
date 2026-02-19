@@ -299,6 +299,40 @@ public class CompactSet implements HLLRepresentation {
       return false;
    }
 
+   /**
+    * Read the register value for the given bucket.
+    *
+    * @param bucket the bucket index (0 to HLL_BUCKET_TOTAL - 1).
+    * @return the register value.
+    */
+   private byte getRegister(int bucket) {
+      int index = bucket * REGISTER_WIDTH;
+      int first = index >>> REGISTER_WIDTH;
+      int second = (index + REGISTER_WIDTH - 1) >>> REGISTER_WIDTH;
+      int offset = index & SINGLE_REGISTER_MASK;
+
+      synchronized (this) {
+         if (first != second) {
+            return (byte) (((store[first] >>> offset) | (store[second] << (MAX_REGISTER_ENTRY - offset))) & SINGLE_REGISTER_MASK);
+         }
+         return (byte) ((store[first] >>> offset) & SINGLE_REGISTER_MASK);
+      }
+   }
+
+   /**
+    * Merge another CompactSet into this one by taking the maximum register value for each bucket.
+    *
+    * @param other the CompactSet to merge from.
+    */
+   public void merge(CompactSet other) {
+      for (int i = 0; i < HLL_BUCKET_TOTAL; i++) {
+         byte val = other.getRegister(i);
+         if (val > 0) {
+            setRegister(i, val);
+         }
+      }
+   }
+
    @ProtoField(number = 1, collectionImplementation = ArrayList.class)
    List<Long> store() {
       return LongStream.of(store)

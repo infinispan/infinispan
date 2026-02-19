@@ -107,6 +107,34 @@ public class HyperLogLog {
       return representation == null ? 0 : representation.cardinality();
    }
 
+   /**
+    * Merge another HyperLogLog into this instance.
+    * After merging, this instance contains the union of both sets.
+    *
+    * @param other the HyperLogLog to merge from.
+    */
+   public void mergeWith(HyperLogLog other) {
+      HLLRepresentation otherStore = other.store();
+      if (otherStore == null) return;
+
+      synchronized (this) {
+         // Ensure we have a compact representation to merge into.
+         if (compact == null) {
+            compact = new CompactSet();
+            if (explicit != null) {
+               explicit.migrate(compact);
+               explicit = null;
+            }
+         }
+      }
+
+      if (otherStore instanceof ExplicitSet es) {
+         es.migrate(compact);
+      } else if (otherStore instanceof CompactSet cs) {
+         compact.merge(cs);
+      }
+   }
+
    synchronized HLLRepresentation store() {
       if (compact != null) return compact;
       if (explicit != null) return explicit;

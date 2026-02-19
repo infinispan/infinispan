@@ -1309,6 +1309,124 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testPFCOUNT() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Cardinality of non-existent key is 0.
+      assertThat(redis.pfcount("nonexistent")).isZero();
+
+      // Single key cardinality.
+      redis.pfadd("hll-count-1", "a", "b", "c");
+      assertThat(redis.pfcount("hll-count-1")).isEqualTo(3);
+
+      // Adding duplicates doesn't change cardinality.
+      redis.pfadd("hll-count-1", "a", "b", "c");
+      assertThat(redis.pfcount("hll-count-1")).isEqualTo(3);
+
+      // Adding new elements increases cardinality.
+      redis.pfadd("hll-count-1", "d", "e");
+      assertThat(redis.pfcount("hll-count-1")).isEqualTo(5);
+
+      // Multi-key PFCOUNT returns the cardinality of the union.
+      redis.pfadd("hll-count-2", "c", "d", "e", "f", "g");
+      // Union of {a,b,c,d,e} and {c,d,e,f,g} = {a,b,c,d,e,f,g} = 7.
+      assertThat(redis.pfcount("hll-count-1", "hll-count-2")).isEqualTo(7);
+
+      // Multi-key PFCOUNT with a non-existent key.
+      assertThat(redis.pfcount("hll-count-1", "nonexistent")).isEqualTo(5);
+
+      // Multi-key PFCOUNT with all non-existent keys.
+      assertThat(redis.pfcount("nx-1", "nx-2", "nx-3")).isZero();
+
+      // WRONGTYPE on non-HLL key.
+      assertWrongType(() -> redis.set("plain-str", "value"), () -> redis.pfcount("plain-str"));
+   }
+
+   @Test
+   public void testPFCOUNTAccuracy() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Test accuracy with a larger set. Standard error for HLL is ~0.81%.
+      int total = 10000;
+      String[] elements = new String[total];
+      for (int i = 0; i < total; i++) {
+         elements[i] = "element-" + i;
+      }
+      redis.pfadd("hll-accuracy", elements);
+
+      long count = redis.pfcount("hll-accuracy");
+      // Allow 5% tolerance.
+      assertThat(count).isBetween((long) (total * 0.95), (long) (total * 1.05));
+   }
+
+   @Test
+   public void testPFMERGE() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Basic merge of three sets.
+      redis.pfadd("hll-src-1", "a", "b", "c");
+      redis.pfadd("hll-src-2", "c", "d", "e");
+      redis.pfadd("hll-src-3", "e", "f");
+
+      assertThat(redis.pfmerge("hll-dest", "hll-src-1", "hll-src-2", "hll-src-3")).isEqualTo("OK");
+
+      // Union of {a,b,c}, {c,d,e}, {e,f} = {a,b,c,d,e,f} = 6.
+      assertThat(redis.pfcount("hll-dest")).isEqualTo(6);
+   }
+
+   @Test
+   public void testPFMERGEMissingSources() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Merging non-existent source keys should create an empty destination.
+      assertThat(redis.pfmerge("hll-empty-dest", "nx-src-1", "nx-src-2")).isEqualTo("OK");
+      assertThat(redis.pfcount("hll-empty-dest")).isZero();
+   }
+
+   @Test
+   public void testPFMERGESelfMerge() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Merge a key into itself.
+      redis.pfadd("hll-self", "x", "y", "z");
+      assertThat(redis.pfmerge("hll-self", "hll-self")).isEqualTo("OK");
+      assertThat(redis.pfcount("hll-self")).isEqualTo(3);
+   }
+
+   @Test
+   public void testPFMERGEIntoExisting() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Merge into an existing destination that already has data.
+      redis.pfadd("hll-existing-dest", "a", "b");
+      redis.pfadd("hll-merge-src", "c", "d");
+
+      assertThat(redis.pfmerge("hll-existing-dest", "hll-merge-src")).isEqualTo("OK");
+      // Union of {a,b} and {c,d} = {a,b,c,d} = 4.
+      assertThat(redis.pfcount("hll-existing-dest")).isEqualTo(4);
+   }
+
+   @Test
+   public void testPFMERGENonExistentIntoExisting() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Merging non-existent sources into an existing dest should not change it.
+      redis.pfadd("hll-keep", "a", "b", "c");
+      assertThat(redis.pfmerge("hll-keep", "nx-1", "nx-2")).isEqualTo("OK");
+      assertThat(redis.pfcount("hll-keep")).isEqualTo(3);
+   }
+
+   @Test
+   public void testPFMERGEWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // WRONGTYPE when source contains a non-HLL key.
+      redis.set("not-hll", "value");
+      redis.pfadd("hll-ok", "a");
+      assertWrongType(() -> {}, () -> redis.pfmerge("hll-wt-dest", "hll-ok", "not-hll"));
+   }
+
+   @Test
    public void testKeys() {
       RedisCommands<String, String> redis = redisConnection.sync();
       redis.flushdb();
