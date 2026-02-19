@@ -238,7 +238,9 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       // We don't care about the actual expiration sub info
       Compactor.CompactionExpirationSubscriber sub = new Compactor.CompactionExpirationSubscriber() {
          @Override
-         public void onEntryPosition(EntryPosition entryPosition) { }
+         public void onEntryPosition(EntryPosition entryPosition) {
+            expired.incrementAndGet();
+         }
          @Override
          public void onEntryEntryRecord(EntryRecord entryRecord) {
             expired.incrementAndGet();

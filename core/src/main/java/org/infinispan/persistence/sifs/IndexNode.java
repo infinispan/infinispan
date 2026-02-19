@@ -221,12 +221,11 @@ class IndexNode {
       }
       assert buffer.position() == buffer.limit() : "Buffer position: " + buffer.position() + " limit: " + buffer.limit();
       buffer.flip();
-      try (FileProvider.Handle handle = segment.getIndexFile()) {
-         handle.write(buffer, offset);
-      }
+
+      segment.bufferIndexWrite(offset, buffer, occupiedSpace);
 
       if (log.isTraceEnabled()) {
-         log.tracef("Persisted %08x (length %d, %d %s) to %d:%d", System.identityHashCode(this), length(),
+         log.tracef("Buffered %08x (length %d, %d %s) to %d:%d", System.identityHashCode(this), length(),
             innerNodes != null ? innerNodes.length : leafNodes.length,
             innerNodes != null ? "children" : "leaves", offset, occupiedSpace);
       }
