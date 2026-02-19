@@ -1,21 +1,18 @@
 package org.infinispan.statetransfer;
 
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.assertEquals;
-
-import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
-import org.infinispan.remoting.responses.ValidResponse;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.test.Mocks;
@@ -43,7 +40,6 @@ import org.testng.annotations.Test;
 public class StateTransferRestartTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder cfgBuilder;
-   private GlobalConfigurationBuilder gcfgBuilder;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -52,8 +48,6 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       cfgBuilder.clustering().hash().numOwners(2);
       cfgBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       cfgBuilder.clustering().stateTransfer().timeout(20000);
-
-      gcfgBuilder = new GlobalConfigurationBuilder().clusteredDefault();
    }
 
    @Override
@@ -64,8 +58,8 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
    public void testStateTransferRestart() {
       final int numKeys = 100;
 
-      addClusterEnabledCacheManager(gcfgBuilder, cfgBuilder, new TransportFlags().withFD(true));
-      addClusterEnabledCacheManager(gcfgBuilder, cfgBuilder, new TransportFlags().withFD(true));
+      addClusterEnabledCacheManager(cfgBuilder, new TransportFlags().withFD(true));
+      addClusterEnabledCacheManager(cfgBuilder, new TransportFlags().withFD(true));
       log.info("waiting for cluster { c0, c1 }");
       waitForClusterToForm();
 
@@ -80,25 +74,23 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       assertEquals(numKeys, c0.entrySet().size());
       assertEquals(numKeys, c1.entrySet().size());
 
-      log.info("adding cache c2");
-      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(cfgBuilder, new TransportFlags().withFD(true), false);
-      RequestRepository spyRequests = spyRequestRepository(cm2);
+      PerCacheInboundInvocationHandler spyHandler0 = Mocks.replaceComponentWithSpy(c1, PerCacheInboundInvocationHandler.class);
       doAnswer(invocation -> {
-         fork((Callable<Void>) () -> {
-            log.info("KILLING the c1 cache");
-            try {
-               DISCARD d3 = TestingUtil.getDiscardForCache(c1.getCacheManager());
-               d3.discardAll(true);
-               TestingUtil.killCacheManagers(manager(c1));
-            } catch (Exception e) {
-               log.info("there was some exception while killing cache");
-            }
-            return null;
-         });
-         return invocation.callRealMethod();
-      }).when(spyRequests).addResponse(anyLong(), eq(address(1)), argThat(r ->
-            r.isSuccessful() && r instanceof ValidResponse<?> vr && vr.getResponseValue() instanceof PublisherResponse));
-      cm2.start();
+         log.info("KILLING the c1 cache");
+         try {
+            DISCARD d3 = TestingUtil.getDiscardForCache(c1.getCacheManager());
+            d3.discardAll(true);
+            TestingUtil.killCacheManagers(manager(c1));
+         } catch (Exception e) {
+            log.info("there was some exception while killing cache");
+         }
+         return null;
+      })
+      // Only on first call - when c2 joins do we kill the cache
+      .doCallRealMethod().when(spyHandler0).handle(any(InitialPublisherCommand.class), any(Reply.class), any(DeliverOrder.class));
+
+      log.info("adding cache c2");
+      addClusterEnabledCacheManager(cfgBuilder, new TransportFlags().withFD(true));
 
       log.info("get c2");
       final Cache<Object, Object> c2 = cache(2);
