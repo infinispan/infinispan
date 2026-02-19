@@ -80,6 +80,10 @@
           <classifier>tests</classifier>
           <version>${project.version}</version>
        </dependency>
+       <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-server-resp</artifactId>
+       </dependency>
     </dependencies>
 
     <build>
@@ -149,6 +153,20 @@
                          <mainClass>org.infinispan.server.test.core.compatibility.Compatibility</mainClass>
                          <arguments>
                             <argument>${project.build.directory}/generated-asciidoc/compatibility.adoc</argument>
+                         </arguments>
+                      </configuration>
+                   </execution>
+                   <execution>
+                      <id>generate-resp-commands-doc</id>
+                      <phase>process-classes</phase>
+                      <goals>
+                         <goal>java</goal>
+                      </goals>
+                      <configuration>
+                         <mainClass>org.infinispan.documentation.RespCommands2Asciidoc</mainClass>
+                         <arguments>
+                            <argument>${project.build.directory}/generated-asciidoc/ref_redis_commands.adoc</argument>
+                            <argument>${project.basedir}/src/main/resources/resp-command-notes.properties</argument>
                          </arguments>
                       </configuration>
                    </execution>

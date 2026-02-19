@@ -2,3 +2,4 @@
 //Please review authoring guidelines in the Contributors Guide.
 
 include::{stories}/assembly_resp_endpoint.adoc[leveloffset=+1]
+include::{generated}/ref_redis_commands.adoc[leveloffset=+2]

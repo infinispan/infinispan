@@ -1,4 +1,5 @@
 //Directory attributes
+:generated: ../../../../../target/generated-asciidoc
 :stories: ../../stories
 :topics: ../topics
 :imagesdir: ../{topics}/images
