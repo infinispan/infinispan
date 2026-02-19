@@ -48,4 +48,6 @@ classes
 *.jfr
 jacoco-report
 jacoco
-
+# ignore ai md files
+GEMINI.md
+CLAUDE.md
