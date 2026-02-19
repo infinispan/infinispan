@@ -86,6 +86,10 @@ public interface CacheTransaction {
 
    void markForRollback(boolean markForRollback);
 
+   boolean hasRolledBack();
+
+   void markAsRolledBack();
+
    /**
     * Sets the version read for this key. The version is only set at the first time, i.e. multiple invocation of this
     * method will not change the state.
