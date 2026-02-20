@@ -36,7 +36,7 @@ public class BITFIELD extends RespCommand implements Resp3Command {
    }
 
    protected BITFIELD(boolean readOnly, long mask) {
-      super(-4, 1, 1, 1, mask);
+      super(-2, 1, 1, 1, mask);
       this.readOnly = readOnly;
    }
 

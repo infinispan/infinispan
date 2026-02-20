@@ -68,6 +68,10 @@ public class ZRANGE extends RespCommand implements Resp3Command {
       super(arity, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SORTEDSET.mask() | AclCategory.SLOW.mask());
    }
 
+   protected ZRANGE(int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
+      super(arity, firstKeyPos, lastKeyPos, steps, aclMask);
+   }
+
    static class ResultOptions {
       boolean withScores = false;
       Long offset = null;
