@@ -208,7 +208,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       SiteMasterController oldSiteMaster = findSiteMaster(null);
       //let the state command go through
       SiteMasterController newSiteMaster = getSiteMasterController(
-            oldSiteMaster.managerIndex + 1 % defaultNumberOfNodes(),
+            (oldSiteMaster.managerIndex + 1) % defaultNumberOfNodes(),
             XSiteStatePushCommand.class,
             StateTransferStartCommand.class, StateResponseCommand.class,
             StateTransferCancelCommand.class,
