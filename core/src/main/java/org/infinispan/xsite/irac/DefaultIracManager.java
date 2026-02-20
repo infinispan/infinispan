@@ -105,11 +105,16 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       return true;
    };
 
-   @Inject RpcManager rpcManager;
-   @Inject TakeOfflineManager takeOfflineManager;
-   @Inject ClusteringDependentLogic clusteringDependentLogic;
-   @Inject CommandsFactory commandsFactory;
-   @Inject IracTombstoneManager iracTombstoneManager;
+   @Inject
+   RpcManager rpcManager;
+   @Inject
+   TakeOfflineManager takeOfflineManager;
+   @Inject
+   ClusteringDependentLogic clusteringDependentLogic;
+   @Inject
+   CommandsFactory commandsFactory;
+   @Inject
+   IracTombstoneManager iracTombstoneManager;
 
    private final Map<Object, IracManagerKeyState> updatedKeys;
    private final Collection<IracXSiteBackup> asyncBackups;
@@ -406,7 +411,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       }
 
       AggregateCompletionStage<Void> aggregation = CompletionStages.aggregateCompletionStage();
-      for (IracXSiteBackup backup: asyncBackups) {
+      for (IracXSiteBackup backup : asyncBackups) {
          if (backup.isBackOffEnabled()) {
             for (IracStateData data : batch) {
                data.state.retry();
