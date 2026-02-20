@@ -80,10 +80,18 @@ class ControlledXSiteStateTransferManager extends AbstractDelegatingXSiteStateTr
             waitTime = endTime - System.currentTimeMillis();
          }
          siteUpCopy = List.copyOf(sitesUp);
-         sitesUp = null;
+         // Clear but keep non-null so that any delayed events arriving during .run()
+         // are silently captured instead of leaking through to the real impl (which would
+         // consume ControlledRpcManager waiters and cause spurious TimeoutExceptions).
+         sitesUp.clear();
       }
       assertEquals(expectedSites, siteUpCopy.stream().map(r -> r.remoteSite).collect(Collectors.toList()));
-      return () -> siteUpCopy.forEach(RemoteSiteRequest::run);
+      return () -> {
+         siteUpCopy.forEach(RemoteSiteRequest::run);
+         synchronized (ControlledXSiteStateTransferManager.this) {
+            sitesUp = null;
+         }
+      };
    }
 
    private class RemoteSiteRequest implements Comparable<RemoteSiteRequest> {
