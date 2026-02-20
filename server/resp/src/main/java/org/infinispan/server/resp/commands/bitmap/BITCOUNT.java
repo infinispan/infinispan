@@ -21,7 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class BITCOUNT extends RespCommand implements Resp3Command {
    public BITCOUNT() {
-      super(-2, 1, 1, 1, AclCategory.READ.mask() | AclCategory.STRING.mask() | AclCategory.FAST.mask());
+      super(-2, 1, 1, 1, AclCategory.READ.mask() | AclCategory.BITMAP.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

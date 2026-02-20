@@ -23,7 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SETBIT extends RespCommand implements Resp3Command {
    public SETBIT() {
-      super(4, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.STRING.mask() | AclCategory.SLOW.mask());
+      super(4, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.BITMAP.mask() | AclCategory.SLOW.mask());
    }
 
    @Override
