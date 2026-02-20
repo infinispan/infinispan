@@ -154,6 +154,8 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 
 * link:https://redis.io/commands/json.arrpop[JSON.ARRPOP]
 
+* link:https://redis.io/commands/json.debug-memory[JSON.DEBUG MEMORY]
+
 * link:https://redis.io/commands/json.del[JSON.DEL]
 
 * link:https://redis.io/commands/json.forget[JSON.FORGET]
