@@ -109,11 +109,12 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
             cmd -> {
                writer.arrayNext();
                return cmd.perform(handler, ctx)
-                     .exceptionally(t -> {
-                        handler.writer().error(t);
+                     .<Void>handleAsync((r, t) -> {
+                        if (t != null) {
+                           handler.writer().error(t);
+                        }
                         return null;
-                     })
-                     .thenApply(CompletableFutures.toNullFunction());
+                     }, ctx.executor());
             });
    }
 }
