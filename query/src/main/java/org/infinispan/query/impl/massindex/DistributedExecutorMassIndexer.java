@@ -119,8 +119,9 @@ public class DistributedExecutorMassIndexer implements Indexer {
          if (!acquired) {
             return CompletableFuture.failedFuture(new MassIndexerAlreadyStartedException());
          }
+         isRunning = true;
+         CompletionStage<Void> work;
          try {
-            isRunning = true;
             Collection<Class<?>> javaClasses = (entities.length == 0) ?
                   indexUpdater.allJavaClasses() : Arrays.asList(entities);
             IndexWorker indexWork = new IndexWorker(cache.getName(), javaClasses, skipIndex, (Set<Object>) null);
@@ -128,13 +129,18 @@ public class DistributedExecutorMassIndexer implements Indexer {
             if (local) {
                clusterExecutor = clusterExecutor.filterTargets(a -> a.equals(cache.getRpcManager().getAddress()));
             }
-            return clusterExecutor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
+            work = clusterExecutor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
          } catch (Throwable t) {
-            return CompletableFuture.failedFuture(t);
-         } finally {
-            lock.unlock();
-            isRunning = false;
+            work = CompletableFuture.failedFuture(t);
          }
+         return work.handle((v, t) -> {
+            isRunning = false;
+            CompletionStage<Void> unlocked = lock.unlock();
+            if (t != null) {
+               return unlocked.thenCompose(unused -> CompletableFuture.<Void>failedFuture(t));
+            }
+            return unlocked;
+         }).thenCompose(stage -> stage);
       });
    }
 }
