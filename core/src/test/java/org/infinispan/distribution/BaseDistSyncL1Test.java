@@ -326,14 +326,14 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
       addCheckpointInterceptor(ownerCache, checkPoint, GetCacheEntryCommand.class,
             getL1InterceptorClass(), true);
-      addCheckpointInterceptor(backupOwnerCache, checkPoint, GetCacheEntryCommand.class,
-            getL1InterceptorClass(), true);
 
       try {
          Future<String> future = fork(() -> nonOwnerCache.get(key));
 
-         // Wait until get goes remote and retrieves value before going back into L1 interceptor
-         checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 2, 10, TimeUnit.SECONDS);
+         // Wait until get goes remote and retrieves value before going back into L1 interceptor.
+         // The staggered RPC sends to the primary owner first, then waits for a stagger delay before
+         // trying the backup. We only need one owner to have processed the command to proceed.
+         checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
 
          assertEquals(firstValue, ownerCache.put(key, secondValue));
 
