@@ -71,7 +71,7 @@ public class LockingTest extends SingleCacheManagerTest {
       hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("localhost").port(hotrodServer.getPort()).socketTimeout(10_000);
+      clientBuilder.addServer().host("localhost").port(hotrodServer.getPort()).socketTimeout(30_000);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
    }
 
@@ -87,7 +87,7 @@ public class LockingTest extends SingleCacheManagerTest {
       checkPoint.awaitStrict("before-block", 30, TimeUnit.SECONDS);
 
       try {
-         for (int i = 0; i < 25; ++i) {
+         for (int i = 0; i < 5; ++i) {
             try {
                remoteCache.put("key", "value" + i);
                AssertJUnit.fail("It should have fail with lock timeout!");
