@@ -171,7 +171,7 @@
       <version.spring.session3>3.5.5</version.spring.session3>
       <!-- Spring 7, Spring Boot 4 versions -->
       <version.spring7>7.0.3</version.spring7>
-      <version.spring.boot4>4.0.2</version.spring.boot4>
+      <version.spring.boot4>4.0.3</version.spring.boot4>
       <version.spring.session4>4.0.1</version.spring.session4>
 
       <version.swagger-ui-dist>5.31.1</version.swagger-ui-dist>
