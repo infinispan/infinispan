@@ -20,7 +20,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class GETBIT extends RespCommand implements Resp3Command {
    public GETBIT() {
-      super(3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.STRING.mask() | AclCategory.FAST.mask());
+      super(3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.BITMAP.mask() | AclCategory.FAST.mask());
    }
 
    @Override

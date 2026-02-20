@@ -24,7 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SELECT extends RespCommand implements Resp3Command {
    public SELECT() {
-      super(-1, 0, 0, 0, AclCategory.FAST.mask() | AclCategory.CONNECTION.mask());
+      super(2, 0, 0, 0, AclCategory.FAST.mask() | AclCategory.CONNECTION.mask());
    }
 
    @Override

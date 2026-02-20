@@ -21,7 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class BITOP extends RespCommand implements Resp3Command {
    public BITOP() {
-      super(-4, 2, -1, 1, AclCategory.WRITE.mask() | AclCategory.STRING.mask() | AclCategory.SLOW.mask());
+      super(-4, 2, -1, 1, AclCategory.WRITE.mask() | AclCategory.BITMAP.mask() | AclCategory.SLOW.mask());
    }
 
    @Override
