@@ -36,8 +36,8 @@ import io.netty.channel.ChannelProgressivePromise;
 public class AccessLoggerManager implements IntConsumer {
    private final ChannelProgressivePromise promise;
    private final Tracker tracker;
-   private long start;
-   private long end;
+   private long start = 1;
+   private long end = 1;
 
    public AccessLoggerManager(ChannelHandlerContext ctx, TimeService timeService) {
       this.promise = ctx.newProgressivePromise();

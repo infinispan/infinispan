@@ -69,6 +69,12 @@ public class RespAccessLoggingTest extends SingleNodeRespBaseTest {
 
       server.getTransport().stop();
 
+      // Transport stop closes channels, but channelUnregistered (which flushes remaining
+      // access log entries) fires asynchronously after the close promise completes.
+      int expectedLogs = size + 7; // HELLO(1) + CLIENT(2) + SET(size) + INFO(1) + MGET(1) + MSET(1) + UNKNOWN(1)
+      eventually(() -> "Expected " + expectedLogs + " log entries, got " + logAppender.size(),
+            () -> logAppender.size() >= expectedLogs);
+
       assertThat(logAppender.get(0))
             .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"HELLO /\\[] RESP\" OK \\d+ \\d+ \\d+$");
 
