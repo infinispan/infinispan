@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
@@ -71,6 +73,8 @@ import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogSerializer;
+
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * REST resource to manage the cache container.
@@ -126,6 +130,10 @@ public class ContainerResource implements ResourceHandler {
             // Shutdown the container content
             .invocation().methods(POST).path("/v2/container").withAction("shutdown").name("SHUTDOWN CONTAINER")
             .auditContext(AuditContext.CACHEMANAGER).handleWith(this::shutdown)
+
+            // Stops the container
+            .invocation().methods(POST).path("/v2/container").withAction("leave").name("STOPS CONTAINER")
+            .auditContext(AuditContext.CACHEMANAGER).handleWith(this::leave)
 
             // Container configuration listener
             .invocation().methods(GET).path("/v2/container/config").withAction("listen")
@@ -425,6 +433,24 @@ public class ContainerResource implements ResourceHandler {
                .set("name", name)
                .set("configuration", Json.factory().raw(configuration));
       }
+   }
+
+   protected CompletionStage<RestResponse> leave(RestRequest request) {
+      return CompletableFuture.supplyAsync(() -> {
+         String parameter = request.getParameter("timeout");
+         long timeout = parameter != null ? Long.parseLong(parameter) : -1;
+         Supplier<Boolean> action = () -> {
+            try {
+               return invocationHelper.getServer().getCacheManager().stopAllCaches(timeout, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               return false;
+            }
+         };
+         boolean res = Security.doAs(request.getSubject(), action);
+         return invocationHelper.newResponse(request)
+               .status(res ? NO_CONTENT : HttpResponseStatus.REQUEST_TIMEOUT).build();
+      }, invocationHelper.getExecutor());
    }
 
    protected CompletionStage<RestResponse> shutdown(RestRequest request) {
