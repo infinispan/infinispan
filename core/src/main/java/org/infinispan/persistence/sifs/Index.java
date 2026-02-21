@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -727,6 +728,13 @@ class Index {
 
       private volatile IndexNode root;
 
+      // Buffering for index writes
+      private final Map<Long, PendingIndexWrite> pendingIndexWrites = new HashMap<>();
+      private final List<Runnable> pendingTempTableOps = new ArrayList<>();
+      private int updatesSinceLastFlush = 0;
+
+      record PendingIndexWrite(ByteBuffer data, short occupiedSpace) {}
+
       private Segment(Index index, int id, TemporaryTable temporaryTable) {
          this.index = index;
          this.temporaryTable = temporaryTable;
@@ -803,8 +811,10 @@ class Index {
          if (log.isTraceEnabled()) log.tracef("Indexing %s", request);
          IndexNode.OverwriteHook overwriteHook;
          IndexNode.RecordChange recordChange;
+         boolean isUpdate = false;
          switch (request.getType()) {
             case CLEAR:
+               flushBufferedWrites();
                root = IndexNode.emptyWithLeaves(this);
                try (FileProvider.Handle handle = index.indexFileProvider.getFile(id)) {
                   handle.truncate(0);
@@ -814,6 +824,7 @@ class Index {
                index.nonBlockingManager.complete(request, null);
                return;
             case SYNC_REQUEST:
+               flushBufferedWrites();
                Runnable runnable = (Runnable) request.getKey();
                runnable.run();
                index.nonBlockingManager.complete(request, null);
@@ -825,6 +836,7 @@ class Index {
             case UPDATE:
                recordChange = IndexNode.RecordChange.INCREASE;
                overwriteHook = index.updateHook;
+               isUpdate = true;
                break;
             case DROPPED:
                recordChange = IndexNode.RecordChange.DECREASE;
@@ -842,8 +854,25 @@ class Index {
          } catch (Throwable e) {
             request.completeExceptionally(e);
          }
-         temporaryTable.removeConditionally(request.getSegment(), request.getKey(), request.getFile(), request.getOffset());
-         if (request.getType() != IndexRequest.Type.UPDATE) {
+
+         // Buffer the temporary table operation instead of executing it immediately
+         int segment = request.getSegment();
+         Object key = request.getKey();
+         int file = request.getFile();
+         int offset = request.getOffset();
+         pendingTempTableOps.add(() -> temporaryTable.removeConditionally(segment, key, file, offset));
+
+         // Flush if this is not an update or if we've accumulated 50 updates
+         if (isUpdate) {
+            updatesSinceLastFlush++;
+            if (updatesSinceLastFlush >= 50) {
+               flushBufferedWrites();
+            }
+         } else {
+            // Non-update request - flush and reset counter
+            flushBufferedWrites();
+            updatesSinceLastFlush = 0;
+
             // The update type will complete it in the switch statement above
             index.nonBlockingManager.complete(request, null);
          }
@@ -853,8 +882,15 @@ class Index {
       @Override
       public void run() throws IOException {
          try {
+            // Flush any remaining buffered writes before shutdown
+            flushBufferedWrites();
+
             IndexSpace rootSpace = allocateIndexSpace(root.length());
             root.store(rootSpace);
+
+            // Need to flush the root write as well
+            flushBufferedWrites();
+
             try (FileProvider.Handle handle = index.indexFileProvider.getFile(id)) {
                ByteBuffer buffer = ByteBuffer.allocate(4);
                buffer.putInt(0, freeBlocks.size());
@@ -1009,9 +1045,27 @@ class Index {
          return new IndexSpace(oldSize, length);
       }
 
+      void bufferIndexWrite(long offset, ByteBuffer data, short occupiedSpace) {
+         // If we're writing to an offset that was previously freed, it's being reused
+         // We can overwrite any previous write at this offset
+         PendingIndexWrite piw;
+         if ((piw = pendingIndexWrites.put(offset, new PendingIndexWrite(data, occupiedSpace))) != null) {
+            log.tracef("Previous pending index write %s has been cleared for index %s", piw, id);
+         }
+      }
+
       // this should be accessed only from the updater thread
       void freeIndexSpace(long offset, short length) {
          if (length <= 0) throw new IllegalArgumentException("Offset=" + offset + ", length=" + length);
+
+         // If there's a pending write for this offset, remove it as it's no longer needed
+         PendingIndexWrite removed = pendingIndexWrites.remove(offset);
+         if (removed != null) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Dropped pending write at offset %d as it's being freed", offset);
+            }
+         }
+
          // TODO: fragmentation!
          // TODO: memory bounds!
          if (offset + length < indexFileSize) {
@@ -1024,6 +1078,41 @@ class Index {
                log.cannotTruncateIndex(e);
             }
          }
+      }
+
+      private void flushBufferedWrites() throws IOException {
+         if (pendingIndexWrites.isEmpty() && pendingTempTableOps.isEmpty()) {
+            return;
+         }
+
+         if (log.isTraceEnabled()) {
+            log.tracef("Flushing %d buffered index writes and %d temp table operations",
+                  pendingIndexWrites.size(), pendingTempTableOps.size());
+         }
+
+         // Write all buffered index updates to disk
+         if (!pendingIndexWrites.isEmpty()) {
+            try (FileProvider.Handle handle = index.indexFileProvider.getFile(id)) {
+               for (Map.Entry<Long, PendingIndexWrite> entry : pendingIndexWrites.entrySet()) {
+                  ByteBuffer buffer = entry.getValue().data;
+                  long writeOffset = entry.getKey();
+                  write(handle, buffer, writeOffset);
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Wrote buffered index data to offset %d", writeOffset);
+                  }
+               }
+            }
+         }
+
+         // Run all temporary table operations
+         for (Runnable op : pendingTempTableOps) {
+            op.run();
+         }
+
+         // Clear buffers
+         pendingIndexWrites.clear();
+         pendingTempTableOps.clear();
+         updatesSinceLastFlush = 0;
       }
 
       Lock rootReadLock() {
