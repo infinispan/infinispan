@@ -67,6 +67,11 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
 
       restServer.stop();
 
+      // Access log entries are written asynchronously via ChannelFuture listeners.
+      // Wait for all expected entries to arrive before asserting.
+      eventually(() -> "Expected 1 log entry, got " + logAppender.size(),
+            () -> logAppender.size() >= 1);
+
       String logline = logAppender.get(0);
 
       String regex = String.format("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d+] \"PUT /rest/v2/caches/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+ %s/\\p{Graph}+$", System.getProperty("infinispan.brand.name"));

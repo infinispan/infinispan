@@ -56,7 +56,13 @@ public class RestAuthAccessLoggingTest extends AbstractAuthAccessLoggingTest {
       }
       restServer.stop();
 
-      assertEquals(14, logAppender.size());
+      // Access log entries are written asynchronously via ChannelFuture listeners.
+      // Wait for all expected entries to arrive before asserting.
+      int expectedLogs = 14;
+      eventually(() -> "Expected " + expectedLogs + " log entries, got " + logAppender.size(),
+            () -> logAppender.size() >= expectedLogs);
+
+      assertEquals(expectedLogs, logAppender.size());
 
       // ANONYMOUS PUT
       assertThat(parseAccessLog(0)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "401", "WHO", "-"));

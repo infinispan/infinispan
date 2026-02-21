@@ -40,6 +40,11 @@ public class HotRodAccessLoggingTest extends HotRodSingleNodeTest {
 
       server().getTransport().stop();
 
+      // Access log entries are written asynchronously via ChannelFuture listeners.
+      // Wait for all expected entries to arrive before asserting.
+      eventually(() -> "Expected 2 log entries, got " + logAppender.size(),
+            () -> logAppender.size() >= 2);
+
       String logline = logAppender.get(1);
       assertTrue(logline, logline.matches(
             "^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"PUT /" +
