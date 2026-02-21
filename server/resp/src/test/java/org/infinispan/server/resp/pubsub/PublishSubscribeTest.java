@@ -245,6 +245,324 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       connection.unsubscribe("channel2", "test");
    }
 
+   @Test
+   public void testSubscribeToOneChannelMoreThanOnce() throws InterruptedException {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+      // Subscribe to the same channel multiple times
+      connection.subscribe("chan1");
+      assertSubscription(handOffQueue, "chan1");
+
+      connection.subscribe("chan1");
+      String value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isNotNull();
+      assertThat(value).startsWith("subscribed-chan1-");
+
+      connection.subscribe("chan1");
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isNotNull();
+      assertThat(value).startsWith("subscribed-chan1-");
+
+      // Publish should only deliver one copy (no duplicate listeners)
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.publish("chan1", "hello");
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("message-chan1-hello");
+
+      // No duplicate message
+      value = handOffQueue.poll(1, TimeUnit.SECONDS);
+      assertThat(value).isNull();
+
+      connection.unsubscribe("chan1");
+   }
+
+   @Test
+   public void testUnsubscribeFromNonSubscribedChannels() throws InterruptedException {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+      // Enter subscriber mode first
+      connection.subscribe("dummy");
+      assertSubscription(handOffQueue, "dummy");
+
+      // Unsubscribe from channels we never subscribed to
+      connection.unsubscribe("foo", "bar", "quux");
+
+      // Should get unsubscribe confirmations - count stays at 1 (still subscribed to "dummy")
+      for (String channel : new String[] { "foo", "bar", "quux" }) {
+         String value = handOffQueue.poll(10, TimeUnit.SECONDS);
+         assertThat(value).withFailMessage("Didn't receive unsubscribe notification for " + channel).isNotNull();
+         assertThat(value).startsWith("unsubscribed-" + channel + "-");
+      }
+
+      connection.unsubscribe("dummy");
+   }
+
+   // --- Pattern subscription tests (PSUBSCRIBE / PUNSUBSCRIBE) ---
+
+   @Test
+   public void testPSubscribeBasics() throws InterruptedException {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+      // Subscribe to two patterns
+      connection.psubscribe("foo.*", "bar.*");
+      assertPSubscription(handOffQueue, "foo.*", "bar.*");
+
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Publish to channels matching the patterns
+      redis.publish("foo.1", "hello");
+      String value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("pmessage-foo.*-foo.1-hello");
+
+      redis.publish("bar.1", "world");
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("pmessage-bar.*-bar.1-world");
+
+      // Publish to channels that should NOT match
+      redis.publish("foo1", "nope");
+      redis.publish("barfoo.1", "nope");
+      redis.publish("qux.1", "nope");
+
+      // Give a brief moment for any unexpected messages
+      value = handOffQueue.poll(1, TimeUnit.SECONDS);
+      assertThat(value).isNull();
+
+      // Unsubscribe from foo.* pattern, bar.* should still work
+      connection.punsubscribe("foo.*");
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("punsubscribed-foo.*-1");
+
+      redis.publish("foo.1", "should-not-arrive");
+      value = handOffQueue.poll(1, TimeUnit.SECONDS);
+      assertThat(value).isNull();
+
+      redis.publish("bar.1", "still-works");
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("pmessage-bar.*-bar.1-still-works");
+
+      // Unsubscribe from remaining pattern
+      connection.punsubscribe("bar.*");
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("punsubscribed-bar.*-0");
+
+      redis.publish("bar.1", "should-not-arrive");
+      value = handOffQueue.poll(1, TimeUnit.SECONDS);
+      assertThat(value).isNull();
+   }
+
+   @Test
+   public void testPSubscribeTwoClients() throws InterruptedException {
+      RedisPubSubCommands<String, String> client1 = createPubSubConnection();
+      BlockingQueue<String> queue1 = addPubSubListener(client1);
+
+      RedisPubSubCommands<String, String> client2 = createPubSubConnection();
+      BlockingQueue<String> queue2 = addPubSubListener(client2);
+
+      // Both clients subscribe to the same pattern
+      client1.psubscribe("chan.*");
+      assertPSubscription(queue1, "chan.*");
+
+      client2.psubscribe("chan.*");
+      assertPSubscription(queue2, "chan.*");
+
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.publish("chan.foo", "hello");
+
+      // Both clients should receive the message
+      String value1 = queue1.poll(10, TimeUnit.SECONDS);
+      assertThat(value1).isEqualTo("pmessage-chan.*-chan.foo-hello");
+
+      String value2 = queue2.poll(10, TimeUnit.SECONDS);
+      assertThat(value2).isEqualTo("pmessage-chan.*-chan.foo-hello");
+
+      client1.punsubscribe("chan.*");
+      client2.punsubscribe("chan.*");
+   }
+
+   @Test
+   public void testPUnsubscribeWithoutArguments() throws InterruptedException {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+      int listenersBefore = getListeners(cache).size();
+
+      // Subscribe to multiple patterns
+      connection.psubscribe("chan1.*", "chan2.*", "chan3.*");
+      assertPSubscription(handOffQueue, "chan1.*", "chan2.*", "chan3.*");
+
+      assertThat(getListeners(cache)).hasSize(listenersBefore + 3);
+
+      // Unsubscribe from all patterns without arguments
+      connection.punsubscribe();
+
+      // Punsubscribe notifications (order may vary)
+      for (int i = 0; i < 3; ++i) {
+         String value = handOffQueue.poll(10, TimeUnit.SECONDS);
+         assertThat(value).withFailMessage("Didn't receive punsubscribe notification").isNotNull();
+         assertThat(value).startsWith("punsubscribed-");
+      }
+
+      eventually(() -> getListeners(cache).size() == listenersBefore);
+
+      // Confirm no more messages are delivered
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.publish("chan1.hi", "nope");
+      redis.publish("chan2.hi", "nope");
+      redis.publish("chan3.hi", "nope");
+      String value = handOffQueue.poll(1, TimeUnit.SECONDS);
+      assertThat(value).isNull();
+   }
+
+   @Test
+   public void testPUnsubscribeFromNonSubscribedPatterns() throws InterruptedException {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+      // First subscribe to something to enter subscriber mode
+      connection.subscribe("dummy");
+      assertSubscription(handOffQueue, "dummy");
+
+      // Punsubscribe from patterns we never subscribed to
+      connection.punsubscribe("foo.*", "bar.*", "quux.*");
+
+      // Should get punsubscribe confirmations with count reflecting remaining subs
+      for (String pattern : new String[] { "foo.*", "bar.*", "quux.*" }) {
+         String value = handOffQueue.poll(10, TimeUnit.SECONDS);
+         assertThat(value).withFailMessage("Didn't receive punsubscribe notification for " + pattern).isNotNull();
+         assertThat(value).startsWith("punsubscribed-" + pattern + "-");
+      }
+
+      connection.unsubscribe("dummy");
+   }
+
+   @Test
+   public void testNumPatWithPatterns() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.pubsubNumpat()).isZero();
+
+      RedisPubSubCommands<String, String> client1 = createPubSubConnection();
+      BlockingQueue<String> queue1 = addPubSubListener(client1);
+
+      RedisPubSubCommands<String, String> client2 = createPubSubConnection();
+      BlockingQueue<String> queue2 = addPubSubListener(client2);
+
+      // Client 1 subscribes to foo* and bar*
+      client1.psubscribe("foo*", "bar*");
+      assertPSubscription(queue1, "foo*", "bar*");
+
+      // Client 2 subscribes to foo* and baz*
+      client2.psubscribe("foo*", "baz*");
+      assertPSubscription(queue2, "foo*", "baz*");
+
+      // NUMPAT should count unique patterns: foo*, bar*, baz* = 3
+      assertThat(redis.pubsubNumpat()).isEqualTo(3);
+
+      client1.punsubscribe("foo*", "bar*");
+      client2.punsubscribe("foo*", "baz*");
+
+      // Drain punsubscribe notifications
+      for (int i = 0; i < 2; i++) queue1.poll(10, TimeUnit.SECONDS);
+      for (int i = 0; i < 2; i++) queue2.poll(10, TimeUnit.SECONDS);
+
+      eventually(() -> redis.pubsubNumpat() == 0);
+   }
+
+   @Test
+   public void testMixSubscribeAndPSubscribe() throws InterruptedException {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+      // Subscribe to exact channel and a pattern that matches it
+      connection.subscribe("foo.bar");
+      assertSubscription(handOffQueue, "foo.bar");
+
+      connection.psubscribe("foo.*");
+      assertPSubscription(handOffQueue, 2, "foo.*");
+
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.publish("foo.bar", "hello");
+
+      // Should receive both a message and a pmessage
+      String value1 = handOffQueue.poll(10, TimeUnit.SECONDS);
+      String value2 = handOffQueue.poll(10, TimeUnit.SECONDS);
+
+      assertThat(value1).isNotNull();
+      assertThat(value2).isNotNull();
+
+      // One should be message, the other pmessage (order may vary)
+      assertThat(new String[] { value1, value2 }).containsExactlyInAnyOrder(
+            "message-foo.bar-hello",
+            "pmessage-foo.*-foo.bar-hello"
+      );
+
+      connection.unsubscribe("foo.bar");
+      connection.punsubscribe("foo.*");
+   }
+
+   @Test
+   public void testPSubscribeIdempotent() throws InterruptedException {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+      // Subscribe to the same pattern multiple times
+      connection.psubscribe("test.*");
+      assertPSubscription(handOffQueue, "test.*");
+
+      connection.psubscribe("test.*");
+      // Second subscription should still give a psubscribe confirmation
+      String value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isNotNull();
+      assertThat(value).startsWith("psubscribed-test.*-");
+
+      // Publish a message - should only receive one copy
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.publish("test.hello", "world");
+
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("pmessage-test.*-test.hello-world");
+
+      // No duplicate
+      value = handOffQueue.poll(1, TimeUnit.SECONDS);
+      assertThat(value).isNull();
+
+      connection.punsubscribe("test.*");
+   }
+
+   @Test(dataProvider = "booleans")
+   public void testPSubUnsubDisconnect(boolean quit) throws InterruptedException {
+      int listenersBefore = getListeners(cache).size();
+
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+      // Subscribe to patterns
+      connection.psubscribe("chan1.*", "chan2.*");
+      assertPSubscription(handOffQueue, "chan1.*", "chan2.*");
+
+      assertThat(getListeners(cache)).hasSize(listenersBefore + 2);
+
+      if (quit) {
+         connection.getStatefulConnection().close();
+
+         eventually(() -> getListeners(cache).size() == listenersBefore);
+         assertThat(getListeners(cache)).hasSize(listenersBefore);
+      } else {
+         connection.punsubscribe();
+
+         for (int i = 0; i < 2; ++i) {
+            String value = handOffQueue.poll(10, TimeUnit.SECONDS);
+            assertThat(value).withFailMessage("Didn't receive punsubscribe notification").isNotNull();
+            assertThat(value).startsWith("punsubscribed-");
+         }
+
+         eventually(() -> getListeners(cache).size() == listenersBefore);
+         assertThat(connection.ping()).isEqualTo(PONG);
+      }
+   }
+
    protected RedisPubSubCommands<String, String> createPubSubConnection() {
       return client.connectPubSub().sync();
    }
@@ -254,6 +572,18 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       for (String channel : channels) {
          String value = queue.poll(10, TimeUnit.SECONDS);
          assertThat(value).isEqualTo(String.format("subscribed-%s-%d", channel, i++));
+      }
+   }
+
+   private void assertPSubscription(BlockingQueue<String> queue, String ... patterns) throws InterruptedException {
+      assertPSubscription(queue, 1, patterns);
+   }
+
+   private void assertPSubscription(BlockingQueue<String> queue, int startCount, String ... patterns) throws InterruptedException {
+      int i = startCount;
+      for (String pattern : patterns) {
+         String value = queue.poll(10, TimeUnit.SECONDS);
+         assertThat(value).isEqualTo(String.format("psubscribed-%s-%d", pattern, i++));
       }
    }
 
@@ -276,15 +606,33 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
          }
 
          @Override
+         public void message(String pattern, String channel, String message) {
+            log.tracef("Received pmessage pattern %s channel %s of %s", pattern, channel, message);
+            handOffQueue.add("pmessage-" + pattern + "-" + channel + "-" + message);
+         }
+
+         @Override
          public void subscribed(String channel, long count) {
             log.tracef("Subscribed to %s with %s", channel, count);
             handOffQueue.add("subscribed-" + channel + "-" + count);
          }
 
          @Override
+         public void psubscribed(String pattern, long count) {
+            log.tracef("PSubscribed to %s with %s", pattern, count);
+            handOffQueue.add("psubscribed-" + pattern + "-" + count);
+         }
+
+         @Override
          public void unsubscribed(String channel, long count) {
             log.tracef("Unsubscribed to %s with %s", channel, count);
             handOffQueue.add("unsubscribed-" + channel + "-" + count);
+         }
+
+         @Override
+         public void punsubscribed(String pattern, long count) {
+            log.tracef("PUnsubscribed from %s with %s", pattern, count);
+            handOffQueue.add("punsubscribed-" + pattern + "-" + count);
          }
       });
 
