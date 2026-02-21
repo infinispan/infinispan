@@ -56,7 +56,11 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
 
    @AfterMethod
    void resetBloomFilter() throws InterruptedException {
-      assertClient.expectNoNearEvents(50, TimeUnit.MILLISECONDS);
+      // Drain any residual events from the test - some events may arrive
+      // asynchronously from the server after test methods complete
+      while (assertClient.events.poll(50, TimeUnit.MILLISECONDS) != null) {
+         // discard
+      }
 
       ((InvalidatedNearRemoteCache) assertClient.remote).clearNearCache();
       CompletionStages.join(((InvalidatedNearRemoteCache) assertClient.remote).updateBloomFilter());
