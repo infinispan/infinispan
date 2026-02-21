@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
@@ -55,13 +54,20 @@ public class LocalIndexSyncStateTransferTest extends MultipleCacheManagersTest {
 
    private void assertIndexesSynced(Cache<Integer, Object> c) {
       String address = c.getAdvancedCache().getRpcManager().getAddress().toString();
-      Map<Class<?>, AtomicInteger> countPerEntity = getEntityCountPerClass(c);
-      Map<String, Long> indexInfo = getIndexCountPerEntity(c);
-      countPerEntity.forEach((entity, count) -> {
-         long indexed = indexInfo.get(entity.getName());
-         Supplier<String> messageSupplier = () -> String.format("On node %s index contains %d entries for entity %s," +
-               " but data container has %d", address, indexed, entity.getName(), count.get());
-         eventually(messageSupplier, () -> indexed == count.get());
+      eventually(() -> {
+         Map<Class<?>, AtomicInteger> countPerEntity = getEntityCountPerClass(c);
+         Map<String, Long> indexInfo = getIndexCountPerEntity(c);
+         for (var entry : countPerEntity.entrySet()) {
+            String entityName = entry.getKey().getName();
+            long dataCount = entry.getValue().get();
+            Long indexed = indexInfo.get(entityName);
+            if (indexed == null || indexed != dataCount) {
+               log.debugf("On node %s index contains %d entries for entity %s, but data container has %d",
+                     address, indexed, entityName, dataCount);
+               return false;
+            }
+         }
+         return true;
       });
    }
 
