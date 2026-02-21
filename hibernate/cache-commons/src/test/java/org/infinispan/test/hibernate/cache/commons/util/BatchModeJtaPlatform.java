@@ -16,43 +16,41 @@ import jakarta.transaction.UserTransaction;
  * @author Steve Ebersole
  */
 public class BatchModeJtaPlatform implements JtaPlatform {
-	@Override
-	public TransactionManager retrieveTransactionManager() {
-        try {
-            return BatchModeTransactionManager.getInstance();
-        }
-        catch (Exception e) {
-            throw new HibernateException("Failed getting BatchModeTransactionManager", e);
-        }
-	}
+   @Override
+   public TransactionManager retrieveTransactionManager() {
+      try {
+         return BatchModeTransactionManager.getInstance();
+      } catch (Exception e) {
+         throw new HibernateException("Failed getting BatchModeTransactionManager", e);
+      }
+   }
 
-	@Override
-	public UserTransaction retrieveUserTransaction() {
-        throw new UnsupportedOperationException();
-	}
+   @Override
+   public UserTransaction retrieveUserTransaction() {
+      throw new UnsupportedOperationException();
+   }
 
-	@Override
-	public Object getTransactionIdentifier(Transaction transaction) {
-		return transaction;
-	}
+   @Override
+   public Object getTransactionIdentifier(Transaction transaction) {
+      return transaction;
+   }
 
-	@Override
-	public boolean canRegisterSynchronization() {
-		return JtaStatusHelper.isActive( retrieveTransactionManager() );
-	}
+   @Override
+   public boolean canRegisterSynchronization() {
+      return JtaStatusHelper.isActive(retrieveTransactionManager());
+   }
 
-	@Override
-	public void registerSynchronization(Synchronization synchronization) {
-		try {
-			retrieveTransactionManager().getTransaction().registerSynchronization( synchronization );
-		}
-		catch (Exception e) {
-			throw new TransactionException( "Could not obtain transaction from TM" );
-		}
-	}
+   @Override
+   public void registerSynchronization(Synchronization synchronization) {
+      try {
+         retrieveTransactionManager().getTransaction().registerSynchronization(synchronization);
+      } catch (Exception e) {
+         throw new TransactionException("Could not obtain transaction from TM");
+      }
+   }
 
-	@Override
-	public int getCurrentStatus() throws SystemException {
-		return JtaStatusHelper.getStatus( retrieveTransactionManager() );
-	}
+   @Override
+   public int getCurrentStatus() throws SystemException {
+      return JtaStatusHelper.getStatus(retrieveTransactionManager());
+   }
 }

@@ -34,7 +34,7 @@
          <object size="140000"/>
       </memory>
       <expiration maxIdle="1200000" wakeUpInterval="60000"/>
-      <transaction transactionMode="NON_TRANSACTIONAL" autoCommit="false" />
+      <transaction transactionMode="NON_TRANSACTIONAL" autoCommit="false"/>
    </local-cache>
 
    <!-- Optimized for timestamp caching. -->

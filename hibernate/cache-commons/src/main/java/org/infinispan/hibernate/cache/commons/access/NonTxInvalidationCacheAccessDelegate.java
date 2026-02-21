@@ -24,51 +24,51 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
    private static final long REMOVE_FLAGS = FlagBitSets.IGNORE_RETURN_VALUES | FlagBitSets.FORCE_WRITE_LOCK;
 
    protected final AsyncInterceptorChain invoker;
-	private final CommandsFactory commandsFactory;
+   private final CommandsFactory commandsFactory;
    private final KeyPartitioner keyPartitioner;
-	private final InvocationContextFactory contextFactory;
-	protected final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
-	protected final boolean isLocal;
+   private final InvocationContextFactory contextFactory;
+   protected final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
+   protected final boolean isLocal;
 
-	public NonTxInvalidationCacheAccessDelegate(InfinispanDataRegion region, PutFromLoadValidator validator) {
-		super(region, validator);
-		isLocal = !region.getCache().getCacheConfiguration().clustering().cacheMode().isClustered();
-		ComponentRegistry cr = ComponentRegistry.of(region.getCache());
-		invoker = cr.getComponent(AsyncInterceptorChain.class);
-		commandsFactory = cr.getComponent(CommandsFactory.class);
+   public NonTxInvalidationCacheAccessDelegate(InfinispanDataRegion region, PutFromLoadValidator validator) {
+      super(region, validator);
+      isLocal = !region.getCache().getCacheConfiguration().clustering().cacheMode().isClustered();
+      ComponentRegistry cr = ComponentRegistry.of(region.getCache());
+      invoker = cr.getComponent(AsyncInterceptorChain.class);
+      commandsFactory = cr.getComponent(CommandsFactory.class);
       keyPartitioner = cr.getComponent(KeyPartitioner.class);
-		contextFactory = cr.getComponent(InvocationContextFactory.class);
-		nonTxPutFromLoadInterceptor = cr.getComponent(NonTxPutFromLoadInterceptor.class);
-	}
+      contextFactory = cr.getComponent(InvocationContextFactory.class);
+      nonTxPutFromLoadInterceptor = cr.getComponent(NonTxPutFromLoadInterceptor.class);
+   }
 
-	@Override
-	@SuppressWarnings("UnusedParameters")
-	public boolean insert(Object session, Object key, Object value, Object version) throws CacheException {
-		if ( !region.checkValid() ) {
-			return false;
-		}
-		write(session, key, value);
-		return true;
-	}
+   @Override
+   @SuppressWarnings("UnusedParameters")
+   public boolean insert(Object session, Object key, Object value, Object version) throws CacheException {
+      if (!region.checkValid()) {
+         return false;
+      }
+      write(session, key, value);
+      return true;
+   }
 
-	@Override
-	@SuppressWarnings("UnusedParameters")
-	public boolean update(Object session, Object key, Object value, Object currentVersion, Object previousVersion)
-			throws CacheException {
-		// We update whether or not the region is valid. Other nodes
-		// may have already restored the region so they need to
-		// be informed of the change.
-		write(session, key, value);
-		return true;
-	}
+   @Override
+   @SuppressWarnings("UnusedParameters")
+   public boolean update(Object session, Object key, Object value, Object currentVersion, Object previousVersion)
+         throws CacheException {
+      // We update whether or not the region is valid. Other nodes
+      // may have already restored the region so they need to
+      // be informed of the change.
+      write(session, key, value);
+      return true;
+   }
 
-	@Override
-	public void remove(Object session, Object key) throws CacheException {
-		// We update whether or not the region is valid. Other nodes
-		// may have already restored the region so they need to
-		// be informed of the change.
-		write(session, key, null);
-	}
+   @Override
+   public void remove(Object session, Object key) throws CacheException {
+      // We update whether or not the region is valid. Other nodes
+      // may have already restored the region so they need to
+      // be informed of the change.
+      write(session, key, null);
+   }
 
    private void write(Object session, Object key, Object value) {
       // We need to be invalidating even for regular writes; if we were not and the write was followed by eviction
@@ -95,46 +95,46 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
       }
    }
 
-	protected void invoke(Object session, InvocationContext ctx, RemoveCommand command) {
-		invoker.invoke(ctx, command);
-	}
+   protected void invoke(Object session, InvocationContext ctx, RemoveCommand command) {
+      invoker.invoke(ctx, command);
+   }
 
-	@Override
-	public boolean afterInsert(Object session, Object key, Object value, Object version) {
-		// endInvalidatingKeys is called from NonTxInvalidationInterceptor, from the synchronization callback
-		return false;
-	}
+   @Override
+   public boolean afterInsert(Object session, Object key, Object value, Object version) {
+      // endInvalidatingKeys is called from NonTxInvalidationInterceptor, from the synchronization callback
+      return false;
+   }
 
-	@Override
-	public boolean afterUpdate(Object session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) {
-		// endInvalidatingKeys is called from NonTxInvalidationInterceptor, from the synchronization callback
-		return false;
-	}
+   @Override
+   public boolean afterUpdate(Object session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) {
+      // endInvalidatingKeys is called from NonTxInvalidationInterceptor, from the synchronization callback
+      return false;
+   }
 
-	@Override
-	public void removeAll() throws CacheException {
-		cache.clear();
-	}
+   @Override
+   public void removeAll() throws CacheException {
+      cache.clear();
+   }
 
-	protected void registerLocalInvalidation(Object session, Object lockOwner, Object key) {
-		SessionAccess.TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(session);
-		if (transactionCoordinator == null) {
-			return;
-		}
-		if (log.isTraceEnabled()) {
-			log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
-		}
-		transactionCoordinator.registerLocalSynchronization(new LocalInvalidationSynchronization(putValidator, key, lockOwner));
-	}
-
-	protected void registerClusteredInvalidation(Object session, Object lockOwner, Object key) {
-		SessionAccess.TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(session);
-		if (transactionCoordinator == null) {
-			return;
-		}
-		if (log.isTraceEnabled()) {
+   protected void registerLocalInvalidation(Object session, Object lockOwner, Object key) {
+      SessionAccess.TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(session);
+      if (transactionCoordinator == null) {
+         return;
+      }
+      if (log.isTraceEnabled()) {
          log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
       }
-		transactionCoordinator.registerLocalSynchronization(new InvalidationSynchronization(nonTxPutFromLoadInterceptor, key, lockOwner));
-	}
+      transactionCoordinator.registerLocalSynchronization(new LocalInvalidationSynchronization(putValidator, key, lockOwner));
+   }
+
+   protected void registerClusteredInvalidation(Object session, Object lockOwner, Object key) {
+      SessionAccess.TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(session);
+      if (transactionCoordinator == null) {
+         return;
+      }
+      if (log.isTraceEnabled()) {
+         log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
+      }
+      transactionCoordinator.registerLocalSynchronization(new InvalidationSynchronization(nonTxPutFromLoadInterceptor, key, lockOwner));
+   }
 }

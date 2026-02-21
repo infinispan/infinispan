@@ -46,6 +46,7 @@
       <version.maven.gpg>3.2.8</version.maven.gpg>
       <version.maven.javadoc>3.12.0</version.maven.javadoc>
       <version.maven.sonatype.central>0.10.0</version.maven.sonatype.central>
+      <version.maven.spotless>3.2.1</version.maven.spotless>
    </properties>
 
    <dependencyManagement>
@@ -408,6 +409,31 @@
          </dependency>
       </dependencies>
    </dependencyManagement>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>${version.maven.spotless}</version>
+            <configuration>
+               <java>
+                  <importOrder>
+                     <order>\#,java,javax,org,com,</order>
+                  </importOrder>
+                  <indent>
+                     <spaces>true</spaces>
+                     <spacesPerTab>3</spacesPerTab>
+                  </indent>
+                  <removeUnusedImports/>
+                  <trimTrailingWhitespace/>
+                  <endWithNewline/>
+                  <toggleOffOn/>
+               </java>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 
    <profiles>
       <profile>

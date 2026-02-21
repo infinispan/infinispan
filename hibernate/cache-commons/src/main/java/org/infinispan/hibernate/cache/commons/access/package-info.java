@@ -1,4 +1,3 @@
-
 /**
  * Internal Infinispan-based implementation of the cache region access strategies
  */

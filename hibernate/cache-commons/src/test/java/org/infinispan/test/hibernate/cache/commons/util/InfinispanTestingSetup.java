@@ -21,35 +21,35 @@ import org.junit.runners.model.Statement;
  */
 public final class InfinispanTestingSetup implements TestRule {
 
-    private volatile String runningTest;
+   private volatile String runningTest;
 
-    public InfinispanTestingSetup() {
-    }
+   public InfinispanTestingSetup() {
+   }
 
-    public Statement apply(Statement base, Description d) {
-        final String methodName = d.getMethodName();
-        final String testName = methodName == null ? d.getClassName() : d.getClassName() + "#" + d.getMethodName();
-        runningTest = testName;
-        return new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                TestResourceTracker.testStarted( testName );
-                ThreadLeakChecker.testStarted( testName );
-                try {
-                    base.evaluate();
-                } finally {
-                    TestResourceTracker.testFinished( testName );
-                    ThreadLeakChecker.testFinished( testName );
-                }
+   public Statement apply(Statement base, Description d) {
+      final String methodName = d.getMethodName();
+      final String testName = methodName == null ? d.getClassName() : d.getClassName() + "#" + d.getMethodName();
+      runningTest = testName;
+      return new Statement() {
+         @Override
+         public void evaluate() throws Throwable {
+            TestResourceTracker.testStarted(testName);
+            ThreadLeakChecker.testStarted(testName);
+            try {
+               base.evaluate();
+            } finally {
+               TestResourceTracker.testFinished(testName);
+               ThreadLeakChecker.testFinished(testName);
             }
-        };
-    }
+         }
+      };
+   }
 
    /**
     * Make a new thread join the test context.
     */
    public void joinContext() {
-        TestResourceTracker.setThreadTestName( runningTest );
-    }
+      TestResourceTracker.setThreadTestName(runningTest);
+   }
 
 }

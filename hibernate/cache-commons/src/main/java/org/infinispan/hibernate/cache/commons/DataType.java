@@ -12,7 +12,7 @@ public enum DataType {
    COLLECTION(InfinispanProperties.COLLECTION, InfinispanProperties.DEF_ENTITY_RESOURCE, DataType::noValidation),
    IMMUTABLE_ENTITY(InfinispanProperties.IMMUTABLE_ENTITY, InfinispanProperties.DEF_ENTITY_RESOURCE, DataType::noValidation),
    TIMESTAMPS(InfinispanProperties.TIMESTAMPS, InfinispanProperties.DEF_TIMESTAMPS_RESOURCE, c -> {
-      if ( c.clustering().cacheMode().isInvalidation() ) {
+      if (c.clustering().cacheMode().isInvalidation()) {
          throw log().timestampsMustNotUseInvalidation();
       }
       if (c.memory().isEvictionEnabled()) {

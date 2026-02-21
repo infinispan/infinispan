@@ -29,45 +29,46 @@ import org.infinispan.util.logging.LogFactory;
  * by primary owner.
  */
 public class UnorderedDistributionInterceptor extends NonTxDistributionInterceptor {
-	private static final Log log = LogFactory.getLog(UnorderedDistributionInterceptor.class);
+   private static final Log log = LogFactory.getLog(UnorderedDistributionInterceptor.class);
 
-	@Inject DistributionManager distributionManager;
-	private boolean isReplicated;
+   @Inject
+   DistributionManager distributionManager;
+   private boolean isReplicated;
 
-	@Start
-	public void start() {
-		isReplicated = cacheConfiguration.clustering().cacheMode().isReplicated();
-	}
+   @Start
+   public void start() {
+      isReplicated = cacheConfiguration.clustering().cacheMode().isReplicated();
+   }
 
-	@Override
-	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
-		return handleDataWriteCommand(ctx, command);
-	}
+   @Override
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
+      return handleDataWriteCommand(ctx, command);
+   }
 
-	@Override
-	public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
-		return handleDataWriteCommand(ctx, command);
-	}
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      return handleDataWriteCommand(ctx, command);
+   }
 
-	@Override
-	public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) {
-		return handleDataWriteCommand(ctx, command);
-	}
+   @Override
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) {
+      return handleDataWriteCommand(ctx, command);
+   }
 
-	private Object handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
-		if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-			// for state-transfer related writes
-			return invokeNext(ctx, command);
-		}
-		int commandTopologyId = command.getTopologyId();
+   private Object handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+         // for state-transfer related writes
+         return invokeNext(ctx, command);
+      }
+      int commandTopologyId = command.getTopologyId();
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
-		int currentTopologyId = cacheTopology.getTopologyId();
-		if (commandTopologyId != -1 && currentTopologyId != commandTopologyId) {
-			throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
-		}
+      int currentTopologyId = cacheTopology.getTopologyId();
+      if (commandTopologyId != -1 && currentTopologyId != commandTopologyId) {
+         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
+      }
 
-		if (isReplicated) {
-			// local result is always ignored
+      if (isReplicated) {
+         // local result is always ignored
          return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
             CompletionStage<?> remoteInvocation = invokeRemotelyAsync(null, rCtx, rCommand);
             if (remoteInvocation != null) {
@@ -75,52 +76,50 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
             }
             return rv;
          });
-		}
-		else {
-			List<Address> owners = cacheTopology.getDistribution(command.getKey()).writeOwners();
-			if (owners.contains(rpcManager.getAddress())) {
-            return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
+      } else {
+         List<Address> owners = cacheTopology.getDistribution(command.getKey()).writeOwners();
+         if (owners.contains(rpcManager.getAddress())) {
+            return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
                CompletionStage<?> remoteInvocation = invokeRemotelyAsync(owners, rCtx, rCommand);
                if (remoteInvocation != null) {
                   return remoteInvocation.thenApply(responses -> rv);
                }
                return rv;
             });
-			}
-			else {
-				log.tracef("Not invoking %s on %s since it is not an owner", command, rpcManager.getAddress());
+         } else {
+            log.tracef("Not invoking %s on %s since it is not an owner", command, rpcManager.getAddress());
             if (ctx.isOriginLocal() && command.isSuccessful()) {
                // This is called with the entry locked. In order to avoid deadlocks we must not wait for RPC while
                // holding the lock, therefore we'll return a future and wait for it in LockingInterceptor after
                // unlocking (and committing) the entry.
-					if (isSynchronous(command)) {
-						return rpcManager.invokeCommand(owners, command, MapResponseCollector.ignoreLeavers(owners.size()),
-																  rpcManager.getSyncRpcOptions());
-					} else {
-						rpcManager.sendToMany(owners, command, DeliverOrder.NONE);
-					}
-				}
+               if (isSynchronous(command)) {
+                  return rpcManager.invokeCommand(owners, command, MapResponseCollector.ignoreLeavers(owners.size()),
+                        rpcManager.getSyncRpcOptions());
+               } else {
+                  rpcManager.sendToMany(owners, command, DeliverOrder.NONE);
+               }
+            }
             return null;
-			}
-		}
+         }
+      }
 
-	}
+   }
 
    private CompletionStage<?> invokeRemotelyAsync(List<Address> finalOwners, InvocationContext rCtx, WriteCommand writeCmd) {
       if (rCtx.isOriginLocal() && writeCmd.isSuccessful()) {
          // This is called with the entry locked. In order to avoid deadlocks we must not wait for RPC while
          // holding the lock, therefore we'll return a future and wait for it in LockingInterceptor after
          // unlocking (and committing) the entry.
-			if (isSynchronous(writeCmd)) {
-				if (finalOwners != null) {
-					return rpcManager.invokeCommand(
-                  finalOwners, writeCmd, MapResponseCollector.ignoreLeavers(finalOwners.size()), rpcManager.getSyncRpcOptions());
-				} else {
-					return rpcManager.invokeCommandOnAll(writeCmd, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
-				}
-			} else {
-				rpcManager.sendToMany(finalOwners, writeCmd, DeliverOrder.NONE);
-			}
+         if (isSynchronous(writeCmd)) {
+            if (finalOwners != null) {
+               return rpcManager.invokeCommand(
+                     finalOwners, writeCmd, MapResponseCollector.ignoreLeavers(finalOwners.size()), rpcManager.getSyncRpcOptions());
+            } else {
+               return rpcManager.invokeCommandOnAll(writeCmd, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
+            }
+         } else {
+            rpcManager.sendToMany(finalOwners, writeCmd, DeliverOrder.NONE);
+         }
       }
       return null;
    }

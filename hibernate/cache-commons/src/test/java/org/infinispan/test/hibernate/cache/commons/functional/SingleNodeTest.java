@@ -19,46 +19,46 @@ import jakarta.transaction.TransactionManager;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public abstract class SingleNodeTest extends AbstractFunctionalTest {
-	protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
+   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
-	@Override
-	protected void afterSessionFactoryBuilt(SessionFactoryImplementor sessionFactory) {
-		super.afterSessionFactoryBuilt(sessionFactory);
-		JtaPlatform jtaPlatform = sessionFactory().getServiceRegistry().getService(JtaPlatform.class);
-		assertNotNull(jtaPlatform);
-		assertEquals(jtaPlatformClass, jtaPlatform.getClass());
-	}
+   @Override
+   protected void afterSessionFactoryBuilt(SessionFactoryImplementor sessionFactory) {
+      super.afterSessionFactoryBuilt(sessionFactory);
+      JtaPlatform jtaPlatform = sessionFactory().getServiceRegistry().getService(JtaPlatform.class);
+      assertNotNull(jtaPlatform);
+      assertEquals(jtaPlatformClass, jtaPlatform.getClass());
+   }
 
-	protected void withTxSession(TxUtil.ThrowingConsumer<Session, Exception> consumer) throws Exception {
-		withTxSession(sessionFactory().withOptions(), consumer);
-	}
+   protected void withTxSession(TxUtil.ThrowingConsumer<Session, Exception> consumer) throws Exception {
+      withTxSession(sessionFactory().withOptions(), consumer);
+   }
 
-	protected void withTxSession(SessionBuilder sessionBuilder, TxUtil.ThrowingConsumer<Session, Exception> consumer) throws Exception {
-		JtaPlatform jtaPlatform = useJta ? sessionFactory().getServiceRegistry().getService(JtaPlatform.class) : null;
-		TxUtil.withTxSession(jtaPlatform, sessionBuilder, consumer);
-	}
+   protected void withTxSession(SessionBuilder sessionBuilder, TxUtil.ThrowingConsumer<Session, Exception> consumer) throws Exception {
+      JtaPlatform jtaPlatform = useJta ? sessionFactory().getServiceRegistry().getService(JtaPlatform.class) : null;
+      TxUtil.withTxSession(jtaPlatform, sessionBuilder, consumer);
+   }
 
-	protected <T> T withTxSessionApply(TxUtil.ThrowingFunction<Session, T, Exception> function) throws Exception {
-		JtaPlatform jtaPlatform = useJta ? sessionFactory().getServiceRegistry().getService(JtaPlatform.class) : null;
-		return TxUtil.withTxSessionApply(jtaPlatform, sessionFactory().withOptions(), function);
-	}
+   protected <T> T withTxSessionApply(TxUtil.ThrowingFunction<Session, T, Exception> function) throws Exception {
+      JtaPlatform jtaPlatform = useJta ? sessionFactory().getServiceRegistry().getService(JtaPlatform.class) : null;
+      return TxUtil.withTxSessionApply(jtaPlatform, sessionFactory().withOptions(), function);
+   }
 
-	protected <T> T withTx(Callable<T> callable) throws Exception {
-		if (useJta) {
-			TransactionManager tm = sessionFactory().getServiceRegistry().getService(JtaPlatform.class).retrieveTransactionManager();
-			return Caches.withinTx(tm, () -> callable.call());
-		} else {
-			return callable.call();
-		}
-	}
+   protected <T> T withTx(Callable<T> callable) throws Exception {
+      if (useJta) {
+         TransactionManager tm = sessionFactory().getServiceRegistry().getService(JtaPlatform.class).retrieveTransactionManager();
+         return Caches.withinTx(tm, () -> callable.call());
+      } else {
+         return callable.call();
+      }
+   }
 
-	public <E extends Throwable> void withSession(TxUtil.ThrowingConsumer<Session, E> consumer) throws E {
-		TxUtil.withSession(sessionFactory().withOptions(), consumer);
-	}
+   public <E extends Throwable> void withSession(TxUtil.ThrowingConsumer<Session, E> consumer) throws E {
+      TxUtil.withSession(sessionFactory().withOptions(), consumer);
+   }
 
 
-	public <R, E extends Throwable> R withSessionApply(TxUtil.ThrowingFunction<Session, R, E> function) throws E {
-		return TxUtil.withSessionApply(sessionFactory().withOptions(), function);
-	}
+   public <R, E extends Throwable> R withSessionApply(TxUtil.ThrowingFunction<Session, R, E> function) throws E {
+      return TxUtil.withSessionApply(sessionFactory().withOptions(), function);
+   }
 
 }

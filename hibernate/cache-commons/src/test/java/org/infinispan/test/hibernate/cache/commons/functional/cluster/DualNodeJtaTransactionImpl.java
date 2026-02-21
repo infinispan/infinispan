@@ -24,7 +24,7 @@ import jakarta.transaction.Transaction;
 
 /**
  * SimpleJtaTransactionImpl variant that works with DualNodeTransactionManagerImpl.
- *
+ * <p>
  * TODO: Merge with single node transaction manager
  *
  * @author Brian Stansberry
@@ -49,7 +49,7 @@ public class DualNodeJtaTransactionImpl implements Transaction {
    }
 
    public void commit() throws RollbackException, HeuristicMixedException,
-            HeuristicRollbackException, IllegalStateException, SystemException {
+         HeuristicRollbackException, IllegalStateException, SystemException {
 
       if (status == Status.STATUS_MARKED_ROLLBACK) {
          log.trace("on commit, status was marked for rollback-only");
@@ -129,7 +129,7 @@ public class DualNodeJtaTransactionImpl implements Transaction {
    }
 
    public void registerSynchronization(Synchronization synchronization) throws RollbackException,
-            IllegalStateException, SystemException {
+         IllegalStateException, SystemException {
       // todo : find the spec-allowable statuses during which synch can be registered...
       if (synchronizations == null) {
          synchronizations = new LinkedList();
@@ -149,7 +149,7 @@ public class DualNodeJtaTransactionImpl implements Transaction {
    }
 
    public boolean enlistResource(XAResource xaResource) throws RollbackException,
-            IllegalStateException, SystemException {
+         IllegalStateException, SystemException {
       enlistedResources.add(new WrappedXaResource(xaResource));
       try {
          xaResource.start(xid, 0);
@@ -161,7 +161,7 @@ public class DualNodeJtaTransactionImpl implements Transaction {
    }
 
    public boolean delistResource(XAResource xaResource, int i) throws IllegalStateException,
-            SystemException {
+         SystemException {
       throw new SystemException("not supported");
    }
 
@@ -191,7 +191,7 @@ public class DualNodeJtaTransactionImpl implements Transaction {
          try {
             res.rollback(xid);
          } catch (XAException e) {
-            log.warn("Error while rolling back",e);
+            log.warn("Error while rolling back", e);
          }
       }
    }
@@ -202,7 +202,7 @@ public class DualNodeJtaTransactionImpl implements Transaction {
          try {
             res.commit(xid, false);//todo we only support one phase commit for now, change this!!!
          } catch (XAException e) {
-            log.warn("exception while committing",e);
+            log.warn("exception while committing", e);
             throw new HeuristicMixedException(e.getMessage());
          }
       }

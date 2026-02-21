@@ -16,26 +16,25 @@ import org.junit.Test;
  * @since 3.5
  */
 public abstract class AbstractEntityCollectionRegionTest extends AbstractRegionImplTest {
-	@Test
-	public void testSupportedAccessTypes() {
-		StandardServiceRegistryBuilder ssrb = createStandardServiceRegistryBuilder();
-		final StandardServiceRegistry registry = ssrb.build();
-		try {
-			TestRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
-					registry,
-					getCacheTestSupport()
-			);
-			supportedAccessTypeTest( regionFactory, CacheTestUtil.toProperties( ssrb.getSettings() ) );
-		}
-		finally {
-			StandardServiceRegistryBuilder.destroy( registry );
-		}
-	}
+   @Test
+   public void testSupportedAccessTypes() {
+      StandardServiceRegistryBuilder ssrb = createStandardServiceRegistryBuilder();
+      final StandardServiceRegistry registry = ssrb.build();
+      try {
+         TestRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
+               registry,
+               getCacheTestSupport()
+         );
+         supportedAccessTypeTest(regionFactory, CacheTestUtil.toProperties(ssrb.getSettings()));
+      } finally {
+         StandardServiceRegistryBuilder.destroy(registry);
+      }
+   }
 
-	/**
-	 * Creates a Region using the given factory, and then ensure that it handles calls to
-	 * buildAccessStrategy as expected when all the various {@link AccessType}s are passed as
-	 * arguments.
-	 */
-	protected abstract void supportedAccessTypeTest(TestRegionFactory regionFactory, Properties properties);
+   /**
+    * Creates a Region using the given factory, and then ensure that it handles calls to
+    * buildAccessStrategy as expected when all the various {@link AccessType}s are passed as
+    * arguments.
+    */
+   protected abstract void supportedAccessTypeTest(TestRegionFactory regionFactory, Properties properties);
 }

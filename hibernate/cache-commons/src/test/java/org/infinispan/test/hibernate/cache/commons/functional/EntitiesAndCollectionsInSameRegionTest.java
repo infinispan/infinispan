@@ -52,8 +52,8 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
    @Override
    public Class[] getAnnotatedClasses() {
       return new Class[]{
-         AnEntity.class,
-         AnotherEntity.class
+            AnEntity.class,
+            AnotherEntity.class
       };
    }
 
@@ -72,10 +72,10 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
       stats.clear();
 
       withTxSession(
-         s -> {
-            s.persist(anEntity);
-            s.persist(anotherEntity);
-         }
+            s -> {
+               s.persist(anEntity);
+               s.persist(anotherEntity);
+            }
       );
 
       // Then entities should have been cached, but not their collections.
@@ -90,10 +90,10 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
    @After
    public void cleanup() throws Exception {
       withTxSession(
-         s -> {
-            s.remove(s.get(AnEntity.class, 1));
-            s.remove(s.get(AnotherEntity.class, 1));
-         }
+            s -> {
+               s.remove(s.get(AnEntity.class, 1));
+               s.remove(s.get(AnotherEntity.class, 1));
+            }
       );
    }
 
@@ -106,98 +106,98 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
       stats.clear();
 
       withTxSession(
-         s -> {
-            AnEntity anEntity1 = s.get(AnEntity.class, anEntity.id);
+            s -> {
+               AnEntity anEntity1 = s.get(AnEntity.class, anEntity.id);
 
-            CacheRegionStatistics cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
+               CacheRegionStatistics cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
 
-            // anEntity1 was cached when it was persisted
-            assertEquals(0, cacheStatistics.getMissCount());
-            assertEquals(1, cacheStatistics.getHitCount());
-            assertEquals(0, cacheStatistics.getPutCount());
+               // anEntity1 was cached when it was persisted
+               assertEquals(0, cacheStatistics.getMissCount());
+               assertEquals(1, cacheStatistics.getHitCount());
+               assertEquals(0, cacheStatistics.getPutCount());
 
-            stats.clear();
+               stats.clear();
 
-            assertFalse(Hibernate.isInitialized(anEntity1.valuesSet));
-            Hibernate.initialize(anEntity1.valuesSet);
+               assertFalse(Hibernate.isInitialized(anEntity1.valuesSet));
+               Hibernate.initialize(anEntity1.valuesSet);
 
-            // anEntity1.values gets cached when it gets loadead
-            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
-            assertEquals(1, cacheStatistics.getMissCount());
-            assertEquals(0, cacheStatistics.getHitCount());
-            assertEquals(1, cacheStatistics.getPutCount());
+               // anEntity1.values gets cached when it gets loadead
+               cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
+               assertEquals(1, cacheStatistics.getMissCount());
+               assertEquals(0, cacheStatistics.getHitCount());
+               assertEquals(1, cacheStatistics.getPutCount());
 
-            stats.clear();
+               stats.clear();
 
-            AnotherEntity anotherEntity1 = s.get(AnotherEntity.class, anotherEntity.id);
+               AnotherEntity anotherEntity1 = s.get(AnotherEntity.class, anotherEntity.id);
 
-            // anotherEntity1 was cached when it was persisted
-            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
-            assertEquals(0, cacheStatistics.getMissCount());
-            assertEquals(1, cacheStatistics.getHitCount());
-            assertEquals(0, cacheStatistics.getPutCount());
+               // anotherEntity1 was cached when it was persisted
+               cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
+               assertEquals(0, cacheStatistics.getMissCount());
+               assertEquals(1, cacheStatistics.getHitCount());
+               assertEquals(0, cacheStatistics.getPutCount());
 
-            stats.clear();
+               stats.clear();
 
-            assertFalse(Hibernate.isInitialized(anotherEntity1.valuesSet));
-            Hibernate.initialize(anotherEntity1.valuesSet);
+               assertFalse(Hibernate.isInitialized(anotherEntity1.valuesSet));
+               Hibernate.initialize(anotherEntity1.valuesSet);
 
-            // anotherEntity1.values gets cached when it gets loadead
-            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
-            assertEquals(1, cacheStatistics.getMissCount());
-            assertEquals(0, cacheStatistics.getHitCount());
-            assertEquals(1, cacheStatistics.getPutCount());
-         }
+               // anotherEntity1.values gets cached when it gets loadead
+               cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
+               assertEquals(1, cacheStatistics.getMissCount());
+               assertEquals(0, cacheStatistics.getHitCount());
+               assertEquals(1, cacheStatistics.getPutCount());
+            }
       );
 
       // The entities and their collections should all be cached now.
 
       withTxSession(
-         s -> {
+            s -> {
 
-            stats.clear();
+               stats.clear();
 
-            AnEntity anEntity1 = s.get(AnEntity.class, anEntity.id);
+               AnEntity anEntity1 = s.get(AnEntity.class, anEntity.id);
 
-            CacheRegionStatistics cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
+               CacheRegionStatistics cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
 
-            assertEquals(0, cacheStatistics.getMissCount());
-            assertEquals(1, cacheStatistics.getHitCount());
-            assertEquals(0, cacheStatistics.getPutCount());
+               assertEquals(0, cacheStatistics.getMissCount());
+               assertEquals(1, cacheStatistics.getHitCount());
+               assertEquals(0, cacheStatistics.getPutCount());
 
-            stats.clear();
+               stats.clear();
 
-            assertFalse(Hibernate.isInitialized(anEntity1.valuesSet));
-            Hibernate.initialize(anEntity1.valuesSet);
+               assertFalse(Hibernate.isInitialized(anEntity1.valuesSet));
+               Hibernate.initialize(anEntity1.valuesSet);
 
-            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
-            assertEquals(0, cacheStatistics.getMissCount());
-            assertEquals(1, cacheStatistics.getHitCount());
-            assertEquals(0, cacheStatistics.getPutCount());
+               cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
+               assertEquals(0, cacheStatistics.getMissCount());
+               assertEquals(1, cacheStatistics.getHitCount());
+               assertEquals(0, cacheStatistics.getPutCount());
 
-            assertEquals(anEntity.valuesSet, anEntity1.valuesSet);
+               assertEquals(anEntity.valuesSet, anEntity1.valuesSet);
 
-            stats.clear();
+               stats.clear();
 
-            AnotherEntity anotherEntity1 = s.get(AnotherEntity.class, anotherEntity.id);
+               AnotherEntity anotherEntity1 = s.get(AnotherEntity.class, anotherEntity.id);
 
-            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
-            assertEquals(0, cacheStatistics.getMissCount());
-            assertEquals(1, cacheStatistics.getHitCount());
-            assertEquals(0, cacheStatistics.getPutCount());
+               cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
+               assertEquals(0, cacheStatistics.getMissCount());
+               assertEquals(1, cacheStatistics.getHitCount());
+               assertEquals(0, cacheStatistics.getPutCount());
 
-            stats.clear();
+               stats.clear();
 
-            assertFalse(Hibernate.isInitialized(anotherEntity1.valuesSet));
-            Hibernate.initialize(anotherEntity1.valuesSet);
+               assertFalse(Hibernate.isInitialized(anotherEntity1.valuesSet));
+               Hibernate.initialize(anotherEntity1.valuesSet);
 
-            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
-            assertEquals(0, cacheStatistics.getMissCount());
-            assertEquals(1, cacheStatistics.getHitCount());
-            assertEquals(0, cacheStatistics.getPutCount());
+               cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
+               assertEquals(0, cacheStatistics.getMissCount());
+               assertEquals(1, cacheStatistics.getHitCount());
+               assertEquals(0, cacheStatistics.getPutCount());
 
-            assertEquals(anotherEntity.valuesSet, anotherEntity1.valuesSet);
-         }
+               assertEquals(anotherEntity.valuesSet, anotherEntity1.valuesSet);
+            }
       );
    }
 

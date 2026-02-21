@@ -8,12 +8,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.NonBlockingStore;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 public class CustomNonBlockingStore implements NonBlockingStore<String, String> {
    private MarshallableEntryFactory<String, String> marshallableEntryFactory;

@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.hibernate.PessimisticLockException;
 import org.hibernate.testing.orm.junit.JiraKey;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
@@ -54,7 +53,7 @@ public class InvalidationTest extends SingleNodeTest {
    @JiraKey(value = "HHH-9868")
    public void testConcurrentRemoveAndPutFromLoad() throws Exception {
 
-      final Item item = new Item( "chris", "Chris's Item" );
+      final Item item = new Item("chris", "Chris's Item");
       withTxSession(s -> {
          s.persist(item);
       });

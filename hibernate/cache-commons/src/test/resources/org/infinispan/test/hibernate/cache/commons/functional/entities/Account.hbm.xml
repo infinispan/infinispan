@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC
-	"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+      "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+      "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.infinispan.test.hibernate.cache.commons.functional.entities">
 
-	<class name="Account" table="Accounts">
-		<id name="id">
-			<generator class="assigned"/>
-		</id>
-		
-		<property name="branch" not-null="true"/>
-		<property name="balance" not-null="true"/>		
+   <class name="Account" table="Accounts">
+      <id name="id">
+         <generator class="assigned"/>
+      </id>
+
+      <property name="branch" not-null="true"/>
+      <property name="balance" not-null="true"/>
       <property name="accountHolder" type="serializable" not-null="true"/>
-      
-	</class>
+
+   </class>
 
 </hibernate-mapping>

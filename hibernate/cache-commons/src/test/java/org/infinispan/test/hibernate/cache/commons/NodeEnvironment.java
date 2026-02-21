@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
@@ -71,7 +70,7 @@ public class NodeEnvironment {
 
    public void prepare() throws Exception {
       serviceRegistry = ssrb.build();
-      regionFactory = CacheTestUtil.startRegionFactory( serviceRegistry );
+      regionFactory = CacheTestUtil.startRegionFactory(serviceRegistry);
    }
 
    public void release() throws Exception {
@@ -96,18 +95,16 @@ public class NodeEnvironment {
             }
             collectionRegionMap.clear();
          }
-      }
-      finally {
+      } finally {
          try {
             if (regionFactory != null) {
                // Currently the RegionFactory is shutdown by its registration
                // with the CacheTestSetup from CacheTestUtil when built
                regionFactory.stop();
             }
-         }
-         finally {
+         } finally {
             if (serviceRegistry != null) {
-               StandardServiceRegistryBuilder.destroy( serviceRegistry );
+               StandardServiceRegistryBuilder.destroy(serviceRegistry);
             }
          }
       }

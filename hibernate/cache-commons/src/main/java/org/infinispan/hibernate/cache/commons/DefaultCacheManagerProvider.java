@@ -95,8 +95,7 @@ public class DefaultCacheManagerProvider implements EmbeddedCacheManagerProvider
          // Workaround Infinispan's ClassLoader strategies to bend to our will:
          builderHolder.getGlobalConfigurationBuilder().classLoader(classLoader);
          return builderHolder;
-      }
-      finally {
+      } finally {
          currentThread.setContextClassLoader(originalClassLoader);
       }
    }

@@ -7,5 +7,6 @@ package org.infinispan.hibernate.cache.commons.util;
  */
 public interface CompletableFunction {
    boolean isComplete();
+
    void markComplete();
 }

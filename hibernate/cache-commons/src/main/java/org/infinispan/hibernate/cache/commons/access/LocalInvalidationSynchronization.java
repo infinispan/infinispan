@@ -20,7 +20,8 @@ public class LocalInvalidationSynchronization implements Synchronization {
    }
 
    @Override
-   public void beforeCompletion() {}
+   public void beforeCompletion() {
+   }
 
    @Override
    public void afterCompletion(int status) {

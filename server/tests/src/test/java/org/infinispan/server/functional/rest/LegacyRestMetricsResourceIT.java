@@ -26,8 +26,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import io.prometheus.metrics.expositionformats.OpenMetricsTextFormatWriter;
-import io.prometheus.metrics.expositionformats.PrometheusTextFormatWriter;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.AbstractDoubleAssert;
 import org.assertj.core.api.AbstractStringAssert;
@@ -44,6 +42,9 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import io.prometheus.metrics.expositionformats.OpenMetricsTextFormatWriter;
+import io.prometheus.metrics.expositionformats.PrometheusTextFormatWriter;
 
 
 /**
@@ -389,7 +390,7 @@ public class LegacyRestMetricsResourceIT {
          return addDescription(assertThat(value));
       }
 
-      private <T extends AbstractAssert<?,?>> T addDescription(T abstractAssert) {
+      private <T extends AbstractAssert<?, ?>> T addDescription(T abstractAssert) {
          abstractAssert.getWritableAssertionInfo().description("metric=%s, tags=%s", name, rawTags);
          return abstractAssert;
       }

@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC
-   "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-   "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+      "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+      "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
-   <hibernate-mapping
-   package="org.infinispan.test.hibernate.cache.commons.functional.entities">
+<hibernate-mapping
+      package="org.infinispan.test.hibernate.cache.commons.functional.entities">
 
    <class name="Customer" table="Customers">
       <id name="id">
-         <generator class="increment" />
+         <generator class="increment"/>
       </id>
-      <property name="name" not-null="true" />
+      <property name="name" not-null="true"/>
       <set name="contacts" inverse="true" cascade="persist">
-         <key column="cust_id" />
-         <one-to-many class="Contact" />
+         <key column="cust_id"/>
+         <one-to-many class="Contact"/>
       </set>
 
    </class>

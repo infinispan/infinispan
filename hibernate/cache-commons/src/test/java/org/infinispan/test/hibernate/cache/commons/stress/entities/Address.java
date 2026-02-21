@@ -1,4 +1,3 @@
-
 package org.infinispan.test.hibernate.cache.commons.stress.entities;
 
 import java.util.HashSet;

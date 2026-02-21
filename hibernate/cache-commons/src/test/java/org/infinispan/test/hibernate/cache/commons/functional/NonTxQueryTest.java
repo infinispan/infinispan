@@ -8,9 +8,9 @@ import java.util.Map;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.hibernate.stat.Statistics;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.junit.Test;
 
 public class NonTxQueryTest extends SingleNodeTest {

@@ -291,7 +291,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       CollectionUpdateTestInterceptor collectionUpdateTestInterceptor = new CollectionUpdateTestInterceptor(putFromLoadLatch);
       AnotherCollectionUpdateTestInterceptor anotherInterceptor = new AnotherCollectionUpdateTestInterceptor(putFromLoadLatch, committing);
       AsyncInterceptorChain interceptorChain = extractInterceptorChain(collectionCache);
-      interceptorChain.addInterceptorBefore( collectionUpdateTestInterceptor, CallInterceptor.class );
+      interceptorChain.addInterceptorBefore(collectionUpdateTestInterceptor, CallInterceptor.class);
       interceptorChain.addInterceptor(anotherInterceptor, 0);
 
       TIME_SERVICE.advance(1);

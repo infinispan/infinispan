@@ -25,71 +25,71 @@ import org.infinispan.util.concurrent.BlockingManager;
  */
 @ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_INVALIDATE_COMMAND_END)
 public class EndInvalidationCommand extends BaseRpcCommand {
-	private final Object[] keys;
-	private final Object lockOwner;
+   private final Object[] keys;
+   private final Object lockOwner;
 
-	/**
-	 * @param cacheName name of the cache to evict
-	 */
-	public EndInvalidationCommand(ByteString cacheName, Object[] keys, Object lockOwner) {
-		super(cacheName);
-		this.keys = keys;
-		this.lockOwner = lockOwner;
-	}
+   /**
+    * @param cacheName name of the cache to evict
+    */
+   public EndInvalidationCommand(ByteString cacheName, Object[] keys, Object lockOwner) {
+      super(cacheName);
+      this.keys = keys;
+      this.lockOwner = lockOwner;
+   }
 
-	@ProtoFactory
-	EndInvalidationCommand(ByteString cacheName, MarshallableArray<Object> keys, MarshallableObject<Object> lockOwner) {
-		this(cacheName, MarshallableArray.unwrap(keys), MarshallableObject.unwrap(lockOwner));
-	}
+   @ProtoFactory
+   EndInvalidationCommand(ByteString cacheName, MarshallableArray<Object> keys, MarshallableObject<Object> lockOwner) {
+      this(cacheName, MarshallableArray.unwrap(keys), MarshallableObject.unwrap(lockOwner));
+   }
 
-	@ProtoField(2)
-	MarshallableArray<Object> getKeys() {
-		return MarshallableArray.create(keys);
-	}
+   @ProtoField(2)
+   MarshallableArray<Object> getKeys() {
+      return MarshallableArray.create(keys);
+   }
 
-	@ProtoField(3)
-	MarshallableObject<Object> getLockOwner() {
-		return MarshallableObject.create(lockOwner);
-	}
+   @ProtoField(3)
+   MarshallableObject<Object> getLockOwner() {
+      return MarshallableObject.create(lockOwner);
+   }
 
-	@Override
-	public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
-		BlockingManager bm = componentRegistry.getGlobalComponentRegistry().getComponent(BlockingManager.class);
-		PutFromLoadValidator putFromLoadValidator = componentRegistry.getComponent(PutFromLoadValidator.class);
-		return bm.runBlocking(() -> {
-			for (Object key : keys) {
-				putFromLoadValidator.endInvalidatingKey(lockOwner, key);
-			}
-		}, "end-invalidation");
-	}
+   @Override
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
+      BlockingManager bm = componentRegistry.getGlobalComponentRegistry().getComponent(BlockingManager.class);
+      PutFromLoadValidator putFromLoadValidator = componentRegistry.getComponent(PutFromLoadValidator.class);
+      return bm.runBlocking(() -> {
+         for (Object key : keys) {
+            putFromLoadValidator.endInvalidatingKey(lockOwner, key);
+         }
+      }, "end-invalidation");
+   }
 
-	@Override
-	public boolean equals(Object o) {
-		if (o == null || getClass() != o.getClass()) return false;
-		EndInvalidationCommand that = (EndInvalidationCommand) o;
-		return Objects.deepEquals(keys, that.keys) && Objects.equals(lockOwner, that.lockOwner) && Objects.equals(cacheName, that.cacheName);
-	}
+   @Override
+   public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      EndInvalidationCommand that = (EndInvalidationCommand) o;
+      return Objects.deepEquals(keys, that.keys) && Objects.equals(lockOwner, that.lockOwner) && Objects.equals(cacheName, that.cacheName);
+   }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(Arrays.hashCode(keys), lockOwner, cacheName);
-	}
+   @Override
+   public int hashCode() {
+      return Objects.hash(Arrays.hashCode(keys), lockOwner, cacheName);
+   }
 
-	@Override
-	public boolean isReturnValueExpected() {
-		return false;
-	}
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
+   }
 
-	@Override
-	public NodeVersion supportedSince() {
-		return NodeVersion.SIXTEEN;
-	}
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
+   }
 
-	@Override
-	public String toString() {
+   @Override
+   public String toString() {
       return "EndInvalidationCommand{" + "cacheName=" + cacheName +
             ", keys=" + Arrays.toString(keys) +
             ", sessionTransactionId=" + lockOwner +
             '}';
-	}
+   }
 }

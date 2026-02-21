@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd"
-        xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd"
+      xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
    <jgroups>
       <stack-file name="2lc-test-tcp" path="2lc-test-tcp.xml"/>
    </jgroups>
 
-   <cache-container name="SampleCacheManager" statistics="false" default-cache="the-default-cache" shutdown-hook="DEFAULT">
+   <cache-container name="SampleCacheManager" statistics="false" default-cache="the-default-cache"
+                    shutdown-hook="DEFAULT">
       <transport stack="2lc-test-tcp" cluster="infinispan-hibernate-cluster"/>
 
-      <local-cache name="the-default-cache" statistics="false" />
+      <local-cache name="the-default-cache" statistics="false"/>
 
       <!-- Default configuration is appropriate for entity/collection caching. -->
       <invalidation-cache name="entity" mode="SYNC" remote-timeout="20000">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
-         <transaction mode="NONE" />
+         <transaction mode="NONE"/>
          <expiration max-idle="100000" interval="5000"/>
          <memory storage="OBJECT" max-count="10000"/>
       </invalidation-cache>
@@ -32,7 +33,7 @@
       <!-- A config appropriate for query caching. Does not replicate queries. -->
       <local-cache name="local-query">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
-         <transaction mode="NONE" />
+         <transaction mode="NONE"/>
          <expiration max-idle="100000" interval="5000"/>
          <memory storage="OBJECT" max-count="10000"/>
       </local-cache>
@@ -40,7 +41,7 @@
       <!-- A query cache that replicates queries. Replication is asynchronous. -->
       <replicated-cache name="replicated-query" mode="ASYNC">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
-         <transaction mode="NONE" />
+         <transaction mode="NONE"/>
          <expiration max-idle="100000" interval="5000"/>
          <memory storage="OBJECT" max-count="10000"/>
       </replicated-cache>
@@ -60,19 +61,19 @@
       <!-- This configuration should match to InfinispanRegionFactory.DEFAULT_PENDING_PUTS_CACHE_CONFIGURATION -->
       <local-cache name="pending-puts" statistics="false">
          <transaction mode="NONE"/>
-         <expiration max-idle="120000" />
+         <expiration max-idle="120000"/>
       </local-cache>
 
       <!-- ISPN-8836 check what happens when custom region name matches cache name -->
       <invalidation-cache-configuration name="myregion" remote-timeout="20000" statistics="false">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
-         <transaction mode="NONE" />
+         <transaction mode="NONE"/>
          <expiration max-idle="100000" interval="5000"/>
          <memory storage="OBJECT" max-count="10000"/>
       </invalidation-cache-configuration>
       <invalidation-cache-configuration name="otherregion" remote-timeout="20000" statistics="false">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
-         <transaction mode="NONE" />
+         <transaction mode="NONE"/>
          <expiration max-idle="100000" interval="5000"/>
          <memory storage="OBJECT" max-count="10000"/>
       </invalidation-cache-configuration>

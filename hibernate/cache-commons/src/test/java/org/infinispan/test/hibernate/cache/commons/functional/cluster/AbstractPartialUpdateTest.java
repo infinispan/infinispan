@@ -39,8 +39,8 @@ public abstract class AbstractPartialUpdateTest extends DualNodeTest {
       localFactory = sessionFactory();
       remoteFactory = secondNodeEnvironment().getSessionFactory();
       remoteCustomerCache = ClusterAware
-         .getCacheManager(DualNodeTest.REMOTE)
-         .getCache(Customer.class.getName()).getAdvancedCache();
+            .getCacheManager(DualNodeTest.REMOTE)
+            .getCache(Customer.class.getName()).getAdvancedCache();
    }
 
    public String getDbName() {
@@ -50,14 +50,14 @@ public abstract class AbstractPartialUpdateTest extends DualNodeTest {
    @Test
    public void testPartialUpdate() throws Exception {
       final AsyncInterceptor failureInterceptor =
-         addFailureInducingInterceptor(remoteCustomerCache);
+            addFailureInducingInterceptor(remoteCustomerCache);
 
       try {
          // Remote update latch
          CountDownLatch remoteLatch = new CountDownLatch(2);
          ExpectingInterceptor.get(remoteCustomerCache)
-            .when((ctx, cmd) -> cmd instanceof ReadWriteKeyCommand)
-            .countDown(remoteLatch);
+               .when((ctx, cmd) -> cmd instanceof ReadWriteKeyCommand)
+               .countDown(remoteLatch);
 
          try {
             Statistics statsNode0 = getStatistics(localFactory);
@@ -100,7 +100,7 @@ public abstract class AbstractPartialUpdateTest extends DualNodeTest {
          }
       } finally {
          extractInterceptorChain(remoteCustomerCache)
-            .removeInterceptor(failureInterceptor.getClass());
+               .removeInterceptor(failureInterceptor.getClass());
       }
    }
 

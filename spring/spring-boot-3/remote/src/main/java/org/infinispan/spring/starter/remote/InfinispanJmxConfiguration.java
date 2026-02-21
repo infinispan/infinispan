@@ -1,11 +1,11 @@
 package org.infinispan.spring.starter.remote;
 
-import jakarta.annotation.PostConstruct;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jmx.export.MBeanExporter;
+
+import jakarta.annotation.PostConstruct;
 
 /**
  * Spring and Infinispan register the same bean. Avoid an exception telling Spring not to export Infinispan's

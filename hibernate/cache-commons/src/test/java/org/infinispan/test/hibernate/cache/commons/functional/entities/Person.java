@@ -15,42 +15,43 @@ import jakarta.persistence.Transient;
 @Entity
 @Cacheable
 public class Person implements Serializable {
-    @EmbeddedId
-    Name name;
+   @EmbeddedId
+   Name name;
 
-    int age;
+   int age;
 
-    @Transient
-    long version;
+   @Transient
+   long version;
 
-    public Person() {}
+   public Person() {
+   }
 
-    public Person(String firstName, String lastName, int age) {
-        name = new Name(firstName, lastName);
-        this.age = age;
-    }
+   public Person(String firstName, String lastName, int age) {
+      name = new Name(firstName, lastName);
+      this.age = age;
+   }
 
-    public Name getName() {
-        return name;
-    }
+   public Name getName() {
+      return name;
+   }
 
-    public void setName(Name name) {
-        this.name = name;
-    }
+   public void setName(Name name) {
+      this.name = name;
+   }
 
-    public int getAge() {
-        return age;
-    }
+   public int getAge() {
+      return age;
+   }
 
-    public void setAge(int age) {
-        this.age = age;
-    }
+   public void setAge(int age) {
+      this.age = age;
+   }
 
-    public long getVersion() {
-        return version;
-    }
+   public long getVersion() {
+      return version;
+   }
 
-    public void setVersion(long version) {
-        this.version = version;
-    }
+   public void setVersion(long version) {
+      this.version = version;
+   }
 }

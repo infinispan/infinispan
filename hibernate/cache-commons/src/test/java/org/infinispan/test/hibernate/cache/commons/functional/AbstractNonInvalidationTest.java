@@ -65,7 +65,7 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
 
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, "Executor-" +  counter.incrementAndGet());
+            return new Thread(r, "Executor-" + counter.incrementAndGet());
          }
       });
    }
@@ -160,7 +160,7 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
             }
             s.flush();
          } catch (StaleStateException | OptimisticLockException
-            | PessimisticLockException | org.hibernate.PessimisticLockException | LockTimeoutException e) {
+                  | PessimisticLockException | org.hibernate.PessimisticLockException | LockTimeoutException e) {
             log.info("Exception thrown: ", e);
             markRollbackOnly(s);
             return false;
