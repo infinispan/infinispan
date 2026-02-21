@@ -110,6 +110,7 @@
       <bnd.provider.policy>$&lt;range;[==,=+)&gt;</bnd.provider.policy>
       <buildDirectory>target</buildDirectory>
       <commitProtoLockChanges>false</commitProtoLockChanges>
+      <spotless.skip>false</spotless.skip>
       <defaultExcludedJUnitGroups>org.infinispan.testing.categories.test.Unstable,org.infinispan.testing.categories.test.Stress,org.infinispan.testing.categories.test.Profiling</defaultExcludedJUnitGroups>
       <!-- unstable and stress because we can have them inside a functional class, for example -->
       <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
@@ -2148,6 +2149,27 @@
                </configuration>
             </plugin>
             <plugin>
+               <groupId>com.diffplug.spotless</groupId>
+               <artifactId>spotless-maven-plugin</artifactId>
+               <version>${version.spotless.maven-plugin}</version>
+               <configuration>
+                  <skip>${spotless.skip}</skip>
+                  <java>
+                     <importOrder>
+                        <order>\#,java,javax,org,com,</order>
+                     </importOrder>
+                     <indent>
+                        <spaces>true</spaces>
+                        <spacesPerTab>3</spacesPerTab>
+                     </indent>
+                     <removeUnusedImports/>
+                     <trimTrailingWhitespace/>
+                     <endWithNewline/>
+                     <toggleOffOn/>
+                  </java>
+               </configuration>
+            </plugin>
+            <plugin>
                <groupId>org.graalvm.buildtools</groupId>
                <artifactId>native-maven-plugin</artifactId>
                <version>${version.native.maven.plugin}</version>
@@ -2345,6 +2367,10 @@
                   </goals>
                </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
