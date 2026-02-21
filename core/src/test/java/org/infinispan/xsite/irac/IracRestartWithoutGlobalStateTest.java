@@ -29,8 +29,10 @@ import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.XSiteAdminOperations;
+import org.infinispan.xsite.irac.DefaultIracManager;
 import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -134,6 +136,7 @@ public class IracRestartWithoutGlobalStateTest extends AbstractMultipleSitesTest
 
       log.debug("Starting site_0");
       restartSite(0);
+      disableIracBackOff(0);
 
       if (!persistent) {
          XSiteAdminOperations operations = adminOperations();
@@ -190,6 +193,13 @@ public class IracRestartWithoutGlobalStateTest extends AbstractMultipleSitesTest
 
    private void eventuallyAssertData(String key, String value) {
       eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals(value, cache.get(key)));
+   }
+
+   private void disableIracBackOff(int siteIndex) {
+      for (int i = 0; i < defaultNumberOfNodes(); i++) {
+         DefaultIracManager iracManager = (DefaultIracManager) extractComponent(cache(siteIndex, i), IracManager.class);
+         iracManager.setBackOff(ExponentialBackOff.NO_OP_BUILDER);
+      }
    }
 
    protected XSiteAdminOperations adminOperations() {
