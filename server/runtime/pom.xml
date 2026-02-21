@@ -15,9 +15,6 @@
    <description>Infinispan Server</description>
 
    <properties>
-      <maven.compiler.source>25</maven.compiler.source>
-      <maven.compiler.target>25</maven.compiler.target>
-      <maven.compiler.release>25</maven.compiler.release>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
       <version.lucene>${version.lucene10}</version.lucene>
       <defaultTestGroup/>
