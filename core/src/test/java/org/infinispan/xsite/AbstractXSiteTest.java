@@ -151,7 +151,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
     * Wait for all the site masters to see a specific list of sites.
     */
    public void waitForSites(long timeout, TimeUnit unit, String... siteNames) {
-      long deadlineNanos = System.nanoTime() + unit.toNanos(timeout);
+      long timeoutNanos = unit.toNanos(timeout);
       Set<String> expectedSites = new HashSet<>(Arrays.asList(siteNames));
       sites.forEach(site -> {
          site.cacheManagers.forEach(manager -> {
@@ -159,6 +159,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
             RELAY2 relay2 = transport.getChannel().getProtocolStack().findProtocol(RELAY2.class);
             if (!relay2.isSiteMaster())
                return;
+            long deadlineNanos = System.nanoTime() + timeoutNanos;
             while (System.nanoTime() - deadlineNanos < 0) {
                if (expectedSites.equals(transport.getSitesView()))
                   break;
