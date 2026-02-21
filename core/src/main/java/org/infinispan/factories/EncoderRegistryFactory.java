@@ -5,6 +5,7 @@ import org.infinispan.commons.dataconversion.BinaryTranscoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.DefaultTranscoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
+import org.infinispan.commons.dataconversion.TextTranscoder;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.encoding.ProtostreamTranscoder;
@@ -40,15 +41,14 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       EncoderRegistryImpl encoderRegistry = new EncoderRegistryImpl();
       ClassAllowList classAllowList = embeddedCacheManager.getClassAllowList();
 
-      // Default and binary transcoder use the user marshaller to convert data to/from a byte array
-      encoderRegistry.registerTranscoder(new DefaultTranscoder(userMarshaller));
+      // Deprecated binary transcoder. Will be removed in a future version together with MediaType.APPLICATION_UNKNOWN.
       encoderRegistry.registerTranscoder(new BinaryTranscoder(userMarshaller));
       // Core transcoders are always available
       encoderRegistry.registerTranscoder(new ProtostreamTranscoder(ctxRegistry, classLoader));
       encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classAllowList));
-      // Wraps the GlobalMarshaller so that it can be used as a transcoder
-      // Keeps application/x-infinispan-marshalling available for backwards compatibility
-      encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(globalMarshaller.wired()));
+      encoderRegistry.registerTranscoder(TextTranscoder.INSTANCE);
+      // Default transcoder use the global marshaller to convert data to/from a byte array
+      encoderRegistry.registerTranscoder(new DefaultTranscoder(globalMarshaller.wired()));
       // Make the user marshaller's media type available as well
       // As custom marshaller modules like Kryo and Protostuff do not define their own transcoder
       encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(userMarshaller));
