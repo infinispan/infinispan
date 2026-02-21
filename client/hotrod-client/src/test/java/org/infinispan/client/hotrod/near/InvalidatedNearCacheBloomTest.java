@@ -124,6 +124,9 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
       // This conflicts with our original key thus it will send a remove despite nothing being removed
       assertClient.put(conflictKey, "v2").expectNearRemove(conflictKey);
       assertClient.get(1, "v1").expectNearGetValue(1, "v1");
+      // The server may send additional async remove events due to bloom filter collision.
+      // Consume them here so they don't leak into the next test.
+      drainAsyncEvents();
    }
 
    public void testMultipleKeyFilterNoConflict() {
@@ -168,6 +171,11 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
 
       assertTrue("The server bloom filter was never updated and we got remove events every time",
             serverBloomFilterUpdated);
+   }
+
+   private void drainAsyncEvents() {
+      eventually("Expected all async near cache events to be drained",
+            () -> assertClient.events.poll(50, TimeUnit.MILLISECONDS) == null);
    }
 
    int findNextKey(BloomFilter<byte[]> filter, int originalValue, boolean present) {
