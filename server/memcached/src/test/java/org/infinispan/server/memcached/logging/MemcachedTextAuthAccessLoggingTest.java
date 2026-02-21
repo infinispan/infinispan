@@ -18,6 +18,12 @@ public class MemcachedTextAuthAccessLoggingTest extends MemcachedBaseAuthAccessL
 
    @Override
    protected void verifyLogs() {
+      // Access log entries are written asynchronously via ChannelFuture listeners.
+      // Wait for all expected entries to arrive before asserting.
+      int expectedLogs = 11;
+      eventually(() -> "Expected " + expectedLogs + " log entries, got " + logAppender.size(),
+            () -> logAppender.size() >= expectedLogs);
+
       int i = 0;
       assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "MCTXT", "METHOD", "auth", "STATUS", "\"CLIENT_ERROR authentication failed: Wrong credentials\"", "WHO", "-"));
       assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "MCTXT", "METHOD", "get", "STATUS", "\"CLIENT_ERROR authentication failed: Forbidden\"", "WHO", "-"));

@@ -89,6 +89,12 @@ public class RespAuthAccessLoggingTest extends AbstractAuthAccessLoggingTest {
          }
       }
 
+      // Access log entries are written asynchronously via ChannelFuture listeners.
+      // Wait for all expected entries to arrive before asserting.
+      int expectedLogs = 12;
+      eventually(() -> "Expected " + expectedLogs + " log entries, got " + logAppender.size(),
+            () -> logAppender.size() >= expectedLogs);
+
       int i = 0;
 
       assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "RESP", "METHOD", "HELLO", "STATUS", "\"" + Messages.MESSAGES.noAuthHello() + "\"", "WHO", "-"));

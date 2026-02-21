@@ -42,6 +42,11 @@ public class MemcachedAccessLoggingTest extends MemcachedSingleNodeTest {
 
       server.getTransport().stop();
 
+      // Access log entries are written asynchronously via ChannelFuture listeners.
+      // Wait for all expected entries to arrive before asserting.
+      eventually(() -> "Expected 1 log entry, got " + logAppender.size(),
+            () -> logAppender.size() >= 1);
+
       String logline = logAppender.get(0);
       assertTrue(logline, logline.matches(
             "^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"set /key MCTXT\" OK \\d+ \\d+ \\d+$"));
