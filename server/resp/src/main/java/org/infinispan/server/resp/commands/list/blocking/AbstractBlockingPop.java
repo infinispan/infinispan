@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -75,18 +76,26 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
          // as error
          return (v != null && !v.isEmpty())
                ? CompletableFuture.completedFuture(v)
-               : addSubscriber(configuration, handler);
+               : addSubscriber(configuration, handler, ctx);
       }), ctx, ResponseWriter.ARRAY_BULK_STRING);
    }
 
-   private CompletableFuture<Collection<byte[]>> addSubscriber(PopConfiguration configuration, Resp3Handler handler) {
+   private CompletableFuture<Collection<byte[]>> addSubscriber(PopConfiguration configuration, Resp3Handler handler,
+         ChannelHandlerContext ctx) {
       if (log.isTraceEnabled()) {
          log.tracef("Subscriber for keys: " + configuration.keys());
       }
       AdvancedCache<byte[], Object> cache = handler.typedCache(null);
       DataConversion vc = cache.getValueDataConversion();
-      PubSubListener pubSubListener = new PubSubListener(handler, cache, configuration);
+      // Use the connection's EventLoop for scheduling timeouts instead of the shared
+      // single-threaded TIMEOUT_SCHEDULE_EXECUTOR, which can starve under load.
+      PubSubListener pubSubListener = new PubSubListener(ctx.channel().eventLoop(), cache,
+            handler.getListMultimap(), configuration);
       EventListenerKeysFilter filter = new EventListenerKeysFilter(configuration.keys().stream());
+      // Record the deadline before listener installation, which may take time in clustered environments.
+      // The timeout should be relative to when the command was issued, not when the listener is fully installed.
+      long timeout = configuration.timeout();
+      long deadline = timeout > 0 ? handler.respServer().getTimeService().wallClockTime() + timeout : 0;
       CompletionStage<Void> addListenerStage = cache.addListenerAsync(pubSubListener, filter,
             new EventListenerConverter<Object, Object, byte[]>(vc));
       addListenerStage.whenComplete((ignore, t) -> {
@@ -98,8 +107,17 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
          // Listener can lose events during its install, so we need to poll again
          // and if we get values complete the listener future. In case of exception
          // completeExceptionally
-         // Start a timer if required
-         pubSubListener.startTimer(configuration.timeout());
+         // Start a timer with the remaining time, accounting for time spent installing the listener.
+         if (timeout > 0) {
+            long remaining = deadline - handler.respServer().getTimeService().wallClockTime();
+            if (remaining <= 0) {
+               // Timeout expired during listener installation. Complete immediately.
+               cache.removeListenerAsync(pubSubListener);
+               pubSubListener.synchronizer.resultFuture.complete(null);
+               return;
+            }
+            pubSubListener.startTimer(remaining);
+         }
          pubSubListener.synchronizer.onListenerAdded();
       });
       ClientMetadata metadata = handler.respServer().metadataRepository().client();
@@ -144,13 +162,14 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
    public static class PubSubListener {
       private final AdvancedCache<byte[], Object> cache;
       private volatile ScheduledFuture<?> scheduledTimer;
-      private final Resp3Handler handler;
+      private final ScheduledExecutorService scheduler;
       private final PollListenerSynchronizer synchronizer;
 
-      private PubSubListener(Resp3Handler handler, AdvancedCache<byte[], Object> cache, PopConfiguration configuration) {
+      private PubSubListener(ScheduledExecutorService scheduler, AdvancedCache<byte[], Object> cache,
+            EmbeddedMultimapListCache<byte[], byte[]> listMultimap, PopConfiguration configuration) {
          this.cache = cache;
-         this.handler = handler;
-         this.synchronizer = new PollListenerSynchronizer(handler.getListMultimap(), configuration);
+         this.scheduler = scheduler;
+         this.synchronizer = new PollListenerSynchronizer(listMultimap, configuration);
 
          synchronizer.resultFuture.whenComplete((ignore_v, ignore_t) -> {
             deleteTimer();
@@ -164,7 +183,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
 
       private void startTimer(long timeout) {
          deleteTimer();
-         scheduledTimer = (timeout > 0) ? handler.getScheduler().schedule(() -> {
+         scheduledTimer = (timeout > 0) ? scheduler.schedule(() -> {
             cache.removeListenerAsync(this);
             synchronizer.resultFuture.complete(null);
          }, timeout, TimeUnit.MILLISECONDS) : null;
