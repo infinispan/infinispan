@@ -179,6 +179,7 @@
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.6.0</version.checkstyle.maven-plugin>
+      <version.spotless.maven-plugin>2.44.4</version.spotless.maven-plugin>
       <version.native.maven.plugin>0.11.4</version.native.maven.plugin>
       <version.maven>3.9.12</version.maven>
       <version.maven.antlr4>4.13.2</version.maven.antlr4>
