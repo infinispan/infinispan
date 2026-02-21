@@ -16,7 +16,7 @@ import org.kohsuke.MetaInfServices;
 
 @MetaInfServices(EmbeddedCacheManagerProvider.class)
 public class JndiCacheManagerProvider implements EmbeddedCacheManagerProvider {
-   private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( JndiCacheManagerProvider.class );
+   private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(JndiCacheManagerProvider.class);
 
    @Override
    public EmbeddedCacheManager getEmbeddedCacheManager(Properties properties) {

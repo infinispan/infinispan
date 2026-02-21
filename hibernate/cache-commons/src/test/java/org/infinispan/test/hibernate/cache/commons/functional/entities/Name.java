@@ -11,39 +11,40 @@ import jakarta.persistence.Embeddable;
  */
 @Embeddable
 public class Name implements Serializable {
-    String firstName;
-    String lastName;
+   String firstName;
+   String lastName;
 
-    public Name() {}
+   public Name() {
+   }
 
-    public Name(String firstName, String lastName) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-    }
+   public Name(String firstName, String lastName) {
+      this.firstName = firstName;
+      this.lastName = lastName;
+   }
 
-    public String getFirstName() {
-        return firstName;
-    }
+   public String getFirstName() {
+      return firstName;
+   }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
+   public void setFirstName(String firstName) {
+      this.firstName = firstName;
+   }
 
-    public String getLastName() {
-        return lastName;
-    }
+   public String getLastName() {
+      return lastName;
+   }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
+   public void setLastName(String lastName) {
+      this.lastName = lastName;
+   }
 
-    @Override
-    public int hashCode() {
-        return 0;
-    }
+   @Override
+   public int hashCode() {
+      return 0;
+   }
 
-    @Override
-    public boolean equals(Object obj) {
-        return false;
-    }
+   @Override
+   public boolean equals(Object obj) {
+      return false;
+   }
 }

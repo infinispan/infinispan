@@ -1,6 +1,8 @@
 package test.org.infinispan.spring.starter.remote.actuator;
 
-import io.micrometer.core.instrument.binder.MeterBinder;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.api.BasicCache;
@@ -8,9 +10,7 @@ import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinderProvider;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import io.micrometer.core.instrument.binder.MeterBinder;
 
 public class RemoteCacheMeterBinderProviderTest {
 

@@ -9,6 +9,7 @@ import org.infinispan.spring.starter.remote.InfinispanRemoteCacheManagerAutoConf
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
 import test.org.infinispan.spring.starter.remote.testconfiguration.InfinispanCacheTestConfiguration;
 
 @SpringBootTest(

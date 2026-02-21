@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 /**
  * Description.
- * 
+ *
  * @author Durgesh Anaokar
  * @since 13.0
  */
@@ -19,9 +19,9 @@ import java.lang.annotation.Target;
 public @interface Description {
 
    /**
-    * 
+    *
     * Return the Description for the log message.
-    * 
+    *
     * @return String
     */
    String value();

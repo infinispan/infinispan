@@ -6,8 +6,8 @@ import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.service.ServiceRegistry;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.hibernate.cache.commons.TimeSource;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.hibernate.cache.commons.TimeSource;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 public interface TestRegionFactory extends TimeSource {

@@ -14,9 +14,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-
-import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.hibernate.testing.orm.junit.JiraKey;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;

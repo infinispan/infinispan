@@ -9,7 +9,7 @@ public class UnorderedReplicationLogic extends ClusteringDependentLogic.Replicat
    @Override
    public Commit commitType(
          FlagAffectedCommand command, InvocationContext ctx, int segment, boolean removed) {
-      Commit commit = super.commitType( command, ctx, segment, removed );
+      Commit commit = super.commitType(command, ctx, segment, removed);
       return commit == Commit.NO_COMMIT ? Commit.COMMIT_LOCAL : commit;
    }
 

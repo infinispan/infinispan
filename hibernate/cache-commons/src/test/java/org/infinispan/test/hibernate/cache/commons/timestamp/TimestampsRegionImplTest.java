@@ -39,84 +39,83 @@ import org.junit.experimental.categories.Category;
 @Category(Smoke.class)
 public class TimestampsRegionImplTest extends AbstractGeneralDataRegionTest {
 
-	@Override
-	protected InfinispanBaseRegion createRegion(TestRegionFactory regionFactory, String regionName) {
-		return regionFactory.buildTimestampsRegion(regionName);
-	}
+   @Override
+   protected InfinispanBaseRegion createRegion(TestRegionFactory regionFactory, String regionName) {
+      return regionFactory.buildTimestampsRegion(regionName);
+   }
 
-	@Test
-	public void testClearTimestampsRegionInIsolated() throws Exception {
-		StandardServiceRegistryBuilder ssrb = createStandardServiceRegistryBuilder();
-		final StandardServiceRegistry registry = ssrb.build();
-		final StandardServiceRegistry registry2 = ssrb.build();
+   @Test
+   public void testClearTimestampsRegionInIsolated() throws Exception {
+      StandardServiceRegistryBuilder ssrb = createStandardServiceRegistryBuilder();
+      final StandardServiceRegistry registry = ssrb.build();
+      final StandardServiceRegistry registry2 = ssrb.build();
 
-		try {
-			final Properties properties = CacheTestUtil.toProperties( ssrb.getSettings() );
+      try {
+         final Properties properties = CacheTestUtil.toProperties(ssrb.getSettings());
 
-			TestRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
-					  registry,
-					  getCacheTestSupport()
-			);
+         TestRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
+               registry,
+               getCacheTestSupport()
+         );
 
-			TestRegionFactory regionFactory2 = CacheTestUtil.startRegionFactory(
-					  registry2,
-					  getCacheTestSupport()
-			);
+         TestRegionFactory regionFactory2 = CacheTestUtil.startRegionFactory(
+               registry2,
+               getCacheTestSupport()
+         );
 
-			InfinispanBaseRegion region = regionFactory.buildTimestampsRegion(REGION_PREFIX + "/timestamps");
-			InfinispanBaseRegion region2 = regionFactory2.buildTimestampsRegion(REGION_PREFIX + "/timestamps");
+         InfinispanBaseRegion region = regionFactory.buildTimestampsRegion(REGION_PREFIX + "/timestamps");
+         InfinispanBaseRegion region2 = regionFactory2.buildTimestampsRegion(REGION_PREFIX + "/timestamps");
 
-			Account acct = new Account();
-			acct.setAccountHolder(new AccountHolder());
-			region.getCache().withFlags(Flag.FORCE_SYNCHRONOUS).put(acct, "boo");
-		}
-		finally {
-			StandardServiceRegistryBuilder.destroy( registry );
-			StandardServiceRegistryBuilder.destroy( registry2 );
-		}
-	}
+         Account acct = new Account();
+         acct.setAccountHolder(new AccountHolder());
+         region.getCache().withFlags(Flag.FORCE_SYNCHRONOUS).put(acct, "boo");
+      } finally {
+         StandardServiceRegistryBuilder.destroy(registry);
+         StandardServiceRegistryBuilder.destroy(registry2);
+      }
+   }
 
-	@Override
-	protected StandardServiceRegistryBuilder createStandardServiceRegistryBuilder() {
-		StandardServiceRegistryBuilder ssrb = super.createStandardServiceRegistryBuilder();
-		ssrb.applySetting(TestRegionFactory.WRAP_CACHE, (Function<AdvancedCache, AdvancedCache>) cache ->
-         new ClassLoaderAwareCache(cache, Thread.currentThread().getContextClassLoader()) {
-            @Override
-            public void addListener(Object listener) {
-               super.addListener(new MockClassLoaderAwareListener(listener, this));
+   @Override
+   protected StandardServiceRegistryBuilder createStandardServiceRegistryBuilder() {
+      StandardServiceRegistryBuilder ssrb = super.createStandardServiceRegistryBuilder();
+      ssrb.applySetting(TestRegionFactory.WRAP_CACHE, (Function<AdvancedCache, AdvancedCache>) cache ->
+            new ClassLoaderAwareCache(cache, Thread.currentThread().getContextClassLoader()) {
+               @Override
+               public void addListener(Object listener) {
+                  super.addListener(new MockClassLoaderAwareListener(listener, this));
+               }
+
+               @Override
+               public CompletionStage<Void> addListenerAsync(Object listener) {
+                  return super.addListenerAsync(new MockClassLoaderAwareListener(listener, this));
+               }
             }
+      );
+      return ssrb;
+   }
 
-				@Override
-				public CompletionStage<Void> addListenerAsync(Object listener) {
-					return super.addListenerAsync(new MockClassLoaderAwareListener(listener, this));
-				}
-			}
-		);
-		return ssrb;
-	}
+   @Listener
+   public static class MockClassLoaderAwareListener extends ClassLoaderAwareCache.ClassLoaderAwareListener {
+      MockClassLoaderAwareListener(Object listener, ClassLoaderAwareCache cache) {
+         super(listener, cache);
+      }
 
-	@Listener
-	public static class MockClassLoaderAwareListener extends ClassLoaderAwareCache.ClassLoaderAwareListener {
-		MockClassLoaderAwareListener(Object listener, ClassLoaderAwareCache cache) {
-			super(listener, cache);
-		}
-
-		@CacheEntryActivated
-		@CacheEntryCreated
-		@CacheEntryInvalidated
-		@CacheEntryLoaded
-		@CacheEntryModified
-		@CacheEntryPassivated
-		@CacheEntryRemoved
-		@CacheEntryVisited
-		public void event(Event event) throws Throwable {
-			ClassLoader cl = Thread.currentThread().getContextClassLoader();
-			String notFoundPackage = "org.infinispan.test.hibernate.cache.functional.entities";
-			String[] notFoundClasses = { notFoundPackage + ".Account", notFoundPackage + ".AccountHolder" };
-			SelectedClassnameClassLoader visible = new SelectedClassnameClassLoader(null, null, notFoundClasses, cl);
-			Thread.currentThread().setContextClassLoader(visible);
-			super.event(event);
-			Thread.currentThread().setContextClassLoader(cl);
-		}
-	}
+      @CacheEntryActivated
+      @CacheEntryCreated
+      @CacheEntryInvalidated
+      @CacheEntryLoaded
+      @CacheEntryModified
+      @CacheEntryPassivated
+      @CacheEntryRemoved
+      @CacheEntryVisited
+      public void event(Event event) throws Throwable {
+         ClassLoader cl = Thread.currentThread().getContextClassLoader();
+         String notFoundPackage = "org.infinispan.test.hibernate.cache.functional.entities";
+         String[] notFoundClasses = {notFoundPackage + ".Account", notFoundPackage + ".AccountHolder"};
+         SelectedClassnameClassLoader visible = new SelectedClassnameClassLoader(null, null, notFoundClasses, cl);
+         Thread.currentThread().setContextClassLoader(visible);
+         super.event(event);
+         Thread.currentThread().setContextClassLoader(cl);
+      }
+   }
 }

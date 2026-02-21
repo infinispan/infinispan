@@ -40,7 +40,7 @@ public class CustomConfigTest extends AbstractFunctionalTest {
 
    @Override
    protected Class[] getAnnotatedClasses() {
-      return new Class[] { TestEntity.class, OtherTestEntity.class };
+      return new Class[]{TestEntity.class, OtherTestEntity.class};
    }
 
    @Test

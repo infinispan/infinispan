@@ -1,4 +1,5 @@
 package org.infinispan.test.hibernate.cache.commons.functional.entities;
+
 import java.io.Serializable;
 import java.util.Set;
 
@@ -9,45 +10,45 @@ import java.util.Set;
  * @author Kabir Khan
  */
 public class Customer implements Serializable {
-	Integer id;
-	String name;
-	// mapping added programmatically
-	long version;
+   Integer id;
+   String name;
+   // mapping added programmatically
+   long version;
 
-	private transient Set<Contact> contacts;
+   private transient Set<Contact> contacts;
 
-	public Customer() {
-	}
+   public Customer() {
+   }
 
-	public Integer getId() {
-		return id;
-	}
+   public Integer getId() {
+      return id;
+   }
 
-	public void setId(Integer id) {
-		this.id = id;
-	}
+   public void setId(Integer id) {
+      this.id = id;
+   }
 
-	public String getName() {
-		return name;
-	}
+   public String getName() {
+      return name;
+   }
 
-	public void setName(String string) {
-		name = string;
-	}
+   public void setName(String string) {
+      name = string;
+   }
 
-	public Set<Contact> getContacts() {
-		return contacts;
-	}
+   public Set<Contact> getContacts() {
+      return contacts;
+   }
 
-	public void setContacts(Set<Contact> contacts) {
-		this.contacts = contacts;
-	}
+   public void setContacts(Set<Contact> contacts) {
+      this.contacts = contacts;
+   }
 
-	public long getVersion() {
-		return version;
-	}
+   public long getVersion() {
+      return version;
+   }
 
-	public void setVersion(long version) {
-		this.version = version;
-	}
+   public void setVersion(long version) {
+      this.version = version;
+   }
 }

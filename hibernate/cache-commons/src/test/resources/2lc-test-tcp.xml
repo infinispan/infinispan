@@ -42,15 +42,15 @@
                max_join_attempts="3"
    />
 
-    <!-- At this place we can react on DISCONNECTs immediatelly -->
-    <!-- It deadlocks with JGroups 4.0.6, enable only after making sure it works -->
-    <!--<org.infinispan.test.hibernate.cache.util.TestDisconnectHandler />-->
+   <!-- At this place we can react on DISCONNECTs immediatelly -->
+   <!-- It deadlocks with JGroups 4.0.6, enable only after making sure it works -->
+   <!--<org.infinispan.test.hibernate.cache.util.TestDisconnectHandler />-->
 
    <UFC max_credits="4m"
         min_threshold="0.40"
    />
    <MFC max_credits="4m"
         min_threshold="0.40"
-    />
-   <FRAG4 frag_size="6k" />
+   />
+   <FRAG4 frag_size="6k"/>
 </config>

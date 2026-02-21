@@ -30,11 +30,11 @@ public class CacheKeysFactoryTest extends BaseUnitTestCase {
 
    private SessionFactory getSessionFactory(String cacheKeysFactory) {
       Configuration configuration = new Configuration()
-         .setProperty(Environment.USE_SECOND_LEVEL_CACHE, "true")
-         .setProperty(Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName())
-         .setProperty(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, "transactional")
-         .setProperty("javax.persistence.sharedCache.mode", "ALL")
-         .setProperty(Environment.HBM2DDL_AUTO, "create-drop");
+            .setProperty(Environment.USE_SECOND_LEVEL_CACHE, "true")
+            .setProperty(Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName())
+            .setProperty(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, "transactional")
+            .setProperty("javax.persistence.sharedCache.mode", "ALL")
+            .setProperty(Environment.HBM2DDL_AUTO, "create-drop");
       if (cacheKeysFactory != null) {
          configuration.setProperty(Environment.CACHE_KEYS_FACTORY, cacheKeysFactory);
       }

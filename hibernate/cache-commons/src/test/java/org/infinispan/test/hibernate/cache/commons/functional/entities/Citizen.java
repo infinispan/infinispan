@@ -1,4 +1,3 @@
-
 //$Id$
 package org.infinispan.test.hibernate.cache.commons.functional.entities;
 
@@ -17,65 +16,65 @@ import jakarta.persistence.Transient;
 @Entity
 @NaturalIdCache
 public class Citizen {
-	@Id
-	@GeneratedValue
-	private Integer id;
-	@Transient
-	private long version;
-	private String firstname;
-	private String lastname;
-	@NaturalId
-	@ManyToOne
-	private State state;
-	@NaturalId
-	private String ssn;
+   @Id
+   @GeneratedValue
+   private Integer id;
+   @Transient
+   private long version;
+   private String firstname;
+   private String lastname;
+   @NaturalId
+   @ManyToOne
+   private State state;
+   @NaturalId
+   private String ssn;
 
 
-	public Integer getId() {
-		return id;
-	}
+   public Integer getId() {
+      return id;
+   }
 
-	public void setId(Integer id) {
-		this.id = id;
-	}
+   public void setId(Integer id) {
+      this.id = id;
+   }
 
-	public long getVersion() {
-		return version;
-	}
+   public long getVersion() {
+      return version;
+   }
 
-	public void setVersion(long version) {
-		this.version = version;
-	}
+   public void setVersion(long version) {
+      this.version = version;
+   }
 
-	public String getFirstname() {
-		return firstname;
-	}
+   public String getFirstname() {
+      return firstname;
+   }
 
-	public void setFirstname(String firstname) {
-		this.firstname = firstname;
-	}
+   public void setFirstname(String firstname) {
+      this.firstname = firstname;
+   }
 
-	public String getLastname() {
-		return lastname;
-	}
+   public String getLastname() {
+      return lastname;
+   }
 
-	public void setLastname(String lastname) {
-		this.lastname = lastname;
-	}
+   public void setLastname(String lastname) {
+      this.lastname = lastname;
+   }
 
-	public State getState() {
-		return state;
-	}
+   public State getState() {
+      return state;
+   }
 
-	public void setState(State state) {
-		this.state = state;
-	}
+   public void setState(State state) {
+      this.state = state;
+   }
 
-	public String getSsn() {
-		return ssn;
-	}
+   public String getSsn() {
+      return ssn;
+   }
 
-	public void setSsn(String ssn) {
-		this.ssn = ssn;
-	}
+   public void setSsn(String ssn) {
+      this.ssn = ssn;
+   }
 }

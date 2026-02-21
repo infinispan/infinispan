@@ -1,4 +1,3 @@
-
 package org.infinispan.test.hibernate.cache.commons.stress;
 
 import java.io.BufferedWriter;
@@ -112,7 +111,7 @@ import jakarta.transaction.TransactionManager;
 
 /**
  * Tries to execute random operations for {@link #EXECUTION_TIME} and then verify the log for correctness.
- *
+ * <p>
  * Assumes serializable consistency.
  *
  * @author Radim Vansa
@@ -167,26 +166,26 @@ public abstract class CorrectnessTestCase {
    }
 
    public static class Jta extends CorrectnessTestCase {
-      private final TransactionManager transactionManager  = TestingJtaPlatformImpl.transactionManager();
+      private final TransactionManager transactionManager = TestingJtaPlatformImpl.transactionManager();
 
       @Parameterized.Parameters(name = "{0}")
       public List<Object[]> getParameters() {
          return Arrays.<Object[]>asList(
-               new Object[] { "transactional, invalidation", CacheMode.INVALIDATION_SYNC, AccessType.TRANSACTIONAL },
-               new Object[] { "read-only, invalidation", CacheMode.INVALIDATION_SYNC, AccessType.READ_ONLY }, // maybe not needed
-               new Object[] { "read-write, invalidation", CacheMode.INVALIDATION_SYNC, AccessType.READ_WRITE },
-               new Object[] { "read-write, replicated", CacheMode.REPL_SYNC, AccessType.READ_WRITE },
-               new Object[] { "read-write, distributed", CacheMode.DIST_SYNC, AccessType.READ_WRITE },
-               new Object[] { "non-strict, replicated", CacheMode.REPL_SYNC, AccessType.NONSTRICT_READ_WRITE }
+               new Object[]{"transactional, invalidation", CacheMode.INVALIDATION_SYNC, AccessType.TRANSACTIONAL},
+               new Object[]{"read-only, invalidation", CacheMode.INVALIDATION_SYNC, AccessType.READ_ONLY}, // maybe not needed
+               new Object[]{"read-write, invalidation", CacheMode.INVALIDATION_SYNC, AccessType.READ_WRITE},
+               new Object[]{"read-write, replicated", CacheMode.REPL_SYNC, AccessType.READ_WRITE},
+               new Object[]{"read-write, distributed", CacheMode.DIST_SYNC, AccessType.READ_WRITE},
+               new Object[]{"non-strict, replicated", CacheMode.REPL_SYNC, AccessType.NONSTRICT_READ_WRITE}
          );
       }
 
       @Override
       protected void applySettings(StandardServiceRegistryBuilder ssrb) {
          super.applySettings(ssrb);
-         ssrb.applySetting( Environment.JTA_PLATFORM, TestingJtaPlatformImpl.class.getName() );
-         ssrb.applySetting( Environment.CONNECTION_PROVIDER, JtaAwareConnectionProviderImpl.class.getName() );
-         ssrb.applySetting( Environment.TRANSACTION_COORDINATOR_STRATEGY, JtaTransactionCoordinatorBuilderImpl.class.getName() );
+         ssrb.applySetting(Environment.JTA_PLATFORM, TestingJtaPlatformImpl.class.getName());
+         ssrb.applySetting(Environment.CONNECTION_PROVIDER, JtaAwareConnectionProviderImpl.class.getName());
+         ssrb.applySetting(Environment.TRANSACTION_COORDINATOR_STRATEGY, JtaTransactionCoordinatorBuilderImpl.class.getName());
       }
 
       @Override
@@ -210,10 +209,10 @@ public abstract class CorrectnessTestCase {
       @Parameterized.Parameters(name = "{0}")
       public List<Object[]> getParameters() {
          return Arrays.<Object[]>asList(
-               new Object[] { "read-write, invalidation", CacheMode.INVALIDATION_SYNC, AccessType.READ_WRITE },
-               new Object[] { "read-write, replicated", CacheMode.REPL_SYNC, AccessType.READ_WRITE },
-               new Object[] { "read-write, distributed", CacheMode.DIST_SYNC, AccessType.READ_WRITE },
-               new Object[] { "non-strict, replicated", CacheMode.REPL_SYNC, AccessType.NONSTRICT_READ_WRITE }
+               new Object[]{"read-write, invalidation", CacheMode.INVALIDATION_SYNC, AccessType.READ_WRITE},
+               new Object[]{"read-write, replicated", CacheMode.REPL_SYNC, AccessType.READ_WRITE},
+               new Object[]{"read-write, distributed", CacheMode.DIST_SYNC, AccessType.READ_WRITE},
+               new Object[]{"non-strict, replicated", CacheMode.REPL_SYNC, AccessType.NONSTRICT_READ_WRITE}
          );
       }
 
@@ -229,31 +228,31 @@ public abstract class CorrectnessTestCase {
    public void beforeClass() {
       TestResourceTracker.testStarted(getClass().getSimpleName());
       Arrays.asList(new File(System.getProperty("java.io.tmpdir"))
-            .listFiles((dir, name) -> name.startsWith("family_") || name.startsWith("invalidations-")))
+                  .listFiles((dir, name) -> name.startsWith("family_") || name.startsWith("invalidations-")))
             .stream().forEach(f -> f.delete());
       StandardServiceRegistryBuilder ssrb = new StandardServiceRegistryBuilder().enableAutoClose()
-              .applySetting( Environment.USE_SECOND_LEVEL_CACHE, "true" )
-              .applySetting( Environment.USE_QUERY_CACHE, "true" )
-              .applySetting( Environment.DRIVER, "org.h2.Driver" )
-              .applySetting( Environment.URL, "jdbc:h2:mem:" + getDbName() + ";TRACE_LEVEL_FILE=4")
-              .applySetting( Environment.DIALECT, H2Dialect.class.getName() )
-              .applySetting( Environment.HBM2DDL_AUTO, "create-drop" )
-              .applySetting( TestRegionFactory.CONFIGURATION_HOOK, InjectFailures.class)
-              .applySetting( TestRegionFactory.CACHE_MODE, cacheMode )
-              .applySetting( Environment.USE_MINIMAL_PUTS, "false" )
-              .applySetting( Environment.GENERATE_STATISTICS, "false" );
+            .applySetting(Environment.USE_SECOND_LEVEL_CACHE, "true")
+            .applySetting(Environment.USE_QUERY_CACHE, "true")
+            .applySetting(Environment.DRIVER, "org.h2.Driver")
+            .applySetting(Environment.URL, "jdbc:h2:mem:" + getDbName() + ";TRACE_LEVEL_FILE=4")
+            .applySetting(Environment.DIALECT, H2Dialect.class.getName())
+            .applySetting(Environment.HBM2DDL_AUTO, "create-drop")
+            .applySetting(TestRegionFactory.CONFIGURATION_HOOK, InjectFailures.class)
+            .applySetting(TestRegionFactory.CACHE_MODE, cacheMode)
+            .applySetting(Environment.USE_MINIMAL_PUTS, "false")
+            .applySetting(Environment.GENERATE_STATISTICS, "false");
       applySettings(ssrb);
 
       sessionFactories = new SessionFactory[NUM_NODES];
       for (int i = 0; i < NUM_NODES; ++i) {
          StandardServiceRegistry registry = ssrb.build();
-         Metadata metadata = buildMetadata( registry );
+         Metadata metadata = buildMetadata(registry);
          sessionFactories[i] = metadata.buildSessionFactory();
       }
    }
 
    protected void applySettings(StandardServiceRegistryBuilder ssrb) {
-      ssrb.applySetting( Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, accessType.getExternalName());
+      ssrb.applySetting(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, accessType.getExternalName());
       ssrb.applySetting(TestRegionFactory.TRANSACTIONAL, TestRegionFactoryProvider.load().supportTransactionalCaches() && accessType == AccessType.TRANSACTIONAL);
    }
 
@@ -266,28 +265,28 @@ public abstract class CorrectnessTestCase {
    }
 
    public static Class[] getAnnotatedClasses() {
-      return new Class[] {Family.class, Person.class, Address.class};
+      return new Class[]{Family.class, Person.class, Address.class};
    }
 
    private Metadata buildMetadata(StandardServiceRegistry registry) {
-      MetadataSources metadataSources = new MetadataSources( registry );
-      for ( Class entityClass : getAnnotatedClasses() ) {
-         metadataSources.addAnnotatedClass( entityClass );
+      MetadataSources metadataSources = new MetadataSources(registry);
+      for (Class entityClass : getAnnotatedClasses()) {
+         metadataSources.addAnnotatedClass(entityClass);
       }
 
       Metadata metadata = metadataSources.buildMetadata();
 
-      for ( PersistentClass entityBinding : metadata.getEntityBindings() ) {
+      for (PersistentClass entityBinding : metadata.getEntityBindings()) {
          if (!entityBinding.isInherited()) {
-            ( (RootClass) entityBinding ).setCacheConcurrencyStrategy( accessType.getExternalName() );
+            ((RootClass) entityBinding).setCacheConcurrencyStrategy(accessType.getExternalName());
          }
       }
 
       // Collections don't have integrated version, these piggyback on parent's owner version (for DB).
       // However, this version number isn't extractable and is not passed to cache methods.
       AccessType collectionAccessType = accessType == AccessType.NONSTRICT_READ_WRITE ? AccessType.READ_WRITE : accessType;
-      for ( Collection collectionBinding : metadata.getCollectionBindings() ) {
-         collectionBinding.setCacheConcurrencyStrategy( collectionAccessType.getExternalName() );
+      for (Collection collectionBinding : metadata.getCollectionBindings()) {
+         collectionBinding.setCacheConcurrencyStrategy(collectionAccessType.getExternalName());
       }
 
       return metadata;
@@ -367,7 +366,7 @@ public abstract class CorrectnessTestCase {
          for (int i = 0; i < NUM_THREADS_PER_NODE; ++i) {
             final int I = i;
             futures.add(exec.submit(() -> {
-               Thread.currentThread().setName("Node" + (char)('A' + NODE) + "-thread-" + I);
+               Thread.currentThread().setName("Node" + (char) ('A' + NODE) + "-thread-" + I);
                threadNode.set(NODE);
                while (running) {
                   Operation operation;
@@ -496,7 +495,8 @@ public abstract class CorrectnessTestCase {
       // poll until all invalidations come
       long deadline = System.currentTimeMillis() + 30000;
       while (System.currentTimeMillis() < deadline) {
-         iterateInvalidators(delayed, getInvalidators, (k, i) -> {});
+         iterateInvalidators(delayed, getInvalidators, (k, i) -> {
+         });
          if (delayed.isEmpty()) {
             break;
          }
@@ -514,8 +514,7 @@ public abstract class CorrectnessTestCase {
          Object pendingPutMap = entry.getPendingPutMap();
          if (pendingPutMap == null) {
             iterator.remove();
-         }
-         else {
+         } else {
             java.util.Collection invalidators = (java.util.Collection) getInvalidators.invoke(pendingPutMap);
             if (invalidators == null || invalidators.isEmpty()) {
                iterator.remove();
@@ -614,7 +613,7 @@ public abstract class CorrectnessTestCase {
 
    private <T> void dumpLogs(String prefix, List<Log<T>> logs) {
       try {
-         File f = File.createTempFile(prefix,  ".log");
+         File f = File.createTempFile(prefix, ".log");
          log.info("Dumping logs into " + f.getAbsolutePath());
          try (BufferedWriter writer = Files.newBufferedWriter(f.toPath())) {
             for (Log<T> log : logs) {
@@ -820,10 +819,10 @@ public abstract class CorrectnessTestCase {
       @Override
       public void run() throws Exception {
          withRandomFamily((s, f) -> {
-               if (evict) {
-                  sessionFactory(threadNode.get()).getCache().evictEntityData(Family.class, f.getId());
-               }
-            }, Ref.empty(), Ref.empty(), null);
+            if (evict) {
+               sessionFactory(threadNode.get()).getCache().evictEntityData(Family.class, f.getId());
+            }
+         }, Ref.empty(), Ref.empty(), null);
       }
    }
 

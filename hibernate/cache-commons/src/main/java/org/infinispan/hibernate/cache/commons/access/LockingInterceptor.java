@@ -24,13 +24,13 @@ import org.infinispan.util.logging.LogFactory;
  * modifications will proceed concurrently.
  * Similar issue threatens consistency when the command has {@link org.infinispan.context.Flag#CACHE_MODE_LOCAL}
  * - these commands don't acquire locks either.
- *
+ * <p>
  * Therefore, this interceptor locks the entry all the time. {@link UnorderedDistributionInterceptor} does not forward
  * the message from non-origin to any other node, and the distribution interceptor won't block on RPC but will return
  * {@link CompletableFuture} and we'll wait for it here.
  */
 public class LockingInterceptor extends NonTransactionalLockingInterceptor {
-	private static final Log log = LogFactory.getLog(LockingInterceptor.class);
+   private static final Log log = LogFactory.getLog(LockingInterceptor.class);
 
    protected final InvocationFinallyFunction<DataWriteCommand> unlockAllReturnCheckCompletableFutureHandler = (rCtx, rCommand, rv, throwable) -> {
       lockManager.unlockAll(rCtx);
@@ -74,17 +74,16 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
       try {
          if (log.isTraceEnabled()) {
             Ownership ownership = cdl.getCacheTopology().getDistribution(command.getKey()).writeOwnership();
-            log.tracef( "Am I owner for key=%s ? %s", command.getKey(), ownership);
+            log.tracef("Am I owner for key=%s ? %s", command.getKey(), ownership);
          }
 
          if (ctx.getLockOwner() == null) {
-            ctx.setLockOwner( command.getCommandInvocationId() );
+            ctx.setLockOwner(command.getCommandInvocationId());
          }
 
          InvocationStage lockStage = lockAndRecord(ctx, command, command.getKey(), getLockTimeoutMillis(command));
          return lockStage.andHandle(ctx, command, invokeNextAndUnlock);
-      }
-      catch (Throwable t) {
+      } catch (Throwable t) {
          lockManager.unlockAll(ctx);
          throw t;
       }

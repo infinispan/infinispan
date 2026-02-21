@@ -17,7 +17,7 @@ import jakarta.transaction.TransactionManager;
 /**
  * Variant of SimpleJtaTransactionManagerImpl that doesn't use a VM-singleton, but rather a set of
  * impls keyed by a node id.
- *
+ * <p>
  * TODO: Merge with single node transaction manager as much as possible
  *
  * @author Brian Stansberry
@@ -33,7 +33,7 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
 
    public synchronized static DualNodeJtaTransactionManagerImpl getInstance(String nodeId) {
       DualNodeJtaTransactionManagerImpl tm = (DualNodeJtaTransactionManagerImpl) INSTANCES
-               .get(nodeId);
+            .get(nodeId);
       if (tm == null) {
          tm = new DualNodeJtaTransactionManagerImpl(nodeId);
          INSTANCES.put(nodeId, tm);
@@ -42,7 +42,7 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
    }
 
    public synchronized static void cleanupTransactions() {
-      for (java.util.Iterator it = INSTANCES.values().iterator(); it.hasNext();) {
+      for (java.util.Iterator it = INSTANCES.values().iterator(); it.hasNext(); ) {
          TransactionManager tm = (TransactionManager) it.next();
          try {
             tm.suspend();
@@ -80,20 +80,20 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
    public Transaction suspend() throws SystemException {
       DualNodeJtaTransactionImpl suspended = getCurrentTransaction();
       log.trace(nodeId + ": Suspending " + suspended + " for thread "
-               + Thread.currentThread().getName());
+            + Thread.currentThread().getName());
       currentTransaction.set(null);
       return suspended;
    }
 
    public void resume(Transaction transaction) throws InvalidTransactionException,
-            IllegalStateException, SystemException {
+         IllegalStateException, SystemException {
       currentTransaction.set(transaction);
       log.trace(nodeId + ": Resumed " + transaction + " for thread "
-               + Thread.currentThread().getName());
+            + Thread.currentThread().getName());
    }
 
    public void commit() throws RollbackException, HeuristicMixedException,
-            HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
+         HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
       Transaction tx = getCurrentTransaction();
       if (tx == null) {
          throw new IllegalStateException("no current transaction to commit");

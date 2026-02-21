@@ -1,4 +1,3 @@
-
 package org.infinispan.test.hibernate.cache.commons.stress;
 
 import static org.infinispan.test.hibernate.cache.commons.util.TestingUtil.withTx;
@@ -49,7 +48,7 @@ import jakarta.transaction.TransactionManager;
 
 /**
  * Stress test for second level cache.
- *
+ * <p>
  * TODO Various:
  * - Switch to a JDBC connection pool to avoid too many connections created
  * (as well as consuming memory, it's expensive to create)
@@ -85,21 +84,21 @@ public class SecondLevelCacheStressTestCase {
       removeIds = new ConcurrentLinkedQueue<Integer>();
 
       StandardServiceRegistryBuilder ssrb = new StandardServiceRegistryBuilder().enableAutoClose()
-              .applySetting( Environment.USE_SECOND_LEVEL_CACHE, "true" )
-              .applySetting( Environment.USE_QUERY_CACHE, "true" )
-              .applySetting( Environment.DRIVER, "com.mysql.jdbc.Driver" )
-              .applySetting( Environment.URL, "jdbc:mysql://localhost:3306/hibernate" )
-              .applySetting( Environment.DIALECT, "org.hibernate.dialect.MySQL5InnoDBDialect" )
-              .applySetting( Environment.USER, "root" )
-              .applySetting( Environment.PASS, "password" )
-              .applySetting( Environment.HBM2DDL_AUTO, "create-drop" );
+            .applySetting(Environment.USE_SECOND_LEVEL_CACHE, "true")
+            .applySetting(Environment.USE_QUERY_CACHE, "true")
+            .applySetting(Environment.DRIVER, "com.mysql.jdbc.Driver")
+            .applySetting(Environment.URL, "jdbc:mysql://localhost:3306/hibernate")
+            .applySetting(Environment.DIALECT, "org.hibernate.dialect.MySQL5InnoDBDialect")
+            .applySetting(Environment.USER, "root")
+            .applySetting(Environment.PASS, "password")
+            .applySetting(Environment.HBM2DDL_AUTO, "create-drop");
 
       // Create database schema in each run
-      applyCacheSettings( ssrb );
+      applyCacheSettings(ssrb);
 
       StandardServiceRegistry registry = ssrb.build();
 
-      Metadata metadata = buildMetadata( registry );
+      Metadata metadata = buildMetadata(registry);
 
       sessionFactory = metadata.buildSessionFactory();
 
@@ -111,9 +110,9 @@ public class SecondLevelCacheStressTestCase {
    }
 
    protected void applyCacheSettings(StandardServiceRegistryBuilder ssrb) {
-      ssrb.applySetting( Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName() );
-      ssrb.applySetting( Environment.JTA_PLATFORM, new NarayanaStandaloneJtaPlatform() );
-      ssrb.applySetting( InfinispanProperties.INFINISPAN_CONFIG_RESOURCE_PROP, "stress-local-infinispan.xml" );
+      ssrb.applySetting(Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName());
+      ssrb.applySetting(Environment.JTA_PLATFORM, new NarayanaStandaloneJtaPlatform());
+      ssrb.applySetting(InfinispanProperties.INFINISPAN_CONFIG_RESOURCE_PROP, "stress-local-infinispan.xml");
    }
 
    @After
@@ -209,7 +208,7 @@ public class SecondLevelCacheStressTestCase {
    }
 
    TotalStats runEntityFindUpdated(long runningTimeout,
-         List<Integer> updatedIdsSeq) {
+                                   List<Integer> updatedIdsSeq) {
       return runSingleWork(runningTimeout, "find-updated", findUpdatedOperation(updatedIdsSeq));
    }
 
@@ -230,13 +229,14 @@ public class SecondLevelCacheStressTestCase {
 
       ExecutorService exec = Executors.newFixedThreadPool(
             NUM_THREADS, new ThreadFactory() {
-         volatile int i = 0;
-         @Override
-         public Thread newThread(Runnable r) {
-            return new Thread(new ThreadGroup(name),
-                  r, "worker-" + name + "-" + i++);
-         }
-      });
+               volatile int i = 0;
+
+               @Override
+               public Thread newThread(Runnable r) {
+                  return new Thread(new ThreadGroup(name),
+                        r, "worker-" + name + "-" + i++);
+               }
+            });
 
       try {
          List<Future<Void>> futures = new ArrayList<Future<Void>>(NUM_THREADS);
@@ -396,7 +396,7 @@ public class SecondLevelCacheStressTestCase {
                   Family family = (Family) s.getReference(Family.class, id);
                   String familyName = family.getName();
                   // Skip ñ check in order to avoid issues...
-                  assertTrue("Unexpected family: " + familyName ,
+                  assertTrue("Unexpected family: " + familyName,
                         familyName.startsWith("Zamarre"));
 
                   s.close();
@@ -425,7 +425,7 @@ public class SecondLevelCacheStressTestCase {
                         Family family = (Family) s.getReference(Family.class, id);
                         String familyName = family.getName();
                         // Skip ñ check in order to avoid issues...
-                        assertTrue("Unexpected family: " + familyName ,
+                        assertTrue("Unexpected family: " + familyName,
                               familyName.startsWith("Zamarre"));
                         s.remove(family);
 
@@ -442,27 +442,27 @@ public class SecondLevelCacheStressTestCase {
    }
 
    public static Class[] getAnnotatedClasses() {
-      return new Class[] {Family.class, Person.class, Address.class};
+      return new Class[]{Family.class, Person.class, Address.class};
    }
 
    private static Metadata buildMetadata(StandardServiceRegistry registry) {
       final String cacheStrategy = "transactional";
 
-      MetadataSources metadataSources = new MetadataSources( registry );
-      for ( Class entityClass : getAnnotatedClasses() ) {
-         metadataSources.addAnnotatedClass( entityClass );
+      MetadataSources metadataSources = new MetadataSources(registry);
+      for (Class entityClass : getAnnotatedClasses()) {
+         metadataSources.addAnnotatedClass(entityClass);
       }
 
       Metadata metadata = metadataSources.buildMetadata();
 
-      for ( PersistentClass entityBinding : metadata.getEntityBindings() ) {
+      for (PersistentClass entityBinding : metadata.getEntityBindings()) {
          if (!entityBinding.isInherited()) {
-            ( (RootClass) entityBinding ).setCacheConcurrencyStrategy( cacheStrategy);
+            ((RootClass) entityBinding).setCacheConcurrencyStrategy(cacheStrategy);
          }
       }
 
-      for ( Collection collectionBinding : metadata.getCollectionBindings() ) {
-         collectionBinding.setCacheConcurrencyStrategy( cacheStrategy );
+      for (Collection collectionBinding : metadata.getCollectionBindings()) {
+         collectionBinding.setCacheConcurrencyStrategy(cacheStrategy);
       }
 
       return metadata;
@@ -487,7 +487,7 @@ public class SecondLevelCacheStressTestCase {
       private final CyclicBarrier barrier;
 
       public WorkerThread(long runningTimeout, TotalStats perf,
-            Operation op, CyclicBarrier barrier) {
+                          Operation op, CyclicBarrier barrier) {
          this.runningTimeout = runningTimeout;
          this.perf = perf;
          this.op = op;
@@ -532,7 +532,7 @@ public class SecondLevelCacheStressTestCase {
             new ConcurrentHashMap<String, OpStats>();
 
       public void addStats(String opName, long opCount,
-            long runningTime, long missCount) {
+                           long runningTime, long missCount) {
          OpStats s = new OpStats(opName, opCount, runningTime, missCount);
          OpStats old = statsMap.putIfAbsent(opName, s);
          boolean replaced = old == null;
@@ -588,7 +588,7 @@ public class SecondLevelCacheStressTestCase {
       public final long missCount;
 
       private OpStats(String opName, long opCount,
-            long runningTime, long missCount) {
+                      long runningTime, long missCount) {
          this.opName = opName;
          this.threadCount = 1;
          this.opCount = opCount;
@@ -597,7 +597,7 @@ public class SecondLevelCacheStressTestCase {
       }
 
       private OpStats(OpStats base, long opCount,
-            long runningTime, long missCount) {
+                      long runningTime, long missCount) {
          this.opName = base.opName;
          this.threadCount = base.threadCount + 1;
          this.opCount = base.opCount + opCount;

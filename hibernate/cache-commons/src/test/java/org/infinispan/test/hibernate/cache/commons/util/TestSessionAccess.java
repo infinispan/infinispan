@@ -11,8 +11,8 @@ import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
-import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 
 public interface TestSessionAccess {
 

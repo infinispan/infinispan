@@ -1,5 +1,11 @@
 package org.infinispan.test.hibernate.cache.commons.functional.cluster;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.concurrent.CompletionException;
+
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
@@ -7,12 +13,6 @@ import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
-
-import java.util.concurrent.CompletionException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class PartialTombstoneTest extends AbstractPartialUpdateTest {
 

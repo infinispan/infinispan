@@ -20,32 +20,33 @@ import org.infinispan.util.ByteString;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class NonTxPutFromLoadInterceptor extends BaseCustomAsyncInterceptor {
-	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(NonTxPutFromLoadInterceptor.class);
-	private final ByteString cacheName;
-	private final PutFromLoadValidator putFromLoadValidator;
+   private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(NonTxPutFromLoadInterceptor.class);
+   private final ByteString cacheName;
+   private final PutFromLoadValidator putFromLoadValidator;
 
-	@Inject RpcManager rpcManager;
+   @Inject
+   RpcManager rpcManager;
 
-	public NonTxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, ByteString cacheName) {
-		this.putFromLoadValidator = putFromLoadValidator;
-		this.cacheName = cacheName;
-	}
+   public NonTxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, ByteString cacheName) {
+      this.putFromLoadValidator = putFromLoadValidator;
+      this.cacheName = cacheName;
+   }
 
-	@Override
-	public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
-		if (!ctx.isOriginLocal() && command instanceof BeginInvalidationCommand) {
-			for (Object key : command.getKeys()) {
-				putFromLoadValidator.beginInvalidatingKey(((BeginInvalidationCommand) command).getLockOwner(), key);
-			}
-		}
-		return invokeNext(ctx, command);
-	}
+   @Override
+   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
+      if (!ctx.isOriginLocal() && command instanceof BeginInvalidationCommand) {
+         for (Object key : command.getKeys()) {
+            putFromLoadValidator.beginInvalidatingKey(((BeginInvalidationCommand) command).getLockOwner(), key);
+         }
+      }
+      return invokeNext(ctx, command);
+   }
 
-	public void endInvalidating(Object key, Object lockOwner, boolean successful) {
-		assert lockOwner != null;
-		if (!putFromLoadValidator.endInvalidatingKey(lockOwner, key, successful)) {
-			log.failedEndInvalidating(key, cacheName);
-		}
-		rpcManager.sendToAll(new EndInvalidationCommand(cacheName, new Object[] {key}, lockOwner), DeliverOrder.NONE);
-	}
+   public void endInvalidating(Object key, Object lockOwner, boolean successful) {
+      assert lockOwner != null;
+      if (!putFromLoadValidator.endInvalidatingKey(lockOwner, key, successful)) {
+         log.failedEndInvalidating(key, cacheName);
+      }
+      rpcManager.sendToAll(new EndInvalidationCommand(cacheName, new Object[]{key}, lockOwner), DeliverOrder.NONE);
+   }
 }

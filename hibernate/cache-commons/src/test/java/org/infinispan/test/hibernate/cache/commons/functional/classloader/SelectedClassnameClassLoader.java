@@ -26,177 +26,177 @@ import org.jboss.logging.Logger;
  * @author Brian Stansberry
  */
 public class SelectedClassnameClassLoader extends ClassLoader {
-	private static final Logger log = Logger.getLogger( SelectedClassnameClassLoader.class );
+   private static final Logger log = Logger.getLogger(SelectedClassnameClassLoader.class);
 
-	private String[] includedClasses = null;
-    private String[] excludedClasses = null;
-    private String[] notFoundClasses = null;
+   private String[] includedClasses = null;
+   private String[] excludedClasses = null;
+   private String[] notFoundClasses = null;
 
-    private final Map<String, Class> classes = new java.util.HashMap<String, Class>();
+   private final Map<String, Class> classes = new java.util.HashMap<String, Class>();
 
-    /**
-     * Creates a new classloader that loads the given classes.
-     *
-     * @param includedClasses array of class or package names that should be directly loaded by this loader. Classes whose name
-     *        starts with any of the strings in this array will be loaded by this class, unless their name appears in
-     *        <code>excludedClasses</code>. Can be <code>null</code>
-     * @param excludedClasses array of class or package names that should NOT be directly loaded by this loader. Loading of classes
-     *        whose name starts with any of the strings in this array will be delegated to <code>parent</code>, even if the classes
-     *        package or classname appears in <code>includedClasses</code>. Typically this parameter is used to exclude loading one
-     *        or more classes in a package whose other classes are loaded by this object.
-     * @param parent ClassLoader to which loading of classes should be delegated if necessary
-     */
-    public SelectedClassnameClassLoader( String[] includedClasses,
-                                         String[] excludedClasses,
-                                         ClassLoader parent ) {
-        this(includedClasses, excludedClasses, null, parent);
-    }
+   /**
+    * Creates a new classloader that loads the given classes.
+    *
+    * @param includedClasses array of class or package names that should be directly loaded by this loader. Classes whose name
+    *                        starts with any of the strings in this array will be loaded by this class, unless their name appears in
+    *                        <code>excludedClasses</code>. Can be <code>null</code>
+    * @param excludedClasses array of class or package names that should NOT be directly loaded by this loader. Loading of classes
+    *                        whose name starts with any of the strings in this array will be delegated to <code>parent</code>, even if the classes
+    *                        package or classname appears in <code>includedClasses</code>. Typically this parameter is used to exclude loading one
+    *                        or more classes in a package whose other classes are loaded by this object.
+    * @param parent          ClassLoader to which loading of classes should be delegated if necessary
+    */
+   public SelectedClassnameClassLoader(String[] includedClasses,
+                                       String[] excludedClasses,
+                                       ClassLoader parent) {
+      this(includedClasses, excludedClasses, null, parent);
+   }
 
-    /**
-     * Creates a new classloader that loads the given classes.
-     *
-     * @param includedClasses array of class or package names that should be directly loaded by this loader. Classes whose name
-     *        starts with any of the strings in this array will be loaded by this class, unless their name appears in
-     *        <code>excludedClasses</code>. Can be <code>null</code>
-     * @param excludedClasses array of class or package names that should NOT be directly loaded by this loader. Loading of classes
-     *        whose name starts with any of the strings in this array will be delegated to <code>parent</code>, even if the classes
-     *        package or classname appears in <code>includedClasses</code>. Typically this parameter is used to exclude loading one
-     *        or more classes in a package whose other classes are loaded by this object.
-     * @param notFoundClasses array of class or package names for which this should raise a ClassNotFoundException
-     * @param parent ClassLoader to which loading of classes should be delegated if necessary
-     */
-    public SelectedClassnameClassLoader( String[] includedClasses,
-                                         String[] excludedClasses,
-                                         String[] notFoundClasses,
-                                         ClassLoader parent ) {
-        super(parent);
-        this.includedClasses = includedClasses;
-        this.excludedClasses = excludedClasses;
-        this.notFoundClasses = notFoundClasses;
+   /**
+    * Creates a new classloader that loads the given classes.
+    *
+    * @param includedClasses array of class or package names that should be directly loaded by this loader. Classes whose name
+    *                        starts with any of the strings in this array will be loaded by this class, unless their name appears in
+    *                        <code>excludedClasses</code>. Can be <code>null</code>
+    * @param excludedClasses array of class or package names that should NOT be directly loaded by this loader. Loading of classes
+    *                        whose name starts with any of the strings in this array will be delegated to <code>parent</code>, even if the classes
+    *                        package or classname appears in <code>includedClasses</code>. Typically this parameter is used to exclude loading one
+    *                        or more classes in a package whose other classes are loaded by this object.
+    * @param notFoundClasses array of class or package names for which this should raise a ClassNotFoundException
+    * @param parent          ClassLoader to which loading of classes should be delegated if necessary
+    */
+   public SelectedClassnameClassLoader(String[] includedClasses,
+                                       String[] excludedClasses,
+                                       String[] notFoundClasses,
+                                       ClassLoader parent) {
+      super(parent);
+      this.includedClasses = includedClasses;
+      this.excludedClasses = excludedClasses;
+      this.notFoundClasses = notFoundClasses;
 
-        log.debug("created " + this);
-    }
+      log.debug("created " + this);
+   }
 
-    @Override
-    protected synchronized Class<?> loadClass( String name,
-                                               boolean resolve ) throws ClassNotFoundException {
-        log.trace("loadClass(" + name + "," + resolve + ")");
-        if (isIncluded(name) && (isExcluded(name) == false)) {
-            Class c = findClass(name);
+   @Override
+   protected synchronized Class<?> loadClass(String name,
+                                             boolean resolve) throws ClassNotFoundException {
+      log.trace("loadClass(" + name + "," + resolve + ")");
+      if (isIncluded(name) && (isExcluded(name) == false)) {
+         Class c = findClass(name);
 
-            if (resolve) {
-                resolveClass(c);
+         if (resolve) {
+            resolveClass(c);
+         }
+         return c;
+      } else if (isNotFound(name)) {
+         throw new ClassNotFoundException(name + " is discarded");
+      } else {
+         return super.loadClass(name, resolve);
+      }
+   }
+
+   @Override
+   protected Class<?> findClass(String name) throws ClassNotFoundException {
+      log.trace("findClass(" + name + ")");
+      Class result = classes.get(name);
+      if (result != null) {
+         return result;
+      }
+
+      if (isIncluded(name) && (isExcluded(name) == false)) {
+         result = createClass(name);
+      } else if (isNotFound(name)) {
+         throw new ClassNotFoundException(name + " is discarded");
+      } else {
+         result = super.findClass(name);
+      }
+
+      classes.put(name, result);
+
+      return result;
+   }
+
+   protected Class createClass(String name) throws ClassFormatError, ClassNotFoundException {
+      log.info("createClass(" + name + ")");
+      try {
+         InputStream is = getResourceAsStream(name.replace('.', '/').concat(".class"));
+         byte[] bytes = new byte[1024];
+         ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
+         int read;
+         while ((read = is.read(bytes)) > -1) {
+            baos.write(bytes, 0, read);
+         }
+         bytes = baos.toByteArray();
+         return this.defineClass(name, bytes, 0, bytes.length);
+      } catch (FileNotFoundException e) {
+         throw new ClassNotFoundException("cannot find " + name, e);
+      } catch (IOException e) {
+         throw new ClassNotFoundException("cannot read " + name, e);
+      }
+   }
+
+   protected boolean isIncluded(String className) {
+
+      if (includedClasses != null) {
+         for (int i = 0; i < includedClasses.length; i++) {
+            if (className.startsWith(includedClasses[i])) {
+               return true;
             }
-            return c;
-        } else if (isNotFound(name)) {
-            throw new ClassNotFoundException(name + " is discarded");
-        } else {
-            return super.loadClass(name, resolve);
-        }
-    }
+         }
+      }
 
-    @Override
-    protected Class<?> findClass( String name ) throws ClassNotFoundException {
-        log.trace("findClass(" + name + ")");
-        Class result = classes.get(name);
-        if (result != null) {
-            return result;
-        }
+      return false;
+   }
 
-        if (isIncluded(name) && (isExcluded(name) == false)) {
-            result = createClass(name);
-        } else if (isNotFound(name)) {
-            throw new ClassNotFoundException(name + " is discarded");
-        } else {
-            result = super.findClass(name);
-        }
+   protected boolean isExcluded(String className) {
 
-        classes.put(name, result);
-
-        return result;
-    }
-
-    protected Class createClass( String name ) throws ClassFormatError, ClassNotFoundException {
-        log.info("createClass(" + name + ")");
-        try {
-            InputStream is = getResourceAsStream(name.replace('.', '/').concat(".class"));
-            byte[] bytes = new byte[1024];
-            ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
-            int read;
-            while ((read = is.read(bytes)) > -1) {
-                baos.write(bytes, 0, read);
+      if (excludedClasses != null) {
+         for (int i = 0; i < excludedClasses.length; i++) {
+            if (className.startsWith(excludedClasses[i])) {
+               return true;
             }
-            bytes = baos.toByteArray();
-            return this.defineClass(name, bytes, 0, bytes.length);
-        } catch (FileNotFoundException e) {
-            throw new ClassNotFoundException("cannot find " + name, e);
-        } catch (IOException e) {
-            throw new ClassNotFoundException("cannot read " + name, e);
-        }
-    }
+         }
+      }
 
-    protected boolean isIncluded( String className ) {
+      return false;
+   }
 
-        if (includedClasses != null) {
-            for (int i = 0; i < includedClasses.length; i++) {
-                if (className.startsWith(includedClasses[i])) {
-                    return true;
-                }
+   protected boolean isNotFound(String className) {
+
+      if (notFoundClasses != null) {
+         for (int i = 0; i < notFoundClasses.length; i++) {
+            if (className.startsWith(notFoundClasses[i])) {
+               return true;
             }
-        }
+         }
+      }
 
-        return false;
-    }
+      return false;
+   }
 
-    protected boolean isExcluded( String className ) {
+   @Override
+   public String toString() {
+      String s = getClass().getName();
+      s += "[includedClasses=";
+      s += listClasses(includedClasses);
+      s += ";excludedClasses=";
+      s += listClasses(excludedClasses);
+      s += ";notFoundClasses=";
+      s += listClasses(notFoundClasses);
+      s += ";parent=";
+      s += getParent();
+      s += "]";
+      return s;
+   }
 
-        if (excludedClasses != null) {
-            for (int i = 0; i < excludedClasses.length; i++) {
-                if (className.startsWith(excludedClasses[i])) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    protected boolean isNotFound( String className ) {
-
-        if (notFoundClasses != null) {
-            for (int i = 0; i < notFoundClasses.length; i++) {
-                if (className.startsWith(notFoundClasses[i])) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public String toString() {
-        String s = getClass().getName();
-        s += "[includedClasses=";
-        s += listClasses(includedClasses);
-        s += ";excludedClasses=";
-        s += listClasses(excludedClasses);
-        s += ";notFoundClasses=";
-        s += listClasses(notFoundClasses);
-        s += ";parent=";
-        s += getParent();
-        s += "]";
-        return s;
-    }
-
-    private static String listClasses( String[] classes ) {
-        if (classes == null) return null;
-        String s = "";
-        for (int i = 0; i < classes.length; i++) {
-            if (i > 0) s += ",";
-            s += classes[i];
-        }
-        return s;
-    }
+   private static String listClasses(String[] classes) {
+      if (classes == null) return null;
+      String s = "";
+      for (int i = 0; i < classes.length; i++) {
+         if (i > 0) s += ",";
+         s += classes[i];
+      }
+      return s;
+   }
 
 }

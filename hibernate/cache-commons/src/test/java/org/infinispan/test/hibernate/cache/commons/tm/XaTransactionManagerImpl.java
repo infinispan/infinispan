@@ -1,4 +1,5 @@
 package org.infinispan.test.hibernate.cache.commons.tm;
+
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
 import jakarta.transaction.InvalidTransactionException;
@@ -48,12 +49,12 @@ public class XaTransactionManagerImpl implements TransactionManager {
    }
 
    public void resume(Transaction transaction) throws InvalidTransactionException, IllegalStateException,
-            SystemException {
+         SystemException {
       currentTransaction.set((XaTransactionImpl) transaction);
    }
 
    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException,
-            SecurityException, IllegalStateException, SystemException {
+         SecurityException, IllegalStateException, SystemException {
       XaTransactionImpl currentTransaction = this.currentTransaction.get();
       if (currentTransaction == null) {
          throw new IllegalStateException("no current transaction to commit");

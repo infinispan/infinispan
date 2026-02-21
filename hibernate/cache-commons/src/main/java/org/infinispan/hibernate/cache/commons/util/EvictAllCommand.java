@@ -28,27 +28,27 @@ public class EvictAllCommand extends BaseRpcCommand {
     */
    @ProtoFactory
    public EvictAllCommand(ByteString cacheName) {
-		super(cacheName);
-	}
-
-	@Override
-	public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
-		// When a node is joining the cluster, it may receive an EvictAllCommand before the regions
-		// are started up. It's safe to ignore such invalidation at this point since no data got in.
-		var region = registry.getComponent(InfinispanBaseRegion.class);
-		if (region != null) {
-			region.invalidateRegion();
-		}
-		return CompletableFutures.completedNull();
-	}
+      super(cacheName);
+   }
 
    @Override
-	public boolean isReturnValueExpected() {
-		return false;
-	}
+   public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+      // When a node is joining the cluster, it may receive an EvictAllCommand before the regions
+      // are started up. It's safe to ignore such invalidation at this point since no data got in.
+      var region = registry.getComponent(InfinispanBaseRegion.class);
+      if (region != null) {
+         region.invalidateRegion();
+      }
+      return CompletableFutures.completedNull();
+   }
 
-	@Override
-	public NodeVersion supportedSince() {
-		return NodeVersion.SIXTEEN;
-	}
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
+   }
 }

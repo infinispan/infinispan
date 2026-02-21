@@ -1,5 +1,7 @@
 package org.infinispan.test.hibernate.cache.commons.functional.cluster;
 
+import static org.junit.Assert.assertEquals;
+
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
@@ -7,8 +9,6 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
-
-import static org.junit.Assert.assertEquals;
 
 public class PartialFutureUpdateTest extends AbstractPartialUpdateTest {
 

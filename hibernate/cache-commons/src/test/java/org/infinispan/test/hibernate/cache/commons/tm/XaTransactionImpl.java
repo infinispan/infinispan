@@ -56,7 +56,7 @@ public class XaTransactionImpl implements Transaction {
    }
 
    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException,
-            IllegalStateException, SystemException {
+         IllegalStateException, SystemException {
 
       if (status == Status.STATUS_MARKED_ROLLBACK) {
          log.trace("on commit, status was marked for rollback-only");
@@ -64,9 +64,9 @@ public class XaTransactionImpl implements Transaction {
       } else {
          status = Status.STATUS_PREPARING;
 
-         if ( synchronizations != null ) {
-            for ( int i = 0; i < synchronizations.size(); i++ ) {
-               Synchronization s = (Synchronization) synchronizations.get( i );
+         if (synchronizations != null) {
+            for (int i = 0; i < synchronizations.size(); i++) {
+               Synchronization s = (Synchronization) synchronizations.get(i);
                s.beforeCompletion();
             }
          }
@@ -94,10 +94,10 @@ public class XaTransactionImpl implements Transaction {
 
          status = Status.STATUS_COMMITTED;
 
-         if ( synchronizations != null ) {
-            for ( int i = 0; i < synchronizations.size(); i++ ) {
-               Synchronization s = (Synchronization) synchronizations.get( i );
-               s.afterCompletion( status );
+         if (synchronizations != null) {
+            for (int i = 0; i < synchronizations.size(); i++) {
+               Synchronization s = (Synchronization) synchronizations.get(i);
+               s.afterCompletion(status);
             }
          }
 
@@ -138,7 +138,7 @@ public class XaTransactionImpl implements Transaction {
    }
 
    public void registerSynchronization(Synchronization synchronization) throws RollbackException,
-            IllegalStateException, SystemException {
+         IllegalStateException, SystemException {
       // todo : find the spec-allowable statuses during which synch can be registered...
       if (synchronizations == null) {
          synchronizations = new LinkedList();
@@ -159,7 +159,7 @@ public class XaTransactionImpl implements Transaction {
    }
 
    public boolean enlistResource(XAResource xaResource) throws RollbackException, IllegalStateException,
-            SystemException {
+         SystemException {
       enlistedResources.add(new WrappedXaResource(xaResource));
       try {
          xaResource.start(xid, 0);
@@ -200,7 +200,7 @@ public class XaTransactionImpl implements Transaction {
          try {
             res.rollback(xid);
          } catch (XAException e) {
-            log.warn("Error while rolling back",e);
+            log.warn("Error while rolling back", e);
          }
       }
    }
@@ -211,7 +211,7 @@ public class XaTransactionImpl implements Transaction {
          try {
             res.commit(xid, false);//todo we only support one phase commit for now, change this!!!
          } catch (XAException e) {
-            log.warn("exception while committing",e);
+            log.warn("exception while committing", e);
             throw new HeuristicMixedException(e.getMessage());
          }
       }

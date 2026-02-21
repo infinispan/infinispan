@@ -13,6 +13,6 @@ import jakarta.persistence.Entity;
 @Entity
 @Cacheable
 public class WithEmbeddedId {
-	@EmbeddedId
-	private PK embeddedId;
+   @EmbeddedId
+   private PK embeddedId;
 }
