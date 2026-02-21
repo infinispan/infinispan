@@ -1,6 +1,9 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -20,9 +23,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseClusteredReadCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
-import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.TimeoutException;
@@ -39,7 +40,14 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulObjResponse;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.RequestRepository;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -116,6 +124,17 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    protected void test(int expectRemoteGets, BiFunction<MagicKey, Integer, Object> operation, MagicKey... keys) throws Exception {
       ControlledRpcManager crm0 = ControlledRpcManager.replaceRpcManager(cache(0));
       ControlledRpcManager crm2 = ControlledRpcManager.replaceRpcManager(cache(2));
+      RequestRepository spyRequests = spyRequestRepository(cache(2));
+      CountDownLatch blockStateResponseLatch = new CountDownLatch(1);
+      CountDownLatch resumeStateResponseLatch = new CountDownLatch(1);
+      doAnswer(invocation -> {
+         Response response = invocation.getArgument(2);
+         if (response instanceof SuccessfulObjResponse<?> && ((SuccessfulObjResponse<?>) response).getResponseValue() instanceof PublisherResponse) {
+            blockStateResponseLatch.countDown();
+            resumeStateResponseLatch.await(10, TimeUnit.SECONDS);
+         }
+         return invocation.callRealMethod();
+      }).when(spyRequests).addResponse(anyLong(), any(), any());
       CountDownLatch topologyChangeLatch = new CountDownLatch(2);
       cache(0).addListener(new TopologyChangeListener(topologyChangeLatch));
       cache(2).addListener(new TopologyChangeListener(topologyChangeLatch));
@@ -140,9 +159,11 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
 
       // block sending segment 0 to node 2
       crm2.expectCommand(StateTransferGetTransactionsCommand.class).send().receiveAll();
-      crm2.expectCommand(StateTransferStartCommand.class).send().receiveAllAsync();
-      ControlledRpcManager.BlockedRequest blockedStateResponse0 = crm0.expectCommand(StateResponseCommand.class);
+      crm2.expectCommand(InitialPublisherCommand.class).send().receiveAllAsync();
+
       assertTrue(topologyChangeLatch.await(10, TimeUnit.SECONDS));
+      // wait for response to be blocked
+      assertTrue(blockStateResponseLatch.await(10, TimeUnit.SECONDS));
 
       Transaction transaction = tm(0).suspend();
       Future<Void> commitFuture = fork(transaction::commit);
@@ -178,9 +199,14 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
          assertEquals("v" + i, cache(2).get(key));
       }
 
-      blockedStateResponse0.send().receiveAll();
+      resumeStateResponseLatch.countDown();
 
       newNode.get(10, TimeUnit.SECONDS);
+   }
+
+   private RequestRepository spyRequestRepository(Cache<Object, Object> cache) {
+      Transport transport = TestingUtil.extractComponent(cache, Transport.class);
+      return Mocks.replaceFieldWithSpy(transport, "requests");
    }
 
    private Object readWriteKey(MagicKey key, int index) {

@@ -34,6 +34,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandInvocationId;
@@ -64,13 +65,16 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -84,12 +88,13 @@ import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.processors.AsyncProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
  * Tests StateConsumerImpl.
@@ -185,8 +190,6 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       when(transport.getViewId()).thenReturn(1);
 
       RpcManager rpcManager = mock(RpcManager.class);
-      Answer<?> successfulResponse = invocation -> CompletableFuture.completedFuture(
-            SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
 
       when(rpcManager.invokeCommand(any(Address.class), any(StateTransferGetTransactionsCommand.class),
             any(ResponseCollector.class),
@@ -199,14 +202,6 @@ public class StateConsumerTest extends AbstractInfinispanTest {
                flatRequestedSegments.addAll(segments);
                return CompletableFuture.completedFuture(SuccessfulResponse.create(new ArrayList<TransactionInfo>()));
             });
-      when(rpcManager.invokeCommand(any(Address.class), any(StateTransferStartCommand.class),
-            any(ResponseCollector.class),
-            any(RpcOptions.class)))
-            .thenAnswer(successfulResponse);
-      when(rpcManager.invokeCommand(any(Address.class), any(StateTransferCancelCommand.class),
-            any(ResponseCollector.class),
-            any(RpcOptions.class)))
-            .thenAnswer(successfulResponse);
       when(rpcManager.getSyncRpcOptions()).thenReturn(new RpcOptions(DeliverOrder.NONE, 10000, TimeUnit.MILLISECONDS));
       when(rpcManager.blocking(any())).thenAnswer(invocation -> ((CompletionStage<?>) invocation
             .getArgument(0)).toCompletableFuture().join());
@@ -262,24 +257,36 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertEquals(stateConsumer.inflightRequestCount(), newSegments.size());
    }
 
-   private static void completeAndCheckRebalance(StateConsumerImpl stateConsumer, Map<Address, Set<Integer>> requestedSegments, int topologyId) throws ExecutionException, InterruptedException, TimeoutException {
+   private static void completeAndCheckRebalance(StateConsumerImpl stateConsumer,
+                                                 UnicastProcessor<SegmentPublisherSupplier.Notification<?>> unicastProcessor,
+                                                 Map<Address, Set<Integer>> requestedSegments, int topologyId) throws ExecutionException, InterruptedException, TimeoutException {
       // We count how many segments were requested and then start to apply the state individually, to assert that the
       // number of in-flight requests will decrease accordingly. During real usage, the state chunk collections can
       // have more than a single segment.
-      long inflightCounter = requestedSegments.values().stream().mapToLong(Collection::size).sum();
-      assertEquals(stateConsumer.inflightRequestCount(), inflightCounter);
+      AtomicLong inflightCounter = new AtomicLong(requestedSegments.values().stream().mapToLong(Collection::size).sum());
+      assertEquals(stateConsumer.inflightRequestCount(), inflightCounter.get());
       for (Map.Entry<Address, Set<Integer>> entry : requestedSegments.entrySet()) {
-         for (Integer segment : entry.getValue()) {
-            Collection<StateChunk> chunks = Collections.singletonList(
-                  new StateChunk(segment, Collections.emptyList(), true));
-            stateConsumer.applyState(entry.getKey(), topologyId, chunks)
-                  .toCompletableFuture()
-                  .get(10, TimeUnit.SECONDS);
+         entry.getValue().forEach(segment -> {
+            unicastProcessor.onNext(new SegmentPublisherSupplier.Notification<>() {
+               @Override
+               public int completedSegment() {
+                  return segment;
+               }
 
-            inflightCounter -= 1;
-            assertEquals(stateConsumer.inflightRequestCount(), inflightCounter);
-         }
+               @Override
+               public boolean isValue() {
+                  return false;
+               }
+
+               @Override
+               public boolean isSegmentComplete() {
+                  return true;
+               }
+            });
+            assertEquals(stateConsumer.inflightRequestCount(), inflightCounter.decrementAndGet());
+         });
       }
+      unicastProcessor.onComplete();
       assertEquals(stateConsumer.inflightRequestCount(), 0);
       eventually(() -> !stateConsumer.hasActiveTransfers());
    }
@@ -291,7 +298,10 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       stateConsumer.applyState(entry.getKey(), 22, chunks);
    }
 
-   private void injectComponents(StateConsumer stateConsumer, AsyncInterceptorChain interceptorChain, RpcManager rpcManager) {
+   private void injectComponents(StateConsumer stateConsumer, AsyncInterceptorChain interceptorChain, RpcManager rpcManager,
+                                 ClusterPublisherManager clusterPublisherManager) {
+      Transport transport = mock(Transport.class);
+      when(transport.getOldestMember()).thenReturn(NodeVersion.INSTANCE);
       TestingUtil.inject(stateConsumer,
             mockCache(),
             TestingUtil.named(NON_BLOCKING_EXECUTOR, pooledExecutorService),
@@ -314,7 +324,9 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             mock(PerCacheInboundInvocationHandler.class),
             mockXSiteStateTransferManager(),
             new ControlledTimeService(),
-            TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutorService)
+            TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutorService),
+            clusterPublisherManager,
+            transport
             );
    }
 
@@ -339,10 +351,15 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       final Map<Address, Set<Integer>> requestedSegments = new ConcurrentHashMap<>();
       final Set<Integer> flatRequestedSegments = new ConcurrentSkipListSet<>();
 
+      ClusterPublisherManager clusterPublisherManager = mock(ClusterPublisherManager.class);
+      UnicastProcessor<SegmentPublisherSupplier.Notification<?>> unicastProcessor = UnicastProcessor.create();
+      when(clusterPublisherManager.entryPublisherForTopology(anyInt(), anyInt(), any()))
+            .thenReturn(AsyncProcessor.create(), unicastProcessor);
+
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
       injectComponents(stateConsumer, mock(AsyncInterceptorChain.class),
-            mockRpcManager(requestedSegments, flatRequestedSegments, addresses[0]));
+            mockRpcManager(requestedSegments, flatRequestedSegments, addresses[0]), clusterPublisherManager);
 
       stateConsumer.start();
       assertFalse(stateConsumer.hasActiveTransfers());
@@ -364,14 +381,13 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       future.get();
       assertFalse(stateConsumer.hasActiveTransfers());
 
-
       // restart the rebalance
       requestedSegments.clear();
       flatRequestedSegments.clear();
       rebalanceStart(stateConsumer, persistentUUIDManager, 4, 4, ch2, ch3, ch23);
       assertRebalanceStart(stateConsumer, ch2, ch3, addresses[0], flatRequestedSegments);
 
-      completeAndCheckRebalance(stateConsumer, requestedSegments, 4);
+      completeAndCheckRebalance(stateConsumer, unicastProcessor, requestedSegments, 4);
       stateConsumer.stop();
    }
 
@@ -397,16 +413,17 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       final Map<Address, Set<Integer>> requestedSegments = new ConcurrentHashMap<>();
       final Set<Integer> flatRequestedSegments = new ConcurrentSkipListSet<>();
-      final CompletableFuture<Object> putFuture = new CompletableFuture<>();
 
-      // create dependencies
-      AsyncInterceptorChain interceptorChain = mock(AsyncInterceptorChain.class);
-      when(interceptorChain.invokeAsync(any(), any())).thenReturn(putFuture);
+      ClusterPublisherManager clusterPublisherManager = mock(ClusterPublisherManager.class);
+      UnicastProcessor<SegmentPublisherSupplier.Notification<?>> transfer1 = UnicastProcessor.create();
+      UnicastProcessor<SegmentPublisherSupplier.Notification<?>> transfer2 = UnicastProcessor.create();
+      when(clusterPublisherManager.entryPublisherForTopology(anyInt(), anyInt(), any()))
+            .thenReturn(transfer1, transfer2);
 
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
-      injectComponents(stateConsumer, interceptorChain,
-            mockRpcManager(requestedSegments, flatRequestedSegments, addresses[1]));
+      injectComponents(stateConsumer, mock(AsyncInterceptorChain.class),
+            mockRpcManager(requestedSegments, flatRequestedSegments, addresses[1]), clusterPublisherManager);
       stateConsumer.start();
 
       // initial topology
@@ -418,11 +435,33 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       rebalanceStart(stateConsumer, persistentUUIDManager, 22, 8, ch2, ch3, ch23);
       assertRebalanceStart(stateConsumer, ch2, ch3, addresses[1], flatRequestedSegments);
 
-      applyState(stateConsumer, requestedSegments, Collections.singletonList(new ImmortalCacheEntry("a", "b")));
+      transfer1.onNext(new SegmentPublisherSupplier.Notification<InternalCacheEntry>() {
+         @Override
+         public InternalCacheEntry value() {
+            return new ImmortalCacheEntry("a", "b");
+         }
+
+         @Override
+         public int valueSegment() {
+            return flatRequestedSegments.iterator().next();
+         }
+
+         @Override
+         public boolean isValue() {
+            return true;
+         }
+
+         @Override
+         public boolean isSegmentComplete() {
+            return false;
+         }
+      });
 
       // merge view update
       //CacheTopology{id=23, phase=NO_REBALANCE, rebalanceId=9, currentCH=DefaultConsistentHash{ns=60, owners = (2)[node-3: 29+10, node-5: 31+10]}, pendingCH=null, unionCH=null, actualMembers=[node-3, node-5], persistentUUIDs=...}
       noRebalance(stateConsumer, persistentUUIDManager, 23, 9, ch2);
+
+      transfer1.onComplete();
 
       // restart the rebalance
       requestedSegments.clear();
@@ -432,10 +471,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       rebalanceStart(stateConsumer, persistentUUIDManager, 24, 10, ch2, ch3, ch23);
       assertRebalanceStart(stateConsumer, ch2, ch3, addresses[1], flatRequestedSegments);
 
-      // let the apply state complete
-      putFuture.complete(null);
-
-      completeAndCheckRebalance(stateConsumer, requestedSegments, 24);
+      completeAndCheckRebalance(stateConsumer, transfer2, requestedSegments, 24);
 
       stateConsumer.stop();
    }

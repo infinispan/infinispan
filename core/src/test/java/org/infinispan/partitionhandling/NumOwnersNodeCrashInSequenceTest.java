@@ -1,14 +1,15 @@
 package org.infinispan.partitionhandling;
 
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
@@ -16,7 +17,13 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.RequestRepository;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
@@ -108,14 +115,21 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       StateSequencer ss = new StateSequencer();
       ss.logicalThread("main", "main:st_in_progress", "main:2nd_node_left", "main:cluster_degraded", "main:after_cluster_degraded");
 
-      advanceOnInboundRpc(ss, advancedCache(a1),
-            matchCommand(StateResponseCommand.class).matchCount(0).build())
-            .before("main:st_in_progress", "main:cluster_degraded");
-      // When the coordinator node stops gracefully there are two rebalance operations, one with the old coord
-      // and one with the new coord. The second
-      advanceOnInboundRpc(ss, advancedCache(a1),
-            matchCommand(StateResponseCommand.class).matchCount(1).build())
-            .before("main:after_cluster_degraded");
+      RequestRepository spyRequests = spyRequestRepository(manager(a1));
+      final AtomicInteger responseCount = new AtomicInteger(0);
+      doAnswer(invocation -> {
+         Response response = invocation.getArgument(2);
+         if (response instanceof ValidResponse && ((ValidResponse) response).getResponseValue() instanceof PublisherResponse) {
+            int count = responseCount.getAndIncrement();
+            if (count == 0) {
+               ss.advance("main:st_in_progress");
+               ss.advance("main:cluster_degraded");
+            } else if (count == 1) {
+               ss.advance("main:after_cluster_degraded");
+            }
+         }
+         return invocation.callRealMethod();
+      }).when(spyRequests).addResponse(anyLong(), any(), any());
 
       // Prepare for rebalance. Manager a1 will request state from c0 for segment 2
       cchf.setMembersToUse(advancedCache(a0).getRpcManager().getTransport().getMembers());
@@ -171,6 +185,11 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       ltm.setCacheAvailability(TestingUtil.getDefaultCacheName(manager(a0)), AvailabilityMode.AVAILABLE);
       TestingUtil.waitForNoRebalance(cache(a0), cache(a1));
       eventuallyEquals(AvailabilityMode.AVAILABLE, phm0::getAvailabilityMode);
+   }
+
+   private RequestRepository spyRequestRepository(EmbeddedCacheManager cm) {
+      Transport transport = TestingUtil.extractGlobalComponent(cm, Transport.class);
+      return Mocks.replaceFieldWithSpy(transport, "requests");
    }
 
    private void installNewView(List<Address> members, Address missing, EmbeddedCacheManager... where) {
