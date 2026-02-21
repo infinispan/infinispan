@@ -56,6 +56,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
             super.createHotRodClientConfigurationBuilder(servers.get(0));
       clientBuilder.marshaller(new UTF8StringMarshaller());
       clientBuilder.version(getProtocolVersion());
+      clientBuilder.socketTimeout(10_000);
       return new RemoteCacheManager(clientBuilder.build());
    }
 
@@ -63,6 +64,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             super.createHotRodClientConfigurationBuilder(servers.get(0));
       clientBuilder.version(getProtocolVersion());
+      clientBuilder.socketTimeout(10_000);
       return new RemoteCacheManager(clientBuilder.build());
    }
 
