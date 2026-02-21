@@ -18,7 +18,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class ZREVRANGE extends ZRANGE implements Resp3Command {
    public ZREVRANGE() {
-      super(-3, Set.of(Arg.REV));
+      super(-4, Set.of(Arg.REV));
    }
 
    @Override
