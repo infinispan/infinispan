@@ -92,6 +92,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  * ClusterPublisherManager that determines targets for the given segments and/or keys and then sends to local and
  * remote nodes in parallel collecting results to be returned. This implement prioritizes running as much as possible
  * on the local node, in some cases not even going remotely if all keys or segments are available locally.
+ *
  * @author wburns
  * @since 10.0
  */
@@ -99,23 +100,36 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
 public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManager<K, V> {
    protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   @Inject PublisherHandler publisherHandler;
-   @Inject LocalPublisherManager<K, V> localPublisherManager;
-   @Inject DistributionManager distributionManager;
-   @Inject StateTransferLock stateTransferLock;
-   @Inject RpcManager rpcManager;
-   @Inject CommandsFactory commandsFactory;
-   @Inject KeyPartitioner keyPartitioner;
-   @Inject Configuration cacheConfiguration;
-   @Inject ComponentRegistry componentRegistry;
-   @Inject PersistenceManager persistenceManager;
-   @Inject GlobalConfiguration nodeConfiguration;
+   @Inject
+   PublisherHandler publisherHandler;
+   @Inject
+   LocalPublisherManager<K, V> localPublisherManager;
+   @Inject
+   DistributionManager distributionManager;
+   @Inject
+   StateTransferLock stateTransferLock;
+   @Inject
+   RpcManager rpcManager;
+   @Inject
+   CommandsFactory commandsFactory;
+   @Inject
+   KeyPartitioner keyPartitioner;
+   @Inject
+   Configuration cacheConfiguration;
+   @Inject
+   ComponentRegistry componentRegistry;
+   @Inject
+   PersistenceManager persistenceManager;
+   @Inject
+   GlobalConfiguration nodeConfiguration;
 
    // Make sure we don't create one per invocation
    private final KeyComposedType KEY_COMPOSED = new KeyComposedType<>();
+
    private <R> KeyComposedType<R> keyComposedType() {
       return KEY_COMPOSED;
    }
+
    // Make sure we don't create one per invocation
    private final EntryComposedType ENTRY_COMPOSED = new EntryComposedType<>();
 
@@ -124,6 +138,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    private final SizeComposedType SIZE_COMPOSED = new SizeComposedType();
+
    private SizeComposedType sizeComposedType() {
       return SIZE_COMPOSED;
    }
@@ -156,10 +171,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       rpcOptions = new RpcOptions(DeliverOrder.NONE, cacheConfiguration.clustering().remoteTimeout() * 3,
             TimeUnit.MILLISECONDS);
       cacheConfiguration.clustering()
-                   .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
-                   .addListener((a, ignored) -> {
-                      rpcOptions = new RpcOptions(DeliverOrder.NONE, a.get().longValue() * 3, TimeUnit.MILLISECONDS);
-                   });
+            .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+            .addListener((a, ignored) -> {
+               rpcOptions = new RpcOptions(DeliverOrder.NONE, a.get().longValue() * 3, TimeUnit.MILLISECONDS);
+            });
    }
 
    @Stop
@@ -169,24 +184,24 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    @Override
    public <R> CompletionStage<R> keyReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-         InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                                              InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                              Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
+                                              Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       return reduction(parallelPublisher, segments, keysToInclude, ctx, explicitFlags, deliveryGuarantee, keyComposedType(), transformer, finalizer);
    }
 
    @Override
    public <R> CompletionStage<R> entryReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-         InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                                                InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                                Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
+                                                Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       return reduction(parallelPublisher, segments, keysToInclude, ctx, explicitFlags, deliveryGuarantee, entryComposedType(), transformer, finalizer);
    }
 
    private <I, R> CompletionStage<R> reduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude, InvocationContext ctx,
-         long explicitFlags, DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
-         Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                                               long explicitFlags, DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
+                                               Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+                                               Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       // Needs to be serialized processor as we can write to it from different threads
       FlowableProcessor<R> flowableProcessor = UnicastProcessor.<R>create().toSerialized();
       // Apply the finalizer first (which subscribes) before emitting items, to avoid buffering in UnicastProcessor
@@ -208,10 +223,11 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    /**
     * This method is used to determine if a finalizer is required to be sent remotely. For cases we don't have to
     * we don't want to serialize it for nothing
+    *
     * @return whether finalizer is required
     */
    private <R> boolean requiresFinalizer(boolean parallelPublisher, Set<K> keysToInclude,
-         DeliveryGuarantee deliveryGuarantee) {
+                                         DeliveryGuarantee deliveryGuarantee) {
       // Parallel publisher has to use the finalizer to consolidate intermediate values on the remote nodes
       return parallelPublisher ||
             // Using segments with exactly once does one segment at a time and requires consolidation
@@ -219,8 +235,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    private <I, R> void handleContextInvocation(IntSet segments, Set<K> keysToInclude, InvocationContext ctx, ComposedType<K, I, R> composedType,
-         Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
-         BiConsumer<PublisherResult<R>, Throwable> biConsumer) {
+                                               Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+                                               BiConsumer<PublisherResult<R>, Throwable> biConsumer) {
       CompletionStage<PublisherResult<R>> localStage = composedType.contextInvocation(segments, keysToInclude, ctx,
             transformer);
 
@@ -241,7 +257,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    // Finalizer isn't required as the FlowableProcessor already has that configured upstream
    private static <I, R> void handleNoTargets(Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
-         FlowableProcessor<R> flowableProcessor) {
+                                              FlowableProcessor<R> flowableProcessor) {
       // Need to do this in case if the transformer or finalizer has additional values such as reduce with identity
       // or switchIfEmpty etc.
       CompletionStage<R> transformedStage = transformer.apply(Flowable.empty());
@@ -258,10 +274,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    private <I, R> void startKeyPublisher(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude, InvocationContext ctx,
-         long explicitFlags, DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
-         Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer,
-         FlowableProcessor<R> flowableProcessor) {
+                                         long explicitFlags, DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
+                                         Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+                                         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer,
+                                         FlowableProcessor<R> flowableProcessor) {
       LocalizedCacheTopology topology = distributionManager.getCacheTopology();
       Address localAddress = topology.getLocalAddress();
       // This excludes the keys from the various address targets
@@ -330,10 +346,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    private <I, R> void startSegmentPublisher(boolean parallelPublisher, IntSet segments,
-         InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
-         Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer,
-         FlowableProcessor<R> flowableProcessor) {
+                                             InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
+                                             Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+                                             Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer,
+                                             FlowableProcessor<R> flowableProcessor) {
       LocalizedCacheTopology topology = distributionManager.getCacheTopology();
       Address localAddress = topology.getLocalAddress();
       Map<Address, IntSet> targets = determineSegmentTargets(topology, segments, localAddress, explicitFlags);
@@ -422,10 +438,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       private final Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer;
 
       SegmentSpecificConsumer(FlowableProcessor<R> flowableProcessor, AtomicInteger parallelCount,
-            int currentTopologyId, boolean parallelPublisher, InvocationContext ctx, long explicitFlags,
-            DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
-            Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
-            Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                              int currentTopologyId, boolean parallelPublisher, InvocationContext ctx, long explicitFlags,
+                              DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
+                              Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+                              Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
          this.flowableProcessor = flowableProcessor;
          this.parallelCount = parallelCount;
 
@@ -508,9 +524,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       private final Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer;
 
       KeyBiConsumer(FlowableProcessor<R> flowableProcessor, AtomicInteger parallelCount, int currentTopologyId,
-            boolean parallelPublisher, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-            ComposedType<K, I, R> composedType, Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
-            Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                    boolean parallelPublisher, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                    ComposedType<K, I, R> composedType, Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+                    Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
          this.flowableProcessor = flowableProcessor;
          this.parallelCount = parallelCount;
          this.currentTopologyId = currentTopologyId;
@@ -698,7 +714,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    private void handleSegment(int segment, LocalizedCacheTopology topology, Address localAddress,
-         Map<Address, IntSet> targets) {
+                              Map<Address, IntSet> targets) {
       DistributionInfo distributionInfo = topology.getSegmentDistribution(segment);
 
       Address targetAddres = determineOwnerToReadFrom(distributionInfo, localAddress);
@@ -730,7 +746,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    private Map<Address, Set<K>> determineKeyTargets(LocalizedCacheTopology topology, Set<K> keys, Address localAddress,
-         IntSet segments, InvocationContext ctx) {
+                                                    IntSet segments, InvocationContext ctx) {
       Map<Address, Set<K>> filteredKeys = new HashMap<>();
       for (K key : keys) {
          if (ctx != null && ctx.lookupEntry(key) != null) {
@@ -756,17 +772,17 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    interface ComposedType<K, I, R> {
       CompletionStage<PublisherResult<R>> localInvocation(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-            Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-            Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
-            Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
+                                                          Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                                          Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+                                                          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 
       TopologyAffectedCommand remoteInvocation(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-            Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-            Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
-            Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
+                                               Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                               Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+                                               Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 
       CompletionStage<PublisherResult<R>> contextInvocation(IntSet segments, Set<K> keysToInclude, InvocationContext ctx,
-            Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer);
+                                                            Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer);
 
       boolean isEntry();
 
@@ -779,25 +795,25 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       public CompletionStage<PublisherResult<R>> localInvocation(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-            Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-            Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
-            Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                                                                 Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                                                 Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
+                                                                 Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
          return localPublisherManager.keyReduction(parallelPublisher, segments, keysToInclude, keysToExclude,
                explicitFlags, deliveryGuarantee, transformer, finalizer);
       }
 
       @Override
       public ReductionPublisherRequestCommand<K> remoteInvocation(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-            Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-            Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
-            Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                                                                  Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                                                  Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
+                                                                  Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
          return commandsFactory.buildKeyReductionPublisherCommand(parallelPublisher, deliveryGuarantee, segments, keysToInclude,
                keysToExclude, explicitFlags, transformer, finalizer);
       }
 
       @Override
       public CompletionStage<PublisherResult<R>> contextInvocation(IntSet segments, Set<K> keysToInclude,
-            InvocationContext ctx, Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer) {
+                                                                   InvocationContext ctx, Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer) {
 
          Flowable<K> flowable = LocalClusterPublisherManagerImpl.entryPublisherFromContext(ctx, segments, keyPartitioner, keysToInclude)
                .map(RxJavaInterop.entryToKeyFunction());
@@ -825,25 +841,25 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       public CompletionStage<PublisherResult<R>> localInvocation(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-            Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-            Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
-            Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                                                                 Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                                                 Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
+                                                                 Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
          return localPublisherManager.entryReduction(parallelPublisher, segments, keysToInclude, keysToExclude,
                explicitFlags, deliveryGuarantee, transformer, finalizer);
       }
 
       @Override
       public ReductionPublisherRequestCommand<K> remoteInvocation(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-            Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-            Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
-            Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+                                                                  Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                                                  Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
+                                                                  Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
          return commandsFactory.buildEntryReductionPublisherCommand(parallelPublisher, deliveryGuarantee, segments, keysToInclude,
                keysToExclude, explicitFlags, transformer, finalizer);
       }
 
       @Override
       public CompletionStage<PublisherResult<R>> contextInvocation(IntSet segments, Set<K> keysToInclude,
-            InvocationContext ctx, Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer) {
+                                                                   InvocationContext ctx, Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer) {
          return transformer.apply(LocalClusterPublisherManagerImpl.entryPublisherFromContext(ctx, segments, keyPartitioner, keysToInclude))
                .thenApply(LocalPublisherManagerImpl.ignoreSegmentsFunction());
       }
@@ -868,10 +884,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       public CompletionStage<PublisherResult<Long>> localInvocation(boolean parallelPublisher,
-         IntSet segments, Set<K> keysToInclude, Set<K> keysToExclude, long explicitFlags,
-         DeliveryGuarantee deliveryGuarantee,
-         Function<? super Publisher<Long>, ? extends CompletionStage<Long>> transformer,
-         Function<? super Publisher<Long>, ? extends CompletionStage<Long>> finalizer) {
+                                                                    IntSet segments, Set<K> keysToInclude, Set<K> keysToExclude, long explicitFlags,
+                                                                    DeliveryGuarantee deliveryGuarantee,
+                                                                    Function<? super Publisher<Long>, ? extends CompletionStage<Long>> transformer,
+                                                                    Function<? super Publisher<Long>, ? extends CompletionStage<Long>> finalizer) {
          return localPublisherManager.sizePublisher(segments, explicitFlags)
                .thenApply(size -> new SegmentPublisherResult<>(null, size));
       }
@@ -888,7 +904,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       public CompletionStage<PublisherResult<Long>> contextInvocation(IntSet segments, Set<K> keysToInclude,
-         InvocationContext ctx, Function<? super Publisher<Long>, ? extends CompletionStage<Long>> transformer) {
+                                                                      InvocationContext ctx, Function<? super Publisher<Long>, ? extends CompletionStage<Long>> transformer) {
          throw new IllegalStateException("Should never be invoked!");
       }
 
@@ -926,10 +942,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                                                        Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
       if (keysToInclude != null) {
          return new KeyAwarePublisherImpl<>(keysToInclude, keyComposedType(), segments, invocationContext,
-                                            explicitFlags, deliveryGuarantee, batchSize, transformer);
+               explicitFlags, deliveryGuarantee, batchSize, transformer);
       }
       return new SegmentAwarePublisherImpl<>(segments, keyComposedType(), invocationContext, explicitFlags,
-                                             deliveryGuarantee, batchSize, transformer);
+            deliveryGuarantee, batchSize, transformer);
    }
 
    @Override
@@ -940,10 +956,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                                                                extends Publisher<R>> transformer) {
       if (keysToInclude != null) {
          return new KeyAwarePublisherImpl<>(keysToInclude, entryComposedType(), segments, invocationContext,
-                                            explicitFlags, deliveryGuarantee, batchSize, transformer);
+               explicitFlags, deliveryGuarantee, batchSize, transformer);
       }
       return new SegmentAwarePublisherImpl<>(segments, entryComposedType(), invocationContext, explicitFlags,
-                                             deliveryGuarantee, batchSize, transformer);
+            deliveryGuarantee, batchSize, transformer);
    }
 
    @Override
@@ -970,6 +986,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
     * This class handles whenever a new subscriber is registered. This class handles the retry mechanism and submission
     * of requests to various nodes. All details regarding a specific subscriber should be stored in this class, such
     * as the completed segments.
+    *
     * @param <I>
     * @param <R>
     */
@@ -1099,7 +1116,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       CompletionStage<PublisherResponse> sendInitialCommand(Address target, IntSet segments, int batchSize,
-            Set<K> excludedKeys, int topologyId) {
+                                                            Set<K> excludedKeys, int topologyId) {
          if (keysBySegment != null) {
             for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
                int segment = iter.nextInt();
@@ -1227,8 +1244,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
     * key tracking when delivery guarantee is EXACTLY_ONCE. In somes case we don't need to track keys if the transformer
     * is the identity function (delineated by being the same as {@link MarshallableFunctions#identity()} or the function
     * implements a special interface {@link ModifiedValueFunction} and it retains the original value.
+    *
     * @param deliveryGuarantee guarantee of the data
-    * @param transformer provided transformer
+    * @param transformer       provided transformer
     * @return should keys for the current segment be returned in the response
     */
    private static boolean shouldTrackKeys(DeliveryGuarantee deliveryGuarantee, Function<?, ?> transformer) {
@@ -1258,8 +1276,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       final AtomicBoolean usedContext = new AtomicBoolean();
 
       private AbstractSegmentAwarePublisher(ComposedType<K, I, R> composedType, IntSet segments, InvocationContext invocationContext,
-            long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
-            Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+                                            long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
+                                            Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
          this.composedType = composedType;
          this.segments = segments != null ? segments : IntSets.immutableRangeSet(maxSegment);
          this.invocationContext = invocationContext;
@@ -1290,8 +1308,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       final Set<K> keysToInclude;
 
       private KeyAwarePublisherImpl(Set<K> keysToInclude, ComposedType<K, I, R> composedType, IntSet segments,
-            InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-            int batchSize, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+                                    InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                    int batchSize, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
          super(composedType, segments, invocationContext, explicitFlags, deliveryGuarantee, batchSize, transformer);
          this.keysToInclude = Objects.requireNonNull(keysToInclude);
       }
@@ -1348,8 +1366,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    private class SegmentAwarePublisherImpl<I, R> extends AbstractSegmentAwarePublisher<I, R> {
       private SegmentAwarePublisherImpl(IntSet segments, ComposedType<K, I, R> composedType,
-            InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
-            int batchSize, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+                                        InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+                                        int batchSize, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
          super(composedType, segments, invocationContext, explicitFlags, deliveryGuarantee, batchSize, transformer);
       }
 

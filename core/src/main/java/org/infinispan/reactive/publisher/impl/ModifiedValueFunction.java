@@ -11,6 +11,7 @@ import java.util.function.Function;
  * It should be noted that "changed" can be different in a given context. For example if the underlying implementation
  * utilized something similar to a {@link org.infinispan.cache.impl.EncodingFunction} the result could be a different
  * object completely but is essentially the same.
+ *
  * @param <I> the input type
  * @param <O> the output type
  */
@@ -18,6 +19,7 @@ public interface ModifiedValueFunction<I, O> extends Function<I, O> {
    /**
     * This method should return true when this function changes the actual values of the Publisher. This
     * can be useful for some optimizations that may need to track produced values from the original.
+    *
     * @return if the values in the publisher are changed
     */
    boolean isModified();
