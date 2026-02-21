@@ -418,9 +418,12 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          Collection<IracManagerKeyState> validState = new ArrayList<>(size);
          for (IracStateData data : batch) {
             if (data.entry == null && data.tombstone == null) {
-               // there a concurrency issue where the entry and the tombstone do not exist (remove following by a put)
-               // the put will create a new state and the key will be sent to the remote sites
-               invalidState.add(data.state);
+               // Entry may not be loadable yet if passivation is still in progress after eviction.
+               // Retry instead of discarding so the next batch cycle can find the entry in the store.
+               if (log.isTraceEnabled()) {
+                  log.tracef("[IRAC] Entry and tombstone both null for key %s, scheduling retry", data.state.getKeyInfo());
+               }
+               data.state.retry();
                continue;
             }
 
