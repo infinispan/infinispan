@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
@@ -14,6 +15,9 @@
    <properties>
       <javadoc.outputDirectory>${project.build.directory}</javadoc.outputDirectory>
       <skipCentralPublish>true</skipCentralPublish>
+      <maven.compiler.source>25</maven.compiler.source>
+      <maven.compiler.target>25</maven.compiler.target>
+      <maven.compiler.release>25</maven.compiler.release>
    </properties>
 
    <dependencies>
@@ -70,12 +74,12 @@
          <artifactId>infinispan-clustered-lock</artifactId>
       </dependency>
 
-       <dependency>
-           <groupId>org.infinispan</groupId>
-           <artifactId>infinispan-multimap</artifactId>
-       </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-multimap</artifactId>
+      </dependency>
 
-       <dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-core</artifactId>
       </dependency>
@@ -261,7 +265,9 @@
                         </group>
                         <group>
                            <title>Server Connectors API</title>
-                           <packages>org.infinispan.rest*:org.infinispan.server.hotrod*:org.infinispan.server.resp*:org.infinispan.server.memcached*</packages>
+                           <packages>
+                              org.infinispan.rest*:org.infinispan.server.hotrod*:org.infinispan.server.resp*:org.infinispan.server.memcached*
+                           </packages>
                         </group>
                         <group>
                            <title>Tasks API</title>
@@ -273,13 +279,17 @@
                         <dependencySourceInclude>org.infinispan:*</dependencySourceInclude>
                      </dependencySourceIncludes>
                      <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
-                     <excludePackageNames>org.infinispan.commons.jdkspecific*:*.impl.*:*.backend.*:io.netty*:*.logging.*:org.infinispan.commands*:*.internal.*</excludePackageNames>
+                     <excludePackageNames>
+                        org.infinispan.commons.jdkspecific*:*.impl.*:*.backend.*:io.netty*:*.logging.*:org.infinispan.commands*:*.internal.*
+                     </excludePackageNames>
                      <excludedocfilessubdir>org/infinispan/commons/jdkspecific</excludedocfilessubdir>
                      <doclint>none</doclint>
                      <useStandardDocletOptions>true</useStandardDocletOptions>
                      <additionalOptions combine.self="override">
                         <additionalOption>--allow-script-in-comments</additionalOption>
-                        <additionalOption>--excludeGeneratedBy org.jboss.logging.processor.generator.model.MessageLoggerImplementor</additionalOption>
+                        <additionalOption>--excludeGeneratedBy
+                           org.jboss.logging.processor.generator.model.MessageLoggerImplementor
+                        </additionalOption>
                      </additionalOptions>
                      <additionalJOptions>
                         <!-- Custom doclet needs access to javadoc module internals -->
@@ -299,7 +309,9 @@
                         <tag>
                            <name>api.private</name>
                            <placement>a</placement>
-                           <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;THIS IS NOT PUBLIC API! This is a private implementation detail and must not be referenced by user code.&lt;/b&gt;&lt;/div&gt;</head>
+                           <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;THIS IS NOT PUBLIC API! This is a private
+                              implementation detail and must not be referenced by user code.&lt;/b&gt;&lt;/div&gt;
+                           </head>
                         </tag>
                      </tags>
                      <additionalDependencies>
@@ -313,11 +325,11 @@
                            <artifactId>agroal-api</artifactId>
                            <version>${version.io.agroal}</version>
                         </additionalDependency>
-                         <additionalDependency>
-                             <groupId>io.micrometer</groupId>
-                             <artifactId>micrometer-registry-prometheus-simpleclient</artifactId>
-                             <version>${version.micrometer}</version>
-                         </additionalDependency>
+                        <additionalDependency>
+                           <groupId>io.micrometer</groupId>
+                           <artifactId>micrometer-registry-prometheus-simpleclient</artifactId>
+                           <version>${version.micrometer}</version>
+                        </additionalDependency>
                      </additionalDependencies>
                      <outputDirectory>${javadoc.outputDirectory}</outputDirectory>
                   </configuration>

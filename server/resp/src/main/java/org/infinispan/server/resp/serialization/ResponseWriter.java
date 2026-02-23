@@ -3,13 +3,11 @@ package org.infinispan.server.resp.serialization;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletionException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.security.sasl.SaslException;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespVersion;
 import org.infinispan.server.resp.exception.RespCommandException;
@@ -325,35 +323,32 @@ public interface ResponseWriter {
    }
 
    static Consumer<ResponseWriter> handleException(Throwable t) {
-      Throwable ex = t;
-      while (ex instanceof CompletionException || ex instanceof CacheException) {
-         ex = ex.getCause();
-      }
+      for (Throwable ex = t; ex != null; ex = ex.getCause()) {
+         if (ex instanceof RespCommandException rce) {
+            return rw -> rw.error(String.format("-%s", rce.getMessage()));
+         }
 
-      if (ex instanceof RespCommandException rce) {
-         return rw -> rw.error(String.format("-%s", rce.getMessage()));
-      }
-
-      if (ex instanceof ClassCastException) {
-         return ResponseWriter::wrongType;
-      }
-
-      if (ex instanceof IllegalArgumentException) {
-         if (ex.getMessage().contains("No marshaller registered for object of Java type")) {
+         if (ex instanceof ClassCastException) {
             return ResponseWriter::wrongType;
          }
-      }
 
-      if (ex instanceof IndexOutOfBoundsException) {
-         return ResponseWriter::indexOutOfRange;
-      }
+         if (ex instanceof IllegalArgumentException) {
+            if (ex.getMessage().contains("No marshaller registered for object of Java type")) {
+               return ResponseWriter::wrongType;
+            }
+         }
 
-      if (ex instanceof NumberFormatException) {
-         return ResponseWriter::valueNotInteger;
-      }
+         if (ex instanceof IndexOutOfBoundsException) {
+            return ResponseWriter::indexOutOfRange;
+         }
 
-      if (ex instanceof SecurityException || ex instanceof SaslException) {
-         return ResponseWriter::unauthorized;
+         if (ex instanceof NumberFormatException) {
+            return ResponseWriter::valueNotInteger;
+         }
+
+         if (ex instanceof SecurityException || ex instanceof SaslException) {
+            return ResponseWriter::unauthorized;
+         }
       }
 
       return null;
