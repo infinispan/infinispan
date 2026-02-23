@@ -123,7 +123,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          throw CONTAINER.groupingAndAggregationQueriesMustUseProjections();
       }
 
-      if (queryAnalyzer.fullIndexingAggregation(parsingResult)) {
+      if (isIndexed && queryAnalyzer.fullIndexingAggregation(parsingResult)) {
          return buildQueryWithNativeAggregations(namedParameters, startOffset, maxResults, parsingResult, local);
       }
 

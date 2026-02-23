@@ -58,7 +58,7 @@ public class User {
       this.accountIds = accountIds;
    }
 
-   @Basic(projectable = true, sortable = true)
+   @Basic(projectable = true, sortable = true, aggregable = true)
    @ProtoField(3)
    public String getName() {
       return name;
