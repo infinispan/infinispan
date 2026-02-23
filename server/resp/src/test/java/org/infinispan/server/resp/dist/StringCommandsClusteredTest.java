@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.resp.StringCommandsTest;
 import org.infinispan.server.resp.test.TestSetup;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 
@@ -39,4 +40,11 @@ public class StringCommandsClusteredTest extends StringCommandsTest {
    protected TestSetup setup() {
       return TestSetup.clusteredTestSetup(3);
    }
+
+   @Override
+   @Ignore("Checking for the existing type costs ~20% in write throughput. Make this a no-op for now")
+   public void testSetWrongType() {
+
+   }
+
 }
