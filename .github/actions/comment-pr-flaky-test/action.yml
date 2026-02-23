@@ -22,14 +22,39 @@ runs:
         PR="${{ inputs.pr-number }}"
         if [ "$PR" != "" ]; then
           shopt -s nullglob globstar
+
+          # Load flaky-test-issues mapping (written by track_flaky_tests.sh)
+          declare -A ISSUE_MAP
+          declare -A COMMENT_COUNT_MAP
+          if [ -f flaky-test-issues.map ]; then
+            while IFS=$'\t' read -r key number count; do
+              ISSUE_MAP["$key"]="$number"
+              COMMENT_COUNT_MAP["$key"]="$count"
+            done < flaky-test-issues.map
+          fi
+
           FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml"
           TESTS=(${FLAKY_TEST_GLOB})
           for TEST in "${TESTS[@]}"
           do
-            FULL_TEST_NAME=$(xmlstarlet sel -T -t -m "/testsuite/testcase" -o '   - '\
+            RAW_NAMES=$(xmlstarlet sel -T -t -m "/testsuite/testcase" \
              -v "concat(@classname,'#',@name)" -n ${TEST} \
              | sed 's/(Flaky Test)//' | sed 's/\[[0-9]\]//')
-            FLAKES_PR_COMMENT="$FLAKES_PR_COMMENT$FULL_TEST_NAME\n"
+            while IFS= read -r LINE; do
+              [ -z "$LINE" ] && continue
+              # Strip leading/trailing whitespace
+              LINE=$(echo "$LINE" | xargs)
+              # Build lookup key by stripping parameters (same logic as track_flaky_tests.sh)
+              LOOKUP_KEY="${LINE%%\[*}"
+              LOOKUP_KEY="${LOOKUP_KEY%%(*}"
+              if [ -n "${ISSUE_MAP[$LOOKUP_KEY]+x}" ]; then
+                ISSUE_NUM="${ISSUE_MAP[$LOOKUP_KEY]}"
+                SEEN_COUNT=$(( ${COMMENT_COUNT_MAP[$LOOKUP_KEY]} + 1 ))
+                FLAKES_PR_COMMENT="$FLAKES_PR_COMMENT   - [${LINE}](https://github.com/${{ github.repository }}/issues/${ISSUE_NUM}) (seen ${SEEN_COUNT} times)\n"
+              else
+                FLAKES_PR_COMMENT="$FLAKES_PR_COMMENT   - ${LINE}\n"
+              fi
+            done <<< "$RAW_NAMES"
           done
           if [ "$FLAKES_PR_COMMENT" != "" ]; then
             pr_url=https://github.com/${{ github.repository }}/pull/$PR

@@ -69,13 +69,18 @@ for TEST in "${TESTS[@]}"; do
       ISSUE_NUMBER=$(echo "${ISSUE_URL}" | grep -oE '[0-9]+$')
       # Set the issue type to Bug via API
       gh api -X PATCH "/repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" --field type=Bug
+      COMMENT_COUNT=0
     else
-      export ISSUE_KEY=$(echo "${ISSUES}" | jq  '.[0].number')
+      ISSUE_NUMBER=$(echo "${ISSUES}" | jq -r '.[0].number')
+      # Fetch issue data to check state and get comment count in a single API call
+      ISSUE_DATA=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}")
+      COMMENT_COUNT=$(echo "${ISSUE_DATA}" | jq .comments)
       # Re-open the issue if it was previously resolved
-      if [ "$(gh issue view ${ISSUE_KEY} --json state | jq .state)" == '"CLOSED"' ]; then
-        gh issue reopen ${ISSUE_KEY}
+      if [ "$(echo "${ISSUE_DATA}" | jq -r .state)" == 'closed' ]; then
+        gh issue reopen ${ISSUE_NUMBER}
       fi
-      gh issue comment ${ISSUE_KEY} --body "${BODY}"
+      gh issue comment ${ISSUE_NUMBER} --body "${BODY}"
     fi
+    echo -e "${TEST_CLASS}#${TEST_NAME_NO_PARAMS}\t${ISSUE_NUMBER}\t${COMMENT_COUNT}" >> flaky-test-issues.map
   done
 done
