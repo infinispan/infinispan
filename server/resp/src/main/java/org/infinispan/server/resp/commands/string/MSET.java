@@ -1,5 +1,6 @@
 package org.infinispan.server.resp.commands.string;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -41,6 +42,16 @@ public class MSET extends RespCommand implements Resp3Command {
       AggregateCompletionStage<Void> setStage = CompletionStages.aggregateCompletionStage();
       for (int i = 0; i < keyValuePairCount; i += 2) {
          byte[] keyBytes = arguments.get(i);
+         // Skip if this key appears again later — last value wins
+         boolean laterDuplicate = false;
+         for (int j = i + 2; j < keyValuePairCount; j += 2) {
+            if (Arrays.equals(keyBytes, arguments.get(j))) {
+               laterDuplicate = true;
+               break;
+            }
+         }
+         if (laterDuplicate) continue;
+
          byte[] valueBytes = arguments.get(i + 1);
          setStage.dependsOn(handler.cache().putAsync(keyBytes, valueBytes));
       }
