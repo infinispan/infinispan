@@ -385,6 +385,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
             .exceptionally(throwable -> {
                log.debugf(throwable, "[IRAC] Failed to load entry to send to remote sites. It will be retried. State=%s", state);
                state.retry();
+               iracExecutor.run();
                return null;
             }));
    }
@@ -424,6 +425,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
                   log.tracef("[IRAC] Entry and tombstone both null for key %s, scheduling retry", data.state.getKeyInfo());
                }
                data.state.retry();
+               iracExecutor.run();
                continue;
             }
 
