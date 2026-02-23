@@ -31,6 +31,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.internal.InternalCacheNames;
+import org.infinispan.commons.test.skip.SkipJunit;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.Address;
@@ -42,6 +43,7 @@ import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.server.test.junit5.RollingUpgradeHandlerExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -152,6 +154,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testIteratorWithQueryAndProjections(boolean indexed) {
+      SkipJunit.skipCondition(() -> !indexed && SERVERS instanceof RollingUpgradeHandlerExtension);
       RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
@@ -168,6 +171,12 @@ public class HotRodCacheQueries {
       Object[] projections = (Object[]) entries.get(0).getValue();
       assertEquals("Cat", projections[0]);
       assertEquals("Tom", projections[1]);
+
+      Query<Object[]> aggrQuery = remoteCache.query("SELECT name, count(name) FROM sample_bank_account.User GROUP BY name ORDER BY name");
+      projections = aggrQuery.list().get(0);
+      assertEquals("Adrian", projections[0]);
+      assertEquals(1L, (long) projections[1]);
+
    }
 
    @ParameterizedTest
