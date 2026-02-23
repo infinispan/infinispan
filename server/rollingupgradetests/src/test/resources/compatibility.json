@@ -35,6 +35,18 @@
           "description": "Legacy metrics are disabled by default",
           "issue": "https://github.com/infinispan/infinispan/issues/16392",
           "test-failures": []
+        },
+        {
+          "description": "Aggregation on indexed field do not work with non-indexed cache",
+          "issue": "https://github.com/infinispan/infinispan/issues/16761",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.hotrod.HotRodCacheQueries",
+              "test-methods": [
+                "testIteratorWithQueryAndProjections"
+              ]
+            }
+          ]
         }
       ]
     }

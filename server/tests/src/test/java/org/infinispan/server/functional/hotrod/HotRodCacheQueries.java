@@ -168,6 +168,12 @@ public class HotRodCacheQueries {
       Object[] projections = (Object[]) entries.get(0).getValue();
       assertEquals("Cat", projections[0]);
       assertEquals("Tom", projections[1]);
+
+      Query<Object[]> aggrQuery = remoteCache.query("SELECT name, count(name) FROM sample_bank_account.User GROUP BY name ORDER BY name");
+      projections = aggrQuery.list().get(0);
+      assertEquals("Adrian", projections[0]);
+      assertEquals(1L, (long) projections[1]);
+
    }
 
    @ParameterizedTest
