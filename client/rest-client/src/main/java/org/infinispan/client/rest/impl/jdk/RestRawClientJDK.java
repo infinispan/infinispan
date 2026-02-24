@@ -37,6 +37,7 @@ import org.infinispan.client.rest.impl.jdk.auth.BasicAuthenticator;
 import org.infinispan.client.rest.impl.jdk.auth.BearerAuthenticator;
 import org.infinispan.client.rest.impl.jdk.auth.DigestAuthenticator;
 import org.infinispan.client.rest.impl.jdk.auth.HttpAuthenticator;
+import org.infinispan.client.rest.impl.jdk.auth.LocalUserAuthenticator;
 import org.infinispan.client.rest.impl.jdk.auth.NegotiateAuthenticator;
 import org.infinispan.client.rest.impl.jdk.sse.EventSubscriber;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -111,6 +112,9 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
                break;
             case "BEARER_TOKEN":
                authenticator = new BearerAuthenticator(httpClient, authentication);
+               break;
+            case "LOCALUSER":
+               authenticator = new LocalUserAuthenticator(httpClient, authentication);
                break;
             default:
                throw new IllegalArgumentException("Cannot handle " + authentication.mechanism());
@@ -241,11 +245,11 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
    private <T> CompletionStage<RestResponse> execute(HttpRequest.Builder builder, Supplier<HttpResponse.BodyHandler<?>> handlerSupplier) {
       // Add configured headers
       configuration.headers().forEach(builder::header);
-      HttpRequest request = builder.build();
-      LOG.tracef("Request %s", request);
       if (authenticator != null && authenticator.supportsPreauthentication()) {
          authenticator.preauthenticate(builder);
       }
+      HttpRequest request = builder.build();
+      LOG.tracef("Request %s", request);
       return handle(httpClient.sendAsync(request, handlerSupplier.get()), handlerSupplier).thenApply(RestResponseJDK::new);
    }
 

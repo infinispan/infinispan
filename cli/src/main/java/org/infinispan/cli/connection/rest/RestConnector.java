@@ -21,14 +21,14 @@ import org.kohsuke.MetaInfServices;
  **/
 @MetaInfServices
 public class RestConnector implements Connector {
-   private final Pattern HOST_PORT = Pattern.compile("(\\[[0-9A-Fa-f:]+\\]|[^:/?#]*)(?::(\\d*))");
+   private final Pattern HOST_PORT = Pattern.compile("(\\[[0-9A-Fa-f:]+]|[^:/?#]*):(\\d*)");
 
    @Override
    public Connection getConnection(Properties properties, String connectionString, SSLContextSettings sslContextSettings) {
       try {
          RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().withProperties(properties);
          if (connectionString == null || connectionString.isEmpty() || "-".equals(connectionString)) {
-            builder.addServer().host("localhost").port(11222);
+            builder.addServer().host("localhost").port(11222).security().authentication().enable();
          } else {
             Matcher matcher = HOST_PORT.matcher(connectionString);
             if (matcher.matches()) {
