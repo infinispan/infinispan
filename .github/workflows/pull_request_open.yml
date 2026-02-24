@@ -2,17 +2,13 @@ name: Pull Request Open
 
 on:
   pull_request_target:
-    branches:
-      - main
-      - 14.0.x
-      - 15.*.x
-
     types:
       - opened
       - reopened
 
 jobs:
   targetlabel:
+    if: contains(github.event.pull_request.base.ref, '.')
     runs-on: ubuntu-latest
     steps:
       - name: Add target label
@@ -21,6 +17,46 @@ jobs:
           if gh api repos/${GH_REPO}/labels -q '.[].name' --paginate | grep -qxF "$TARGET"; then
             gh pr edit ${{ github.event.pull_request.number }} --add-label "$TARGET"
           fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+
+  issuelabels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy labels from referenced issues
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          TITLE="${{ github.event.pull_request.title }}"
+          BODY=$(gh pr view "$PR_NUMBER" --json body -q '.body // ""')
+
+          # Extract issue numbers from [#N] in title, and Fixes/Closes/Resolves #N in body
+          ISSUES=$(echo "$TITLE" | grep -oP '\[#\K[0-9]+' || true)
+          ISSUES="$ISSUES $(echo "$BODY" | grep -oiP '(fix(es|ed)?|close[sd]?|resolve[sd]?)\s+#\K[0-9]+' || true)"
+          ISSUES=$(echo "$ISSUES" | tr ' ' '\n' | sort -un | xargs)
+
+          if [ -z "$ISSUES" ]; then
+            echo "No issue references found"
+            exit 0
+          fi
+
+          # Collect all repo labels for validation
+          REPO_LABELS=$(gh api repos/${GH_REPO}/labels -q '.[].name' --paginate)
+
+          for ISSUE in $ISSUES; do
+            echo "Processing issue #$ISSUE"
+            LABELS=$(gh api repos/${GH_REPO}/issues/${ISSUE}/labels -q '.[].name' 2>/dev/null || true)
+            if [ -z "$LABELS" ]; then
+              echo "  No labels found or issue does not exist"
+              continue
+            fi
+            while IFS= read -r LABEL; do
+              if echo "$REPO_LABELS" | grep -qxF "$LABEL"; then
+                echo "  Adding label: $LABEL"
+                gh pr edit "$PR_NUMBER" --add-label "$LABEL"
+              fi
+            done <<< "$LABELS"
+          done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
