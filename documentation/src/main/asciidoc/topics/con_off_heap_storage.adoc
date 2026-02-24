@@ -3,6 +3,12 @@
 
 When you add entries to off-heap caches, {brandname} dynamically allocates native memory to your data.
 
+[NOTE]
+====
+When running {brandname} on JDK 23 or later, the off-heap implementation uses JDK-supported APIs for native memory management instead of the previous implementation. 
+This change ensures compatibility with newer JDK versions.
+====
+
 {brandname} hashes the serialized `byte[]` for each key into buckets that are similar to a standard Java `HashMap`.
 Buckets include address pointers that {brandname} uses to locate entries that you store in off-heap memory.
 
