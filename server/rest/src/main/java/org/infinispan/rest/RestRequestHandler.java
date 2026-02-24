@@ -131,7 +131,9 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
       }
 
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
-      metadata.protocolVersion(request.protocolVersion().text());
+      if (metadata.protocolVersion() == null) {
+         metadata.protocolVersion(request.protocolVersion().text());
+      }
       String userAgent = request.headers().get(HttpHeaderNames.USER_AGENT);
       if (userAgent != null) {
          metadata.clientLibraryName(userAgent);
@@ -156,7 +158,7 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
       }
 
       if (authenticator == null || isAnon(invocationLookup)) {
-         handleRestRequest(ctx, restRequest, invocationLookup);
+         handleRestRequest(ctx, restRequest, invocationLookup, null);
          return;
       }
       if (subject != null) {
@@ -167,7 +169,7 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                logger.tracef("Authorization header match, skipping authentication for %s", request);
             }
             restRequest.setSubject(subject);
-            handleRestRequest(ctx, restRequest, invocationLookup);
+            handleRestRequest(ctx, restRequest, invocationLookup, null);
             return;
          } else {
             // Invalidate and force re-authentication
@@ -185,7 +187,7 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             authorization = restRequest.getAuthorizationHeader();
             subject = restRequest.getSubject();
             metadata.subject(subject);
-            handleRestRequest(ctx, restRequest, invocationLookup);
+            handleRestRequest(ctx, restRequest, invocationLookup, (NettyRestResponse) authResponse);
          } else {
             try {
                if (hasError) {
@@ -205,12 +207,17 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
       return lookupResult.getInvocation().anonymous();
    }
 
-   private void handleRestRequest(ChannelHandlerContext ctx, NettyRestRequest restRequest, LookupResult invocationLookup) {
+   private void handleRestRequest(ChannelHandlerContext ctx, NettyRestRequest restRequest, LookupResult invocationLookup,
+                                   NettyRestResponse authResponse) {
       restServer.getRestDispatcher().dispatch(restRequest, invocationLookup).whenComplete((restResponse, throwable) -> {
          FullHttpRequest request = restRequest.getFullHttpRequest();
          try {
             if (throwable == null) {
                NettyRestResponse nettyRestResponse = (NettyRestResponse) restResponse;
+               if (authResponse != null) {
+                  authResponse.getResponse().headers().forEach(e ->
+                        nettyRestResponse.getResponse().headers().set(e.getKey(), e.getValue()));
+               }
                sendResponse(ctx, request, nettyRestResponse);
             } else {
                handleError(ctx, request, throwable);

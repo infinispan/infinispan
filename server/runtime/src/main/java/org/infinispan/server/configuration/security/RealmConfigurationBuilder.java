@@ -112,7 +112,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       serverIdentitiesConfiguration.validate();
       Set<String> names = new HashSet<>();
       for(RealmProviderBuilder<?> builder : builders) {
-         if (names.contains(builder.name())) {
+         if (!names.add(builder.name())) {
             throw Server.log.duplicateRealm(builder.name());
          }
          builder.validate();

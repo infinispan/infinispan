@@ -15,12 +15,12 @@ public class BasicAuthenticator extends HttpAuthenticator {
 
    public BasicAuthenticator(HttpClient client, AuthenticationConfiguration configuration) {
       super(client, configuration);
-      authzValue = basic(configuration.username(), new String(configuration.password()));
+      authzValue = (configuration.username() != null && configuration.password() != null) ? basic(configuration.username(), new String(configuration.password())) : null;
    }
 
    @Override
    public boolean supportsPreauthentication() {
-      return true;
+      return authzValue != null;
    }
 
    @Override
@@ -32,7 +32,7 @@ public class BasicAuthenticator extends HttpAuthenticator {
    public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler) {
       HttpRequest request = response.request();
       List<String> authorization = request.headers().allValues(WWW_AUTH_RESP);
-      if (!authorization.isEmpty() && authorization.get(0).startsWith("Basic")) {
+      if (authzValue == null || !authorization.isEmpty() && authorization.get(0).startsWith("Basic")) {
          // We have already attempted to authenticate, fail
          return null;
       }
