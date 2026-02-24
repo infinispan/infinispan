@@ -9,7 +9,7 @@
             </ssl>
          </server-identities>
          <ldap-realm name="ldap" url="ldaps://${org.infinispan.test.host.address}:10636"
-                     principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword" client-ssl-context="default">
+                     principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword" client-ssl-context="default" connection-timeout="15s">
             <identity-mapping rdn-identifier="uid" search-dn="dc=infinispan,dc=org" search-recursive="true">
                <attribute-mapping>
                   <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))"
