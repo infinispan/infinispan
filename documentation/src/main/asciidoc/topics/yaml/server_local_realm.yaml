@@ -1,0 +1,6 @@
+server:
+  security:
+    securityRealms:
+      - name: "default"
+        localRealm: ~
+        propertiesRealm: ~

@@ -39,13 +39,39 @@ public class DigestAuthenticator extends HttpAuthenticator {
    private String lastNonce;
    private long nonceCount;
    private String cnonce;
+   // Cached challenge parameters for preauthentication
+   private volatile Map<String, String> cachedParameters;
 
    public DigestAuthenticator(HttpClient client, AuthenticationConfiguration configuration) {
       super(client, configuration);
    }
 
    @Override
+   public boolean supportsPreauthentication() {
+      return cachedParameters != null;
+   }
+
+   @Override
+   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request) {
+      Map<String, String> params = cachedParameters;
+      if (params != null) {
+         // Build a mutable copy with the current request's method and URI
+         Map<String, String> requestParams = new ConcurrentHashMap<>(params);
+         // Method and URI will be set from the built request after the header is added,
+         // but we need a temporary request to extract them
+         HttpRequest tempRequest = request.copy().build();
+         requestParams.put("methodname", tempRequest.method());
+         requestParams.put("uri", digestUri(tempRequest.uri()));
+         request.header(WWW_AUTH_RESP, createDigestHeader(tempRequest, requestParams));
+      }
+      return request;
+   }
+
+   @Override
    public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler) {
+      if (configuration.username() == null || configuration.password() == null) {
+         return null;
+      }
       String header = findHeader(response, WWW_AUTH, "Digest");
       Matcher matcher = HEADER_REGEX.matcher(header);
       Map<String, String> parameters = new ConcurrentHashMap<>(8);
@@ -62,14 +88,27 @@ public class DigestAuthenticator extends HttpAuthenticator {
       }
       boolean isStale = Boolean.parseBoolean(parameters.get("stale"));
       HttpRequest request = response.request();
-      if (havePreviousDigestAuthorizationAndShouldAbort(request, isStale)) {
+      if (cachedParameters != null) {
+         // A preauthenticated request was rejected (e.g. nonce expired or different server node).
+         // Clear the cache and retry with the fresh challenge.
+         cachedParameters = null;
+      } else if (havePreviousDigestAuthorizationAndShouldAbort(request, isStale)) {
          return null;
       }
       parameters.put("methodname", request.method());
       parameters.put("uri", digestUri(request.uri()));
       parameters.computeIfAbsent("charset", k -> getCredentialsCharset(request));
-      HttpRequest.Builder newRequest = copyRequest(request).header(WWW_AUTH_RESP, createDigestHeader(request, parameters));
-      return client.sendAsync(newRequest.build(), (HttpResponse.BodyHandler<T>) bodyHandler);
+      // Strip old Authorization headers to prevent accumulation across retries
+      HttpRequest.Builder newRequest = copyRequest(request, (n, v) -> !n.equalsIgnoreCase(WWW_AUTH_RESP))
+            .header(WWW_AUTH_RESP, createDigestHeader(request, parameters));
+      return client.sendAsync(newRequest.build(), (HttpResponse.BodyHandler<T>) bodyHandler)
+            .thenApply(r -> {
+               if (r.statusCode() != 401) {
+                  // Cache challenge parameters for preauthentication on subsequent requests
+                  cachedParameters = parameters;
+               }
+               return r;
+            });
    }
 
    private String digestUri(URI uri) {

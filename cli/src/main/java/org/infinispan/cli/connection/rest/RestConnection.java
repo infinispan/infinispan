@@ -89,7 +89,9 @@ public class RestConnection implements Connection, Closeable {
    public void connect() throws IOException {
       client = RestClient.forConfiguration(builder.build());
       AuthenticationConfiguration authentication = client.getConfiguration().security().authentication();
-      if (authentication.enabled() && authentication.username() != null && authentication.password() == null && !"Bearer".equals(authentication.mechanism())) {
+      String mechanism = authentication.mechanism();
+      if (authentication.enabled() && authentication.username() != null && authentication.password() == null
+            && !"Bearer".equals(mechanism) && !"LOCALUSER".equals(mechanism) && !"AUTO".equals(mechanism)) {
          throw new AccessDeniedException("");
       }
       connectInternal();
@@ -163,22 +165,14 @@ public class RestConnection implements Connection, Closeable {
    }
 
    private RestResponse handleResponseStatus(RestResponse response) throws IOException {
-      switch (response.status()) {
-         case 200:
-         case 201:
-         case 202:
-            return response;
-         case 204:
-            return null;
-         case 401:
-            throw MSG.unauthorized(response.body());
-         case 403:
-            throw MSG.forbidden(response.body());
-         case 404:
-            throw MSG.notFound(response.body());
-         default:
-            throw MSG.error(response.body());
-      }
+      return switch (response.status()) {
+         case 200, 201, 202 -> response;
+         case 204 -> null;
+         case 401 -> throw MSG.unauthorized(response.body());
+         case 403 -> throw MSG.forbidden(response.body());
+         case 404 -> throw MSG.notFound(response.body());
+         default -> throw MSG.error(response.body());
+      };
    }
 
    @Override
@@ -441,12 +435,12 @@ public class RestConnection implements Connection, Closeable {
    @Override
    public void refreshServerInfo() throws IOException {
       try {
-         Map cacheManagerInfo = parseBody(fetch(() -> client.container().info()), Map.class);
+         Map<?, ?> cacheManagerInfo = parseBody(fetch(() -> client.container().info()), Map.class);
          List<Map<String, Object>> definedCaches = (List<Map<String, Object>>) cacheManagerInfo.get("defined_caches");
          availableCaches = new ArrayList<>();
          definedCaches.forEach(m -> availableCaches.add((String) m.get("name")));
          availableCaches.remove(PROTOBUF_METADATA_CACHE_NAME);
-         List configurationList = parseBody(fetch(() -> client.container().cacheConfigurations()), List.class);
+         List<?> configurationList = parseBody(fetch(() -> client.container().cacheConfigurations()), List.class);
          availableConfigurations = new ArrayList<>(configurationList.size());
          for (Object item : configurationList) {
             availableConfigurations.add(((Map<String, String>) item).get("name"));
