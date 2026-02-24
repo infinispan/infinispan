@@ -508,7 +508,9 @@ jobs:
           .github/scripts/merge-jacoco-files.sh "$GITHUB_WORKSPACE/test_dir/infinispan/" "${GITHUB_WORKSPACE}/jacoco-files-*"
           #Read and store value of PR from the File
           PR_NUMBER=$(cat "$GITHUB_WORKSPACE/jacoco-files-main/pr-number.txt")
+          COMMIT_SHA=$(cat "$GITHUB_WORKSPACE/jacoco-files-main/github-sha.txt")
           echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
+          echo "HEAD_SHA=$COMMIT_SHA" >> "$GITHUB_ENV"
 
       - name: Coverage report generation
         id: generate_coverage
@@ -520,7 +522,7 @@ jobs:
 
       - name: Add coverage to PR
         id: jacoco
-        uses: madrapps/jacoco-report@v1.7.2
+        uses: vilmosnagy/jacoco-report@1.7.2-v2
         with:
           paths: |
             ${{ github.workspace }}/test_dir/infinispan/jacoco-report/jacoco.xml
@@ -528,6 +530,7 @@ jobs:
           min-coverage-overall: 70
           min-coverage-changed-files: 70
           pr-number: ${{ env.PR_NUMBER }}
+          head-sha: ${{ env.HEAD_SHA }}
           debug-mode: true
 
       - name: Copy the Jacoco Report into Readable directory
@@ -561,7 +564,7 @@ jobs:
 
       - name: Add rolling upgrade coverage to PR
         id: jacoco-rolling-upgrade
-        uses: madrapps/jacoco-report@v1.7.2
+        uses: vilmosnagy/jacoco-report@1.7.2-v2
         with:
           paths: |
             ${{ github.workspace }}/test_dir/infinispan-rolling-upgrade/jacoco-report/jacoco.xml
@@ -569,6 +572,7 @@ jobs:
           min-coverage-overall: 25
           min-coverage-changed-files: 25
           pr-number: ${{ env.PR_NUMBER }}
+          head-sha: ${{ env.HEAD_SHA }}
           title: Coverage for rolling-upgrade tests
           debug-mode: true
 
