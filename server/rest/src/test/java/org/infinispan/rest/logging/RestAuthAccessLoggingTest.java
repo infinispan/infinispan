@@ -58,7 +58,10 @@ public class RestAuthAccessLoggingTest extends AbstractAuthAccessLoggingTest {
 
       // Access log entries are written asynchronously via ChannelFuture listeners.
       // Wait for all expected entries to arrive before asserting.
-      int expectedLogs = 14;
+      // After the first successful auth exchange, the client preauthenticates subsequent
+      // requests (sends the Authorization header proactively), eliminating the 401
+      // round-trip on GET requests. This reduces the count from 14 to 11.
+      int expectedLogs = 11;
       eventually(() -> "Expected " + expectedLogs + " log entries, got " + logAppender.size(),
             () -> logAppender.size() >= expectedLogs);
 
@@ -72,26 +75,20 @@ public class RestAuthAccessLoggingTest extends AbstractAuthAccessLoggingTest {
       assertThat(parseAccessLog(2)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "401", "WHO", "-"));
       // WRITER PUT, AFTER AUTH
       assertThat(parseAccessLog(3)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "204", "WHO", "writer"));
-      // WRITER GET, BEFORE AUTH
-      assertThat(parseAccessLog(4)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "GET", "STATUS", "401", "WHO", "writer"));
-      // WRITER GET, AFTER AUTH
-      assertThat(parseAccessLog(5)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "GET", "STATUS", "200", "WHO", "writer"));
+      // WRITER GET, PREAUTHENTICATED
+      assertThat(parseAccessLog(4)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "GET", "STATUS", "200", "WHO", "writer"));
       // READER PUT, BEFORE AUTH
-      assertThat(parseAccessLog(6)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "401", "WHO", "-"));
+      assertThat(parseAccessLog(5)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "401", "WHO", "-"));
       // READER PUT, AFTER AUTH
-      assertThat(parseAccessLog(7)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "403", "WHO", "reader"));
-      // READER GET, BEFORE AUTH
-      assertThat(parseAccessLog(8)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "GET", "STATUS", "401", "WHO", "reader"));
-      // READER GET, AFTER AUTH
-      assertThat(parseAccessLog(9)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "GET", "STATUS", "404", "WHO", "reader"));
+      assertThat(parseAccessLog(6)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "403", "WHO", "reader"));
+      // READER GET, PREAUTHENTICATED
+      assertThat(parseAccessLog(7)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "GET", "STATUS", "404", "WHO", "reader"));
       // WRONG PUT, BEFORE AUTH
-      assertThat(parseAccessLog(10)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "401", "WHO", "-"));
+      assertThat(parseAccessLog(8)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "401", "WHO", "-"));
       // WRONG PUT, AFTER AUTH
-      assertThat(parseAccessLog(11)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "403", "WHO", "-"));
-      // WRONG GET, BEFORE AUTH
-      assertThat(parseAccessLog(12)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "GET", "STATUS", "401", "WHO", "-"));
-      // WRONG GET, AFTER AUTH
-      assertThat(parseAccessLog(13)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "GET", "STATUS", "403", "WHO", "-"));
+      assertThat(parseAccessLog(9)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "PUT", "STATUS", "403", "WHO", "-"));
+      // WRONG GET, PREAUTHENTICATED
+      assertThat(parseAccessLog(10)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HTTP/1.1", "METHOD", "GET", "STATUS", "403", "WHO", "-"));
    }
 
    private RestClient createRestClient(String username, String password) {

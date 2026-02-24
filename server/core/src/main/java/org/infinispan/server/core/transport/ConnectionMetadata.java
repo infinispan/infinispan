@@ -24,6 +24,10 @@ public class ConnectionMetadata {
    private String cache;
 
    public static ConnectionMetadata getInstance(Channel channel) {
+      Channel parent = channel.parent();
+      if (parent != null && parent.remoteAddress() != null) {
+         channel = parent;
+      }
       ConnectionMetadata existing = channel.attr(METADATA).get();
       if (existing == null) {
          ConnectionMetadata metadata = new ConnectionMetadata(channel);
@@ -108,5 +112,20 @@ public class ConnectionMetadata {
 
    public void cache(String cache) {
       this.cache = cache;
+   }
+
+   @Override
+   public String toString() {
+      return "ConnectionMetadata{" +
+            "channel=" + channel +
+            ", id=" + id +
+            ", subject=" + subject +
+            ", clientName='" + clientName + '\'' +
+            ", clientLibName='" + clientLibName + '\'' +
+            ", clientLibVersion='" + clientLibVersion + '\'' +
+            ", protocolVersion='" + protocolVersion + '\'' +
+            ", created=" + created +
+            ", cache='" + cache + '\'' +
+            '}';
    }
 }
