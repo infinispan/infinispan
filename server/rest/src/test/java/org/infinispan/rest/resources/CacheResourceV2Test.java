@@ -132,6 +132,14 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                    required int32 value=1;
                    optional string description=2;
                 }
+                message ParentEntity {
+                   required string value=1;
+                   repeated ChildEntity childs=2;
+                }
+                message ChildEntity {
+                   required string name=1;
+                   required string surname=2;
+                }
                """;
    public static final String ACCEPT = "Accept";
 
@@ -2205,6 +2213,23 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(restClient.markTopologyStable(false))
             .isNotFound()
             .hasReturnedText("\"Cache 'it-does-not-exist' does not exist\"");
+   }
+
+   @Test
+   public void testPutDataWithRepeatedEntity() {
+      // without "_type" in repeated entity
+      Json json = Json.object().set("_type", "ParentEntity").set("value", "parent")
+            .set("childs", Json.array(Json.object().set("name", "first").set("surname", "second")));
+      RestCacheClient cacheClient = client.cache("indexedCache");
+      CompletionStage<RestResponse> response = cacheClient.put("REPEATED_WITHOUT_TYPE", RestEntity.create(APPLICATION_JSON, json.toString()));
+      assertThat(response).isOk();
+
+      // with "_type" in repeated entity
+      json = Json.object().set("_type", "ParentEntity").set("value", "parent")
+            .set("childs", Json.array(Json.object().set("_type", "ChildEntity").set("name", "first").set("surname", "second")));
+
+      response = cacheClient.put("REPEATED_WITH_TYPE", RestEntity.create(APPLICATION_JSON, json.toString()));
+      assertThat(response).isOk();
    }
 
    public void testNonInitializedCacheNotListed() {
