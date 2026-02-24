@@ -564,6 +564,23 @@ public final class Util {
       return String.valueOf(result);
    }
 
+   public static byte[] hexToBytes(String hex) {
+      int len = hex.length();
+      if ((len & 1) != 0) {
+         throw new IllegalArgumentException("Odd-length hex string");
+      }
+      byte[] data = new byte[len / 2];
+      for (int i = 0; i < len; i += 2) {
+         int hi = Character.digit(hex.charAt(i), 16);
+         int lo = Character.digit(hex.charAt(i + 1), 16);
+         if ((hi | lo) < 0) {
+            throw new IllegalArgumentException("Invalid hex character at index " + (hi < 0 ? i : i + 1));
+         }
+         data[i / 2] = (byte) ((hi << 4) + lo);
+      }
+      return data;
+   }
+
    public static String padString(String s, int minWidth) {
       if (s.length() < minWidth) {
          StringBuilder sb = new StringBuilder(s);
