@@ -244,9 +244,6 @@ public class AuthenticationMultiEndpointIT {
       }
 
       private void validateSuccess() {
-         if (isAnonymous && useAuth) {
-            throw new IllegalStateException("Authenticated client should not be allowed to connect to anonymous server");
-         }
          if (!isAnonymous && !useAuth) {
             throw new IllegalStateException("Unauthenticated client should not be allowed to connect to authenticated server");
          }

@@ -113,7 +113,7 @@ public class NetworkAddress {
    }
 
    public static NetworkAddress nonLoopback(String name) throws IOException {
-      return new NetworkAddress(name, findAddress(a -> !a.getAddress().isLoopbackAddress()));
+      return new NetworkAddress(name, findAddress(a -> !a.getAddress().isLoopbackAddress() && !a.getAddress().isLinkLocalAddress()));
    }
 
    public static NetworkAddress siteLocal(String name) throws IOException {

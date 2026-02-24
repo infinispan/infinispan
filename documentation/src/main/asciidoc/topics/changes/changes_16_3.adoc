@@ -1,5 +1,20 @@
 == Upgrading from 16.2 to 16.3
 
+=== Security
+
+==== Local user authentication enabled by default
+
+The default server configurations now include a `local-realm` that enables the `LOCALUSER` HTTP authentication mechanism.
+This allows the CLI to authenticate automatically against a local {brandname} server without prompting for credentials, as long as the user running the CLI is the same system user that started the server.
+
+Authentication is restricted to loopback connections and relies on file-system permissions to verify that the client process runs as the same operating system user as the server.
+The authenticated user receives full administrative permissions.
+
+If your deployment does not require local CLI access, you can remove the `<local-realm/>` element from your server configuration.
+
+NOTE: The `LOCALUSER` mechanism requires a POSIX-compatible file system.
+On Windows, the mechanism is automatically disabled and a warning is logged.
+
 === Deprecations
 
 ==== InvocationBatchingConfiguration

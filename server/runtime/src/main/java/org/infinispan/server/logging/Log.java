@@ -291,4 +291,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Malformed entry in user properties file at line %d", id = 80076)
    IllegalStateException malformedUserProperties(int line);
+
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(value = "LOCALUSER authentication mechanism disabled: the filesystem does not support POSIX file permissions", id = 80077)
+   void localUserDisabledNoPosix();
 }

@@ -116,6 +116,7 @@ public class ThreadLeakChecker {
                       "|Cleaner-" +
                       // Tomcat NIO connector threads
                       "|http-nio-" +
+                      "|localuser-challenge-cleanup" +
                       ").*");
    private static final Pattern ARQUILLIAN_CONSOLE_CONSUMER_REGEX = Pattern.compile("org\\.jboss(\\.as)?\\.arquillian\\.container[^$]+\\$ConsoleConsumer");
    private static final boolean ENABLED =
