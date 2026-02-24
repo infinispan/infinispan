@@ -14,9 +14,11 @@ import java.util.function.Predicate;
 
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
+import org.infinispan.server.test.core.TestSetupUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -146,6 +148,9 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
          if (suite != null) {
             Assertions.fail(String.format("Failed during '%s#beforeAll' suite execution", suite.getName()), t);
          } else {
+            if (TestSetupUtil.isAssumptionViolated(t)) {
+               Assumptions.abort(t.getMessage());
+            }
             Assertions.fail(String.format("Failed during '%s#afterAll' execution", testClass), t);
          }
       }
