@@ -7,7 +7,7 @@
             <kerberos keytab-path="hotrod.keytab" principal="hotrod/datagrid@INFINISPAN.ORG" debug="true" required="true"/>
             <kerberos keytab-path="http.keytab" principal="HTTP/localhost@INFINISPAN.ORG" debug="true" required="true"/>
          </server-identities>
-         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389" principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
+         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389" principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword" connection-timeout="15s">
             <name-rewriter>
                <regex-principal-transformer name="domain-remover" pattern="(.*)@INFINISPAN\.ORG" replacement="$1"/>
             </name-rewriter>
