@@ -221,7 +221,7 @@
       <version.pmd.plugin>3.28.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.2.0</version.owasp-dependency-check-plugin>
       <version.spotbugs.plugin>4.9.8.2</version.spotbugs.plugin>
-      <version.openapi.generator>7.19.0</version.openapi.generator>
+      <version.openapi.generator>7.20.0</version.openapi.generator>
       <version.weld-servlet>5.1.7.Final</version.weld-servlet>
 
       <!-- versionx -->
