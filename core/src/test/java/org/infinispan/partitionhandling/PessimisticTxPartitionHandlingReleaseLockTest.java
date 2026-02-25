@@ -24,6 +24,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.MergePolicy;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManagerImpl;
@@ -72,9 +73,15 @@ public class PessimisticTxPartitionHandlingReleaseLockTest extends MultipleCache
    public void testLockReleased() throws Exception {
       final AdvancedCache<MagicKey, String> cache0 = this.<MagicKey, String>cache(0).getAdvancedCache();
       final TransactionManager tm = cache0.getTransactionManager();
-      final ControlledInboundHandler handler1 = wrapInboundInvocationHandler(cache(1), ControlledInboundHandler::new);
       final ControlledLocalTopologyManager localTopologyManager0 = wrapGlobalComponent(cache0.getCacheManager(), LocalTopologyManager.class, ControlledLocalTopologyManager::new, true);
-      final MagicKey key = new MagicKey(cache0, cache(1));
+      final MagicKey key = new MagicKey(cache0);
+
+      // Find the actual backup owner dynamically instead of hardcoding cache(1),
+      // since the consistent hash may not place cache(1) as backup for any segment
+      // where cache(0) is primary.
+      DistributionInfo distributionInfo = cache0.getDistributionManager().getCacheTopology().getDistribution(key);
+      int backupIndex = managerIndex(distributionInfo.writeBackups().iterator().next());
+      final ControlledInboundHandler backupHandler = wrapInboundInvocationHandler(cache(backupIndex), ControlledInboundHandler::new);
 
       Future<GlobalTransaction> f = fork(() -> {
          tm.begin();
@@ -87,13 +94,13 @@ public class PessimisticTxPartitionHandlingReleaseLockTest extends MultipleCache
       });
 
       //make sure the PrepareCommand was sent
-      assertTrue(handler1.receivedLatch.await(30, TimeUnit.SECONDS));
+      assertTrue(backupHandler.receivedLatch.await(30, TimeUnit.SECONDS));
 
       //block stable topology update on originator
       localTopologyManager0.blockStableTopologyUpdate();
 
       //isolate backup owner
-      getDiscardForCache(manager(1)).discardAll(true);
+      getDiscardForCache(manager(backupIndex)).discardAll(true);
 
       //wait for the transaction to finish
       //after the view change, the transaction is handled by the PartitionHandlingManager which finishes the commit
