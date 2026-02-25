@@ -1,5 +1,6 @@
 package org.infinispan.test.integration.thirdparty.persistence.jdbc.stringbased;
 
+import org.infinispan.commons.test.Eventually;
 import org.infinispan.test.integration.persistence.jdbc.stringbased.PooledConnectionIT;
 import org.infinispan.test.integration.persistence.jdbc.util.JdbcConfigurationUtil;
 import org.infinispan.test.integration.persistence.jdbc.util.TableManipulation;
@@ -23,6 +24,8 @@ public class PooledConnectionDeployIT extends PooledConnectionIT {
         war.addClass(PooledConnectionIT.class);
         war.addClass(TableManipulation.class);
         war.addClass(JdbcConfigurationUtil.class);
+        war.addClass(Eventually.class);
+        war.addClass(Eventually.Condition.class);
         addJdbcLibraries(war);
         return war;
     }

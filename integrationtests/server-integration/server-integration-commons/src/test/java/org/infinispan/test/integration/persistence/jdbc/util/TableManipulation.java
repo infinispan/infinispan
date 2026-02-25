@@ -66,6 +66,20 @@ public class TableManipulation implements AutoCloseable {
       }
    }
 
+   public int countAllRows() {
+      connection = getConnection();
+      try (PreparedStatement ps = connection.prepareStatement(countRowsSql);
+           ResultSet rs = ps.executeQuery()) {
+         if (rs.next()) {
+            return rs.getInt(1);
+         } else {
+            throw new IllegalStateException(countRowsSql + " returned no rows");
+         }
+      } catch (SQLException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    public String getEncodedKey(String key) throws Exception {
       ProtoStreamMarshaller protoStreamMarshaller = new ProtoStreamMarshaller();
       byte[] marshalled = protoStreamMarshaller.objectToByteBuffer(key);
