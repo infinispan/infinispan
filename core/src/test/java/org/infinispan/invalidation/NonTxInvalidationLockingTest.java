@@ -39,19 +39,17 @@ public class NonTxInvalidationLockingTest extends MultipleCacheManagersTest {
    }
 
    private void defineCache(String cacheName) {
-      ConfigurationBuilder config = buildConfig();
-      manager(0).defineConfiguration(cacheName, config.build());
-      manager(1).defineConfiguration(cacheName, config.build());
+      manager(0).defineConfiguration(cacheName, buildConfig(0).build());
+      manager(1).defineConfiguration(cacheName, buildConfig(1).build());
    }
 
-   private ConfigurationBuilder buildConfig() {
+   private ConfigurationBuilder buildConfig(int nodeIndex) {
       ConfigurationBuilder cacheConfig = new ConfigurationBuilder();
       cacheConfig.clustering().cacheMode(CacheMode.INVALIDATION_SYNC)
                  .stateTransfer().fetchInMemoryState(false)
                  .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
                  .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
-                 .storeName(NonTxInvalidationLockingTest.class.getName())
-                 .build();
+                 .storeName(NonTxInvalidationLockingTest.class.getName() + "_" + nodeIndex);
       return cacheConfig;
    }
 
