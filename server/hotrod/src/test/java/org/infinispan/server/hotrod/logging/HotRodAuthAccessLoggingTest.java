@@ -7,6 +7,7 @@ import static org.infinispan.test.TestingUtil.v;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import javax.security.sasl.Sasl;
@@ -89,9 +90,15 @@ public class HotRodAuthAccessLoggingTest extends AbstractAuthAccessLoggingTest {
       // Initial client PING
       assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HOTROD/2.1", "METHOD", "PING", "STATUS", "OK", "WHO", "-"));
       // Failed authentication with wrong password
-      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HOTROD/2.1", "METHOD", "AUTH", "STATUS", "\"Authentication failure\"", "WHO", "-"));
-      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HOTROD/2.1", "METHOD", "PUT", "STATUS", "\"ISPN006017: Operation 'PUT' requires authentication\"", "WHO", "-"));
-      assertThat(parseAccessLog(i++)).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HOTROD/2.1", "METHOD", "GET", "STATUS", "\"ISPN006017: Operation 'GET' requires authentication\"", "WHO", "-"));
+      // AUTH failure is processed on the executor while PUT/GET are processed on the event loop,
+      // so log entries for these operations can appear in any order
+      List<Map<String, String>> wrongUserEntries = List.of(parseAccessLog(i++), parseAccessLog(i++), parseAccessLog(i++));
+      assertThat(wrongUserEntries).anySatisfy(entry ->
+            assertThat(entry).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HOTROD/2.1", "METHOD", "AUTH", "STATUS", "\"Authentication failure\"", "WHO", "-")));
+      assertThat(wrongUserEntries).anySatisfy(entry ->
+            assertThat(entry).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HOTROD/2.1", "METHOD", "PUT", "STATUS", "\"ISPN006017: Operation 'PUT' requires authentication\"", "WHO", "-")));
+      assertThat(wrongUserEntries).anySatisfy(entry ->
+            assertThat(entry).containsAllEntriesOf(Map.of("IP", "127.0.0.1", "PROTOCOL", "HOTROD/2.1", "METHOD", "GET", "STATUS", "\"ISPN006017: Operation 'GET' requires authentication\"", "WHO", "-")));
 
       assertEquals(i, logAppender.size());
    }
