@@ -186,6 +186,13 @@
             <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
+                <configuration>
+                    <logHandler>
+                        <failIf>
+                            <severity>WARN</severity>
+                        </failIf>
+                    </logHandler>
+                </configuration>
                 <dependencies>
                     <dependency>
                         <groupId>org.asciidoctor</groupId>
