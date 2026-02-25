@@ -115,9 +115,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          } else {
             if (globalConfiguration.isClustered()) { // We are running in clustered mode
                builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-               // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
-               builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner());
             }
+            // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
+            builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner());
             builder.encoding().key().mediaType(RESP_KEY_MEDIA_TYPE);
             builder.encoding().value().mediaType(configuredValueType);
          }
@@ -131,7 +131,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          if (!RESP_KEY_MEDIA_TYPE.equals(explicitConfiguration.encoding().keyDataType().mediaType()))
             throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType());
 
-         if (globalConfiguration.isClustered() &&
+         if (explicitConfiguration.clustering().cacheMode().isClustered() &&
                !(explicitConfiguration.clustering().hash().keyPartitioner() instanceof RESPHashFunctionPartitioner)) {
             throw CONFIG.respCacheUseDefineConsistentHash(cacheName, explicitConfiguration.clustering().hash().keyPartitioner().getClass().getName());
          }
