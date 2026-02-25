@@ -31,8 +31,8 @@ public class FootprintIT {
    private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 12_200;
    private static final long HEAP_USAGE_LOWER_BOUND = 22_000_000L;
    private static final long HEAP_USAGE_UPPER_BOUND = 24_000_000L;
-   private static final long DISK_USAGE_LOWER_BOUND = 85_000_000L;
-   private static final long DISK_USAGE_UPPER_BOUND = 90_000_000L;
+   private static final long DISK_USAGE_LOWER_BOUND = 88_000_000L;
+   private static final long DISK_USAGE_UPPER_BOUND = 92_000_000L;
 
    private static final int JACOCO_CLASS_COUNT = 165;
    private static final long JACOCO_HEAP_USAGE = 2_350_000L;
