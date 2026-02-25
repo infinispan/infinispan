@@ -82,8 +82,7 @@ public class AuthHandler extends ActivationHandler {
                log.debug("Exception encountered while closing saslClient", e);
             }
          }
-         channel.pipeline().remove(this);
-         operationChannel.markAcceptingRequests();
+         super.activate(ctx,  operationChannel);
       }).exceptionally(throwable -> {
          while (throwable instanceof CompletionException && throwable.getCause() != null) {
             throwable = throwable.getCause();
