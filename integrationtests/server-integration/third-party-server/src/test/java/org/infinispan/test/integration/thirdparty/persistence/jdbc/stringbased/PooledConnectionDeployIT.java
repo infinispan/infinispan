@@ -6,6 +6,7 @@ import org.infinispan.test.integration.persistence.jdbc.stringbased.PooledConnec
 import org.infinispan.test.integration.persistence.jdbc.util.JdbcConfigurationUtil;
 import org.infinispan.test.integration.persistence.jdbc.util.TableManipulation;
 import org.infinispan.test.integration.thirdparty.DeploymentHelper;
+import org.infinispan.testing.Eventually;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
@@ -23,6 +24,8 @@ public class PooledConnectionDeployIT extends PooledConnectionIT {
         war.addClass(PooledConnectionIT.class);
         war.addClass(TableManipulation.class);
         war.addClass(JdbcConfigurationUtil.class);
+        war.addClass(Eventually.class);
+        war.addClass(Eventually.Condition.class);
         addJdbcLibraries(war);
         return war;
     }

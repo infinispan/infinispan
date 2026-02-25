@@ -1,6 +1,7 @@
 package org.infinispan.test.integration.persistence.jdbc.stringbased;
 
 import static org.infinispan.test.integration.persistence.jdbc.util.JdbcConfigurationUtil.CACHE_NAME;
+import static org.infinispan.testing.Eventually.eventually;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -42,14 +43,16 @@ public class PooledConnectionIT {
             cache.put("k3", "v3");
             //now some key is evicted and stored in store
             assertEquals(2, getNumberOfEntriesInMemory(cache));
-            // TODO: need to fix this later, for some reason this fails on Oracle but passes on other DBs
-//            assertEquals(1, table.countAllRows());
+            // Passivation will happen asynchronously.
+            eventually(() -> table.countAllRows() == 1);
 
             cache.stop();
             cache.start();
 
             assertEquals(3, cache.size());
             assertEquals("v1", cache.get("k1"));
+            assertEquals(2, getNumberOfEntriesInMemory(cache));
+            assertEquals(3, table.countAllRows());
             assertCleanCacheAndStore(cache);
         }
     }
