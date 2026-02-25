@@ -44,6 +44,8 @@ public class RemoteQueryAccessTest extends SingleHotRodServerTest {
 
    @BeforeMethod
    public void setUp() {
+      Search.getSearchStatistics(cache).getQueryStatistics().clear();
+
       RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache();
       if (!remoteCache.isEmpty()) {
          return;
@@ -97,6 +99,5 @@ public class RemoteQueryAccessTest extends SingleHotRodServerTest {
       assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(expectedIndexedQueries);
       assertThat(queryStatistics.getHybridQueryCount()).isEqualTo(expectedHybridQueries);
       assertThat(queryStatistics.getNonIndexedQueryCount()).isZero();
-      queryStatistics.clear();
    }
 }
