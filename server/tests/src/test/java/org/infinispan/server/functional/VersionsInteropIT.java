@@ -2,13 +2,13 @@ package org.infinispan.server.functional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.testcontainers.InfinispanContainer;
 import org.junit.jupiter.api.Test;
 
-public class VersionsInteropTest {
+public class VersionsInteropIT {
 
    @Test
    public void testOlderVersion() {
@@ -17,7 +17,8 @@ public class VersionsInteropTest {
       try (InfinispanContainer container = new InfinispanContainer("quay.io/infinispan/server:13.0")) {
          container.start();
          try (RemoteCacheManager cacheManager = new RemoteCacheManager(container.getConnectionURI())) {
-            RemoteCache<Object, Object> testCache = cacheManager.administration().getOrCreateCache("test", DefaultTemplate.DIST_SYNC);
+            String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"></distributed-cache></cache-container></infinispan>", "test");
+            RemoteCache<Object, Object> testCache = cacheManager.administration().getOrCreateCache("test", new StringConfiguration(xml));
             testCache.put("key", "value");
             assertEquals("value", testCache.get("key"));
          }
