@@ -17,7 +17,7 @@ public final class FIPS {
          enabled = true;
       }
       ENABLED = enabled;
-      Log.SECURITY.infof("FIPS=%s", ENABLED ? "enabled" : "disabled");
+      Log.SECURITY.debugf("FIPS=%s", ENABLED ? "enabled" : "disabled");
    }
 
    public static boolean isFipsEnabled() {
