@@ -3,7 +3,7 @@ package org.infinispan.cli.impl;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-import org.aesh.readline.tty.terminal.TerminalConnection;
+import org.aesh.terminal.tty.TerminalConnection;
 
 /**
  * @since 14.0
