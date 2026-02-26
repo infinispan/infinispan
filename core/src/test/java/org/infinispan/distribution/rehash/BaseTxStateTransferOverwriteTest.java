@@ -348,7 +348,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          return invocation.callRealMethod();
       }).when(publisherHandler).register(any());
 
-      CyclicBarrier nonOwnerSendData = new CyclicBarrier(1);
+      CyclicBarrier nonOwnerSendData = new CyclicBarrier(2);
       publisherHandler = Mocks.replaceComponentWithSpy(nonOwnerCache, PublisherHandler.class);
       doAnswer(invocation -> {
          nonOwnerSendData.await(10, TimeUnit.SECONDS);

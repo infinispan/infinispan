@@ -140,9 +140,12 @@ public class StateConsumerImpl implements StateConsumer {
                                                                         SKIP_XSITE_BACKUP, SKIP_LOCKING, IRAC_STATE,
                                                                         SKIP_INDEX_CLEANUP);
    protected static final long INVALIDATE_FLAGS = STATE_TRANSFER_FLAGS & ~FlagBitSets.PUT_FOR_STATE_TRANSFER;
+   protected static final NodeVersion NODE_VERSION_16_2 = NodeVersion.from((byte) 16, (byte) 2, (byte) 0);
+   protected static final boolean FORCE_PUSH_STATE_TRANSFER = Boolean.getBoolean("infinispan.state.transfer.push");
    public static final String NO_KEY = "N/A";
 
    @Inject protected ComponentRef<Cache<Object, Object>> cache;
+
    @Inject protected Configuration configuration;
    @Inject protected RpcManager rpcManager;
    @Inject protected TransactionManager transactionManager;   // optional
@@ -942,7 +945,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (isFetchEnabled) {
          // As of 16.2 we use the new method of ST to use pull based ClusterPublisherManager. If at least one
          // node is before this version we have to use the old method
-         if (transport.getOldestMember().compareTo(NodeVersion.from((byte) 16, (byte) 2, (byte) 0)) < 0) {
+         if (FORCE_PUSH_STATE_TRANSFER || transport.getOldestMember().compareTo(NODE_VERSION_16_2) < 0) {
             stage = stage.thenRun(() -> {
                log.tracef("Using old state transfer method as a version before 16.2 was encountered");
                requestSegments(addedSegments, sources, excludedSources);
@@ -972,30 +975,31 @@ public class StateConsumerImpl implements StateConsumer {
    private void completeSegmentForTask(int segment, Map<Address, IntSet> sources) {
       transferMapsLock.lock();
       try {
-         // TODO: should we have tracing here somewhere?
          List<InboundTransferTask> innerTransfers = transfersBySegment.get(segment);
-         if (innerTransfers != null) {
-            if (innerTransfers.removeIf(inboundTransferTask -> {
-               IntSet segments = sources.get(inboundTransferTask.getSource());
-               if (segments != null && segments.contains(segment)) {
-                  if (inboundTransferTask.onStateReceived(segment, true)) {
-                     List<InboundTransferTask> list = transfersBySource.get(inboundTransferTask.getSource());
-                     if (list != null && list.remove(inboundTransferTask) && list.isEmpty()) {
-                        transfersBySource.remove(inboundTransferTask.getSource());
-                     }
-                  }
-                  return true;
+         if (innerTransfers == null)
+            return;
+         boolean changed = false;
+         Iterator<InboundTransferTask> it = innerTransfers.iterator();
+         while (it.hasNext()) {
+            InboundTransferTask inboundTransferTask = it.next();
+            IntSet segments = sources.get(inboundTransferTask.getSource());
+            if (segments == null || !segments.contains(segment))
+               continue;
+            if (inboundTransferTask.onStateReceived(segment, true)) {
+               List<InboundTransferTask> list = transfersBySource.get(inboundTransferTask.getSource());
+               if (list != null && list.remove(inboundTransferTask) && list.isEmpty()) {
+                  transfersBySource.remove(inboundTransferTask.getSource());
                }
-               return false;
-            })) {
-               if (innerTransfers.isEmpty()) {
-                  commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, segment);
-                  transfersBySegment.remove(segment);
-                  progressTracker.removeTasks(1);
-                  if (transfersBySource.isEmpty()) {
-                     progressTracker.finishedAllTasks();
-                  }
-               }
+            }
+            changed = true;
+            it.remove();
+         }
+         if (changed && innerTransfers.isEmpty()) {
+            commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, segment);
+            transfersBySegment.remove(segment);
+            progressTracker.removeTasks(1);
+            if (transfersBySource.isEmpty()) {
+               progressTracker.finishedAllTasks();
             }
          }
       } finally {
@@ -1041,9 +1045,6 @@ public class StateConsumerImpl implements StateConsumer {
       log.tracef("Starting state transfer iteration for segments %s", segmentsToProcess);
       Flowable<SegmentPublisherSupplier.Notification<CacheEntry<Object, Object>>> notificationFlowable =
             Flowable.fromPublisher(clusterPublisherManager.entryPublisherForTopology(topologyId, chunkSize, sources));
-
-      // TODO: to remove this later
-//      notificationFlowable = notificationFlowable.doOnNext(n -> log.info("Received notification: " + n));
 
       int concurrency = 20;
       if (transactionManager == null) {

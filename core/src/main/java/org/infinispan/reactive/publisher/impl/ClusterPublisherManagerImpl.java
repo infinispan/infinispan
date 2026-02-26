@@ -1025,6 +1025,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          if (publisher.targets == null) {
             this.segmentsToComplete = IntSets.concurrentCopyFrom(publisher.segments, maxSegment);
          } else {
+            // If targets was non null then the delivery guarantee has to be AT_MOST_ONCE among other things
+            // Check AbstractSegmentAwarePublisher constructor for more assertions
             this.segmentsToComplete = null;
          }
       }
@@ -1310,9 +1312,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       // Prevents the context from being applied for every segment - only the first
       final AtomicBoolean usedContext = new AtomicBoolean();
 
-      private AbstractSegmentAwarePublisher(ComposedType<K, I, R> composedType, IntSet segments, InvocationContext invocationContext,
-            long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
-            Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+      private AbstractSegmentAwarePublisher(int topologyId, ComposedType<K, I, R> composedType, IntSet segments,
+            InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
+            Function<? super Publisher<I>, ? extends Publisher<R>> transformer,  Map<Address, IntSet> targets) {
+         this.topologyId = topologyId;
          this.composedType = composedType;
          this.invocationContext = invocationContext;
          this.explicitFlags = explicitFlags;
