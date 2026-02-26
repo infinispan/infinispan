@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.aesh.readline.util.Parser;
 import org.aesh.terminal.Attributes;
 import org.aesh.terminal.BaseDevice;
 import org.aesh.terminal.Connection;
@@ -14,6 +13,7 @@ import org.aesh.terminal.tty.Capability;
 import org.aesh.terminal.tty.Signal;
 import org.aesh.terminal.tty.Size;
 import org.aesh.terminal.utils.Config;
+import org.aesh.terminal.utils.Parser;
 import org.infinispan.testing.Eventually;
 import org.junit.ComparisonFailure;
 

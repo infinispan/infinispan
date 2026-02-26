@@ -3,7 +3,7 @@ package org.infinispan.cli.impl;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.aesh.readline.terminal.formatting.Color;
+import org.aesh.terminal.formatting.Color;
 import org.aesh.terminal.utils.ANSI;
 import org.infinispan.cli.Context;
 

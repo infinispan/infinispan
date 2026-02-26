@@ -1,6 +1,6 @@
 package org.infinispan.cli.impl;
 
-import org.aesh.readline.ShellImpl;
+import org.aesh.console.ShellImpl;
 import org.aesh.terminal.Connection;
 
 /**

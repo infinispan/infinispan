@@ -79,7 +79,7 @@ import org.infinispan.cli.impl.ExitCodeResultHandler;
             User.class,
             Version.class
       }, resultHandler = ExitCodeResultHandler.class)
-public class Batch implements Command {
+public class Batch implements Command<CommandInvocation> {
 
    @Override
    public CommandResult execute(CommandInvocation invocation) {

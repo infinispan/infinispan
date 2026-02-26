@@ -29,6 +29,11 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandResult;
 import org.aesh.command.CommandRuntime;
 import org.aesh.command.GroupCommandDefinition;
+import org.aesh.command.activator.CommandActivator;
+import org.aesh.command.activator.OptionActivator;
+import org.aesh.command.completer.CompleterInvocation;
+import org.aesh.command.converter.ConverterInvocation;
+import org.aesh.command.impl.completer.CommandSuggestionProvider;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.impl.registry.AeshCommandRegistryBuilder;
 import org.aesh.command.invocation.CommandInvocation;
@@ -39,8 +44,10 @@ import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.registry.CommandRegistryException;
 import org.aesh.command.settings.SettingsBuilder;
 import org.aesh.command.shell.Shell;
+import org.aesh.command.validator.ValidatorInvocation;
+import org.aesh.console.ReadlineConsole;
 import org.aesh.io.Resource;
-import org.aesh.readline.ReadlineConsole;
+import org.aesh.readline.CompositeSuggestionProvider;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.activators.ContextAwareCommandActivatorProvider;
 import org.infinispan.cli.commands.kubernetes.Kube;
@@ -70,6 +77,7 @@ import org.infinispan.cli.commands.rest.Task;
 import org.infinispan.cli.commands.rest.Topology;
 import org.infinispan.cli.commands.troubleshoot.Troubleshoot;
 import org.infinispan.cli.completers.ContextAwareCompleterInvocationProvider;
+import org.infinispan.cli.completers.HistorySuggestionProvider;
 import org.infinispan.cli.completers.OnErrorCompleter;
 import org.infinispan.cli.connection.RegexHostnameVerifier;
 import org.infinispan.cli.impl.AeshDelegatingShell;
@@ -128,6 +136,7 @@ import org.wildfly.security.keystore.KeyStoreUtil;
             Get.class,
             Index.class,
             Install.class,
+            Bind.class,
             Logging.class,
             Ls.class,
             Migrate.class,
@@ -291,9 +300,9 @@ public class CLI extends CliCommand {
    }
 
    private CommandResult batch(List<String> inputFiles, Shell shell) {
-      CommandRegistry commandRegistry = initializeCommands(Batch.class);
+      CommandRegistry<CommandInvocation> commandRegistry = initializeCommands(Batch.class);
 
-      AeshCommandRuntimeBuilder runtimeBuilder = AeshCommandRuntimeBuilder.builder();
+      AeshCommandRuntimeBuilder<CommandInvocation> runtimeBuilder = AeshCommandRuntimeBuilder.builder();
       runtimeBuilder
             .commandActivatorProvider(new ContextAwareCommandActivatorProvider(context))
             .commandInvocationProvider(new ContextAwareCommandInvocationProvider(context))
@@ -319,7 +328,7 @@ public class CLI extends CliCommand {
 
    private CommandResult interactive(Shell shell) {
       // We now start an interactive CLI
-      CommandRegistry commandRegistry = initializeCommands();
+      CommandRegistry<CommandInvocation> commandRegistry = initializeCommands();
       context.setRegistry(commandRegistry);
       CliAliasManager aliasManager;
       try {
@@ -327,7 +336,7 @@ public class CLI extends CliCommand {
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
-      SettingsBuilder settings = SettingsBuilder.builder();
+      SettingsBuilder<CommandInvocation, ConverterInvocation, CompleterInvocation, ValidatorInvocation, OptionActivator, CommandActivator> settings = SettingsBuilder.builder();
       settings
             .enableAlias(true)
             .aliasManager(aliasManager)
@@ -342,12 +351,21 @@ public class CLI extends CliCommand {
             .commandRegistry(commandRegistry)
             .aeshContext(context)
             .quitHandler(new ContextAwareQuitHandler(context));
+      if (Files.exists(context.getConfigPath().resolve("inputrc"))) {
+         settings.inputrc(context.getConfigPath().resolve("inputrc").toFile());
+      }
 
       if (shell instanceof AeshDelegatingShell) {
          settings.connection(((AeshDelegatingShell) shell).getConnection());
       }
 
       ReadlineConsole console = new ReadlineConsole(settings.build());
+      if (Boolean.parseBoolean(context.getProperty(Context.Property.AUTOSUGGEST, "true"))) {
+         console.setSuggestionProvider(new CompositeSuggestionProvider(
+               new HistorySuggestionProvider(console::getHistory),
+               new CommandSuggestionProvider<>(console.getCommandRegistry())
+         ));
+      }
       context.setConsole(console);
       try {
          console.start();
@@ -357,10 +375,10 @@ public class CLI extends CliCommand {
       }
    }
 
-   private CommandRegistry initializeCommands(Class<? extends Command>... commands) {
+   private CommandRegistry<CommandInvocation> initializeCommands(Class<? extends Command<CommandInvocation>>... commands) {
       try {
          AeshCommandRegistryBuilder<CommandInvocation> registryBuilder = AeshCommandRegistryBuilder.builder();
-         for (Class<? extends Command> command : commands) {
+         for (Class<? extends Command<CommandInvocation>> command : commands) {
             registryBuilder.command(command);
          }
          for (Command command : ServiceFinder.load(Command.class, this.getClass().getClassLoader())) {
@@ -372,8 +390,8 @@ public class CLI extends CliCommand {
       }
    }
 
-   private static AeshCommandRuntimeBuilder initialCommandRuntimeBuilder(Shell shell, Properties properties, boolean kube) throws CommandRegistryException {
-      AeshCommandRegistryBuilder registryBuilder = AeshCommandRegistryBuilder.builder();
+   private static AeshCommandRuntimeBuilder<CommandInvocation> initialCommandRuntimeBuilder(Shell shell, Properties properties, boolean kube) throws CommandRegistryException {
+      AeshCommandRegistryBuilder<CommandInvocation> registryBuilder = AeshCommandRegistryBuilder.builder();
       Context context;
       if (kube) {
          context = new KubernetesContext(properties);
@@ -382,7 +400,7 @@ public class CLI extends CliCommand {
          context = new ContextImpl(properties);
          registryBuilder.command(CLI.class);
       }
-      AeshCommandRuntimeBuilder runtimeBuilder = AeshCommandRuntimeBuilder.builder();
+      AeshCommandRuntimeBuilder<CommandInvocation> runtimeBuilder = AeshCommandRuntimeBuilder.builder();
       runtimeBuilder
             .commandActivatorProvider(new ContextAwareCommandActivatorProvider(context))
             .commandInvocationProvider(new ContextAwareCommandInvocationProvider(context))
