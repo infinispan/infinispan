@@ -117,6 +117,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
          builderUsed.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       }
       builderUsed.expiration().disableReaper();
+      builderUsed.clustering().stateTransfer().timeout("30s");
       createClusteredCaches(3, CACHE_NAME, sci, builderUsed);
       injectTimeServices();
    }

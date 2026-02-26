@@ -168,6 +168,13 @@ public class LocalizedCacheTopology extends CacheTopology {
       return distributionInfos[segmentId].isWriteOwner();
    }
 
+   /**
+    * @return {@code true} iff all segments are owned by this node, meaning all reads can be locally done
+    */
+   public boolean isAllLocal() {
+      return allLocal;
+   }
+
    public boolean isSegmentWriteOwner(int segment) {
       return allLocal || distributionInfos[segment].isWriteOwner();
    }

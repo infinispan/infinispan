@@ -5,9 +5,11 @@ import static org.infinispan.commons.logging.Log.CONFIG;
 import org.infinispan.anchored.configuration.AnchoredKeysConfiguration;
 import org.infinispan.anchored.impl.AnchorManager;
 import org.infinispan.anchored.impl.AnchoredCacheNotifier;
+import org.infinispan.anchored.impl.AnchoredClusterPublisherManager;
 import org.infinispan.anchored.impl.AnchoredDistributionInterceptor;
 import org.infinispan.anchored.impl.AnchoredEntryFactory;
 import org.infinispan.anchored.impl.AnchoredFetchInterceptor;
+import org.infinispan.anchored.impl.AnchoredKeysSerializationContextInitializerImpl;
 import org.infinispan.anchored.impl.AnchoredStateProvider;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -22,8 +24,10 @@ import org.infinispan.factories.impl.ModuleMetadataBuilder;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.statetransfer.StateProvider;
 
 /**
@@ -46,6 +50,9 @@ public final class AnchoredKeysModule implements ModuleLifecycle, DynamicModuleM
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
       this.globalConfiguration = globalConfiguration;
+
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, new AnchoredKeysSerializationContextInitializerImpl());
    }
 
    @Override
@@ -85,6 +92,7 @@ public final class AnchoredKeysModule implements ModuleLifecycle, DynamicModuleM
       bcr.replaceComponent(StateProvider.class.getName(), new AnchoredStateProvider(), true);
       bcr.replaceComponent(EntryFactory.class.getName(), new AnchoredEntryFactory(), true);
       bcr.replaceComponent(CacheNotifier.class.getName(), new AnchoredCacheNotifier<>(), true);
+      bcr.replaceComponent(ClusterPublisherManager.class.getName(), new AnchoredClusterPublisherManager<>(), true);
 
       bcr.rewire();
    }

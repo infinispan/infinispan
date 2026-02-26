@@ -247,12 +247,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder builder, TransportFlags flags) {
+      return addClusterEnabledCacheManager(builder, flags, true);
+   }
+
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder builder, TransportFlags flags, boolean shouldStart) {
       flags.withZeroJoinTimeout(cacheManagers.isEmpty());
       EmbeddedCacheManager cm = createClusteredCacheManager(false, defaultGlobalConfigurationBuilder(),
-                                                            builder, flags);
+            builder, flags);
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
-      cm.start();
+      if (shouldStart) cm.start();
       return cm;
    }
 

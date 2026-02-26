@@ -14,6 +14,9 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -61,7 +64,8 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
       partition1.remove(c);
 
       ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(c);
-      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, StateResponseCommand.class);
+      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, StateResponseCommand.class,
+            InitialPublisherCommand.class, NextPublisherCommand.class, CancelPublisherCommand.class);
 
       Future<Boolean> future = fork(() -> c.replace(key, value, "myNewValue"));
 
