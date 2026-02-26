@@ -12,7 +12,6 @@ import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -23,18 +22,17 @@ import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.distribution.BlockingInterceptor;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
@@ -42,7 +40,6 @@ import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;
-import org.infinispan.util.concurrent.BlockingManager;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
@@ -222,22 +219,14 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       Answer<?> forwardedAnswer = AdditionalAnswers.delegatesTo(ctm);
       ClusterTopologyManager mock = mock(ClusterTopologyManager.class, withSettings().defaultAnswer(forwardedAnswer));
-      BlockingManager blockingManager = GlobalComponentRegistry.componentOf(manager, BlockingManager.class);
       doAnswer(invocation -> {
          Object[] arguments = invocation.getArguments();
          Address source = (Address) arguments[1];
          int topologyId = (Integer) arguments[2];
          if (topologyId == rebalanceTopologyId) {
             checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
-            return checkPoint.awaitStrictAsync("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS, blockingManager.asExecutor("checkpoint"))
-                  .thenCompose(unused -> {
-                     try {
-                        //noinspection unchecked
-                        return (CompletionStage<Void>) forwardedAnswer.answer(invocation);
-                     } catch (Throwable e) {
-                        throw CompletableFutures.asCompletionException(e);
-                     }
-                  });
+            return checkPoint.future("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS, testExecutor())
+                  .thenCompose(__ -> Mocks.callAnotherAnswer(forwardedAnswer, invocation));
          }
          return forwardedAnswer.answer(invocation);
       }).when(mock).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull());
