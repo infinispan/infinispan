@@ -7,6 +7,7 @@ include::{topics}/proc_cli_configuring_startup_properties.adoc[leveloffset=+1]
 include::{topics}/proc_cli_creating_command_aliases.adoc[leveloffset=+1]
 include::{topics}/proc_cli_configuring_tls_properties.adoc[leveloffset=+1]
 include::{topics}/ref_cli_storage_directory.adoc[leveloffset=+1]
+include::{topics}/ref_cli_key_bindings.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

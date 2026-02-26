@@ -10,7 +10,7 @@ import org.infinispan.cli.Context;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class ContextAwareCommandActivatorProvider implements CommandActivatorProvider {
+public class ContextAwareCommandActivatorProvider implements CommandActivatorProvider<CommandActivator> {
 
    private final Context context;
 

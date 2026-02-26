@@ -10,8 +10,8 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.shell.Shell;
-import org.aesh.readline.AeshContext;
-import org.aesh.readline.ReadlineConsole;
+import org.aesh.console.AeshContext;
+import org.aesh.console.ReadlineConsole;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.SSLContextSettings;
 import org.infinispan.cli.resources.Resource;
@@ -32,7 +32,11 @@ public interface Context extends AeshContext {
 
    String getProperty(String key);
 
-   String getProperty(Property property);
+   default String getProperty(Property property) {
+      return getProperty(property, null);
+   }
+
+   String getProperty(Property property, String defaultValue);
 
    Properties getProperties();
 
@@ -94,7 +98,8 @@ public interface Context extends AeshContext {
       KEYSTORE_PASSWORD,
       PROVIDER,
       AUTOCONNECT_URL,
-      AUTOEXEC;
+      AUTOEXEC,
+      AUTOSUGGEST;
 
       public static final List<String> NAMES;
 

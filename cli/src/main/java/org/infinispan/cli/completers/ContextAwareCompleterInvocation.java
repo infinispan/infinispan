@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.aesh.command.Command;
 import org.aesh.command.completer.CompleterInvocation;
-import org.aesh.readline.AeshContext;
-import org.aesh.readline.terminal.formatting.TerminalString;
+import org.aesh.console.AeshContext;
+import org.aesh.terminal.formatting.TerminalString;
 import org.infinispan.cli.Context;
 
 /**

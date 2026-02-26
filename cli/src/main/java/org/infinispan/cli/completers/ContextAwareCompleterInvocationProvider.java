@@ -10,7 +10,7 @@ import org.infinispan.cli.Context;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class ContextAwareCompleterInvocationProvider implements CompleterInvocationProvider {
+public class ContextAwareCompleterInvocationProvider implements CompleterInvocationProvider<CompleterInvocation> {
    private final Context context;
 
    public ContextAwareCompleterInvocationProvider(Context context) {

@@ -5,10 +5,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 import org.aesh.readline.Prompt;
-import org.aesh.readline.terminal.Key;
-import org.aesh.readline.tty.terminal.TerminalConnection;
-import org.aesh.readline.util.Parser;
+import org.aesh.terminal.Key;
+import org.aesh.terminal.tty.TerminalConnection;
 import org.aesh.terminal.utils.ANSI;
+import org.aesh.terminal.utils.Parser;
 
 public class KubeShell extends AeshDelegatingShell {
 

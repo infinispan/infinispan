@@ -1,0 +1,279 @@
+[id='cli_key_bindings-{context}']
+= Key Bindings
+The {brandname} CLI provides Emacs and Vi key bindings for line editing in interactive mode.
+You can view all available key bindings from your CLI session with the [command]`bind` command.
+
+[source,options="nowrap",subs=attributes+]
+----
+bind
+----
+
+To view Vi key bindings instead of the default Emacs bindings:
+
+[source,options="nowrap",subs=attributes+]
+----
+bind --mode vi
+----
+
+== Default Emacs Key Bindings
+
+The following table lists the default Emacs key bindings:
+
+.Movement
+[cols="1,2",options="header"]
+|===
+|Key |Action
+
+|Ctrl-A
+|Move to the beginning of the line
+
+|Ctrl-E
+|Move to the end of the line
+
+|Ctrl-F
+|Move forward one character
+
+|Ctrl-B
+|Move backward one character
+
+|Alt-f
+|Move forward one word
+
+|Alt-b
+|Move backward one word
+|===
+
+.Editing
+[cols="1,2",options="header"]
+|===
+|Key |Action
+
+|Ctrl-D
+|Delete the character under the cursor
+
+|Backspace
+|Delete the character before the cursor
+
+|Ctrl-K
+|Delete from the cursor to the end of the line
+
+|Ctrl-U
+|Delete from the cursor to the beginning of the line
+
+|Ctrl-W
+|Delete the word before the cursor
+
+|Alt-d
+|Delete the word after the cursor
+
+|Ctrl-T
+|Transpose the character under the cursor with the one before it
+
+|Alt-u
+|Uppercase the current word
+
+|Alt-l
+|Lowercase the current word
+
+|Alt-c
+|Capitalize the current word
+
+|Ctrl-Y
+|Paste the last deleted text
+|===
+
+.History
+[cols="1,2",options="header"]
+|===
+|Key |Action
+
+|Ctrl-P / Up
+|Previous command in history
+
+|Ctrl-N / Down
+|Next command in history
+
+|Ctrl-R
+|Reverse search through history
+
+|Alt-<
+|Move to the beginning of history
+
+|Alt->
+|Move to the end of history
+|===
+
+.Completion
+[cols="1,2",options="header"]
+|===
+|Key |Action
+
+|Tab
+|Autocomplete the current word
+
+|Alt-?
+|List possible completions
+|===
+
+.Other
+[cols="1,2",options="header"]
+|===
+|Key |Action
+
+|Ctrl-L
+|Clear the screen
+
+|Enter
+|Accept the current line
+
+|Ctrl-C
+|Interrupt / cancel the current input
+|===
+
+== Default Vi Key Bindings
+
+Vi mode operates in two modes: _insert mode_ for typing text and _command mode_ for navigating and manipulating text.
+Press `Esc` to switch from insert mode to command mode.
+Press `i`, `a`, `A`, `I`, or other insert commands to return to insert mode.
+
+.Mode Switching
+[cols="1,2",options="header"]
+|===
+|Key |Action
+
+|Esc
+|Switch to command mode
+
+|i
+|Insert before cursor
+
+|a
+|Insert after cursor
+
+|I
+|Insert at beginning of line
+
+|A
+|Insert at end of line
+|===
+
+.Movement (Command Mode)
+[cols="1,2",options="header"]
+|===
+|Key |Action
+
+|h
+|Move backward one character
+
+|l
+|Move forward one character
+
+|w
+|Move forward one word
+
+|b
+|Move backward one word
+
+|0
+|Move to the beginning of the line
+
+|$
+|Move to the end of the line
+|===
+
+.Editing (Command Mode)
+[cols="1,2",options="header"]
+|===
+|Key |Action
+
+|x
+|Delete the character under the cursor
+
+|X
+|Delete the character before the cursor
+
+|dw
+|Delete from cursor to end of word
+
+|dd
+|Delete the entire line
+
+|D
+|Delete from cursor to end of line
+
+|cw
+|Change from cursor to end of word
+
+|cc
+|Change the entire line
+
+|C
+|Change from cursor to end of line
+
+|r
+|Replace the character under the cursor
+
+|p
+|Paste after cursor
+
+|P
+|Paste before cursor
+
+|u
+|Undo the last edit
+
+|~
+|Toggle case of the character under the cursor
+|===
+
+.History (Command Mode)
+[cols="1,2",options="header"]
+|===
+|Key |Action
+
+|k / Up
+|Previous command in history
+
+|j / Down
+|Next command in history
+
+|/
+|Search backward through history
+
+|n
+|Repeat the last search
+
+|N
+|Repeat the last search in reverse direction
+|===
+
+.Completion
+[cols="1,2",options="header"]
+|===
+|Key |Action
+
+|Tab
+|Autocomplete the current word (insert and command mode)
+|===
+
+== Customizing Key Bindings
+
+The CLI uses _GNU Readline_-style configuration.
+You can customize key bindings by placing an `inputrc` file in the {brandname} CLI storage directory. If such a file
+is not present, the CLI will attempt to load the default `${HOME}/.inputrc` file instead.
+The CLI reads this file on startup and applies the configured bindings.
+The file uses the GNU Readline `inputrc` format.
+
+For example, to bind `Ctrl-X Ctrl-R` to reverse search:
+
+[source,options="nowrap"]
+----
+"\C-x\C-r": reverse-search-history
+----
+
+To set Vi as the default editing mode:
+
+[source,options="nowrap"]
+----
+set editing-mode vi
+----
