@@ -175,6 +175,7 @@ import org.infinispan.server.resp.commands.sortedset.ZSCORE;
 import org.infinispan.server.resp.commands.sortedset.ZUNION;
 import org.infinispan.server.resp.commands.sortedset.ZUNIONSTORE;
 import org.infinispan.server.resp.commands.string.APPEND;
+import org.infinispan.server.resp.commands.string.COPY;
 import org.infinispan.server.resp.commands.string.DECR;
 import org.infinispan.server.resp.commands.string.DECRBY;
 import org.infinispan.server.resp.commands.string.DEL;
@@ -218,7 +219,7 @@ public final class Commands {
       // in this array as they are looked up sequentially for matches
       ALL_COMMANDS[0] = new RespCommand[]{new APPEND(), new AUTH()};
       ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP(), new BLMPOP(), new BITFIELD(), new BITFIELD_RO(), new BITCOUNT(), new BITOP(), new BITPOS()};
-      ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT()};
+      ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new COPY(), new CLUSTER(), new CLIENT()};
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DISCARD()};
       ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC(), new EVAL(), new EVAL_RO(), new EVALSHA(), new EVALSHA_RO()};
