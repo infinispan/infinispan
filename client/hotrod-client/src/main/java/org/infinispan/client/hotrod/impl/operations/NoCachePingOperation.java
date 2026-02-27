@@ -10,7 +10,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import io.netty.buffer.ByteBuf;
 
 public class NoCachePingOperation extends AbstractNoCacheHotRodOperation<PingResponse> {
-   private static final Log log = LogFactory.getLog(CachePingOperation.class);
+   private static final Log log = LogFactory.getLog(NoCachePingOperation.class);
 
    // Needs to be instance field so acceptResponse can be invoked multiple times
    private final PingResponse.Decoder pingDecoder = new PingResponse.Decoder();
