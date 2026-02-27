@@ -113,7 +113,7 @@ jobs:
           echo "$CHECK_RUN" > check-run-id.txt
 
       - name: Upload Check Run ID
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: check-run-id
           path: check-run-id.txt
@@ -186,7 +186,7 @@ jobs:
 
       - name: Upload surefire test report
         if: (success() || failure())
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: surefire-test-report
           path: |
@@ -201,7 +201,7 @@ jobs:
 
       - name: Upload infinispan with coverage execution files
         if: (success() || failure())
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jacoco-files-main
           path: |
@@ -211,7 +211,7 @@ jobs:
 
       - name: Upload jstack files
         if: (success() || failure())
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jstack-report
           path: |
@@ -239,7 +239,7 @@ jobs:
 
       - name: Upload flaky test report
         if: (success() || failure()) && steps.check_flaky_report.outputs.files_exists == 'true'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: flaky-test-report
           path: |
@@ -251,7 +251,7 @@ jobs:
 
       - name: Upload log files
         if: (success() || failure())
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-files
           compression-level: 9
@@ -329,7 +329,7 @@ jobs:
           echo "$CHECK_RUN" > check-run-id-${{ matrix.targets }}.txt
 
       - name: Upload Check Run ID
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: check-run-id-${{ matrix.targets }}
           path: check-run-id-${{ matrix.targets }}.txt
@@ -403,7 +403,7 @@ jobs:
 
       - name: Upload surefire test report
         if: (success() || failure())
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: surefire-test-report-${{ matrix.targets }}
           path: |
@@ -418,7 +418,7 @@ jobs:
 
       - name: Upload jacoco exec files for db
         if: (success() || failure())
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jacoco-files-${{ matrix.targets }}
           path: |
@@ -539,7 +539,7 @@ jobs:
 
       - name: Upload jacoco report
         if: (success() || failure())
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jacocoReport
           path: |
@@ -574,7 +574,7 @@ jobs:
 
       - name: Upload jacoco report for rolling upgrade
         if: (success() || failure())
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jacocoReport-rolling-upgrade
           path: |

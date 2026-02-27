@@ -114,7 +114,7 @@ jobs:
       # This allows the main workflow to distinguish between matrix runs
       - name: Upload jacoco exec files
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jacoco-files-rolling-upgrades-${{ inputs.name }}
           path: |
@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload surefire test report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: surefire-test-report-rolling-upgrades-${{ inputs.name }}
           path: |
