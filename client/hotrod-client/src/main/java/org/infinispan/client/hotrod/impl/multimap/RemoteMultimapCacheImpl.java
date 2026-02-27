@@ -37,7 +37,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
    private final RemoteCacheManager remoteCacheManager;
    private MultimapOperationsFactory operationsFactory;
    private OperationDispatcher dispatcher;
-   private Marshaller marshaller;
+   private Marshaller defaultMarshaller;
    private final BufferSizePredictor keySizePredictor = new AdaptiveBufferSizePredictor();
    private final BufferSizePredictor valueSizePredictor = new AdaptiveBufferSizePredictor();
    private final boolean supportsDuplicates;
@@ -46,7 +46,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       operationsFactory = new DefaultMultimapOperationsFactory(cache, remoteCacheManager.getMarshaller(),
             new AdaptiveBufferSizePredictor(), new AdaptiveBufferSizePredictor());
       dispatcher = cache.getDispatcher();
-      this.marshaller = remoteCacheManager.getMarshaller();
+      this.defaultMarshaller = remoteCacheManager.getMarshaller();
    }
 
    public RemoteMultimapCacheImpl(RemoteCacheManager rcm, RemoteCache<K, Collection<V>> cache) {
@@ -132,7 +132,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          log.tracef("About to call contains (V): (%s)", value);
       }
       assertRemoteCacheManagerIsStarted();
-      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
+      byte[] marshallValue = MarshallerUtil.obj2bytes(defaultMarshaller, value, valueSizePredictor);
       HotRodOperation<Boolean> containsValueOperation = operationsFactory.newContainsValueOperation(marshallValue, supportsDuplicates);
       return dispatcher.execute(containsValueOperation).toCompletableFuture();
    }

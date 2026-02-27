@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.impl.BaseQueryResponse;
@@ -81,13 +82,13 @@ public final class QueryOperation<T> extends AbstractCacheOperation<BaseQueryRes
       if (namedParameters == null || namedParameters.isEmpty()) {
          return null;
       }
-      final SerializationContext serCtx = remoteQuery.getSerializationContext();
+      boolean isProtostream = remoteQuery.getCache().getMarshaller() instanceof ProtoStreamMarshaller;
+      SerializationContext serCtx = remoteQuery.getSerializationContext();
       List<QueryRequest.NamedParameter> params = new ArrayList<>(namedParameters.size());
       for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
          Object value = e.getValue();
-         // only if we're using protobuf, some simple types need conversion
-         if (serCtx != null) {
-            // todo [anistor] not the most elegant way of doing conversion
+         // if we're using protobuf, some simple types need conversion
+         if (isProtostream) {
             if (value instanceof Enum) {
                EnumMarshaller encoder = (EnumMarshaller) serCtx.getMarshaller(value.getClass());
                value = encoder.encode((Enum) value);
@@ -108,6 +109,6 @@ public final class QueryOperation<T> extends AbstractCacheOperation<BaseQueryRes
    public BaseQueryResponse<T> createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       byte[] responseBytes = ByteBufUtil.readArray(buf);
       return (BaseQueryResponse<T>) querySerializer.readQueryResponse(
-            internalRemoteCache.getRemoteCacheManager().getMarshaller(), remoteQuery, responseBytes);
+            internalRemoteCache.getMarshaller(), remoteQuery, responseBytes);
    }
 }

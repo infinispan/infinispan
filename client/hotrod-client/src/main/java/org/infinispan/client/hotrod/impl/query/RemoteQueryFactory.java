@@ -6,7 +6,6 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.query.ContinuousQuery;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
@@ -27,10 +26,10 @@ public final class RemoteQueryFactory implements QueryFactory {
 
    public RemoteQueryFactory(InternalRemoteCache<?, ?> cache) {
       this.cache = cache;
-      Marshaller marshaller = cache.getRemoteCacheContainer().getMarshaller();
-      // we may or may not use Protobuf
-      if (marshaller instanceof ProtoStreamMarshaller) {
-         serializationContext = ((ProtoStreamMarshaller) marshaller).getSerializationContext();
+      ProtoStreamMarshaller protoStreamMarshaller = (ProtoStreamMarshaller) cache.getRemoteCacheContainer().getMarshallerRegistry().getMarshaller(ProtoStreamMarshaller.class);
+      // protostream might be absent
+      if (protoStreamMarshaller != null) {
+         serializationContext = protoStreamMarshaller.getSerializationContext();
          try {
             if (!serializationContext.canMarshall(QueryRequest.class)) {
                MarshallerRegistration.init(serializationContext);

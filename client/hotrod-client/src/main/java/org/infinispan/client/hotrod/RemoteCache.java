@@ -7,10 +7,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration;
 import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
@@ -567,4 +569,31 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * @return {@code true} if the cache can participate in a transaction, {@code false} otherwise.
     */
    boolean isTransactional();
+
+   /**
+    * Gets configured marshaller for this cache on client side
+    *
+    * @return {@link Marshaller}
+    */
+   default Marshaller getMarshaller() {
+      Marshaller marshaller = null;
+      RemoteCacheContainer container = this.getRemoteCacheContainer();
+      RemoteCacheConfiguration remoteCacheConfiguration = container.getConfiguration().remoteCaches().get(this.getName());
+      if (remoteCacheConfiguration != null) {
+         // Use the marshaller configured for the cache on client side
+         marshaller = remoteCacheConfiguration.marshaller();
+         if (marshaller == null) {
+            // Use the marshaller class configured for the cache on client side
+            Class<? extends Marshaller> marshallerClass = remoteCacheConfiguration.marshallerClass();
+            if (marshallerClass != null) {
+               marshaller = container.getMarshallerRegistry().getMarshaller(marshallerClass);
+            }
+         }
+      }
+      if (marshaller == null) {
+         // If the marshaller is still null, use the default marshaller
+         marshaller = container.getMarshaller();
+      }
+      return marshaller;
+   }
 }

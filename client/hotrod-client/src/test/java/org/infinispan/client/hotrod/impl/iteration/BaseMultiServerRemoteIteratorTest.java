@@ -168,7 +168,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
          }
       }
 
-      Marshaller marshaller = clients.get(0).getMarshaller();
+      Marshaller marshaller = cache.getMarshaller();
       KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache(0), KeyPartitioner.class);
       DataFormat df = cache.getDataFormat();
 
@@ -261,7 +261,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
    private Set<Integer> getKeysFromSegments(Set<Integer> segments) {
       RemoteCacheManager remoteCacheManager = clients.get(0);
       RemoteCache<Object, ?> cache = remoteCacheManager.getCache();
-      Marshaller marshaller = clients.get(0).getMarshaller();
+      Marshaller marshaller = cache.getMarshaller();
       Function<byte[], Integer> segmentExtract = extractKeySegment(cache);
       Set<Object> keys = cache.keySet();
       return keys.stream()

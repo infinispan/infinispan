@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.Marshaller;
 
@@ -71,4 +72,8 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
    boolean isTransactional(String cacheName);
 
    RemoteCacheManagerAdmin administration();
+
+   default MarshallerRegistry getMarshallerRegistry() {
+      throw new UnsupportedOperationException();
+   }
 }
