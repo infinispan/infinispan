@@ -461,11 +461,14 @@ class Index {
                ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 4 + 8);
                for (Map.Entry<Integer, Compactor.Stats> entry : map.entrySet()) {
                   int file = entry.getKey();
-                  int total = entry.getValue().getTotal();
-                  if (total == -1) {
-                     total = (int) dataFileProvider.getFileSize(file);
+                  // Always read the actual file size from disk to avoid race conditions where
+                  // a file is deleted after its stats were recorded (e.g., by compaction or
+                  // deferred deletion in FileProvider.stop())
+                  int total = (int) dataFileProvider.getFileSize(file);
+                  if (total <= 0) {
+                     continue;
                   }
-                  int free = entry.getValue().getFree();
+                  int free = Math.min(entry.getValue().getFree(), total);
                   buffer.putInt(file);
                   buffer.putInt(total);
                   buffer.putInt(free);
