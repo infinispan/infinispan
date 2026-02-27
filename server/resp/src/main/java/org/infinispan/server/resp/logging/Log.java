@@ -77,4 +77,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Multi-Exec operations without transactions have a relaxed isolation level. Consider enabling transaction.", id = 13011)
    void enableTransactionForMultiExec();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to load script engine. Script features disabled for RESP")
+   void failedToLoadScriptEngine(@Cause Throwable cause);
 }
