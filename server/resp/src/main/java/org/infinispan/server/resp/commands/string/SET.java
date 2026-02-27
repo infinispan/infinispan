@@ -40,7 +40,7 @@ public class SET extends RespCommand implements Resp3Command {
                .stageToReturn(SetOperation.performOperation(handler.cache(), arguments, ts, getName()), ctx, SetResponse.SERIALIZER);
       }
       return handler.stageToReturn(
-            handler.ignorePreviousValuesCache().putAsync(arguments.get(0), arguments.get(1)),
+            handler.cache().putAsync(arguments.get(0), arguments.get(1)),
             ctx, ResponseWriter.OK);
    }
 }
