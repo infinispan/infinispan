@@ -671,10 +671,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                      log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone", key, entry.file, entry.offset);
                      return null;
                   }
-                  MarshallableEntry<K, V> marshallableEntry = readValueFromFileOffset(key, entry);
-                  if (marshallableEntry != null) {
-                     return marshallableEntry;
-                  }
+                  // TODO: I don't know if this is okay or not... it should be as a tombstone should be null
+                  return readValueFromFileOffset(key, entry);
                } else {
                   EntryRecord record = index.getRecord(key, segmentUsed, marshaller.objectToBuffer(key));
                   if (record == null) {
