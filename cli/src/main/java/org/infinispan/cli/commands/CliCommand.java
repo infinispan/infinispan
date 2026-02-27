@@ -3,7 +3,6 @@ package org.infinispan.cli.commands;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.terminal.utils.ANSI;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.Util;
@@ -24,18 +23,18 @@ public abstract class CliCommand implements Command<ContextAwareCommandInvocatio
          return exec(invocation);
       } catch (CommandException e) {
          Throwable cause = Util.getRootCause(e);
-         invocation.getShell().writeln(ANSI.RED_TEXT + e.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
+         invocation.errorln(e.getLocalizedMessage());
          if (cause != e) {
-            invocation.getShell().writeln(ANSI.RED_TEXT + cause.getClass().getSimpleName() + ": " + cause.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
+            invocation.errorln(cause.getClass().getSimpleName() + ": " + cause.getLocalizedMessage());
          }
          return CommandResult.FAILURE;
       } catch (CacheConfigurationException e) {
-         System.err.println(ANSI.RED_TEXT + e.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
+         invocation.errorln(e.getLocalizedMessage());
          return CommandResult.FAILURE;
       } catch (Throwable e) {
          // These are unhandled
          Throwable cause = Util.getRootCause(e);
-         System.err.println(ANSI.RED_TEXT + cause.getClass().getSimpleName() +": " + cause.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
+         invocation.errorln(cause.getClass().getSimpleName() + ": " + cause.getLocalizedMessage());
          return CommandResult.FAILURE;
       }
    }

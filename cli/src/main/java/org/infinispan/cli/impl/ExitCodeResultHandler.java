@@ -9,7 +9,19 @@ import org.aesh.command.result.ResultHandler;
  * @since 12.1
  **/
 public class ExitCodeResultHandler implements ResultHandler {
-   static int exitCode;
+   private static int exitCode;
+
+   public static int exitCode() {
+      return exitCode;
+   }
+
+   public static void reset() {
+      exitCode = 0;
+   }
+
+   public static void fail() {
+      exitCode = 1;
+   }
 
    @Override
    public void onSuccess() {
