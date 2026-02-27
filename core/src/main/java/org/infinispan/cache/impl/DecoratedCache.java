@@ -616,8 +616,85 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
+            .build();
+      return compute(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, maxIdleTimeUnit)
+            .build();
+      return compute(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
+            .build();
+      return computeIfPresent(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, maxIdleTimeUnit)
+            .build();
+      return computeIfPresent(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
+            .build();
+      return computeIfAbsent(key, mappingFunction, metadata);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, maxIdleTimeUnit)
+            .build();
+      return computeIfAbsent(key, mappingFunction, metadata);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
+            .build();
+      return merge(key, value, remappingFunction, metadata);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, maxIdleTimeUnit)
+            .build();
+      return merge(key, value, remappingFunction, metadata);
+   }
+
+   @Override
    public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return computeAsync(key, remappingFunction, cacheImplementation.defaultMetadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cacheImplementation.computeAsyncInternal(key, remappingFunction, false, metadata, flags, contextBuilder);
    }
 
    @Override
@@ -626,13 +703,100 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cacheImplementation.computeAsyncInternal(key, remappingFunction, true, metadata, flags, contextBuilder);
+   }
+
+   @Override
    public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
       return computeIfAbsentAsync(key, mappingFunction, cacheImplementation.defaultMetadata);
    }
 
    @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return cacheImplementation.computeIfAbsentAsyncInternal(key, mappingFunction, metadata, flags, contextBuilder);
+   }
+
+   @Override
    public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
       return mergeAsync(key, value, remappingFunction, cacheImplementation.defaultMetadata);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cacheImplementation.mergeInternalAsync(key, value, remappingFunction, metadata, flags, contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
+            .build();
+      return computeAsync(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdle, maxIdleUnit)
+            .build();
+      return computeAsync(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
+            .build();
+      return computeIfPresentAsync(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdle, maxIdleUnit)
+            .build();
+      return computeIfPresentAsync(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
+            .build();
+      return computeIfAbsentAsync(key, mappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdle, maxIdleUnit)
+            .build();
+      return computeIfAbsentAsync(key, mappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
+            .build();
+      return mergeAsync(key, value, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdle, maxIdleUnit)
+            .build();
+      return mergeAsync(key, value, remappingFunction, metadata);
    }
 
    //Not exposed on interface
