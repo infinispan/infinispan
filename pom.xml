@@ -1835,6 +1835,16 @@
 
    <build>
       <directory>${buildDirectory}</directory>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>false</filtering>
+            <includes>
+               <include>**/Log.i18n*.properties</include>
+               <include>**/Messages.i18n*.properties</include>
+            </includes>
+         </resource>
+      </resources>
       <extensions>
          <extension>
             <groupId>kr.motd.maven</groupId>
@@ -2169,6 +2179,7 @@
                   <release>${maven.compiler.release}</release>
                   <compilerArgs>
                      <arg>-Aorg.jboss.logging.tools.addGeneratedAnnotation=false</arg>
+                     <arg>-AgeneratedTranslationFilesPath=${project.basedir}/target/generated-translation-files</arg>
                   </compilerArgs>
                   <encoding>UTF-8</encoding>
                   <excludes>

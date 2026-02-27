@@ -50,9 +50,9 @@ public interface Log extends BasicLogger {
    @Message(value = "%s Server stopped", id = 80003)
    void serverStopped(String name);
 
-   @LogMessage(level = Logger.Level.INFO)
-   @Message(value = "Connector %s (%s) listening on %s:%d", id = 80004)
-   void protocolStarted(String name, String socketBinding, String host, int port);
+//   @LogMessage(level = Logger.Level.INFO)
+//   @Message(value = "Connector %s (%s) listening on %s:%d", id = 80004)
+//   void protocolStarted(String name, String socketBinding, String host, int port);
 
 //   @Message(value = "Duplicate path '%s'", id = 80005)
 //   CacheConfigurationException duplicatePath(String name);
@@ -253,8 +253,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unknown realm '%s'", id = 80064)
    CacheConfigurationException unknownRealm(String realmName);
 
-   @Message(value = "Invalid keystore '%s'", id = 80065)
-   KeyStoreException invalidKeyStore(String filename);
+//   @Message(value = "Invalid keystore '%s'", id = 80065)
+//   KeyStoreException invalidKeyStore(String filename);
 
    @Message(value = "KeyStore definitions without a path must specify a type.", id = 80066)
    CacheConfigurationException filelessKeyStoreRequiresType();
