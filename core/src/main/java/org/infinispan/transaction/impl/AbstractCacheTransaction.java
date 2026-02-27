@@ -69,6 +69,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    /** mark as volatile as this might be set from the tx thread code on view change*/
    private volatile boolean isMarkedForRollback;
 
+   private volatile boolean rolledBack;
+
    /**
     * Mark the time this tx object was created
     */
@@ -80,6 +82,16 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    public final boolean isMarkedForRollback() {
       return isMarkedForRollback;
+   }
+
+   @Override
+   public void markAsRolledBack() {
+      rolledBack = true;
+   }
+
+   @Override
+   public boolean hasRolledBack() {
+      return rolledBack;
    }
 
    public void markForRollback(boolean markForRollback) {
