@@ -12,6 +12,14 @@ import org.infinispan.server.resp.commands.bitmap.BITOP;
 import org.infinispan.server.resp.commands.bitmap.BITPOS;
 import org.infinispan.server.resp.commands.bitmap.GETBIT;
 import org.infinispan.server.resp.commands.bitmap.SETBIT;
+import org.infinispan.server.resp.commands.bloom.BFADD;
+import org.infinispan.server.resp.commands.bloom.BFCARD;
+import org.infinispan.server.resp.commands.bloom.BFEXISTS;
+import org.infinispan.server.resp.commands.bloom.BFINFO;
+import org.infinispan.server.resp.commands.bloom.BFINSERT;
+import org.infinispan.server.resp.commands.bloom.BFMADD;
+import org.infinispan.server.resp.commands.bloom.BFMEXISTS;
+import org.infinispan.server.resp.commands.bloom.BFRESERVE;
 import org.infinispan.server.resp.commands.cluster.CLUSTER;
 import org.infinispan.server.resp.commands.connection.AUTH;
 import org.infinispan.server.resp.commands.connection.CLIENT;
@@ -27,6 +35,22 @@ import org.infinispan.server.resp.commands.connection.READONLY;
 import org.infinispan.server.resp.commands.connection.READWRITE;
 import org.infinispan.server.resp.commands.connection.RESET;
 import org.infinispan.server.resp.commands.connection.SELECT;
+import org.infinispan.server.resp.commands.countmin.CMSINCRBY;
+import org.infinispan.server.resp.commands.countmin.CMSINFO;
+import org.infinispan.server.resp.commands.countmin.CMSINITBYDIM;
+import org.infinispan.server.resp.commands.countmin.CMSINITBYPROB;
+import org.infinispan.server.resp.commands.countmin.CMSMERGE;
+import org.infinispan.server.resp.commands.countmin.CMSQUERY;
+import org.infinispan.server.resp.commands.cuckoo.CFADD;
+import org.infinispan.server.resp.commands.cuckoo.CFADDNX;
+import org.infinispan.server.resp.commands.cuckoo.CFCOUNT;
+import org.infinispan.server.resp.commands.cuckoo.CFDEL;
+import org.infinispan.server.resp.commands.cuckoo.CFEXISTS;
+import org.infinispan.server.resp.commands.cuckoo.CFINFO;
+import org.infinispan.server.resp.commands.cuckoo.CFINSERT;
+import org.infinispan.server.resp.commands.cuckoo.CFINSERTNX;
+import org.infinispan.server.resp.commands.cuckoo.CFMEXISTS;
+import org.infinispan.server.resp.commands.cuckoo.CFRESERVE;
 import org.infinispan.server.resp.commands.generic.EXISTS;
 import org.infinispan.server.resp.commands.generic.EXPIRE;
 import org.infinispan.server.resp.commands.generic.EXPIREAT;
@@ -208,6 +232,27 @@ import org.infinispan.server.resp.commands.string.SETRANGE;
 import org.infinispan.server.resp.commands.string.STRALGO;
 import org.infinispan.server.resp.commands.string.STRLEN;
 import org.infinispan.server.resp.commands.string.SUBSTR;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTADD;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTBYRANK;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTBYREVRANK;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTCDF;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTCREATE;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTINFO;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTMAX;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTMERGE;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTMIN;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTQUANTILE;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTRANK;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTRESET;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTREVRANK;
+import org.infinispan.server.resp.commands.tdigest.TDIGESTTRIMMED_MEAN;
+import org.infinispan.server.resp.commands.topk.TOPKADD;
+import org.infinispan.server.resp.commands.topk.TOPKCOUNT;
+import org.infinispan.server.resp.commands.topk.TOPKINCRBY;
+import org.infinispan.server.resp.commands.topk.TOPKINFO;
+import org.infinispan.server.resp.commands.topk.TOPKLIST;
+import org.infinispan.server.resp.commands.topk.TOPKQUERY;
+import org.infinispan.server.resp.commands.topk.TOPKRESERVE;
 import org.infinispan.server.resp.commands.tx.DISCARD;
 import org.infinispan.server.resp.commands.tx.EXEC;
 import org.infinispan.server.resp.commands.tx.MULTI;
@@ -227,8 +272,8 @@ public final class Commands {
       // NOTE that the order within the sub array matters, commands we want to have the lowest latency should be first
       // in this array as they are looked up sequentially for matches
       ALL_COMMANDS[0] = new RespCommand[]{new APPEND(), new AUTH()};
-      ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP(), new BLMPOP(), new BITFIELD(), new BITFIELD_RO(), new BITCOUNT(), new BITOP(), new BITPOS()};
-      ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT()};
+      ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP(), new BLMPOP(), new BFADD(), new BFMADD(), new BFEXISTS(), new BFMEXISTS(), new BFRESERVE(), new BFINSERT(), new BFINFO(), new BFCARD(), new BITFIELD(), new BITFIELD_RO(), new BITCOUNT(), new BITOP(), new BITPOS()};
+      ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT(), new CFADD(), new CFADDNX(), new CFEXISTS(), new CFMEXISTS(), new CFRESERVE(), new CFINSERT(), new CFINSERTNX(), new CFDEL(), new CFCOUNT(), new CFINFO(), new CMSINITBYDIM(), new CMSINITBYPROB(), new CMSINCRBY(), new CMSQUERY(), new CMSINFO(), new CMSMERGE()};
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DELEX(), new DIGEST(), new DISCARD()};
       ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC(), new EVAL(), new EVAL_RO(), new EVALSHA(), new EVALSHA_RO()};
@@ -252,7 +297,7 @@ public final class Commands {
             new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(),
             new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(),
             new SORT(), new SORT_RO(), new SUBSTR(), new SCRIPT(), new SETBIT()};
-      ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME()};
+      ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME(), new TOPKRESERVE(), new TOPKADD(), new TOPKINCRBY(), new TOPKQUERY(), new TOPKLIST(), new TOPKINFO(), new TOPKCOUNT(), new TDIGESTCREATE(), new TDIGESTADD(), new TDIGESTRESET(), new TDIGESTQUANTILE(), new TDIGESTCDF(), new TDIGESTRANK(), new TDIGESTREVRANK(), new TDIGESTBYRANK(), new TDIGESTBYREVRANK(), new TDIGESTMIN(), new TDIGESTMAX(), new TDIGESTTRIMMED_MEAN(), new TDIGESTINFO(), new TDIGESTMERGE()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE(), new UNWATCH()};
       ALL_COMMANDS[22] = new RespCommand[]{new WATCH()};
       ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZLEXCOUNT(), new ZDIFF(),
