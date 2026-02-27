@@ -17,7 +17,7 @@ jobs:
 
         # Downloading surefire report artifact containing
         - name: Download Surefire Report Artifact
-          uses: actions/download-artifact@v7.0.0
+          uses: actions/download-artifact@v8.0.0
           with:
             pattern: surefire-test-report*
             github-token: ${{ github.token }}
@@ -62,7 +62,7 @@ jobs:
 
         - name: Download Check Run ID
           if: failure() && steps.job-status.outputs.job_status == 'success'
-          uses: actions/download-artifact@v7.0.0
+          uses: actions/download-artifact@v8.0.0
           with:
             name: check-run-id
             github-token: ${{ github.token }}
@@ -148,7 +148,7 @@ jobs:
          echo "runid=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
 
     - name: Download a Build Artifact
-      uses: actions/download-artifact@v7.0.0
+      uses: actions/download-artifact@v8.0.0
       with:
         name: surefire-test-report-${{ matrix.targets }}
         github-token: ${{ github.token }}
@@ -198,7 +198,7 @@ jobs:
 
     - name: Download Check Run ID
       if: failure()
-      uses: actions/download-artifact@v7.0.0
+      uses: actions/download-artifact@v8.0.0
       with:
         name: check-run-id-${{ matrix.targets }}
         github-token: ${{ github.token }}
