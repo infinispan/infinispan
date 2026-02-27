@@ -1,0 +1,53 @@
+name: PMD Static Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pmd-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: PMD analysis
+        id: pmd
+        uses: pmd/pmd-github-action@v2
+        with:
+          version: '7.15.0'
+          rulesets: 'rulesets/java/quickstart.xml'
+          analyzeModifiedFilesOnly: true
+          createGitHubAnnotations: true
+          uploadSarifReport: true
+
+      - name: Fail build on new violations
+        if: >
+          steps.pmd.outputs.violations != '0' &&
+          !(
+            github.event_name == 'push' &&
+            (
+              contains(github.event.head_commit.message, '[skip-pmd]') ||
+              contains(github.event.head_commit.message, '[SKIP-PMD]') ||
+              contains(github.event.head_commit.message, 'skip pmd') ||
+              contains(github.event.head_commit.message, 'SKIP PMD')
+            )
+            ||
+            github.event_name == 'pull_request' &&
+            (
+              contains(github.event.pull_request.title, '[skip-pmd]') ||
+              contains(github.event.pull_request.title, '[SKIP-PMD]') ||
+              contains(github.event.pull_request.title, 'skip pmd') ||
+              contains(github.event.pull_request.title, 'SKIP PMD')
+            )
+          )
+        run: exit 1
