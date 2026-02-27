@@ -1,0 +1,32 @@
+[id='cache-leave-cluster_{context}']
+= Cache leaving a cluster
+
+{brandname} caches can leave the cluster dynamically.
+When a node stops, the cluster updates its topology and, if necessary, rebalances data to ensure availability.
+
+However, data safety depends on your cache configuration:
+
+* *Distributed Caches:* Data is stored on a specific subset of nodes determined by the `num-owners` attribute (see. link:{config_docs}#cache-configuration[cache configuration]).
+* *Replicated Caches:* Data is stored on all nodes in the cluster.
+
+Because the cluster changes dynamically, nodes leaving simultaneously can pose a risk.
+If the number of nodes leaving the cluster at the same time is greater than or equal to the configured number of owners might lead to data loss.
+
+To leave the cluster in an orderly manner and minimize the risk of data loss, use the `Cache.stop(long timeout, TimeUnit unit)` API.
+This method attempts to gracefully stop the cache by waiting for any ongoing internal operations, such as state transfers, to complete before the node stops and leave the cache topology.
+
+.Orderly Cache Shutdown
+[source,java]
+----
+// Attempt to stop the cache gracefully
+// Waits up to 10 seconds for pending state transfers to complete
+cache.stop(10, TimeUnit.SECONDS);
+----
+
+[WARNING]
+====
+The `Cache.stop(long, TimeUnit)` method does not guarantee complete protection against data loss if multiple nodes leave the cluster concurrently.
+
+If multiple nodes issue stop requests simultaneously, the coordinator might accept multiple leave requests before triggering a state transfer.
+Ensure sufficient time intervals between stopping nodes to allow the cluster topology to stabilize.
+====

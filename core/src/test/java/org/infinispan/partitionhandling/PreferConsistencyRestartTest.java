@@ -275,7 +275,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       List<Future<Void>> stops = new ArrayList<>(indexes.length);
       for (int index : indexes) {
          EmbeddedCacheManager ecm = cacheManagers.remove(index);
-         stops.add(fork(ecm::stop));
+         stops.add(fork(() -> ecm.stop()));
       }
 
       stops.forEach(this::join);

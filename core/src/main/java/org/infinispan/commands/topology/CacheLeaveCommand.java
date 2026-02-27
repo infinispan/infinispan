@@ -1,6 +1,7 @@
 package org.infinispan.commands.topology;
 
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -22,20 +23,24 @@ public class CacheLeaveCommand extends AbstractCacheControlCommand {
    @ProtoField(1)
    final String cacheName;
 
+   @ProtoField(2)
+   final long timeout;
+
    @ProtoFactory
-   CacheLeaveCommand(String cacheName) {
-      this(cacheName, null);
+   CacheLeaveCommand(String cacheName, long timeout) {
+      this(cacheName, null, timeout);
    }
 
-   public CacheLeaveCommand(String cacheName, Address origin) {
+   public CacheLeaveCommand(String cacheName, Address origin, long timeout) {
       super(origin);
       this.cacheName = cacheName;
+      this.timeout = timeout;
    }
 
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       return gcr.getClusterTopologyManager()
-            .handleLeave(cacheName, origin);
+            .handleLeave(cacheName, origin, timeout, TimeUnit.MILLISECONDS);
    }
 
    @Override

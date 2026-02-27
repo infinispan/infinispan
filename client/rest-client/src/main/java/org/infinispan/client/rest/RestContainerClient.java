@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.dataconversion.MediaType;
 
@@ -21,6 +22,35 @@ public interface RestContainerClient {
     * and clustering, however REST calls to container resources will result in a 503 Service Unavailable response.
     */
    CompletionStage<RestResponse> shutdown();
+
+   /**
+    * Stops the container and all caches.
+    *
+    * <p>
+    * The servers remain running with active endpoints and clustered. However, REST calls to container resources will
+    * result in a 503 unavailable.
+    * </p>
+    *
+    * @return A {@link CompletionStage} that completes once the request is done.
+    */
+   default CompletionStage<RestResponse> leave() {
+      return leave(-1, TimeUnit.SECONDS);
+   }
+
+   /**
+    * Stops the container and all caches.
+    *
+    * <p>
+    * This method stops each cache in order and wait for any pending state transfer to complete before leaving the
+    * cache topology. The server remain running with active endpoints and clustered. However, REST calls to container
+    * resources will result in a 503 unavailable.
+    * </p>
+    *
+    * @param timeout The timeout to wait for pending operations to complete. Values {@code <=0} are ignored.
+    * @param unit The unit of the timeout value.
+    * @return A {@link CompletionStage} that completes once the request is done.
+    */
+   CompletionStage<RestResponse> leave(long timeout, TimeUnit unit);
 
    CompletionStage<RestResponse> globalConfiguration(String mediaType);
 

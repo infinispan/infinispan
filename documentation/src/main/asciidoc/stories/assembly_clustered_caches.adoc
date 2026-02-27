@@ -18,6 +18,7 @@ include::{topics}/con_invalidation_caches.adoc[leveloffset=+1]
 include::{topics}/con_asynchronous_replication.adoc[leveloffset=+1]
 include::{topics}/con_asynchronous_return_values.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_initial_cluster_size.adoc[leveloffset=+1]
+include::{topics}/proc_cache_leave_cluster.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

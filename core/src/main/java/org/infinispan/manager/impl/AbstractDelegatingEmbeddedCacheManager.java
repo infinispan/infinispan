@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
@@ -240,6 +241,11 @@ public class AbstractDelegatingEmbeddedCacheManager extends InternalCacheManager
    @Override
    public EmbeddedCacheManager withSubject(Subject subject) {
       return cm.withSubject(subject);
+   }
+
+   @Override
+   public boolean stop(long timeout, TimeUnit unit) throws InterruptedException {
+      return cm.stop(timeout, unit);
    }
 
    @Override

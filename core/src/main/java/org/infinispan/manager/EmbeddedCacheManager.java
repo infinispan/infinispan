@@ -3,6 +3,7 @@ package org.infinispan.manager;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
@@ -314,4 +315,28 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    Subject getSubject();
 
    EmbeddedCacheManager withSubject(Subject subject);
+
+   /**
+    * Orderly stops this cache manager.
+    *
+    * <p>
+    * Stops this cache manager along with all caches in an orderly fashion. The cache will wait until any pending
+    * state transfer is completed before leaving the topology. The timeout value is calculated for the complete operation,
+    * stopping all caches.
+    * </p>
+    *
+    * <p>
+    * This method blocks until all caches are stopped, or the timeout occurs, or the current thread is interrupted.
+    * Whichever happens first. There is no guarantee about the state of the caches in case a timeout happens.
+    * </p>
+    *
+    * @param timeout The timeout value to wait for all caches to stop. Values {@code <= 0} will leave without
+    *                waiting and will not time out.
+    * @param unit    The unit of the timeout value.
+    * @return {@code true} if stopped before the timeout elapses, {@code false}, otherwise.
+    * @throws InterruptedException if interrupted while waiting.
+    * @see #stop()
+    * @see #stopCache(String)
+    */
+   boolean stop(long timeout, TimeUnit unit) throws InterruptedException;
 }

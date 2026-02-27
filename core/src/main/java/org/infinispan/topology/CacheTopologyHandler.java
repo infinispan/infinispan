@@ -25,4 +25,16 @@ public interface CacheTopologyHandler {
     * will have to call {@link LocalTopologyManager#confirmRebalancePhase(String, int, int, Throwable)}
     */
    CompletionStage<Void> rebalance(CacheTopology cacheTopology);
+
+   /**
+    * Invoked when a topology is received.
+    *
+    * <p>
+    * Invokes the listener every time a new topology is received. The topology might have a pending consistent hash,
+    * or it might already be stable.
+    * </p>
+    *
+    * @param cacheTopology The received cache topology.
+    */
+   void onTopologyReceived(CacheTopology cacheTopology);
 }

@@ -26,8 +26,12 @@ public interface LocalTopologyManager {
 
    /**
     * Forwards the leave request to the coordinator.
+    *
+    * @param cacheName The name of the cache to leave.
+    * @param timeout A value in milliseconds to wait for the remote request to complete.
+    * @param keep Whether to keep the cache information in-memory until after the leave request is done.
     */
-   void leave(String cacheName, long timeout);
+   boolean leave(String cacheName, long timeout, boolean keep) throws InterruptedException;
 
    /**
     * Confirm that the local cache {@code cacheName} has finished receiving the new data for topology
