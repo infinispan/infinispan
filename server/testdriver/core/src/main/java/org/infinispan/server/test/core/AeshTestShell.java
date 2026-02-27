@@ -4,10 +4,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.aesh.command.shell.Shell;
 import org.aesh.readline.Prompt;
-import org.aesh.readline.terminal.Key;
-import org.aesh.readline.util.Parser;
+import org.aesh.terminal.Key;
 import org.aesh.terminal.tty.Size;
 import org.aesh.terminal.utils.Config;
+import org.aesh.terminal.utils.Parser;
 import org.infinispan.testing.Eventually;
 import org.junit.ComparisonFailure;
 

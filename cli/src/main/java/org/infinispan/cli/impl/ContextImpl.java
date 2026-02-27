@@ -17,10 +17,10 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.shell.Shell;
+import org.aesh.console.AeshContext;
+import org.aesh.console.ReadlineConsole;
 import org.aesh.io.FileResource;
-import org.aesh.readline.AeshContext;
 import org.aesh.readline.Prompt;
-import org.aesh.readline.ReadlineConsole;
 import org.aesh.terminal.utils.ANSI;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.connection.Connection;
@@ -54,15 +54,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
       this.properties = new Properties(defaults);
       String userDir = properties.getProperty("user.dir");
       cwd = userDir != null ? new FileResource(userDir) : null;
-      String cliDir = properties.getProperty("cli.dir");
-      if (cliDir == null) {
-         cliDir = System.getenv("ISPN_CLI_DIR");
-      }
-      if (cliDir != null) {
-         configPath = Paths.get(cliDir);
-      } else {
-         configPath = Paths.get(SystemUtils.getAppConfigFolder(Version.getBrandName().toLowerCase().replace(' ', '_')));
-      }
+      configPath = getConfigurationDirectory(properties);
       Path configFile = configPath.resolve(CONFIG_FILE);
       if (Files.exists(configFile)) {
          try (Reader r = Files.newBufferedReader(configFile)) {
@@ -99,8 +91,8 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    }
 
    @Override
-   public String getProperty(Property property) {
-      return properties.getProperty(property.propertyName());
+   public String getProperty(Property property, String defaultValue) {
+      return properties.getProperty(property.propertyName(), defaultValue);
    }
 
    @Override
@@ -244,6 +236,18 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    }
 
    @Override
+   public void setConsole(ReadlineConsole console) {
+      this.console = console;
+      refreshPrompt();
+   }
+//
+//   @Override
+//   public void setConsole(ReadlineConsole console) {
+//      this.console = console;
+//      refreshPrompt();
+//   }
+
+   @Override
    public MediaType getEncoding() {
       return connection.getEncoding();
    }
@@ -251,12 +255,6 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    @Override
    public void setEncoding(MediaType encoding) {
       connection.setEncoding(encoding);
-   }
-
-   @Override
-   public void setConsole(ReadlineConsole console) {
-      this.console = console;
-      refreshPrompt();
    }
 
    @Override
@@ -297,5 +295,17 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    @Override
    public void close() {
       disconnect();
+   }
+
+   public static Path getConfigurationDirectory(Properties properties) {
+      String cliDir = properties.getProperty("cli.dir");
+      if (cliDir == null) {
+         cliDir = System.getenv("ISPN_CLI_DIR");
+      }
+      if (cliDir != null) {
+         return Paths.get(cliDir);
+      } else {
+         return Paths.get(SystemUtils.getAppConfigFolder(Version.getBrandName().toLowerCase().replace(' ', '_')));
+      }
    }
 }

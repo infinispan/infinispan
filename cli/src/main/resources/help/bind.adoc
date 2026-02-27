@@ -1,0 +1,25 @@
+BIND(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+bind - shows keybindings.
+
+
+SYNOPSIS
+--------
+*bind* ['OPTIONS']
+
+
+OPTIONS
+-------
+*-m, --mode*='[emacs|vi]'::
+Specifies the keybinding mode. Defaults to `emacs`.
+
+EXAMPLE
+-------
+`bind -m vi` +
+Shows the keybindings for `vi` mode.
+

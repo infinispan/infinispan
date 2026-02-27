@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Properties;
 
 import org.aesh.terminal.utils.Config;
+import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.commons.util.Util;
@@ -52,6 +53,7 @@ public class CliIT {
       workingDir.mkdirs();
       properties = new Properties(System.getProperties());
       properties.put("cli.dir", workingDir.getAbsolutePath());
+      properties.put(Context.Property.AUTOSUGGEST.propertyName(), "false");
    }
 
    @AfterAll
