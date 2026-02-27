@@ -871,7 +871,7 @@
       </xs:attribute>
       <xs:attribute name="mechanisms" type="tns:name-list" default="NONE">
          <xs:annotation>
-            <xs:documentation>The authentication method to require. Can be NONE, BASIC, DIGEST, CLIENT_CERT, SPNEGO.
+            <xs:documentation>The authentication method to require. Can be NONE, BASIC, DIGEST, CLIENT_CERT, SPNEGO, LOCALUSER.
                Defaults to NONE. Setting it to a different value requires enabling a security-realm.
             </xs:documentation>
          </xs:annotation>

@@ -19,6 +19,7 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.security.GroupPrincipal;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfiguration;
+import org.infinispan.server.security.http.localuser.WildFlyElytronHttpLocalUserProvider;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
@@ -66,6 +67,7 @@ public class ElytronHTTPAuthenticator implements RestAuthenticator {
             WildFlyElytronHttpDigestProvider.getInstance(),
             WildFlyElytronHttpClientCertProvider.getInstance(),
             WildFlyElytronHttpSpnegoProvider.getInstance(),
+            WildFlyElytronHttpLocalUserProvider.getInstance(),
       };
       Map<String, String> prefixes = new HashMap<>();
       for (String m : mechanisms) {
@@ -88,6 +90,9 @@ public class ElytronHTTPAuthenticator implements RestAuthenticator {
             case "DIGEST-SHA-512-256":
                prefixes.put("DIGEST", "DIGEST-SHA-512-256");
                break;
+            case "LOCALUSER":
+               prefixes.put("LOCALUSER", "LOCALUSER");
+               break;
             default:
                prefixes.put(m, m);
          }
@@ -100,6 +105,14 @@ public class ElytronHTTPAuthenticator implements RestAuthenticator {
       if (authenticator != null) {
          authenticator.init(serverConfiguration);
       }
+   }
+
+   public Provider[] getProviders() {
+      return providers;
+   }
+
+   public void setFactory(HttpAuthenticationFactory factory) {
+      this.factory = factory;
    }
 
    public void init(ServerConfiguration serverConfiguration) {
@@ -127,26 +140,37 @@ public class ElytronHTTPAuthenticator implements RestAuthenticator {
          try {
             String authorizationHeader = request.getAuthorizationHeader();
             if (authorizationHeader == null) {
-               for (String name : configuration.authentication().mechanisms()) {
-                  HttpServerAuthenticationMechanism mechanism = factory.createMechanism(name);
+               challengeClient(request, requestAdapter);
+            } else {
+               int spaceIdx = authorizationHeader.indexOf(' ');
+               String headerMechName = (spaceIdx >= 0 ? authorizationHeader.substring(0, spaceIdx) : authorizationHeader).toUpperCase();
+               String mechName = challengePrefixMechanisms.get(headerMechName);
+               if (mechName == null) {
+                  // Unknown mechanism prefix: respond with available challenges
+                  // instead of failing, so the client can retry with a supported mechanism
+                  challengeClient(request, requestAdapter);
+               } else {
+                  HttpServerAuthenticationMechanism mechanism = factory.createMechanism(mechName);
+                  if (mechanism == null) {
+                     throw Server.log.unsupportedMechanism(headerMechName);
+                  }
                   mechanism.evaluateRequest(requestAdapter);
                   extractSubject(request, mechanism);
                }
-            } else {
-               String headerMechName = authorizationHeader.substring(0, authorizationHeader.indexOf(' ')).toUpperCase();
-               String mechName = challengePrefixMechanisms.get(headerMechName);
-               HttpServerAuthenticationMechanism mechanism = factory.createMechanism(mechName);
-               if (mechanism == null) {
-                  throw Server.log.unsupportedMechanism(headerMechName);
-               }
-               mechanism.evaluateRequest(requestAdapter);
-               extractSubject(request, mechanism);
             }
             return requestAdapter.getResponse();
          } catch (Exception e) {
             throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
          }
       }, "auth");
+   }
+
+   private void challengeClient(RestRequest request, HttpServerRequestAdapter requestAdapter) throws HttpAuthenticationException {
+      for (String name : configuration.authentication().mechanisms()) {
+         HttpServerAuthenticationMechanism mechanism = factory.createMechanism(name);
+         mechanism.evaluateRequest(requestAdapter);
+         extractSubject(request, mechanism);
+      }
    }
 
    private void extractSubject(RestRequest request, HttpServerAuthenticationMechanism mechanism) {

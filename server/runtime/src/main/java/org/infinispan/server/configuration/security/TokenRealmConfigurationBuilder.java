@@ -83,8 +83,4 @@ public class TokenRealmConfigurationBuilder implements RealmProviderBuilder<Toke
       return this;
    }
 
-   @Override
-   public int compareTo(RealmProviderBuilder o) {
-      return 0; // Irrelevant
-   }
 }

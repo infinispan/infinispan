@@ -1,0 +1,30 @@
+[id='local-security-realms_{context}']
+= Local security realms
+
+A local security realm allows the CLI to authenticate against the local {brandname} instance without prompting the user
+for a username and password. This mechanism only works if the user running the CLI has read access to the server's
+temporary directory. This realm should always be used together with another realm, such as a `properties` realm.
+If the local mechanism fails then the CLI will fall back to prompting for a username and password
+for a user configured as in Default HTTP Interface Security.
+When authenticating with this realm, the user will have all permissions.
+
+[discrete]
+== Local realm configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_local_realm.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_local_realm.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_local_realm.yaml[]
+----
