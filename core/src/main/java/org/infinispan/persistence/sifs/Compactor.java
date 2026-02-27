@@ -69,6 +69,7 @@ class Compactor {
    // This buffer is used by the compactor thread to avoid allocating buffers per entry written that are smaller
    // than the header size
    private final java.nio.ByteBuffer REUSED_BUFFER = java.nio.ByteBuffer.allocate(EntryHeader.HEADER_SIZE_11_0);
+   private AggregateCompletionStage<Void> fileDeletionStage = CompletionStages.aggregateCompletionStage();
 
    FileProvider.Log logFile = null;
    long nextExpirationTime = -1;
@@ -364,6 +365,10 @@ class Compactor {
          completeFile(logFile.fileId, currentOffset, nextExpirationTime, false);
          logFile = null;
       }
+
+      // Wait for any file deletions to complete before completely stopping.
+      CompletionStages.join(fileDeletionStage.freeze());
+      fileDeletionStage = CompletionStages.aggregateCompletionStage();
 
       // Reinitialize processor so it can be started again possibly
       processor = UnicastProcessor.<CompletableFuture<Void>>create().toSerialized();
@@ -769,7 +774,7 @@ class Compactor {
          if (stats != null) {
             stats.markForDeletion();
          }
-         index.deleteFileAsync(scheduledFile);
+         fileDeletionStage.dependsOn(index.deleteFileAsync(scheduledFile));
       }
    }
 

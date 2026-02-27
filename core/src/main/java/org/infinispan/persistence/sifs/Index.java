@@ -399,20 +399,27 @@ class Index {
       return indexRequest;
    }
 
-   public void ensureRunOnLast(Runnable runnable) {
+   public CompletionStage<Void> ensureRunOnLast(Runnable runnable) {
+      CompletableFuture<Void> future = new CompletableFuture<>();
       AtomicInteger count = new AtomicInteger(flowableProcessors.length);
       IndexRequest request = IndexRequest.syncRequest(() -> {
          if (count.decrementAndGet() == 0) {
-            runnable.run();
+            try {
+               runnable.run();
+               nonBlockingManager.complete(future, null);
+            } catch (Throwable t) {
+               nonBlockingManager.completeExceptionally(future, t);
+            }
          }
       });
       for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
          flowableProcessor.onNext(request);
       }
+      return future;
    }
 
-   public void deleteFileAsync(int fileId) {
-      ensureRunOnLast(() -> {
+   public CompletionStage<Void> deleteFileAsync(int fileId) {
+      return ensureRunOnLast(() -> {
          // After all indexes have ensured they have processed all requests - the last one will delete the file
          // This guarantees that the index can't see an outdated value
          dataFileProvider.deleteFile(fileId);
