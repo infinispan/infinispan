@@ -129,7 +129,7 @@
       <version.lucene10>10.3.2</version.lucene10>
       <version.metainf-services>1.11</version.metainf-services>
       <version.micrometer>1.16.3</version.micrometer>
-      <version.mockito>5.21.0</version.mockito>
+      <version.mockito>5.22.0</version.mockito>
       <version.nashorn>15.7</version.nashorn>
       <version.netty>4.1.131.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
