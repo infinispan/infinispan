@@ -64,7 +64,7 @@ public interface ClusterCacheStats extends Stats, ClusterStats {
 
    /**
     * @return the approximate number of entries.
-    *
+    * <p>
     * Each owner's copy is counted separately, except entries
     * in shared stores.
     */
@@ -73,7 +73,7 @@ public interface ClusterCacheStats extends Stats, ClusterStats {
 
    /**
     * @return the approximate number of entries in memory.
-    *
+    * <p>
     * Each owner's copy is counted separately.
     */
    @Override
