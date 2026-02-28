@@ -20,6 +20,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commands.conflict.GetBucketHashesCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
@@ -339,6 +340,16 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
                delegate.handle(command, reply, order);
                latch.countDown();
             });
+            return;
+         }
+
+         // When segment hash optimization skips all segments (e.g. empty cache),
+         // no ConflictResolutionStartCommand is sent. Count down on the hash
+         // command so the test doesn't time out waiting for a command that was
+         // correctly optimized away.
+         if (command instanceof GetBucketHashesCommand) {
+            delegate.handle(command, reply, order);
+            latch.countDown();
             return;
          }
 
