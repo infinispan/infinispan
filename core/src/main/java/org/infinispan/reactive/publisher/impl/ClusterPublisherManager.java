@@ -1,5 +1,6 @@
 package org.infinispan.reactive.publisher.impl;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BinaryOperator;
@@ -8,6 +9,7 @@ import java.util.function.Function;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.transport.Address;
 import org.reactivestreams.Publisher;
 
 /**
@@ -100,4 +102,14 @@ public interface ClusterPublisherManager<K, V> {
                                                   Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer);
 
    CompletionStage<Long> sizePublisher(IntSet segments, InvocationContext ctx, long flags);
+
+   /**
+    * This method is similar to {@link #entryPublisher(IntSet, Set, InvocationContext, long, DeliveryGuarantee, int, Function)}
+    * except it is designed to be used solely for iterating over entries for given targets with
+    * {@link DeliveryGuarantee#AT_MOST_ONCE} semantics since it cannot iterate using any other topology.
+    * @param batchSize how many entries to be returned at a given time
+    * @param targets the address and segment targets to use explicitly
+    * @return a publisher that will publish entries
+    */
+   Publisher<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> entryPublisherForTopology(int topologyId, int batchSize, Map<Address, IntSet> targets);
 }

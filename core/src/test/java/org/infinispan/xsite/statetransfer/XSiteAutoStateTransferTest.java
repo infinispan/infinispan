@@ -30,6 +30,9 @@ import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledRpcManager;
@@ -214,7 +217,8 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
             StateTransferCancelCommand.class,
             IracRequestStateCommand.class, IracStateResponseCommand.class,
             IracUpdateVersionCommand.class, IracCleanupKeysCommand.class,
-            IracTombstoneStateResponseCommand.class);
+            IracTombstoneStateResponseCommand.class, InitialPublisherCommand.class, NextPublisherCommand.class,
+            CancelPublisherCommand.class);
 
       //reset current site master
       oldSiteMaster.getRpcManager().stopBlocking();

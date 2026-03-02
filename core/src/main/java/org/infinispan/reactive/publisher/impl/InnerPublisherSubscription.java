@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.reactive.publisher.impl.commands.batch.KeyPublisherResponse;
 import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
@@ -153,7 +154,7 @@ public class InnerPublisherSubscription<K, I, R, E> implements LongConsumer, Act
          ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent = builder.parent;
          CompletionStage<PublisherResponse> stage;
          Address address = target.getKey();
-         IntSet segments = target.getValue();
+         IntSet segments = IntSets.mutableFrom(target.getValue());
          try {
             if (alreadyCreated) {
                stage = parent.sendNextCommand(address, builder.topologyId);
