@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
@@ -114,7 +115,7 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
       public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
                                                   ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                   long timeout, TimeUnit unit) {
-         if (command instanceof StateTransferStartCommand && target.equals(address(1))) {
+         if (command instanceof InitialPublisherCommand && target.equals(address(1))) {
             d1.discardAll(true);
 
             fork((Callable<Void>) () -> {

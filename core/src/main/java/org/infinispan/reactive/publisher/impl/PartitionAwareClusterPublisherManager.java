@@ -2,6 +2,7 @@ package org.infinispan.reactive.publisher.impl;
 
 import static org.infinispan.util.logging.Log.CLUSTER;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +22,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.remoting.transport.Address;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -146,6 +148,18 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
                   .doFinally(() -> pendingOperations.remove(ab));
          }
       };
+   }
+
+   @Override
+   public CompletionStage<Long> sizePublisher(IntSet segments, InvocationContext ctx, long flags) {
+      checkPartitionStatus();
+      return super.sizePublisher(segments, ctx, flags);
+   }
+
+   @Override
+   public Publisher<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> entryPublisherForTopology(int topologyId, int batchSize, Map<Address, IntSet> targets) {
+      checkPartitionStatus();
+      return super.entryPublisherForTopology(topologyId, batchSize, targets);
    }
 
    private void checkPendingOperation(AtomicBoolean ab) {

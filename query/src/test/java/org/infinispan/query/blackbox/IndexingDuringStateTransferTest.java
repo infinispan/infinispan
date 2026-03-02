@@ -3,27 +3,25 @@ package org.infinispan.query.blackbox;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.helper.TestQueryHelperFactory.queryAll;
+import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.orTimeout;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -33,14 +31,15 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.ValidResponse;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.RequestRepository;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -77,6 +76,12 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
    @BeforeMethod
    public void cleanData() {
       caches().forEach(Cache::clear);
+   }
+
+   private RequestRepository spyRequestRepository(Cache<Object, Object> cache) {
+      // This is assumed to be a JGroupsTransport
+      Transport transport = extractComponent(cache, Transport.class);
+      return Mocks.replaceFieldWithSpy(transport, "requests");
    }
 
    public void testPut() {
@@ -152,29 +157,29 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       // wait until the node discards old entries
       eventuallyEquals(null, () -> cache0.getAdvancedCache().getDataContainer().peek(KEY));
 
-      // block state response commands
+      // block state transfer responses
       AtomicReference<Throwable> exception = new AtomicReference<>();
       CompletableFuture<Void> allowStateResponse = new CompletableFuture<>();
-      caches().forEach(
-            c -> TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractDelegatingRpcManager(original) {
-               @Override
-               protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
-                                                               ResponseCollector<Address, T> collector,
-                                                               Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker,
-                                                               RpcOptions rpcOptions) {
-                  if (command instanceof StateResponseCommand) {
-                     CompletableFuture<Void> stageWithTimeout = orTimeout(allowStateResponse, 10, SECONDS,
-                           testExecutor());
-                     return CompletionStages.handleAndCompose(stageWithTimeout, (ignored, t) -> {
-                        if (t != null) {
-                           exception.set(t);
-                        }
-                        return super.performRequest(targets, command, collector, invoker, rpcOptions);
-                     });
+
+      caches().forEach(c -> {
+         RequestRepository spyRequests = spyRequestRepository(c);
+         doAnswer(invocation -> {
+            Response response = invocation.getArgument(2);
+            if (response instanceof ValidResponse) {
+               Object responseValue = ((ValidResponse) response).getResponseValue();
+               if (responseValue instanceof PublisherResponse) {
+                  CompletableFuture<Void> stageWithTimeout = orTimeout(allowStateResponse, 10, SECONDS,
+                        testExecutor());
+                  try {
+                     stageWithTimeout.join();
+                  } catch (Throwable t) {
+                     exception.set(t);
                   }
-                  return super.performRequest(targets, command, collector, invoker, rpcOptions);
                }
-            }));
+            }
+            return invocation.callRealMethod();
+         }).when(spyRequests).addResponse(anyLong(), any(), any());
+      });
 
       // stop the other cache, cache(0) should get the entry back
       chf.setOwnerIndexes(0, 1);

@@ -265,6 +265,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
          // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
          // are performed first and create opportunity for inconsistencies
          if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+            log.tracef("Received PutKeyValueCommand %s - will wait for signal if first", cmd);
             // signal we encounter a state transfer PUT
             applyStateStartedLatch.countDown();
             // wait until it is ok to apply state
