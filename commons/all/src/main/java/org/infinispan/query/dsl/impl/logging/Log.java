@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl.logging;
 
+import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import org.jboss.logging.BasicLogger;
@@ -88,8 +89,9 @@ public interface Log extends BasicLogger {
    @Message(value = "maxResults cannot be less than 0", id = 14823)
    IllegalArgumentException maxResultCannotBeLessThanZero();
 
+   @LogMessage(level = DEBUG)
    @Message(value = "startOffset cannot be less than 0", id = 14824)
-   IllegalArgumentException startOffsetCannotBeLessThanZero();
+   void startOffsetCannotBeLessThanZero();
 
    @Message(value = "Query parameter '%s' was not set", id = 14825)
    IllegalStateException queryParameterNotSet(String paramName);
