@@ -1012,13 +1012,17 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       final IntSet segmentsToComplete;
       // Only allow the first child publisher to use the context values
       final AtomicBoolean useContext = new AtomicBoolean(true);
+      final boolean includeSegmentNotification;
 
       // Variable used to ensure we only read the context once - so it is not read again during a retry
       volatile int currentTopology = -1;
 
-      SubscriberHandler(AbstractSegmentAwarePublisher<I, R> publisher) {
+      SubscriberHandler(AbstractSegmentAwarePublisher<I, R> publisher, boolean withSegments) {
          this.publisher = publisher;
          this.requestId = rpcManager.getAddress() + "#" + requestCounter.incrementAndGet();
+         this.includeSegmentNotification = withSegments
+               || publisher.shouldTrackKeys
+               || publisher.deliveryGuarantee == DeliveryGuarantee.EXACTLY_ONCE;
 
          this.keysBySegment = publisher.deliveryGuarantee == DeliveryGuarantee.EXACTLY_ONCE ?
                new AtomicReferenceArray<>(maxSegment) : null;
@@ -1171,7 +1175,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          }
          boolean local = target == rpcManager.getAddress();
          InitialPublisherCommand cmd = publisher.buildInitialCommand(local ? null : target, requestId, segments, excludedKeys, batchSize,
-               local && useContext.getAndSet(false));
+               local && useContext.getAndSet(false), includeSegmentNotification);
          if (cmd == null) {
             return CompletableFuture.completedFuture(PublisherResponse.emptyResponse(segments, null));
          }
@@ -1337,15 +1341,16 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       public Publisher<Notification<R>> publisherWithSegments() {
-         return new SubscriberHandler<I, R>(this).startWithSegments();
+         return new SubscriberHandler<I, R>(this, true).startWithSegments();
       }
 
       public Publisher<R> publisherWithoutSegments() {
-         return new SubscriberHandler<I, R>(this).start();
+         return new SubscriberHandler<I, R>(this, false).start();
       }
 
       abstract InitialPublisherCommand buildInitialCommand(Address target, String requestId, IntSet segments,
-                                                           Set<K> excludedKeys, int batchSize, boolean useContext);
+                                                           Set<K> excludedKeys, int batchSize, boolean useContext,
+                                                           boolean includeSegmentNotification);
 
       NextPublisherCommand buildNextCommand(String requestId) {
          return commandsFactory.buildNextPublisherCommand(requestId);
@@ -1382,7 +1387,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       InitialPublisherCommand buildInitialCommand(Address target, String requestId, IntSet segments, Set<K> excludedKeys,
-                                                  int batchSize, final boolean useContext) {
+                                                  int batchSize, final boolean useContext, boolean includeSegmentNotification) {
          Set<K> keysToUse = calculateKeysToUse(keysToInclude, segments, excludedKeys);
          if (keysToUse == null) {
             return null;
@@ -1412,7 +1417,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
          return commandsFactory.buildInitialPublisherCommand(requestId, guarantee,
                batchSize, segments, keysToUse, excludedKeys, explicitFlags, composedType.isEntry(), shouldTrackKeys,
-               functionToUse);
+               functionToUse, includeSegmentNotification);
       }
    }
 
@@ -1445,7 +1450,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       InitialPublisherCommand buildInitialCommand(Address target, String requestId, IntSet segments, Set<K> excludedKeys,
-                                                  int batchSize, boolean useContext) {
+                                                  int batchSize, boolean useContext, boolean includeSegmentNotification) {
          Function<? super Publisher<I>, ? extends Publisher<R>> functionToUse;
          int lookupEntryCount;
          if (useContext && invocationContext != null && (lookupEntryCount = invocationContext.lookedUpEntriesCount()) > 0) {
@@ -1466,7 +1471,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          DeliveryGuarantee guarantee = deliveryToUse(target, deliveryGuarantee, explicitFlags);
 
          return commandsFactory.buildInitialPublisherCommand(requestId, guarantee,
-               batchSize, segments, null, excludedKeys, explicitFlags, composedType.isEntry(), shouldTrackKeys, functionToUse);
+               batchSize, segments, null, excludedKeys, explicitFlags, composedType.isEntry(), shouldTrackKeys, functionToUse, includeSegmentNotification);
       }
    }
 

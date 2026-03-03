@@ -49,6 +49,18 @@ public interface SegmentAwarePublisherSupplier<R> extends SegmentPublisherSuppli
    Publisher<R> publisherWithoutSegments();
 
    /**
+    * Similar to {@link #publisherWithLostSegments()} but without requiring values to be published in segment order.
+    * Values from different segments may be interleaved, and all segment complete or lost notifications are published
+    * after all values.
+    * <p>
+    * The provided {@link DeliveryGuarantee} when creating this <i>SegmentAwarePublisherSupplier</i> controls
+    * how lost segment notifications are raised, following the same rules as {@link #publisherWithLostSegments()}.
+    */
+   default Publisher<NotificationWithLost<R>> publisherWithDelayedSegments() {
+      return publisherWithLostSegments();
+   }
+
+   /**
     * Same as {@link SegmentPublisherSupplier#publisherWithSegments()} , except that we also can notify a
     * listener when a segment has been lost before publishing all its entries.
     * <p>

@@ -506,6 +506,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
          }
       };
       doAnswer(blockingAnswer).when(mockContainer).publisher(anyInt());
+      doAnswer(blockingAnswer).when(mockContainer).publisher(any(IntSet.class));
       TestingUtil.replaceComponent(cache, InternalDataContainer.class, mockContainer, true);
    }
 }
