@@ -1,5 +1,6 @@
 package org.infinispan.stream;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -8,6 +9,7 @@ import static org.testng.AssertJUnit.fail;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.test.TestingUtil;
@@ -30,7 +32,10 @@ public class DistributedStreamIteratorExceptionTest extends BaseSetupStreamItera
    }
 
    protected InternalDataContainer mockContainer(Throwable t) {
-      return when(mock(InternalDataContainer.class).publisher(anyInt())).thenThrow(t).getMock();
+      InternalDataContainer mock = mock(InternalDataContainer.class);
+      when(mock.publisher(anyInt())).thenThrow(t);
+      when(mock.publisher(any(IntSet.class))).thenThrow(t);
+      return mock;
    }
 
    public void ensureDataContainerRemoteExceptionPropagated() {

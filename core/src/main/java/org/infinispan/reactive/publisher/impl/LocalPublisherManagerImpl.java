@@ -311,6 +311,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       private final CacheSet<I> cacheSet;
       private final Predicate<? super I> predicate;
       private final DeliveryGuarantee deliveryGuarantee;
+      private final Function<? super I, K> toKeyFunction;
       private final Function<? super Publisher<I>, ? extends Publisher<R>> transformer;
 
       private SegmentAwarePublisherSupplierImpl(IntSet segments, CacheSet<I> cacheSet,
@@ -319,9 +320,60 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                                                 Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
          this.segments = segments;
          this.cacheSet = cacheSet;
+         this.toKeyFunction = toKeyFunction;
          this.predicate = keysToExclude != null ? v -> !keysToExclude.contains(toKeyFunction.apply(v)) : null;
          this.deliveryGuarantee = deliveryGuarantee;
          this.transformer = transformer;
+      }
+
+      @Override
+      public Publisher<NotificationWithLost<R>> publisherWithDelayedSegments() {
+         return switch (deliveryGuarantee) {
+            case AT_MOST_ONCE -> {
+               Notifications.NotificationBuilder<R> builder = Notifications.newBuilder();
+               Flowable<I> flowable = Flowable.fromPublisher(cacheSet.localPublisher(segments));
+               if (predicate != null) {
+                  flowable = flowable.filter(predicate);
+               }
+
+               yield flowable
+                     .concatMap(item -> {
+                        int segment = keyPartitioner.getSegment(toKeyFunction.apply(item));
+                        return Flowable.fromPublisher(transformer.apply(Flowable.just(item)))
+                              .map(r -> builder.value(r, segment));
+                     })
+                     .concatWith(Flowable.fromIterable(segments)
+                           .map(builder::segmentComplete));
+            }
+            case AT_LEAST_ONCE ->
+               Flowable.defer(() -> {
+                  Notifications.NotificationBuilder<R> builder = Notifications.newBuilder();
+                  IntSet concurrentSet = IntSets.concurrentCopyFrom(segments, maxSegment);
+                  RemoveSegmentListener listener = new RemoveSegmentListener(concurrentSet);
+
+                  changeListener.add(listener);
+                  listener.verifyTopology(distributionManager.getCacheTopology());
+
+                  Flowable<I> flowable = Flowable.fromPublisher(cacheSet.localPublisher(segments));
+                  if (predicate != null) {
+                     flowable = flowable.filter(predicate);
+                  }
+
+                  return flowable
+                        .concatMap(item -> {
+                           int segment = keyPartitioner.getSegment(toKeyFunction.apply(item));
+                           return Flowable.fromPublisher(transformer.apply(Flowable.just(item)))
+                                 .map(r -> builder.value(r, segment));
+                        })
+                        .concatWith(Flowable.fromIterable(segments)
+                              .map(segment -> concurrentSet.remove(segment)
+                                    ? builder.segmentComplete(segment)
+                                    : builder.segmentLost(segment)))
+                        .doFinally(() -> changeListener.remove(listener));
+               });
+            case EXACTLY_ONCE ->
+                  throw new IllegalStateException("Segment notifications are required for exactly once guarantee");
+         };
       }
 
       @Override

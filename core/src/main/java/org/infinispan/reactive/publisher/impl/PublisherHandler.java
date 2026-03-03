@@ -263,6 +263,7 @@ public class PublisherHandler {
       IntSet lostSegments;
       int currentSegment = -1;
       int segmentEntries;
+      boolean trackingSegments;
       // Set to true when the last futureResponse has been set - meaning the next response will be the last
       volatile boolean complete;
 
@@ -275,6 +276,7 @@ public class PublisherHandler {
       }
 
       void startProcessing(InitialPublisherCommand command) {
+         trackingSegments = command.isSegmentNotificationNeeded();
          SegmentAwarePublisherSupplier<Object> sap;
          if (command.isEntryStream()) {
             sap = localPublisherManager.entryPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
@@ -284,8 +286,13 @@ public class PublisherHandler {
                   command.getExplicitFlags(), command.getDeliveryGuarantee(), command.getTransformer());
          }
 
-         Flowable.fromPublisher(sap.publisherWithLostSegments(true))
-               .subscribe(this);
+         if (!command.isSegmentNotificationNeeded()) {
+            Flowable.fromPublisher(sap.publisherWithDelayedSegments())
+                  .subscribe(this);
+         } else {
+            Flowable.fromPublisher(sap.publisherWithLostSegments(true))
+                  .subscribe(this);
+         }
       }
 
       @Override
@@ -343,7 +350,7 @@ public class PublisherHandler {
          }
          int segment = notification.valueSegment();
 
-         assert currentSegment == segment || currentSegment == -1;
+         assert !trackingSegments || currentSegment == segment || currentSegment == -1;
          currentSegment = segment;
          segmentEntries++;
 
@@ -355,7 +362,7 @@ public class PublisherHandler {
       }
 
       public void segmentComplete(int segment) {
-         assert currentSegment == segment || currentSegment == -1;
+         assert !trackingSegments || currentSegment == segment || currentSegment == -1;
 
          if (log.isTraceEnabled()) {
             log.tracef("Completing segment %s for %s", segment, requestId);
@@ -371,7 +378,7 @@ public class PublisherHandler {
       }
 
       public void segmentLost(int segment) {
-         assert currentSegment == segment || currentSegment == -1;
+         assert !trackingSegments || currentSegment == segment || currentSegment == -1;
 
          if (log.isTraceEnabled()) {
             log.tracef("Lost segment %s for %s", segment, requestId);
@@ -634,7 +641,7 @@ public class PublisherHandler {
          }
 
          int segment = notification.valueSegment();
-         assert currentSegment == segment || currentSegment == -1;
+         assert !trackingSegments || currentSegment == segment || currentSegment == -1;
          currentSegment = segment;
          segmentEntries++;
 
