@@ -46,7 +46,7 @@
       <version.maven.gpg>3.2.8</version.maven.gpg>
       <version.maven.javadoc>3.12.0</version.maven.javadoc>
       <version.maven.sonatype.central>0.10.0</version.maven.sonatype.central>
-      <version.maven.spotless>3.2.1</version.maven.spotless>
+      <version.maven.spotless>3.3.0</version.maven.spotless>
    </properties>
 
    <dependencyManagement>
