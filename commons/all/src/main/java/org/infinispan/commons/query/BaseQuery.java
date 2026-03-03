@@ -172,7 +172,8 @@ public abstract class BaseQuery<T> implements Query<T> {
    @Override
    public Query<T> startOffset(long startOffset) {
       if (startOffset < 0) {
-         throw log.startOffsetCannotBeLessThanZero();
+         log.startOffsetCannotBeLessThanZero();
+         startOffset = 0;
       }
       this.startOffset = (int) startOffset;    //todo [anistor] why accept a long if cache size is int?
       resetQuery();
