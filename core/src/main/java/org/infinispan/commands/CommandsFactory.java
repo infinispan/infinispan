@@ -605,7 +605,7 @@ public interface CommandsFactory {
 
    <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(String requestId, DeliveryGuarantee deliveryGuarantee,
                                                                            int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
-                                                                           boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer);
+                                                                           boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer, boolean includeSegmentNotification);
 
    NextPublisherCommand buildNextPublisherCommand(String requestId);
 
