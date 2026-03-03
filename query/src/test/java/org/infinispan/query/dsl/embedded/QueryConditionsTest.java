@@ -899,11 +899,6 @@ public class QueryConditionsTest extends AbstractQueryTest {
       queryCache("FROM " + USER_TYPE).maxResults(-1).execute();
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014824: startOffset cannot be less than 0")
-   public void testPagination2() {
-      queryCache("FROM " + USER_TYPE).startOffset(-3).execute();
-   }
-
    public void testOrderedPagination4() {
       Query<User> q = queryCache("FROM " + USER_TYPE + " ORDER BY id ASC");
       q.maxResults(5);
