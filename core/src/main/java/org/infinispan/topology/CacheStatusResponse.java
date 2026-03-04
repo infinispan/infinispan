@@ -2,6 +2,8 @@ package org.infinispan.topology;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -17,7 +19,7 @@ import org.infinispan.remoting.transport.Address;
 @ProtoTypeId(ProtoStreamTypeIds.CACHE_STATUS_RESPONSE)
 public class CacheStatusResponse implements Serializable {
 
-   private static final CacheStatusResponse EMPTY = new CacheStatusResponse(null, null, null, null, null);
+   private static final CacheStatusResponse EMPTY = new CacheStatusResponse(null, null, null, null, null, null);
 
    @ProtoField(1)
    final CacheJoinInfo cacheJoinInfo;
@@ -34,14 +36,18 @@ public class CacheStatusResponse implements Serializable {
    @ProtoField(5)
    final List<Address> current;
 
+   @ProtoField(6)
+   final Set<UUID> previous;
+
    @ProtoFactory
    public CacheStatusResponse(CacheJoinInfo cacheJoinInfo, CacheTopology cacheTopology, CacheTopology stableTopology,
-                              AvailabilityMode availabilityMode, List<Address> current) {
+                              AvailabilityMode availabilityMode, List<Address> current, Set<UUID> previous) {
       this.cacheJoinInfo = cacheJoinInfo;
       this.cacheTopology = cacheTopology;
       this.stableTopology = stableTopology;
       this.availabilityMode = availabilityMode;
       this.current = current;
+      this.previous = previous;
    }
 
    public static CacheStatusResponse empty() {
@@ -53,7 +59,8 @@ public class CacheStatusResponse implements Serializable {
             && cacheTopology == null
             && stableTopology == null
             && availabilityMode == null
-            && current == null;
+            && current == null
+            && previous == null;
    }
 
    public CacheJoinInfo getCacheJoinInfo() {
@@ -79,12 +86,17 @@ public class CacheStatusResponse implements Serializable {
       return current;
    }
 
+   public Set<UUID> previousMembers() {
+      return previous;
+   }
+
    @Override
    public String toString() {
       return "StatusResponse{" +
             "cacheJoinInfo=" + cacheJoinInfo +
             ", cacheTopology=" + cacheTopology +
             ", stableTopology=" + stableTopology +
+            ", previousMembers=" + previous +
             '}';
    }
 }

@@ -13,10 +13,12 @@ import static org.infinispan.util.logging.events.Messages.MESSAGES;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -43,7 +45,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.PersistedConsistentHash;
+import org.infinispan.distribution.ch.impl.ConsistentHashPersistenceConstants;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -178,7 +180,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       CompletionStage<KeyValuePair<CacheStatusResponse, CacheTopology>> cf = orderOnCache(cacheName, () -> {
          log.debugf("Node %s joining cache %s", transport.getAddress(), cacheName);
          LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm, phm,
-               getNumberMembersFromState(cacheName, joinInfo), gcr.getNamedComponentRegistry(cacheName));
+               getNumberMembersFromState(cacheName), gcr.getNamedComponentRegistry(cacheName));
          LocalCacheStatus previousStatus = runningCaches.put(cacheName, cacheStatus);
          if (previousStatus != null) {
             throw new IllegalStateException("A cache can only join once");
@@ -303,8 +305,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                     viewId, transport.getCoordinator(), cacheStatus, initialStatus)
                    .thenCompose(applied -> {
                       if (!applied) {
-                         throw new IllegalStateException(
-                               "We already had a newer topology by the time we received the join response");
+                         // The node already has this or a newer topology installed.
+                         // This can happen when a recovery join retries after a view change.
+                         log.debugf("Cache %s join response topology already applied, skipping", cacheName);
+                         return CompletableFuture.completedFuture(null);
                       }
 
                       LocalCacheStatus lcs = runningCaches.get(cacheName);
@@ -336,12 +340,40 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       return ct;
    }
 
-   private int getNumberMembersFromState(String cacheName, CacheJoinInfo joinInfo) {
-      Optional<ScopedPersistentState> optional = globalStateManager.readScopedState(cacheName);
-      return optional.map(state -> joinInfo.getConsistentHashFactory()
-                  .fromPersistentState(state, persistentUUIDManager.persistentUUIDToAddress()))
-            .map(PersistedConsistentHash::totalMembers)
-            .orElse(-1);
+   private int getNumberMembersFromState(String cacheName) {
+      Set<UUID> uuids = getMemberUUIDsFromState(cacheName);
+      return uuids != null ? uuids.size() : -1;
+   }
+
+   private Set<UUID> getMemberUUIDsFromState(String cacheName) {
+      Optional<ScopedPersistentState> cacheStateOptional = globalStateManager.readScopedState(cacheName);
+      if (cacheStateOptional.isEmpty())
+         return null;
+
+      ScopedPersistentState state = cacheStateOptional.get();
+      Set<UUID> uuids = new HashSet<>();
+
+      // Main members
+      String membersCount = state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS);
+      if (membersCount != null) {
+         int count = Integer.parseInt(membersCount);
+         for (int i = 0; i < count; i++) {
+            uuids.add(UUID.fromString(state.getProperty(
+                  String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i))));
+         }
+      }
+
+      // Members without entries (replicated caches)
+      String noEntriesCount = state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS_NO_ENTRIES);
+      if (noEntriesCount != null) {
+         int count = Integer.parseInt(noEntriesCount);
+         for (int i = 0; i < count; i++) {
+            uuids.add(UUID.fromString(state.getProperty(
+                  String.format(ConsistentHashPersistenceConstants.STATE_MEMBER_NO_ENTRIES, i))));
+         }
+      }
+
+      return uuids.isEmpty() ? null : uuids;
    }
 
    @Override
@@ -385,7 +417,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                // Ignore caches that haven't finished joining yet.
                // They will either wait for recovery to finish (if started in the current view)
                // or retry (if started in a previous view).
-               if (cacheStatus.getCurrentTopology() == null) {
+               if (cacheStatus.getCurrentTopology() == null || (cacheStatus.getStableTopology() == null && cacheStatus.needRecovery())) {
                   // If the cache has a persistent state, it tries to join again.
                   // The coordinator has cleared the previous information about running caches,
                   // so we need to send a join again for the caches waiting recovery in order to
@@ -397,16 +429,27 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                            .whenComplete((ignore, t) -> {
                               if (t != null) leave(name, getGlobalTimeout());
                            });
+                     // We include this node information about the cache.
+                     // It has a null stable topology. The coordinator will identify that and mark the node as pending recovery.
+                     // This allows the node join later with a state, even if the coordinator is stateless.
+                     caches.put(cacheName, new CacheStatusResponse(cacheStatus.getJoinInfo(),
+                           cacheStatus.getCurrentTopology(),
+                           null,
+                           cacheStatus.getPartitionHandlingManager()
+                                 .getAvailabilityMode(),
+                           cacheStatus.knownMembers(),
+                           getMemberUUIDsFromState(cacheName)));
                   }
                   continue;
                }
 
                caches.put(e.getKey(), new CacheStatusResponse(cacheStatus.getJoinInfo(),
-                                                              cacheStatus.getCurrentTopology(),
-                                                              cacheStatus.getStableTopology(),
-                                                              cacheStatus.getPartitionHandlingManager()
-                                                                         .getAvailabilityMode(),
-                                                              cacheStatus.knownMembers()));
+                     cacheStatus.getCurrentTopology(),
+                     cacheStatus.getStableTopology(),
+                     cacheStatus.getPartitionHandlingManager()
+                           .getAvailabilityMode(),
+                     cacheStatus.knownMembers(),
+                     getMemberUUIDsFromState(cacheName)));
             }
          }
 
@@ -649,8 +692,14 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          if (stableTopology == null || stableTopology.getTopologyId() < newStableTopology.getTopologyId()) {
             log.tracef("Updating stable topology for cache %s: %s", cacheName, newStableTopology);
             cacheStatus.setStableTopology(newStableTopology);
-            if (newStableTopology != null && cacheStatus.getJoinInfo().getPersistentUUID() != null) {
-               // Don't use the current CH state for the next restart
+            if (newStableTopology != null
+                  && cacheStatus.getJoinInfo().getPersistentUUID() != null
+                  && !newStableTopology.wasTopologyRestoredFromState()) {
+               // Don't use the current CH state for the next restart.
+               // We only delete the consistent hash in a subsequent stable topology installation.
+               // The consistent hash is kept in disk until we confirm, in a 2PC-like approach, that all nodes in the topology
+               // received the stable topology.
+               // If the topology was *not* restored, we then just delete it.
                deleteCHState(cacheName);
             }
          }

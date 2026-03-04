@@ -58,7 +58,7 @@ import org.testng.annotations.Test;
 public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    protected static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   private final AtomicInteger viewId = new AtomicInteger(5);
+   protected final AtomicInteger viewId = new AtomicInteger(5);
    protected int numMembersInCluster = 4;
    protected int numberOfOwners = 2;
    protected volatile Partition[] partitions;
@@ -208,35 +208,51 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          channels.add(c);
       }
 
+      public List<JChannel> channels() {
+         return channels;
+      }
+
       public void partition() {
          log.trace("Partition forming");
          disableDiscovery();
-         installNewView();
-         assertPartitionFormed();
+         installNewView(-1, viewId.incrementAndGet());
+         assertPartitionFormed(-1);
          log.trace("New views installed");
+      }
+
+      public void partition(int coordinator) {
+         disableDiscovery();
+         installNewView(coordinator, viewId.get());
+         assertPartitionFormed(coordinator);
       }
 
       private void disableDiscovery() {
          channels.forEach(BasePartitionHandlingTest.this::disableDiscoveryProtocol);
       }
 
-      private void assertPartitionFormed() {
+      private void assertPartitionFormed(int index) {
          final List<Address> viewMembers = new ArrayList<>();
          for (JChannel ac : channels) viewMembers.add(ac.getAddress());
+
+         int i = 0;
          for (JChannel c : channels) {
             List<Address> members = c.getView().getMembers();
-            if (!members.equals(viewMembers)) throw new AssertionError();
+            if (i != index && !members.equals(viewMembers))
+               throw new AssertionError(String.format("Member %s (%d) has view with %s, the full cluster is %s", c.getAddress(), i, members, viewMembers));
+            i++;
          }
       }
 
-      private List<Address> installNewView() {
+      private List<Address> installNewView(int coord, long viewId) {
          final List<Address> viewMembers = new ArrayList<>();
          for (JChannel c : channels) viewMembers.add(c.getAddress());
-         View view = View.create(channels.get(0).getAddress(), viewId.incrementAndGet(),
+         View view = View.create(channels.get(0).getAddress(), viewId,
                                  viewMembers.toArray(new Address[0]));
 
          log.trace("Before installing new view...");
+         int i = 0;
          for (JChannel c : channels) {
+            if (i++ == coord) continue;
             getGms(c).installView(view);
          }
          return viewMembers;
@@ -306,6 +322,36 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          }
       }
 
+      public void discardOtherMembersExceptCoordinator(int coordinatorIndex) {
+         List<Address> outsideMembers = new ArrayList<>();
+         for (Address a : allMembers) {
+            boolean inThisPartition = false;
+            for (JChannel c : channels) {
+               if (c.getAddress().equals(a)) inThisPartition = true;
+            }
+            if (!inThisPartition) outsideMembers.add(a);
+         }
+
+         Address coordinatorAddress = channel(coordinatorIndex).getAddress();
+
+         for (JChannel c : channels) {
+            // Skip coordinator - it should be able to reach everyone
+            if (c.getAddress().equals(coordinatorAddress)) {
+               continue;
+            }
+
+            DISCARD discard = new DISCARD();
+            log.tracef("%s discarding messages from %s", c.getAddress(), outsideMembers);
+            discard.excludeItself(false);
+            for (Address a : outsideMembers) discard.addIgnoreMember(a);
+            try {
+               c.getProtocolStack().insertProtocol(discard, ProtocolStack.Position.ABOVE, TP.class);
+            } catch (Exception e) {
+               throw new RuntimeException(e);
+            }
+         }
+      }
+
       @Override
       public String toString() {
          StringBuilder addresses = new StringBuilder();
@@ -355,7 +401,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          log.trace("Discovery started.");
       }
 
-      private void observeMembers(Partition partition) {
+      public final void observeMembers(Partition partition) {
          for (JChannel c : channels) {
             List<Protocol> protocols = c.getProtocolStack().getProtocols();
             for (Protocol p : protocols) {
@@ -445,7 +491,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
    }
 
-   private GMS getGms(JChannel c) {
+   protected final GMS getGms(JChannel c) {
       return c.getProtocolStack().findProtocol(GMS.class);
    }
 
