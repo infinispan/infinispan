@@ -14,12 +14,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
@@ -83,6 +85,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private volatile Map<Address, Float> capacityFactors;
    // Cache members that have not yet received state. Always included in the members list.
    private volatile List<Address> joiners;
+   // Cache members restoring from graceful shutdown.
+   private volatile Set<UUID> restoredMembers;
    // Persistent state (if it exists)
    private final Optional<ScopedPersistentState> persistentState;
    // Cache topology. Its consistent hashes contain only members that did receive/are receiving state
@@ -148,6 +152,12 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    public void queueRebalance(List<Address> newMembers) {
       acquireLock();
       try {
+         if (isRestoringStableTopology()) {
+            log.debugf("Postponing rebalance for cache %s, waiting for stable topology confirmations from %s",
+                  cacheName, restoredMembers);
+            return;
+         }
+
          if (newMembers != null && !newMembers.isEmpty() && totalCapacityFactors() != 0f) {
             log.debugf("Queueing rebalance for cache %s with members %s", cacheName, newMembers);
             queuedRebalanceMembers = newMembers;
@@ -241,6 +251,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          this.currentTopology = currentTopology;
          this.stableTopology = stableTopology;
          this.availabilityMode = availabilityMode;
+
+         if (isRestoringStableTopology()) {
+            log.debugf("Skipping broadcast after merge for cache %s, it is restoring from persistent state", cacheName);
+            return;
+         }
 
          clusterTopologyManager.broadcastTopologyUpdate(cacheName, currentTopology, availabilityMode);
 
@@ -527,6 +542,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    public void updateCurrentTopology(List<Address> newMembers) {
       acquireLock();
       try {
+         if (isRestoringStableTopology()) {
+            log.debugf("Postponing topology update for cache %s, waiting stable topology install for %s", cacheName, restoredMembers);
+            return;
+         }
          // The current topology might be null just after a joiner became the coordinator
          if (currentTopology == null) {
             createInitialCacheTopology();
@@ -669,7 +688,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          for (Map.Entry<Address, CacheStatusResponse> e : statusResponses.entrySet()) {
             Address sender = e.getKey();
             CacheStatusResponse response = e.getValue();
-            joinInfos.put(sender, response.getCacheJoinInfo());
+            // Include nodes that have completed joining or have persistent state from a graceful shutdown.
+            // Nodes with persistent state need to be in expectedMembers so the coordinator can restore the topology.
+            if (response.getStableTopology() != null || response.getCacheJoinInfo().getPersistentStateChecksum().isPresent())
+               joinInfos.put(sender, response.getCacheJoinInfo());
             if (response.getCacheTopology() != null) {
                currentTopologies.add(response.getCacheTopology());
             }
@@ -681,10 +703,21 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          log.debugf("Recovered %d partition(s) for cache %s: %s", currentTopologies.size(), cacheName, currentTopologies);
          recoverMembers(joinInfos, currentTopologies, stableTopologies);
 
+         // Recreate and flag the cache in case the cache has a graceful shutdown pending.
+         recoverPersistentState(statusResponses);
+
          // TODO Should automatically detect when the coordinator has left and there is only one partition
          // and continue any in-progress rebalance without resetting the cache topology.
 
          availabilityStrategy.onPartitionMerge(this, statusResponses);
+
+         // After merge processing, if all restored members are present, attempt topology restoration.
+         // This handles the case where a coordinator change during graceful shutdown recovery
+         // left some nodes without the restored topology, but all original members are now in the cluster.
+         // This avoids completing the whole join cycle again.
+         if (isRestoringStableTopology() && status == ComponentStatus.INSTANTIATED) {
+            restoreTopologyFromState();
+         }
       } catch (IllegalLifecycleStateException e) {
          // Retrieving the conflict manager fails during shutdown, because internalGetCache checks the manager status
          // Remote invocations also fail if the transport is stopped before recovery finishes
@@ -713,6 +746,54 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (!expectedMembers.contains(e.getKey())) {
             addMember(e.getKey(), e.getValue());
          }
+      }
+   }
+
+   @GuardedBy("lock")
+   private void recoverPersistentState(Map<Address, CacheStatusResponse> statusResponses) {
+      // If none of the nodes has a persistent state set, we can return, there is nothing to restore.
+      if (statusResponses.values().stream().map(CacheStatusResponse::getCacheJoinInfo).allMatch(cji -> cji.getPersistentStateChecksum().isEmpty()))
+         return;
+
+      // Otherwise, we need to calculate which nodes belong to the previous topology.
+      // We might have some different cases:
+      //
+      // 1. Everything runs correctly, the coordinator installs the stable topology in all nodes, and later a coordinator change.
+      // In this case, we consider the cache as recovered, we need to carefully calculate the nodes.
+      // If the coordinator change is caused by the previous coordinator leaving, it won't have a status response in the map.
+      //
+      // 2. There was a problem with the network during the stable topology recovery.
+      // In this case, only *some* of the nodes will have a stable topology. The nodes that do not have a stable topology,
+      // have not received the stable topology from the coordinator. We need to keep the addresses of the nodes which haven't
+      // received the topology until they join the cache.
+      //
+      // 3. There was a problem with the network and this is a partial restore.
+      // If the network was split in multiple partitions (or some nodes have left the cluster), they won't be included in
+      // response maps since they are not reachable. We need to be able to distinguish between a node that successfully
+      // recovered and left, to a node that didn't recovered and left.
+      Set<UUID> members = new HashSet<>();
+      Set<UUID> seenStable = new HashSet<>();
+
+      for (CacheStatusResponse csr : statusResponses.values()) {
+         CacheJoinInfo cji = csr.getCacheJoinInfo();
+         if (cji.getPersistentStateChecksum().isEmpty())
+            continue;
+
+         Set<UUID> previous = csr.previousMembers();
+         if (previous != null && !previous.isEmpty()) {
+            members.addAll(previous);
+         }
+
+         CacheTopology topology = csr.getStableTopology();
+         if (topology != null)
+            seenStable.add(cji.getPersistentUUID());
+      }
+
+      members.removeAll(seenStable);
+
+      if (!members.isEmpty()) {
+         restoredMembers = members;
+         log.debugf("Cache %s has pending members %s to restore stable topology", cacheName, restoredMembers);
       }
    }
 
@@ -749,8 +830,17 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             }
          } else {
             // A joiner with state can not join a cache without a state.
-            if (joinInfo.getPersistentStateChecksum().isPresent()) {
+            // We only allow this in case the nodes were restoring and a partition happened.
+            // A previous participant might have a state and the coordinator don't.
+            if (joinInfo.getPersistentStateChecksum().isPresent() && !isRejoiningFromPersistentState(joinInfo)) {
                throw CLUSTER.nodeWithPersistentStateJoiningClusterWithoutState(joiner, cacheName);
+            }
+
+            // We also validate the case where the coordinator has already installed the stable topology and deleted the state,
+            // but it is still waiting the other nodes confirm the stable topology.
+            // In this case, we delay the joiner same as when the node has the persistent state.
+            if (joinInfo.getPersistentStateChecksum().isEmpty() && isRestoringStableTopology() && !restoredMembers.contains(joinInfo.getPersistentUUID())) {
+               return CacheStatusResponse.empty();
             }
          }
 
@@ -759,14 +849,23 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (!memberJoined) {
             if (log.isTraceEnabled()) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
                                                  "members = %s, joiners = %s, availability = %s", joiner, cacheName, expectedMembers, joiners, availabilityMode);
-            return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, expectedMembers);
+            // Suppress stableTopology only if it has restored=false during recovery, as that would trigger store clearing on the receiving node.
+            // A restored=true stableTopology is safe, it signals data came from persistent state.
+            CacheTopology st = isRestoringStableTopology() && stableTopology != null && !stableTopology.wasTopologyRestoredFromState()
+                  ? null : stableTopology;
+            return new CacheStatusResponse(null, currentTopology, st, availabilityMode, expectedMembers, null);
          }
          final List<Address> current = Collections.unmodifiableList(expectedMembers);
          if (status == ComponentStatus.INSTANTIATED) {
-            if (persistentState.isPresent()) {
+            if (persistentState.isPresent() || isRejoiningFromPersistentState(joinInfo)) {
                if (log.isTraceEnabled()) log.tracef("Node %s joining. Attempting to reform previous cluster", joiner);
                if (restoreTopologyFromState()) {
-                  return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, current);
+                  return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, current, null);
+               }
+
+               // If the cache has a stable topology pending, we return null for now until all missing nodes join again.
+               if (isRestoringStableTopology()) {
+                  return new CacheStatusResponse(null, currentTopology, null, availabilityMode, current, null);
                }
             } else {
                if (isFirstMember) {
@@ -792,10 +891,21 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (topologyBeforeRebalance != null)
             availabilityStrategy.onJoin(this, joiner);
 
-         return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode, current);
+         return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode, current, null);
       } finally {
          releaseLock();
       }
+   }
+
+   /**
+    * Verify whether a joiner is a member missing from the previous topology.
+    *
+    * @param cji The joiner information
+    * @return {@code true} if the joiner UUID is listed as missing. {@code false}, otherwise.
+    */
+   @GuardedBy("lock")
+   private boolean isRejoiningFromPersistentState(CacheJoinInfo cji) {
+      return isRestoringStableTopology() && restoredMembers.contains(cji.getPersistentUUID());
    }
 
    CompletionStage<Void> nodeCanJoinFuture(CacheJoinInfo joinInfo) {
@@ -826,6 +936,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          throw CLUSTER.extraneousMembersJoinRestoredCache(extraneousMembers, cacheName);
       }
       int topologyId = currentTopology == null ? initialTopologyId : currentTopology.getTopologyId() + 1;
+      restoredMembers = new HashSet<>(persistentUUIDManager.mapAddresses(ch.getMembers()));
       CacheTopology initialTopology = new CacheTopology(topologyId, INITIAL_REBALANCE_ID, true, ch, null,
             CacheTopology.Phase.NO_REBALANCE, ch.getMembers(), persistentUUIDManager.mapAddresses(ch.getMembers()));
       return cacheTopologyCreated(initialTopology);
@@ -842,13 +953,58 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    @GuardedBy("lock")
    private boolean restoreTopologyFromState() {
-      assert persistentState.isPresent() : "Persistent state not available";
-      CacheTopology topology = restoreCacheTopology(persistentState.get());
+      assert persistentState.isPresent() || (restoredMembers != null && !restoredMembers.isEmpty()) : "Persistent state not available";
+      CacheTopology topology;
+      // If the persistent state is still present, try restoring from it.
+      if (persistentState.isPresent()) {
+         topology = restoreCacheTopology(persistentState.get());
+      } else {
+         // In case the persistent state was cleaned without completing the stable topology restore.
+         // We restore the topology once all missing nodes join the cluster again.
+         // During this time, all extraneous members will be unable to join.
+         // The list of nodes should include only the previous nodes.
+         topology = restoreMissingMembers();
+      }
+
       if (topology != null) {
          restoreTopologyFromState(topology);
          return true;
       }
       return false;
+   }
+
+   @GuardedBy("lock")
+   private CacheTopology restoreMissingMembers() {
+      if (stableTopology == null || !isRestoringStableTopology())
+         return null;
+
+      Set<UUID> current = expectedMembers.stream()
+            .map(persistentUUIDManager.addressToPersistentUUID())
+            .collect(Collectors.toSet());
+
+      if (!current.containsAll(restoredMembers)) {
+         log.tracef("Cache %s is still missing member exp=%s, curr=%s, rest=%s", cacheName, expectedMembers, current, restoredMembers);
+         return null;
+      }
+
+      List<Address> oldMembers = stableTopology.getMembers();
+      Map<Address, Address> mapper = new HashMap<>();
+      List<Address> remappedMembers = new ArrayList<>(oldMembers.size());
+      for (Address oldAddr : oldMembers) {
+         UUID uuid = persistentUUIDManager.getPersistentUuid(oldAddr);
+         Address newAddr = persistentUUIDManager.getAddress(uuid);
+         mapper.put(oldAddr, newAddr);
+         remappedMembers.add(newAddr);
+      }
+
+      ConsistentHash remappedCH = currentTopology.getCurrentCH().transform(addr -> mapper.getOrDefault(addr, addr));
+      int topologyId = currentTopology.getTopologyId() + 1;
+      CacheTopology topology = new CacheTopology(topologyId, stableTopology.getRebalanceId(), true, remappedCH, null,
+            CacheTopology.Phase.NO_REBALANCE, remappedMembers, stableTopology.getMembersPersistentUUIDs());
+      cacheTopologyCreated(topology);
+      log.debugf("Cache %s restored after missing joins %s", cacheName, topology);
+
+      return topology;
    }
 
    @GuardedBy("lock")
@@ -860,6 +1016,31 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
           topology.getMembers(), topology.getTopologyId()));
       clusterTopologyManager.broadcastTopologyUpdate(cacheName, topology, availabilityMode);
       clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, topology);
+   }
+
+   public void stableTopologyInstallConfirmation(StableTopologyConfirmationCollector.StableTopologyConfirmationResult result) {
+      acquireLock();
+      try {
+         if (result.allNodesConfirmed()) {
+            log.debugf("Cache %s all nodes confirmed installing stable topology %s", cacheName, stableTopology);
+            restoredMembers = null;
+
+            // Phase 2: only update stable topology to trigger state file deletion.
+            // Don't touch currentTopology — preserve the restored CH at id=1.
+            int id = stableTopology.getTopologyId() + 1;
+            CacheTopology commitStable = new CacheTopology(id, stableTopology.getRebalanceId(), false,
+                  stableTopology.getCurrentCH(), null, CacheTopology.Phase.NO_REBALANCE,
+                  stableTopology.getMembers(), stableTopology.getMembersPersistentUUIDs());
+            setStableTopology(commitStable);
+            clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, commitStable);
+            return;
+         }
+
+         restoredMembers = new HashSet<>(persistentUUIDManager.mapAddresses(List.copyOf(result.pending())));
+         log.debugf("Cache %s has unconfirmed nodes %s for stable topology %s", cacheName, restoredMembers, stableTopology);
+      } finally {
+         releaseLock();
+      }
    }
 
    public boolean setCurrentTopologyAsStable(boolean force) {
@@ -942,6 +1123,12 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    public void startQueuedRebalance() {
       acquireLock();
       try {
+         if (isRestoringStableTopology()) {
+            log.debugf("Postponing rebalance for cache %s, waiting for stable topology confirmations from %s",
+                  cacheName, restoredMembers);
+            return;
+         }
+
          // We cannot start rebalance until queued CR is complete
          if (conflictResolution != null) {
             log.tracef("Postponing rebalance for cache %s as conflict resolution is in progress", cacheName);
@@ -1120,6 +1307,21 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    public void forceRebalance() {
       queueRebalance(getCurrentTopology().getMembers());
+   }
+
+   /**
+    * Verify whether stable topology is still restoring.
+    *
+    * <p>
+    * This execution is triggered in case the cluster is recovering from a graceful shutdown procedure. Until the stable
+    * topology is restored, no rebalancing should happen.
+    * </p>
+    *
+    * @return {@code true} if a stable topology is restoring. {@code false}, otherwise.
+    */
+   @GuardedBy("lock")
+   private boolean isRestoringStableTopology() {
+      return restoredMembers != null && !restoredMembers.isEmpty();
    }
 
    public CompletionStage<Void> forceAvailabilityMode(AvailabilityMode newAvailabilityMode) {

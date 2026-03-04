@@ -30,7 +30,7 @@ import org.infinispan.topology.PersistentUUIDManager;
 
 public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest {
 
-   protected static final int DATA_SIZE = 100;
+   protected static int DATA_SIZE = 100;
    protected static final String CACHE_NAME = "testCache";
 
    protected boolean createDefault;
@@ -52,7 +52,7 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
       }
    }
 
-   void createStatefulCacheManager(String id, boolean clear) {
+   protected void createStatefulCacheManager(String id, boolean clear) {
       createStatefulCacheManager(id, clear, true);
    }
 
@@ -98,7 +98,7 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
       }
    }
 
-   void checkData() {
+   protected void checkData() {
       // Ensure that the cache contains the right data
       assertEquals(DATA_SIZE, cache(0, CACHE_NAME).size());
       for (int i = 0; i < DATA_SIZE; i++) {
