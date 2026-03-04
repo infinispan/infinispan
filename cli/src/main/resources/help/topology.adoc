@@ -1,0 +1,42 @@
+TOPOLOGY(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+topology - manages the cluster topology for caches recovering from a graceful shutdown.
+
+
+SYNOPSIS
+--------
+*topology set-stable* ['OPTIONS'] ['CACHE_NAME']
+
+
+DESCRIPTION
+-----------
+After a graceful shutdown, caches remain unavailable until all members from the previous topology rejoin the cluster.
+If some members cannot rejoin, use `topology set-stable` to install the current topology as the new stable topology so the cache becomes operational again.
+
+The command verifies that the number of missing members does not exceed the number of owners configured for the cache.
+If too many members are missing, data loss is likely and the command fails unless the `--force` flag is provided.
+
+
+SET-STABLE OPTIONS
+------------------
+*-f*::
+Forces the topology installation even when the number of missing members exceeds the number of owners. This may result in data loss for segments that have no surviving owner.
+
+
+EXAMPLES
+--------
+`topology set-stable my-cache` +
+Installs the current members as the stable topology for cache `my-cache`. Fails if too many members are missing.
+
+`topology set-stable -f my-cache` +
+Forces the topology installation for cache `my-cache`, even if the number of missing members exceeds the number of owners.
+
+
+SEE ALSO
+--------
+shutdown(1), availability(1)
