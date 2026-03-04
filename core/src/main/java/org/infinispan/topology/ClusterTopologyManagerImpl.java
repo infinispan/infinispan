@@ -382,7 +382,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
                Map<Address, CacheStatusResponse> cacheResponses =
                      responsesByCache.computeIfAbsent(cacheName, k -> new HashMap<>());
                cacheResponses.put(sender, new CacheStatusResponse(info, cacheTopology, stableTopology,
-                                                                  csr.getAvailabilityMode(), csr.joinedMembers()));
+                     csr.getAvailabilityMode(), csr.joinedMembers(), csr.previousMembers()));
             }
          }
          return null;
@@ -683,7 +683,24 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
 
    void broadcastStableTopologyUpdate(String cacheName, CacheTopology cacheTopology) {
       ReplicableCommand command = new TopologyUpdateStableCommand(cacheName, transport.getAddress(), cacheTopology, viewId);
-      helper.executeOnClusterAsync(transport, command);
+      if (!cacheTopology.wasTopologyRestoredFromState()) {
+         helper.executeOnClusterAsync(transport, command);
+         return;
+      }
+
+      // We track the results in case the topology is restoring after a graceful shutdown.
+      // This is necessary to ensure that all nodes install the stable topology, even after network partitions.
+      // Until a response is collected, we assume the stable topology was not installed.
+      ClusterCacheStatus status = cacheStatusMap.get(cacheName);
+      StableTopologyConfirmationCollector collector = new StableTopologyConfirmationCollector(cacheTopology.getMembers());
+      helper.executeOnClusterSync(transport, command, getGlobalTimeout(), collector)
+            .whenComplete((result, t) -> {
+               if (t != null) {
+                  log.errorf(t, "Failed broadcasting stable topology of %s with topology %s", cacheName, cacheTopology);
+               } else {
+                  status.stableTopologyInstallConfirmation(result);
+               }
+            });
    }
 
    @Override
