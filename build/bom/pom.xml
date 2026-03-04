@@ -39,9 +39,8 @@
    <inceptionYear>2009</inceptionYear>
 
    <properties>
-      <versionx.org.infinispan.infinispan-console>16.1.0</versionx.org.infinispan.infinispan-console>
-      <version.protostream>6.0.4</version.protostream>
-
+      <versionx.org.infinispan.infinispan-console>16.1.1</versionx.org.infinispan.infinispan-console>
+      <version.protostream>6.0.6</version.protostream>
       <!-- Maven plugins -->
       <version.maven.gpg>3.2.8</version.maven.gpg>
       <version.maven.javadoc>3.12.0</version.maven.javadoc>
