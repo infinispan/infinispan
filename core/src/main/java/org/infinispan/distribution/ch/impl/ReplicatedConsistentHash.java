@@ -260,6 +260,12 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @Override
+   public ConsistentHash transform(Function<Address, Address> mapper) {
+      List<Address> remappedMembers = members.stream().map(mapper).toList();
+      return new ReplicatedConsistentHash(remappedMembers, capacityFactors, membersWithoutState, primaryOwners);
+   }
+
+   @Override
    public String getRoutingTableAsString() {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < primaryOwners.size(); i++) {

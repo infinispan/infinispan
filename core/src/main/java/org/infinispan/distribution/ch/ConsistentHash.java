@@ -105,6 +105,19 @@ public interface ConsistentHash {
    Set<Integer> getPrimarySegmentsForOwner(Address owner);
 
    /**
+    * Transform this hash into another utilizing the address mapper.
+    *
+    * <p>
+    * This method does not update the mapping of segments. It returns a new consistent hash with the addresses transformed
+    * by the given mapper.
+    * </p>
+    *
+    * @param mapper maps one address to another.
+    * @return A new consistent hash with the addresses remapped.
+    */
+   ConsistentHash transform(Function<Address, Address> mapper);
+
+   /**
     * Returns a string containing all the segments and their associated addresses.
     */
    String getRoutingTableAsString();
