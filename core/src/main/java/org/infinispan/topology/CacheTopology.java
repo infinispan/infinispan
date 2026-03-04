@@ -271,6 +271,7 @@ public class CacheTopology {
             ", unionCH=" + unionCH +
             ", actualMembers=" + actualMembers +
             ", persistentUUIDs=" + persistentUUIDs +
+            ", restored=" + restoredFromState +
             '}';
    }
 
