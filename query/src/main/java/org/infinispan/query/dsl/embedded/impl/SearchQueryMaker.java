@@ -187,32 +187,38 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
                searchAggregation = aggregationFactory.terms()
                      .field(groupByFieldName, projectedType)
                      .value(aggregationFactory.count().documents())
+                     .maxTermCount(maxResults)
                      .toAggregation();
             } else {
                searchAggregation = aggregationFactory.terms()
                      .field(groupByFieldName, projectedType)
                      .value(aggregationFactory.count().field(aggFieldName))
+                     .maxTermCount(maxResults)
                      .toAggregation();
             }
          }
          case SUM -> searchAggregation = aggregationFactory.terms()
                .field(groupByFieldName, projectedType)
                .value(aggregationFactory.sum().field(aggFieldName, Object.class))
+               .maxTermCount(maxResults)
                .toAggregation();
 
          case MAX -> searchAggregation = aggregationFactory.terms()
                .field(groupByFieldName, projectedType)
                .value(aggregationFactory.max().field(aggFieldName, Object.class))
+               .maxTermCount(maxResults)
                .toAggregation();
 
          case MIN -> searchAggregation = aggregationFactory.terms()
                .field(groupByFieldName, projectedType)
                .value(aggregationFactory.min().field(aggFieldName, Object.class))
+               .maxTermCount(maxResults)
                .toAggregation();
 
          case AVG -> searchAggregation = aggregationFactory.terms()
                .field(groupByFieldName, projectedType)
                .value(aggregationFactory.avg().field(aggFieldName, Object.class))
+               .maxTermCount(maxResults)
                .toAggregation();
 
          default ->
