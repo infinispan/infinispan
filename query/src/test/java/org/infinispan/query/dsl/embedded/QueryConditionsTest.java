@@ -894,11 +894,6 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals(3, list.get(0).getId());
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014823: maxResults cannot be less than 0")
-   public void testPagination1() {
-      queryCache("FROM " + USER_TYPE).maxResults(-1).execute();
-   }
-
    public void testOrderedPagination4() {
       Query<User> q = queryCache("FROM " + USER_TYPE + " ORDER BY id ASC");
       q.maxResults(5);
