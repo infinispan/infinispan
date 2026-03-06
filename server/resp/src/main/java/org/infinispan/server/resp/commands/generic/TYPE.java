@@ -30,8 +30,7 @@ public class TYPE extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       byte[] keyBytes = arguments.get(0);
-      MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
-      return handler.stageToReturn(handler.cache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, vmt).getCacheEntryAsync(keyBytes).thenApply(e -> {
+      return handler.stageToReturn(handler.cache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT).getCacheEntryAsync(keyBytes).thenApply(e -> {
          if (e == null) {
             return RespTypes.none.toString();
          }

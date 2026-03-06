@@ -517,6 +517,14 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
       return new TreeSet<>(scoredEntries);
    }
 
+   @Override
+   public String toString() {
+      return "SortedSetBucket{" +
+            "scoredEntries=" + scoredEntries +
+            ", entries=" + entries +
+            '}';
+   }
+
    public long size() {
       return scoredEntries.size();
    }
