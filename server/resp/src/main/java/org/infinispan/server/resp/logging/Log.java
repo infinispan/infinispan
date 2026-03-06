@@ -79,6 +79,6 @@ public interface Log extends BasicLogger {
    void enableTransactionForMultiExec();
 
    @LogMessage(level = WARN)
-   @Message(value = "Failed to load script engine. Script features disabled for RESP")
-   void failedToLoadScriptEngine(@Cause Throwable cause);
+   @Message(value = "Failed to load script engine. Script features disabled for RESP", id = 13012)
+   void failedToLoadScriptEngine();
 }
