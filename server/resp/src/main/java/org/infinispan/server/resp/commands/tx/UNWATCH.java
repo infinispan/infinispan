@@ -46,13 +46,13 @@ public class UNWATCH extends RespCommand implements Resp3Command {
          return CompletableFutures.completedNull();
       }
 
-      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      AggregateCompletionStage<List<WATCH.TxKeysListener>> stage = CompletionStages.aggregateCompletionStage(watchers);
       for (WATCH.TxKeysListener watcher : watchers) {
          metadata.recordWatchedKeys(-watcher.getNumberOfKeys());
          metadata.decrementWatchingClients();
          stage.dependsOn(cache.removeListenerAsync(watcher));
       }
 
-      return stage.freeze().thenApply(ignore -> watchers);
+      return stage.freeze();
    }
 }

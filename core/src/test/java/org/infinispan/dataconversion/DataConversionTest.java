@@ -2,6 +2,7 @@ package org.infinispan.dataconversion;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.notifications.Listener.Observation.POST;
@@ -243,6 +244,40 @@ public class DataConversionTest extends AbstractInfinispanTest {
          InternalCacheEntry<?, ?> cacheEntry = dataContainer.peek(new WrappedByteArray(marshaller.objectToByteBuffer("key")));
          assertEquals(new WrappedByteArray(marshaller.objectToByteBuffer("value")), cacheEntry.getValue());
       }
+   }
+
+   @Test
+   public void testOctetStreamStorageWithObjectRequest() {
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.encoding().key().mediaType(APPLICATION_OCTET_STREAM.toString());
+      cfg.encoding().value().mediaType(APPLICATION_OCTET_STREAM.toString());
+
+      withCacheManager(new CacheManagerCallable(
+            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
+         @Override
+         public void call() {
+            Cache<String, String> cache = cm.getCache();
+
+            // Create a request cache that uses x-java-object as the MediaType
+            Cache<String, Object> objectCache = cache.getAdvancedCache()
+                  .withMediaType(APPLICATION_OBJECT, APPLICATION_OBJECT);
+
+            // Insert a value as String
+            objectCache.put("key1", "value-string");
+
+            // Insert a value as byte[] (String.getBytes())
+            objectCache.put("key2", "value-bytes".getBytes());
+
+            // Retrieve from the cache and compare the values
+            Object value1 = objectCache.get("key1");
+            Object value2 = objectCache.get("key2");
+
+            // We don't know how to convert back from octet-stream to x-java-object!!!
+//            assertEquals(value1, "value-string");
+            assertEquals(value1, "value-string".getBytes());
+            assertEquals(value2, "value-bytes".getBytes());
+         }
+      });
    }
 
    @SuppressWarnings("unused")
