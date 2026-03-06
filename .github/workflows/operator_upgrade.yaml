@@ -57,7 +57,7 @@ jobs:
           cekit -v --descriptor server-openjdk.yaml build --overrides '{'version': '${{ github.sha }}'}' --overrides ${SERVER_OVERRIDE} --dry-run docker
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build Image
         run: |
