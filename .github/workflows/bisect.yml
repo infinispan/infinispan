@@ -40,8 +40,8 @@ jobs:
 
       - name: Run bisection
         run: |
-          cp .github/scripts/bisect.sh $HOME/bisect.sh
-          $HOME/bisect.sh ${{ inputs.goodCommit }} ${{ inputs.mavenModule }} ${{ inputs.testName }} ${{ inputs.badCommit }}
+          cp .github/scripts/bisect.sh "$HOME/bisect.sh"
+          "$HOME/bisect.sh" ${{ inputs.goodCommit }} ${{ inputs.mavenModule }} ${{ inputs.testName }} ${{ inputs.badCommit }}
 
       - name: Upload report
         if: (success() || failure())

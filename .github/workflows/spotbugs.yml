@@ -22,7 +22,7 @@ jobs:
         run: |
           chmod +x .github/scripts/changed-classes.sh
           CLASSES=$(.github/scripts/changed-classes.sh origin/${{ github.event.pull_request.base.ref }} HEAD)
-          echo "classes=$CLASSES" >> $GITHUB_OUTPUT
+          echo "classes=$CLASSES" >> "$GITHUB_OUTPUT"
 
       - name: Skip if no changes
         if: steps.changed.outputs.classes == 'NO_CHANGES'

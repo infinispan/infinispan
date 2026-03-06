@@ -246,7 +246,7 @@ jobs:
       - name: Set run_id based on event type
         id: run_id
         run: |
-           echo "runid=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+           echo "runid=${{ github.event.workflow_run.id }}" >> "$GITHUB_OUTPUT"
 
       - name: Download Rolling Upgrade Artifact
         uses: actions/download-artifact@v8.0.0
@@ -280,7 +280,7 @@ jobs:
           --jq ".jobs[] | select(.name | endswith(\"$JOB_SUFFIX\")) | .conclusion")
           
           echo "Found status: $JOB_STATUS"
-          echo "job_status=$JOB_STATUS" >> $GITHUB_OUTPUT
+          echo "job_status=$JOB_STATUS" >> "$GITHUB_OUTPUT"
 
       - name: Publish Test Report
         if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
@@ -307,14 +307,14 @@ jobs:
         id: read_check_id
         run: |
           CHECK_RUN_ID=$(cat check-run-id.txt)
-          echo "CHECK_RUN_ID=$CHECK_RUN_ID" >> $GITHUB_ENV
+          echo "CHECK_RUN_ID=$CHECK_RUN_ID" >> "$GITHUB_ENV"
 
       - name: Set failure check if Publish Test Report step failed
         if: failure()
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh api repos/${{ github.repository }}/check-runs/${CHECK_RUN_ID} \
+          gh api "repos/${{ github.repository }}/check-runs/${CHECK_RUN_ID}" \
             -H "Accept: application/vnd.github+json" \
             -f status="completed" \
             -f conclusion="failure" \

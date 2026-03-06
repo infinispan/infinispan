@@ -47,7 +47,7 @@ jobs:
         run: |
           unzip -q infinispan-*-src.zip
           SRCROOT=$(find . -maxdepth 1 -type d -name '*src')
-          echo "srcroot=$SRCROOT" >> $GITHUB_OUTPUT
+          echo "srcroot=$SRCROOT" >> "$GITHUB_OUTPUT"
           mv infinispan-server-*.zip "$SRCROOT"/server/image/infinispan-server.zip
 
       - name: Install qemu

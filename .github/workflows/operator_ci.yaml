@@ -39,14 +39,14 @@ jobs:
         id: infinispan
         run: |
           SERVER_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          OPERAND_VERSION=$(echo ${SERVER_VERSION} | cut -d '-' -f 1)
+          OPERAND_VERSION=$(echo "${SERVER_VERSION}" | cut -d '-' -f 1)
           IMAGE="localhost:5001/server:${SERVER_VERSION}"
 
-          ./mvnw install -DskipTests -am -pl server/runtime,server/image -Pimage -Dimage.name=${IMAGE}
-          docker save ${IMAGE} > /tmp/operand-image.tar
+          ./mvnw install -DskipTests -am -pl server/runtime,server/image -Pimage -Dimage.name="${IMAGE}"
+          docker save "${IMAGE}" > /tmp/operand-image.tar
 
-          echo "image=${IMAGE}" >> ${GITHUB_OUTPUT}
-          echo "version=${OPERAND_VERSION}" >> ${GITHUB_OUTPUT}
+          echo "image=${IMAGE}" >> "${GITHUB_OUTPUT}"
+          echo "version=${OPERAND_VERSION}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload
         uses: actions/upload-artifact@v7
