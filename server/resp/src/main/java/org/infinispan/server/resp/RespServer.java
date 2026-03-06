@@ -163,7 +163,8 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          TaskManager taskManager = gcr.getComponent(TaskManager.class);
          taskManager.registerTaskEngine(luaTaskEngine);
       } catch (Exception | LinkageError e) {
-         log.failedToLoadScriptEngine(e);
+         log.failedToLoadScriptEngine();
+         log.debugf(e, "Failed to register script engine for RESP cache");
       }
    }
 
