@@ -183,7 +183,8 @@ public abstract class BaseQuery<T> implements Query<T> {
    @Override
    public Query<T> maxResults(int maxResults) {
       if (maxResults < 0) {
-         throw log.maxResultCannotBeLessThanZero();
+         log.maxResultCannotBeLessThanZero();
+         maxResults = -1;
       }
       this.maxResults = maxResults;
       resetQuery();
