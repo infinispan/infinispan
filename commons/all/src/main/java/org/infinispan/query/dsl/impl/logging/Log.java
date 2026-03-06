@@ -86,8 +86,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Projection can be specified only once", id = 14822)
    IllegalStateException projectionCanBeSpecifiedOnlyOnce();
 
+   @LogMessage(level = DEBUG)
    @Message(value = "maxResults cannot be less than 0", id = 14823)
-   IllegalArgumentException maxResultCannotBeLessThanZero();
+   void maxResultCannotBeLessThanZero();
 
    @LogMessage(level = DEBUG)
    @Message(value = "startOffset cannot be less than 0", id = 14824)
