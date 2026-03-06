@@ -15,6 +15,10 @@ uses the URI of the current CLI connection.
 Benchmarks for Hot Rod URIs connect to the entire cluster. For HTTP and RESP URIs,
 benchmarks connect to a single node only.
 
+You can specify a bookmark name instead of a URI. If the argument does not
+contain `://`, the CLI treats it as a bookmark name and resolves the URI and
+credentials from the stored bookmark.
+
 Benchmarks test performance against an existing cache. Before you run a
 benchmark, you should create a cache with the capabilities you want to measure.
 For example, if you want to evaluate the performance of cross-site replication,
@@ -24,7 +28,7 @@ performance of persistence, create a cache that uses an appropriate cache store.
 
 SYNOPSIS
 --------
-*benchmark* ['OPTIONS'] [`uri`]
+*benchmark* ['OPTIONS'] ['URI' | 'BOOKMARK_NAME']
 
 
 BENCHMARK OPTIONS
@@ -76,3 +80,12 @@ Performs a benchmark test with the Hot Rod protocol against the `largecache` cac
 
 `benchmark --mode=All --threads=20 https://user:password@server:11222` +
 Performs a benchmark test with the HTTPS protocol using 20 threads and includes all modes in the report.
+
+`benchmark prod` +
+Performs a benchmark test using the `prod` bookmark. The URI and credentials
+are loaded from the stored bookmark.
+
+
+SEE ALSO
+--------
+bookmark(1)

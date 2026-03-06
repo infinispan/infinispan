@@ -15,6 +15,7 @@ import org.infinispan.cli.benchmark.HttpBenchmark;
 import org.infinispan.cli.benchmark.RespBenchmark;
 import org.infinispan.cli.completers.BenchmarkModeCompleter;
 import org.infinispan.cli.completers.BenchmarkVerbosityModeCompleter;
+import org.infinispan.cli.completers.BookmarkCompleter;
 import org.infinispan.cli.completers.CacheCompleter;
 import org.infinispan.cli.completers.TimeUnitCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
@@ -33,7 +34,7 @@ import org.openjdk.jmh.runner.options.VerboseMode;
 @MetaInfServices(Command.class)
 @CommandDefinition(name = "benchmark", description = "Benchmarks server performance")
 public class Benchmark extends CliCommand {
-   @Argument(description = "Specifies the URI of the server to benchmark. Supported protocols are http, https, hotrod, hotrods, redis, rediss. If you do not set a protocol, the benchmark uses the URI of the current connection.")
+   @Argument(description = "Specifies the URI of the server to benchmark or a bookmark name. Supported protocols are http, https, hotrod, hotrods, redis, rediss. If you do not set a protocol, the benchmark uses the URI of the current connection.", completer = BookmarkCompleter.class)
    String uri;
 
    @Option(shortName = 't', defaultValue = "10", description = "Specifies the number of threads to create. Defaults to 10.")
@@ -90,6 +91,14 @@ public class Benchmark extends CliCommand {
             throw new IllegalArgumentException("You must specify a URI");
          }
       }
+      // Resolve bookmark if the argument is not a URI
+      if (!this.uri.contains("://")) {
+         Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(invocation, this.uri);
+         if (bookmark == null) {
+            throw new IllegalArgumentException("Bookmark '" + this.uri + "' not found and argument is not a valid URI");
+         }
+         this.uri = embedCredentials(bookmark);
+      }
       URI uri = URI.create(this.uri);
       switch (uri.getScheme()) {
          case "hotrod":
@@ -128,5 +137,30 @@ public class Benchmark extends CliCommand {
       } catch (RunnerException e) {
          throw new CommandException(e);
       }
+   }
+
+   /**
+    * Builds a URI string from a resolved bookmark, embedding credentials in the URI if present.
+    */
+   private static String embedCredentials(Bookmark.ResolvedBookmark bookmark) {
+      if (bookmark.username() == null) {
+         return bookmark.url();
+      }
+      URI base = URI.create(bookmark.url());
+      StringBuilder sb = new StringBuilder();
+      sb.append(base.getScheme()).append("://");
+      sb.append(bookmark.username());
+      if (bookmark.password() != null) {
+         sb.append(':').append(bookmark.password());
+      }
+      sb.append('@');
+      sb.append(base.getHost());
+      if (base.getPort() > 0) {
+         sb.append(':').append(base.getPort());
+      }
+      if (base.getPath() != null && !base.getPath().isEmpty()) {
+         sb.append(base.getPath());
+      }
+      return sb.toString();
    }
 }

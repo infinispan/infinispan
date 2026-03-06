@@ -109,6 +109,7 @@ import org.wildfly.security.keystore.KeyStoreUtil;
             Availability.class,
             Backup.class,
             Benchmark.class,
+            Bookmark.class,
             Cache.class,
             Cas.class,
             Cd.class,

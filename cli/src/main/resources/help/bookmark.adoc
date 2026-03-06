@@ -1,0 +1,97 @@
+BOOKMARK(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+bookmark - manages connection bookmarks for ${infinispan.brand.name} servers.
+
+
+DESCRIPTION
+-----------
+Creates, updates, lists, and removes named bookmarks that store connection
+details for ${infinispan.brand.name} servers. Bookmarks save connection URLs,
+credentials, and SSL/TLS settings so you can connect to servers by name
+instead of specifying full connection strings.
+
+Non-sensitive properties (URL, username, truststore and keystore paths) are
+stored in a `bookmarks.properties` file. Sensitive properties (passwords)
+are stored in a PKCS12 credential store (`bookmarks.pfx`) protected by a
+master password that is prompted interactively.
+
+You can use bookmark names with the `connect` command instead of URLs.
+
+
+SYNOPSIS
+--------
+*bookmark set* 'NAME' [-u 'URL'] ['OPTIONS']
+
+*bookmark ls*
+
+*bookmark get* 'NAME'
+
+*bookmark remove* 'NAME'
+
+
+BOOKMARK SET OPTIONS
+--------------------
+*-u, --url*='URL'::
+The connection URL for the server. Supported protocols are `http`, `https`,
+`hotrod`, and `hotrods`. If omitted and the CLI is connected to a server,
+the URL, username, and SSL/TLS settings are inferred from the current
+connection.
+
+*--username*='USERNAME'::
+The username for authentication.
+
+*--password*='PASSWORD'::
+The password for authentication. Stored in the credential store.
+
+*--truststore*='PATH'::
+The path to a truststore file for SSL/TLS connections.
+
+*--truststore-password*='PASSWORD'::
+The password for the truststore. Stored in the credential store.
+
+*--keystore*='PATH'::
+The path to a keystore file containing a client certificate.
+
+*--keystore-password*='PASSWORD'::
+The password for the keystore. Stored in the credential store.
+
+
+EXAMPLES
+--------
+`bookmark set prod -u https://prod-server:11222 --username admin --password secret` +
+Creates a bookmark named `prod` with a URL and credentials.
+
+`bookmark set local -u hotrod://localhost:11222` +
+Creates a bookmark named `local` for a Hot Rod connection without credentials.
+
+`bookmark set secure -u https://server:11222 --truststore /path/to/truststore.pfx --truststore-password changeme` +
+Creates a bookmark with SSL/TLS truststore settings.
+
+`bookmark set myserver` +
+When connected to a server, creates a bookmark named `myserver` using the
+URL, username, and SSL/TLS settings from the current connection.
+
+`bookmark ls` +
+Lists all defined bookmarks.
+
+`bookmark get prod` +
+Shows the details of the `prod` bookmark. Passwords are masked.
+
+`bookmark remove prod` +
+Removes the `prod` bookmark and its stored credentials.
+
+`connect prod` +
+Connects to the server using the `prod` bookmark.
+
+`connect prod -u otheruser` +
+Connects using the `prod` bookmark but overrides the username.
+
+
+SEE ALSO
+--------
+connect(1), credentials(1)

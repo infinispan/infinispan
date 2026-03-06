@@ -21,7 +21,6 @@ public class SslConfiguration {
    private final String keyAlias;
    private final SSLContext sslContext;
    private final String trustStoreFileName;
-   private final String trustStorePath;
    private final String trustStoreType;
    private final char[] trustStorePassword;
    private final String sniHostName;
@@ -33,7 +32,7 @@ public class SslConfiguration {
 
    SslConfiguration(boolean enabled, String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias,
                     SSLContext sslContext, TrustManager[] trustManagers, HostnameVerifier hostnameVerifier,
-                    String trustStoreFileName, String trustStorePath, String trustStoreType, char[] trustStorePassword, String sniHostName, String protocol,
+                    String trustStoreFileName, String trustStoreType, char[] trustStorePassword, String sniHostName, String protocol,
                     String provider) {
       this.enabled = enabled;
       this.keyStoreFileName = keyStoreFileName;
@@ -45,7 +44,6 @@ public class SslConfiguration {
       this.hostnameVerifier = hostnameVerifier;
       this.trustManagers = trustManagers;
       this.trustStoreFileName = trustStoreFileName;
-      this.trustStorePath = trustStorePath;
       this.trustStoreType = trustStoreType;
       this.trustStorePassword = trustStorePassword;
       this.sniHostName = sniHostName;
@@ -91,10 +89,6 @@ public class SslConfiguration {
 
    public String trustStoreFileName() {
       return trustStoreFileName;
-   }
-
-   public String trustStorePath() {
-      return trustStorePath;
    }
 
    public String trustStoreType() {
