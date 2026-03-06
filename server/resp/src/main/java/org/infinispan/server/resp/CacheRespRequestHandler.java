@@ -9,19 +9,24 @@ public class CacheRespRequestHandler extends RespRequestHandler {
    protected CacheRespRequestHandler(RespServer respServer, AdvancedCache<byte[], byte[]> cache) {
       super(respServer);
       if (cache != null)
-         setCache(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
+         setCache(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT));
    }
 
    public AdvancedCache<byte[], byte[]> cache() {
       if (cache == null)
-         setCache(respServer().getCache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
+         setCache(respServer().getCache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT));
       return cache;
    }
 
    @SuppressWarnings("unchecked")
    public <V> AdvancedCache<byte[], V> typedCache(MediaType valueMediaType) {
       AdvancedCache<byte[], ?> c = cache;
-      if (cache.getValueDataConversion().getRequestMediaType().match(valueMediaType)) {
+      MediaType cacheMediatype = cache.getValueDataConversion().getRequestMediaType();
+      if (cacheMediatype == null) {
+        if (valueMediaType == null) {
+           return (AdvancedCache<byte[], V>) c;
+        }
+      } else if (cacheMediatype == valueMediaType) {
          return (AdvancedCache<byte[], V>) c;
       }
 

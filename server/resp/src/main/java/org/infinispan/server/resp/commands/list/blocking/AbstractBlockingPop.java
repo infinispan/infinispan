@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.encoding.DataConversion;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.multimap.impl.ListBucket;
 import org.infinispan.notifications.Listener;
@@ -24,7 +24,6 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.filter.EventListenerConverter;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.meta.ClientMetadata;
@@ -83,16 +82,14 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       if (log.isTraceEnabled()) {
          log.tracef("Subscriber for keys: " + configuration.keys());
       }
-      AdvancedCache<byte[], Object> cache = handler.typedCache(null);
-      DataConversion vc = cache.getValueDataConversion();
+      AdvancedCache<byte[], ListBucket<byte[]>> cache = handler.typedCache(MediaType.APPLICATION_OBJECT.withClassType(ListBucket.class));
       PubSubListener pubSubListener = new PubSubListener(handler, cache, configuration);
       EventListenerKeysFilter filter = new EventListenerKeysFilter(configuration.keys().stream());
       // Record the deadline before listener installation, which may take time in clustered environments.
       // The timeout should be relative to when the command was issued, not when the listener is fully installed.
       long timeout = configuration.timeout();
       long deadline = timeout > 0 ? handler.respServer().getTimeService().expectedEndTime(timeout, TimeUnit.MILLISECONDS) : 0;
-      CompletionStage<Void> addListenerStage = cache.addListenerAsync(pubSubListener, filter,
-            new EventListenerConverter<Object, Object, byte[]>(vc));
+      CompletionStage<Void> addListenerStage = cache.addListenerAsync(pubSubListener, filter, null);
       addListenerStage.whenComplete((ignore, t) -> {
          // If listener fails to install, complete exceptionally pubSubFuture and return
          if (t != null) {
@@ -155,12 +152,12 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
 
    @Listener(clustered = true)
    public static class PubSubListener {
-      private final AdvancedCache<byte[], Object> cache;
+      private final AdvancedCache<byte[], ListBucket<byte[]>> cache;
       private volatile ScheduledFuture<?> scheduledTimer;
       private final Resp3Handler handler;
       private final PollListenerSynchronizer synchronizer;
 
-      private PubSubListener(Resp3Handler handler, AdvancedCache<byte[], Object> cache, PopConfiguration configuration) {
+      private PubSubListener(Resp3Handler handler, AdvancedCache<byte[], ListBucket<byte[]>> cache, PopConfiguration configuration) {
          this.cache = cache;
          this.handler = handler;
          this.synchronizer = new PollListenerSynchronizer(handler.getListMultimap(), configuration);
@@ -191,12 +188,10 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
 
       @CacheEntryCreated
       @CacheEntryModified
-      public void onEvent(CacheEntryEvent<Object, Object> entryEvent) {
+      public void onEvent(CacheEntryEvent<Object, ListBucket<byte[]>> entryEvent) {
          try {
-            if (entryEvent.getValue() instanceof ListBucket) {
-               byte[] key = unwrapKey(entryEvent.getKey());
-               synchronizer.onEvent(key);
-            }
+            byte[] key = unwrapKey(entryEvent.getKey());
+            synchronizer.onEvent(key);
          } catch (Exception ex) {
             synchronizer.resultFuture.completeExceptionally(ex);
          }

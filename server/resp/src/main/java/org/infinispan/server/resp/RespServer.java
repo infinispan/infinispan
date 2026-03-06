@@ -56,7 +56,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    public static final MediaType RESP_KEY_MEDIA_TYPE = MediaType.APPLICATION_OCTET_STREAM;
    private Configuration defaultCacheConfiguration;
    private MetadataRepository metadataRepository;
-   private MediaType configuredValueType = MediaType.APPLICATION_OCTET_STREAM;
+   private MediaType configuredValueType = MediaType.APPLICATION_OBJECT;
    private DefaultIterationManager iterationManager;
    private ExternalSourceIterationManager dataStructureIterationManager;
    private TimeService timeService;
@@ -212,7 +212,8 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    public AdvancedCache<byte[], byte[]> getCache() {
       if (!isDefaultCacheRunning())
          throw new IllegalStateException("Cache is not initialized");
-      return cacheManager.<byte[], byte[]>getCache(configuration.defaultCacheName()).getAdvancedCache();
+      return cacheManager.<byte[], byte[]>getCache(configuration.defaultCacheName()).getAdvancedCache()
+            .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT);
    }
 
    public Resp3Handler newHandler(AdvancedCache<byte[], byte[]> cache) {
