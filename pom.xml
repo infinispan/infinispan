@@ -46,6 +46,7 @@
       <module>build/logging-annotations</module>
       <module>build/logging-processor</module>
       <module>testing</module>
+      <module>build/schema-tools</module>
       <module>api</module>
       <module>commons</module>
       <module>build/infinispan-defaults-maven-plugin</module>
@@ -949,6 +950,13 @@
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-logging-processor</artifactId>
+            <version>${version.infinispan}</version>
+            <!-- compile-only dependency -->
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-schema-tools</artifactId>
             <version>${version.infinispan}</version>
             <!-- compile-only dependency -->
             <scope>provided</scope>

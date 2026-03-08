@@ -1,0 +1,187 @@
+{
+  "$id": "https://infinispan.org/infinispan-cachestore-sql-config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infinispan SQL Cache Store Configuration",
+  "description": "SQL cache store configuration for Infinispan.",
+  "type": "object",
+  "properties": {
+    "table-jdbc-store": {
+      "$ref": "#/$defs/TableJdbcStore"
+    },
+    "query-jdbc-store": {
+      "$ref": "#/$defs/QueryJdbcStore"
+    }
+  },
+  "$defs": {
+    "AbstractSqlStore": {
+      "type": "object",
+      "description": "Abstract SQL store that extends the JDBC common store.",
+      "allOf": [
+        {
+          "$ref": "https://infinispan.org/infinispan-cachestore-jdbc-common-config#/$defs/AbstractJdbcStore"
+        }
+      ],
+      "properties": {
+        "dialect": true,
+        "db-major-version": true,
+        "db-minor-version": true,
+        "read-query-timeout": true,
+        "write-query-timeout": true,
+        "connection-pool": true,
+        "data-source": true,
+        "cdi-data-source": true,
+        "simple-connection": true,
+        "shared": true,
+        "preload": true,
+        "purge": true,
+        "read-only": true,
+        "write-only": true,
+        "transactional": true,
+        "max-batch-size": true,
+        "segmented": true,
+        "write-behind": true,
+        "properties": true,
+        "schema": {
+          "$ref": "#/$defs/Schema"
+        }
+      }
+    },
+    "TableJdbcStore": {
+      "type": "object",
+      "description": "Defines a table-based SQL cache store. The SQL cache store automatically generates statements based on the database dialect to perform all operations.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/AbstractSqlStore"
+        }
+      ],
+      "properties": {
+        "dialect": true,
+        "db-major-version": true,
+        "db-minor-version": true,
+        "read-query-timeout": true,
+        "write-query-timeout": true,
+        "connection-pool": true,
+        "data-source": true,
+        "cdi-data-source": true,
+        "simple-connection": true,
+        "shared": true,
+        "preload": true,
+        "purge": true,
+        "read-only": true,
+        "write-only": true,
+        "transactional": true,
+        "max-batch-size": true,
+        "segmented": true,
+        "write-behind": true,
+        "properties": true,
+        "schema": true,
+        "table-name": {
+          "type": "string",
+          "description": "Specifies a database table that loads entries to the cache and stores data from the cache."
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "QueryJdbcStore": {
+      "type": "object",
+      "description": "Defines a query-based SQL cache store with custom SQL queries for all operations.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/AbstractSqlStore"
+        }
+      ],
+      "properties": {
+        "dialect": true,
+        "db-major-version": true,
+        "db-minor-version": true,
+        "read-query-timeout": true,
+        "write-query-timeout": true,
+        "connection-pool": true,
+        "data-source": true,
+        "cdi-data-source": true,
+        "simple-connection": true,
+        "shared": true,
+        "preload": true,
+        "purge": true,
+        "read-only": true,
+        "write-only": true,
+        "transactional": true,
+        "max-batch-size": true,
+        "segmented": true,
+        "write-behind": true,
+        "properties": true,
+        "schema": true,
+        "key-columns": {
+          "type": "string",
+          "description": "Specifies the columns from the database table that correspond to key(s). Use commas to separate multiple columns."
+        },
+        "queries": {
+          "$ref": "#/$defs/Queries"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Schema": {
+      "type": "object",
+      "description": "Defines the Protobuf schema mapping for the SQL cache store.",
+      "properties": {
+        "message-name": {
+          "type": "string",
+          "description": "Specifies the Protobuf message name to use for the value of the cache entry."
+        },
+        "key-message-name": {
+          "type": "string",
+          "description": "Specifies the Protobuf message name to use for the key of the cache entry."
+        },
+        "package": {
+          "type": "string",
+          "description": "Specifies the package for key and value message names."
+        },
+        "embedded-key": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Specifies if key field(s) are also part of the value schema."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Queries": {
+      "type": "object",
+      "description": "Defines custom SQL queries for the query-based SQL cache store.",
+      "properties": {
+        "select-all": {
+          "type": "string",
+          "description": "Defines a SQL query that bulk loads cache entries from a database."
+        },
+        "select-single": {
+          "type": "string",
+          "description": "Defines a SQL query that loads cache entries from a database."
+        },
+        "delete-all": {
+          "type": "string",
+          "description": "Defines a SQL query to clear the cache."
+        },
+        "delete-single": {
+          "type": "string",
+          "description": "Defines a SQL query to delete specific entries from the cache."
+        },
+        "upsert": {
+          "type": "string",
+          "description": "Defines a SQL query to modify entries in the cache."
+        },
+        "size": {
+          "type": "string",
+          "description": "Defines a SQL query to count the number of entries in the cache."
+        }
+      },
+      "required": [
+        "select-all",
+        "select-single",
+        "size"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

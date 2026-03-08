@@ -1,0 +1,176 @@
+{
+  "$id": "https://infinispan.org/infinispan-cachestore-jdbc-config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infinispan JDBC Cache Store Configuration",
+  "description": "String-keyed JDBC cache store configuration for Infinispan.",
+  "type": "object",
+  "properties": {
+    "string-keyed-jdbc-store": {
+      "$ref": "#/$defs/StringKeyedJdbcStore"
+    }
+  },
+  "$defs": {
+    "StringKeyedJdbcStore": {
+      "type": "object",
+      "description": "Defines a JDBC string-keyed cache store.",
+      "allOf": [
+        {
+          "$ref": "https://infinispan.org/infinispan-cachestore-jdbc-common-config#/$defs/AbstractJdbcStore"
+        }
+      ],
+      "properties": {
+        "dialect": true,
+        "db-major-version": true,
+        "db-minor-version": true,
+        "read-query-timeout": true,
+        "write-query-timeout": true,
+        "connection-pool": true,
+        "data-source": true,
+        "cdi-data-source": true,
+        "simple-connection": true,
+        "shared": true,
+        "preload": true,
+        "purge": true,
+        "read-only": true,
+        "write-only": true,
+        "transactional": true,
+        "max-batch-size": true,
+        "segmented": true,
+        "write-behind": true,
+        "properties": true,
+        "key-to-string-mapper": {
+          "type": "string",
+          "description": "The class name of a Key2StringMapper to use for mapping keys to strings suitable for storage in a database table."
+        },
+        "string-keyed-table": {
+          "$ref": "#/$defs/StringKeyedTable"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "StringKeyedTable": {
+      "type": "object",
+      "description": "Defines the table used to store cache entries.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/Table"
+        }
+      ],
+      "properties": {
+        "fetch-size": true,
+        "batch-size": true,
+        "create-on-start": true,
+        "drop-on-exit": true,
+        "id-column": true,
+        "data-column": true,
+        "timestamp-column": true,
+        "segment-column": true,
+        "prefix": {
+          "type": "string",
+          "description": "Defines the prefix prepended to the cache name used when composing the name of the cache entry table."
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Table": {
+      "type": "object",
+      "description": "Base table configuration for JDBC stores.",
+      "properties": {
+        "fetch-size": {
+          "type": "string",
+          "description": "The fetch size used when querying from this table. Used to avoid heap memory exhaustion when query is large."
+        },
+        "batch-size": {
+          "type": "string",
+          "description": "The statement batch size used when modifying this table."
+        },
+        "create-on-start": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Determines whether database tables should be created by the store on startup."
+        },
+        "drop-on-exit": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Determines whether database tables should be dropped by the store on shutdown."
+        },
+        "id-column": {
+          "$ref": "#/$defs/IdColumn"
+        },
+        "data-column": {
+          "$ref": "#/$defs/DataColumn"
+        },
+        "timestamp-column": {
+          "$ref": "#/$defs/TimestampColumn"
+        },
+        "segment-column": {
+          "$ref": "#/$defs/SegmentColumn"
+        }
+      }
+    },
+    "IdColumn": {
+      "type": "object",
+      "description": "Defines the column in which to store the cache key or bucket id.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the column used to store the cache key or bucket id."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the column used to store the cache key or bucket id."
+        }
+      },
+      "additionalProperties": false
+    },
+    "DataColumn": {
+      "type": "object",
+      "description": "Defines the column in which to store the cache entry or bucket.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the column used to store the cache entry or bucket."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the column used to store the cache entry or bucket."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TimestampColumn": {
+      "type": "object",
+      "description": "Defines the column in which to store the timestamp of the cache entry or bucket.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the column used to store the cache entry or bucket timestamp."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the column used to store the cache entry or bucket timestamp."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SegmentColumn": {
+      "type": "object",
+      "description": "Defines the column in which to store the segment number.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the column used to store the segment number."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the column used to store the segment number."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
