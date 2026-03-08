@@ -35,7 +35,6 @@ public class RestClientConfigurationProperties {
    public static final String KEY_ALIAS = ICR + "key_alias";
    public static final String KEY_STORE_CERTIFICATE_PASSWORD = ICR + "key_store_certificate_password";
    public static final String TRUST_STORE_FILE_NAME = ICR + "trust_store_file_name";
-   public static final String TRUST_STORE_PATH = ICR + "trust_store_path";
    public static final String TRUST_STORE_TYPE = ICR + "trust_store_type";
    public static final String TRUST_STORE_PASSWORD = ICR + "trust_store_password";
    public static final String SSL_PROTOCOL = ICR + "ssl_protocol";
@@ -188,14 +187,6 @@ public class RestClientConfigurationProperties {
 
    public void setTrustStorePassword(String trustStorePassword) {
       props.setProperty(TRUST_STORE_PASSWORD, trustStorePassword);
-   }
-
-   public String getTrustStorePath() {
-      return props.getProperty(TRUST_STORE_PATH);
-   }
-
-   public void setTrustStorePath(String trustStorePath) {
-      props.setProperty(TRUST_STORE_PATH, trustStorePath);
    }
 
    public String getSSLProtocol() {

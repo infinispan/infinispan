@@ -84,7 +84,6 @@ public class CustomPropertiesTest {
       assertThat(configuration.security().ssl().keyStorePassword()).hasSize(6);
       assertThat(configuration.security().ssl().keyAlias()).isEqualTo("aliaskey");
       assertThat(configuration.security().ssl().trustStoreFileName()).isEqualTo("classpath:trustFileName.pfx");
-      assertThat(configuration.security().ssl().trustStorePath()).isNull();
       assertThat(configuration.security().ssl().trustStoreType()).isEqualTo("PKCS12");
       assertThat(configuration.security().ssl().trustStorePassword().length).isEqualTo(6);
       assertThat(configuration.security().ssl().sniHostName()).isEqualTo("oihost");

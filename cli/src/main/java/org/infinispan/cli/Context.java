@@ -24,7 +24,7 @@ import org.infinispan.commons.dataconversion.MediaType;
  * @since 5.2
  */
 public interface Context extends AeshContext {
-   Path getConfigPath();
+   Path configPath();
 
    boolean isConnected();
 
@@ -38,7 +38,7 @@ public interface Context extends AeshContext {
 
    String getProperty(Property property, String defaultValue);
 
-   Properties getProperties();
+   Properties properties();
 
    void resetProperties();
 
@@ -71,7 +71,7 @@ public interface Context extends AeshContext {
     *
     * @return
     */
-   Connection getConnection();
+   Connection connection();
 
    /**
     * Disconnects from the server

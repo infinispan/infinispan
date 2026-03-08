@@ -30,7 +30,7 @@ public class Version extends CliCommand {
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       invocation.println(String.format("CLI: %s", org.infinispan.commons.util.Version.printVersion()));
       if (invocation.getContext().isConnected()) {
-         invocation.println("Server: " + invocation.getContext().getConnection().getServerVersion());
+         invocation.println("Server: " + invocation.getContext().connection().getServerVersion());
       }
       if (invocation.getContext() instanceof KubernetesContext) {
          KubernetesClient client = ((KubernetesContext) invocation.getContext()).getKubernetesClient();

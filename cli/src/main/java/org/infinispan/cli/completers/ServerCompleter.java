@@ -12,6 +12,6 @@ import org.infinispan.cli.Context;
 public class ServerCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) throws IOException {
-      return context.getConnection().getAvailableServers();
+      return context.connection().getAvailableServers();
    }
 }

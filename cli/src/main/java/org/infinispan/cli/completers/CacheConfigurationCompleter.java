@@ -11,6 +11,6 @@ import org.infinispan.cli.Context;
 public class CacheConfigurationCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) {
-      return context.getConnection().getAvailableCacheConfigurations();
+      return context.connection().getAvailableCacheConfigurations();
    }
 }

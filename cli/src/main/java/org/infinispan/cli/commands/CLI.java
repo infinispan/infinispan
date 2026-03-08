@@ -46,6 +46,7 @@ import org.aesh.command.settings.SettingsBuilder;
 import org.aesh.command.shell.Shell;
 import org.aesh.command.validator.ValidatorInvocation;
 import org.aesh.console.ReadlineConsole;
+import org.aesh.io.FileResource;
 import org.aesh.io.Resource;
 import org.aesh.readline.CompositeSuggestionProvider;
 import org.infinispan.cli.Context;
@@ -117,6 +118,7 @@ import org.wildfly.security.keystore.KeyStoreUtil;
             Availability.class,
             Backup.class,
             Benchmark.class,
+            Bookmark.class,
             Cache.class,
             Cas.class,
             Cd.class,
@@ -186,7 +188,7 @@ public class CLI extends CliCommand {
    @OptionList(completer = FileOptionCompleter.class, shortName = 'f', description = "File for batch mode (can be specified more than once)")
    List<String> file;
 
-   @Option(shortName = 'c', description = "A connection URL. Use '-' to connect to http://localhost:11222")
+   @Option(shortName = 'c', description = "A connection URL or a bookmark name. Use '-' to connect to http://localhost:11222")
    String connect;
 
    @Option(shortName = 'P', description = "Sets system properties from the specified file.")
@@ -230,14 +232,14 @@ public class CLI extends CliCommand {
       context = invocation.getContext();
 
       if (propertyMap != null) {
-         propertyMap.forEach(context.getProperties()::putIfAbsent);
+         propertyMap.forEach(context.properties()::putIfAbsent);
       }
 
       if (properties != null) {
          try (Reader r = Files.newBufferedReader(Paths.get(properties))) {
             Properties loaded = new Properties();
             loaded.load(r);
-            loaded.forEach(context.getProperties()::putIfAbsent);
+            loaded.forEach(context.properties()::putIfAbsent);
          } catch (IOException e) {
             throw new IllegalArgumentException(e);
          }
@@ -253,7 +255,32 @@ public class CLI extends CliCommand {
       String connectionString = connect != null ? connect : context.getProperty(Context.Property.AUTOCONNECT_URL);
 
       if (connectionString != null) {
-         context.connect(null, connectionString);
+         // If it doesn't look like a URL, try to resolve it as a bookmark
+         if (!connectionString.contains("://")) {
+            try {
+               Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(invocation, connectionString);
+               if (bookmark != null) {
+                  // Reconfigure SSL if the bookmark has SSL settings
+                  Resource bmTruststore = bookmark.truststore() != null ? new FileResource(Paths.get(bookmark.truststore()).toFile()) : null;
+                  Resource bmKeystore = bookmark.keystore() != null ? new FileResource(Paths.get(bookmark.keystore()).toFile()) : null;
+                  if (bmTruststore != null || bmKeystore != null || bookmark.trustAll()) {
+                     configureSslContext(context, bmTruststore, bookmark.truststorePassword(), bmKeystore, bookmark.keystorePassword(), provider, bookmark.hostnameVerifier(), bookmark.trustAll());
+                  }
+                  if (bookmark.username() != null) {
+                     context.connect(null, bookmark.url(), bookmark.username(), bookmark.password());
+                  } else {
+                     context.connect(null, bookmark.url());
+                  }
+                  connectionString = null; // already connected
+               }
+            } catch (Exception e) {
+               invocation.getShell().writeln(Messages.MSG.keyStoreError(e));
+               return CommandResult.FAILURE;
+            }
+         }
+         if (connectionString != null) {
+            context.connect(null, connectionString);
+         }
       }
 
       if (file != null) {
@@ -332,7 +359,7 @@ public class CLI extends CliCommand {
       context.setRegistry(commandRegistry);
       CliAliasManager aliasManager;
       try {
-         aliasManager = new CliAliasManager(context.getConfigPath().resolve("aliases").toFile(), true, commandRegistry);
+         aliasManager = new CliAliasManager(context.configPath().resolve("aliases").toFile(), true, commandRegistry);
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
@@ -340,7 +367,7 @@ public class CLI extends CliCommand {
       settings
             .enableAlias(true)
             .aliasManager(aliasManager)
-            .historyFile(context.getConfigPath().resolve("history").toFile())
+            .historyFile(context.configPath().resolve("history").toFile())
             .outputStream(System.out)
             .outputStreamError(System.err)
             .inputStream(System.in)
@@ -351,8 +378,8 @@ public class CLI extends CliCommand {
             .commandRegistry(commandRegistry)
             .aeshContext(context)
             .quitHandler(new ContextAwareQuitHandler(context));
-      if (Files.exists(context.getConfigPath().resolve("inputrc"))) {
-         settings.inputrc(context.getConfigPath().resolve("inputrc").toFile());
+      if (Files.exists(context.configPath().resolve("inputrc"))) {
+         settings.inputrc(context.configPath().resolve("inputrc").toFile());
       }
 
       if (shell instanceof AeshDelegatingShell) {
