@@ -96,6 +96,13 @@ public class GlobalConfiguration {
    }
 
    /**
+    * @return The {@link GlobalMemoryMonitorConfiguration} for the memory monitor.
+    */
+   public GlobalMemoryMonitorConfiguration memoryMonitor() {
+      return cacheContainerConfiguration.memoryMonitor();
+   }
+
+   /**
     * @return The {@link GlobalMetricsConfiguration} for the global metrics.
     */
    public GlobalMetricsConfiguration metrics() {
