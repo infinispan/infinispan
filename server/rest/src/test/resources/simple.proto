@@ -1,0 +1,12 @@
+package org.infinispan.rest.search.simple;
+
+/**
+ * @Indexed
+ */
+message Simple {
+
+   /**
+    * @Basic(projectable = true)
+    */
+   required string name = 1;
+}

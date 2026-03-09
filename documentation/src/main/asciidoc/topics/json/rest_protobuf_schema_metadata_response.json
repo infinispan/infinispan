@@ -1,0 +1,6 @@
+{
+  "name" : "users.proto",
+  "content" : "// Protobuf schema content",
+  "caches" : [ "indexedCache1" ],
+  "error" : null
+}
