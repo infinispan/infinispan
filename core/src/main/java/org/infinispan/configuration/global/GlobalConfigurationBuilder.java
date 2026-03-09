@@ -76,6 +76,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    @Override
+   public GlobalMemoryMonitorConfigurationBuilder memoryMonitor() {
+      return cacheContainerConfiguration.memoryMonitor();
+   }
+
+   @Override
    public GlobalMetricsConfigurationBuilder metrics() {
       return cacheContainerConfiguration.metrics();
    }

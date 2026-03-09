@@ -1,0 +1,77 @@
+[id='memory-monitor_{context}']
+= Memory monitor
+
+{brandname} includes a memory monitor that tracks JVM memory usage and garbage collection activity.
+When thresholds are exceeded, {brandname} can protect the system by rejecting memory-intensive operations such as sorted non-indexed queries that load all results into memory.
+
+The memory monitor tracks three conditions:
+
+Memory threshold::
+Alerts when old generation heap usage exceeds a configured percentage of the maximum heap.
+The alert auto-clears after a garbage collection if memory usage drops back below the threshold.
+
+GC duration threshold::
+Alerts when a single garbage collection pause exceeds a configured duration in milliseconds.
+
+GC pressure::
+Alerts when the ratio of time spent in garbage collection over a rolling time window exceeds a configured percentage.
+The alert auto-clears when GC pressure drops below the threshold.
+
+[discrete]
+== XML configuration
+
+Add the `memory-monitor` element to the `cache-container` in your {brandname} configuration:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<cache-container>
+  <memory-monitor memory-threshold="0.85"
+                  gc-duration-threshold="5000"
+                  gc-pressure-threshold="0.20"
+                  gc-pressure-window="60000" />
+</cache-container>
+----
+
+.Memory monitor attributes
+[cols="1,1,3"]
+|===
+| Attribute | Default | Description
+
+| `memory-threshold`
+| `0.85`
+| Fraction of old generation heap usage (between 0 exclusive and 1.0 inclusive) that triggers a low memory alert.
+
+| `gc-duration-threshold`
+| `5000`
+| Duration in milliseconds. A single GC pause exceeding this value triggers a GC duration alert.
+
+| `gc-pressure-threshold`
+| `0.20`
+| Fraction of time (between 0 exclusive and 1.0 inclusive) spent in GC over the pressure window that triggers a GC pressure alert.
+
+| `gc-pressure-window`
+| `60000`
+| Rolling time window in milliseconds over which GC pressure is calculated.
+|===
+
+[discrete]
+== Programmatic configuration
+
+[source,java,options="nowrap"]
+----
+GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+builder.memoryMonitor()
+       .memoryThreshold(0.90)
+       .gcDurationThreshold(3000)
+       .gcPressureThreshold(0.15)
+       .gcPressureWindow(30000);
+----
+
+All thresholds can be changed at runtime.
+
+[discrete]
+== Query protection
+
+When the memory monitor detects low memory or GC pressure, {brandname} rejects sorted non-indexed queries.
+These queries require loading all matching entries into memory for sorting, which can cause out-of-memory conditions when the system is already under memory pressure.
+Indexed queries are not affected because they perform sorting in the index.

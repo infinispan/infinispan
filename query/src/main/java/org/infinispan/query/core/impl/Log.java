@@ -261,6 +261,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Lucene version: %s", id = 14068)
    void luceneBackendVersion(String version);
 
+   @Message(value = "Query '%s' rejected: sorted non-indexed queries require loading all results into memory, but the system is under memory pressure", id = 14069)
+   CacheException queryRejectedLowMemory(String queryString);
+
    @Message(id = 14501, value = "Exception while retrieving the type model for '%1$s'.")
    SearchException errorRetrievingTypeModel(@FormatWith(ClassFormatter.class) Class<?> clazz, @Cause Exception cause);
 

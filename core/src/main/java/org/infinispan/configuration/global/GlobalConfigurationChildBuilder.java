@@ -12,6 +12,11 @@ public interface GlobalConfigurationChildBuilder {
    TransportConfigurationBuilder transport();
 
    /**
+    * Global memory monitor configuration.
+    */
+   GlobalMemoryMonitorConfigurationBuilder memoryMonitor();
+
+   /**
     * Global metrics configuration.
     */
    GlobalMetricsConfigurationBuilder metrics();
