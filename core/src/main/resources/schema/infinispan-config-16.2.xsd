@@ -298,6 +298,13 @@
           <xs:documentation>Specifies how data serialization will be performed by the cache container.</xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:element name="memory-monitor" type="tns:memory-monitor" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Configures memory and GC monitoring thresholds.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
       <xs:element name="metrics" type="tns:metrics" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
@@ -842,6 +849,50 @@
       <xs:annotation>
         <xs:documentation>
           The kind of compatibility validation that is performed when updating schemas.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="memory-monitor">
+    <xs:attribute name="enabled" type="xs:boolean" default="true">
+      <xs:annotation>
+        <xs:documentation>
+          Whether the memory monitor is enabled. When disabled, no JMX listeners are registered
+          and no alerts are raised. Default is true.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="memory-threshold" type="xs:double" default="0.85">
+      <xs:annotation>
+        <xs:documentation>
+          The old generation heap usage threshold as a fraction (0.0 to 1.0). When usage exceeds
+          this threshold, a low memory alert is triggered. Default is 0.85 (85%).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="gc-duration-threshold" type="xs:long" default="5000">
+      <xs:annotation>
+        <xs:documentation>
+          The GC pause duration threshold in milliseconds. When a single GC pause exceeds this
+          threshold, an alert is triggered. Default is 5000 (5 seconds).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="gc-pressure-threshold" type="xs:double" default="0.20">
+      <xs:annotation>
+        <xs:documentation>
+          The GC pressure threshold as a fraction (0.0 to 1.0) of time spent in GC over a rolling
+          window. When the ratio of GC time to wall clock time exceeds this threshold, an alert
+          is triggered. Default is 0.20 (20%).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="gc-pressure-window" type="xs:long" default="60000">
+      <xs:annotation>
+        <xs:documentation>
+          The rolling window duration in milliseconds for GC pressure computation. Default is 60000
+          (60 seconds).
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

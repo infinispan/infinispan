@@ -16,9 +16,11 @@ import javax.management.MBeanServerFactory;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.MemoryMonitor;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalMemoryMonitorConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
 import org.infinispan.factories.annotations.Start;
@@ -126,6 +128,14 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.registerComponent(InternalCacheRegistry.class.getName(), new InternalCacheRegistryImpl(), true);
          basicComponentRegistry.registerComponent(EntryMergePolicyFactoryRegistry.class.getName(), new EntryMergePolicyFactoryRegistry(), true);
          basicComponentRegistry.registerComponent(GlobalXSiteAdminOperations.class.getName(), new GlobalXSiteAdminOperations(), true);
+
+         GlobalMemoryMonitorConfiguration mmConfig = configuration.memoryMonitor();
+         if (mmConfig.enabled()) {
+            MemoryMonitor memoryMonitor = new MemoryMonitor(
+                  mmConfig.memoryThreshold(), mmConfig.gcDurationThreshold(),
+                  mmConfig.gcPressureThreshold(), mmConfig.gcPressureWindow());
+            basicComponentRegistry.registerComponent(MemoryMonitor.class.getName(), memoryMonitor, true);
+         }
 
          // Allow caches to depend only on module initialization instead of the entire GCR
          basicComponentRegistry.registerComponent(ModuleInitializer.class, new ModuleInitializer(), true);
@@ -410,6 +420,13 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       @Stop
       void stop() {
          modulesManagerStopped();
+         var memoryMonitorRef = basicComponentRegistry.getComponent(MemoryMonitor.class);
+         if (memoryMonitorRef != null) {
+            MemoryMonitor monitor = memoryMonitorRef.running();
+            if (monitor != null) {
+               monitor.stop();
+            }
+         }
       }
    }
 

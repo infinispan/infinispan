@@ -739,6 +739,10 @@ public class Parser extends CacheParser {
                parseSerialization(reader, holder);
                break;
             }
+            case MEMORY_MONITOR: {
+               parseMemoryMonitor(reader, holder);
+               break;
+            }
             case METRICS: {
                parseMetrics(reader, holder);
                break;
@@ -1088,6 +1092,41 @@ public class Parser extends CacheParser {
          role.permission(permissions);
       } else {
          throw ParseUtils.missingRequired(reader, Collections.singleton(Attribute.PERMISSIONS));
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseMemoryMonitor(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case ENABLED: {
+               builder.memoryMonitor().enabled(ParseUtils.parseBoolean(reader, i, value));
+               break;
+            }
+            case MEMORY_THRESHOLD: {
+               builder.memoryMonitor().memoryThreshold(Double.parseDouble(value));
+               break;
+            }
+            case GC_DURATION_THRESHOLD: {
+               builder.memoryMonitor().gcDurationThreshold(Long.parseLong(value));
+               break;
+            }
+            case GC_PRESSURE_THRESHOLD: {
+               builder.memoryMonitor().gcPressureThreshold(Double.parseDouble(value));
+               break;
+            }
+            case GC_PRESSURE_WINDOW: {
+               builder.memoryMonitor().gcPressureWindow(Long.parseLong(value));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
       }
       ParseUtils.requireNoContent(reader);
    }
