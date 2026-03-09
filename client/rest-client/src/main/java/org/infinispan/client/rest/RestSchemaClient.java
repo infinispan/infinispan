@@ -48,4 +48,9 @@ public interface RestSchemaClient {
     * GET a schema by name.
     */
    CompletionStage<RestResponse> get(String schemaName);
+
+   /**
+    * GET a schema by name with metadata.
+    */
+   CompletionStage<RestResponse> getWithMetadata(String schemaName);
 }

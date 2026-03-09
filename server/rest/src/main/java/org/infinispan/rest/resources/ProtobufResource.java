@@ -9,7 +9,10 @@ import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -24,6 +27,11 @@ import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -34,10 +42,13 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.rest.framework.openapi.ParameterIn;
+import org.infinispan.rest.framework.openapi.Schema;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.query.ProtobufMetadataManager;
 import org.infinispan.server.core.query.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.telemetry.InfinispanTelemetry;
@@ -69,7 +80,9 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
             .invocation().methods(PUT).path("/v2/schemas/{schemaName}")
                .permission(AuthorizationPermission.CREATE).auditContext(AuditContext.SERVER).name("SCHEMA CREATE")
                .handleWith(r -> createOrReplace(r, false))
-            .invocation().methods(GET).path("/v2/schemas/{schemaName}").handleWith(this::getSchema)
+            .invocation().methods(GET).path("/v2/schemas/{schemaName}")
+               .parameter("metadata", ParameterIn.QUERY, false, Schema.BOOLEAN, "Asks for content and metadata details")
+               .handleWith(this::getSchema)
             .invocation().method(DELETE).path("/v2/schemas/{schemaName}")
                .permission(AuthorizationPermission.CREATE).auditContext(AuditContext.SERVER).name("SCHEMA DELETE")
                .handleWith(this::deleteSchema)
@@ -84,14 +97,10 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       return CompletableFuture.supplyAsync(() ->
                   Flowable.fromIterable(cache.keySet())
                         .filter(key -> !((String) key).endsWith(RemoteSchemasAdmin.SchemaErrors.ERRORS_KEY_SUFFIX))
-                        .map(key -> {
-                           String error = (String) cache
-                                 .get(key + RemoteSchemasAdmin.SchemaErrors.ERRORS_KEY_SUFFIX);
+                        .map(schemaName -> {
                            ProtoSchema protoSchema = new ProtoSchema();
-                           protoSchema.name = (String) key;
-                           if (error != null) {
-                              protoSchema.error = createErrorContent(protoSchema.name, error);
-                           }
+                           protoSchema.name = (String) schemaName;
+                           protoSchema.error = getSchemaError(protoSchema.name, cache);
                            return protoSchema;
                         })
                         .sorted(Comparator.comparing(s -> s.name))
@@ -100,6 +109,12 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
                         .toCompletionStage()
             , invocationHelper.getExecutor())
             .thenCompose(Function.identity());
+   }
+
+   private ValidationError getSchemaError(String schemaName, AdvancedCache<Object, Object> cache) {
+      return createErrorContent(schemaName, (String) cache
+            .get(schemaName + RemoteSchemasAdmin.SchemaErrors.ERRORS_KEY_SUFFIX));
+
    }
 
    private CompletionStage<RestResponse> createOrReplace(RestRequest request, boolean create) {
@@ -154,9 +169,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
          if (isOkOrCreated(builder)) {
             ProtoSchema protoSchema = new ProtoSchema();
             protoSchema.name = schemaName;
-            if (validationError != null) {
-               protoSchema.error = createErrorContent(schemaName, (String) validationError);
-            }
+            protoSchema.error = createErrorContent(schemaName, (String) validationError);
             addEntityAsJson(protoSchema, builder);
          }
          return builder.build();
@@ -170,7 +183,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
    private CompletionStage<RestResponse> getSchema(RestRequest request) {
       String schemaName = checkMandatorySchemaName(request);
 
-      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
+      final AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
             .getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, request);
 
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
@@ -179,12 +192,60 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
          if (entry == null) {
             responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          } else {
+            // We check metadata parameter
+            boolean metadata = Boolean.valueOf(request.getParameter("metadata"));
             responseBuilder.status(HttpResponseStatus.OK);
-            responseBuilder.contentType(MediaType.TEXT_PLAIN);
-            responseBuilder.entity(entry.getValue());
+            if (metadata) {
+               // We need to grab the extra information
+               ProtoSchemaContent protoSchemaContent = new ProtoSchemaContent();
+               protoSchemaContent.name = schemaName;
+               protoSchemaContent.content = (String) entry.getValue();
+               protoSchemaContent.caches = collectCaches(request, schemaName, entry.getValue());
+               protoSchemaContent.error = getSchemaError(schemaName, cache);
+               addEntityAsJson(protoSchemaContent, responseBuilder);
+            } else {
+               responseBuilder.contentType(MediaType.TEXT_PLAIN);
+               responseBuilder.entity(entry.getValue());
+            }
          }
          return responseBuilder.build();
       });
+   }
+
+   private List<String> collectCaches(RestRequest request, String schemaName, Object content) {
+      List<String> caches = new ArrayList<>();
+      if (!(content instanceof String)) {
+         return caches;
+      }
+
+      String schemaContent = (String) content;
+      List<Descriptor> types;
+      try {
+         FileDescriptorSource fileDescriptorSource = new FileDescriptorSource().addProtoFile(schemaName, schemaContent);
+         ProtostreamProtoParser parser = new ProtostreamProtoParser(Configuration.builder().build());
+         FileDescriptor fileDescriptor = parser.parse(fileDescriptorSource).get(schemaName);
+         types = fileDescriptor.getMessageTypes();
+      } catch (Exception parseError) {
+         // If the content can't be parsed, empty list
+         types = Collections.emptyList();
+      }
+
+      RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
+      for (Descriptor descriptor : types) {
+         String typeName = descriptor.getFullName();
+         for (String configName : restCacheManager.getCacheNames()) {
+            AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(configName, request);
+            if (cache != null) {
+               org.infinispan.configuration.cache.Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
+               if (cacheConfiguration.indexing().enabled()
+                     && cacheConfiguration.indexing().indexedEntityTypes().contains(typeName)) {
+                  caches.add(configName);
+               }
+            }
+         }
+      }
+
+      return caches;
    }
 
    private CompletionStage<RestResponse> getTypes(RestRequest request) {
@@ -218,6 +279,10 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
    }
 
    private ValidationError createErrorContent(String schemaName, String cause) {
+      if (cause == null || cause.isEmpty()) {
+         return null;
+      }
+
       String message = "Schema " + schemaName + " has errors";
       ValidationError validationError = new ValidationError();
       validationError.message = message;
@@ -249,6 +314,21 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       @Override
       public Json toJson() {
          return Json.object("name", name).set("error", error == null ? null : error.toJson());
+      }
+   }
+
+   static class ProtoSchemaContent implements JsonSerialization {
+      public String name;
+      public String content;
+      public List<String> caches;
+      public ValidationError error;
+
+      @Override
+      public Json toJson() {
+         return Json.object("name", name)
+               .set("content", content)
+               .set("caches", Json.array(caches))
+               .set("error", error == null ? null : error.toJson());
       }
    }
 }
