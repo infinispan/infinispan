@@ -66,8 +66,8 @@ public class RestSchemaClientJDK implements RestSchemaClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> getWithMetadata(String schemaName) {
-      return client.get(schemaUrl(schemaName) + "?metadata=true", Map.of(ACCEPT, APPLICATION_JSON_TYPE));
+   public CompletionStage<RestResponse> getDetailed(String schemaName) {
+      return client.get(schemaUrl(schemaName) + "?action=detailed", Map.of(ACCEPT, APPLICATION_JSON_TYPE));
    }
 
    private String schemaUrl(String name) {

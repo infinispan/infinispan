@@ -145,7 +145,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       join(cacheClient.delete());
 
       // Read with metadata
-      response = join(schemaClient.getWithMetadata(SIMPLE_PROTO));
+      response = join(schemaClient.getDetailed(SIMPLE_PROTO));
       ResponseAssertion.assertThat(response).isOk();
       ProtobufResource.ProtoSchemaContent schemaContent = MAPPER.readValue(response.body(), ProtobufResource.ProtoSchemaContent.class);
       assertEquals(SIMPLE_PROTO, schemaContent.name);
@@ -160,7 +160,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(cacheClient.createWithConfiguration(config)).isOk();
 
       // Read with metadata
-      response = join(schemaClient.getWithMetadata(SIMPLE_PROTO));
+      response = join(schemaClient.getDetailed(SIMPLE_PROTO));
       ResponseAssertion.assertThat(response).isOk();
       schemaContent = MAPPER.readValue(response.body(), ProtobufResource.ProtoSchemaContent.class);
       assertEquals(SIMPLE_PROTO, schemaContent.name);
