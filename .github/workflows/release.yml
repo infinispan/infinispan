@@ -216,3 +216,14 @@ jobs:
       image: quay.io/infinispan/server:${{ inputs.version }}
       ref: 2.4.x
       repository: infinispan/infinispan-operator
+
+  update-org-vars:    
+    needs: published
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update GitHub Organization Variable to next release version
+        shell: bash
+        env:
+          GH_TOKEN: "${{ secrets.INFINISPAN_RELEASE_TOKEN }}"
+        run: >
+          gh variable set "RELEASE_$(echo '${{ inputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "${{ inputs.nextVersion }}" --org infinispan;
