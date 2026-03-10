@@ -42,8 +42,6 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
-import org.infinispan.rest.framework.openapi.ParameterIn;
-import org.infinispan.rest.framework.openapi.Schema;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
 import org.infinispan.security.AuditContext;
@@ -80,16 +78,15 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
             .invocation().methods(PUT).path("/v2/schemas/{schemaName}")
                .permission(AuthorizationPermission.CREATE).auditContext(AuditContext.SERVER).name("SCHEMA CREATE")
                .handleWith(r -> createOrReplace(r, false))
-            .invocation().methods(GET).path("/v2/schemas/{schemaName}")
-               .parameter("metadata", ParameterIn.QUERY, false, Schema.BOOLEAN, "Asks for content and metadata details")
-               .handleWith(this::getSchema)
+            .invocation().methods(GET).path("/v2/schemas/{schemaName}").handleWith(this::getSchema)
+            .invocation().methods(GET).path("/v2/schemas/{schemaName}").withAction("detailed").handleWith(this::getSchema)
             .invocation().method(DELETE).path("/v2/schemas/{schemaName}")
                .permission(AuthorizationPermission.CREATE).auditContext(AuditContext.SERVER).name("SCHEMA DELETE")
                .handleWith(this::deleteSchema)
             .create();
    }
 
-   private CompletionStage<RestResponse> getSchemasNames(RestRequest request) {
+   protected CompletionStage<RestResponse> getSchemasNames(RestRequest request) {
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
             .getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, request);
       boolean pretty = isPretty(request);
@@ -117,7 +114,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
 
    }
 
-   private CompletionStage<RestResponse> createOrReplace(RestRequest request, boolean create) {
+   protected CompletionStage<RestResponse> createOrReplace(RestRequest request, boolean create) {
 
       String schemaName = checkMandatorySchemaName(request);
 
@@ -181,6 +178,10 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
    }
 
    private CompletionStage<RestResponse> getSchema(RestRequest request) {
+      return getSchema(request, "detailed".equals(request.getAction()));
+   }
+
+   protected CompletionStage<RestResponse> getSchema(RestRequest request, boolean detailed) {
       String schemaName = checkMandatorySchemaName(request);
 
       final AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
@@ -192,10 +193,9 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
          if (entry == null) {
             responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          } else {
-            // We check metadata parameter
-            boolean metadata = Boolean.valueOf(request.getParameter("metadata"));
+            // We check if detailed action is requested
             responseBuilder.status(HttpResponseStatus.OK);
-            if (metadata) {
+            if (detailed) {
                // We need to grab the extra information
                ProtoSchemaContent protoSchemaContent = new ProtoSchemaContent();
                protoSchemaContent.name = schemaName;
@@ -248,7 +248,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       return caches;
    }
 
-   private CompletionStage<RestResponse> getTypes(RestRequest request) {
+   protected CompletionStage<RestResponse> getTypes(RestRequest request) {
       ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) invocationHelper.protobufMetadataManager();
       Set<String> knownTypes = protobufMetadataManager.getKnownTypes();
       Json protobufTypes = Json.array();
@@ -258,7 +258,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       return asJsonResponseFuture(invocationHelper.newResponse(request), protobufTypes, isPretty(request));
    }
 
-   private CompletionStage<RestResponse> deleteSchema(RestRequest request) {
+   protected CompletionStage<RestResponse> deleteSchema(RestRequest request) {
       String schemaName = checkMandatorySchemaName(request);
 
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();

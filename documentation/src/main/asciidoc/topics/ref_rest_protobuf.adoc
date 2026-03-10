@@ -35,17 +35,14 @@ GET /rest/v2/schemas/{schemaName}
 
 By default, {brandname} returns the Protobuf schema content as plain text.
 
-.Query parameters
+To retrieve detailed information about the schema, use the `action=detailed` query parameter:
 
-|===
-|Parameter |Required or Optional |Value
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/schemas/{schemaName}?action=detailed
+----
 
-|`metadata`
-|Optional
-|A Boolean value that determines whether {brandname} returns additional metadata about the schema. The default value is `false`.
-|===
-
-When `metadata` is `true`, {brandname} returns a JSON document that includes the schema content, validation errors, and the list of caches that index types declared in the schema.
+When `action=detailed` is specified, {brandname} returns a JSON document that includes the schema content, validation errors, and the list of caches that index types declared in the schema.
 
 [source,json,options="nowrap",subs=attributes+]
 ----
