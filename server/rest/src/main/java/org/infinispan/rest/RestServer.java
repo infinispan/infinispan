@@ -29,6 +29,7 @@ import org.infinispan.rest.resources.McpServerResource;
 import org.infinispan.rest.resources.MetricsResource;
 import org.infinispan.rest.resources.OpenAPIResource;
 import org.infinispan.rest.resources.ProtobufResource;
+import org.infinispan.rest.resources.ProtobufResourceV3;
 import org.infinispan.rest.resources.RedirectResource;
 import org.infinispan.rest.resources.SearchAdminResource;
 import org.infinispan.rest.resources.SearchAdminResourceV3;
@@ -161,6 +162,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(restContext, new SearchAdminResourceV3(invocationHelper));
       resourceManager.registerResource(restContext, new TasksResource(invocationHelper));
       resourceManager.registerResource(restContext, new ProtobufResource(invocationHelper, telemetryService));
+      resourceManager.registerResource(restContext, new ProtobufResourceV3(invocationHelper, telemetryService));
       resourceManager.registerResource(rootContext, new HealthCheckResource(invocationHelper));
       resourceManager.registerResource(restContext, new OpenAPIResource(invocationHelper, resourceManager.registry()));
       resourceManager.registerResource(rootContext, new SwaggerUIResource(invocationHelper));
