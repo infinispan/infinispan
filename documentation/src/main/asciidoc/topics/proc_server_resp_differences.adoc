@@ -36,7 +36,9 @@ The recommended configuration utilizes `PESSIMISTIC` locking and transaction mod
 See the link:{config_docs}#transaction_manager[cache configuration guide] for more information.
 ====
 
+ifdef::community[]
 == Lua Scripts
 
 Lua scripts executed by {brandname} serialize responses using the RESP3 protocol.
 This is equivalent to invoking `redis.setresp(3)` in every script.
+endif::[]
