@@ -96,24 +96,16 @@ public class ClassFinder {
    }
 
    private static List<Class<?>> findClassesOnPath(File path) {
-      List<Class<?>> classes = new ArrayList<>();
-      Class<?> claz;
+      List<String> classNames = new ArrayList<>();
 
+      // First, collect all class names without loading them
       if (path.isDirectory()) {
          List<File> classFiles = new ArrayList<>();
          dir(classFiles, path);
          for (File cf : classFiles) {
-            String clazz = null;
-            try {
-               clazz = toClassName(path.toPath().relativize(cf.toPath()).toString());
-               claz = Util.loadClassStrict(clazz, null);
-               classes.add(claz);
-            } catch (NoClassDefFoundError ncdfe) {
-               log.warnf("%s has reference to a class %s that could not be loaded from classpath",
-                     cf.getAbsolutePath(), ncdfe.getMessage());
-            } catch (Throwable e) {
-               // Catch all since we do not want skip iteration
-               log.warn("On path " + cf.getAbsolutePath() + " could not load class " + clazz, e);
+            String clazz = toClassName(path.toPath().relativize(cf.toPath()).toString());
+            if (clazz != null) {
+               classNames.add(clazz);
             }
          }
       } else {
@@ -123,24 +115,16 @@ public class ClassFinder {
                jar = new JarFile(path);
             } catch (Exception ex) {
                log.warnf("Could not create jar file on path %s", path);
-               return classes;
+               return Collections.emptyList();
             }
             try {
                Enumeration<JarEntry> en = jar.entries();
                while (en.hasMoreElements()) {
                   JarEntry entry = en.nextElement();
                   if (entry.getName().endsWith("class")) {
-                     String clazz = null;
-                     try {
-                        clazz = toClassName(entry.getName());
-                        claz = Util.loadClassStrict(clazz, null);
-                        classes.add(claz);
-                     } catch (NoClassDefFoundError ncdfe) {
-                        log.warnf("%s has reference to a class %s that could not be loaded from classpath",
-                              entry.getName(), ncdfe.getMessage());
-                     } catch (Throwable e) {
-                        // Catch all since we do not want skip iteration
-                        log.warn("From jar path " + entry.getName() + " could not load class " + clazz, e);
+                     String clazz = toClassName(entry.getName());
+                     if (clazz != null) {
+                        classNames.add(clazz);
                      }
                   }
                }
@@ -153,6 +137,35 @@ public class ClassFinder {
             }
          }
       }
+
+      // Sort so outer classes are loaded before inner classes to avoid deadlocks
+      classNames.sort((a, b) -> {
+         // If one is a prefix of the other followed by $, the prefix (outer class) comes first
+         if (b.startsWith(a + "$")) {
+            return -1; // a comes before b
+         }
+         if (a.startsWith(b + "$")) {
+            return 1; // b comes before a
+         }
+         // Otherwise use natural string ordering
+         return a.compareTo(b);
+      });
+
+      // Now load classes in order
+      List<Class<?>> classes = new ArrayList<>();
+      for (String className : classNames) {
+         try {
+            Class<?> claz = Util.loadClassStrict(className, null);
+            classes.add(claz);
+         } catch (NoClassDefFoundError ncdfe) {
+            log.warnf("%s has reference to a class %s that could not be loaded from classpath",
+                  className, ncdfe.getMessage());
+         } catch (Throwable e) {
+            // Catch all since we do not want skip iteration
+            log.warn("Could not load class " + className, e);
+         }
+      }
+
       return classes;
    }
 
