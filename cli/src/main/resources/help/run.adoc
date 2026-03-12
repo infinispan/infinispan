@@ -1,0 +1,37 @@
+RUN(1)
+======
+:doctype: manpage
+
+
+NAME
+----
+run - executes batch scripts.
+
+
+SYNOPSIS
+--------
+*run* 'file1' ['file2'...] ['OPTIONS']
+
+If a filename is `-`, then commands will be read from stdin.
+
+
+OPTIONS
+-------
+
+*--echo*='NAME'::
+Specifies the cache from which to remove entries. Defaults to the currently
+selected cache.
+
+*--on-error*='[FAIL_FAST|FAIL_AT_END|IGNORE]'::
+
+* `FAIL_FAST`: stop executing the script at the first failure.
+
+* `FAIL_AT_END`: execute all commands, skipping failures and reporting failure at the end.
+
+* `IGNORE`: execute all commands, skipping failures and reporting success at the end.
+
+
+EXAMPLE
+-------
+`run --on-error=FAIL_AT_END --echo script.batch` +
+Executes all commands contained in the `script.batch` fail, echoing them, skipping failures until the end.

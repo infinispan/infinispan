@@ -14,7 +14,6 @@ import java.util.Properties;
 import java.util.UUID;
 
 import org.infinispan.cli.AeshTestShell;
-import org.infinispan.cli.CliPipeTest;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
@@ -33,7 +32,7 @@ public class PersistentStateParseTest {
 
    @Test
    public void testListAllStates() throws IOException {
-      File workingDir = new File(CommonsTestingUtil.tmpDirectory(CliPipeTest.class));
+      File workingDir = new File(CommonsTestingUtil.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
@@ -42,14 +41,14 @@ public class PersistentStateParseTest {
       Path p = createPersistentState(name.getMethodName(), persistentStateName);
 
       AeshTestShell shell = new AeshTestShell();
-      int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString()}, properties);
+      int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString()}, properties, false);
       assertEquals(0, exit);
       shell.assertContains(persistentStateName);
    }
 
    @Test
    public void showStateContents() throws IOException {
-      File workingDir = new File(CommonsTestingUtil.tmpDirectory(CliPipeTest.class));
+      File workingDir = new File(CommonsTestingUtil.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
@@ -58,14 +57,14 @@ public class PersistentStateParseTest {
       Path p = createPersistentState(name.getMethodName(), persistentStateName);
 
       AeshTestShell shell = new AeshTestShell();
-      int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--show", persistentStateName}, properties);
+      int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--show", persistentStateName}, properties, false);
       assertEquals(0, exit);
       shell.assertContains("key=key; value=content");
    }
 
    @Test
    public void testSuccessfulDeleteScope() throws IOException {
-      File workingDir = new File(CommonsTestingUtil.tmpDirectory(CliPipeTest.class));
+      File workingDir = new File(CommonsTestingUtil.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
@@ -77,7 +76,7 @@ public class PersistentStateParseTest {
       assertTrue(p.toFile().exists());
 
       AeshTestShell shell = new AeshTestShell();
-      int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--delete", persistentStateName}, properties);
+      int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--delete", persistentStateName}, properties, false);
       assertEquals(0, exit);
       shell.assertContains("key=key; value=content");
 
@@ -87,7 +86,7 @@ public class PersistentStateParseTest {
 
    @Test
    public void testFailedDeleteOnGlobalLock() throws IOException {
-      File workingDir = new File(CommonsTestingUtil.tmpDirectory(CliPipeTest.class));
+      File workingDir = new File(CommonsTestingUtil.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
@@ -102,7 +101,7 @@ public class PersistentStateParseTest {
       assertTrue(lock.tryLock());
       try {
          AeshTestShell shell = new AeshTestShell();
-         int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--delete", persistentStateName}, properties);
+         int exit = CLI.main(shell, new String[] {"troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--delete", persistentStateName}, properties, false);
          assertEquals(0, exit);
       } finally {
          lock.unlock();

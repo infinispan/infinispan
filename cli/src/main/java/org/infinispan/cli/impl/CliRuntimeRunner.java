@@ -42,7 +42,7 @@ public class CliRuntimeRunner {
       }
       try {
          runtime.executeCommand(sb.toString());
-         return ExitCodeResultHandler.exitCode;
+         return ExitCodeResultHandler.exitCode();
       } catch (CommandNotFoundException e) {
          System.err.println("Command not found: " + commandName);
          return 1;

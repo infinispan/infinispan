@@ -15,6 +15,7 @@ import org.aesh.command.validator.CommandValidatorException;
 import org.aesh.command.validator.OptionValidatorException;
 import org.aesh.readline.Prompt;
 import org.aesh.readline.action.KeyAction;
+import org.aesh.terminal.utils.ANSI;
 import org.infinispan.cli.Context;
 
 /**
@@ -145,5 +146,14 @@ public class ContextAwareCommandInvocation implements CommandInvocation {
          }
       }
       return password;
+   }
+
+   public void errorln(String msg) {
+      // TODO: this should eventually go to stderr
+      if (shell instanceof AeshDelegatingShell ads && ads.getConnection().supportsAnsi()) {
+         invocation.println(ANSI.RED_TEXT + msg + ANSI.DEFAULT_TEXT);
+      } else {
+         invocation.println(msg);
+      }
    }
 }
