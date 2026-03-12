@@ -13,7 +13,6 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       includeClasses = {
             ReplaceWithLocationFunction.class
       },
-      dependsOn = org.infinispan.marshall.protostream.impl.GlobalContextInitializer.class,
       schemaFileName = "anchored.keys.proto",
       schemaFilePath = "org/infinispan/anchored",
       schemaPackageName = "org.infinispan.anchored"
