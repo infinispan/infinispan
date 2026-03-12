@@ -188,8 +188,12 @@ public class TransactionCoordinator {
    }
 
    public CompletionStage<Void> rollback(LocalTransaction localTransaction) {
+      if (localTransaction.hasRolledBack())
+         return CompletableFutures.completedNull();
+
       return CompletionStages.handleAndCompose(rollbackInternal(icf.running().createTxInvocationContext(localTransaction)),
             (ignore, t) -> {
+               localTransaction.markAsRolledBack();
                if (t != null) {
                   return handleRollbackFailure(t, localTransaction);
                }
