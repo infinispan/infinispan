@@ -90,6 +90,7 @@ ENV JAVA_HOME=${NEWROOT}/usr/lib/jvm/default-java
 ENV JAVA_OPTS="-XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Xms64m -Xmx512m"
 # Temporarily disabled
 RUN ${NEWROOT}/${WORKDIR}/bin/server.sh --aot || true
+RUN rm -rf ${NEWROOT}/${WORKDIR}/server/data ${NEWROOT}/${WORKDIR}/server/log ${NEWROOT}/${WORKDIR}/server/cache
 ADD src/main/docker/bashrc ${NEWROOT}/${WORKDIR}/.bashrc
 RUN chown -R 65532:0 ${NEWROOT}/${WORKDIR}
 # Backwards compatibility
