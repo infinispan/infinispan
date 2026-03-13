@@ -36,11 +36,13 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
    final boolean entryStream;
    final boolean trackKeys;
    final Function<? super Publisher<I>, ? extends Publisher<R>> transformer;
+   final boolean segmentNotificationNeeded;
    private int topologyId = -1;
 
    public InitialPublisherCommand(ByteString cacheName, String requestId, DeliveryGuarantee deliveryGuarantee,
                                   int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
-                                  boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+                                  boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer,
+                                  boolean segmentNotificationNeeded) {
       super(cacheName);
       this.requestId = requestId;
       this.deliveryGuarantee = deliveryGuarantee;
@@ -52,6 +54,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       this.entryStream = entryStream;
       this.trackKeys = trackKeys;
       this.transformer = transformer;
+      this.segmentNotificationNeeded = segmentNotificationNeeded;
    }
 
 
@@ -59,7 +62,8 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
    InitialPublisherCommand(ByteString cacheName, String requestId, DeliveryGuarantee deliveryGuarantee, int batchSize,
                            WrappedMessage wrappedSegments, MarshallableSet<K> wrappedKeys, MarshallableSet<K> wrappedExcludedKeys,
                            long explicitFlags, boolean entryStream, boolean trackKeys, int topologyId,
-                           MarshallableObject<Function<? super Publisher<I>, ? extends Publisher<R>>> wrappedTransformer) {
+                           MarshallableObject<Function<? super Publisher<I>, ? extends Publisher<R>>> wrappedTransformer,
+                           boolean segmentNotificationNeeded) {
       super(cacheName);
       this.requestId = requestId;
       this.deliveryGuarantee = deliveryGuarantee;
@@ -72,6 +76,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       this.trackKeys = trackKeys;
       this.transformer = MarshallableObject.unwrap(wrappedTransformer);
       this.topologyId = topologyId;
+      this.segmentNotificationNeeded = segmentNotificationNeeded;
    }
 
    @ProtoField(2)
@@ -154,6 +159,11 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
    @Override
    public boolean isReturnValueExpected() {
       return true;
+   }
+
+   @ProtoField(13)
+   public boolean isSegmentNotificationNeeded() {
+      return segmentNotificationNeeded;
    }
 
    @Override

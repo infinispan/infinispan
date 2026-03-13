@@ -639,9 +639,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(String requestId, DeliveryGuarantee deliveryGuarantee,
                                                                                   int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
-                                                                                  boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+                                                                                  boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer, boolean includeSegmentNotification) {
       return new InitialPublisherCommand<>(cacheName, requestId, deliveryGuarantee, batchSize, segments, keys,
-            excludedKeys, explicitFlags, entryStream, trackKeys, transformer);
+            excludedKeys, explicitFlags, entryStream, trackKeys, transformer, includeSegmentNotification);
    }
 
    @Override
