@@ -184,6 +184,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       d1.discardAll(false);
       d2.discardAll(false);
       d3.discardAll(false);
+      TestingUtil.installNewView(managers());
 
       // wait for the merged cluster to form
       long startTime = System.currentTimeMillis();
@@ -228,6 +229,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       log.debugf("Merging the cluster partitions");
       d2.discardAll(false);
       d3.discardAll(false);
+      TestingUtil.installNewView(manager(1), manager(2));
 
       // wait for the merged cluster to form
       long startTime = System.currentTimeMillis();
@@ -298,6 +300,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       d1.discardAll(false);
       d2.discardAll(false);
       d3.discardAll(false);
+      TestingUtil.installNewView(managers());
 
       // wait for the JGroups merge
       long startTime = System.currentTimeMillis();
