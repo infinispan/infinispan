@@ -23,18 +23,15 @@ public class TranscoderMarshallerAdapter extends OneToManyTranscoder {
    private final Marshaller marshaller;
 
    public TranscoderMarshallerAdapter(Marshaller marshaller) {
-      super(marshaller.mediaType(), MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_UNKNOWN);
+      super(marshaller.mediaType(), MediaType.APPLICATION_OBJECT);
       this.marshaller = marshaller;
    }
 
    @Override
    public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
       try {
-         if (destinationType.equals(MediaType.APPLICATION_UNKNOWN) || contentType.equals(MediaType.APPLICATION_UNKNOWN)) {
-            return content;
-         }
-         if (destinationType.match(marshaller.mediaType())) {
-            return contentType.equals(marshaller.mediaType()) ? content : marshaller.objectToByteBuffer(content);
+         if (destinationType.match(mainType)) {
+            return contentType.equals(mainType) ? content : marshaller.objectToByteBuffer(content);
          }
          if (destinationType.match(MediaType.APPLICATION_OBJECT)) {
             return marshaller.objectFromByteBuffer((byte[]) content);
