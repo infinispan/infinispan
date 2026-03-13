@@ -11,8 +11,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commands.conflict.GetBucketEntriesCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.conflict.ConflictManager;
@@ -55,7 +55,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
    private static final String RESOLVED_VALUE = "RESOLVED";
    private static final String[] ALL_KEYS = new String[] {BEFORE_CR_CRASH_KEY, DURING_CR_CRASH_KEY, AFTER_CR_RESTART_KEY};
    private static final EntryMergePolicy POLICY = (preferredEntry, otherEntries) -> {
-      Object key = preferredEntry != null ? preferredEntry.getKey() : ((CacheEntry)otherEntries.get(0)).getKey();
+      Object key = preferredEntry != null ? preferredEntry.getKey() : ((CacheEntry<?, ?>)otherEntries.get(0)).getKey();
       return new ImmortalCacheEntry(key, RESOLVED_VALUE);
    };
    private static final KeyPartitioner PARTITIONER = new TestKeyPartioner();
@@ -96,7 +96,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
 
    @Override
    protected void performMerge() throws Exception {
-      CompletableFuture<ConflictResolutionStartCommand> blockedStateRequest = createStateRequestFuture();
+      CompletableFuture<GetBucketEntriesCommand> blockedStateRequest = createStateRequestFuture();
 
       for (String key : ALL_KEYS) {
          assertCacheGet(key, PARTITION_0_VAL, p0.getNodes());
@@ -131,9 +131,9 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
       assertEquals(0, cm.getConflicts().peek(m -> log.errorf("Conflict: " + m)).count());
    }
 
-   private CompletableFuture<ConflictResolutionStartCommand> createStateRequestFuture() {
+   private CompletableFuture<GetBucketEntriesCommand> createStateRequestFuture() {
       int segment = PARTITIONER.getSegment(DURING_CR_CRASH_KEY);
-      CompletableFuture<ConflictResolutionStartCommand> future = new CompletableFuture<>();
+      CompletableFuture<GetBucketEntriesCommand> future = new CompletableFuture<>();
       wrapInboundInvocationHandler(cache(2), handler -> new CompleteFutureOnStateRequestHandler(handler, segment, manager(2), future));
       return future;
    }
@@ -141,10 +141,10 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
    private static class CompleteFutureOnStateRequestHandler extends AbstractDelegatingHandler {
       final int segment;
       final EmbeddedCacheManager manager;
-      final CompletableFuture<ConflictResolutionStartCommand> future;
+      final CompletableFuture<GetBucketEntriesCommand> future;
 
       CompleteFutureOnStateRequestHandler(PerCacheInboundInvocationHandler delegate, int segment, EmbeddedCacheManager manager,
-                                          CompletableFuture<ConflictResolutionStartCommand> future) {
+                                          CompletableFuture<GetBucketEntriesCommand> future) {
          super(delegate);
          this.segment = segment;
          this.manager = manager;
@@ -153,11 +153,10 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
 
       @Override
       public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof ConflictResolutionStartCommand) {
-            ConflictResolutionStartCommand src = (ConflictResolutionStartCommand) command;
-            if (src.getSegments().contains(segment)) {
+         if (command instanceof GetBucketEntriesCommand cmd) {
+            if (cmd.getSegmentId() == segment) {
                log.debugf("Completing future and ignoring state request %s", command);
-               future.complete(src);
+               future.complete(cmd);
                return;
             }
          }

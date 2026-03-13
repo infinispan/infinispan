@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -1344,7 +1343,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                      eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionCancelled(
                              topology.getMembers(), topology.getTopologyId()));
                      cancelConflictResolutionPhase(topology);
-                  } else if (t instanceof CompletionException) {
+                  } else {
                      Throwable cause;
                      Throwable rootCause = t;
                      while ((cause = rootCause.getCause()) != null && (rootCause != cause)) {
@@ -1355,9 +1354,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                      Log.CLUSTER.failedConflictResolution(cacheName, topology, rootCause);
                      eventLogger.error(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionFailed(
                              topology.getMembers(), topology.getTopologyId(), rootCause.getMessage()));
-                     // If a node is suspected then we can't restart the CR until a new view is received, so we leave conflictResolution != null
-                     // so that on a new view restartConflictResolution can return true
-                     if (!(rootCause instanceof SuspectException)) {
+                     // If a node is suspected (or the RPC timed out, possibly due to a delayed view change
+                     // notification), we can't restart the CR until a new view is received, so we leave
+                     // conflictResolution != null so that on a new view restartConflictResolution can return true
+                     if (!(rootCause instanceof SuspectException) && !(rootCause instanceof TimeoutException)) {
                         cancelConflictResolutionPhase(topology);
                      }
                   }
