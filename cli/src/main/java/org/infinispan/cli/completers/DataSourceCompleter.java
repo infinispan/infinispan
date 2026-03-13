@@ -16,7 +16,7 @@ public class DataSourceCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) throws IOException {
       try {
-         return context.getConnection().getDataSourceNames();
+         return context.connection().getDataSourceNames();
       } catch (IOException e) {
          return Collections.emptyList();
       }

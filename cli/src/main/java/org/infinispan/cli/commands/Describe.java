@@ -35,7 +35,7 @@ public class Describe extends CliCommand {
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
       try {
-         invocation.println(invocation.getContext().getConnection().getActiveResource().getResource(name).describe());
+         invocation.println(invocation.getContext().connection().getActiveResource().getResource(name).describe());
          return CommandResult.SUCCESS;
       } catch (IOException e) {
          throw new CommandException(e);

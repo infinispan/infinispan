@@ -17,7 +17,7 @@ import org.infinispan.cli.resources.ContainerResource;
 public class SchemaCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) throws IOException {
-      Connection connection = context.getConnection();
+      Connection connection = context.connection();
       ContainerResource container = connection.getActiveResource().findAncestor(ContainerResource.class);
       return container != null ? connection.getAvailableSchemas() : Collections.emptyList();
    }

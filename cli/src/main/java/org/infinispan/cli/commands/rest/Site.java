@@ -330,7 +330,7 @@ public class Site extends CliCommand {
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          try {
-            Connection connection = invocation.getContext().getConnection();
+            Connection connection = invocation.getContext().connection();
             connection.refreshServerInfo();
             invocation.println(connection.getSitesView().toString());
             return CommandResult.SUCCESS;
@@ -355,7 +355,7 @@ public class Site extends CliCommand {
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          try {
-            Connection connection = invocation.getContext().getConnection();
+            Connection connection = invocation.getContext().connection();
             connection.refreshServerInfo();
             invocation.println(connection.getLocalSiteName());
             return CommandResult.SUCCESS;
@@ -464,7 +464,7 @@ public class Site extends CliCommand {
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          try {
-            Connection connection = invocation.getContext().getConnection();
+            Connection connection = invocation.getContext().connection();
             connection.refreshServerInfo();
             invocation.println(String.valueOf(connection.getRelayNodes()));
             return CommandResult.SUCCESS;
@@ -488,7 +488,7 @@ public class Site extends CliCommand {
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          try {
-            Connection connection = invocation.getContext().getConnection();
+            Connection connection = invocation.getContext().connection();
             connection.refreshServerInfo();
             invocation.println(String.valueOf(connection.isRelayNode()));
             return CommandResult.SUCCESS;

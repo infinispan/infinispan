@@ -89,7 +89,6 @@ public class ApplicationPropertiesTest {
       assertThat(configuration.security().ssl().keyStorePassword().length).isEqualTo(6);
       assertThat(configuration.security().ssl().keyAlias()).isEqualTo("superAliasKey");
       assertThat(configuration.security().ssl().trustStoreFileName()).isEqualTo("classpath:superTrustFile.pfx");
-      assertThat(configuration.security().ssl().trustStorePath()).isNull();
       assertThat(configuration.security().ssl().trustStoreType()).isEqualTo("PKCS12");
       assertThat(configuration.security().ssl().trustStorePassword().length).isEqualTo(6);
       assertThat(configuration.security().ssl().sniHostName()).isEqualTo("elahost");

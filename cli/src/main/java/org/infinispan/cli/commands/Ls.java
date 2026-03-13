@@ -54,7 +54,7 @@ public class Ls extends CliCommand {
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
       try {
-         Connection connection = invocation.getContext().getConnection();
+         Connection connection = invocation.getContext().connection();
          connection.refreshServerInfo();
          Resource resource = connection.getActiveResource().getResource(path);
 

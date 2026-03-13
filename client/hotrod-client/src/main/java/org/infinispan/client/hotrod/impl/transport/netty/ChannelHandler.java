@@ -152,8 +152,9 @@ public class ChannelHandler {
                   .build().keyManager());
          }
          if (ssl.trustStoreFileName() != null) {
-            if ("pem".equalsIgnoreCase(ssl.trustStoreType())) {
-               builder.trustManager(new File(ssl.trustStoreFileName()));
+            File trustFile = new File(ssl.trustStoreFileName());
+            if ("pem".equalsIgnoreCase(ssl.trustStoreType()) || SslContextFactory.isPemFile(trustFile)) {
+               builder.trustManager(trustFile);
             } else {
                builder.trustManager(new SslContextFactory()
                      .trustStoreFileName(ssl.trustStoreFileName())
@@ -165,9 +166,6 @@ public class ChannelHandler {
                      .build()
                      .trustManager());
             }
-         }
-         if (ssl.trustStorePath() != null) {
-            builder.trustManager(new File(ssl.trustStorePath()));
          }
          if (ssl.protocol() != null) {
             builder.protocols(ssl.protocol());

@@ -75,6 +75,13 @@ public class TestCertificates {
             trustStore.store(os, KEY_PASSWORD);
          }
 
+         // Write a PEM trust store containing the CA certificate
+         try (Writer w = Files.newBufferedWriter(baseDir().resolve("trust.pem"))) {
+            w.write("-----BEGIN CERTIFICATE-----\n");
+            w.write(Base64.getEncoder().encodeToString(ca.getSelfSignedCertificate().getEncoded()));
+            w.write("\n-----END CERTIFICATE-----\n");
+         }
+
          // Create an untrusted certificate
          createSelfSignedCertificate(CA_DN, "untrusted");
       } catch (Exception e) {
@@ -153,6 +160,20 @@ public class TestCertificates {
          }
 
       });
+
+      try (Writer w = Files.newBufferedWriter(baseDir().resolve(name + ".pem"))) {
+         w.write("-----BEGIN PRIVATE KEY-----\n");
+         w.write(Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded()));
+         w.write("\n-----END PRIVATE KEY-----\n");
+         w.write("-----BEGIN CERTIFICATE-----\n");
+         w.write(Base64.getEncoder().encodeToString(certificate.getEncoded()));
+         w.write("\n-----END CERTIFICATE-----\n");
+         w.write("-----BEGIN CERTIFICATE-----\n");
+         w.write(Base64.getEncoder().encodeToString(caCertificate.getEncoded()));
+         w.write("\n-----END CERTIFICATE-----\n");
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
    }
 
    private static void writeKeyStore(Path file, Consumer<KeyStore> consumer) {
