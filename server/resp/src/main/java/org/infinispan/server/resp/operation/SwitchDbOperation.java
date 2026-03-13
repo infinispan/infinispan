@@ -12,7 +12,7 @@ public class SwitchDbOperation {
    public static void switchDB(Resp3Handler handler, String db, ChannelHandlerContext ctx) {
       Cache<byte[], byte[]> cache = handler.respServer().getCacheManager().getCache(db);
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
-      handler.setCache(cache.getAdvancedCache().withSubject(metadata.subject()).withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
+      handler.setCache(cache.getAdvancedCache().withSubject(metadata.subject()).withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT));
       metadata.cache(cache.getName());
    }
 

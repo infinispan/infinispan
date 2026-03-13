@@ -41,7 +41,7 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       ClassAllowList classAllowList = embeddedCacheManager.getClassAllowList();
 
       // Default and binary transcoder use the user marshaller to convert data to/from a byte array
-      encoderRegistry.registerTranscoder(new DefaultTranscoder(userMarshaller));
+      encoderRegistry.registerTranscoder(new DefaultTranscoder(globalMarshaller.wired()));
       encoderRegistry.registerTranscoder(new BinaryTranscoder(userMarshaller));
       // Core transcoders are always available
       encoderRegistry.registerTranscoder(new ProtostreamTranscoder(ctxRegistry, classLoader));

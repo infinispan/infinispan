@@ -61,7 +61,7 @@ public abstract class AbstractTranscoder implements Transcoder {
          Object decoded = decodeContent(content, contentType);
          Object result = doTranscode(decoded, contentType, destinationType);
          return encodeContent(result, destinationType);
-      } catch (UnsupportedEncodingException e) {
+      } catch (UnsupportedEncodingException | IllegalStateException e) {
          throw CONTAINER.errorTranscoding(Util.toStr(content), contentType, destinationType, e);
       }
    }

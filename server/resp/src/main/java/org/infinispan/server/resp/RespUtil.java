@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.time.TimeService;
 
 public class RespUtil {
@@ -103,6 +104,9 @@ public class RespUtil {
    public static boolean isWrongTypeError(Throwable t) {
       while (t instanceof CompletionException || t instanceof CacheException || t instanceof ExecutionException) {
          t = t.getCause();
+         if (t instanceof EncodingException e) {
+            return true;
+         }
       }
       return t instanceof ClassCastException ||
             (t instanceof IllegalArgumentException &&

@@ -63,6 +63,6 @@ class JavaMediaTypeCodec implements MediaTypeCodec {
          return content;
       }
       JavaStringCodec codec = JavaStringCodec.forType(type);
-      return codec.encode(content, destinationType);
+      return codec != null ? codec.encode(content, destinationType) : content;
    }
 }

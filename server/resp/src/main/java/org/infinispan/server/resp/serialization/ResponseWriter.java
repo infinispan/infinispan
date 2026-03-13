@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 
 import javax.security.sasl.SaslException;
 
+import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespVersion;
 import org.infinispan.server.resp.exception.RespCommandException;
@@ -328,7 +329,7 @@ public interface ResponseWriter {
             return rw -> rw.error(String.format("-%s", rce.getMessage()));
          }
 
-         if (ex instanceof ClassCastException) {
+         if (ex instanceof ClassCastException || ex instanceof EncodingException) {
             return ResponseWriter::wrongType;
          }
 

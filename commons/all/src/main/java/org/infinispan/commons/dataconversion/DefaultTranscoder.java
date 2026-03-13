@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 
@@ -23,6 +25,7 @@ import org.infinispan.commons.util.Util;
  */
 public final class DefaultTranscoder extends AbstractTranscoder {
 
+   private static final Log log = LogFactory.getLog(DefaultTranscoder.class);
    private static final Set<MediaType> supportedTypes = new HashSet<>();
 
    private final Marshaller marshaller;
@@ -84,14 +87,19 @@ public final class DefaultTranscoder extends AbstractTranscoder {
          String classType = destinationType.getClassType();
          if (classType != null && !(classType.startsWith("java.lang") || classType.equals(BYTE_ARRAY.getName()))) {
             Object unmarshalled = marshaller.objectFromByteBuffer((byte[]) content);
-            if (unmarshalled.getClass().getName().equals(classType)) {
-               return unmarshalled;
+            if (!Class.forName(classType).isAssignableFrom(unmarshalled.getClass())) {
+               throw new ClassCastException("Decoded object for class + " + unmarshalled.getClass() + " is not assignable from " + classType);
             }
+            return unmarshalled;
          } else {
+            // We don't try to unmarshall an object from octet-stream unless the object storage defines a type class
             return content;
          }
       }
       if (contentType.match(APPLICATION_OBJECT)) {
+         if (content instanceof byte[] && destinationType.getClassType() != null && contentType.getClassType() == null) {
+            content = marshaller.objectFromByteBuffer((byte[]) content);
+         }
          return content;
       }
       if (contentType.match(TEXT_PLAIN)) {
