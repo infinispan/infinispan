@@ -2,6 +2,7 @@ package org.infinispan.client.rest.impl.jdk;
 
 import static org.infinispan.client.rest.RestHeaders.ACCEPT;
 import static org.infinispan.client.rest.impl.jdk.Util.sanitize;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 
@@ -62,6 +63,11 @@ public class RestSchemaClientJDK implements RestSchemaClient {
    @Override
    public CompletionStage<RestResponse> get(String schemaName) {
       return client.get(schemaUrl(schemaName), Map.of(ACCEPT, TEXT_PLAIN_TYPE));
+   }
+
+   @Override
+   public CompletionStage<RestResponse> getDetailed(String schemaName) {
+      return client.get(schemaUrl(schemaName) + "?action=detailed", Map.of(ACCEPT, APPLICATION_JSON_TYPE));
    }
 
    private String schemaUrl(String name) {

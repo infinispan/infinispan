@@ -33,6 +33,27 @@ Retrieve Protobuf schema from {brandname} with `GET` requests.
 GET /rest/v2/schemas/{schemaName}
 ----
 
+By default, {brandname} returns the Protobuf schema content as plain text.
+
+To retrieve detailed information about the schema, use the `action=detailed` query parameter:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/schemas/{schemaName}?action=detailed
+----
+
+When `action=detailed` is specified, {brandname} returns a JSON document that includes the schema content, validation errors, and the list of caches that index types declared in the schema.
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_protobuf_schema_metadata_response.json[]
+----
+
+* `name` is the name of the Protobuf schema.
+* `content` is the Protobuf schema content.
+* `caches` is the list of caches that use indexed types declared in this schema.
+* `error` is `null` for valid Protobuf schemas. If {brandname} cannot successfully validate the schema, it returns errors.
+
 [id='rest_v2_update_protobuf']
 = Updating Protobuf Schemas
 Modify Protobuf schemas with `PUT` requests that include the content of a protobuf file in the payload.

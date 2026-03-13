@@ -48,4 +48,9 @@ public interface RestSchemaClient {
     * GET a schema by name.
     */
    CompletionStage<RestResponse> get(String schemaName);
+
+   /**
+    * GET a schema by name with detailed information (content, validation errors, and caches using this schema).
+    */
+   CompletionStage<RestResponse> getDetailed(String schemaName);
 }

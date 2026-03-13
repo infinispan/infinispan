@@ -1,25 +1,41 @@
 package org.infinispan.rest.resources;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.util.Util.getResourceAsString;
-import static org.testng.Assert.assertTrue;
+import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.nio.file.Paths;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.Cache;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
-import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.rest.resources.ProtobufResource.ProtoSchema;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.query.ProtobufMetadataManager;
 import org.infinispan.testing.Exceptions;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Test(groups = "functional", testName = "rest.ProtobufResourceTest")
 public class ProtobufResourceTest extends AbstractRestResourceTest {
+
+   private static final ObjectMapper MAPPER = new ObjectMapper();
+   protected String PERSISTENT_LOCATION = tmpDirectory(ProtobufResourceTest.class.getName());
+   public static final String PERSON_PROTO = "person.proto";
+   public static final String ERROR_PROTO = "error.proto";
 
    @Override
    public Object[] factory() {
@@ -31,19 +47,32 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       };
    }
 
+   protected GlobalConfigurationBuilder getGlobalConfigForNode(int id) {
+      GlobalConfigurationBuilder config = super.getGlobalConfigForNode(id);
+      config.globalState().enable()
+            .configurationStorage(ConfigurationStorage.OVERLAY)
+            .persistentLocation(Paths.get(PERSISTENT_LOCATION, Integer.toString(id)).toString())
+            .metrics().accurateSize(true);
+      return config;
+   }
+
    @BeforeMethod(alwaysRun = true)
    @Override
    public void createBeforeMethod() {
-      //Clear schema cache to avoid conflicts between methods
-      Security.doAs(ADMIN, () -> cacheManagers.get(0).getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME).clear());
+      //Remove user schemas to avoid conflicts between methods.
+      //Do not use clear() as it also unregisters built-in protobuf types (e.g. WrappedMessage) from the serialization context.
+      Security.doAs(ADMIN, () -> {
+         Cache<String, String> cache = cacheManagers.get(0).getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME);
+         cache.keySet().forEach(cache::remove);
+      });
    }
 
-   public void listSchemasWhenEmpty() {
+   public void listSchemasWhenEmpty() throws Exception {
       CompletionStage<RestResponse> response = client.schemas().names();
 
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(join(response).body());
-      assertEquals(0, jsonNode.asList().size());
+      ProtoSchema[] schemas = MAPPER.readValue(join(response).body(), ProtoSchema[].class);
+      assertEquals(0, schemas.length);
    }
 
    @Test
@@ -54,7 +83,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void updateNonExistingSchema() throws Exception {
-      String person = getResourceAsString("person.proto", getClass().getClassLoader());
+      String person = getResourceAsString(PERSON_PROTO, getClass().getClassLoader());
 
       CompletionStage<RestResponse> response = client.schemas().put("person", person);
       ResponseAssertion.assertThat(response).isOk();
@@ -64,58 +93,90 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    public void putAndGetWrongProtobuf() throws Exception {
       RestSchemaClient schemaClient = client.schemas();
 
-      String errorProto = getResourceAsString("error.proto", getClass().getClassLoader());
+      String errorProto = getResourceAsString(ERROR_PROTO, getClass().getClassLoader());
 
       RestResponse response = join(schemaClient.post("error", errorProto));
 
       String cause = "Syntax error in error.proto at 3:7: unexpected label: messoge";
 
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(response.body());
-      assertEquals("error.proto", jsonNode.at("name").asString());
-      assertEquals("Schema error.proto has errors", jsonNode.at("error").at("message").asString());
-      assertEquals(cause, jsonNode.at("error").at("cause").asString());
+      ProtoSchema protoSchema = MAPPER.readValue(response.body(), ProtoSchema.class);
+      assertEquals(ERROR_PROTO, protoSchema.name);
+      assertEquals("Schema error.proto has errors", protoSchema.error.message);
+      assertEquals(cause, protoSchema.error.cause);
 
       // Read adding .proto should also work
       response = join(schemaClient.get("error"));
       ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentEqualToFile("error.proto");
+      ResponseAssertion.assertThat(response).hasContentEqualToFile(ERROR_PROTO);
 
-      checkListProtobufEndpointUrl("error.proto", cause);
+      checkListProtobufEndpointUrl(ERROR_PROTO, cause);
    }
 
    @Test
    public void crudSchema() throws Exception {
+      final String SIMPLE = "simple";
+      final String SIMPLE_PROTO = SIMPLE + ProtobufMetadataManager.PROTO_KEY_SUFFIX;
+
       RestSchemaClient schemaClient = client.schemas();
-      String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
+      String simpleProto = getResourceAsString(SIMPLE_PROTO, getClass().getClassLoader());
 
       // Create
-      RestResponse response = join(schemaClient.post("person", personProto));
+      RestResponse response = join(schemaClient.post(SIMPLE, simpleProto));
       ResponseAssertion.assertThat(response).isOk();
 
-      Json jsonNode = Json.read(response.body());
-      assertTrue(jsonNode.at("error").isNull());
+      ProtoSchema protoSchema = MAPPER.readValue(response.body(), ProtoSchema.class);
+      assertThat(protoSchema.error).isNull();
+      assertThat(protoSchema.name).isEqualTo(SIMPLE_PROTO);
 
       // Read
-      response = join(schemaClient.get("person"));
+      response = join(schemaClient.get(SIMPLE));
 
       ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentEqualToFile("person.proto");
+      ResponseAssertion.assertThat(response).hasContentEqualToFile(SIMPLE_PROTO);
 
       // Read adding .proto should also work
-      response = join(schemaClient.get("person.proto"));
+      response = join(schemaClient.get(SIMPLE_PROTO));
       ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentEqualToFile("person.proto");
+      ResponseAssertion.assertThat(response).hasContentEqualToFile(SIMPLE_PROTO);
+
+      // Delete a cache with the schema
+      RestCacheClient cacheClient = adminClient.cache("testSchemasList");
+      join(cacheClient.delete());
+
+      // Read with metadata
+      response = join(schemaClient.getDetailed(SIMPLE_PROTO));
+      ResponseAssertion.assertThat(response).isOk();
+      ProtobufResource.ProtoSchemaContent schemaContent = MAPPER.readValue(response.body(), ProtobufResource.ProtoSchemaContent.class);
+      assertEquals(SIMPLE_PROTO, schemaContent.name);
+      assertEquals(simpleProto, schemaContent.content);
+      assertThat(schemaContent.error).isNull();
+      assertThat(schemaContent.caches).isEmpty();
+
+      // Create a cache with the schema
+      String cacheConfig = cacheConfigToJson("testSchemasList", new ConfigurationBuilder()
+            .indexing().enable().addIndexedEntities("org.infinispan.rest.search.simple.Simple").build());
+      RestEntity config = RestEntity.create(APPLICATION_JSON, cacheConfig);
+      ResponseAssertion.assertThat(cacheClient.createWithConfiguration(config)).isOk();
+
+      // Read with metadata
+      response = join(schemaClient.getDetailed(SIMPLE_PROTO));
+      ResponseAssertion.assertThat(response).isOk();
+      schemaContent = MAPPER.readValue(response.body(), ProtobufResource.ProtoSchemaContent.class);
+      assertEquals(SIMPLE_PROTO, schemaContent.name);
+      assertEquals(simpleProto, schemaContent.content);
+      assertThat(schemaContent.error).isNull();
+      assertThat(schemaContent.caches).contains("testSchemasList");
 
       // Update
-      response = join(schemaClient.put("person", personProto));
+      response = join(schemaClient.put(SIMPLE, simpleProto));
       ResponseAssertion.assertThat(response).isOk();
 
       // Delete
-      response = join(schemaClient.delete("person"));
+      response = join(schemaClient.delete(SIMPLE));
       ResponseAssertion.assertThat(response).isOk();
 
-      response = join(schemaClient.get("person"));
+      response = join(schemaClient.get(SIMPLE));
       ResponseAssertion.assertThat(response).isNotFound();
    }
 
@@ -123,7 +184,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    public void createTwiceSchema() throws Exception {
       RestSchemaClient schemaClient = client.schemas();
 
-      String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
+      String personProto = getResourceAsString(PERSON_PROTO, getClass().getClassLoader());
       CompletionStage<RestResponse> response = schemaClient.post("person", personProto);
       ResponseAssertion.assertThat(response).isOk();
       response = schemaClient.post("person", personProto);
@@ -134,7 +195,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    public void addAndGetListOrderedByName() throws Exception {
       RestSchemaClient schemaClient = client.schemas();
 
-      String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
+      String personProto = getResourceAsString(PERSON_PROTO, getClass().getClassLoader());
 
       join(schemaClient.post("users", personProto));
       join(schemaClient.post("people", personProto));
@@ -143,26 +204,27 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(schemaClient.names());
 
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(response.body());
-      assertEquals(3, jsonNode.asList().size());
-      assertEquals("dancers.proto", jsonNode.at(0).at("name").asString());
-      assertEquals("people.proto", jsonNode.at(1).at("name").asString());
-      assertEquals("users.proto", jsonNode.at(2).at("name").asString());
+      ProtoSchema[] schemas = MAPPER.readValue(response.body(), ProtoSchema[].class);
+      assertEquals(3, schemas.length);
+      assertEquals("dancers.proto", schemas[0].name);
+      assertEquals("people.proto", schemas[1].name);
+      assertEquals("users.proto", schemas[2].name);
    }
 
    @Test
    public void getSchemaTypes() throws Exception {
       RestSchemaClient schemaClient = client.schemas();
 
-      String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
+      String personProto = getResourceAsString(PERSON_PROTO, getClass().getClassLoader());
 
       join(schemaClient.post("users", personProto));
 
       RestResponse response = join(schemaClient.types());
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(response.body());
-      assertEquals(4, jsonNode.asList().size());
-      assertTrue(jsonNode.asList().contains("org.infinispan.rest.search.entity.Person"));
+      String[] types = MAPPER.readValue(response.body(), String[].class);
+      assertThat(types).contains("org.infinispan.rest.search.entity.Person");
+      assertThat(types).contains("org.infinispan.rest.search.entity.Address");
+      assertThat(types).contains("org.infinispan.rest.search.entity.PhoneNumber");
    }
 
    @Test
@@ -193,16 +255,16 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       assertThat(body).contains("IPROTO000034: Type 'evolution.e1' no longer reserves field numbers '{4, 5}'");
    }
 
-   private void checkListProtobufEndpointUrl(String fileName, String errorMessage) {
+   private void checkListProtobufEndpointUrl(String fileName, String errorMessage) throws Exception {
       RestSchemaClient schemaClient = client.schemas();
 
       RestResponse response = join(schemaClient.names());
 
-      Json jsonNode = Json.read(response.body());
-      assertEquals(1, jsonNode.asList().size());
-      assertEquals(fileName, jsonNode.at(0).at("name").asString());
+      ProtoSchema[] schemas = MAPPER.readValue(response.body(), ProtoSchema[].class);
+      assertEquals(1, schemas.length);
+      assertEquals(fileName, schemas[0].name);
 
-      assertEquals("Schema error.proto has errors", jsonNode.at(0).at("error").at("message").asString());
-      assertEquals(errorMessage, jsonNode.at(0).at("error").at("cause").asString());
+      assertEquals("Schema error.proto has errors", schemas[0].error.message);
+      assertEquals(errorMessage, schemas[0].error.cause);
    }
 }
