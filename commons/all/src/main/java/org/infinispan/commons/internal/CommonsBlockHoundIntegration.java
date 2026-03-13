@@ -79,6 +79,8 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside(ForkJoinPool.class.getName(), "runWorker");
       // The scan method is where the task is actually ran
       builder.disallowBlockingCallsInside(ForkJoinPool.class.getName(), "scan");
+      // Spin lock is done internally by fork join pool to avoid sleeping a thread if not necessary
+      builder.disallowBlockingCallsInside(ForkJoinPool.class.getName(), "spinLockRunState");
       // StampedLock unlock can cause a Thread.onSpinWait call which causes blockhound issues
       builder.allowBlockingCallsInside(StampedLock.class.getName(), "tryDecReaderOverflow");
 
