@@ -205,6 +205,21 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    @Override
+   public ConsistentHash transform(Function<Address, Address> mapper) {
+      List<Address> remappedMembers = members.stream().map(mapper).toList();
+      Map<Address, Float> remappedCf = new HashMap<>();
+      for (int i = 0; i < members.size(); i++) {
+         Address member = members.get(i);
+         remappedCf.put(mapper.apply(member), capacityFactors.get(i));
+      }
+      List<Address>[] remappedSegmentOwners = new List[segmentOwners.length];
+      for (int i = 0; i < segmentOwners.length; i++) {
+         remappedSegmentOwners[i] = segmentOwners[i].stream().map(mapper).toList();
+      }
+      return new DefaultConsistentHash(numOwners, segmentOwners.length, remappedMembers, remappedCf, remappedSegmentOwners);
+   }
+
+   @Override
    public List<Address> locateOwnersForSegment(int segmentId) {
       return segmentOwners[segmentId];
    }
