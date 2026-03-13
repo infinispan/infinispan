@@ -190,7 +190,27 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener}</listener>
                </properties>
+               <excludes>
+                  <exclude>**/MemoryMonitorLowMemoryTest.java</exclude>
+               </excludes>
             </configuration>
+            <executions>
+               <execution>
+                  <id>low-memory-tests</id>
+                  <goals>
+                     <goal>test</goal>
+                  </goals>
+                  <configuration>
+                     <forkCount>1</forkCount>
+                     <reuseForks>false</reuseForks>
+                     <argLine>-Xmx256m -Xms256m</argLine>
+                     <includes>
+                        <include>**/MemoryMonitorLowMemoryTest.java</include>
+                     </includes>
+                     <excludes combine.self="override" />
+                  </configuration>
+               </execution>
+            </executions>
             <dependencies>
                <dependency>
                   <groupId>org.apache.maven.surefire</groupId>
