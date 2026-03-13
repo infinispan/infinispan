@@ -105,6 +105,7 @@ public class StateProviderTest {
    private LocalizedCacheTopology cacheTopology;
    private InternalEntryFactory ef;
    private LocalPublisherManager<?, ?> lpm;
+   private StateTransferTracker stt;
 
    @BeforeMethod
    public void setUp() {
@@ -131,6 +132,7 @@ public class StateProviderTest {
       ef = mock(InternalEntryFactory.class);
       lpm = mock(LocalPublisherManager.class);
       when(distributionManager.getCacheTopology()).thenAnswer(invocation -> cacheTopology);
+      stt = mock(StateTransferTracker.class);
    }
 
    public void test1() {
@@ -155,7 +157,7 @@ public class StateProviderTest {
       StateProviderImpl stateProvider = new StateProviderImpl();
       TestingUtil.inject(stateProvider, configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
                          dataContainer, transactionTable, stateTransferLock, distributionManager, ef, lpm, keyPartitioner,
-                         TransactionOriginatorChecker.LOCAL);
+                         TransactionOriginatorChecker.LOCAL, stt);
       stateProvider.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
@@ -252,7 +254,7 @@ public class StateProviderTest {
       StateProviderImpl stateProvider = new StateProviderImpl();
       TestingUtil.inject(stateProvider, configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
                          dataContainer, transactionTable, stateTransferLock, distributionManager, ef, lpm, keyPartitioner,
-                         TransactionOriginatorChecker.LOCAL);
+                         TransactionOriginatorChecker.LOCAL, stt);
       stateProvider.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();

@@ -86,6 +86,7 @@ public class StateProviderImpl implements StateProvider {
    @Inject protected LocalPublisherManager<?, ?> localPublisherManager;
    @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    @Inject ScheduledExecutorService timeoutExecutor;
+   @Inject StateTransferTracker stateTracker;
 
    protected long timeout;
    protected int chunkSize;
@@ -130,6 +131,9 @@ public class StateProviderImpl implements StateProvider {
                }
             }
          }
+
+         if (isRebalance && transfersByDestination.isEmpty())
+            stateTracker.completeStateProvider(cacheTopology.getTopologyId());
       }
       return CompletableFutures.completedNull();
       //todo [anistor] must cancel transfers for all segments that we no longer own
@@ -160,6 +164,8 @@ public class StateProviderImpl implements StateProvider {
                }
             }
          }
+
+         stateTracker.completeStateProvider(Integer.MIN_VALUE);
       } catch (Throwable t) {
          log.errorf(t, "Failed to stop StateProvider of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
@@ -317,9 +323,14 @@ public class StateProviderImpl implements StateProvider {
                     transferTask.getSegments());
       }
       synchronized (transfersByDestination) {
+         boolean isEmpty = transfersByDestination.isEmpty();
          List<OutboundTransferTask> transfers = transfersByDestination
                .computeIfAbsent(transferTask.getDestination(), k -> new ArrayList<>());
          transfers.add(transferTask);
+
+         if (isEmpty) {
+            stateTracker.startStateProvider(transferTask.getTopologyId());
+         }
       }
    }
 
@@ -352,6 +363,10 @@ public class StateProviderImpl implements StateProvider {
             if (transferTasks.isEmpty()) {
                transfersByDestination.remove(transferTask.getDestination());
             }
+         }
+
+         if (transfersByDestination.isEmpty()) {
+            stateTracker.completeStateProvider(transferTask.getTopologyId());
          }
       }
    }
