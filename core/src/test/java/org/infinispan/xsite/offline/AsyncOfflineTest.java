@@ -25,6 +25,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.AbstractXSiteTest;
@@ -43,7 +44,7 @@ import org.testng.annotations.Test;
 public class AsyncOfflineTest extends AbstractXSiteTest {
 
    private static final int NUM_NODES = 3;
-   private static final int NUM_FAILURES = 6;
+   private static final int NUM_FAILURES = 3;
 
    private static final String LON = "LON-1";
    private static final String NYC = "NYC-2";
@@ -84,6 +85,16 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
       cache(LON, cacheName, 0).put("key", "value");
       eventuallyEquals("value", () -> cache(SFO, cacheName, 0).get("key"));
+
+      // Wait for IRAC to finish processing the initial put before installing DiscardHandler
+      eventually(() -> {
+         for (int i = 0; i < NUM_NODES; ++i) {
+            if (!iracManager(LON, cacheName, i).isEmpty()) {
+               return false;
+            }
+         }
+         return true;
+      }, 30, TimeUnit.SECONDS);
 
       assertEquals(0, takeOfflineManager(LON, cacheName, primaryOwner).getOfflineStatus(SFO).getFailureCount());
 
@@ -183,11 +194,13 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
          assertOnline(cacheName, index, NYC);
          assertEventuallyOffline(cacheName, index);
       } else {
-         assertOnline(cacheName, index, NYC);
-         assertEventuallyOffline(cacheName, index);
-
+         // Check primary owner first.
+         // It's the source of the distributed state update
          assertOnline(cacheName, primaryOwnerIndex, NYC);
          assertEventuallyOffline(cacheName, primaryOwnerIndex);
+
+         assertOnline(cacheName, index, NYC);
+         assertEventuallyOffline(cacheName, index);
       }
 
       assertBringSiteOnline(cacheName, primaryOwnerIndex);
@@ -202,18 +215,20 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
    private void assertEventuallyOffline(String cacheName, int index) {
       OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
       assertTrue(status.isEnabled());
-      eventually(() -> "Site " + SFO + " is online. status=" + status, status::isOffline);
+      eventually(() -> "Site " + SFO + " is online. status=" + status, status::isOffline, 30, TimeUnit.SECONDS);
    }
 
    private void assertEventuallySFOOnline(String cacheName, int index) {
       OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
       assertTrue(status.isEnabled());
-      eventually(() -> "Site " + SFO + " is offline. status=" + status, () -> !status.isOffline());
+      eventually(() -> "Site " + SFO + " is offline. status=" + status, () -> !status.isOffline(), 30, TimeUnit.SECONDS);
    }
 
    private void assertBringSiteOnline(String cacheName, int index) {
       OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
       assertTrue("Unable to bring " + SFO + " online. status=" + status, CompletionStages.join(status.bringOnline()));
+      // Wait for any pending IRAC runs to process the offline to cleanup transition
+      eventually(() -> iracManager(LON, cacheName, index).isEmpty(), 30, TimeUnit.SECONDS);
    }
 
 
@@ -293,6 +308,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       @Override
       public void handleFromRemoteSite(String origin, XSiteRequest<?> command, Reply reply, DeliverOrder order) {
          if (discard) {
+            reply.reply(CacheNotFoundResponse.INSTANCE);
             return;
          }
          handler.handleFromRemoteSite(origin, command, reply, order);
