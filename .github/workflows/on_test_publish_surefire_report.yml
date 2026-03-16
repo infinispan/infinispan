@@ -31,7 +31,7 @@ jobs:
             path: ./surefire-test-report/github-sha.txt
 
         # Get GitHub App token to use in API calls
-        - uses: actions/create-github-app-token@v2
+        - uses: actions/create-github-app-token@v3
           id: app-token
           with:
             # required
@@ -166,7 +166,7 @@ jobs:
       with:
         path: ./github-sha.txt
 
-    - uses: actions/create-github-app-token@v2
+    - uses: actions/create-github-app-token@v3
       id: app-token
       with:
         # required
@@ -261,7 +261,7 @@ jobs:
         with:
           path: ./github-sha.txt
 
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ secrets.GH_APP_ISPN_ID }}
