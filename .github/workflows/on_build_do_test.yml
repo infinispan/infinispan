@@ -88,7 +88,7 @@ jobs:
           unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ secrets.GH_APP_ISPN_ID }}
@@ -154,7 +154,7 @@ jobs:
 
       # Renewing token since it last for 1 hour and cannot be extended
       # see for more info https://github.com/actions/create-github-app-token/issues/128
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         if: always() && failure()
         id: app-token-2
         with:
@@ -304,7 +304,7 @@ jobs:
           unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
             app-id: ${{ secrets.GH_APP_ISPN_ID }}

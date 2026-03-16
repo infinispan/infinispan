@@ -57,7 +57,7 @@ jobs:
           unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ secrets.GH_APP_ISPN_ID }}
