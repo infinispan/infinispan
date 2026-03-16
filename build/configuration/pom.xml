@@ -162,7 +162,7 @@
       <version.smallrye-mutiny>2.9.5</version.smallrye-mutiny>
 
       <!-- Default versions Spring and Spring Boot-->
-      <version.spring>${version.spring6}</version.spring>
+      <version.spring>6.2.17</version.spring>
       <version.spring.boot>${version.spring.boot3}</version.spring.boot>
       <version.spring.session>${version.spring.session3}</version.spring.session>
       <!-- Spring 6, Spring Boot 3 versions -->
