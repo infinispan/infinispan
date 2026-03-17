@@ -32,13 +32,14 @@ jobs:
       
       - name: Inline comments in PR
         if: github.event_name == 'pull_request'
-        uses: sett-and-hive/sarif-to-comment-action@v2.0.1
+        uses: sett-and-hive/sarif-to-comment-action@main
         with:
           sarif-file: 'pmd-report.sarif'
           token: ${{ secrets.GITHUB_TOKEN }}
-         branch: ${{ github.head_ref }}
-         pr-number: ${{ github.event.number }}
-
+          branch: ${{ github.head_ref }}
+          pr-number: ${{ github.event.number }}
+          repository: ${{ github.repository }}
+          
       - name: Fail build on new errors
         if: >
           steps.pmd.outputs.errors != '0' &&
