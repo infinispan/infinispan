@@ -22,17 +22,26 @@ jobs:
 
       - name: PMD analysis
         id: pmd
-        uses: pmd/pmd-github-action@v2
+        uses: rigazilla/pmd-github-action@min-priority
         with:
           version: '7.15.0'
           rulesets: 'rulesets/java/quickstart.xml'
           analyzeModifiedFilesOnly: true
           createGitHubAnnotations: true
           uploadSarifReport: true
+      
+      - name: Inline comments in PR
+        if: github.event_name == 'pull_request'
+        uses: sett-and-hive/sarif-to-comment-action@v2.0.1
+        with:
+          sarif-file: 'pmd-report.sarif'
+          token: ${{ secrets.GITHUB_TOKEN }}
+         branch: ${{ github.head_ref }}
+         pr-number: ${{ github.event.number }}
 
-      - name: Fail build on new violations
+      - name: Fail build on new errors
         if: >
-          steps.pmd.outputs.violations != '0' &&
+          steps.pmd.outputs.errors != '0' &&
           !(
             github.event_name == 'push' &&
             (
