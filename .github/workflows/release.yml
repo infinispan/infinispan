@@ -221,9 +221,15 @@ jobs:
     needs: published
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+            app-id: ${{ secrets.GH_APP_ISPN_ID }}
+            private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+
       - name: Update GitHub Organization Variable to next release version
         shell: bash
         env:
-          GH_TOKEN: "${{ secrets.INFINISPAN_RELEASE_TOKEN }}"
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: >
           gh variable set "RELEASE_$(echo '${{ inputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "${{ inputs.nextVersion }}" --org infinispan;
