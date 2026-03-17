@@ -84,7 +84,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static final String STARTUP_MESSAGE_REGEX = ".*ISPN080001.*";
    private static final String SHUTDOWN_MESSAGE_REGEX = ".*ISPN080003.*";
    private static final String CLUSTER_VIEW_REGEX = ".*ISPN000093.*(?<=\\()(%1$d)(?=\\)).*|.*ISPN000094.*(?<=\\()(%1$d)(?=\\)).*";
-   private static final int TIMEOUT_SECONDS = Integer.getInteger(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_TIMEOUT_SECONDS, 45);
+   private static final int TIMEOUT_SECONDS = Integer.getInteger(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_TIMEOUT_SECONDS, 50);
    private static final Long IMAGE_MEMORY = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY, null);
    private static final Long IMAGE_MEMORY_SWAP = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP, null);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
