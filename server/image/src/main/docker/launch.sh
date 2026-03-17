@@ -14,8 +14,8 @@ tailAll() {
     if [ -d "$f" ]; then
       tailAll "$f"
     else
-      print "\n$f\n"
-      print ">>>>>>>>>>>\n"
+      printf "\n%s\n" "$f"
+      printf ">>>>>>>>>>>\n"
       tail -n +1 "$f"
       printf "\n<<<<<<<<<<<\n"
     fi
