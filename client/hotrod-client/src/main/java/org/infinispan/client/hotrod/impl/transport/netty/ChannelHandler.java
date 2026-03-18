@@ -152,8 +152,9 @@ public class ChannelHandler {
                   .build().keyManager());
          }
          if (ssl.trustStoreFileName() != null) {
-            if ("pem".equalsIgnoreCase(ssl.trustStoreType())) {
-               builder.trustManager(new File(ssl.trustStoreFileName()));
+            File trustFile = new File(ssl.trustStoreFileName());
+            if ("pem".equalsIgnoreCase(ssl.trustStoreType()) || SslContextFactory.isPemFile(trustFile)) {
+               builder.trustManager(trustFile);
             } else {
                builder.trustManager(new SslContextFactory()
                      .trustStoreFileName(ssl.trustStoreFileName())
@@ -165,9 +166,6 @@ public class ChannelHandler {
                      .build()
                      .trustManager());
             }
-         }
-         if (ssl.trustStorePath() != null) {
-            builder.trustManager(new File(ssl.trustStorePath()));
          }
          if (ssl.protocol() != null) {
             builder.protocols(ssl.protocol());
@@ -207,16 +205,15 @@ public class ChannelHandler {
             .option(ChannelOption.SO_RCVBUF, 1024576);
       ChannelInitializer channelInitializer = createChannelInitializer(address, bootstrap);
       bootstrap.handler(channelInitializer);
-      OperationChannel operationChannel = createOperationChannel(channelInitializer, address);
-      return operationChannel;
+      return createOperationChannel(channelInitializer, address);
    }
 
-   public ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
+   private ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
       return new ChannelInitializer(bootstrap, address, configuration, sniHostName, sslContext, dispatcher,
             pipelineDecorator);
    }
 
-   protected OperationChannel createOperationChannel(ChannelInitializer channelInitializer, SocketAddress address) {
+   OperationChannel createOperationChannel(ChannelInitializer channelInitializer, SocketAddress address) {
       return OperationChannel.createAndStart(address, channelInitializer, dispatcher::getClientTopologyInfo, dispatcher::handleConnectionFailure);
    }
 
