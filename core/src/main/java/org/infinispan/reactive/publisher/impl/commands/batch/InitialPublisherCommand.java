@@ -44,6 +44,8 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
                                   boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer,
                                   boolean segmentNotificationNeeded) {
       super(cacheName);
+      assert segmentNotificationNeeded || deliveryGuarantee != DeliveryGuarantee.EXACTLY_ONCE
+            : "Segment notifications are required with EXACTLY_ONCE guarantee";
       this.requestId = requestId;
       this.deliveryGuarantee = deliveryGuarantee;
       this.batchSize = batchSize;
@@ -65,8 +67,6 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
                            MarshallableObject<Function<? super Publisher<I>, ? extends Publisher<R>>> wrappedTransformer,
                            boolean segmentNotificationNeeded) {
       super(cacheName);
-      assert segmentNotificationNeeded || (!trackKeys && deliveryGuarantee != DeliveryGuarantee.EXACTLY_ONCE)
-            : "Segment notifications are required when tracking keys or EXACTLY_ONCE guarantee";
       this.requestId = requestId;
       this.deliveryGuarantee = deliveryGuarantee;
       this.batchSize = batchSize;

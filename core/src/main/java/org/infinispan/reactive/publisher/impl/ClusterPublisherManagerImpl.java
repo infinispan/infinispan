@@ -1021,7 +1021,6 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          this.publisher = publisher;
          this.requestId = rpcManager.getAddress() + "#" + requestCounter.incrementAndGet();
          this.includeSegmentNotification = withSegments
-               || publisher.shouldTrackKeys
                || publisher.deliveryGuarantee == DeliveryGuarantee.EXACTLY_ONCE;
 
          this.keysBySegment = publisher.deliveryGuarantee == DeliveryGuarantee.EXACTLY_ONCE ?

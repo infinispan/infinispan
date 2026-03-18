@@ -22,6 +22,7 @@ import static org.infinispan.rest.framework.Method.PUT;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.RequestHeader;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -132,12 +133,14 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
             .invocation().methods(GET).path("/v3/caches/{cacheName}/keys")
                .operationId("AllCacheKeys")
                .name("Retrieve all keys from a cache")
+               .parameter("delivery-guarantee", ParameterIn.QUERY, false, new Schema(DeliveryGuarantee.class), "Defines the delivery guarantee when iterating the elements")
                .response(OK, "All cache keys", APPLICATION_JSON, Schema.STRING_ARRAY)
                .response(NOT_FOUND, CACHE_NOT_FOUND_RESPONSE, TEXT_PLAIN, Schema.STRING)
                .handleWith(this::streamKeys)
             .invocation().methods(GET).path("/v3/caches/{cacheName}/entries")
                .operationId("AllCacheEntries")
                .name("Retrieve all entries from a cache")
+               .parameter("delivery-guarantee", ParameterIn.QUERY, false, new Schema(DeliveryGuarantee.class), "Defines the delivery guarantee when iterating the elements")
                .response(OK, "All cache entries", APPLICATION_JSON)
                .response(NOT_FOUND, CACHE_NOT_FOUND_RESPONSE, TEXT_PLAIN, Schema.STRING)
                .handleWith(this::streamEntries)

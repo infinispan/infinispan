@@ -688,6 +688,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    protected CompletionStage<RestResponse> streamKeys(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
+      DeliveryGuarantee guarantee = deliveryGuarantee(request);
+      if (guarantee == null)
+         return invocationHelper.newResponse(request, BAD_REQUEST).toFuture();
 
       String batchParam = request.getParameter("batch");
       String limitParam = request.getParameter("limit");
@@ -708,7 +711,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       ClusterPublisherManager<Object, ?> cpm = registry.getClusterPublisherManager().wired();
       EncoderKeyMapper<Object> mapper = new EncoderKeyMapper<>(cache.getKeyDataConversion());
       mapper.injectDependencies(registry);
-      SegmentPublisherSupplier<Object> sps = cpm.keyPublisher(null, null, null, EMPTY_BIT_SET, DeliveryGuarantee.EXACTLY_ONCE,
+      SegmentPublisherSupplier<Object> sps = cpm.keyPublisher(null, null, null, EMPTY_BIT_SET, guarantee,
             batch, PublisherTransformers.identity());
       Flowable<byte[]> flowable = Flowable.fromPublisher(sps.publisherWithoutSegments())
             .map(e -> CacheChunkedStream.readContentAsBytes(mapper.apply(e)));
@@ -727,6 +730,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String metadataParam = request.getParameter("metadata");
       String batchParam = request.getParameter("batch");
       String negotiateMediaType = request.getParameter("content-negotiation");
+      DeliveryGuarantee guarantee = deliveryGuarantee(request);
+
+      if (guarantee == null)
+         return invocationHelper.newResponse(request, BAD_REQUEST).toFuture();
 
       int limit = limitParam == null ? -1 : Integer.parseInt(limitParam);
       boolean metadata = Boolean.parseBoolean(metadataParam);
@@ -750,7 +757,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       InternalEntryFactory ief = registry.getInternalEntryFactory().running();
       EncoderEntryMapper<Object, Object, CacheEntry<Object, Object>> mapper = EncoderEntryMapper.newCacheEntryMapper(typedCache.getKeyDataConversion(), typedCache.getValueDataConversion(), ief);
       mapper.injectDependencies(registry);
-      SegmentPublisherSupplier<CacheEntry<Object, Object>> sps = cpm.entryPublisher(null, null, null, EMPTY_BIT_SET, DeliveryGuarantee.EXACTLY_ONCE,
+      SegmentPublisherSupplier<CacheEntry<Object, Object>> sps = cpm.entryPublisher(null, null, null, EMPTY_BIT_SET, guarantee,
             batch, PublisherTransformers.identity());
       Flowable<CacheEntry<?, ?>> flowable = Flowable.fromPublisher(sps.publisherWithoutSegments())
             .map(mapper::apply);
@@ -766,6 +773,18 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       responseBuilder.header(ResponseHeader.VALUE_CONTENT_TYPE_HEADER.getValue(), valueMediaType.toString());
 
       return CompletableFuture.completedFuture(responseBuilder.build());
+   }
+
+   private static DeliveryGuarantee deliveryGuarantee(RestRequest request) {
+      String param = request.getParameter("delivery-guarantee");
+      if (param == null || param.isEmpty()) {
+         return DeliveryGuarantee.EXACTLY_ONCE;
+      }
+      try {
+         return DeliveryGuarantee.valueOf(param);
+      } catch (IllegalArgumentException e) {
+         return null;
+      }
    }
 
    CompletionStage<RestResponse> cacheListen(RestRequest request) {
