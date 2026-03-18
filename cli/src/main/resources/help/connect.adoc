@@ -13,10 +13,15 @@ DESCRIPTION
 Defaults to `http://localhost:11222` and prompts for credentials if
 authentication is required.
 
+You can specify a bookmark name instead of a URL. If the argument does not
+contain `://`, the CLI treats it as a bookmark name and resolves the URL,
+credentials, and SSL/TLS settings from the stored bookmark. Command-line
+options override bookmark values.
+
 
 SYNOPSIS
 --------
-*connect* ['OPTIONS'] ['SERVER_LOCATION']
+*connect* ['OPTIONS'] ['SERVER_LOCATION' | 'BOOKMARK_NAME']
 
 
 OPTIONS
@@ -48,13 +53,20 @@ Trusts all certificates.
 *--context-path*='PATH'::
 The context path for the server REST connector. If unspecified, defaults to `/rest`.
 
-EXAMPLE
--------
+EXAMPLES
+--------
 `connect 127.0.0.1:11322 -u test -p changeme` +
 Connects to a locally running server using a port offset of `100` and example
 credentials.
 
+`connect prod` +
+Connects using a bookmark named `prod`. The URL, credentials, and SSL/TLS
+settings are loaded from the bookmark.
+
+`connect prod -u otheruser -p otherpass` +
+Connects using the `prod` bookmark but overrides the username and password.
+
 
 SEE ALSO
 --------
-disconnect(1)
+bookmark(1), disconnect(1)

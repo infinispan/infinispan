@@ -14,7 +14,7 @@ public class RolesCompleter extends ListCompleter {
 
    @Override
    Collection<String> getAvailableItems(Context context) throws IOException {
-      Connection connection = context.getConnection();
+      Connection connection = context.connection();
       return connection.getRoles();
    }
 }

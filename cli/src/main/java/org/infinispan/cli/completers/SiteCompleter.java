@@ -21,7 +21,7 @@ public class SiteCompleter extends ListCompleter {
    protected Collection<String> getAvailableItems(ContextAwareCompleterInvocation invocation) throws IOException {
       Context context = invocation.context;
       Command<?> cmd = invocation.getCommand();
-      Connection connection = context.getConnection();
+      Connection connection = context.connection();
       Optional<String> cacheName = getCacheName(context, cmd);
       return cacheName.map(name -> getAvailableSites(connection, name))
             .orElseGet(connection::getSitesView);

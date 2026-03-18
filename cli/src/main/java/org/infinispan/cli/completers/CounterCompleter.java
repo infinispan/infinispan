@@ -14,7 +14,7 @@ import org.infinispan.cli.connection.Connection;
 public class CounterCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) throws IOException {
-      Connection connection = context.getConnection();
+      Connection connection = context.connection();
       return connection != null ? connection.getAvailableCounters() : Collections.emptyList();
    }
 }
