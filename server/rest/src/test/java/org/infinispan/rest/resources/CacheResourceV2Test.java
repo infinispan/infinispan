@@ -1198,6 +1198,82 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testStreamKeysWithDeliveryGuarantee() {
+      // Put some entries
+      putTextEntryInCache("default", "k1", "v1");
+
+      // Default (no param): EXACTLY_ONCE
+      try (RestResponse response = join(client.raw().get("/rest/v2/caches/default?action=keys"))) {
+         assertEquals(200, response.status());
+         String body = response.body();
+         Json json = Json.read(body);
+         assertThat(json.isArray()).isTrue();
+         assertThat(json.asJsonList())
+               .hasSize(1)
+               .satisfies(j -> assertThat(j.getFirst()).isEqualTo(Json.make("k1")));
+      }
+
+      // Explicit AT_MOST_ONCE
+      try (RestResponse response = join(client.raw().get("/rest/v2/caches/default?action=keys&delivery-guarantee=AT_MOST_ONCE"))) {
+         assertEquals(200, response.status());
+         // Verify results are still correct
+         String body = response.body();
+         Json json = Json.read(body);
+         assertThat(json.isArray()).isTrue();
+         assertThat(json.asJsonList())
+               .hasSize(1)
+               .satisfies(j -> assertThat(j.getFirst()).isEqualTo(Json.make("k1")));
+      }
+
+      // Invalid value: 400
+      try (RestResponse response = join(client.raw().get("/rest/v2/caches/default?action=keys&delivery-guarantee=INVALID"))) {
+         assertEquals(400, response.status());
+      }
+   }
+
+   @Test
+   public void testStreamEntriesWithDeliveryGuarantee() {
+      // Put some entries
+      putTextEntryInCache("default", "k1", "v1");
+
+      // Default (no param): EXACTLY_ONCE
+      try (RestResponse response = join(client.raw().get("/rest/v2/caches/default?action=entries"))) {
+         assertEquals(200, response.status());
+         String body = response.body();
+         Json json = Json.read(body);
+         assertThat(json.isArray()).isTrue();
+         assertThat(json.asJsonList())
+               .hasSize(1)
+               .satisfies(j -> {
+                  Json entry = j.getFirst();
+                  assertThat(entry.at("key")).isEqualTo(Json.make("k1"));
+                  assertThat(entry.at("value")).isEqualTo(Json.make("v1"));
+               });
+      }
+
+      // Explicit AT_MOST_ONCE
+      try (RestResponse response = join(client.raw().get("/rest/v2/caches/default?action=entries&delivery-guarantee=AT_MOST_ONCE"))) {
+         assertEquals(200, response.status());
+         // Verify results are still correct
+         String body = response.body();
+         Json json = Json.read(body);
+         assertThat(json.isArray()).isTrue();
+         assertThat(json.asJsonList())
+               .hasSize(1)
+               .satisfies(j -> {
+                  Json entry = j.getFirst();
+                  assertThat(entry.at("key")).isEqualTo(Json.make("k1"));
+                  assertThat(entry.at("value")).isEqualTo(Json.make("v1"));
+               });
+      }
+
+      // Invalid value: 400
+      try (RestResponse response = join(client.raw().get("/rest/v2/caches/default?action=entries&delivery-guarantee=INVALID"))) {
+         assertEquals(400, response.status());
+      }
+   }
+
+   @Test
    public void testMultiByte() {
       putTextEntryInCache("default", "José", "Uberlândia");
       RestResponse response = join(client.cache("default").keys());
