@@ -16,7 +16,7 @@ public class ConnectorCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) throws IOException {
       try {
-         return context.getConnection().getConnectorNames();
+         return context.connection().getConnectorNames();
       } catch (IOException e) {
          return Collections.emptyList();
       }

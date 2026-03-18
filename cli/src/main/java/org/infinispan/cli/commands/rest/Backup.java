@@ -112,7 +112,7 @@ public class Backup extends CliCommand {
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
-         String container = invocation.getContext().getConnection().getActiveContainer().getName();
+         String container = invocation.getContext().connection().getActiveContainer().getName();
          return client.container().getBackupNames();
       }
    }
@@ -152,7 +152,7 @@ public class Backup extends CliCommand {
          Map<String, List<String>> resources = createResourceMap();
          // If the restore name has not been specified generate one based upon the Infinispan version and timestamp
          String restoreName = name != null ? name : String.format("%s-%tY%2$tm%2$td%2$tH%2$tM%2$tS", Version.getBrandName(), LocalDateTime.now());
-         String container = invocation.getContext().getConnection().getActiveContainer().getName();
+         String container = invocation.getContext().connection().getActiveContainer().getName();
          if (upload) {
             invocation.printf("Uploading backup '%s' and restoring%n", path.getAbsolutePath());
             File file = new File(path.getAbsolutePath());

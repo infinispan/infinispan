@@ -59,7 +59,7 @@ public class Config extends CliCommand {
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       Context context = invocation.getContext();
-      context.getProperties().forEach((k, v) -> invocation.printf("%s=%s\n", k, v));
+      context.properties().forEach((k, v) -> invocation.printf("%s=%s\n", k, v));
       return CommandResult.SUCCESS;
    }
 

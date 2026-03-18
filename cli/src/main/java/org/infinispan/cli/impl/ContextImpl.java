@@ -67,7 +67,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    }
 
    @Override
-   public Path getConfigPath() {
+   public Path configPath() {
       return configPath;
    }
 
@@ -96,7 +96,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    }
 
    @Override
-   public Properties getProperties() {
+   public Properties properties() {
       return properties;
    }
 
@@ -262,7 +262,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    }
 
    @Override
-   public Connection getConnection() {
+   public Connection connection() {
       return connection;
    }
 

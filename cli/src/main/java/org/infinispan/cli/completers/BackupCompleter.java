@@ -14,6 +14,6 @@ import org.infinispan.cli.Context;
 public class BackupCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) throws IOException {
-      return context.getConnection().getBackupNames();
+      return context.connection().getBackupNames();
    }
 }
