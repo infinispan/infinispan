@@ -1,0 +1,12 @@
+distributedCache:
+  mode: "SYNC"
+  statistics: true
+  encoding:
+    key:
+      mediaType: "application/x-protostream"
+    value:
+      mediaType: "application/x-protostream"
+  memory:
+    maxCount: "1000000"
+  indexing:
+    enabled: false

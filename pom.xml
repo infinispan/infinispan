@@ -68,6 +68,7 @@
       <module>server/memcached</module>
       <module>server/hotrod</module>
       <module>server/resp</module>
+      <module>server/cache-migrator</module>
       <module>server/rest</module>
       <module>server/router</module>
       <module>server/runtime</module>

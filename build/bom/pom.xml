@@ -265,6 +265,12 @@
          <!-- TODO should be here? -->
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-cache-migrator</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <!-- TODO should be here? -->
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-rest</artifactId>
             <version>${project.version}</version>
          </dependency>

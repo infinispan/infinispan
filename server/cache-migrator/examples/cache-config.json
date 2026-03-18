@@ -1,0 +1,20 @@
+{
+  "distributed-cache": {
+    "mode": "SYNC",
+    "statistics": true,
+    "encoding": {
+      "key": {
+        "media-type": "application/x-protostream"
+      },
+      "value": {
+        "media-type": "application/x-protostream"
+      }
+    },
+    "memory": {
+      "max-count": "1000000"
+    },
+    "indexing": {
+      "enabled": false
+    }
+  }
+}

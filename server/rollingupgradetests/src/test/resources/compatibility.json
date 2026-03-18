@@ -49,6 +49,88 @@
           ]
         }
       ]
+    },
+    {
+      "version-from": "[16.0,16.2)",
+      "version-to": "[16.2,)",
+      "exceptions": [
+        {
+          "description": "RESP encoding changed in 16.2 - values are now stored using the configured value media type",
+          "issue": "https://github.com/infinispan/infinispan/issues/16981",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.resp.RespDistributedTest",
+              "test-methods": [
+                "testListOperations",
+                "testHashOperations",
+                "testBasicOperations",
+                "testHyperLogLogOperations"
+              ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.resp.RespHashTest",
+              "test-methods": [
+                "testHashOperations",
+                "testMixTypes",
+                "testConcurrentOperations"
+              ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.resp.RespListTest",
+              "test-methods": [
+                "testMixTypes",
+                "testConcurrentOperations",
+                "testRPUSH"
+              ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.resp.RespSetTest",
+              "test-methods": [
+                "testMixTypes",
+                "testConcurrentOperations",
+                "testSetOperations"
+              ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.resp.RespSortedSetTest",
+              "test-methods": [
+                "testMixTypes",
+                "testSortedSetOperations"
+              ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.resp.RespPubSubTest",
+              "test-methods": [
+                "testBasicPubSubOperations"
+              ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.resp.RespScriptTest",
+              "test-methods": [
+                "testEvalSha",
+                "testEval",
+                "testEvalRo"
+              ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.resp.RespStringTest",
+              "test-methods": [
+                "testSetGetDelete",
+                "testBasicOperationsConcurrently"
+              ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.resp.RespTransactionTest",
+              "test-methods": [
+                "testStartTxAndExecuteOperations",
+                "testTxAbortByWatcher",
+                "testTxSuccessWithFailedCommands",
+                "testSuccessWithWatcher"
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }
