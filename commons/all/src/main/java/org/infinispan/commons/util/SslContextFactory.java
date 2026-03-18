@@ -4,13 +4,22 @@ import static org.infinispan.commons.logging.Log.SECURITY;
 import static org.infinispan.commons.util.SecurityProviders.findProvider;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
 import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.security.Provider;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -154,24 +163,35 @@ public class SslContextFactory {
 
    private X509ExtendedKeyManager getKeyManager() {
       try {
-         String type = keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE;
-         Provider provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), type);
-         KeyStore ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
-         loadKeyStore(ks, keyStoreFileName, keyStorePassword, classLoader);
-         if (keyAlias != null) {
-            if (ks.containsAlias(keyAlias) && ks.isKeyEntry(keyAlias)) {
-               KeyStore.PasswordProtection passParam = new KeyStore.PasswordProtection(keyStorePassword);
-               KeyStore.Entry entry = ks.getEntry(keyAlias, passParam);
-               // Recreate the keystore with just one key
-               ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
-               ks.load(null, null);
-               ks.setEntry(keyAlias, entry, passParam);
-            } else {
-               throw SECURITY.noSuchAliasInKeyStore(keyAlias, keyStoreFileName);
+         KeyStore ks;
+         File keyStoreFile = new File(keyStoreFileName);
+         if (isPemFile(keyStoreFile)) {
+            ks = KeyStore.getInstance(DEFAULT_KEYSTORE_TYPE);
+            ks.load(null, null);
+            PrivateKey key = readPemKey(keyStoreFile);
+            X509Certificate[] certs = readPem(keyStoreFile);
+            String alias = keyAlias != null ? keyAlias : "key";
+            ks.setKeyEntry(alias, key, keyStorePassword, certs);
+         } else {
+            String type = keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE;
+            Provider provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), type);
+            ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
+            loadKeyStore(ks, keyStoreFileName, keyStorePassword, classLoader);
+            if (keyAlias != null) {
+               if (ks.containsAlias(keyAlias) && ks.isKeyEntry(keyAlias)) {
+                  KeyStore.PasswordProtection passParam = new KeyStore.PasswordProtection(keyStorePassword);
+                  KeyStore.Entry entry = ks.getEntry(keyAlias, passParam);
+                  // Recreate the keystore with just one key
+                  ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
+                  ks.load(null, null);
+                  ks.setEntry(keyAlias, entry, passParam);
+               } else {
+                  throw SECURITY.noSuchAliasInKeyStore(keyAlias, keyStoreFileName);
+               }
             }
          }
          String algorithm = KeyManagerFactory.getDefaultAlgorithm();
-         provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), algorithm);
+         Provider provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), algorithm);
          KeyManagerFactory kmf = provider != null ? KeyManagerFactory.getInstance(algorithm, provider) : KeyManagerFactory.getInstance(algorithm);
          kmf.init(ks, keyStorePassword);
          for (KeyManager km : kmf.getKeyManagers()) {
@@ -187,12 +207,23 @@ public class SslContextFactory {
 
    private X509ExtendedTrustManager getTrustManager() {
       try {
-         String type = trustStoreType != null ? trustStoreType : DEFAULT_KEYSTORE_TYPE;
-         Provider provider = findProvider(this.provider, KeyStore.class.getSimpleName(), trustStoreType);
-         KeyStore ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
-         loadKeyStore(ks, trustStoreFileName, trustStorePassword, classLoader);
+         KeyStore ks;
+         File trustStoreFile = new File(trustStoreFileName);
+         if (isPemFile(trustStoreFile)) {
+            ks = KeyStore.getInstance(DEFAULT_KEYSTORE_TYPE);
+            ks.load(null, null);
+            X509Certificate[] certs = readPem(trustStoreFile);
+            for (int i = 0; i < certs.length; i++) {
+               ks.setCertificateEntry("cert-" + i, certs[i]);
+            }
+         } else {
+            String type = trustStoreType != null ? trustStoreType : DEFAULT_KEYSTORE_TYPE;
+            Provider provider = findProvider(this.provider, KeyStore.class.getSimpleName(), trustStoreType);
+            ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
+            loadKeyStore(ks, trustStoreFileName, trustStorePassword, classLoader);
+         }
          String algorithm = KeyManagerFactory.getDefaultAlgorithm();
-         provider = findProvider(this.provider, TrustManagerFactory.class.getSimpleName(), algorithm);
+         Provider provider = findProvider(this.provider, TrustManagerFactory.class.getSimpleName(), algorithm);
          TrustManagerFactory tmf = provider != null ? TrustManagerFactory.getInstance(algorithm, provider) : TrustManagerFactory.getInstance(algorithm);
          tmf.init(ks);
          for (TrustManager tm : tmf.getTrustManagers()) {
@@ -233,6 +264,63 @@ public class SslContextFactory {
          ks.load(is, keyStorePassword);
       } finally {
          Util.close(is);
+      }
+   }
+
+   public static X509Certificate[] readPem(File file) throws IOException, GeneralSecurityException {
+      StringBuilder sb = new StringBuilder();
+      boolean inCert = false;
+      try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+         String line;
+         while ((line = reader.readLine()) != null) {
+            if (line.startsWith("-----BEGIN CERTIFICATE")) {
+               inCert = true;
+            }
+            if (inCert) {
+               sb.append(line).append('\n');
+            }
+            if (line.startsWith("-----END CERTIFICATE")) {
+               inCert = false;
+            }
+         }
+      }
+      CertificateFactory cf = CertificateFactory.getInstance("X.509");
+      try (InputStream is = new java.io.ByteArrayInputStream(sb.toString().getBytes())) {
+         return cf.generateCertificates(is).toArray(new X509Certificate[0]);
+      }
+   }
+
+   public static PrivateKey readPemKey(File file) throws IOException, GeneralSecurityException {
+      StringBuilder sb = new StringBuilder();
+      boolean inKey = false;
+      try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+         String line;
+         while ((line = reader.readLine()) != null) {
+            if (line.startsWith("-----BEGIN") && line.contains("PRIVATE KEY")) {
+               inKey = true;
+            } else if (line.startsWith("-----END") && line.contains("PRIVATE KEY")) {
+               break;
+            } else if (inKey) {
+               sb.append(line);
+            }
+         }
+      }
+      byte[] keyBytes = Base64.getDecoder().decode(sb.toString());
+      PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+      try {
+         return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+      } catch (GeneralSecurityException e) {
+         return KeyFactory.getInstance("EC").generatePrivate(keySpec);
+      }
+   }
+
+   public static boolean isPemFile(File file) {
+      try (InputStream is = new BufferedInputStream(new FileInputStream(file))) {
+         byte[] header = new byte[5];
+         int read = is.read(header);
+         return read == 5 && new String(header).equals("-----");
+      } catch (IOException e) {
+         return false;
       }
    }
 

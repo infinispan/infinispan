@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.configuration;
 
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,6 +15,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
@@ -29,7 +31,6 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    private String keyStoreType;
    private char[] keyStorePassword;
    private String keyAlias;
-   private String trustStorePath;
    private String trustStoreFileName;
    private String trustStoreType;
    private char[] trustStorePassword;
@@ -213,13 +214,10 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
             if (keyStoreFileName != null && keyStorePassword == null) {
                throw HOTROD.missingKeyStorePassword(keyStoreFileName);
             }
-            if (trustStoreFileName == null && trustStorePath == null) {
+            if (trustStoreFileName == null) {
                throw HOTROD.noSSLTrustManagerConfiguration();
             }
-            if (trustStoreFileName != null && trustStorePath != null) {
-               throw HOTROD.trustStoreFileAndPathExclusive();
-            }
-            if (trustStoreFileName != null && trustStorePassword == null && !"pem".equalsIgnoreCase(trustStoreType)) {
+            if (trustStorePassword == null && !"pem".equalsIgnoreCase(trustStoreType) && !SslContextFactory.isPemFile(new File(trustStoreFileName))) {
                throw HOTROD.missingTrustStorePassword(trustStoreFileName);
             }
          } else {
@@ -238,7 +236,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       return new SslConfiguration(enabled,
             keyStoreFileName, keyStoreType, keyStorePassword, keyAlias,
             sslContext,
-            trustStoreFileName, trustStorePath, trustStoreType, trustStorePassword,
+            trustStoreFileName, trustStoreType, trustStorePassword,
             sniHostName, provider, protocol, ciphers, hostnameValidation);
    }
 
@@ -251,7 +249,6 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       this.keyAlias = template.keyAlias();
       this.sslContext = template.sslContext();
       this.trustStoreFileName = template.trustStoreFileName();
-      this.trustStorePath = template.trustStorePath();
       this.trustStoreType = template.trustStoreType();
       this.trustStorePassword = template.trustStorePassword();
       this.sniHostName = template.sniHostName();
