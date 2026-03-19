@@ -106,7 +106,6 @@ import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
-import org.infinispan.rest.NettyRestRequest;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.RestResponseException;
@@ -114,6 +113,7 @@ import org.infinispan.rest.ServerSentEvent;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.distribution.CacheDistributionInfo;
 import org.infinispan.rest.framework.ContentSource;
+import org.infinispan.rest.framework.FormParts;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
@@ -136,12 +136,7 @@ import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
-import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
-import io.netty.handler.codec.http.multipart.HttpPostMultipartRequestDecoder;
-import io.netty.handler.codec.http.multipart.InterfaceHttpData;
-import io.netty.handler.codec.http.multipart.MemoryAttribute;
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
@@ -648,18 +643,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       if (!contentType.match(MediaType.MULTIPART_FORM_DATA)) {
          throw Log.REST.wrongMediaType(MediaType.MULTIPART_FORM_DATA_TYPE, contentType.toString());
       }
-      FullHttpRequest nettyRequest = ((NettyRestRequest) request).getFullHttpRequest();
-      DefaultHttpDataFactory factory = new DefaultHttpDataFactory(false);
-      HttpPostMultipartRequestDecoder decoder = new HttpPostMultipartRequestDecoder(factory, nettyRequest);
-      try {
-         List<InterfaceHttpData> datas = decoder.getBodyHttpDatas();
-         if (datas.size() != 2) {
+      try (FormParts parts = request.formData()) {
+         if (parts.size() != 2) {
             throw Log.REST.cacheCompareWrongContent();
          }
-         MemoryAttribute one = (MemoryAttribute) datas.get(0);
-         MemoryAttribute two = (MemoryAttribute) datas.get(1);
-         String s1 = one.content().toString(UTF_8);
-         String s2 = two.content().toString(UTF_8);
+         String s1 = parts.get("one").contents().asString();
+         String s2 = parts.get("two").contents().asString();
          ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
          Map<String, ConfigurationBuilder> b1 = parserRegistry.parse(s1, null).getNamedConfigurationBuilders();
          Map<String, ConfigurationBuilder> b2 = parserRegistry.parse(s2, null).getNamedConfigurationBuilders();
@@ -681,8 +670,6 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             result = c1.equals(c2);
          }
          return CompletableFuture.completedFuture(responseBuilder.status(result ? NO_CONTENT : CONFLICT).build());
-      } finally {
-         decoder.destroy();
       }
    }
 

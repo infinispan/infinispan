@@ -9,7 +9,11 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.rest.InvocationHelper;
+import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.framework.impl.Invocations.Builder;
 import org.infinispan.rest.framework.openapi.ParameterIn;
@@ -61,6 +65,7 @@ public class XSiteResourceV3 extends XSiteResource {
             .methods(GET).path("/v3/caches/{cacheName}/x-site/backups")
             .name("List backup sites for cache")
             .operationId("listCacheBackupSites")
+            .parameter("cacheName", ParameterIn.PATH, true, Schema.STRING, "The cache name")
             .response(OK, "List of backup site statuses", APPLICATION_JSON)
             .response(NOT_FOUND, "Cache not found or cross-site not configured", TEXT_PLAIN, Schema.STRING)
             .permission(AuthorizationPermission.ADMIN)
@@ -196,11 +201,12 @@ public class XSiteResourceV3 extends XSiteResource {
             .methods(GET).path("/v3/container/x-site/backups")
             .name("Get global backup status for all caches")
             .operationId("getGlobalBackupStatus")
+            .parameter("pretty", ParameterIn.QUERY, false, Schema.BOOLEAN, "Pretty print the JSON output")
             .response(OK, "Global backup status", APPLICATION_JSON)
             .response(NOT_FOUND, "Cross-site not configured", TEXT_PLAIN, Schema.STRING)
             .permission(AuthorizationPermission.ADMIN)
             .auditContext(AuditContext.CACHEMANAGER)
-            .handleWith(this::globalStatus);
+            .handleWith(this::globalStatusAll);
 
       // 15. Global Site Status
       builder.invocation()
@@ -258,5 +264,9 @@ public class XSiteResourceV3 extends XSiteResource {
             .handleWith(this::cancelPushAll);
 
       return builder.create();
+   }
+
+   private CompletionStage<RestResponse> globalStatusAll(RestRequest request) {
+      return globalStatus(request, null);
    }
 }

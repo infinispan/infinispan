@@ -70,7 +70,7 @@ public class XSiteResource implements ResourceHandler {
    private static final BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> START_PUSH_ALL_CACHES = GlobalXSiteAdminOperations::pushStateAllCaches;
    private static final BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> CANCEL_PUSH_ALL_CACHES = GlobalXSiteAdminOperations::cancelPushStateAllCaches;
 
-   private final InvocationHelper invocationHelper;
+   protected final InvocationHelper invocationHelper;
 
    public XSiteResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
@@ -180,6 +180,10 @@ public class XSiteResource implements ResourceHandler {
    }
 
    protected CompletionStage<RestResponse> globalStatus(RestRequest request) {
+      return globalStatus(request, request.variables().get("site"));
+   }
+
+   protected final CompletionStage<RestResponse> globalStatus(RestRequest request, String site) {
       GlobalXSiteAdminOperations globalXSiteAdmin = getGlobalXSiteAdmin(request);
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
@@ -188,7 +192,6 @@ public class XSiteResource implements ResourceHandler {
       return supplyAsync(() -> {
          Map<String, SiteStatus> globalStatus = Security.doAs(request.getSubject(), globalXSiteAdmin::globalStatus);
          Map<String, GlobalStatus> collect = globalStatus.entrySet().stream().collect(Collectors.toMap(Entry::getKey, GlobalStatus::fromSiteStatus));
-         String site = request.variables().get("site");
          if (site != null) {
             GlobalStatus siteStatus = collect.get(site);
             return siteStatus == null ?
@@ -363,7 +366,7 @@ public class XSiteResource implements ResourceHandler {
       return Optional.of(ops);
    }
 
-   private GlobalXSiteAdminOperations getGlobalXSiteAdmin(RestRequest request) {
+   protected final GlobalXSiteAdminOperations getGlobalXSiteAdmin(RestRequest request) {
       EmbeddedCacheManager cm = invocationHelper.getRestCacheManager().getInstance();
       return SecurityActions.getGlobalComponentRegistry(cm).getComponent(GlobalXSiteAdminOperations.class);
    }
@@ -411,7 +414,7 @@ public class XSiteResource implements ResourceHandler {
       builder.status(NOT_FOUND).contentType(MediaType.TEXT_PLAIN).entity(String.format("Cache '%s' does not backup to site '%s'", cacheName, site));
    }
 
-   private static class GlobalStatus implements JsonSerialization {
+   static class GlobalStatus implements JsonSerialization {
       static final GlobalStatus OFFLINE = new GlobalStatus("offline", null, null, null);
       static final GlobalStatus ONLINE = new GlobalStatus("online", null, null, null);
       static final GlobalStatus UNKNOWN = new GlobalStatus("unknown", null, null, null);

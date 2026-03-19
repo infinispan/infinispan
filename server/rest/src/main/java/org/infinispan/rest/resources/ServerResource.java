@@ -84,7 +84,7 @@ import io.netty.handler.ipfilter.IpFilterRuleType;
  * @since 10.0
  */
 public class ServerResource implements ResourceHandler {
-   private final InvocationHelper invocationHelper;
+   protected final InvocationHelper invocationHelper;
    private final Executor blockingExecutor;
 
    public ServerResource(InvocationHelper invocationHelper) {
@@ -194,23 +194,26 @@ public class ServerResource implements ResourceHandler {
    }
 
    protected CompletionStage<RestResponse> doIgnoreOp(RestRequest request) {
-      NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
-      boolean add = request.method().equals(POST);
-
-      RestCacheManager<Object> cacheManager = invocationHelper.getRestCacheManager();
       String cacheManagerName = request.variables().get("cache-manager");
       String cacheName = request.variables().get("cache");
       if (cacheName == null) {
          cacheName = cacheManagerName;
       }
+      return doIgnoreOp(request, cacheName);
+   }
+
+   protected CompletionStage<RestResponse> doIgnoreOp(RestRequest request, final String cacheName) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
+      boolean add = request.method().equals(POST);
+
+      RestCacheManager<Object> cacheManager = invocationHelper.getRestCacheManager();
       if (!cacheManager.getCacheNames().contains(cacheName)) {
          return completedFuture(builder.status(NOT_FOUND).build());
       }
-      final String cacheNameFinal = cacheName;
       ServerManagement server = invocationHelper.getServer();
       ServerStateManager ignoreManager = server.getServerStateManager();
-      return Security.doAs(request.getSubject(), () -> add ? ignoreManager.ignoreCache(cacheNameFinal) : ignoreManager.unignoreCache(cacheNameFinal))
-            .thenApply(r -> builder.build());
+      return Security.doAs(request.getSubject(), () -> add ? ignoreManager.ignoreCache(cacheName) : ignoreManager.unignoreCache(cacheName))
+            .thenApply(ignore -> builder.build());
    }
 
    protected CompletionStage<RestResponse> listIgnored(RestRequest request) {

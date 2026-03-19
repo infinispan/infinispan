@@ -23,8 +23,9 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
 import org.infinispan.rest.InvocationHelper;
-import org.infinispan.rest.NettyRestRequest;
 import org.infinispan.rest.NettyRestResponse;
+import org.infinispan.rest.framework.FormPart;
+import org.infinispan.rest.framework.FormParts;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
@@ -32,12 +33,6 @@ import org.infinispan.rest.logging.Log;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.backup.BackupManagerResources;
 import org.infinispan.util.function.TriConsumer;
-
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
-import io.netty.handler.codec.http.multipart.DiskAttribute;
-import io.netty.handler.codec.http.multipart.DiskFileUpload;
-import io.netty.handler.codec.http.multipart.HttpPostMultipartRequestDecoder;
 
 /**
  * A helper class for common functionality related to the {@link BackupManager}.
@@ -160,54 +155,48 @@ class BackupManagerResource {
       Json resourcesJson = Json.object();
       MediaType contentType = request.contentType();
       boolean uploadedBackup = contentType.match(MediaType.MULTIPART_FORM_DATA);
-      final HttpPostMultipartRequestDecoder decoder;
-      try {
-         if (uploadedBackup) {
-            FullHttpRequest nettyRequest = ((NettyRestRequest) request).getFullHttpRequest();
-            DefaultHttpDataFactory factory = new DefaultHttpDataFactory(true);
-            decoder = new HttpPostMultipartRequestDecoder(factory, nettyRequest);
-            DiskFileUpload backup = (DiskFileUpload) decoder.getBodyHttpData("backup");
-            path = backup.getFile().toPath();
-            DiskAttribute resources = (DiskAttribute) decoder.getBodyHttpData("resources");
-            if (resources != null)
-               resourcesJson = Json.read(resources.getString());
-         } else if (contentType.match(MediaType.APPLICATION_JSON)) {
-            decoder = null;
-            // Attempt to parse body as json
-            Json json = Json.read(request.contents().asString());
-            Json resources = json.at(RESOURCES_KEY);
-            if (resources != null)
-               resourcesJson = resources;
+      final FormParts closeable;
+      if (uploadedBackup) {
+         FormParts parts = request.formData();
+         path = Path.of(parts.get("backup").contents().asString());
+         FormPart resources = parts.get("resources");
+         if (resources != null)
+            resourcesJson = Json.read(resources.contents().asString());
+         closeable = parts;
+      } else if (contentType.match(MediaType.APPLICATION_JSON)) {
+         closeable = null;
+         // Attempt to parse body as json
+         Json json = Json.read(request.contents().asString());
+         Json resources = json.at(RESOURCES_KEY);
+         if (resources != null)
+            resourcesJson = resources;
 
-            Json backupPath = json.at(LOCATION_KEY);
-            if (backupPath == null) {
-               throw Log.REST.missingArgument("backup-location");
-            }
-
-            path = Paths.get(backupPath.asString());
-         } else {
-            return invocationHelper.newResponse(request, UNSUPPORTED_MEDIA_TYPE).toFuture();
+         Json backupPath = json.at(LOCATION_KEY);
+         if (backupPath == null) {
+            throw Log.REST.missingArgument("backup-location");
          }
 
-         function.apply(name, path, resourcesJson).whenComplete((Void, t) -> {
-                  if (t != null) {
-                     LOG.error(t);
-                  }
-                  if (uploadedBackup) {
-                     try {
-                        Files.delete(path);
-                     } catch (IOException e) {
-                        LOG.warnf(e, "Unable to delete uploaded backup file '%s'", path);
-                     } finally {
-                        decoder.destroy();
-                     }
+         path = Paths.get(backupPath.asString());
+      } else {
+         return invocationHelper.newResponse(request, UNSUPPORTED_MEDIA_TYPE).toFuture();
+      }
+
+      function.apply(name, path, resourcesJson).whenComplete((Void, t) -> {
+               if (t != null) {
+                  LOG.error(t);
+               }
+               if (uploadedBackup) {
+                  try {
+                     Files.delete(path);
+                  } catch (IOException e) {
+                     LOG.warnf(e, "Unable to delete uploaded backup file '%s'", path);
+                  } finally {
+                     closeable.close();
                   }
                }
-         );
-         return invocationHelper.newResponse(request, ACCEPTED).toFuture();
-      } catch (IOException e) {
-         throw Util.unchecked(e);
-      }
+            }
+      );
+      return invocationHelper.newResponse(request, ACCEPTED).toFuture();
    }
 
    static BackupManager.Resources getResources(Json json) {

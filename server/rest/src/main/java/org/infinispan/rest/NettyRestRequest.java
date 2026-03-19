@@ -7,9 +7,12 @@ import static org.infinispan.rest.RequestHeader.LAST_USED_HEADER;
 import static org.infinispan.rest.RequestHeader.MAX_TIME_IDLE_HEADER;
 import static org.infinispan.rest.RequestHeader.TTL_SECONDS_HEADER;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,8 +21,11 @@ import javax.security.auth.Subject;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.rest.framework.ContentSource;
+import org.infinispan.rest.framework.FormPart;
+import org.infinispan.rest.framework.FormParts;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.logging.Log;
@@ -28,6 +34,12 @@ import org.infinispan.rest.operations.exceptions.InvalidFlagException;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
+import io.netty.handler.codec.http.multipart.DiskAttribute;
+import io.netty.handler.codec.http.multipart.DiskFileUpload;
+import io.netty.handler.codec.http.multipart.HttpPostMultipartRequestDecoder;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import io.netty.handler.codec.http.multipart.MemoryAttribute;
 
 /**
  * A {@link RestRequest} backed by Netty.
@@ -270,6 +282,46 @@ public class NettyRestRequest implements RestRequest {
       this.action = action;
    }
 
+   @Override
+   public FormParts formData() {
+      DefaultHttpDataFactory factory = new DefaultHttpDataFactory(true);
+      HttpPostMultipartRequestDecoder decoder = new HttpPostMultipartRequestDecoder(factory, request);
+      Map<String, FormPart> parts = new HashMap<>(2);
+      try {
+         for (InterfaceHttpData data : decoder.getBodyHttpDatas()) {
+            String name = data.getName();
+            String value = switch (data) {
+               case DiskFileUpload upload -> upload.getFile().toPath().toString();
+               case MemoryAttribute attr -> attr.content().toString(StandardCharsets.UTF_8);
+               case DiskAttribute attr -> attr.getString();
+               default -> throw new IllegalStateException("Unknown form part: " + data.getClass());
+            };
+
+            parts.put(name, new SimpleFormPart(name, value));
+         }
+      } catch (IOException e) {
+         decoder.destroy();
+         throw Util.unchecked(e);
+      }
+
+      return new FormParts() {
+         @Override
+         public FormPart get(String name) {
+            return parts.get(name);
+         }
+
+         @Override
+         public int size() {
+            return parts.size();
+         }
+
+         @Override
+         public void close() {
+            decoder.destroy();
+         }
+      };
+   }
+
    private boolean getHeaderAsBoolean(String header) {
       String headerValue = request.headers().get(header);
       if (header == null) return false;
@@ -291,8 +343,30 @@ public class NettyRestRequest implements RestRequest {
       }
    }
 
-   public FullHttpRequest getFullHttpRequest() {
+   FullHttpRequest getFullHttpRequest() {
       return request;
+   }
+
+   private record SimpleFormPart(String name, String value) implements FormPart {
+      @Override
+      public ContentSource contents() {
+         return new ContentSource() {
+            @Override
+            public String asString() {
+               return value;
+            }
+
+            @Override
+            public byte[] rawContent() {
+               return value.getBytes(StandardCharsets.UTF_8);
+            }
+
+            @Override
+            public int size() {
+               return value.length();
+            }
+         };
+      }
    }
 
    @Override

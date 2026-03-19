@@ -18,6 +18,7 @@ import org.infinispan.rest.TestClass;
 import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.rest.framework.impl.ValidatingRestServer;
 import org.infinispan.server.core.DummyServerManagement;
 import org.infinispan.server.core.MockProtocolServer;
 import org.infinispan.server.core.ProtocolServer;
@@ -30,7 +31,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  */
 public class RestServerHelper {
    private final EmbeddedCacheManager cacheManager;
-   private final RestServer restServer = new RestServer();
+   private final RestServer restServer = new ValidatingRestServer();
    private final RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
    public RestServerHelper(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
