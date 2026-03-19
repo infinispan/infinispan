@@ -33,6 +33,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.context.Flag;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -66,7 +67,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
 
-   private final Function<V, V> decodedValueForRead = this::valueFromStorage;
+   private final Function<V, V> decodedValueForRead = v -> valueFromStorage(v, true);
 
    public EncoderCache(AdvancedCache<K, V> cache, InternalEntryFactory entryFactory,
                        BasicComponentRegistry componentRegistry,
@@ -113,7 +114,10 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       return (K) keyDataConversion.fromStorage(key);
    }
 
-   public V valueFromStorage(Object value) {
+   public V valueFromStorage(Object value, boolean respectIgnoreReturnValues) {
+      if (respectIgnoreReturnValues && cache.containsFlag(Flag.IGNORE_RETURN_VALUES)) {
+         return null;
+      }
       return (V) valueDataConversion.fromStorage(value);
    }
 
@@ -132,7 +136,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private Map<K, V> decodeMapForRead(Map<? extends K, ? extends V> map) {
       Map<K, V> newMap = new LinkedHashMap<>(map.size());
-      map.forEach((k, v) -> newMap.put(keyFromStorage(k), valueFromStorage(v)));
+      map.forEach((k, v) -> newMap.put(keyFromStorage(k), valueFromStorage(v, false)));
       return newMap;
    }
 
@@ -147,7 +151,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private BiFunction<? super K, ? super V, ? extends V> convertFunction(
          BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      return (k, v) -> valueToStorage(remappingFunction.apply(keyFromStorage(k), valueFromStorage(v)));
+      return (k, v) -> valueToStorage(remappingFunction.apply(keyFromStorage(k), valueFromStorage(v, false)));
    }
 
    private Map<K, CacheEntry<K, V>> decodeEntryMapForRead(Map<K, CacheEntry<K, V>> map) {
@@ -155,7 +159,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       map.forEach((k, v) -> {
          K unwrappedKey = keyFromStorage(k);
          V originalValue = v.getValue();
-         V unwrappedValue = valueFromStorage(originalValue);
+         V unwrappedValue = valueFromStorage(originalValue, false);
          CacheEntry<K, V> entryToPut;
          if (unwrappedKey != k || unwrappedValue != originalValue) {
             entryToPut = convertEntry(unwrappedKey, unwrappedValue, v);
@@ -190,7 +194,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V put(K key, V value, long lifespan, TimeUnit unit) {
       V ret = cache.put(keyToStorage(key), valueToStorage(value), lifespan, unit);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
@@ -206,7 +210,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
       V v = cache.putIfAbsent(keyToStorage(key), valueToStorage(value), lifespan, unit);
-      return valueFromStorage(v);
+      return valueFromStorage(v, true);
    }
 
    @Override
@@ -217,7 +221,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit unit) {
       V ret = cache.replace(keyToStorage(key), valueToStorage(value), lifespan, unit);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
@@ -228,13 +232,13 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       V ret = cache.put(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       V ret = cache.putIfAbsent(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
@@ -246,7 +250,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       V ret = cache.replace(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
@@ -401,7 +405,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    private CacheEntry<K, V> unwrapCacheEntry(Object key, K keyToStorage, CacheEntry<K, V> returned) {
       if (returned != null) {
          V originalValue = returned.getValue();
-         V valueFromStorage = valueFromStorage(originalValue);
+         V valueFromStorage = valueFromStorage(originalValue, false);
          if (keyToStorage != key || valueFromStorage != originalValue) {
             return convertEntry((K) key, valueFromStorage, returned);
          }
@@ -440,13 +444,13 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V put(K key, V value, Metadata metadata) {
       V ret = cache.put(keyToStorage(key), valueToStorage(value), metadata);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
    public V replace(K key, V value, Metadata metadata) {
       V ret = cache.replace(keyToStorage(key), valueToStorage(value), metadata);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
@@ -467,7 +471,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
       V ret = cache.putIfAbsent(keyToStorage(key), valueToStorage(value), metadata);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
@@ -513,7 +517,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V putIfAbsent(K key, V value) {
       V ret = cache.putIfAbsent(keyToStorage(key), valueToStorage(value));
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    private void lookupEncoderWrapper() {
@@ -557,7 +561,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V replace(K key, V value) {
       V ret = cache.replace(keyToStorage(key), valueToStorage(value));
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
@@ -573,91 +577,91 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       Object returned = cache.compute(keyToStorage(key), wrapBiFunction(remappingFunction));
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       Object returned = cache.compute(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
       Object returned = cache.compute(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       Object returned = cache.compute(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       Object ret = cache.compute(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction));
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
       Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
       Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction));
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
       Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), metadata);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
       Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
    public V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, Metadata metadata) {
       Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), metadata);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
    public V merge(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       Object ret = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), metadata);
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
@@ -673,7 +677,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V get(Object key) {
       V v = cache.get(keyToStorage(key));
-      return valueFromStorage(v);
+      return valueFromStorage(v, false);
    }
 
    @Override
@@ -682,7 +686,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       if (returned == defaultValue) {
          return returned;
       }
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, false);
    }
 
    @Override
@@ -691,13 +695,13 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       if (ret == null) {
          return null;
       }
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
    public V remove(Object key) {
       V ret = cache.remove(keyToStorage(key));
-      return valueFromStorage(ret);
+      return valueFromStorage(ret, true);
    }
 
    @Override
@@ -708,31 +712,31 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
       Object returned = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction));
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       Object returned = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), metadata);
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
       Object returned = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       Object returned = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
    public V computeIfPresent(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
-      return valueFromStorage(returned);
+      return valueFromStorage(returned, true);
    }
 
    @Override
@@ -829,7 +833,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    public void forEach(BiConsumer<? super K, ? super V> action) {
       cache.forEach((k, v) -> {
          K newK = keyFromStorage(k);
-         V newV = valueFromStorage(v);
+         V newV = valueFromStorage(v, false);
          action.accept(newK, newV);
       });
    }
@@ -1108,13 +1112,13 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       CompletableFuture<V> future = cache.getAsync(keyToStorage(key));
       if (future.isDone() && CompletionStages.isCompletedSuccessfully(future)) {
          V value = future.join();
-         V wrapped = valueFromStorage(value);
+         V wrapped = valueFromStorage(value, false);
          if (value == wrapped) {
             return future;
          }
          return CompletableFuture.completedFuture(wrapped);
       }
-      return future.thenApply(decodedValueForRead);
+      return future.thenApply(v -> valueFromStorage(v, false));
    }
 
    @Override

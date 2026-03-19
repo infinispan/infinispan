@@ -2182,16 +2182,18 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.get("totally-nonexistent")).isNull();
    }
 
-   @Test
-   public void testSetWrongType() {
-      RedisCommands<String, String> redis = redisConnection.sync();
-      String key = "set-wrongtype";
-      redis.lpush(key, "item");
-      // Infinispan returns WRONGTYPE for SET on non-string keys
-      assertThatThrownBy(() -> redis.set(key, "value"))
-            .isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageContaining("WRONGTYPE");
-   }
+//   Commented out to remind us that this was changed in https://github.com/infinispan/infinispan/issues/17077
+//   Due to performance we don't verify the value type
+//   @Test
+//   public void testSetWrongType() {
+//      RedisCommands<String, String> redis = redisConnection.sync();
+//      String key = "set-wrongtype";
+//      redis.lpush(key, "item");
+//      // Infinispan returns WRONGTYPE for SET on non-string keys
+//      assertThatThrownBy(() -> redis.set(key, "value"))
+//            .isInstanceOf(RedisCommandExecutionException.class)
+//            .hasMessageContaining("WRONGTYPE");
+//   }
 
    @Test
    public void testMsetnxWithExistentKey() {
