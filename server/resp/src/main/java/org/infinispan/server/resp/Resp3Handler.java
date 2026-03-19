@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.DefaultTranscoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -64,11 +65,16 @@ public class Resp3Handler extends Resp3AuthHandler {
       super.setCache(cache);
       ignorePreviousValueCache = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.IGNORE_RETURN_VALUES);
       // All collection maps are stored in Java Objects, so make sure they are encoded as such
-      listMultimap = new EmbeddedMultimapListCache<>(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT.withClassType(ListBucket.class)));
-      mapMultimap = new EmbeddedMultimapPairCache<>(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT.withClassType(HashMapBucket.class)));
-      embeddedSetCache = new EmbeddedSetCache<>(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT.withClassType(SetBucket.class)));
-      sortedSetMultimap = new EmbeddedMultimapSortedSetCache<>(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT.withClassType(SortedSetBucket.class)));
-      jsonCache = new EmbeddedJsonCache(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT.withClassType(JsonBucket.class)));
+      listMultimap = new EmbeddedMultimapListCache<>(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM,
+            DefaultTranscoder.useGlobalMarshaller(MediaType.APPLICATION_OBJECT.withClassType(ListBucket.class))));
+      mapMultimap = new EmbeddedMultimapPairCache<>(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM,
+            DefaultTranscoder.useGlobalMarshaller(MediaType.APPLICATION_OBJECT.withClassType(HashMapBucket.class))));
+      embeddedSetCache = new EmbeddedSetCache<>(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM,
+            DefaultTranscoder.useGlobalMarshaller(MediaType.APPLICATION_OBJECT.withClassType(SetBucket.class))));
+      sortedSetMultimap = new EmbeddedMultimapSortedSetCache<>(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM,
+            DefaultTranscoder.useGlobalMarshaller(MediaType.APPLICATION_OBJECT.withClassType(SortedSetBucket.class))));
+      jsonCache = new EmbeddedJsonCache(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM,
+            DefaultTranscoder.useGlobalMarshaller(MediaType.APPLICATION_OBJECT.withClassType(JsonBucket.class))));
    }
 
    public EmbeddedJsonCache getJsonCache() {
