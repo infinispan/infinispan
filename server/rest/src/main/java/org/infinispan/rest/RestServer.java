@@ -43,6 +43,7 @@ import org.infinispan.rest.resources.XSiteResource;
 import org.infinispan.rest.resources.XSiteResourceV3;
 import org.infinispan.rest.resources.mcp.McpConstants;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -196,7 +197,11 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       if (SecurityActions.getCacheManagerConfiguration(cacheManager).features().isAvailable(McpConstants.MCP_SERVER_FEATURE)) {
          resourceManager.registerResource(restContext, new McpServerResource(invocationHelper));
       }
-      this.restDispatcher = new RestDispatcherImpl(resourceManager, restCacheManager.getAuthorizer());
+      this.restDispatcher = createDispatcher(resourceManager, restCacheManager.getAuthorizer());
+   }
+
+   protected RestDispatcher createDispatcher(ResourceManager manager, Authorizer authorizer) {
+      return new RestDispatcherImpl(manager, authorizer);
    }
 
    @Override
