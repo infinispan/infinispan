@@ -10,6 +10,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
+import static org.infinispan.commons.dataconversion.MediaType.MULTIPART_FORM_DATA;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
@@ -83,6 +84,7 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
             .invocation().methods(POST).path("/v3/_cache-config-convert")
                .operationId("convertCacheConfig")
                .name("Convert cache configurations between formats")
+               .parameter("pretty", ParameterIn.QUERY, false, Schema.BOOLEAN, "Pretty print the JSON output")
                .request("Cache configuration", true, Map.of(
                      APPLICATION_XML, Schema.STRING,
                      APPLICATION_JSON, Schema.STRING,
@@ -92,6 +94,8 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
             .invocation().methods(POST).path("/v3/_cache-config-compare")
                .operationId("compareCacheConfig")
                .name("Compare cache configurations")
+               .parameter("ignoreMutable", ParameterIn.QUERY, false, Schema.BOOLEAN, "Ignore mutable attributes in the comparison")
+               .request("Two cache configurations to compare", true, Map.of(MULTIPART_FORM_DATA, Schema.NONE))
                .handleWith(this::compare)
 
             // Key related operations
@@ -144,6 +148,8 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
             .invocation().methods(GET).path("/v3/caches/{cacheName}/_listen")
                .operationId("CacheEvents")
                .name("Receive events from a cache")
+               .parameter("cacheName", ParameterIn.PATH, true, Schema.STRING, "The cache name")
+               .parameter("includeCurrentState", ParameterIn.QUERY, false, Schema.BOOLEAN, "Include current state before streaming events")
                .response(OK, "Cache events", TEXT_EVENT_STREAM)
                .response(NOT_FOUND, CACHE_NOT_FOUND_RESPONSE, TEXT_PLAIN, Schema.STRING)
                .handleWith(this::cacheListen)
@@ -324,6 +330,8 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .operationId("deleteByQuery")
                .name("Delete entries from a cache matching an Ickle query")
                .permission(AuthorizationPermission.BULK_WRITE)
+               .parameter("cacheName", ParameterIn.PATH, true, Schema.STRING, "The cache name")
+               .parameter("local", ParameterIn.QUERY, false, Schema.BOOLEAN, "Restrict operation to the local node")
                .request("The query request object", true, Map.of(APPLICATION_JSON, new Schema(JsonQueryRequest.class)))
                .response(OK, "The number of deleted entries", APPLICATION_JSON, Schema.LONG)
                .response(NOT_FOUND, CACHE_NOT_FOUND_RESPONSE, TEXT_PLAIN, Schema.STRING)

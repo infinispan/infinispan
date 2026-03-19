@@ -81,6 +81,8 @@ public interface RestRequest extends InfinispanSpanContext {
 
    InetSocketAddress getRemoteAddress();
 
+   FormParts formData();
+
    @Override
    default Iterable<String> keys() {
       return headersKeys();

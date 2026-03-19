@@ -14,13 +14,23 @@ import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.rest.InvocationHelper;
+import org.infinispan.rest.NettyRestResponse;
+import org.infinispan.rest.cachemanager.RestCacheManager;
+import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.framework.impl.Invocations.Builder;
 import org.infinispan.rest.framework.openapi.ParameterIn;
 import org.infinispan.rest.framework.openapi.Schema;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Security;
+import org.infinispan.server.core.ServerManagement;
+import org.infinispan.server.core.ServerStateManager;
 
 /**
  * ServerResourceV3 - REST v3 API for server management operations.
@@ -48,6 +58,7 @@ public class ServerResourceV3 extends ServerResource {
             .methods(GET).path("/v3/server")
             .name("Retrieve server information")
             .operationId("getServerInfo")
+            .parameter("pretty", ParameterIn.QUERY, false, Schema.BOOLEAN, "Pretty print the JSON output")
             .response(OK, "Server information", APPLICATION_JSON)
             .handleWith(this::info);
 
@@ -151,6 +162,7 @@ public class ServerResourceV3 extends ServerResource {
             .operationId("listIgnoredCaches")
             .permission(AuthorizationPermission.ADMIN)
             .auditContext(AuditContext.SERVER)
+            .parameter("pretty", ParameterIn.QUERY, false, Schema.BOOLEAN, "Pretty print the JSON output")
             .response(OK, "List of ignored cache names", APPLICATION_JSON)
             .handleWith(this::listIgnored);
 
@@ -161,6 +173,7 @@ public class ServerResourceV3 extends ServerResource {
             .operationId("ignoreCache")
             .permission(AuthorizationPermission.ADMIN)
             .auditContext(AuditContext.SERVER)
+            .parameter("cache", ParameterIn.PATH, true, Schema.STRING, "The cache name")
             .response(NO_CONTENT, "Cache marked as ignored")
             .response(NOT_FOUND, "Cache not found", TEXT_PLAIN, Schema.STRING)
             .handleWith(this::doIgnoreOp);
@@ -172,6 +185,7 @@ public class ServerResourceV3 extends ServerResource {
             .operationId("unignoreCache")
             .permission(AuthorizationPermission.ADMIN)
             .auditContext(AuditContext.SERVER)
+            .parameter("cache", ParameterIn.PATH, true, Schema.STRING, "The cache name")
             .response(NO_CONTENT, "Cache removed from ignored list")
             .response(NOT_FOUND, "Cache not found", TEXT_PLAIN, Schema.STRING)
             .handleWith(this::doIgnoreOp);
@@ -194,6 +208,7 @@ public class ServerResourceV3 extends ServerResource {
             .operationId("listConnectors")
             .permission(AuthorizationPermission.ADMIN)
             .auditContext(AuditContext.SERVER)
+            .parameter("pretty", ParameterIn.QUERY, false, Schema.BOOLEAN, "Pretty print the JSON output")
             .response(OK, "List of connector names", APPLICATION_JSON)
             .handleWith(this::listConnectors);
 
@@ -204,6 +219,7 @@ public class ServerResourceV3 extends ServerResource {
             .operationId("getConnectorStatus")
             .permission(AuthorizationPermission.ADMIN)
             .auditContext(AuditContext.SERVER)
+            .parameter("connector", ParameterIn.PATH, true, Schema.STRING, "The connector name")
             .response(OK, "Connector status and configuration", APPLICATION_JSON)
             .response(NOT_FOUND, "Connector not found", TEXT_PLAIN, Schema.STRING)
             .handleWith(this::connectorStatus);
@@ -297,5 +313,21 @@ public class ServerResourceV3 extends ServerResource {
             .handleWith(this::getCacheConfigDefaultAttributes);
 
       return builder.create();
+   }
+
+   @Override
+   protected CompletionStage<RestResponse> doIgnoreOp(RestRequest request) {
+      NettyRestResponse.Builder nrrb = invocationHelper.newResponse(request).status(NO_CONTENT);
+      boolean add = request.method().equals(POST);
+
+      RestCacheManager<Object> cacheManager = invocationHelper.getRestCacheManager();
+      String cacheName = request.variables().get("cache");
+      if (!cacheManager.getCacheNames().contains(cacheName)) {
+         return CompletableFuture.completedFuture(nrrb.status(NOT_FOUND).build());
+      }
+      ServerManagement server = invocationHelper.getServer();
+      ServerStateManager ignoreManager = server.getServerStateManager();
+      return Security.doAs(request.getSubject(), () -> add ? ignoreManager.ignoreCache(cacheName) : ignoreManager.unignoreCache(cacheName))
+            .thenApply(ignore -> nrrb.build());
    }
 }

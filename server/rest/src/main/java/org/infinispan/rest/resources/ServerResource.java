@@ -84,7 +84,7 @@ import io.netty.handler.ipfilter.IpFilterRuleType;
  * @since 10.0
  */
 public class ServerResource implements ResourceHandler {
-   private final InvocationHelper invocationHelper;
+   protected final InvocationHelper invocationHelper;
    private final Executor blockingExecutor;
 
    public ServerResource(InvocationHelper invocationHelper) {
