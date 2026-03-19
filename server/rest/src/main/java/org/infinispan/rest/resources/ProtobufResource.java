@@ -188,7 +188,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
             .getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, request);
 
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
-      return restCacheManager.getPrivilegedInternalEntry(cache, schemaName, true).thenApply(entry -> {
+      return restCacheManager.getPrivilegedInternalEntry(cache, schemaName, true).thenApplyAsync(entry -> {
          NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
          if (entry == null) {
             responseBuilder.status(HttpResponseStatus.NOT_FOUND);
@@ -209,7 +209,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
             }
          }
          return responseBuilder.build();
-      });
+      }, invocationHelper.getExecutor());
    }
 
    private List<String> collectCaches(RestRequest request, String schemaName, Object content) {

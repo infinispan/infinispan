@@ -108,8 +108,7 @@ public class RestCacheManager<V> {
          } else {
             cache = instance.getCache(name);
          }
-         cacheInfo = new CacheInfo<>(cache.getAdvancedCache()
-               .withFlags(Flag.IGNORE_RETURN_VALUES));
+         cacheInfo = new CacheInfo<>(cache.getAdvancedCache());
          knownCaches.putIfAbsent(name, cacheInfo);
       }
       AdvancedCache<Object, V> cache = cacheInfo.getCache(new KeyValuePair<>(keyContentType, valueContentType), subject);

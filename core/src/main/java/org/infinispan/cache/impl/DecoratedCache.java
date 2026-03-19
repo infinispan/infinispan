@@ -904,4 +904,9 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       }
       return ctx;
    }
+
+   @Override
+   public boolean containsFlag(Flag flag) {
+      return EnumUtil.containsAny(flags, EnumUtil.bitSetOf(flag));
+   }
 }
