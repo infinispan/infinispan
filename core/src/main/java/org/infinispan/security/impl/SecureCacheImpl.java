@@ -251,6 +251,11 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    @Override
+   public boolean containsFlag(Flag flag) {
+      return delegate.containsFlag(flag);
+   }
+
+   @Override
    public AdvancedCache<K, V> transform(Function<AdvancedCache<K, V>, ? extends AdvancedCache<K, V>> transformation) {
       authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
       AdvancedCache<K, V> newDelegate = delegate.transform(transformation);
