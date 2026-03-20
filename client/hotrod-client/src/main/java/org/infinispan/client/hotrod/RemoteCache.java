@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
@@ -567,4 +568,11 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * @return {@code true} if the cache can participate in a transaction, {@code false} otherwise.
     */
    boolean isTransactional();
+
+   /**
+    * Gets configured marshaller for this cache on client side
+    *
+    * @return {@link Marshaller}
+    */
+   Marshaller getMarshaller();
 }

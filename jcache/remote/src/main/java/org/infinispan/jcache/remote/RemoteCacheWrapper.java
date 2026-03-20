@@ -19,6 +19,7 @@ import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
@@ -647,5 +648,10 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public Set<Flag> flags() {
       return delegate.flags();
+   }
+
+   @Override
+   public Marshaller getMarshaller() {
+      return delegate.getMarshaller();
    }
 }
