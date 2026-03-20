@@ -322,7 +322,8 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          return (K) keyDataConversion.fromStorage(key);
       }
       MediaType convertFormat = filter == null ? converter.format() : filter.format();
-      if (listenerInvocation.useStorageFormat() || convertFormat == null) {
+      if (listenerInvocation.useStorageFormat() || convertFormat == null
+            || keyDataConversion.getStorageMediaType().match(convertFormat)) {
          // Filter will be run on the storage format, return the unwrapped key
          return (K) unwrappedKey;
       }
@@ -345,7 +346,8 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          return (V) valueDataConversion.fromStorage(value);
       }
       MediaType convertFormat = filter == null ? converter.format() : filter.format();
-      if (listenerInvocation.useStorageFormat() || convertFormat == null) {
+      if (listenerInvocation.useStorageFormat() || convertFormat == null
+            || valueDataConversion.getStorageMediaType().match(convertFormat)) {
          // Filter will be run on the storage format, return the unwrapped key
          return (V) unwrappedValue;
       }
@@ -1407,16 +1409,22 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          MediaType finalFilterMediaType = filterMediaType;
 
          Function<Object, Object> kc = k -> {
-            if (!finalHasFilter) return k;
-            if (finalFilterMediaType == null || useStorageFormat || keyReq == null) {
+            if (!finalHasFilter) {
+               return k;
+            } else if (finalFilterMediaType == null || useStorageFormat || keyReq == null) {
                return keyDataConversion.fromStorage(k);
+            } else if (finalFilterMediaType.match(keyDataConversion.getRequestMediaType())) {
+               return k;
             }
             return encoderRegistry.convert(k, finalFilterMediaType, keyDataConversion.getRequestMediaType());
          };
          Function<Object, Object> kv = v -> {
-            if (!finalHasFilter) return v;
-            if (finalFilterMediaType == null || useStorageFormat || valueReq == null) {
+            if (!finalHasFilter) {
+               return v;
+            } else if (finalFilterMediaType == null || useStorageFormat || valueReq == null) {
                return valueConversion.fromStorage(v);
+            } else if (finalFilterMediaType.match(valueConversion.getRequestMediaType())) {
+               return v;
             }
             return encoderRegistry.convert(v, finalFilterMediaType, valueConversion.getRequestMediaType());
          };
@@ -1968,6 +1976,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          if (object == null) return null;
          MediaType requestMediaType = dataConversion.getRequestMediaType();
          if (requestMediaType == null) return dataConversion.fromStorage(object);
+         if (objectFormat.match(requestMediaType)) return object;
          Transcoder transcoder = encoderRegistry.getTranscoder(objectFormat, requestMediaType);
          return transcoder.transcode(object, objectFormat, requestMediaType);
       }

@@ -4,7 +4,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
 import java.io.ByteArrayInputStream;
@@ -18,7 +17,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.marshall.MarshallingException;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.ImmutableSerializationContext;
@@ -51,7 +49,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
    private final ClassLoader classLoader;
 
    public ProtostreamTranscoder(SerializationContextRegistry ctxRegistry, ClassLoader classLoader) {
-      super(APPLICATION_PROTOSTREAM, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_OBJECT, APPLICATION_JSON, APPLICATION_UNKNOWN);
+      super(APPLICATION_PROTOSTREAM, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_OBJECT, APPLICATION_JSON);
       this.ctxRegistry = ctxRegistry;
       this.classLoader = classLoader;
    }
@@ -60,12 +58,12 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
    public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
       try {
          if (destinationType.match(MediaType.APPLICATION_PROTOSTREAM)) {
+            if (contentType.match(APPLICATION_PROTOSTREAM)) {
+               return content;
+            }
             if (contentType.match(APPLICATION_JSON)) {
                content = addTypeIfNeeded(content);
                return fromJsonCascading(content);
-            }
-            if (contentType.match(APPLICATION_UNKNOWN) || contentType.match(APPLICATION_PROTOSTREAM)) {
-               return content;
             }
             if (contentType.match(TEXT_PLAIN)) {
                content = StandardConversions.convertTextToObject(content, contentType);
@@ -92,12 +90,6 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
             String converted = toJsonCascading((byte[]) content);
             String convertType = destinationType.getClassType();
             return convertType == null ? StandardConversions.convertCharset(converted, contentType.getCharset(), destinationType.getCharset()) : converted;
-         }
-         if (destinationType.equals(APPLICATION_UNKNOWN)) {
-            //TODO: Remove wrapping of byte[] into WrappedByteArray from the Hot Rod Multimap operations.
-            if (content instanceof WrappedByteArray) return content;
-            ImmutableSerializationContext ctx = getCtxForMarshalling(content);
-            return StandardConversions.convertJavaToProtoStream(content, MediaType.APPLICATION_OBJECT, ctx);
          }
          throw logger.cannotConvertContent(ProtostreamTranscoder.class.getSimpleName(), content, contentType, destinationType);
       } catch (InterruptedException | IOException e) {
