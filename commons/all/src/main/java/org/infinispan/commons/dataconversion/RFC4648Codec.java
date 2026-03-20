@@ -78,7 +78,9 @@ class RFC4648Codec implements MediaTypeCodec {
       Optional<String> optionalEncoding = destinationType.getParameter("encoding");
       if (optionalEncoding.isPresent()) {
          String enc = optionalEncoding.get();
-         if (content instanceof byte[]) {
+         if (content instanceof org.infinispan.commons.marshall.SerializedObjectWrapper) {
+            content = encode(((org.infinispan.commons.marshall.SerializedObjectWrapper) content).getBytes(), enc);
+         } else if (content instanceof byte[]) {
             content = encode((byte[]) content, enc);
          } else if (content instanceof String) {
             content = encode(content.toString().getBytes(UTF_8), enc);
