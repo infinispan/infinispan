@@ -869,4 +869,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    @Experimental
    CachePublisher<K, V> cachePublisher();
+
+   /**
+    * Checks if this cache has the given flag set. This is useful for determining if a decorated cache
+    * has specific flags applied to it.
+    *
+    * @param flag the flag to check for
+    * @return true if the flag is set on this cache instance, false otherwise
+    */
+   default boolean containsFlag(Flag flag) {
+      return false;
+   }
 }

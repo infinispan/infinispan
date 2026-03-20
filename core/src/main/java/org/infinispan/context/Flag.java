@@ -160,6 +160,8 @@ public enum Flag {
     * correctly, e.g. {@link Cache#get(Object)},
     * conditional remove ({@link Cache#remove(Object, Object)}),
     * and replace with an expected value ({@link Cache#replace(Object, Object, Object)}).
+    * Note that the write methods will still not return the value, they will just look it up to determine its operation
+    * only.
     *
     * That means it is safe to use {@code IGNORE_RETURN_VALUES} for all the operations on a cache,
     * unlike {@link Flag#SKIP_REMOTE_LOOKUP} and {@link Flag#SKIP_CACHE_LOAD}.
