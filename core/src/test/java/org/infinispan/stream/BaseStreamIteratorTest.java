@@ -75,13 +75,31 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       assertEquals(values, results);
    }
 
-   private void assertConversionEquals(Map<Object, String> map, CloseableIterator<? extends Map.Entry<MagicKey, byte[]>> iterator) {
+   private void assertConversionEquals(Map<Object, String> map, CloseableIterator<? extends Map.Entry<MagicKey, ?>> iterator, Cache<?, ?> cache) {
+      org.infinispan.marshall.core.EncoderRegistry encoderRegistry =
+            org.infinispan.test.TestingUtil.extractComponent(cache, org.infinispan.marshall.core.EncoderRegistry.class);
+      org.infinispan.commons.dataconversion.DefaultTranscoder transcoder =
+            (org.infinispan.commons.dataconversion.DefaultTranscoder) encoderRegistry.getTranscoder(org.infinispan.commons.dataconversion.DefaultTranscoder.class);
+
       try (iterator) {
          iterator.forEachRemaining(e -> {
             String val = map.get(e.getKey());
             assertNotNull("No value found for " + e, val);
 
-            assertEquals(val.getBytes(StandardCharsets.UTF_8), e.getValue());
+            Object value = e.getValue();
+            if (value instanceof org.infinispan.commons.marshall.SerializedObjectWrapper) {
+               // Deserialize and compare the actual String value
+               try {
+                  Object deserialized = transcoder.transcode(value, MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT);
+                  assertEquals(val, deserialized);
+               } catch (Exception ex) {
+                  throw new RuntimeException(ex);
+               }
+            } else {
+               // Raw bytes - compare directly
+               byte[] actualBytes = (byte[]) value;
+               assertEquals(val.getBytes(StandardCharsets.UTF_8), actualBytes);
+            }
          });
       }
    }
@@ -91,11 +109,11 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       Map<Object, String> values = putValuesInCache();
 
       Cache<MagicKey, String> cache = cache(0, CACHE_NAME);
-      CloseableIterator<Map.Entry<MagicKey, byte[]>> iterator = cache.getAdvancedCache()
-            .<MagicKey, byte[]>withMediaType(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_OCTET_STREAM)
+      CloseableIterator<Map.Entry<MagicKey, Object>> iterator = cache.getAdvancedCache()
+            .<MagicKey, Object>withMediaType(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_OCTET_STREAM)
             .entrySet()
             .iterator();
-      assertConversionEquals(values, iterator);
+      assertConversionEquals(values, iterator, cache);
    }
 
    @Test
@@ -103,11 +121,11 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       Map<Object, String> values = putValuesInCache();
 
       Cache<MagicKey, String> cache = cache(0, CACHE_NAME);
-      CloseableIterator<CacheEntry<MagicKey, byte[]>> iterator = cache.getAdvancedCache()
-            .<MagicKey, byte[]>withMediaType(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_OCTET_STREAM)
+      CloseableIterator<CacheEntry<MagicKey, Object>> iterator = cache.getAdvancedCache()
+            .<MagicKey, Object>withMediaType(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_OCTET_STREAM)
             .cacheEntrySet()
             .iterator();
-      assertConversionEquals(values, iterator);
+      assertConversionEquals(values, iterator, cache);
    }
 
    @Test
