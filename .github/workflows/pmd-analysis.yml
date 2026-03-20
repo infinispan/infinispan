@@ -25,7 +25,7 @@ jobs:
         uses: rigazilla/pmd-github-action@min-priority
         with:
           version: '7.15.0'
-          rulesets: 'rulesets/java/quickstart.xml'
+          rulesets: 'pmd-ruleset.xml'
           analyzeModifiedFilesOnly: true
           createGitHubAnnotations: true
           uploadSarifReport: true
