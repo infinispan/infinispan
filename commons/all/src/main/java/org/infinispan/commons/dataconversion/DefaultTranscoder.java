@@ -1,7 +1,6 @@
 package org.infinispan.commons.dataconversion;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.infinispan.commons.dataconversion.JavaStringCodec.BYTE_ARRAY;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
@@ -81,15 +80,12 @@ public final class DefaultTranscoder extends AbstractTranscoder {
 
    private Object convertToObject(Object content, MediaType contentType, MediaType destinationType) throws IOException, ClassNotFoundException {
       if (contentType.match(APPLICATION_OCTET_STREAM)) {
-         String classType = destinationType.getClassType();
-         if (classType != null && !(classType.startsWith("java.lang") || classType.equals(BYTE_ARRAY.getName()))) {
-            Object unmarshalled = marshaller.objectFromByteBuffer((byte[]) content);
-            if (unmarshalled.getClass().getName().equals(classType)) {
-               return unmarshalled;
-            }
-         } else {
-            return content;
+         // Check if content is a SerializedObjectWrapper indicating it must be deserialized
+         if (content instanceof org.infinispan.commons.marshall.SerializedObjectWrapper) {
+            byte[] bytes = ((org.infinispan.commons.marshall.SerializedObjectWrapper) content).getBytes();
+            return marshaller.objectFromByteBuffer(bytes);
          }
+         return content;
       }
       if (contentType.match(APPLICATION_OBJECT)) {
          return content;
@@ -109,7 +105,9 @@ public final class DefaultTranscoder extends AbstractTranscoder {
          if (content instanceof String) {
             return content.toString().getBytes(UTF_8);
          }
-         return marshaller.objectToByteBuffer(content);
+         // Wrap marshalled object in SerializedObjectWrapper to signal it must be deserialized
+         byte[] marshalled = marshaller.objectToByteBuffer(content);
+         return new org.infinispan.commons.marshall.SerializedObjectWrapper(marshalled);
       }
       return content;
    }
