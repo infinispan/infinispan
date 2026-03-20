@@ -21,13 +21,17 @@ requiredEnv GH_JOB_URL FLAKY_TEST_GLOB TARGET_BRANCH GITHUB_REPOSITORY
 shopt -s nullglob globstar
 TESTS=(${FLAKY_TEST_GLOB})
 API_LIMIT_TIME=0
+declare -A SEEN_TESTS
 for TEST in "${TESTS[@]}"; do
-  TEST_CLASS_NAMES=$(xmlstarlet sel -t --value-of '/testsuite/testcase/@classname'  ${TEST})
-  declare -i i
-  for TEST_CLASS in $TEST_CLASS_NAMES; do
-    # just get the first testcase for now
-    i=1
-    TEST_NAME=$(xmlstarlet sel --template --value-of '/testsuite/testcase['$i']/@name' ${TEST})
+  # Extract all classname#testname pairs from the XML file
+  TEST_ENTRIES=$(xmlstarlet sel -T -t -m "/testsuite/testcase" \
+    -v "concat(@classname,'#',@name)" -n ${TEST})
+  i=0
+  while IFS= read -r ENTRY; do
+    [ -z "$ENTRY" ] && continue
+    (( i++ ))
+    TEST_CLASS="${ENTRY%%#*}"
+    TEST_NAME="${ENTRY#*#}"
     # Removing (Flaky Test) text
     TEST_NAME=${TEST_NAME% (Flaky Test)}
     # Some tests have arguments with backslash, ie testReplace\[NO_TX, P_TX\]. Removing
@@ -36,10 +40,15 @@ for TEST in "${TESTS[@]}"; do
     TEST_NAME=${TEST_NAME%%[*}
     # Some tests end with \(. Removing
     TEST_NAME_NO_PARAMS=${TEST_NAME%%\(*}
-    STACK_TRACE=$(xmlstarlet sel --template --value-of '/testsuite/testcase/failure['$i']' ${TEST})
+    STACK_TRACE=$(xmlstarlet sel --template --value-of '/testsuite/testcase['$i']/failure' ${TEST})
 
     # Create Issue for Test Class+TestName
     SUMMARY="Flaky test: ${TEST_CLASS}#${TEST_NAME_NO_PARAMS}"
+    # Skip if we've already processed this test (e.g., same method with different parameters)
+    if [ -n "${SEEN_TESTS[$SUMMARY]+x}" ]; then
+      continue
+    fi
+    SEEN_TESTS[$SUMMARY]=1
     echo ${SUMMARY}
 
     # Search issues for existing github issue
@@ -82,5 +91,5 @@ for TEST in "${TESTS[@]}"; do
       gh issue comment ${ISSUE_NUMBER} --body "${BODY}"
     fi
     echo -e "${TEST_CLASS}#${TEST_NAME_NO_PARAMS}\t${ISSUE_NUMBER}\t${COMMENT_COUNT}" >> flaky-test-issues.map
-  done
+  done <<< "$TEST_ENTRIES"
 done
