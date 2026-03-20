@@ -1025,6 +1025,7 @@ class LocalCacheStatus {
 
    void setCurrentTopology(CacheTopology currentTopology) {
       this.currentTopology = currentTopology;
+      handler.onTopologyReceived(currentTopology);
    }
 
    CacheTopology getStableTopology() {
@@ -1037,6 +1038,7 @@ class LocalCacheStatus {
       if (stableTopology != null) {
          LocalTopologyManagerImpl.log.debugf("Cache %s stable topology complete %s", name, stableTopology);
          stable.complete(stableTopology.wasTopologyRestoredFromState());
+         handler.onTopologyReceived(stableTopology);
       }
    }
 

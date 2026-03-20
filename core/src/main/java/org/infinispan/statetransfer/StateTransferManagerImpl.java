@@ -78,6 +78,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Inject PerCacheInboundInvocationHandler inboundInvocationHandler;
    @Inject IracManager iracManager;
    @Inject IracVersionGenerator iracVersionGenerator;
+   @Inject StateTransferTracker stateTracker;
 
    private final CompletableFuture<Void> initialStateTransferComplete = new CompletableFuture<>();
 
@@ -117,6 +118,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
          @Override
          public CompletionStage<Void> rebalance(CacheTopology cacheTopology) {
             return doTopologyUpdate(cacheTopology, true);
+         }
+
+         @Override
+         public void onTopologyReceived(CacheTopology cacheTopology) {
+            stateTracker.cacheTopologyUpdated(cacheTopology);
          }
       }, partitionHandlingManager);
 
