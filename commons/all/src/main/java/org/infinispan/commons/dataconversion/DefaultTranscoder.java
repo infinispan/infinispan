@@ -1,7 +1,6 @@
 package org.infinispan.commons.dataconversion;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.infinispan.commons.dataconversion.JavaStringCodec.BYTE_ARRAY;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
@@ -109,17 +108,12 @@ public final class DefaultTranscoder extends AbstractTranscoder {
 
    private Object convertToObject(Object content, MediaType contentType, MediaType destinationType) throws IOException, ClassNotFoundException {
       if (contentType.match(APPLICATION_OCTET_STREAM)) {
-         String classType = destinationType.getClassType();
-         if (classType != null && !(classType.startsWith("java.lang") || classType.equals(BYTE_ARRAY.getName()))) {
-            Object unmarshalled = deserialize((byte[]) content, destinationType);
-            if (!Class.forName(classType).isAssignableFrom(unmarshalled.getClass())) {
-               throw new ClassCastException("Decoded object for class + " + unmarshalled.getClass() + " is not assignable from " + classType);
-            }
-            return unmarshalled;
-         } else {
-            // We don't try to unmarshall an object from octet-stream unless the object storage defines a type class
-            return content;
+         // Check if content is a SerializedObjectWrapper indicating it must be deserialized
+         if (content instanceof org.infinispan.commons.marshall.SerializedObjectWrapper) {
+            byte[] bytes = ((org.infinispan.commons.marshall.SerializedObjectWrapper) content).getBytes();
+            return marshaller.objectFromByteBuffer(bytes);
          }
+         return content;
       }
       if (contentType.match(APPLICATION_OBJECT)) {
          if (content instanceof byte[] && destinationType.getClassType() != null && contentType.getClassType() == null) {
@@ -139,10 +133,9 @@ public final class DefaultTranscoder extends AbstractTranscoder {
    public Object convertToOctetStream(Object content, MediaType contentType, MediaType destinationType) throws IOException, InterruptedException {
       if (contentType.match(APPLICATION_OBJECT)) {
          if (content instanceof byte[]) return content;
-         if (content instanceof String) {
-            return content.toString().getBytes(UTF_8);
-         }
-         return serialize(content, contentType);
+         // Wrap marshalled object in SerializedObjectWrapper to signal it must be deserialized
+         byte[] marshalled = marshaller.objectToByteBuffer(content);
+         return new org.infinispan.commons.marshall.SerializedObjectWrapper(marshalled);
       }
       return content;
    }
