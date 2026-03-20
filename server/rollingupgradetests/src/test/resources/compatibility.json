@@ -127,6 +127,13 @@
                 "testTxSuccessWithFailedCommands",
                 "testSuccessWithWatcher"
               ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.resp.RespAuthentication",
+              "test-methods": [
+                "testRespCommandDocs",
+                "testRestReadWrite"
+              ]
             }
           ]
         }
