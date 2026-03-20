@@ -1,0 +1,28 @@
+{
+  "$id": "https://infinispan.org/infinispan-anchored-config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infinispan Anchored Keys Configuration",
+  "description": "Anchored keys configuration for Infinispan caches.",
+  "type": "object",
+  "properties": {
+    "anchored-keys": {
+      "$ref": "#/$defs/AnchoredKeys"
+    }
+  },
+  "$defs": {
+    "AnchoredKeys": {
+      "type": "object",
+      "description": "Enables anchored keys for the cache.",
+      "properties": {
+        "enabled": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Enables anchored keys for the cache."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
