@@ -597,12 +597,16 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       Iterator<List<Mutation<Object, Object, ?>>> mutationsIterator = mutations.iterator();
       for (; keysIterator.hasNext() && mutationsIterator.hasNext(); ) {
          Object key = keysIterator.next();
+         List<Mutation<Object, Object, ?>> currentMutations = mutationsIterator.next();
+         if (currentMutations.isEmpty())
+            continue;
+
          CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), false, true, CompletableFutures.completedNull());
          // We rely on the fact that when isOwner is false this never blocks
          assert CompletionStages.isCompletedSuccessfully(stage);
          MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
          EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, DataConversionInternal.IDENTITY_KEY, DataConversionInternal.IDENTITY_VALUE);
-         for (Mutation mutation : mutationsIterator.next()) {
+         for (Mutation mutation : currentMutations) {
             mutation.apply(readWriteEntryView);
             cacheEntry.updatePreviousValue();
          }
@@ -643,6 +647,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       List<List<Mutation<Object, Object,?>>> mutations = new ArrayList<>(keys.size());
       for (int i = keys.size(); i > 0; --i) mutations.add(Collections.emptyList());
 
+      boolean hasMutations = false;
       for (WriteCommand write : txCtx.getCacheTransaction().getModifications()) {
          if (write == untilCommand) {
             // We've reached this command in the modifications list; this happens when we're replaying a prepared
@@ -659,6 +664,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                      mutations.set(i, list);
                   }
                   list.add(((FunctionalCommand) write).toMutation(key));
+                  hasMutations = true;
                } else {
                   // Non-functional modification must have retrieved the value into context and we should not do any
                   // remote reads!
@@ -668,7 +674,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             }
          }
       }
-      return mutations;
+      return hasMutations ? mutations : null;
    }
 
    private class TxReadOnlyManyHelper extends ReadOnlyManyHelper {
@@ -693,15 +699,21 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       public ReadOnlyManyCommand<?, ?, ?> copyForRemote(C cmd, List<Object> keys, InvocationContext ctx) {
          List<List<Mutation<Object, Object,?>>> mutations = getMutations(ctx, cmd, keys);
          // write command is always executed in transactional scope
-         assert mutations != null;
-
-         for (int i = 0; i < keys.size(); ++i) {
-            List<Mutation<Object, Object,?>> list = mutations.get(i);
-            Mutation mutation = cmd.toMutation(keys.get(i));
-            if (list.isEmpty()) {
-               mutations.set(i, Collections.singletonList(mutation));
-            } else {
-               list.add(mutation);
+         assert ctx.isInTxScope();
+         if (mutations == null) {
+            mutations = new ArrayList<>(keys.size());
+            for (Object key : keys) {
+               mutations.add(Collections.singletonList(cmd.toMutation(key)));
+            }
+         } else {
+            for (int i = 0; i < keys.size(); ++i) {
+               List<Mutation<Object, Object,?>> list = mutations.get(i);
+               Mutation mutation = cmd.toMutation(keys.get(i));
+               if (list.isEmpty()) {
+                  mutations.set(i, Collections.singletonList(mutation));
+               } else {
+                  list.add(mutation);
+               }
             }
          }
          return commandsFactory.buildTxReadOnlyManyCommand(keys, mutations, cmd.getParams(), cmd.getKeyDataConversion(), cmd.getValueDataConversion());
