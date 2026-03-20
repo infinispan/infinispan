@@ -7,8 +7,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +19,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -40,16 +39,7 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
       cleanup =  CleanupPhase.AFTER_METHOD;
    }
 
-   private static int randomPort() {
-      try {
-         ServerSocket socket = new ServerSocket(0);
-         return socket.getLocalPort();
-      } catch (IOException e) {
-         return 56001;
-      }
-   }
-
-   private static final int FIRST_SERVER_PORT = randomPort();
+   private static final int FIRST_SERVER_PORT = ServerTestingUtil.findFreePort();
    private HotRodServer hotRodServer1;
    private HotRodServer hotRodServer2;
    private HotRodServer hotRodServer3;
