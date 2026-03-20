@@ -77,6 +77,7 @@ public interface ProtoStreamTypeIds {
    int UNSURE_RESPONSE = 50;
    int CACHE_NOT_FOUND_RESPONSE = 51;
    int REQUEST_UUID = 52;
+   int SERIALIZED_OBJECT_WRAPPER = 53;
 
    // Priority counter values
    int COUNTER_VALUE = 125;
