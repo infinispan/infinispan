@@ -8,14 +8,28 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.InvocationHelper;
+import org.infinispan.rest.NettyRestResponse;
+import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.framework.impl.Invocations.Builder;
 import org.infinispan.rest.framework.openapi.ParameterIn;
 import org.infinispan.rest.framework.openapi.Schema;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Security;
+import org.infinispan.xsite.GlobalXSiteAdminOperations;
+import org.infinispan.xsite.status.SiteStatus;
 
 /**
  * XSiteResourceV3 - REST v3 API for cross-site replication operations.
@@ -61,6 +75,7 @@ public class XSiteResourceV3 extends XSiteResource {
             .methods(GET).path("/v3/caches/{cacheName}/x-site/backups")
             .name("List backup sites for cache")
             .operationId("listCacheBackupSites")
+            .parameter("cacheName", ParameterIn.PATH, true, Schema.STRING, "The cache name")
             .response(OK, "List of backup site statuses", APPLICATION_JSON)
             .response(NOT_FOUND, "Cache not found or cross-site not configured", TEXT_PLAIN, Schema.STRING)
             .permission(AuthorizationPermission.ADMIN)
@@ -196,11 +211,12 @@ public class XSiteResourceV3 extends XSiteResource {
             .methods(GET).path("/v3/container/x-site/backups")
             .name("Get global backup status for all caches")
             .operationId("getGlobalBackupStatus")
+            .parameter("pretty", ParameterIn.QUERY, false, Schema.BOOLEAN, "Pretty print the JSON output")
             .response(OK, "Global backup status", APPLICATION_JSON)
             .response(NOT_FOUND, "Cross-site not configured", TEXT_PLAIN, Schema.STRING)
             .permission(AuthorizationPermission.ADMIN)
             .auditContext(AuditContext.CACHEMANAGER)
-            .handleWith(this::globalStatus);
+            .handleWith(this::globalStatusAll);
 
       // 15. Global Site Status
       builder.invocation()
@@ -258,5 +274,20 @@ public class XSiteResourceV3 extends XSiteResource {
             .handleWith(this::cancelPushAll);
 
       return builder.create();
+   }
+
+   private CompletionStage<RestResponse> globalStatusAll(RestRequest request) {
+      GlobalXSiteAdminOperations globalXSiteAdmin = getGlobalXSiteAdmin(request);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
+
+      if (globalXSiteAdmin == null)
+         return responseBuilder.status(NOT_FOUND).build().toFuture();
+
+      return CompletableFuture.supplyAsync(() -> {
+         Map<String, SiteStatus> globalStatus = Security.doAs(request.getSubject(), globalXSiteAdmin::globalStatus);
+         Map<String, GlobalStatus> collect = globalStatus.entrySet().stream()
+               .collect(Collectors.toMap(Map.Entry::getKey, GlobalStatus::fromSiteStatus));
+         return addEntityAsJson(Json.make(collect), responseBuilder, isPretty(request)).build();
+      }, invocationHelper.getExecutor());
    }
 }

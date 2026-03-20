@@ -11,6 +11,8 @@ import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.context.Flag;
 import org.infinispan.rest.framework.ContentSource;
+import org.infinispan.rest.framework.FormPart;
+import org.infinispan.rest.framework.FormParts;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
 
@@ -201,6 +203,24 @@ public class SimpleRequest implements RestRequest {
    @Override
    public void setAction(String action) {
       this.action = action;
+   }
+
+   @Override
+   public FormParts formData() {
+      return new FormParts() {
+         @Override
+         public FormPart get(String name) {
+            return null;
+         }
+
+         @Override
+         public int size() {
+            return 0;
+         }
+
+         @Override
+         public void close() { }
+      };
    }
 
    public static class Builder implements RestRequestBuilder<Builder> {
