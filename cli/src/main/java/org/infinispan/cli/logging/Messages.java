@@ -9,6 +9,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 
+import org.aesh.command.CommandException;
 import org.aesh.command.parser.RequiredOptionException;
 import org.infinispan.cli.completers.EncryptionCompleter;
 import org.infinispan.cli.completers.ExposeCompleter;
@@ -20,6 +21,7 @@ import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
+import org.wildfly.security.credential.store.CredentialStoreException;
 
 /**
  * @since 10.0
@@ -272,4 +274,43 @@ public interface Messages {
 
    @Message("Generated Password: %s")
    String generatedPassword(String password);
+
+   @Message("Failed to store credentials")
+   CommandException failedToStoreCredentials(@Cause CredentialStoreException e);
+
+   @Message("A URL is required. Either provide --url or run this command while connected to a server.")
+   CommandException bookmarkUrlRequired();
+
+   @Message("Bookmark '%s' saved")
+   String bookmarkSaved(String name);
+
+   @Message("Bookmark '%s' not found")
+   String bookmarkNotFound(String name);
+
+   @Message("Bookmark '%s' removed")
+   String bookmarkRemoved(String name);
+
+   @Message("No bookmarks defined")
+   String noBookmarks();
+
+   @Message("Cannot read credentials: %s")
+   String cannotReadCredentials(String message);
+
+   @Message("Warning: could not remove credentials: %s")
+   String cannotRemoveCredentials(String message);
+
+   @Message("Failed to load bookmarks")
+   CommandException bookmarkLoadFailure(@Cause IOException e);
+
+   @Message("Failed to save bookmarks")
+   CommandException bookmarkSaveFailure(@Cause IOException e);
+
+   @Message("Enter bookmark master password: ")
+   String bookmarkMasterPassword();
+
+   @Message("Failed to read credentials")
+   CommandException cannotReadCredentials(@Cause CredentialStoreException e);
+
+   @Message("Unsupported protocol '%s'. Only 'http' and 'https' are supported.")
+   CommandException unsupportedProtocol(String protocol);
 }

@@ -21,7 +21,7 @@ public class CacheConfigurationAttributeCompleter extends ListCompleter {
 
    @Override
    protected Collection<String> getAvailableItems(ContextAwareCompleterInvocation invocation) throws IOException {
-      Connection connection = invocation.context.getConnection();
+      Connection connection = invocation.context.connection();
       return getCacheName(invocation.context, invocation.getCommand()).map(connection::getCacheConfigurationAttributes).orElse(Collections.emptyList());
    }
 }

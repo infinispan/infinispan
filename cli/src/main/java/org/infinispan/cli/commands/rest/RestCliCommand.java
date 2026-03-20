@@ -29,13 +29,13 @@ abstract class RestCliCommand extends CliCommand {
    protected final CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
       Shell shell = invocation.getShell();
       Context context = invocation.getContext();
-      if (context.getConnection() == null) {
+      if (context.connection() == null) {
          shell.writeln("The command is not available in the current context.");
          invocation.getContext().refreshPrompt();
          return CommandResult.FAILURE;
       }
       try {
-         String response = context.getConnection().execute((c, r) -> {
+         String response = context.connection().execute((c, r) -> {
             try {
                return exec(invocation, c, r);
             } catch (Exception e) {

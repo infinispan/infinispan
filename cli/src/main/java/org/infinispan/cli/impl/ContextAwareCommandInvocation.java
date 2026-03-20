@@ -136,7 +136,7 @@ public class ContextAwareCommandInvocation implements CommandInvocation {
 
    public String getPasswordInteractively(String prompt, String confirmPrompt) throws InterruptedException {
       String password = null;
-      while (password == null || password.isEmpty()) {
+      while (password == null) {
          password = shell.readLine(new Prompt(prompt, '*'));
       }
       if (confirmPrompt != null) {

@@ -16,11 +16,11 @@ import org.infinispan.cli.resources.Resource;
 public class CacheCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) {
-      return context.getConnection().getAvailableCaches();
+      return context.connection().getAvailableCaches();
    }
 
    static Optional<String> getCacheName(Context context, Command<?> command) {
-      Resource resource = context.getConnection().getActiveResource();
+      Resource resource = context.connection().getActiveResource();
       if (command instanceof CacheAwareCommand) {
          return ((CacheAwareCommand) command).getCacheName(resource);
       }

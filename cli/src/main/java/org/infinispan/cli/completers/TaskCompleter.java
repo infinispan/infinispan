@@ -13,7 +13,7 @@ import org.infinispan.cli.connection.Connection;
 public class TaskCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) throws IOException {
-      Connection connection = context.getConnection();
+      Connection connection = context.connection();
       return connection.getAvailableTasks();
    }
 }
