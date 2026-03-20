@@ -121,16 +121,12 @@ public class SORT extends RespCommand implements Resp3Command {
       }
 
       CompletionStage<List<ScoredValue<byte[]>>> sortedCollection;
-      MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
-      AdvancedCache<byte[], ?> cache = handler.typedCache(vmt);
+      AdvancedCache<byte[], ?> cache = handler.typedCache(MediaType.APPLICATION_OBJECT.withClassType(SortableBucket.class));
       if (pattern == null || !pattern.contains("*")) {
          sortOptions.skipSort = pattern != null;
          sortedCollection = cache.getCacheEntryAsync(key)
                .thenApply(e -> {
                   if (e == null) return Collections.emptyList();
-
-                  if (!(e.getValue() instanceof SortableBucket<?>))
-                     throw new ClassCastException();
 
                   @SuppressWarnings("unchecked")
                   SortableBucket<byte[]> sb = (SortableBucket<byte[]>) e.getValue();

@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 
@@ -23,12 +25,20 @@ import org.infinispan.commons.util.Util;
  */
 public final class DefaultTranscoder extends AbstractTranscoder {
 
+   private static final Log log = LogFactory.getLog(DefaultTranscoder.class);
    private static final Set<MediaType> supportedTypes = new HashSet<>();
+   private static final String USE_GLOBAL_MEDIA_TYPE = "useGlobalMarshaller";
 
    private final Marshaller marshaller;
+   private final Marshaller globalMarshaller;
 
    public DefaultTranscoder(Marshaller marshaller) {
+      this(marshaller, null);
+   }
+
+   public DefaultTranscoder(Marshaller marshaller, Marshaller globalMarshaller) {
       this.marshaller = marshaller;
+      this.globalMarshaller = globalMarshaller;
    }
 
    static {
@@ -36,6 +46,10 @@ public final class DefaultTranscoder extends AbstractTranscoder {
       supportedTypes.add(APPLICATION_OCTET_STREAM);
       supportedTypes.add(APPLICATION_WWW_FORM_URLENCODED);
       supportedTypes.add(TEXT_PLAIN);
+   }
+
+   public static MediaType useGlobalMarshaller(MediaType mediaType) {
+      return mediaType.withParameter(USE_GLOBAL_MEDIA_TYPE, "true");
    }
 
    @Override
@@ -79,19 +93,38 @@ public final class DefaultTranscoder extends AbstractTranscoder {
       throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
    }
 
+   private Object deserialize(byte[] content, MediaType destinationType) throws IOException, ClassNotFoundException {
+      if (destinationType.getParameter(USE_GLOBAL_MEDIA_TYPE).stream().anyMatch(Boolean::parseBoolean)) {
+         return globalMarshaller.objectFromByteBuffer(content);
+      }
+      return marshaller.objectFromByteBuffer(content);
+   }
+
+   private byte[] serialize(Object obj, MediaType sourcetype) throws IOException, InterruptedException {
+      if (sourcetype.getParameter(USE_GLOBAL_MEDIA_TYPE).stream().anyMatch(Boolean::parseBoolean)) {
+         return globalMarshaller.objectToByteBuffer(obj);
+      }
+      return marshaller.objectToByteBuffer(obj);
+   }
+
    private Object convertToObject(Object content, MediaType contentType, MediaType destinationType) throws IOException, ClassNotFoundException {
       if (contentType.match(APPLICATION_OCTET_STREAM)) {
          String classType = destinationType.getClassType();
          if (classType != null && !(classType.startsWith("java.lang") || classType.equals(BYTE_ARRAY.getName()))) {
-            Object unmarshalled = marshaller.objectFromByteBuffer((byte[]) content);
-            if (unmarshalled.getClass().getName().equals(classType)) {
-               return unmarshalled;
+            Object unmarshalled = deserialize((byte[]) content, destinationType);
+            if (!Class.forName(classType).isAssignableFrom(unmarshalled.getClass())) {
+               throw new ClassCastException("Decoded object for class + " + unmarshalled.getClass() + " is not assignable from " + classType);
             }
+            return unmarshalled;
          } else {
+            // We don't try to unmarshall an object from octet-stream unless the object storage defines a type class
             return content;
          }
       }
       if (contentType.match(APPLICATION_OBJECT)) {
+         if (content instanceof byte[] && destinationType.getClassType() != null && contentType.getClassType() == null) {
+            content = deserialize((byte[]) content, destinationType);
+         }
          return content;
       }
       if (contentType.match(TEXT_PLAIN)) {
@@ -109,7 +142,7 @@ public final class DefaultTranscoder extends AbstractTranscoder {
          if (content instanceof String) {
             return content.toString().getBytes(UTF_8);
          }
-         return marshaller.objectToByteBuffer(content);
+         return serialize(content, contentType);
       }
       return content;
    }

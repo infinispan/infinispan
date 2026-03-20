@@ -220,7 +220,7 @@ public class ClusterMigrationDynamicStoreIT extends AbstractMultiClusterIT {
 
    private void createRespCache(RestClient client) {
       String defaultRespConfiguration = """
-{"respCache":{"distributed-cache":{"aliases":["0"],"key-partitioner":"org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner","mode":"SYNC","statistics":true,"encoding":{"key":{"media-type":"application/octet-stream"},"value":{"media-type":"application/octet-stream"}}}}}
+{"respCache":{"distributed-cache":{"aliases":["0"],"key-partitioner":"org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner","mode":"SYNC","statistics":true,"encoding":{"key":{"media-type":"application/octet-stream"},"value":{"media-type":"application/x-java-object"}}}}}
 """;
       assertStatus(OK, client.cache(DEFAULT_RESP_CACHE).createWithConfiguration(RestEntity.create(defaultRespConfiguration)));
    }

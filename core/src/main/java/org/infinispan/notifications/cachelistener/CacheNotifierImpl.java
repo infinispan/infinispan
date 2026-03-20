@@ -43,6 +43,7 @@ import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
+import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.util.EnumUtil;
@@ -1953,10 +1954,28 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                }
             }
          }
-         Object convertedKey = convertToRequestFormat(eventImpl.getKey(), keyFromFormat, keyDataConversion);
-         Object convertedValue = convertToRequestFormat(newValue, valueFromFormat, valueDataConversion);
-         Object convertedOldValue = converter == null || converter.includeOldValue() ?
-               convertToRequestFormat(eventImpl.getOldValue(), valueFromFormat, valueDataConversion) : null;
+         Object convertedKey;
+         try {
+            convertedKey = convertToRequestFormat(eventImpl.getKey(), keyFromFormat, keyDataConversion);
+         } catch (EncodingException e) {
+            log.debugf("Key %s for event failed to convert using %s", eventImpl.getKey(), keyDataConversion);
+            return null;
+         }
+         Object convertedValue;
+         try {
+            convertedValue = convertToRequestFormat(newValue, valueFromFormat, valueDataConversion);
+         } catch (EncodingException e) {
+            log.debugf("New value %s for event failed to convert using %s", newValue, valueDataConversion);
+            return null;
+         }
+         Object convertedOldValue;
+         try {
+            convertedOldValue = converter == null || converter.includeOldValue() ?
+                  convertToRequestFormat(eventImpl.getOldValue(), valueFromFormat, valueDataConversion) : null;
+         } catch (EncodingException e) {
+            log.debugf("Old value %s for event failed to convert using %s", eventImpl.getOldValue(), valueDataConversion);
+            return null;
+         }
          EventImpl<K, V> clone = eventImpl.clone();
          clone.setKey((K) convertedKey);
          clone.setValue((V) convertedValue);

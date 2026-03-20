@@ -50,6 +50,7 @@ public class RespTestingUtil {
    public static ConfigurationBuilder defaultRespConfiguration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
+      builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT);
       builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner()).numSegments(256);
       return builder;
    }

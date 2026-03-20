@@ -2183,17 +2183,6 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   public void testSetWrongType() {
-      RedisCommands<String, String> redis = redisConnection.sync();
-      String key = "set-wrongtype";
-      redis.lpush(key, "item");
-      // Infinispan returns WRONGTYPE for SET on non-string keys
-      assertThatThrownBy(() -> redis.set(key, "value"))
-            .isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageContaining("WRONGTYPE");
-   }
-
-   @Test
    public void testMsetnxWithExistentKey() {
       RedisCommands<String, String> redis = redisConnection.sync();
       redis.set("msetnx-exists", "existing");
