@@ -103,7 +103,9 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
 
    @Override
    public void afterEach(ExtensionContext extensionContext) {
-      testClient.clearResources();
+      if (testClient != null) {
+         testClient.clearResources();
+      }
    }
 
    @Override
