@@ -711,7 +711,6 @@ public class DefaultCacheManager extends InternalCacheManager {
             log.debugf("Cache status changed to %s whiled starting %s", prev, identifierString());
             return;
          }
-         globalComponentRegistry.blameInitialization();
          log.debugf("Started cache manager %s", identifierString());
       } catch (Exception e) {
          if (cacheManagerJmxRegistration != null) {
