@@ -109,6 +109,7 @@ public interface Log extends BasicLogger {
    Log PERSISTENCE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, PERSISTENCE_STRING);
    Log SECURITY = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "SECURITY");
    Log XSITE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "XSITE");
+   Log INTERNAL = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "INTERNAL");
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Unable to load %s from cache loader", id = 1)
