@@ -117,7 +117,7 @@ jobs:
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2.0.0
+        uses: microsoft/setup-msbuild@v3.0.0
 
       - uses: graalvm/setup-graalvm@v1
         with:
