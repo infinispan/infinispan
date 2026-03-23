@@ -4,6 +4,8 @@ import static org.infinispan.testing.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.ComponentFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -27,6 +29,7 @@ public class BasicComponentRegistryImplTest {
    public void setup() {
       moduleRepository = TestModuleRepository.defaultModuleRepository();
       globalRegistry = new BasicComponentRegistryImpl(moduleRepository, true, null);
+      globalRegistry.registerComponent(TimeService.class, new ControlledTimeService(), true);
       cacheRegistry = new BasicComponentRegistryImpl(moduleRepository, false, globalRegistry);
    }
 

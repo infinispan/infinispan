@@ -1,5 +1,7 @@
 package org.infinispan.factories.impl;
 
+import java.util.Collection;
+
 /**
  * Track the execution time between the initialization phases of a component.
  *
@@ -14,109 +16,29 @@ package org.infinispan.factories.impl;
 interface ComponentRegistryTracker {
 
    /**
-    * Register the time a given component started instantiating.
+    * Record a component entering the given lifecycle state.
     *
-    * @param componentName The component name to track the time.
-    * @see org.infinispan.factories.impl.BasicComponentRegistryImpl.WrapperState#INSTANTIATING
+    * @param componentName The component name (registry key).
+    * @param state The new lifecycle state.
+    * @param path The current dependency path, or {@code null} if unavailable.
     */
-   void instantiating(String componentName);
+   void stateChanged(String componentName, BasicComponentRegistryImpl.WrapperState state,
+                     BasicComponentRegistryImpl.ComponentPath path);
 
    /**
-    * Register the time a given component became instantiated.
-    *
-    * @param componentName The component name to track the time.
-    * @see org.infinispan.factories.impl.BasicComponentRegistryImpl.WrapperState#INSTANTIATED
+    * @return All tracked component entries. Never {@code null}.
     */
-   void instantiated(String componentName);
+   Collection<ComponentEntry> entries();
 
    /**
-    * Register the time a component became wiring.
-    *
-    * @param componentName The component name to track the time.
-    * @see org.infinispan.factories.impl.BasicComponentRegistryImpl.WrapperState#WIRING
-    */
-   void wiring(String componentName);
-
-   /**
-    * Register the time a component became wired.
-    *
-    * @param componentName The component name to track the time.
-    * @see org.infinispan.factories.impl.BasicComponentRegistryImpl.WrapperState#WIRED
-    */
-   void wired(String componentName);
-
-   /**
-    * Register the time a component became starting.
-    *
-    * @param componentName The component name to track the time.
-    * @see org.infinispan.factories.impl.BasicComponentRegistryImpl.WrapperState#STARTING
-    */
-   void starting(String componentName);
-
-   /**
-    * Register the time a component became started.
-    *
-    * @param componentName The component name to track the time.
-    * @see org.infinispan.factories.impl.BasicComponentRegistryImpl.WrapperState#STARTED
-    */
-   void started(String componentName);
-
-   /**
-    * Generate the complete report with all components.
-    *
-    * @return A report containing all the registered components sorted by time. <code>null</code> is tracking is not enabled.
-    */
-   String dump();
-
-   /**
-    * Clear all metrics collected.
+    * Clear all tracked data.
     */
    void clear();
 
    /**
-    * Removes a component from the collected metrics.
+    * Remove a single component from tracking.
     *
     * @param componentName The component name to remove.
     */
    void removeComponent(String componentName);
-
-   static ComponentRegistryTracker disabled() {
-      return new Empty();
-   }
-
-   static ComponentRegistryTracker timeTracking(BasicComponentRegistry registry, boolean global) {
-      return ComponentRegistryTimeTracker.tracker(registry, global);
-   }
-
-   final class Empty implements ComponentRegistryTracker {
-
-      @Override
-      public void instantiating(String componentName) { }
-
-      @Override
-      public void instantiated(String componentName) { }
-
-      @Override
-      public void wiring(String componentName) { }
-
-      @Override
-      public void wired(String componentName) { }
-
-      @Override
-      public void starting(String componentName) { }
-
-      @Override
-      public void started(String componentName) { }
-
-      @Override
-      public String dump() {
-         return null;
-      }
-
-      @Override
-      public void clear() { }
-
-      @Override
-      public void removeComponent(String componentName) { }
-   }
 }

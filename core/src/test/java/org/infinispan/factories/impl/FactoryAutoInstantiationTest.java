@@ -9,6 +9,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.ComponentFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -32,6 +34,7 @@ public class FactoryAutoInstantiationTest extends AbstractInfinispanTest {
    public void setup() {
       moduleRepository = TestModuleRepository.defaultModuleRepository();
       globalRegistry = new BasicComponentRegistryImpl(moduleRepository, true, null);
+      globalRegistry.registerComponent(TimeService.class, new ControlledTimeService(), true);
       cacheRegistry = new BasicComponentRegistryImpl(moduleRepository, false, globalRegistry);
    }
 
