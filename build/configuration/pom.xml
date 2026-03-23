@@ -126,7 +126,7 @@
       <version.log4j>2.25.3</version.log4j>
       <!-- version.lucene is defined in the lucene profiles below -->
       <version.lucene9>9.12.3</version.lucene9>
-      <version.lucene10>10.3.2</version.lucene10>
+      <version.lucene10>10.4.0</version.lucene10>
       <version.metainf-services>1.11</version.metainf-services>
       <version.micrometer>1.16.4</version.micrometer>
       <version.mockito>5.23.0</version.mockito>
