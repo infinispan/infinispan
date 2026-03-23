@@ -6,7 +6,6 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
-import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.DataSourceCompleter;
@@ -24,13 +23,6 @@ public class DataSource extends CliCommand {
 
    public static final String CMD = "datasource";
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -41,14 +33,6 @@ public class DataSource extends CliCommand {
 
    @CommandDefinition(name = "ls", description = "Lists data sources", activator = ConnectionActivator.class)
    public static class Ls extends RestCliCommand {
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -61,14 +45,6 @@ public class DataSource extends CliCommand {
 
       @Argument(required = true, description = "The name of the data source", completer = DataSourceCompleter.class)
       String name;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

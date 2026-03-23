@@ -52,13 +52,6 @@ public class Backup extends CliCommand {
    public static final String PROTO_SCHEMAS = "proto-schemas";
    public static final String TASKS = "tasks";
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -177,13 +170,6 @@ public class Backup extends CliCommand {
    }
 
    private abstract static class AbstractBackupCommand extends RestCliCommand {
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
    }
 
    private abstract static class AbstractResourceCommand extends AbstractBackupCommand {

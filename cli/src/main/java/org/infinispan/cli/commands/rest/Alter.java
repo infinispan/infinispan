@@ -36,13 +36,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "alter", description = "Alters a configuration", activator = ConnectionActivator.class, groupCommands = {Alter.Cache.class})
 public class Alter extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -66,13 +59,6 @@ public class Alter extends CliCommand {
       @Option(completer = FileOptionCompleter.class, shortName = 'f')
       Resource file;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) throws RequiredOptionException {

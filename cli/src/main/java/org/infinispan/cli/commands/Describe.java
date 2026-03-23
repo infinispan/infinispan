@@ -7,7 +7,6 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
-import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.completers.CdContextCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
@@ -24,13 +23,6 @@ public class Describe extends CliCommand {
    @Argument(description = "The path of the resource", completer = CdContextCompleter.class)
    String name;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

@@ -64,13 +64,6 @@ public class PersistentStateParse extends CliCommand implements PersistentScopeC
    @Argument(completer = FileOptionCompleter.class, description = "Path to the persistent state directory")
    String path;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   protected boolean isHelp() {
-      return help || path == null;
-   }
 
    @Override
    protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

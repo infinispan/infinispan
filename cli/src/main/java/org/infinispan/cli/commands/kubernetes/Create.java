@@ -37,13 +37,6 @@ import io.fabric8.kubernetes.client.KubernetesClient;
       })
 public class Create extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -84,14 +77,6 @@ public class Create extends CliCommand {
 
       @OptionGroup(shortName = 'P', description = "Sets a spec property. Use the '.' as separator for child nodes")
       Map<String, String> specProperties;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {

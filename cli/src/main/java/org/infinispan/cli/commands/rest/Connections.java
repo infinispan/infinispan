@@ -21,13 +21,6 @@ public class Connections extends CliCommand {
 
    public static final String CMD = "connections";
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -41,14 +34,6 @@ public class Connections extends CliCommand {
 
       @Option(shortName = 'g', hasValue = false, overrideRequired = true)
       protected boolean global;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

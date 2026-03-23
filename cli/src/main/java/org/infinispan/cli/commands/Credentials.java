@@ -39,13 +39,6 @@ public class Credentials extends CliCommand {
    public static final String STORE_TYPE = "pkcs12";
    public static final String CREDENTIALS_PATH = "credentials.pfx";
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -101,14 +94,6 @@ public class Credentials extends CliCommand {
       @Option(description = "Sets the path to the server root directory.", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          try {
@@ -147,14 +132,6 @@ public class Credentials extends CliCommand {
       @Option(description = "Sets the path to the server root directory.", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          try {
@@ -187,14 +164,6 @@ public class Credentials extends CliCommand {
       @Option(description = "Sets the path to the server root directory.", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          try {
@@ -226,14 +195,6 @@ public class Credentials extends CliCommand {
 
       @Option(description = "Sets the number of iterations.", shortName = 'i', required = true)
       Integer iterations;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

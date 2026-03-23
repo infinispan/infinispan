@@ -31,13 +31,6 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(Command.class)
 @GroupCommandDefinition(name = "task", description = "Executes or manipulates server-side tasks", activator = ConnectionActivator.class, groupCommands = {Task.Exec.class, Task.Upload.class})
 public class Task extends CliCommand {
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -54,13 +47,6 @@ public class Task extends CliCommand {
       @OptionGroup(shortName = 'P', description = "Task parameters")
       Map<String, String> parameters;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
@@ -76,13 +62,6 @@ public class Task extends CliCommand {
       @Option(completer = FileOptionCompleter.class, shortName = 'f', required = true)
       Resource file;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {

@@ -3,6 +3,7 @@ package org.infinispan.cli.commands;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
+import org.aesh.command.option.Option;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.Util;
@@ -12,10 +13,12 @@ import org.infinispan.commons.util.Util;
  * @since 10.0
  **/
 public abstract class CliCommand implements Command<ContextAwareCommandInvocation> {
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   public boolean help;
 
    @Override
    public CommandResult execute(ContextAwareCommandInvocation invocation) throws CommandException {
-      if (isHelp()) {
+      if (help) {
          invocation.println(invocation.getHelpInfo());
          return CommandResult.SUCCESS;
       }
@@ -39,11 +42,5 @@ public abstract class CliCommand implements Command<ContextAwareCommandInvocatio
       }
    }
 
-   protected abstract boolean isHelp();
-
    protected abstract CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException;
-
-   public int nesting() {
-      return 0;
-   }
 }

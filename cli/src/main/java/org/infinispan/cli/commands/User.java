@@ -28,13 +28,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "user", description = "User operations", groupCommands = {User.Create.class, User.Describe.class, User.Remove.class, User.Password.class, User.Groups.class, User.Ls.class, User.Encrypt.class, Roles.class})
 public class User extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -79,19 +72,11 @@ public class User extends CliCommand {
       @Option(description = "Echoes generated identifiers", hasValue = false)
       boolean echo;
 
-      @Option(description = "The character class to use when generating random identifiers. Defaults to [:alnum:]", name="random-character-class", defaultValue = "[:alnum:]")
+      @Option(description = "The character class to use when generating random identifiers. Defaults to [:alnum:]", name = "random-character-class", defaultValue = "[:alnum:]")
       String randomCharacterClass;
 
-      @Option(description = "The length of randomly generated identifiers. Defaults to 8", name="random-length", defaultValue = "8")
+      @Option(description = "The length of randomly generated identifiers. Defaults to 8", name = "random-length", defaultValue = "8")
       int randomLength;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -150,14 +135,6 @@ public class User extends CliCommand {
       @Option(description = "The server root", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          UserTool userTool = new UserTool(serverRoot, usersFile, groupsFile);
@@ -180,14 +157,6 @@ public class User extends CliCommand {
 
       @Option(description = "The server root", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -224,14 +193,6 @@ public class User extends CliCommand {
       @Option(description = "The server root", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          if (password == null) { // Get the password interactively
@@ -265,14 +226,6 @@ public class User extends CliCommand {
       @Option(description = "The server root", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          UserTool userTool = new UserTool(serverRoot, usersFile, groupsFile);
@@ -295,14 +248,6 @@ public class User extends CliCommand {
 
       @Option(description = "The server root", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -333,14 +278,6 @@ public class User extends CliCommand {
 
       @OptionList(description = "The algorithms used to encrypt the password", shortName = 'a', completer = EncryptionAlgorithmCompleter.class)
       List<String> algorithms;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {

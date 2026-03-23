@@ -7,7 +7,6 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
-import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CacheCompleter;
@@ -25,13 +24,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "index", description = "Performs operations on indexes", activator = ConnectionActivator.class, groupCommands = {Index.Reindex.class, Index.Clear.class, Index.Stats.class, Index.Metamodel.class, Index.UpdateIndex.class, Index.ClearStats.class})
 public class Index extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation commandInvocation) {
@@ -45,13 +37,6 @@ public class Index extends CliCommand {
       @Argument(description = "Specifies which cache to reindex.", completer = CacheCompleter.class, required = true)
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -65,13 +50,6 @@ public class Index extends CliCommand {
       @Argument(description = "Specifies which cache index to clear.", completer = CacheCompleter.class, required = true)
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -85,13 +63,6 @@ public class Index extends CliCommand {
       @Argument(description = "Specifies which cache to update its index schema.", completer = CacheCompleter.class, required = true)
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -105,13 +76,6 @@ public class Index extends CliCommand {
       @Argument(description = "Specifies which cache statistics to display.", completer = CacheCompleter.class, required = true)
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -125,13 +89,6 @@ public class Index extends CliCommand {
       @Argument(description = "Specifies which cache statistics to display.", completer = CacheCompleter.class, required = true)
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -145,13 +102,6 @@ public class Index extends CliCommand {
       @Argument(description = "Specifies which cache statistics to clear.", completer = CacheCompleter.class, required = true)
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

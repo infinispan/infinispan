@@ -35,13 +35,6 @@ public class Query extends RestCliCommand {
    @Option(name = "offset", defaultValue = "0")
    Integer offset;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

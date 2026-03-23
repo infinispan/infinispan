@@ -10,11 +10,11 @@ import java.util.function.Predicate;
 /**
  * Represents a single line in an access log file.
  *
- * @param file: The absolute path of the file containing the entry.
- * @param client: The client address which submitted the operation.
+ * @param file:      The absolute path of the file containing the entry.
+ * @param client:    The client address which submitted the operation.
  * @param operation: Which operation is performed.
- * @param duration: The operation duration in milliseconds.
- * @param date: The date of the operation.
+ * @param duration:  The operation duration in milliseconds.
+ * @param date:      The date of the operation.
  */
 record AccessLogEntry(String file, String client, String operation, long duration, LocalDateTime date) {
    private static final DateTimeFormatter PARSER = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss");

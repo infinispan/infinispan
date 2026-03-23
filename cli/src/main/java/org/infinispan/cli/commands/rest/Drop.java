@@ -7,7 +7,6 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
-import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CacheCompleter;
@@ -26,13 +25,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "drop", description = "Drops a cache or a counter", activator = ConnectionActivator.class, groupCommands = {Drop.Cache.class, Drop.Counter.class})
 public class Drop extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -47,13 +39,6 @@ public class Drop extends CliCommand {
       @Argument(required = true, completer = CacheCompleter.class, description = "The cache name")
       String name;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -67,13 +52,6 @@ public class Drop extends CliCommand {
       @Argument(required = true, completer = CounterCompleter.class, description = "The counter name")
       String name;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

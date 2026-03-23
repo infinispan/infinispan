@@ -40,10 +40,6 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-commons-graalvm</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-rest</artifactId>
       </dependency>
       <dependency>
@@ -129,6 +125,21 @@
                      <artifactId>jmh-generator-annprocess</artifactId>
                      <version>${version.openjdk.jmh}</version>
                   </annotationProcessorPath>
+                  <annotationProcessorPath>
+                     <groupId>org.aesh</groupId>
+                     <artifactId>aesh-processor</artifactId>
+                     <version>${version.aesh}</version>
+                  </annotationProcessorPath>
+                  <annotationProcessorPath>
+                     <groupId>org.aesh</groupId>
+                     <artifactId>aesh</artifactId>
+                     <version>${version.aesh}</version>
+                  </annotationProcessorPath>
+                  <annotationProcessorPath>
+                     <groupId>org.aesh</groupId>
+                     <artifactId>readline</artifactId>
+                     <version>${version.aesh-readline}</version>
+                  </annotationProcessorPath>
                </annotationProcessorPaths>
             </configuration>
          </plugin>
@@ -170,24 +181,6 @@
                   <configuration>
                      <mainClass>${cli.main.class}</mainClass>
                      <cleanupDaemonThreads>false</cleanupDaemonThreads>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>graalvm-meta</id>
-                  <phase>process-classes</phase>
-                  <goals>
-                     <goal>exec</goal>
-                  </goals>
-                  <configuration>
-                     <executable>${env.JAVA_HOME}/bin/java</executable>
-                     <workingDirectory>target</workingDirectory>
-                     <arguments>
-                        <argument>-cp</argument>
-                        <classpath/>
-                        <argument>org.infinispan.commons.graalvm.NativeMetadataWriter</argument>
-                        <argument>org.infinispan.cli.util.aesh.graal.NativeMetadataProvider</argument>
-                        <argument>classes/META-INF/native-image/org.infinispan/infinispan-cli-client</argument>
-                     </arguments>
                   </configuration>
                </execution>
             </executions>

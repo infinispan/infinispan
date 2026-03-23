@@ -24,13 +24,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "server", description = "Obtains information about the server", activator = ConnectionActivator.class, groupCommands = {Connector.class, DataSource.class, Server.Report.class, Server.HeapDump.class, Connections.class, Principals.class, AclCache.class})
 public class Server extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation commandInvocation) {
@@ -40,14 +33,6 @@ public class Server extends CliCommand {
 
    @CommandDefinition(name = "report", description = "Obtains an aggregate report from the server", activator = ConnectionActivator.class)
    public static class Report extends RestCliCommand {
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -65,14 +50,6 @@ public class Server extends CliCommand {
 
       @Option(shortName = 'l', hasValue = false, description = "Dump only live objects, i.e. objects that are reachable from others.")
       protected boolean live;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

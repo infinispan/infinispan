@@ -29,13 +29,6 @@ public class Remove extends RestCliCommand {
    @Option(completer = CacheCompleter.class)
    String cache;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

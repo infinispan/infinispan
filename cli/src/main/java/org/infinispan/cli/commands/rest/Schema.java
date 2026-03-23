@@ -30,13 +30,6 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(Command.class)
 @GroupCommandDefinition(name = "schema", description = "Manipulates Protobuf schemas", activator = ConnectionActivator.class, groupCommands = {Schema.Upload.class, Schema.Remove.class, Schema.Ls.class, Schema.Get.class})
 public class Schema extends CliCommand {
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -53,14 +46,6 @@ public class Schema extends CliCommand {
       @Option(completer = FileOptionCompleter.class, shortName = 'f', description = "The Protobuf schema file to upload.", required = true)
       Resource file;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) throws NoSuchFileException {
          if (file.exists()) {
@@ -73,14 +58,6 @@ public class Schema extends CliCommand {
 
    @CommandDefinition(name = "ls", description = "Lists available Protobuf schemas.")
    public static class Ls extends RestCliCommand {
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
          return client.schemas().names();
@@ -92,14 +69,6 @@ public class Schema extends CliCommand {
       @Argument(required = true, description = "The name of the schema", completer = SchemaCompleter.class)
       String name;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
          return client.schemas().delete(name);
@@ -110,14 +79,6 @@ public class Schema extends CliCommand {
    public static class Get extends RestCliCommand {
       @Argument(required = true, description = "The name of the schema", completer = SchemaCompleter.class)
       String name;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
