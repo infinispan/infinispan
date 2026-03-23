@@ -10,7 +10,6 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
-import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CdContextCompleter;
@@ -30,13 +29,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "rebalance", description = "Manage rebalance behaviour", activator = ConnectionActivator.class, groupCommands = {Rebalance.Enable.class, Rebalance.Disable.class})
 public class Rebalance extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -49,14 +41,6 @@ public class Rebalance extends CliCommand {
    public static class Enable extends RestCliCommand {
       @Argument(description = "The path of the resource", completer = CdContextCompleter.class)
       String name;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource activeResource) {
@@ -80,14 +64,6 @@ public class Rebalance extends CliCommand {
    public static class Disable extends RestCliCommand {
       @Argument(description = "The path of the resource", completer = CdContextCompleter.class)
       String name;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource activeResource) {

@@ -32,13 +32,6 @@ public class Availability extends RestCliCommand {
    @Option(shortName = 'm', completer = AvailabilityCompleter.class)
    String mode;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {

@@ -62,13 +62,6 @@ public class Connect extends CliCommand {
    @Option(name = "context-path", description = "The context path for the server REST connector. If unspecified, defaults to /rest")
    String contextPath;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

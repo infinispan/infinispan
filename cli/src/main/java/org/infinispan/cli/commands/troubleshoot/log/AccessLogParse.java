@@ -52,13 +52,6 @@ public class AccessLogParse extends CliCommand {
    @Arguments(completer = FileOptionCompleter.class, description = "Path to local access log files")
    List<File> files;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   protected boolean isHelp() {
-      return help || files == null;
-   }
 
    @Override
    protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

@@ -25,13 +25,6 @@ public class Uninstall extends CliCommand {
    @Option(shortName = 'n', description = "Specifies the namespace where the Operator is installed, if you did not install it globally.")
    String namespace;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {

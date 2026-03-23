@@ -43,13 +43,6 @@ public class Ls extends CliCommand {
    @Option(name = "max-items", shortName = 'm', description = "Limit the number of results (supported only by some resources). Defaults to no limit", defaultValue = "-1")
    int maxItems;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

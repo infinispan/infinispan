@@ -25,16 +25,9 @@ public class Bind extends CliCommand {
 
    private static final Set<String> IGNORED_ACTIONS = Set.of("no-action", "self-insert");
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
 
    @Option(name = "mode", shortName = 'm', description = "Editing mode: emacs (default) or vi", defaultValue = "emacs")
    String mode;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {

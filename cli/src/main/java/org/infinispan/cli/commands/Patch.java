@@ -28,13 +28,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "patch", description = "Patch operations", groupCommands = {Patch.Create.class, Patch.Describe.class, Patch.Install.class, Patch.Ls.class, Patch.Rollback.class})
 public class Patch extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -51,14 +44,6 @@ public class Patch extends CliCommand {
 
       @Arguments(completer = FileOptionCompleter.class, description = "The path to the patch archive, the path to the target server and one or more paths to the source servers")
       List<Resource> paths;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -90,14 +75,6 @@ public class Patch extends CliCommand {
       @Option(shortName = 'v', hasValue = false, description = "List the contents of the patch including all the actions that will be performed")
       boolean verbose;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          if (patch == null) {
@@ -126,14 +103,6 @@ public class Patch extends CliCommand {
       @Option(hasValue = false, name = "dry-run", description = "Only list the actions that will be performed without executing them.")
       boolean dryRun;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          if (patch == null) {
@@ -158,14 +127,6 @@ public class Patch extends CliCommand {
       @Option(shortName = 'v', hasValue = false, description = "List the contents of all installed patches.")
       boolean verbose;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          PatchTool patchTool = new PatchTool(invocation.getShellOutput(), invocation.getShellError());
@@ -182,14 +143,6 @@ public class Patch extends CliCommand {
 
       @Option(hasValue = false, name = "dry-run", description = "Only list the actions that will be performed without executing them.")
       boolean dryRun;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

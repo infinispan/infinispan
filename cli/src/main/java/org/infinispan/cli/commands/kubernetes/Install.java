@@ -42,13 +42,6 @@ public class Install extends CliCommand {
    @OptionList(name = "target-namespaces", description = "Specifies the namespaces that the Operator watches. You must set a target namespace if you install the Operator in a specific namespace.")
    List<String> targetNamespaces;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {

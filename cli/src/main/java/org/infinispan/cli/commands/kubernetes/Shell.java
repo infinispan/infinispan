@@ -59,16 +59,9 @@ public class Shell extends CliCommand {
    @Option(shortName = 'w', name = "keystore-password", description = "The password for the keystore")
    String keystorePassword;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
 
    @Argument(description = "Specifies the name of the service to connect to. Defaults to '" + DEFAULT_CLUSTER_NAME + "'", defaultValue = DEFAULT_CLUSTER_NAME)
    String name;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {

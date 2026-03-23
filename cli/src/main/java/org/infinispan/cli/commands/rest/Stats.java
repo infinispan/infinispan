@@ -30,16 +30,9 @@ public class Stats extends RestCliCommand {
    @Argument(description = "The path of the resource", completer = CdContextCompleter.class)
    String name;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
 
    @Option(hasValue = false)
    protected boolean reset;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource activeResource) {

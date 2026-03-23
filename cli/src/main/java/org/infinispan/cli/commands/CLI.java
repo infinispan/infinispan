@@ -206,13 +206,6 @@ public class CLI extends CliCommand {
    @Option(description = "Whether to echo commands to the output", hasValue = false)
    boolean echo;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    private OnErrorCompleter.OnError oe;
 
@@ -227,7 +220,7 @@ public class CLI extends CliCommand {
          invocation.printf("License Apache License, v. 2.0. https://www.apache.org/licenses/LICENSE-2.0\n");
          return CommandResult.SUCCESS;
       }
-      oe = OnErrorCompleter.OnError.valueOf(onError);
+      oe = onError != null ? OnErrorCompleter.OnError.valueOf(onError) : OnErrorCompleter.OnError.FAIL_FAST;
 
       context = invocation.getContext();
 

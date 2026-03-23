@@ -44,14 +44,6 @@ public class Bookmark extends CliCommand {
    static final String CREDENTIAL_STORE_FILE = "bookmarks.pfx";
    private static final Set<String> SECRET_KEYS = Set.of("password", "truststore-password", "keystore-password");
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
-
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       invocation.println(invocation.getHelpInfo());
@@ -90,14 +82,6 @@ public class Bookmark extends CliCommand {
 
       @Option(name = "hostname-verifier", description = "A regular expression used to match hostnames when connecting to SSL/TLS-enabled servers")
       String hostnameVerifier;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -214,14 +198,6 @@ public class Bookmark extends CliCommand {
       @Argument(description = "The bookmark name to remove", required = true, completer = BookmarkCompleter.class)
       String name;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          Properties bookmarks = loadBookmarks(invocation);
@@ -261,14 +237,6 @@ public class Bookmark extends CliCommand {
    @CommandDefinition(name = "ls", description = "Lists all bookmarks")
    public static class Ls extends CliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          Properties bookmarks = loadBookmarks(invocation);
@@ -301,14 +269,6 @@ public class Bookmark extends CliCommand {
 
       @Argument(description = "The bookmark name", required = true, completer = BookmarkCompleter.class)
       String name;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

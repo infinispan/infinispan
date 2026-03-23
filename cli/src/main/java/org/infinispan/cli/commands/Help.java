@@ -56,10 +56,10 @@ public class Help extends AeshFileDisplayer {
          clearBottomLine();
          writeToConsole(ANSI.INVERT_BACKGROUND + "Pattern not found (press RETURN)" + ANSI.DEFAULT_TEXT);
       } else if (getSearchStatus() == TerminalPage.Search.NO_SEARCH ||
-         getSearchStatus() == TerminalPage.Search.RESULT) {
+            getSearchStatus() == TerminalPage.Search.RESULT) {
          writeToConsole(ANSI.INVERT_BACKGROUND);
          writeToConsole("Manual page " + fileParser.getName() + " line " + getTopVisibleRow() +
-            " (press h for help or q to quit)" + ANSI.DEFAULT_TEXT);
+               " (press h for help or q to quit)" + ANSI.DEFAULT_TEXT);
       }
    }
 
@@ -69,7 +69,7 @@ public class Help extends AeshFileDisplayer {
       if (manPages == null || manPages.isEmpty()) {
          shell.writeln("Call `help <command>` where command is one of:");
          List<TerminalString> commandNames = ((ContextAwareCommandInvocation) commandInvocation).getContext().getRegistry()
-            .getAllCommandNames().stream().map(TerminalString::new).toList();
+               .getAllCommandNames().stream().map(TerminalString::new).toList();
          //then we print out the completions
          shell.write(Parser.formatDisplayListTerminalString(commandNames, shell.size().getHeight(), shell.size().getWidth()));
          //then on the next line we write the line again

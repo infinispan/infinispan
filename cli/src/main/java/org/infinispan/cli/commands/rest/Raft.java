@@ -8,7 +8,6 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
-import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
@@ -27,13 +26,6 @@ import org.kohsuke.MetaInfServices;
       })
 public class Raft extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   protected boolean isHelp() {
-      return help;
-   }
 
    @Override
    protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -46,13 +38,6 @@ public class Raft extends CliCommand {
       @Argument(description = "The raft ID of the member")
       String raftId;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      protected final boolean isHelp() {
-         return help;
-      }
    }
 
    @CommandDefinition(name = "add", description = "Adds a new member to the RAFT cluster.", activator = ConnectionActivator.class)
@@ -75,14 +60,6 @@ public class Raft extends CliCommand {
 
    @CommandDefinition(name = "list", description = "List the current RAFT membership.", activator = ConnectionActivator.class)
    public static class ListMembers extends RestCliCommand {
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      protected final boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws Exception {
          return client.raft().currentMembers();

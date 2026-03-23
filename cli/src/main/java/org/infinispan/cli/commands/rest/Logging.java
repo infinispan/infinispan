@@ -29,13 +29,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "logging", description = "Inspects/Manipulates the server logging configuration", activator = ConnectionActivator.class, groupCommands = {Logging.Loggers.class, Logging.Appenders.class, Logging.Set.class, Logging.Remove.class})
 public class Logging extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -47,14 +40,6 @@ public class Logging extends CliCommand {
    @CommandDefinition(name = "list-loggers", description = "Lists available loggers", activator = ConnectionActivator.class)
    public static class Loggers extends RestCliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.server().logging().listLoggers();
@@ -64,14 +49,6 @@ public class Logging extends CliCommand {
    @CommandDefinition(name = "list-appenders", description = "Lists available appenders", activator = ConnectionActivator.class)
    public static class Appenders extends RestCliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.server().logging().listAppenders();
@@ -80,14 +57,6 @@ public class Logging extends CliCommand {
 
    @CommandDefinition(name = "remove", description = "Removes a logger", activator = ConnectionActivator.class)
    public static class Remove extends RestCliCommand {
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Argument(required = true, completer = LoggersCompleter.class)
       String name;
@@ -109,14 +78,6 @@ public class Logging extends CliCommand {
 
       @OptionList(shortName = 'a', description = "One or more appender names", completer = LogAppenderCompleter.class)
       List<String> appenders;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

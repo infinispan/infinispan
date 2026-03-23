@@ -40,8 +40,6 @@ public class Benchmark extends CliCommand {
    @Option(shortName = 't', defaultValue = "10", description = "Specifies the number of threads to create. Defaults to 10.")
    int threads;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
 
    @Option(completer = BenchmarkModeCompleter.class, defaultValue = "Throughput", description = "Specifies the benchmark mode. Possible values are Throughput, AverageTime, SampleTime, SingleShotTime, and All. Defaults to Throughput.")
    String mode;
@@ -67,19 +65,14 @@ public class Benchmark extends CliCommand {
    @Option(completer = CacheCompleter.class, defaultValue = "benchmark", description = "Names the cache against which the benchmark is performed. Defaults to 'benchmark'.")
    String cache;
 
-   @Option(defaultValue = "16", name="key-size", description = "Sets the size, in bytes, of the key. Defaults to 16 bytes.")
+   @Option(defaultValue = "16", name = "key-size", description = "Sets the size, in bytes, of the key. Defaults to 16 bytes.")
    int keySize;
 
-   @Option(defaultValue = "1000", name="value-size", description = "Sets the size, in bytes, of the value. Defaults to 1000 bytes.")
+   @Option(defaultValue = "1000", name = "value-size", description = "Sets the size, in bytes, of the value. Defaults to 1000 bytes.")
    int valueSize;
 
-   @Option(defaultValue = "1000", name="keyset-size", description = "Defines the size, in bytes, of the test key set. Defaults to 1000.")
+   @Option(defaultValue = "1000", name = "keyset-size", description = "Defines the size, in bytes, of the test key set. Defaults to 1000.")
    int keySetSize;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
