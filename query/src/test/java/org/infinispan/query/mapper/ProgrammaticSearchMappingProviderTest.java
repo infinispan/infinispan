@@ -2,7 +2,7 @@ package org.infinispan.query.mapper;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
-import java.util.Arrays;
+import java.util.Objects;
 
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.ProgrammaticMappingConfigurationContext;
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.TypeMappingStep;
@@ -12,6 +12,7 @@ import org.infinispan.query.mapper.mapping.MappingConfigurationContext;
 import org.infinispan.query.mapper.mapping.ProgrammaticSearchMappingProvider;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.TestResourceTracker;
 import org.kohsuke.MetaInfServices;
 import org.testng.annotations.Test;
 
@@ -48,8 +49,7 @@ public class ProgrammaticSearchMappingProviderTest extends SingleCacheManagerTes
 
       private boolean isTestRunning() {
          // Check if our specific test is in the call stack
-         return Arrays.stream(Thread.currentThread().getStackTrace())
-                 .anyMatch(frame -> frame.getClassName().equals(ProgrammaticSearchMappingProviderTest.class.getName()));
+         return Objects.equals(TestResourceTracker.getCurrentTestName(), ProgrammaticSearchMappingProviderTest.class.getName());
       }
    }
 

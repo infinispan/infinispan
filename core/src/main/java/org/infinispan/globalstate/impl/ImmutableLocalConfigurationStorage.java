@@ -36,6 +36,11 @@ public class ImmutableLocalConfigurationStorage implements LocalConfigurationSto
    }
 
    @Override
+   public CompletionStage<Void> defineCacheConfiguration(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      throw CONFIG.immutableConfiguration();
+   }
+
+   @Override
    public CompletionStage<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       throw CONFIG.immutableConfiguration();
    }
