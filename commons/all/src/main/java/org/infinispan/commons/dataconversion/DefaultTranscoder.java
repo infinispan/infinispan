@@ -93,10 +93,17 @@ public final class DefaultTranscoder extends AbstractTranscoder {
    }
 
    private Object deserialize(byte[] content, MediaType destinationType) throws IOException, ClassNotFoundException {
+      Object unmarshalled;
       if (destinationType.getParameter(USE_GLOBAL_MEDIA_TYPE).stream().anyMatch(Boolean::parseBoolean)) {
-         return globalMarshaller.objectFromByteBuffer(content);
+         unmarshalled = globalMarshaller.objectFromByteBuffer(content);
+      } else {
+         unmarshalled = marshaller.objectFromByteBuffer(content);
       }
-      return marshaller.objectFromByteBuffer(content);
+      String classType = destinationType.getClassType();
+      if (classType != null && !Class.forName(classType).isAssignableFrom(unmarshalled.getClass())) {
+         throw new ClassCastException("Decoded object for class + " + unmarshalled.getClass() + " is not assignable from " + classType);
+      }
+      return unmarshalled;
    }
 
    private byte[] serialize(Object obj, MediaType sourcetype) throws IOException, InterruptedException {
@@ -111,7 +118,7 @@ public final class DefaultTranscoder extends AbstractTranscoder {
          // Check if content is a SerializedObjectWrapper indicating it must be deserialized
          if (content instanceof org.infinispan.commons.marshall.SerializedObjectWrapper) {
             byte[] bytes = ((org.infinispan.commons.marshall.SerializedObjectWrapper) content).getBytes();
-            return marshaller.objectFromByteBuffer(bytes);
+            return deserialize(bytes, destinationType);
          }
          return content;
       }
@@ -134,7 +141,7 @@ public final class DefaultTranscoder extends AbstractTranscoder {
       if (contentType.match(APPLICATION_OBJECT)) {
          if (content instanceof byte[]) return content;
          // Wrap marshalled object in SerializedObjectWrapper to signal it must be deserialized
-         byte[] marshalled = marshaller.objectToByteBuffer(content);
+         byte[] marshalled = serialize(content, contentType);
          return new org.infinispan.commons.marshall.SerializedObjectWrapper(marshalled);
       }
       return content;

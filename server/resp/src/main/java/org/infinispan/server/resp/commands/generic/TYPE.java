@@ -3,7 +3,6 @@ package org.infinispan.server.resp.commands.generic;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -30,7 +29,8 @@ public class TYPE extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       byte[] keyBytes = arguments.get(0);
-      return handler.stageToReturn(handler.cache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT).getCacheEntryAsync(keyBytes).thenApply(e -> {
+      return handler.stageToReturn(handler.getObjCache()
+            .getCacheEntryAsync(keyBytes).thenApply(e -> {
          if (e == null) {
             return RespTypes.none.toString();
          }

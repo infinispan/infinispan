@@ -30,7 +30,7 @@ public class PFADD extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       byte[] key = arguments.get(0);
-      FunctionalMap.ReadWriteMap<byte[], Object> cache = FunctionalMap.create(handler.typedCache(null)).toReadWriteMap();
+      FunctionalMap.ReadWriteMap<byte[], Object> cache = FunctionalMap.create(handler.getObjCache()).toReadWriteMap();
 
       List<byte[]> elements = new ArrayList<>(arguments.subList(1, arguments.size()));
       CompletionStage<UpdateStatus> cs = cache.eval(key, view -> {

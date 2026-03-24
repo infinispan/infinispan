@@ -7,7 +7,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
@@ -42,8 +41,7 @@ public class RENAME extends RespCommand implements Resp3Command {
    public static CompletionStage<RespRequestHandler> rename(Resp3Handler handler, byte[] srcKey, byte[] dstKey,
          ChannelHandlerContext ctx, BiConsumer<?, ResponseWriter> consumer) {
       BiConsumer<Object, ResponseWriter> bc = (BiConsumer<Object, ResponseWriter>) consumer;
-      MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
-      final AdvancedCache<byte[], Object> acm = handler.typedCache(vmt);
+      final AdvancedCache<byte[], Object> acm = handler.getObjCache();
       CompletionStage<?> cs = acm.removeAsyncEntry(srcKey)
             .thenCompose(e -> {
                if (e == null) return CompletableFutures.completedNull();

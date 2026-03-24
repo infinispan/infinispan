@@ -63,7 +63,7 @@ public class MEMORY extends RespCommand implements Resp3Command {
                return handler.myStage();
             } else {
                byte[] key = arguments.get(1);
-               CompletionStage<CacheEntry<byte[], Object>> cs = handler.typedCache(null).getCacheEntryAsync(key);
+               CompletionStage<CacheEntry<byte[], Object>> cs = handler.getObjCache().getCacheEntryAsync(key);
                CompletionStage<Long> cs1 = cs
                      .thenApply(e -> MemoryEntrySizeUtils.calculateSize(key, (InternalCacheEntry<byte[], Object>) e));
                return handler.stageToReturn(cs1, ctx, ResponseWriter.INTEGER);

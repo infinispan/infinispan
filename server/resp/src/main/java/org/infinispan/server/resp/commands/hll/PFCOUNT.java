@@ -31,7 +31,7 @@ public class PFCOUNT extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      AdvancedCache<byte[], Object> cache = handler.typedCache(null);
+      AdvancedCache<byte[], Object> cache = handler.getObjCache();
 
       Set<byte[]> uniqueKeys = arguments.stream()
             .map(WrappedByteArray::new)

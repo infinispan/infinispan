@@ -34,7 +34,7 @@ public class PFMERGE extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       byte[] destKey = arguments.get(0);
-      AdvancedCache<byte[], Object> cache = handler.typedCache(null);
+      AdvancedCache<byte[], Object> cache = handler.getObjCache();
 
       // Collect unique source keys (excluding destination).
       Set<byte[]> sourceKeys = arguments.subList(1, arguments.size()).stream()

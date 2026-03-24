@@ -215,7 +215,7 @@ public class DataStructuresMediaTypesTest extends SingleNodeRespBaseTest {
    public Object[] factory() {
       List<DataStructuresMediaTypesTest> instances = new ArrayList<>();
       MediaType[] types = new MediaType[] {
-//            MediaType.APPLICATION_OCTET_STREAM,
+            MediaType.APPLICATION_OCTET_STREAM,
             MediaType.APPLICATION_PROTOSTREAM,
             MediaType.APPLICATION_OBJECT,
             // TODO: commented out for now as many many tests don't work with text/plain as the data structures can't support it

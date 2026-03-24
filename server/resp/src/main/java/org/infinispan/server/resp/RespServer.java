@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.DefaultTranscoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
@@ -213,7 +214,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       if (!isDefaultCacheRunning())
          throw new IllegalStateException("Cache is not initialized");
       return cacheManager.<byte[], byte[]>getCache(configuration.defaultCacheName()).getAdvancedCache()
-            .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT);
+            .withMediaType(MediaType.APPLICATION_OCTET_STREAM, DefaultTranscoder.useGlobalMarshaller(MediaType.APPLICATION_OBJECT));
    }
 
    public Resp3Handler newHandler(AdvancedCache<byte[], byte[]> cache) {

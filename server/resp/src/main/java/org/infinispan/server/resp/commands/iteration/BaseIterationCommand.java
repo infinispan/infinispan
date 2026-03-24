@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.DefaultTranscoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
@@ -56,7 +57,7 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
    private CompletionStage<RespRequestHandler> initializeAndIterate(Resp3Handler handler, ChannelHandlerContext ctx,
                                                                     IterationManager manager, IterationArguments arguments,
                                                                     IterationInitializationContext iic) {
-      AdvancedCache<Object, Object> cache = handler.cache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OBJECT);
+      AdvancedCache<Object, Object> cache = handler.cache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, DefaultTranscoder.useGlobalMarshaller(MediaType.APPLICATION_OBJECT));
       IterationState iterationState = manager.start(cache, null, arguments.getFilterConverterFactory(),
             arguments.getFilterConverterParams(), null, arguments.getCount(),
             false, DeliveryGuarantee.AT_LEAST_ONCE, iic);

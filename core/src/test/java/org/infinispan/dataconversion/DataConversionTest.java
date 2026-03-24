@@ -272,9 +272,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
             Object value1 = objectCache.get("key1");
             Object value2 = objectCache.get("key2");
 
-            // We don't know how to convert back from octet-stream to x-java-object!!!
             assertEquals(value1, "value-string");
-            assertEquals(value1, "value-string".getBytes());
             assertEquals(value2, "value-bytes".getBytes());
          }
       });

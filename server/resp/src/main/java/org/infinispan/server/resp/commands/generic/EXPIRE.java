@@ -10,7 +10,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
@@ -69,8 +68,7 @@ public class EXPIRE extends RespCommand implements Resp3Command {
    }
 
    private static CompletionStage<Long> expire(Resp3Handler handler, byte[] key, long expiration, Mode mode, boolean unixTime) {
-      MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
-      final AdvancedCache<byte[], Object> acm = handler.typedCache(vmt);
+      final AdvancedCache<byte[], Object> acm = handler.getObjCache();
       return acm.getCacheEntryAsync(key).thenCompose(e -> {
          if (e == null) {
             return NOT_APPLIED;
