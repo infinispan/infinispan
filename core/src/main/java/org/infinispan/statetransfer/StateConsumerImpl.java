@@ -954,6 +954,10 @@ public class StateConsumerImpl implements StateConsumer {
          } else {
             stage = stage.thenRun(() -> {
                log.tracef("Using pull based state transfer for cache %s", cacheName);
+               if (cache.wired().getStatus().isTerminated()) {
+                  log.tracef("Cache is shutting down, not requesting segments for %s", cacheName);
+                  return;
+               }
                Flowable<Integer> segmentFlowable = doDataPortionOfStateTransfer(topologyId, addedSegments, sources, excludedSources)
                      .doOnNext(completedSegment -> completeSegmentForTask(completedSegment, sources));
                // We have to subscribe on the non blocking thread to avoid delaying the JGroups thread since some
