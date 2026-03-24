@@ -16,7 +16,6 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.GLOBAL)
 public interface InternalCacheRegistry {
-   void startInternalCaches();
 
    enum Flag {
       /**
