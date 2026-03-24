@@ -74,7 +74,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
    }
 
    @Override
-   public CompletionStage<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletionStage<Void> defineCacheConfiguration(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       Configuration existing = SecurityActions.getCacheConfiguration(cacheManager, name);
       if (existing == null) {
          SecurityActions.defineConfiguration(cacheManager, name, configuration);
@@ -89,15 +89,21 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
             log.debugf("%s already has a cache %s with configuration %s", cacheManager.getAddress(), name, configuration);
          }
       }
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       // Ensure the cache is started
-      return blockingManager.<Void>supplyBlocking(() -> {
-         try {
-            SecurityActions.getCache(cacheManager, name);
-         } catch (CacheException cacheException) {
-            log.cannotObtainFailedCache(name, cacheException);
-         }
-         return null;
-      }, name).toCompletableFuture();
+      return defineCacheConfiguration(name, template, configuration, flags)
+            .thenCompose(ignore -> blockingManager.<Void>supplyBlocking(() -> {
+               try {
+                  SecurityActions.getCache(cacheManager, name);
+               } catch (CacheException cacheException) {
+                  log.cannotObtainFailedCache(name, cacheException);
+               }
+               return null;
+            }, name));
    }
 
    @Override

@@ -20,7 +20,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.persistence.jdbc.common.UnitTestDatabaseManager;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfigurationBuilder;
@@ -58,8 +57,7 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
          @Override
          void runTest(ExceptionRunnable runnable) {
             Exceptions.expectException(".*Additional value columns.*found that were not part of the schema.*", runnable,
-                  EmbeddedCacheManagerStartupException.class, CacheConfigurationException.class,
-                  CompletionException.class, CacheConfigurationException.class);
+                  CacheConfigurationException.class, CompletionException.class, CacheConfigurationException.class);
          }
 
          @Override
@@ -84,8 +82,7 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
          @Override
          void runTest(ExceptionRunnable runnable) {
             Exceptions.expectException(".*was found in the value schema .* but embedded key was not true", runnable,
-                  EmbeddedCacheManagerStartupException.class, CacheConfigurationException.class,
-                  CompletionException.class, CacheConfigurationException.class);
+                  CacheConfigurationException.class, CompletionException.class, CacheConfigurationException.class);
          }
 
          @Override
