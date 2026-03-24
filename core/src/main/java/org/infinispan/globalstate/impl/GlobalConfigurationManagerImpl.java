@@ -4,6 +4,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -33,6 +34,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.globalstate.ScopedState;
+import org.infinispan.manager.CacheStartupManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
@@ -75,6 +77,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    RolePermissionMapper rolePermissionMapper;
    @Inject
    PrincipalRoleMapper principalRoleMapper;
+   @Inject
+   CacheStartupManager cacheStartupManager;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
@@ -107,16 +111,14 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             new ConfigurationBuilder().build(),
             EnumSet.of(InternalCacheRegistry.Flag.GLOBAL));
 
-      internalCacheRegistry.startInternalCaches();
+      cacheStartupManager.startInternalCaches(internalCacheRegistry.getInternalCacheNames());
 
       parserRegistry = new ParserRegistry();
 
       Set<String> staticCacheNames = new TreeSet<>(configurationManager.getDefinedCaches());
       staticCacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
-      log.debugf("Starting user defined caches: %s", staticCacheNames);
-      for (String cacheName : staticCacheNames) {
-         SecurityActions.getCache(cacheManager, cacheName);
-      }
+      log.debugf("Starting user defined caches concurrently: %s", staticCacheNames);
+      cacheStartupManager.startUserCaches(staticCacheNames);
 
       localConfigurationManager.initialize(cacheManager, configurationManager, blockingManager);
 
@@ -128,6 +130,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       Map<String, Configuration> persistedTemplates = localConfigurationManager.loadAllTemplates();
       Map<String, Configuration> persistedCaches = localConfigurationManager.loadAllCaches();
 
+      Set<String> persistedCacheNames = new HashSet<>();
       getStateCache().forEach((key, v) -> {
          String scope = key.getScope();
          if (isKnownScope(scope)) {
@@ -136,8 +139,12 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             boolean cacheScope = CACHE_SCOPE.equals(scope);
             Map<String, Configuration> map = cacheScope ? persistedCaches : persistedTemplates;
             ensureClusterCompatibility(name, state, map);
-            CompletionStage<Void> future = cacheScope ? createCacheLocally(name, state) : createTemplateLocally(name, state);
-            CompletionStages.join(future);
+            if (cacheScope) {
+               CompletionStages.join(createConfigurationLocally(name, state));
+               persistedCacheNames.add(name);
+            } else {
+               CompletionStages.join(createTemplateLocally(name, state));
+            }
          }
       });
 
@@ -150,7 +157,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          CompletionStages.join(getOrCreateTemplate(name, configuration, adminFlags));
       });
 
-      // Create the caches
+      // Create the caches: define the configurations and collect the cache names.
       persistedCaches.forEach((name, configuration) -> {
          ensurePersistenceCompatibility(name, configuration);
          // The cache configuration was permanent, it still needs to be
@@ -159,11 +166,15 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
                   if (r instanceof CacheState) {
                      Configuration remoteConf = buildConfiguration(name, ((CacheState) r).getConfiguration(), false);
                      ensurePersistenceCompatibility(name, configuration, remoteConf);
-                     return createCacheLocally(name, (CacheState) r);
+                     return createConfigurationLocally(name, (CacheState) r);
                   }
                   return CompletableFutures.completedNull();
                }));
+         persistedCacheNames.add(name);
       });
+
+      // Start the caches after the configuration is defined.
+      cacheStartupManager.startUserCaches(persistedCacheNames);
    }
 
    private void ensureClusterCompatibility(String name, CacheState state, Map<String, Configuration> configs) {
@@ -328,6 +339,19 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return localConfigurationManager.createTemplate(name, configuration, flags)
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, ConfigurationChangedEvent.TEMPLATE, name, null))
             .toCompletableFuture();
+   }
+
+   CompletionStage<Void> createConfigurationLocally(String name, CacheState state) {
+      Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
+      return createConfigurationLocally(name, state.getTemplate(), configuration, state.getFlags());
+   }
+
+   CompletionStage<Void> createConfigurationLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      log.debugf("Defining cache configuration %s from global state", name);
+      return localConfigurationManager.defineCacheConfiguration(name, template, configuration, flags)
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(
+                  ConfigurationChangedEvent.EventType.CREATE, ConfigurationChangedEvent.CACHE, name, null
+            ));
    }
 
    CompletionStage<Void> createCacheLocally(String name, CacheState state) {
