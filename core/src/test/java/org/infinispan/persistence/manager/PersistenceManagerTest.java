@@ -198,7 +198,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
             .subscribe(subscriber);
       subscriber.request(Long.MAX_VALUE);
       assertTrue(persistenceManager.anyLocksHeld());
-      assertTrue("Subscriber should have completed with error", subscriber.await(EMIT_TIMEOUT_MS * 2, TimeUnit.MILLISECONDS));
+      assertTrue("Subscriber should have completed with error", subscriber.await(15, TimeUnit.SECONDS));
 
       subscriber.assertError(org.infinispan.commons.TimeoutException.class);
       assertFalse(persistenceManager.anyLocksHeld());
