@@ -19,6 +19,7 @@ public interface ConfigurationChangedEvent extends Event {
    String CACHE = "cache";
    String TEMPLATE = "template";
    String SCHEMA = "schema";
+   String COUNTER = "counter";
 
    EventType getConfigurationEventType();
 

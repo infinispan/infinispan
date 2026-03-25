@@ -39,6 +39,12 @@ import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.counter.EmbeddedCounterManagerFactory;
+import org.infinispan.counter.api.CounterConfiguration;
+import org.infinispan.counter.configuration.AbstractCounterConfiguration;
+import org.infinispan.counter.configuration.ConvertUtil;
+import org.infinispan.counter.configuration.CounterConfigurationSerializer;
+import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -500,6 +506,13 @@ public class ContainerResource implements ResourceHandler {
                            for (String name : metadataManager.getProtofileNames()) {
                               stream.sendEvent(new ServerSentEvent("create-schema", serializeSchema(mediaType, name, metadataManager.getFileErrors(name), metadataManager.getProtofile(name))));
                            }
+                           EmbeddedCounterManager counterManager = (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager);
+                           for (String name : counterManager.getCounterNames()) {
+                              CounterConfiguration config = counterManager.getConfiguration(name);
+                              if (config != null) {
+                                 stream.sendEvent(new ServerSentEvent("create-counter", serializeCounter(mediaType, name, config, pretty)));
+                              }
+                           }
                         }, invocationHelper.getExecutor());
 
                      } : null,
@@ -538,12 +551,31 @@ public class ContainerResource implements ResourceHandler {
                   Map<String, Object> value = event.getConfigurationEntityValue();
                   sse = new ServerSentEvent(eventType, serializeSchema(mediaType, entityName, value.get("errors").toString(), value.get("file").toString()));
                   break;
+               case ConfigurationChangedEvent.COUNTER:
+                  EmbeddedCounterManager cm = (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager);
+                  CounterConfiguration counterConfig = cm.getConfiguration(entityName);
+                  if (counterConfig != null) {
+                     sse = new ServerSentEvent(eventType, serializeCounter(mediaType, entityName, counterConfig, pretty));
+                  } else {
+                     return CompletableFutures.completedNull();
+                  }
+                  break;
                default:
                   // Unhandled entity type, ignore
                   return CompletableFutures.completedNull();
             }
          }
          return eventStream.sendEvent(sse);
+      }
+
+      private static String serializeCounter(MediaType mediaType, String name, CounterConfiguration config, boolean pretty) {
+         AbstractCounterConfiguration parsedConfig = ConvertUtil.configToParsedConfig(name, config);
+         CounterConfigurationSerializer ccs = new CounterConfigurationSerializer();
+         StringWriter s = new StringWriter();
+         try (ConfigurationWriter w = ConfigurationWriter.to(s).withType(mediaType).prettyPrint(pretty).build()) {
+            ccs.serializeConfiguration(w, parsedConfig);
+         }
+         return s.toString();
       }
 
       private static String serializeSchema(MediaType mediaType, String name, String errors, String proto) {
