@@ -12,6 +12,8 @@ import org.infinispan.server.resp.hll.internal.ExplicitSet;
             HyperLogLog.class,
             ExplicitSet.class,
             CompactSet.class,
+            org.infinispan.server.resp.commands.bloom.BloomFilter.class,
+            org.infinispan.server.resp.commands.bloom.BloomFilter.SubFilter.class,
       },
       schemaFileName = "persistence.resp.proto",
       schemaFilePath = "org/infinispan/server/resp",
