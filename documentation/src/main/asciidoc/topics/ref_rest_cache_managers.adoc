@@ -508,6 +508,7 @@ The `event` value will be one of:
 * `create-cache`, `remove-cache`, `update-cache`: a cache was created, removed or its configuration updated
 * `create-template`, `remove-template`, `update-template`: a template was created, removed or updated
 * `create-schema`, `remove-schema`, `update-schema`: a schema was created, removed or updated
+* `create-counter`, `remove-counter`: a counter was created or removed
 * `lifecycle-event`: container lifecycle events, such as nodes joining and leaving the cluster
 
 The `data` value will contain information about the event:
@@ -531,7 +532,13 @@ data:     string street = 1;
 data: }
 data: "}}
 ----
-* `remove-cache`, `remove-template`, `remove-schema`: the name of the removed entity.
+* `create-counter`: the counter configuration in the negotiated media type. The following example uses `application/json`:
+[source,options="nowrap",subs=attributes+]
+----
+event: create-counter
+data: {"strong-counter":{"name":"my-counter","initial-value":0,"storage":"VOLATILE","upper-bound":100}}
+----
+* `remove-cache`, `remove-template`, `remove-schema`, `remove-counter`: the name of the removed entity.
 [source,options="nowrap",subs=attributes+]
 ----
 event: remove-cache
@@ -589,7 +596,7 @@ GET /rest/v2/container?action=listen
 [id='rest_v2_container_configuration_listen']
 = Listening to container configuration events
 Receive events about configuration changes using https://html.spec.whatwg.org/multipage/server-sent-events.html[Server-Sent Events].
-This endpoint returns only the `cache`, `template` and `schema` events which are also returned by <<rest_v2_container_listen>>.
+This endpoint returns only the `cache`, `template`, `schema` and `counter` events which are also returned by <<rest_v2_container_listen>>.
 
 [source,options="nowrap",subs=attributes+]
 ----

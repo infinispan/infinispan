@@ -331,6 +331,15 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
          sseListener.expectEvent("update-schema", "{\"schema\":{\"name\":\"address.proto\",\"errors\":\"\",\"proto\":\"message Address {\\n    string street = 1;\\n    string city = 2;\\n}\\n\"}}");
          assertThat(client.schemas().delete("address.proto")).isOk();
          sseListener.expectEvent("remove-schema", "address.proto");
+
+         // Create a counter
+         String counterJson = "{\"strong-counter\":{\"initial-value\":10,\"storage\":\"VOLATILE\"}}";
+         assertThat(client.counter("test-counter").create(RestEntity.create(APPLICATION_JSON, counterJson))).isOk();
+         sseListener.expectEvent("create-counter", "strong-counter");
+
+         // Delete the counter
+         assertThat(client.counter("test-counter").delete()).isOk();
+         sseListener.expectEvent("remove-counter", "test-counter");
       }
    }
 
