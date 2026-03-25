@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
@@ -45,7 +46,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       stopManagers(2, 0);
 
       // The remaining node is the new coordinator.
-      assertThat(manager(0).isCoordinator()).isTrue();
+      eventuallyViewCoordinator(0);
       eventuallyClusterTopologyCoordinator(0);
 
       // The cache is now in degraded mode.
@@ -59,7 +60,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // The coordinator leaves, and only the extraneous node remains.
       stopManagers(0);
-      assertThat(manager(0).isCoordinator()).isTrue();
+      eventuallyViewCoordinator(0);
 
       // Cache still degraded.
       ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -95,7 +96,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       stopManagers(2, 0);
 
       // The remaining node is the new coordinator.
-      assertThat(manager(0).isCoordinator()).isTrue();
+      eventuallyViewCoordinator(0);
       eventuallyClusterTopologyCoordinator(0);
 
       // The cache is now in degraded mode.
@@ -109,7 +110,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // The coordinator leaves, and only the extraneous node remains.
       stopManagers(0);
-      assertThat(manager(0).isCoordinator()).isTrue();
+      eventuallyViewCoordinator(0);
 
       // Cache still degraded.
       ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -130,7 +131,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // Force availability of cluster.
       await(ctm.forceAvailabilityMode(CACHE_NAME, AVAILABLE));
-      assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(AVAILABLE);
+      eventuallyCacheAvailability(AVAILABLE);
 
       // Again, since the cluster is completely new, all data is gone.
       assertThat(cache(0, CACHE_NAME).size()).isZero();
@@ -154,7 +155,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       stopManagers(2, 0);
 
       // The remaining node is the new coordinator.
-      assertThat(manager(0).isCoordinator()).isTrue();
+      eventuallyViewCoordinator(0);
 
       // The cache is now in degraded mode.
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -169,7 +170,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // The current coordinator leaves, yield control to previous coordinator.
       stopManagers(0);
-      assertThat(manager(0).isCoordinator()).isTrue();
+      eventuallyViewCoordinator(0);
 
       // And the cache is still in degraded mode.
       ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -190,6 +191,16 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
    private void eventuallyClusterTopologyCoordinator(int index) {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager(index), ClusterTopologyManager.class);
       eventually(() -> ctm.getStatus() == ClusterTopologyManager.ClusterManagerStatus.COORDINATOR);
+   }
+
+   private void eventuallyViewCoordinator(int index) {
+      eventually(() -> manager(index).isCoordinator());
+   }
+
+   private void eventuallyCacheAvailability(AvailabilityMode mode) {
+      eventually(() -> Stream.of(managers())
+            .map(m -> TestingUtil.extractGlobalComponent(m, LocalTopologyManager.class))
+            .allMatch(ltm -> ltm.getCacheAvailability(CACHE_NAME) == mode));
    }
 
    public void testCrashBeforeRecover() throws Exception {
