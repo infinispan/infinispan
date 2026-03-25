@@ -8,7 +8,6 @@ import static org.infinispan.counter.logging.Log.CONTAINER;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -33,6 +32,8 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.stream.CacheCollectors;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -55,6 +56,7 @@ public class CounterConfigurationManager implements Lifecycle {
 
    @Inject EmbeddedCacheManager cacheManager;
    @Inject CounterConfigurationStorage storage;
+   @Inject CacheManagerNotifier cacheManagerNotifier;
 
    private final AtomicBoolean counterCacheStarted = new AtomicBoolean(false);
    private final Map<String, AbstractCounterConfiguration> configuredCounters;
@@ -138,7 +140,10 @@ public class CounterConfigurationManager implements Lifecycle {
                            return blockingManager.supplyBlocking(() -> {
                               storage.store(name, configuration);
                               return Boolean.TRUE;
-                           }, name);
+                           }, name).thenCompose(result -> cacheManagerNotifier.notifyConfigurationChanged(
+                                 ConfigurationChangedEvent.EventType.CREATE,
+                                 ConfigurationChangedEvent.COUNTER, name, null)
+                                 .thenApply(v -> result));
                         } else {
                            //already defined.
                            return CompletableFutures.completedFalse();
@@ -154,7 +159,15 @@ public class CounterConfigurationManager implements Lifecycle {
     * @return true if the configuration was removed
     */
    CompletableFuture<Boolean> removeConfiguration(String name) {
-      return stateCache.removeAsync(stateKey(name)).thenApply(Objects::nonNull);
+      return stateCache.removeAsync(stateKey(name)).thenCompose(prev -> {
+         if (prev != null) {
+            return cacheManagerNotifier.notifyConfigurationChanged(
+                  ConfigurationChangedEvent.EventType.REMOVE,
+                  ConfigurationChangedEvent.COUNTER, name, null)
+                  .thenApply(v -> Boolean.TRUE);
+         }
+         return CompletableFutures.completedFalse();
+      });
    }
 
    /**
