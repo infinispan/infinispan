@@ -539,7 +539,9 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    }
 
    @AfterClass(alwaysRun = true)
-   protected void clearTempDir() {
+   @Override
+   protected void destroyAfterClass() {
+      super.destroyAfterClass();
       Util.recursiveFileRemove(persistentLocation);
    }
 
