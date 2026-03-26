@@ -231,7 +231,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       }
 
       fileProvider = new FileProvider(getDataLocation(), maxOpenDataFiles, PREFIX_LATEST,
-            configuration.maxFileSize());
+            configuration.maxFileSize(), false);
       compactor = new Compactor(ctx.getNonBlockingManager(), fileProvider, temporaryTable, marshaller, timeService,
             keyPartitioner, configuration.maxFileSize(), configuration.compactionThreshold(),
             blockingManager.asExecutor("sifs-compactor"));
@@ -259,7 +259,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          // we don't destroy the data on startup
          // get the old files
          FileProvider oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_10_1,
-             configuration.maxFileSize());
+             configuration.maxFileSize(), false);
          // Don't even try to rebuild index or read files if we are allowed to directly purge on startup
          if (ctx.canStoreDirectlyPurgeOnStartup()) {
             try {
@@ -273,7 +273,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                throw PERSISTENCE.persistedDataMigrationUnsupportedVersion("< 11");
             }
             oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0,
-                  configuration.maxFileSize());
+                  configuration.maxFileSize(), false);
             if (oldFileProvider.hasFiles()) {
                try {
                   index.reset();
