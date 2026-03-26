@@ -142,7 +142,7 @@ class Index {
       this.minNodeSize = minNodeSize;
       this.maxNodeSize = maxNodeSize;
       this.sizePerSegment = new AtomicLongArray(cacheSegments);
-      this.indexFileProvider = new FileProvider(indexDir, maxOpenFiles, "index.", Integer.MAX_VALUE);
+      this.indexFileProvider = new FileProvider(indexDir, maxOpenFiles, "index.", Integer.MAX_VALUE, true);
       this.indexSizeFile = new File(indexDir.toFile(), "index-count");
 
       this.segments = new Segment[cacheSegments];
