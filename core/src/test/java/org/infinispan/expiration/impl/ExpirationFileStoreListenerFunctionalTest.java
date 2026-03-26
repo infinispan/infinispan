@@ -63,7 +63,9 @@ public class ExpirationFileStoreListenerFunctionalTest extends ExpirationStoreLi
    }
 
    @AfterClass(alwaysRun = true)
-   protected void clearTempDir() {
-      Util.recursiveFileRemove(CommonsTestingUtil.tmpDirectory(this.getClass()));
+   @Override
+   protected void destroyAfterClass() {
+      super.destroyAfterClass();
+      Util.recursiveFileRemove(location);
    }
 }
