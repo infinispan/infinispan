@@ -50,6 +50,8 @@ public class AsymmetricClusterTest extends MultipleCacheManagersTest {
 
       if (crash) {
          d2.discardAll(true);
+         TestingUtil.installNewView(manager(0));
+         TestingUtil.installNewView(manager(1));
       }
       manager(1).stop();
 
@@ -62,9 +64,12 @@ public class AsymmetricClusterTest extends MultipleCacheManagersTest {
    }
 
    public void testCoordinatorCrashesDuringJoin() {
-      d2.discardAll(true);
-
       manager(1).defineConfiguration(CACHE_NAME, clusteredConfig.build());
+
+      d2.discardAll(true);
+      TestingUtil.installNewView(manager(0));
+      TestingUtil.installNewView(manager(1));
+
       fork((Callable<Object>) () -> cache(1, CACHE_NAME));
 
       TestingUtil.blockUntilViewsReceived(30000, false, manager(0));
