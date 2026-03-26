@@ -60,11 +60,11 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
 
       SoftIndexIterator() {
          if (majorVersion < 11) {
-            this.fileProvider = new FileProvider(location, 1000, NonBlockingSoftIndexFileStore.PREFIX_10_1, 1024 * 1024);
+            this.fileProvider = new FileProvider(location, 1000, NonBlockingSoftIndexFileStore.PREFIX_10_1, 1024 * 1024, false);
             this.reader = EntryRecord::read10_1EntryHeader;
          } else {
             String prefix = majorVersion == 11 ? NonBlockingSoftIndexFileStore.PREFIX_11_0 : NonBlockingSoftIndexFileStore.PREFIX_12_0;
-            this.fileProvider = new FileProvider(location, 1000, prefix, 1024 * 1024);
+            this.fileProvider = new FileProvider(location, 1000, prefix, 1024 * 1024, false);
             this.reader = EntryRecord::readEntryHeader;
          }
          this.iterator = fileProvider.getFileIterator(null);
