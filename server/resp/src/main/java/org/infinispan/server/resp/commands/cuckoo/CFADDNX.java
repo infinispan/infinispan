@@ -1,4 +1,4 @@
-package org.infinispan.server.resp.commands.bloom;
+package org.infinispan.server.resp.commands.cuckoo;
 
 import java.util.Collections;
 import java.util.List;
@@ -14,19 +14,19 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * BF.ADD key item
+ * CF.ADDNX key item
  * <p>
- * Adds an item to a Bloom filter. Creates the filter if it doesn't exist.
+ * Adds an item to a Cuckoo filter only if it doesn't already exist.
  *
- * @see <a href="https://redis.io/commands/bf.add/">BF.ADD</a>
+ * @see <a href="https://redis.io/commands/cf.addnx/">CF.ADDNX</a>
  * @since 16.2
  */
-public class BFADD extends RespCommand implements Resp3Command {
+public class CFADDNX extends RespCommand implements Resp3Command {
 
-   public BFADD() {
-      super("BF.ADD", 3, 1, 1, 1,
+   public CFADDNX() {
+      super("CF.ADDNX", 3, 1, 1, 1,
             // No @slow: matches COMMAND INFO output, despite docs claiming @slow
-            AclCategory.BLOOM.mask() | AclCategory.WRITE.mask());
+            AclCategory.CUCKOO.mask() | AclCategory.WRITE.mask());
    }
 
    @Override
@@ -38,12 +38,10 @@ public class BFADD extends RespCommand implements Resp3Command {
       FunctionalMap.ReadWriteMap<byte[], Object> cache =
             FunctionalMap.create(handler.typedCache(null)).toReadWriteMap();
 
-      BloomFilterInsertFunction function = new BloomFilterInsertFunction(
-            Collections.singletonList(item),
-            BloomFilter.DEFAULT_CAPACITY, BloomFilter.DEFAULT_ERROR_RATE,
-            BloomFilter.DEFAULT_EXPANSION, false, false);
-      CompletionStage<List<Boolean>> result = cache.eval(key, function);
+      CuckooFilterInsertFunction function = new CuckooFilterInsertFunction(
+            Collections.singletonList(item), CuckooFilter.DEFAULT_CAPACITY, false, true);
+      CompletionStage<List<Integer>> result = cache.eval(key, function);
 
-      return handler.stageToReturn(result, ctx, (r, w) -> w.booleans(r.get(0)));
+      return handler.stageToReturn(result, ctx, (r, w) -> w.booleans(r.get(0) == 1));
    }
 }

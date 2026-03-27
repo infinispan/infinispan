@@ -1,6 +1,6 @@
-package org.infinispan.server.resp.commands.bloom;
+package org.infinispan.server.resp.commands.cuckoo;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -14,34 +14,33 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * BF.MEXISTS key item [item ...]
+ * CF.EXISTS key item
  * <p>
- * Determines whether one or more items were added to a Bloom filter.
+ * Determines whether an item was added to a Cuckoo filter.
  *
- * @see <a href="https://redis.io/commands/bf.mexists/">BF.MEXISTS</a>
+ * @see <a href="https://redis.io/commands/cf.exists/">CF.EXISTS</a>
  * @since 16.2
  */
-public class BFMEXISTS extends RespCommand implements Resp3Command {
+public class CFEXISTS extends RespCommand implements Resp3Command {
 
-   public BFMEXISTS() {
-      super("BF.MEXISTS", -3, 1, 1, 1,
+   public CFEXISTS() {
+      super("CF.EXISTS", 3, 1, 1, 1,
             // No @slow: matches COMMAND INFO output, despite docs claiming @slow
-            AclCategory.BLOOM.mask() | AclCategory.READ.mask());
+            AclCategory.CUCKOO.mask() | AclCategory.READ.mask());
    }
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       byte[] key = arguments.get(0);
-      List<byte[]> items = new ArrayList<>(arguments.subList(1, arguments.size()));
+      byte[] item = arguments.get(1);
 
       FunctionalMap.ReadOnlyMap<byte[], Object> cache =
             FunctionalMap.create(handler.typedCache(null)).toReadOnlyMap();
 
-      BloomFilterExistsFunction function = new BloomFilterExistsFunction(items);
+      CuckooFilterExistsFunction function = new CuckooFilterExistsFunction(Collections.singletonList(item));
       CompletionStage<List<Boolean>> result = cache.eval(key, function);
 
-      return handler.stageToReturn(result, ctx, (r, w) ->
-            w.array(r, (b, writer) -> writer.booleans(b)));
+      return handler.stageToReturn(result, ctx, (r, w) -> w.booleans(r.get(0)));
    }
 }

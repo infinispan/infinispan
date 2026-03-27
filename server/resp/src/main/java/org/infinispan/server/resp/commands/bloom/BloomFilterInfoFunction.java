@@ -6,6 +6,7 @@ import java.util.Map;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.server.resp.commands.ProbabilisticErrors;
 import org.infinispan.util.function.SerializableFunction;
 
 /**
@@ -28,7 +29,7 @@ public final class BloomFilterInfoFunction
    public BloomFilterInfo apply(EntryView.ReadEntryView<byte[], Object> view) {
       BloomFilter filter = (BloomFilter) view.peek().orElse(null);
       if (filter == null) {
-         throw new IllegalStateException("ERR not found");
+         throw new IllegalStateException(ProbabilisticErrors.ERR_NOT_FOUND);
       }
 
       return new BloomFilterInfo(
