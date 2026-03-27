@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -36,8 +37,8 @@ public abstract class BaseServerManagement implements ServerManagement {
       Address nodeAddress = cacheManager.getAddress();
       Address coordinatorAddress = cacheManager.getCoordinator();
 
-      String nodeId = (nodeAddress == null) ? null : uuidManager.getPersistentUuid(nodeAddress).toString();
-      String coordinatorId = (coordinatorAddress == null) ? null : uuidManager.getPersistentUuid(coordinatorAddress).toString();
+      String nodeId = extractUuid(uuidManager, nodeAddress);
+      String coordinatorId = extractUuid(uuidManager, coordinatorAddress);
 
       HashSet<String> cacheStores = new HashSet<>();
       HashSet<String> encodings = new HashSet<>();
@@ -88,6 +89,15 @@ public abstract class BaseServerManagement implements ServerManagement {
             .set("used-encodings", encodings)
             .set("clients", clients)
             .set("security", securityOverviewReport());
+   }
+
+   private String extractUuid(PersistentUUIDManager pum, Address address) {
+      if (address == null) return null;
+
+      UUID uuid = pum.getPersistentUuid(address);
+      return uuid != null
+            ? uuid.toString()
+            : null;
    }
 
    private static void collectCacheStores(HashSet<String> cacheStores, Configuration configuration) {
