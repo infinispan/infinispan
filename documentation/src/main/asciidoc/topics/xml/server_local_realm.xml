@@ -1,0 +1,10 @@
+<server xmlns="urn:infinispan:server:{schemaversion}">
+   <security>
+      <security-realms>
+         <security-realm name="default">
+            <local-realm/>
+            <properties-realm />
+         </security-realm>
+      </security-realms>
+   </security>
+</server>
