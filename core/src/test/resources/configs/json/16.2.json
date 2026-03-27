@@ -1,0 +1,1298 @@
+{
+  "infinispan": {
+    "jgroups": {
+      "stacks": {
+        "udp-test": {
+          "stack-file": {
+            "path": "stacks/udp.xml"
+          }
+        },
+        "tcp-test": {
+          "stack-file": {
+            "path": "stacks/tcp_mping/tcp1.xml"
+          }
+        },
+        "mping": {
+          "stack": {
+            "TCP": {
+              "send_buf_size": "640000",
+              "thread_pool.max_threads": "25",
+              "sock_conn_timeout": "300ms",
+              "bundler_type": "transfer-queue",
+              "port_range": "30",
+              "thread_pool.keep_alive_time": "5s",
+              "bind_port": "7800",
+              "recv_buf_size": "20000000",
+              "thread_pool.min_threads": "0"
+            },
+            "RED": null,
+            "MPING": {
+              "ip_ttl": "2",
+              "mcast_port": "43366",
+              "mcast_addr": "239.2.4.6",
+              "num_discovery_runs": "3",
+              "bind_addr": "127.0.0.1",
+              "break_on_coord_rsp": "true"
+            },
+            "MERGE3": null,
+            "FD_SOCK2": null,
+            "FD-ALL3": {
+              "interval": "1000",
+              "timeout": "3000"
+            },
+            "VERIFY-SUSPECT2": {
+              "timeout": "1s"
+            },
+            "pbcast.NAKACK2": {
+              "xmit_interval": "200ms",
+              "xmit_table_num_rows": "50",
+              "use_mcast_xmit": "false",
+              "max_xmit_req_size": "500",
+              "xmit_table_msgs_per_row": "1024",
+              "xmit_table_max_compaction_time": "30s"
+            },
+            "UNICAST3": {
+              "conn_close_timeout": "5s",
+              "xmit_interval": "200ms",
+              "xmit_table_num_rows": "50",
+              "max_xmit_req_size": "500",
+              "xmit_table_msgs_per_row": "1024",
+              "xmit_table_max_compaction_time": "30s"
+            },
+            "pbcast.STABLE": {
+              "desired_avg_gossip": "2s",
+              "max_bytes": "1M"
+            },
+            "pbcast.GMS": {
+              "join_timeout": "2s",
+              "print_local_addr": "false"
+            },
+            "UFC": {
+              "min_threshold": "0.40",
+              "max_credits": "4m"
+            },
+            "MFC": {
+              "min_threshold": "0.40",
+              "max_credits": "4m"
+            },
+            "FRAG4": null
+          }
+        },
+        "mytcp": {
+          "stack": {
+            "extends": "tcp-test",
+            "FD-ALL3": {
+              "timeout": "3500",
+              "stack.combine": "COMBINE"
+            }
+          }
+        },
+        "tcpgossip": {
+          "stack": {
+            "extends": "tcp-test",
+            "MPING": {
+              "stack.combine": "REMOVE"
+            },
+            "TCPGOSSIP": {
+              "initial_hosts": "localhost[12001]",
+              "stack.position": "RED",
+              "stack.combine": "INSERT_AFTER"
+            }
+          }
+        },
+        "tcpfdhost": {
+          "stack": {
+            "extends": "tcp",
+            "FD-HOST": {
+              "stack.position": "FD_ALL3",
+              "stack.combine": "REPLACE"
+            }
+          }
+        },
+        "xsite": {
+          "stack": {
+            "extends": "udp",
+            "relay.RELAY2": {
+              "site": "LON",
+              "max_site_masters": "1000"
+            },
+            "remote-sites": {
+              "default-stack": "tcpgossip",
+              "cluster": "xsite",
+              "remote-site": {
+                "name": "NYC",
+                "cluster": "xsite",
+                "stack": "tcp"
+              }
+            }
+          }
+        }
+      }
+    },
+    "threads": {
+      "thread-factories": {
+        "infinispan-factory": {
+          "thread-factory": {
+            "group-name": "infinispan",
+            "thread-name-pattern": "%G %i",
+            "priority": "5"
+          }
+        }
+      },
+      "thread-pools": {
+        "infinispan-non-blocking": {
+          "non-blocking-bounded-queue-thread-pool": {
+            "thread-factory": "infinispan-factory"
+          }
+        },
+        "infinispan-expiration": {
+          "scheduled-thread-pool": {
+            "thread-factory": "infinispan-factory"
+          }
+        },
+        "infinispan-listener": {
+          "blocking-bounded-queue-thread-pool": {
+            "thread-factory": "infinispan-factory"
+          }
+        },
+        "infinispan-blocking": {
+          "blocking-bounded-queue-thread-pool": {
+            "thread-factory": "infinispan-factory"
+          }
+        }
+      }
+    },
+    "cache-container": {
+      "name": "maximal",
+      "shutdown-hook": "DONT_REGISTER",
+      "statistics": "true",
+      "non-blocking-executor": "infinispan-non-blocking",
+      "expiration-executor": "infinispan-expiration",
+      "listener-executor": "infinispan-listener",
+      "blocking-executor": "infinispan-blocking",
+      "transport": {
+        "cluster": "maximal-cluster",
+        "machine": "a",
+        "rack": "b",
+        "site": "c",
+        "node-name": "a-node",
+        "stack": "tcp",
+        "lock-timeout": "120000",
+        "initial-cluster-size": "4",
+        "initial-cluster-timeout": "30000",
+        "raft-members": "b-node a-node"
+      },
+      "security": {
+        "authorization": {
+          "audit-logger": "org.infinispan.security.audit.NullAuditLogger",
+          "identity-role-mapper": null,
+          "roles": {
+            "peasant": {
+              "role": {
+                "permissions": [
+                  "READ"
+                ]
+              }
+            },
+            "vavasour": {
+              "role": {
+                "permissions": [
+                  "WRITE",
+                  "READ"
+                ]
+              }
+            },
+            "king": {
+              "role": {
+                "permissions": [
+                  "ALL"
+                ]
+              }
+            },
+            "vassal": {
+              "role": {
+                "permissions": [
+                  "WRITE",
+                  "READ",
+                  "LISTEN"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "serialization": {
+        "marshaller": "org.infinispan.marshall.TestObjectStreamMarshaller",
+        "context-initializers": [
+          "org.infinispan.marshall.UserSCIImpl"
+        ],
+        "allow-list": {
+          "class": [
+            "org.infinispan.test.data.Person"
+          ],
+          "regex": [
+            "org.infinispan.test.data.*"
+          ]
+        }
+      },
+      "metrics": {
+        "gauges": true,
+        "histograms": true,
+        "legacy": false
+      },
+      "jmx": {
+        "enabled": true,
+        "domain": "my-domain",
+        "mbean-server-lookup": "org.infinispan.jmx.CustomMBeanServerPropertiesTest$TestLookup",
+        "properties": {
+          "key": "value"
+        }
+      },
+      "global-state": {
+        "unclean-shutdown-action": "FAIL",
+        "persistent-location": {
+          "path": "/tmp/persistentPath"
+        },
+        "shared-persistent-location": {
+          "path": "/tmp/sharedPath"
+        },
+        "temporary-location": {
+          "path": "/tmp/tmpPath"
+        },
+        "overlay-configuration-storage": null
+      },
+      "eviction-containers": {
+        "max-count-container": {
+          "name": "max-count",
+          "count": "4181"
+        },
+        "max-size-container": {
+          "name": "max-size",
+          "size": "23MB"
+        }
+      },
+      "caches": {
+        "local": {
+          "local-cache": {
+            "aliases": [
+              "0",
+              "abc"
+            ],
+            "statistics": true,
+            "encoding": {
+              "key": {
+                "media-type": "application/x-java-object"
+              },
+              "value": {
+                "media-type": "application/x-java-object"
+              }
+            },
+            "locking": {
+              "concurrency-level": "2000",
+              "isolation": "NONE",
+              "acquire-timeout": "30000",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "FULL_XA",
+              "auto-commit": true,
+              "stop-timeout": "60000",
+              "locking": "OPTIMISTIC",
+              "reaper-interval": "35000",
+              "complete-timeout": "34000",
+              "transaction-manager-lookup": "org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup"
+            },
+            "expiration": {
+              "lifespan": "10",
+              "max-idle": "5",
+              "interval": "10000"
+            },
+            "memory": {
+              "max-count": "20000"
+            },
+            "persistence": {
+              "passivation": false,
+              "availability-interval": "2000",
+              "connection-attempts": "5",
+              "file-store": {
+                "purge": false,
+                "preload": true,
+                "shared": false,
+                "data": {
+                  "path": "path"
+                },
+                "index": {
+                  "path": "path"
+                },
+                "write-behind": {
+                  "modification-queue-size": "2048",
+                  "fail-silently": true
+                },
+                "properties": {
+                  "test_property": "foo_bar"
+                }
+              }
+            }
+          }
+        },
+        "invalid": {
+          "invalidation-cache": {
+            "mode": "SYNC",
+            "statistics": true,
+            "locking": {
+              "concurrency-level": "2500",
+              "isolation": "READ_COMMITTED",
+              "acquire-timeout": "30500",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "BATCH",
+              "stop-timeout": "60500",
+              "locking": "OPTIMISTIC"
+            },
+            "expiration": {
+              "lifespan": "11",
+              "max-idle": "6",
+              "interval": "10500"
+            },
+            "memory": {
+              "max-count": "20500"
+            }
+          }
+        },
+        "repl": {
+          "replicated-cache": {
+            "segments": "16",
+            "key-partitioner": "org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner",
+            "mode": "SYNC",
+            "statistics": true,
+            "encoding": {
+              "key": {
+                "media-type": "application/x-java-object"
+              },
+              "value": {
+                "media-type": "application/x-java-object"
+              }
+            },
+            "locking": {
+              "concurrency-level": "3000",
+              "isolation": "REPEATABLE_READ",
+              "acquire-timeout": "31000",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "BATCH",
+              "stop-timeout": "61000",
+              "locking": "PESSIMISTIC"
+            },
+            "expiration": {
+              "lifespan": "12",
+              "max-idle": "7",
+              "interval": "11000",
+              "touch": "ASYNC"
+            },
+            "memory": {
+              "max-count": "21000"
+            },
+            "state-transfer": {
+              "enabled": false,
+              "timeout": "60000",
+              "chunk-size": "10000"
+            }
+          }
+        },
+        "indexed": {
+          "distributed-cache": {
+            "mode": "SYNC",
+            "indexing": {
+              "enabled": true,
+              "index-reader": {},
+              "indexed-entities": [
+                "AnotherEntity",
+                "TheEntity"
+              ]
+            }
+          }
+        },
+        "indexed-memory": {
+          "distributed-cache": {
+            "mode": "SYNC",
+            "indexing": {
+              "enabled": true,
+              "storage": "local-heap",
+              "index-reader": {
+                "refresh-interval": "1000"
+              },
+              "indexed-entities": [
+                "TheEntity"
+              ]
+            }
+          }
+        },
+        "indexed-fs-full": {
+          "distributed-cache": {
+            "mode": "SYNC",
+            "indexing": {
+              "enabled": true,
+              "storage": "filesystem",
+              "path": "/temp",
+              "index-reader": {
+                "refresh-interval": "0"
+              },
+              "index-writer": {
+                "commit-interval": "2000",
+                "low-level-trace": false,
+                "max-buffered-entries": "32",
+                "queue-count": "40",
+                "queue-size": "10000",
+                "thread-pool-size": "8",
+                "ram-buffer-size": "400",
+                "index-merge": {
+                  "calibrate-by-deletes": true,
+                  "factor": "2",
+                  "max-entries": "2000",
+                  "min-size": "10",
+                  "max-size": "20",
+                  "max-forced-size": "30"
+                }
+              },
+              "indexed-entities": [
+                "TheEntity"
+              ]
+            }
+          }
+        },
+        "indexed-fs-medium": {
+          "distributed-cache": {
+            "mode": "SYNC",
+            "indexing": {
+              "enabled": true,
+              "path": "/temp",
+              "index-reader": {},
+              "index-writer": {
+                "commit-interval": "2000"
+              },
+              "indexed-entities": [
+                "TheEntity"
+              ]
+            }
+          }
+        },
+        "indexed-reindex-at-startup": {
+          "distributed-cache": {
+            "mode": "SYNC",
+            "indexing": {
+              "enabled": true,
+              "storage": "local-heap",
+              "startup-mode": "REINDEX",
+              "index-reader": {},
+              "indexed-entities": [
+                "TheEntity"
+              ]
+            }
+          }
+        },
+        "indexed-manual-indexing": {
+          "distributed-cache": {
+            "mode": "SYNC",
+            "indexing": {
+              "enabled": true,
+              "indexing-mode": "MANUAL",
+              "use-java-embedded-entities": true,
+              "index-reader": {},
+              "index-sharding": {
+                "shards": "7"
+              },
+              "indexed-entities": [
+                "TheEntity"
+              ]
+            }
+          }
+        },
+        "disabled-tracing": {
+          "replicated-cache": {
+            "mode": "SYNC",
+            "tracing": {
+              "enabled": false
+            }
+          }
+        },
+        "custom-default-max-results": {
+          "local-cache": {
+            "query": {
+              "default-max-results": "10",
+              "hit-count-accuracy": "1000"
+            }
+          }
+        },
+        "dist": {
+          "distributed-cache": {
+            "owners": "4",
+            "segments": "2",
+            "key-partitioner": "org.infinispan.distribution.ch.impl.HashFunctionPartitioner",
+            "l1-lifespan": "20m",
+            "mode": "SYNC",
+            "remote-timeout": "35s",
+            "statistics": true,
+            "backups": {
+              "merge-policy": "ALWAYS_REMOVE",
+              "max-cleanup-delay": "60000",
+              "tombstone-map-size": "128000",
+              "NYC": {
+                "backup": {
+                  "strategy": "SYNC",
+                  "timeout": "12500",
+                  "failure-policy": "WARN",
+                  "state-transfer": {
+                    "chunk-size": "600",
+                    "timeout": "2400000"
+                  }
+                }
+              },
+              "SFO": {
+                "backup": {
+                  "strategy": "ASYNC",
+                  "timeout": "13000",
+                  "failure-policy": "IGNORE",
+                  "state-transfer": {
+                    "chunk-size": "128",
+                    "mode": "AUTO"
+                  }
+                }
+              },
+              "LON": {
+                "backup": {
+                  "strategy": "SYNC",
+                  "timeout": "13500",
+                  "failure-policy": "FAIL",
+                  "take-offline": {
+                    "after-failures": "3",
+                    "min-wait": "10000"
+                  }
+                }
+              }
+            },
+            "backup-for": {
+              "remote-cache": "users",
+              "remote-site": "LON"
+            },
+            "locking": {
+              "concurrency-level": "3500",
+              "isolation": "READ_COMMITTED",
+              "acquire-timeout": "31.5s",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "FULL_XA",
+              "stop-timeout": "61500",
+              "locking": "OPTIMISTIC"
+            },
+            "expiration": {
+              "lifespan": "13",
+              "max-idle": "8",
+              "interval": "11500",
+              "touch": "SYNC"
+            },
+            "memory": {
+              "max-count": "21500"
+            },
+            "state-transfer": {
+              "enabled": true,
+              "timeout": "60500",
+              "chunk-size": "10500"
+            },
+            "partition-handling": {
+              "when-split": "ALLOW_READS",
+              "merge-policy": "PREFERRED_NON_NULL"
+            }
+          }
+        },
+        "capedwarf-data": {
+          "replicated-cache": {
+            "mode": "SYNC",
+            "transaction": {
+              "mode": "NON_XA"
+            },
+            "persistence": {
+              "passivation": false,
+              "file-store": {
+                "purge": false,
+                "preload": true
+              }
+            }
+          }
+        },
+        "capedwarf-metadata": {
+          "replicated-cache": {
+            "mode": "SYNC",
+            "transaction": {
+              "mode": "NON_XA"
+            },
+            "persistence": {
+              "passivation": true,
+              "store": {
+                "class": "org.infinispan.persistence.dummy.DummyInMemoryStore"
+              }
+            }
+          }
+        },
+        "capedwarf-memcache": {
+          "replicated-cache": {
+            "mode": "SYNC",
+            "transaction": {
+              "mode": "NON_XA",
+              "locking": "PESSIMISTIC"
+            }
+          }
+        },
+        "capedwarf-default": {
+          "distributed-cache": {
+            "mode": "SYNC",
+            "transaction": {
+              "mode": "NON_XA"
+            },
+            "persistence": {
+              "passivation": true,
+              "file-store": {
+                "purge": false,
+                "preload": true
+              }
+            }
+          }
+        },
+        "capedwarf-dist": {
+          "distributed-cache": {
+            "mode": "SYNC",
+            "transaction": {
+              "mode": "NON_XA",
+              "locking": "PESSIMISTIC"
+            },
+            "persistence": {
+              "passivation": true,
+              "file-store": {
+                "purge": false,
+                "preload": true
+              }
+            }
+          }
+        },
+        "capedwarf-tasks": {
+          "distributed-cache": {
+            "mode": "SYNC",
+            "transaction": {
+              "mode": "NON_XA"
+            },
+            "memory": {
+              "max-count": "10000"
+            },
+            "persistence": {
+              "passivation": true,
+              "file-store": {
+                "purge": false,
+                "preload": true
+              }
+            }
+          }
+        },
+        "HibernateSearch-LuceneIndexesMetadata": {
+          "replicated-cache": {
+            "mode": "SYNC",
+            "transaction": {
+              "mode": "BATCH"
+            },
+            "persistence": {
+              "passivation": true,
+              "file-store": {
+                "purge": false,
+                "preload": true
+              }
+            }
+          }
+        },
+        "HibernateSearch-LuceneIndexesData": {
+          "replicated-cache": {
+            "mode": "SYNC",
+            "transaction": {
+              "mode": "BATCH"
+            },
+            "persistence": {
+              "passivation": true,
+              "file-store": {
+                "purge": false,
+                "preload": true
+              }
+            }
+          }
+        },
+        "HibernateSearch-LuceneIndexesLocking": {
+          "replicated-cache": {
+            "mode": "SYNC",
+            "transaction": {
+              "mode": "BATCH"
+            }
+          }
+        },
+        "write-skew": {
+          "local-cache": {
+            "locking": {
+              "isolation": "REPEATABLE_READ"
+            },
+            "transaction": {
+              "mode": "NONE",
+              "locking": "OPTIMISTIC"
+            }
+          }
+        },
+        "pojo-cache": {
+          "local-cache": {
+            "encoding": {
+              "key": {
+                "media-type": "application/x-java-object"
+              },
+              "value": {
+                "media-type": "application/x-java-object"
+              }
+            }
+          }
+        },
+        "simple-cache": {
+          "local-cache": {
+            "simple-cache": true,
+            "transaction": {
+              "mode": "NONE"
+            }
+          }
+        },
+        "off-heap-memory": {
+          "local-cache": {
+            "memory": {
+              "storage": "OFF_HEAP",
+              "max-size": "10000000"
+            }
+          }
+        },
+        "object-memory": {
+          "local-cache": {}
+        },
+        "minimal-offheap": {
+          "local-cache": {
+            "memory": {
+              "storage": "OFF_HEAP"
+            }
+          }
+        },
+        "minimal-object": {
+          "local-cache": {}
+        },
+        "media_type_cascade": {
+          "local-cache": {
+            "encoding": {
+              "media-type": "application/json"
+            }
+          }
+        },
+        "media_type_cascade_2": {
+          "local-cache": {
+            "encoding": {
+              "media-type": "application/json",
+              "value": {
+                "media-type": "text/plain"
+              }
+            }
+          }
+        },
+        "heap_object": {
+          "local-cache": {
+            "memory": {
+              "max-count": "1000"
+            }
+          }
+        },
+        "heap_binary": {
+          "local-cache": {
+            "encoding": {
+              "media-type": "application/x-protostream"
+            },
+            "memory": {
+              "max-size": "1.5GB",
+              "when-full": "REMOVE"
+            }
+          }
+        },
+        "heap_binary_2": {
+          "local-cache": {
+            "encoding": {
+              "key": {
+                "media-type": "text/plain"
+              },
+              "value": {
+                "media-type": "text/plain"
+              }
+            },
+            "memory": {
+              "max-count": "2000",
+              "when-full": "REMOVE"
+            }
+          }
+        },
+        "off_heap_no_eviction": {
+          "local-cache": {
+            "memory": {
+              "storage": "OFF_HEAP"
+            }
+          }
+        },
+        "off_heap_eviction": {
+          "local-cache": {
+            "memory": {
+              "storage": "OFF_HEAP",
+              "max-count": "1000",
+              "when-full": "REMOVE"
+            }
+          }
+        },
+        "local-template": {
+          "local-cache-configuration": {
+            "statistics": true,
+            "encoding": {
+              "media-type": "application/x-protostream"
+            },
+            "locking": {
+              "concurrency-level": "2000",
+              "isolation": "NONE",
+              "acquire-timeout": "30000",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "FULL_XA",
+              "auto-commit": true,
+              "stop-timeout": "60000",
+              "locking": "OPTIMISTIC",
+              "reaper-interval": "35000",
+              "complete-timeout": "34000",
+              "transaction-manager-lookup": "org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup"
+            },
+            "expiration": {
+              "lifespan": "10",
+              "max-idle": "5",
+              "interval": "10s"
+            },
+            "memory": {
+              "max-count": "20000"
+            },
+            "persistence": {
+              "passivation": false,
+              "file-store": {
+                "purge": false,
+                "preload": true,
+                "shared": false,
+                "data": {
+                  "path": "path"
+                },
+                "index": {
+                  "path": "path"
+                },
+                "write-behind": {
+                  "modification-queue-size": "2048"
+                }
+              }
+            }
+          }
+        },
+        "local-instance": {
+          "local-cache": {
+            "configuration": "local-template",
+            "statistics": true,
+            "encoding": {
+              "media-type": "application/x-protostream"
+            },
+            "locking": {
+              "concurrency-level": "2000",
+              "isolation": "NONE",
+              "acquire-timeout": "30000",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "FULL_XA",
+              "auto-commit": true,
+              "stop-timeout": "60000",
+              "locking": "OPTIMISTIC",
+              "reaper-interval": "35000",
+              "complete-timeout": "34000",
+              "transaction-manager-lookup": "org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup"
+            },
+            "expiration": {
+              "lifespan": "10",
+              "max-idle": "5",
+              "interval": "11000"
+            },
+            "memory": {
+              "max-count": "20000"
+            },
+            "persistence": {
+              "passivation": false,
+              "file-store": {
+                "purge": false,
+                "preload": true,
+                "shared": false,
+                "data": {
+                  "path": "path"
+                },
+                "index": {
+                  "path": "path"
+                },
+                "write-behind": {
+                  "modification-queue-size": "2048"
+                }
+              }
+            }
+          }
+        },
+        "shared-container-invalidation": {
+          "invalidation-cache": {
+            "mode": "SYNC",
+            "memory": {
+              "eviction-container": "max-size"
+            }
+          }
+        },
+        "invalidation-template": {
+          "invalidation-cache-configuration": {
+            "mode": "SYNC",
+            "statistics": true,
+            "locking": {
+              "concurrency-level": "2500",
+              "isolation": "READ_COMMITTED",
+              "acquire-timeout": "30500",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "BATCH",
+              "stop-timeout": "60500",
+              "locking": "OPTIMISTIC"
+            },
+            "expiration": {
+              "lifespan": "11",
+              "max-idle": "6",
+              "interval": "10500"
+            },
+            "memory": {
+              "max-count": "20500"
+            }
+          }
+        },
+        "invalidation-instance": {
+          "invalidation-cache": {
+            "configuration": "invalidation-template",
+            "mode": "SYNC",
+            "statistics": true,
+            "locking": {
+              "concurrency-level": "2500",
+              "isolation": "READ_COMMITTED",
+              "acquire-timeout": "30500",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "BATCH",
+              "stop-timeout": "60500",
+              "locking": "OPTIMISTIC"
+            },
+            "expiration": {
+              "lifespan": "11",
+              "max-idle": "6",
+              "interval": "10500"
+            },
+            "memory": {
+              "max-count": "20500"
+            }
+          }
+        },
+        "repl-template": {
+          "replicated-cache-configuration": {
+            "segments": "200",
+            "key-partitioner": "org.infinispan.distribution.ch.impl.HashFunctionPartitioner",
+            "mode": "SYNC",
+            "statistics": true,
+            "encoding": {
+              "key": {
+                "media-type": "application/x-protostream"
+              },
+              "value": {
+                "media-type": "application/x-protostream"
+              }
+            },
+            "locking": {
+              "concurrency-level": "3000",
+              "isolation": "REPEATABLE_READ",
+              "acquire-timeout": "31000",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "BATCH",
+              "stop-timeout": "61000",
+              "locking": "PESSIMISTIC"
+            },
+            "expiration": {
+              "lifespan": "12",
+              "max-idle": "7",
+              "interval": "11000"
+            },
+            "memory": {
+              "max-count": "21000"
+            },
+            "state-transfer": {
+              "enabled": false,
+              "timeout": "60000",
+              "chunk-size": "10000"
+            }
+          }
+        },
+        "repl-instance": {
+          "replicated-cache": {
+            "configuration": "repl-template",
+            "segments": "200",
+            "key-partitioner": "org.infinispan.distribution.ch.impl.HashFunctionPartitioner",
+            "mode": "SYNC",
+            "statistics": true,
+            "encoding": {
+              "key": {
+                "media-type": "application/x-java-object"
+              },
+              "value": {
+                "media-type": "application/x-java-object"
+              }
+            },
+            "locking": {
+              "concurrency-level": "3000",
+              "isolation": "REPEATABLE_READ",
+              "acquire-timeout": "32000",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "BATCH",
+              "stop-timeout": "61000",
+              "locking": "PESSIMISTIC"
+            },
+            "expiration": {
+              "lifespan": "12",
+              "max-idle": "7",
+              "interval": "11000"
+            },
+            "memory": {
+              "max-count": "21000"
+            },
+            "state-transfer": {
+              "enabled": false,
+              "timeout": "60000",
+              "chunk-size": "10000"
+            }
+          }
+        },
+        "shared-container-replicated": {
+          "replicated-cache": {
+            "mode": "SYNC",
+            "memory": {
+              "eviction-container": "max-count"
+            }
+          }
+        },
+        "dist-template": {
+          "distributed-cache-configuration": {
+            "owners": "4",
+            "segments": "2",
+            "key-partitioner": "org.infinispan.distribution.ch.impl.HashFunctionPartitioner",
+            "l1-lifespan": "1200000",
+            "mode": "SYNC",
+            "remote-timeout": "35000",
+            "statistics": true,
+            "backups": {
+              "merge-policy": "org.infinispan.xsite.CustomXSiteEntryMergePolicy",
+              "NYC": {
+                "backup": {
+                  "strategy": "SYNC",
+                  "timeout": "12500",
+                  "failure-policy": "WARN",
+                  "state-transfer": {
+                    "chunk-size": "600",
+                    "timeout": "2400000"
+                  }
+                }
+              },
+              "SFO": {
+                "backup": {
+                  "strategy": "ASYNC",
+                  "timeout": "13000",
+                  "failure-policy": "IGNORE"
+                }
+              },
+              "LON": {
+                "backup": {
+                  "strategy": "SYNC",
+                  "timeout": "13500",
+                  "failure-policy": "FAIL",
+                  "take-offline": {
+                    "after-failures": "3",
+                    "min-wait": "10000"
+                  }
+                }
+              }
+            },
+            "encoding": {
+              "key": {
+                "media-type": "application/x-protostream"
+              },
+              "value": {
+                "media-type": "application/x-protostream"
+              }
+            },
+            "backup-for": {
+              "remote-cache": "users",
+              "remote-site": "LON"
+            },
+            "locking": {
+              "concurrency-level": "3500",
+              "isolation": "READ_COMMITTED",
+              "acquire-timeout": "31500",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "FULL_XA",
+              "stop-timeout": "61500",
+              "locking": "OPTIMISTIC"
+            },
+            "expiration": {
+              "lifespan": "13",
+              "max-idle": "8",
+              "interval": "11500"
+            },
+            "memory": {
+              "max-count": "21500",
+              "when-full": "REMOVE"
+            },
+            "state-transfer": {
+              "timeout": "60500",
+              "chunk-size": "10500"
+            },
+            "partition-handling": {
+              "when-split": "DENY_READ_WRITES",
+              "merge-policy": "PREFERRED_ALWAYS"
+            },
+            "groups": {
+              "enabled": true,
+              "grouper": [
+                "org.infinispan.distribution.groups.KXGrouper",
+                "org.infinispan.distribution.groups.KXGrouper"
+              ]
+            }
+          }
+        },
+        "dist-instance": {
+          "distributed-cache": {
+            "configuration": "dist-template",
+            "owners": "4",
+            "segments": "2",
+            "key-partitioner": "org.infinispan.distribution.ch.impl.HashFunctionPartitioner",
+            "l1-lifespan": "1200000",
+            "mode": "SYNC",
+            "remote-timeout": "35000",
+            "statistics": true,
+            "backups": {
+              "merge-policy": "org.infinispan.xsite.CustomXSiteEntryMergePolicy",
+              "NYC": {
+                "backup": {
+                  "strategy": "SYNC",
+                  "timeout": "12500",
+                  "failure-policy": "WARN",
+                  "state-transfer": {
+                    "chunk-size": "600",
+                    "timeout": "2400000"
+                  }
+                }
+              },
+              "SFO": {
+                "backup": {
+                  "strategy": "ASYNC",
+                  "timeout": "13000",
+                  "failure-policy": "IGNORE"
+                }
+              },
+              "LON": {
+                "backup": {
+                  "strategy": "SYNC",
+                  "timeout": "13500",
+                  "failure-policy": "FAIL",
+                  "take-offline": {
+                    "after-failures": "3",
+                    "min-wait": "10000"
+                  }
+                }
+              }
+            },
+            "encoding": {
+              "key": {
+                "media-type": "application/x-protostream"
+              },
+              "value": {
+                "media-type": "application/x-java-object"
+              }
+            },
+            "backup-for": {
+              "remote-cache": "users",
+              "remote-site": "LON"
+            },
+            "locking": {
+              "concurrency-level": "3500",
+              "isolation": "READ_COMMITTED",
+              "acquire-timeout": "31500",
+              "striping": true
+            },
+            "transaction": {
+              "mode": "FULL_XA",
+              "stop-timeout": "61500",
+              "locking": "OPTIMISTIC"
+            },
+            "expiration": {
+              "lifespan": "13",
+              "max-idle": "8",
+              "interval": "11500"
+            },
+            "memory": {
+              "max-count": "21500",
+              "when-full": "REMOVE"
+            },
+            "state-transfer": {
+              "timeout": "60500",
+              "chunk-size": "10500"
+            },
+            "partition-handling": {
+              "when-split": "DENY_READ_WRITES",
+              "merge-policy": "PREFERRED_ALWAYS"
+            },
+            "groups": {
+              "enabled": true,
+              "grouper": [
+                "org.infinispan.distribution.groups.KXGrouper",
+                "org.infinispan.distribution.groups.KXGrouper"
+              ]
+            }
+          }
+        },
+        "secure": {
+          "local-cache": {
+            "security": {
+              "authorization": {
+                "enabled": true,
+                "roles": [
+                  "peasant",
+                  "vavasour",
+                  "king",
+                  "vassal"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$id": "https://infinispan.org/infinispan-server",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "server": {
+      "$ref": "#/definitions/Server"
+    }
+  },
+  "required": [
+    "server"
+  ],
+  "definitions": {
+    "Server": {
+      "type": "object",
+      "title": "Server",
+      "additionalProperties": false,
+      "properties": {
+        "interfaces": {
+          "$ref": "#/definitions/Interfaces"
+        },
+        "socket-bindings": {
+          "$ref": "#/definitions/SocketBindings"
+        },
+        "security": {
+          "$ref": "#/definitions/Security"
+        },
+        "data-sources": {
+          "$ref": "#/definitions/DataSources"
+        },
+        "endpoints": {
+          "$ref": "#/definitions/Endpoints"
+        }
+      }
+    }
+  }
+}

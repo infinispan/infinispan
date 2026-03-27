@@ -1,0 +1,1666 @@
+{
+  "$id": "https://infinispan.org/infinispan-config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infinispan",
+  "description": "Infinispan configuration",
+  "type": "object",
+  "properties": {
+    "infinispan": {
+      "$ref": "#/$defs/Infinispan"
+    }
+  },
+  "required": [
+    "infinispan"
+  ],
+  "$defs": {
+    "Infinispan": {
+      "type": "object",
+      "title": "Infinispan",
+      "description": "Defines the configuration for Infinispan, for the cache manager configuration, for the default cache, and for named caches.",
+      "additionalProperties": false,
+      "properties": {
+        "jgroups": {
+          "$ref": "jgroups-config-5.5.json#/$defs/JGroups"
+        },
+        "threads": {
+          "$ref": "#/$defs/Threads"
+        },
+        "cache-container": {
+          "$ref": "#/$defs/CacheContainer"
+        }
+      }
+    },
+    "Threads": {
+      "type": "object",
+      "description": "The threading subsystem, used to declare manageable thread pools and resources.",
+      "additionalProperties": false,
+      "properties": {
+        "thread-factories": {
+          "type": "object",
+          "description": "Named thread factory definitions.",
+          "additionalProperties": {
+            "$ref": "#/$defs/ThreadFactoryWrapper"
+          }
+        },
+        "thread-pools": {
+          "type": "object",
+          "description": "Named thread pool definitions.",
+          "additionalProperties": {
+            "$ref": "#/$defs/ThreadPoolDefinition"
+          }
+        }
+      }
+    },
+    "ThreadFactoryWrapper": {
+      "type": "object",
+      "description": "A named thread factory definition.",
+      "properties": {
+        "thread-factory": {
+          "$ref": "#/$defs/ThreadFactory"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ThreadFactory": {
+      "type": "object",
+      "description": "A thread factory (implementing java.util.concurrent.ThreadFactory).",
+      "properties": {
+        "group-name": {
+          "type": "string",
+          "description": "Specifies the name of the thread group."
+        },
+        "thread-name-pattern": {
+          "type": "string",
+          "description": "The template used to create names for threads. Patterns: %% (percent sign), %t (per-factory thread sequence number), %g (global thread sequence number), %f (factory sequence number), %i (thread ID), %G (thread group name)."
+        },
+        "priority": {
+          "type": "string",
+          "description": "Thread priority of created threads."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ThreadPoolDefinition": {
+      "type": "object",
+      "description": "A thread pool definition. Exactly one pool type should be specified.",
+      "properties": {
+        "non-blocking-bounded-queue-thread-pool": {
+          "$ref": "#/$defs/BoundedQueueThreadPool"
+        },
+        "blocking-bounded-queue-thread-pool": {
+          "$ref": "#/$defs/BoundedQueueThreadPool"
+        },
+        "scheduled-thread-pool": {
+          "$ref": "#/$defs/SimpleThreadPool"
+        },
+        "cached-thread-pool": {
+          "$ref": "#/$defs/SimpleThreadPool"
+        }
+      },
+      "additionalProperties": false
+    },
+    "BoundedQueueThreadPool": {
+      "type": "object",
+      "description": "A thread pool executor with a bounded queue.",
+      "properties": {
+        "thread-factory": {
+          "type": "string",
+          "description": "Specifies the bean name of a specific thread factory to use."
+        },
+        "max-threads": {
+          "type": "integer",
+          "description": "Maximum thread pool size."
+        },
+        "core-threads": {
+          "type": "integer",
+          "description": "Number of threads to keep in the pool."
+        },
+        "keepalive-time": {
+          "type": "string",
+          "description": "Amount of time that pool threads should be kept running when idle."
+        },
+        "queue-length": {
+          "type": "string",
+          "description": "Maximum queue length."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SimpleThreadPool": {
+      "type": "object",
+      "description": "A simple thread pool (scheduled or cached).",
+      "properties": {
+        "thread-factory": {
+          "type": "string",
+          "description": "Specifies the bean name of a specific thread factory to use."
+        }
+      },
+      "additionalProperties": false
+    },
+    "CacheContainer": {
+      "type": "object",
+      "title": "CacheContainer",
+      "description": "Defines an embedded cache container.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Uniquely identifies this cache container."
+        },
+        "default-cache": {
+          "type": "string",
+          "description": "Indicates the default cache for this cache container."
+        },
+        "statistics": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Determines whether the cache container should collect statistics."
+        },
+        "zero-capacity-node": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "If true then no data is stored in this node."
+        },
+        "shutdown-hook": {
+          "type": "string",
+          "description": "Behavior of the JVM shutdown hook registered by the cache.",
+          "enum": [
+            "DEFAULT",
+            "REGISTER",
+            "DONT_REGISTER"
+          ]
+        },
+        "listener-executor": {
+          "type": "string",
+          "description": "Defines the executor used for asynchronous cache listener notifications."
+        },
+        "expiration-executor": {
+          "type": "string",
+          "description": "Defines the scheduled executor used for expirations."
+        },
+        "non-blocking-executor": {
+          "type": "string",
+          "description": "The name of the executor used for non-blocking operations."
+        },
+        "blocking-executor": {
+          "type": "string",
+          "description": "The name of the executor used for blocking operations."
+        },
+        "transport": {
+          "$ref": "#/$defs/Transport"
+        },
+        "security": {
+          "$ref": "#/$defs/GlobalSecurity"
+        },
+        "serialization": {
+          "$ref": "#/$defs/Serialization"
+        },
+        "metrics": {
+          "$ref": "#/$defs/Metrics"
+        },
+        "jmx": {
+          "$ref": "#/$defs/JMX"
+        },
+        "global-state": {
+          "$ref": "#/$defs/GlobalState"
+        },
+        "eviction-containers": {
+          "$ref": "#/$defs/EvictionContainers"
+        },
+        "caches": {
+          "type": "object",
+          "description": "Named cache definitions.",
+          "additionalProperties": {
+            "$ref": "#/$defs/CacheDefinition"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Transport": {
+      "type": "object",
+      "description": "Overrides the transport characteristics for this cache container.",
+      "properties": {
+        "stack": {
+          "type": "string",
+          "description": "Defines the JGroups stack used by the transport."
+        },
+        "cluster": {
+          "type": "string",
+          "description": "Defines the name for the underlying group communication cluster."
+        },
+        "lock-timeout": {
+          "type": "string",
+          "description": "Timeout to wait to acquire a distributed lock during state transfer or rehashing."
+        },
+        "node-name": {
+          "type": "string",
+          "description": "Specifies the name of the current node."
+        },
+        "machine": {
+          "type": "string",
+          "description": "Specifies the ID of the machine where the node runs."
+        },
+        "rack": {
+          "type": "string",
+          "description": "Specifies the ID of the rack where the node runs."
+        },
+        "site": {
+          "type": "string",
+          "description": "The ID of the site where the node runs."
+        },
+        "initial-cluster-size": {
+          "type": "string",
+          "description": "The minimum number of nodes that must join the cluster for the cache manager to start."
+        },
+        "initial-cluster-timeout": {
+          "type": "string",
+          "description": "The amount of time in milliseconds to wait for a cluster with sufficient nodes to form."
+        },
+        "raft-members": {
+          "type": "string",
+          "description": "The list of raft members separated by space."
+        }
+      },
+      "additionalProperties": false
+    },
+    "GlobalSecurity": {
+      "type": "object",
+      "description": "Configures security for this cache container.",
+      "properties": {
+        "cache-size": {
+          "type": "integer",
+          "description": "The ACL cache size."
+        },
+        "cache-timeout": {
+          "type": "integer",
+          "description": "The ACL cache timeout in milliseconds."
+        },
+        "authorization": {
+          "$ref": "#/$defs/GlobalAuthorization"
+        }
+      },
+      "additionalProperties": false
+    },
+    "GlobalAuthorization": {
+      "type": "object",
+      "description": "Configures the global authorization role to permission mapping.",
+      "properties": {
+        "audit-logger": {
+          "type": "string",
+          "description": "Class of the audit logger."
+        },
+        "group-only-mapping": {
+          "type": "boolean",
+          "description": "Specifies whether principal-to-role mapping applies only to group principals."
+        },
+        "identity-role-mapper": {
+          "description": "Uses the identity role mapper where principal names are converted as-is into role names."
+        },
+        "common-name-role-mapper": {
+          "description": "Uses the common name role mapper which extracts the Common Name from DN format."
+        },
+        "cluster-role-mapper": {
+          "description": "Stores the principal to role mappings in the cluster registry."
+        },
+        "custom-role-mapper": {
+          "type": "object",
+          "description": "Configures a custom role mapper.",
+          "properties": {
+            "class": {
+              "type": "string",
+              "description": "Specifies the class name of a custom principal to role mapper implementation."
+            }
+          },
+          "additionalProperties": false
+        },
+        "cluster-permission-mapper": {
+          "description": "Stores role to permission mappings in the cluster registry."
+        },
+        "custom-permission-mapper": {
+          "type": "object",
+          "description": "Configures a custom permission mapper implementation.",
+          "properties": {
+            "class": {
+              "type": "string",
+              "description": "Specifies the class name of a custom implementation that maps roles to permissions."
+            }
+          },
+          "additionalProperties": false
+        },
+        "roles": {
+          "type": "object",
+          "description": "Defines authorization roles and their permissions.",
+          "additionalProperties": {
+            "$ref": "#/$defs/RoleDefinition"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "RoleDefinition": {
+      "type": "object",
+      "description": "Defines a named role.",
+      "properties": {
+        "role": {
+          "type": "object",
+          "description": "Role definition with permissions.",
+          "properties": {
+            "permissions": {
+              "type": "array",
+              "description": "Defines the list of permissions for the role.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "LIFECYCLE",
+                  "READ",
+                  "WRITE",
+                  "EXEC",
+                  "LISTEN",
+                  "BULK_READ",
+                  "BULK_WRITE",
+                  "ADMIN",
+                  "ALL",
+                  "ALL_READ",
+                  "ALL_WRITE",
+                  "NONE",
+                  "CREATE",
+                  "MONITOR"
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Serialization": {
+      "type": "object",
+      "description": "Specifies how data serialization will be performed by the cache container.",
+      "properties": {
+        "marshaller": {
+          "type": "string",
+          "description": "Fully qualified name of the marshaller to use."
+        },
+        "version": {
+          "type": "string",
+          "description": "Largest allowable version to use when marshalling internal state."
+        },
+        "schema-compatibility": {
+          "type": "string",
+          "description": "The kind of compatibility validation that is performed when updating schemas.",
+          "enum": [
+            "UNRESTRICTED",
+            "LENIENT",
+            "STRICT"
+          ]
+        },
+        "context-initializers": {
+          "type": "array",
+          "description": "SerializationContextInitializer implementations for ProtoStream marshalling.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allow-list": {
+          "$ref": "#/$defs/AllowList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AllowList": {
+      "type": "object",
+      "description": "Enables individual classes or regular expressions to be added to the allow list.",
+      "properties": {
+        "class": {
+          "type": "array",
+          "description": "FQN of classes to be added to the allow list.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "regex": {
+          "type": "array",
+          "description": "Regex patterns used to determine allow list membership.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Metrics": {
+      "type": "object",
+      "description": "Configures metrics.",
+      "properties": {
+        "gauges": {
+          "type": "boolean",
+          "description": "Exports gauge metrics."
+        },
+        "histograms": {
+          "type": "boolean",
+          "description": "Exports histogram metrics."
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Deprecated. Specifies a global name prefix for metrics."
+        },
+        "names-as-tags": {
+          "type": "boolean",
+          "description": "Deprecated. Put the cache manager and cache name in tags."
+        },
+        "accurate-size": {
+          "type": "boolean",
+          "description": "Enables accurate size computation for numberOfEntries statistics."
+        },
+        "jvm": {
+          "type": "boolean",
+          "description": "Whether JVM metrics should be reported."
+        },
+        "legacy": {
+          "type": "boolean",
+          "description": "Whether legacy metrics should be reported."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JMX": {
+      "type": "object",
+      "description": "Enables and configures JMX monitoring and management.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enables exporting of JMX MBeans."
+        },
+        "domain": {
+          "type": "string",
+          "description": "JMX domain for published JMX objects."
+        },
+        "mbean-server-lookup": {
+          "type": "string",
+          "description": "Class that attempts to locate a JMX MBean server to bind to."
+        },
+        "properties": {
+          "type": "object",
+          "description": "JMX properties passed to the MBean Server lookup instance.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "GlobalState": {
+      "type": "object",
+      "description": "Defines the global state persistence configuration.",
+      "properties": {
+        "unclean-shutdown-action": {
+          "type": "string",
+          "description": "Defines the action taken when a dangling lock file is found in the persistent global state.",
+          "enum": [
+            "IGNORE",
+            "FAIL",
+            "PURGE"
+          ]
+        },
+        "persistent-location": {
+          "$ref": "#/$defs/GlobalStatePath"
+        },
+        "shared-persistent-location": {
+          "$ref": "#/$defs/GlobalStatePath"
+        },
+        "temporary-location": {
+          "$ref": "#/$defs/GlobalStatePath"
+        },
+        "immutable-configuration-storage": {
+          "description": "An immutable configuration storage."
+        },
+        "volatile-configuration-storage": {
+          "description": "A non-persistent configuration storage."
+        },
+        "overlay-configuration-storage": {
+          "description": "A persistent configuration storage which saves runtime configurations to the persistent-location."
+        },
+        "managed-configuration-storage": {
+          "description": "A persistent configuration storage for managed environments."
+        },
+        "custom-configuration-storage": {
+          "type": "object",
+          "description": "Uses a custom configuration storage implementation.",
+          "properties": {
+            "class": {
+              "type": "string",
+              "description": "Class of the custom configuration storage implementation."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "GlobalStatePath": {
+      "type": "object",
+      "description": "Defines a filesystem path for global state.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Defines the path where global state will be stored."
+        },
+        "relative-to": {
+          "type": "string",
+          "description": "A property name whose value will be used as the root path."
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false
+    },
+    "EvictionContainers": {
+      "type": "object",
+      "description": "Configures container memory for caches that share memory spaces.",
+      "additionalProperties": {
+        "$ref": "#/$defs/EvictionContainerDefinition"
+      }
+    },
+    "EvictionContainerDefinition": {
+      "type": "object",
+      "description": "An eviction container, either count-based or size-based.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Specifies the name of the memory container."
+        },
+        "count": {
+          "type": "string",
+          "description": "Sets the maximum number of entries for the memory container."
+        },
+        "size": {
+          "type": "string",
+          "description": "Sets the maximum size of the memory container (e.g. '23MB')."
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "CacheDefinition": {
+      "type": "object",
+      "description": "A named cache definition. Exactly one cache type should be specified.",
+      "properties": {
+        "local-cache": {
+          "$ref": "#/$defs/LocalCache"
+        },
+        "local-cache-configuration": {
+          "$ref": "#/$defs/LocalCache"
+        },
+        "invalidation-cache": {
+          "$ref": "#/$defs/InvalidationCache"
+        },
+        "invalidation-cache-configuration": {
+          "$ref": "#/$defs/InvalidationCache"
+        },
+        "replicated-cache": {
+          "$ref": "#/$defs/ReplicatedCache"
+        },
+        "replicated-cache-configuration": {
+          "$ref": "#/$defs/ReplicatedCache"
+        },
+        "distributed-cache": {
+          "$ref": "#/$defs/DistributedCache"
+        },
+        "distributed-cache-configuration": {
+          "$ref": "#/$defs/DistributedCache"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CommonCacheAttributes": {
+      "type": "object",
+      "description": "Common attributes shared by all cache types.",
+      "properties": {
+        "configuration": {
+          "type": "string",
+          "description": "The name of the cache configuration which this configuration inherits from."
+        },
+        "aliases": {
+          "type": "array",
+          "description": "Zero or more cache alias names.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "statistics": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Determines whether the cache should collect statistics."
+        },
+        "unreliable-return-values": {
+          "type": "boolean",
+          "description": "Specifies whether Infinispan is allowed to disregard the Map contract for return values."
+        },
+        "encoding": {
+          "$ref": "#/$defs/Encoding"
+        },
+        "locking": {
+          "$ref": "#/$defs/Locking"
+        },
+        "transaction": {
+          "$ref": "#/$defs/Transaction"
+        },
+        "expiration": {
+          "$ref": "#/$defs/Expiration"
+        },
+        "memory": {
+          "$ref": "#/$defs/Memory"
+        },
+        "persistence": {
+          "$ref": "#/$defs/Persistence"
+        },
+        "indexing": {
+          "$ref": "#/$defs/Indexing"
+        },
+        "query": {
+          "$ref": "#/$defs/Query"
+        },
+        "backups": {
+          "$ref": "#/$defs/Backups"
+        },
+        "backup-for": {
+          "$ref": "#/$defs/BackupFor"
+        },
+        "security": {
+          "$ref": "#/$defs/CacheSecurity"
+        },
+        "tracing": {
+          "$ref": "#/$defs/CacheTracing"
+        }
+      }
+    },
+    "LocalCache": {
+      "description": "Defines a LOCAL mode cache.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/CommonCacheAttributes"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "simple-cache": {
+              "type": [
+                "boolean",
+                "string"
+              ],
+              "description": "Use optimized (faster) implementation that does not support transactions, persistence, custom interceptors, indexing, or transcoding."
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "InvalidationCache": {
+      "description": "Defines an INVALIDATION mode cache.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/CommonCacheAttributes"
+        },
+        {
+          "$ref": "#/$defs/ClusteredCacheAttributes"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "ReplicatedCache": {
+      "description": "Defines a REPL mode cache.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/CommonCacheAttributes"
+        },
+        {
+          "$ref": "#/$defs/ClusteredCacheAttributes"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "segments": {
+              "type": "string",
+              "description": "Sets the number of hash space segments per cluster."
+            },
+            "key-partitioner": {
+              "type": "string",
+              "description": "The name of the key partitioner class."
+            },
+            "state-transfer": {
+              "$ref": "#/$defs/StateTransfer"
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "DistributedCache": {
+      "description": "Defines a DIST mode cache.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/CommonCacheAttributes"
+        },
+        {
+          "$ref": "#/$defs/ClusteredCacheAttributes"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "owners": {
+              "type": "string",
+              "description": "Number of cluster-wide replicas for each cache entry."
+            },
+            "segments": {
+              "type": "string",
+              "description": "Sets the number of hash space segments per cluster."
+            },
+            "capacity-factor": {
+              "type": "string",
+              "description": "Controls the proportion of entries that reside on the local node."
+            },
+            "l1-lifespan": {
+              "type": "string",
+              "description": "Maximum lifespan of an entry placed in the L1 cache."
+            },
+            "l1-cleanup-interval": {
+              "type": "string",
+              "description": "Controls how often a cleanup task to prune L1 tracking data is run."
+            },
+            "key-partitioner": {
+              "type": "string",
+              "description": "The name of the key partitioner class."
+            },
+            "consistent-hash-factory": {
+              "type": "string",
+              "description": "The factory to use for generating the consistent hash."
+            },
+            "state-transfer": {
+              "$ref": "#/$defs/StateTransfer"
+            },
+            "partition-handling": {
+              "$ref": "#/$defs/PartitionHandling"
+            },
+            "groups": {
+              "$ref": "#/$defs/Groups"
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "ClusteredCacheAttributes": {
+      "type": "object",
+      "description": "Attributes common to clustered cache types.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "Sets the clustered cache mode.",
+          "enum": [
+            "ASYNC",
+            "SYNC"
+          ]
+        },
+        "remote-timeout": {
+          "type": "string",
+          "description": "In SYNC mode, the timeout used to wait for an acknowledgment when making a remote call."
+        },
+        "partition-handling": {
+          "$ref": "#/$defs/PartitionHandling"
+        }
+      }
+    },
+    "Encoding": {
+      "type": "object",
+      "description": "Defines content type and encoding for keys and values of the cache.",
+      "properties": {
+        "media-type": {
+          "type": "string",
+          "description": "The media type for both keys and values."
+        },
+        "key": {
+          "$ref": "#/$defs/EncodingType"
+        },
+        "value": {
+          "$ref": "#/$defs/EncodingType"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EncodingType": {
+      "type": "object",
+      "description": "Describes the content-type and encoding.",
+      "properties": {
+        "media-type": {
+          "type": "string",
+          "description": "The media type."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Locking": {
+      "type": "object",
+      "description": "The locking configuration of the cache.",
+      "properties": {
+        "isolation": {
+          "type": "string",
+          "description": "Sets the cache locking isolation level.",
+          "enum": [
+            "NONE",
+            "READ_UNCOMMITTED",
+            "READ_COMMITTED",
+            "REPEATABLE_READ",
+            "SERIALIZABLE"
+          ]
+        },
+        "striping": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "If true, a pool of shared locks is maintained for all entries."
+        },
+        "acquire-timeout": {
+          "type": "string",
+          "description": "Maximum time to attempt a particular lock acquisition."
+        },
+        "concurrency-level": {
+          "type": "string",
+          "description": "Concurrency level for lock containers."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Transaction": {
+      "type": "object",
+      "description": "The cache transaction configuration.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "Sets the cache transaction mode.",
+          "enum": [
+            "NONE",
+            "BATCH",
+            "NON_XA",
+            "NON_DURABLE_XA",
+            "FULL_XA"
+          ]
+        },
+        "stop-timeout": {
+          "type": "string",
+          "description": "The amount of time to wait for ongoing transactions to finish when a cache is stopped."
+        },
+        "locking": {
+          "type": "string",
+          "description": "The locking mode for this cache.",
+          "enum": [
+            "OPTIMISTIC",
+            "PESSIMISTIC"
+          ]
+        },
+        "transaction-manager-lookup": {
+          "type": "string",
+          "description": "Fully qualified class name of the TransactionManagerLookup implementation."
+        },
+        "complete-timeout": {
+          "type": "string",
+          "description": "The duration in which to keep information about the completion of a transaction."
+        },
+        "reaper-interval": {
+          "type": "string",
+          "description": "The time interval at which the thread that cleans up transaction completion information kicks in."
+        },
+        "auto-commit": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "If enabled, single operation transactions do not need to be manually started."
+        },
+        "recovery-cache": {
+          "type": "string",
+          "description": "Sets the name of the cache where recovery related information is held."
+        },
+        "notifications": {
+          "type": "boolean",
+          "description": "Enables or disables triggering transactional notifications on cache listeners."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Expiration": {
+      "type": "object",
+      "description": "The cache expiration configuration.",
+      "properties": {
+        "max-idle": {
+          "type": "string",
+          "description": "Specifies the maximum amount of time that cache entries can remain idle."
+        },
+        "lifespan": {
+          "type": "string",
+          "description": "Specifies the maximum amount of time that cache entries can exist."
+        },
+        "interval": {
+          "type": "string",
+          "description": "Specifies the interval between expiration runs."
+        },
+        "touch": {
+          "type": "string",
+          "description": "Controls how timestamps get updated for entries in clustered caches.",
+          "enum": [
+            "SYNC",
+            "ASYNC"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "Memory": {
+      "type": "object",
+      "description": "Controls how the entries are stored in memory.",
+      "properties": {
+        "max-size": {
+          "type": "string",
+          "description": "Defines the size of the data container in bytes (e.g. '1.5GB', '10000000')."
+        },
+        "max-count": {
+          "type": "string",
+          "description": "Defines the size of the data container by number of entries."
+        },
+        "when-full": {
+          "type": "string",
+          "description": "Specifies a strategy for evicting cache entries.",
+          "enum": [
+            "NONE",
+            "MANUAL",
+            "REMOVE",
+            "EXCEPTION"
+          ]
+        },
+        "storage": {
+          "type": "string",
+          "description": "Defines the type of memory that the data container uses as storage.",
+          "enum": [
+            "HEAP",
+            "OFF_HEAP"
+          ]
+        },
+        "eviction-container": {
+          "type": "string",
+          "description": "Defines the eviction container this cache should use for storage."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Persistence": {
+      "type": "object",
+      "description": "Configures the persistence layer for caches.",
+      "properties": {
+        "passivation": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Enables passivation so that data is written to cache stores only if it is evicted from memory."
+        },
+        "connection-attempts": {
+          "type": "string",
+          "description": "Sets the maximum number of attempts to start each configured CacheWriter or CacheLoader."
+        },
+        "availability-interval": {
+          "type": "string",
+          "description": "Specifies the time between availability checks."
+        },
+        "file-store": {
+          "$ref": "#/$defs/FileStore"
+        },
+        "store": {
+          "$ref": "#/$defs/CustomStore"
+        }
+      },
+      "additionalProperties": true
+    },
+    "AbstractStore": {
+      "type": "object",
+      "description": "Abstract base type for cache stores.",
+      "properties": {
+        "shared": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Determines if a cache store is shared between cache instances."
+        },
+        "preload": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Pre-loads data into memory from the cache store when the cache starts."
+        },
+        "purge": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Empties the specified cache store at startup."
+        },
+        "read-only": {
+          "type": "boolean",
+          "description": "Prevents data from being persisted to cache stores."
+        },
+        "write-only": {
+          "type": "boolean",
+          "description": "Prevents data from being loaded from cache stores."
+        },
+        "transactional": {
+          "type": "boolean",
+          "description": "Whether the underlying store supports transactions."
+        },
+        "max-batch-size": {
+          "type": "integer",
+          "description": "Sets the maximum size of a batch to insert or delete."
+        },
+        "segmented": {
+          "type": "boolean",
+          "description": "Configures cache stores to store data in hash space segments."
+        },
+        "write-behind": {
+          "$ref": "#/$defs/WriteBehind"
+        },
+        "properties": {
+          "type": "object",
+          "description": "Cache store properties.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "FileStore": {
+      "type": "object",
+      "description": "Defines a filesystem-based cache store.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/AbstractStore"
+        }
+      ],
+      "properties": {
+        "shared": true,
+        "preload": true,
+        "purge": true,
+        "read-only": true,
+        "write-only": true,
+        "transactional": true,
+        "max-batch-size": true,
+        "segmented": true,
+        "write-behind": true,
+        "properties": true,
+        "path": {
+          "type": "string",
+          "description": "Specifies a filesystem directory for data."
+        },
+        "open-files-limit": {
+          "type": "integer",
+          "description": "Max number of data and index files opened for reading."
+        },
+        "compaction-threshold": {
+          "type": "number",
+          "description": "Threshold above which unused space triggers compaction."
+        },
+        "data": {
+          "$ref": "#/$defs/FileStoreData"
+        },
+        "index": {
+          "$ref": "#/$defs/FileStoreIndex"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "FileStoreData": {
+      "type": "object",
+      "description": "Configure where and how entries should be stored.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "A location on disk where the store writes entries."
+        },
+        "max-file-size": {
+          "type": "integer",
+          "description": "Max size of single file with entries, in bytes."
+        },
+        "sync-writes": {
+          "type": "boolean",
+          "description": "If true, the write is confirmed only after the entry is fsynced on disk."
+        }
+      },
+      "additionalProperties": false
+    },
+    "FileStoreIndex": {
+      "type": "object",
+      "description": "Configure where and how the index should be stored.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "A location where the store keeps index."
+        },
+        "max-queue-length": {
+          "type": "integer",
+          "description": "Max number of entry writes waiting to be written to the index."
+        },
+        "max-node-size": {
+          "type": "integer",
+          "description": "Max size of node in bytes."
+        },
+        "min-node-size": {
+          "type": "integer",
+          "description": "Min size of node in bytes."
+        }
+      },
+      "additionalProperties": false
+    },
+    "WriteBehind": {
+      "type": "object",
+      "description": "Configures cache stores as write-behind instead of write-through.",
+      "properties": {
+        "modification-queue-size": {
+          "type": "string",
+          "description": "Specifies the maximum number of entries in the asynchronous modification queue."
+        },
+        "fail-silently": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Controls how asynchronous write operations take place when cache stores become unavailable."
+        }
+      },
+      "additionalProperties": false
+    },
+    "CustomStore": {
+      "type": "object",
+      "description": "Defines a custom cache store.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/AbstractStore"
+        }
+      ],
+      "properties": {
+        "shared": true,
+        "preload": true,
+        "purge": true,
+        "read-only": true,
+        "write-only": true,
+        "transactional": true,
+        "max-batch-size": true,
+        "segmented": true,
+        "write-behind": true,
+        "properties": true,
+        "class": {
+          "type": "string",
+          "description": "Defines the class name of a cache store that implements CacheLoader, CacheWriter, or both."
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "unevaluatedProperties": false
+    },
+    "Indexing": {
+      "type": "object",
+      "description": "Defines indexing options for the cache.",
+      "properties": {
+        "enabled": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Enables and disables cache indexing."
+        },
+        "storage": {
+          "type": "string",
+          "description": "Specify index storage options.",
+          "enum": [
+            "filesystem",
+            "local-heap"
+          ]
+        },
+        "startup-mode": {
+          "type": "string",
+          "description": "Triggers an indexing process when the cache starts.",
+          "enum": [
+            "purge",
+            "reindex",
+            "auto",
+            "none",
+            "PURGE",
+            "REINDEX",
+            "AUTO",
+            "NONE"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "description": "Specifies a filesystem path for the index."
+        },
+        "indexing-mode": {
+          "type": "string",
+          "description": "Affects how cache operations will be propagated to the indexes.",
+          "enum": [
+            "auto",
+            "manual",
+            "AUTO",
+            "MANUAL"
+          ]
+        },
+        "use-java-embedded-entities": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Whether indexes will be defined on the Java indexed entities accessible from the class path."
+        },
+        "index-reader": {
+          "$ref": "#/$defs/IndexReader"
+        },
+        "index-writer": {
+          "$ref": "#/$defs/IndexWriter"
+        },
+        "index-sharding": {
+          "$ref": "#/$defs/IndexSharding"
+        },
+        "indexed-entities": {
+          "type": "array",
+          "description": "Defines the set of indexed type names.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "IndexReader": {
+      "type": "object",
+      "description": "Controls index reading parameters.",
+      "properties": {
+        "refresh-interval": {
+          "type": "string",
+          "description": "Interval to reopen the index reader."
+        }
+      },
+      "additionalProperties": false
+    },
+    "IndexWriter": {
+      "type": "object",
+      "description": "Controls index writing parameters.",
+      "properties": {
+        "commit-interval": {
+          "type": "string",
+          "description": "Amount of time that index changes buffered in memory are flushed to index storage."
+        },
+        "ram-buffer-size": {
+          "type": "string",
+          "description": "Maximum amount of memory (MB) for buffering added entries and deletions."
+        },
+        "max-buffered-entries": {
+          "type": "string",
+          "description": "Maximum number of entries that can be buffered in-memory."
+        },
+        "thread-pool-size": {
+          "type": "string",
+          "description": "Number of threads that execute write operations to the index."
+        },
+        "queue-count": {
+          "type": "string",
+          "description": "Number of internal queues to use for each indexed type."
+        },
+        "queue-size": {
+          "type": "string",
+          "description": "Maximum number of elements each queue can hold."
+        },
+        "low-level-trace": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Enables low-level trace information for indexing operations."
+        },
+        "index-merge": {
+          "$ref": "#/$defs/IndexMerge"
+        }
+      },
+      "additionalProperties": false
+    },
+    "IndexMerge": {
+      "type": "object",
+      "description": "Defines properties to control the merge of index segments.",
+      "properties": {
+        "max-entries": {
+          "type": "string",
+          "description": "Maximum number of entries that an index segment can have before merging."
+        },
+        "factor": {
+          "type": "string",
+          "description": "Number of segments that are merged at once."
+        },
+        "min-size": {
+          "type": "string",
+          "description": "Minimum target size of segments, in MB, for background merges."
+        },
+        "max-size": {
+          "type": "string",
+          "description": "Maximum size of segments, in MB, for background merges."
+        },
+        "max-forced-size": {
+          "type": "string",
+          "description": "Maximum size of segments, in MB, for forced merges."
+        },
+        "calibrate-by-deletes": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Whether the number of deleted entries should be taken into account."
+        }
+      },
+      "additionalProperties": false
+    },
+    "IndexSharding": {
+      "type": "object",
+      "description": "Splitting index data into multiple shards to improve performance.",
+      "properties": {
+        "shards": {
+          "type": "string",
+          "description": "Defines the number of shards. Set to a value strictly greater than 1 to enable sharding."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Query": {
+      "type": "object",
+      "description": "Defines query options for the cache.",
+      "properties": {
+        "default-max-results": {
+          "type": "string",
+          "description": "Limits the number of results returned by a query."
+        },
+        "hit-count-accuracy": {
+          "type": "string",
+          "description": "Limit the required accuracy of the hit count for indexed queries."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Backups": {
+      "type": "object",
+      "description": "Defines backup locations for cache data and modifies state transfer properties.",
+      "properties": {
+        "merge-policy": {
+          "type": "string",
+          "description": "Specifies the fully qualified name of a class that implements XSiteEntryMergePolicy or an alias (DEFAULT, PREFER_NON_NULL, PREFER_NULL, ALWAYS_REMOVE)."
+        },
+        "max-cleanup-delay": {
+          "type": "string",
+          "description": "Specifies the maximum delay between which tombstone cleanup tasks run."
+        },
+        "tombstone-map-size": {
+          "type": "string",
+          "description": "Specifies the target number of tombstones to store."
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/BackupSite"
+      }
+    },
+    "BackupSite": {
+      "type": "object",
+      "description": "Configuration for a specific backup site.",
+      "properties": {
+        "backup": {
+          "$ref": "#/$defs/Backup"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Backup": {
+      "type": "object",
+      "description": "Configures a remote site as a backup location for cache data.",
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "description": "Sets the strategy for backing up to a remote site.",
+          "enum": [
+            "ASYNC",
+            "SYNC"
+          ]
+        },
+        "failure-policy": {
+          "type": "string",
+          "description": "Controls how local writes to caches are handled if synchronous backup operations fail.",
+          "enum": [
+            "IGNORE",
+            "WARN",
+            "FAIL",
+            "CUSTOM"
+          ]
+        },
+        "timeout": {
+          "type": "string",
+          "description": "Specifies timeout for synchronous and asynchronous backup operations."
+        },
+        "two-phase-commit": {
+          "type": "boolean",
+          "description": "Enables two-phase commits for optimistic transactional caches."
+        },
+        "failure-policy-class": {
+          "type": "string",
+          "description": "Specifies the class that implements CustomFailurePolicy."
+        },
+        "take-offline": {
+          "$ref": "#/$defs/TakeOffline"
+        },
+        "state-transfer": {
+          "$ref": "#/$defs/XSiteStateTransfer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TakeOffline": {
+      "type": "object",
+      "description": "Specifies the number of failures before backup locations go offline.",
+      "properties": {
+        "after-failures": {
+          "type": "string",
+          "description": "Sets the number of consecutive failures before sites go offline."
+        },
+        "min-wait": {
+          "type": "string",
+          "description": "Sets the minimum time to wait before sites go offline."
+        }
+      },
+      "additionalProperties": false
+    },
+    "XSiteStateTransfer": {
+      "type": "object",
+      "description": "Modifies cross-site state transfer operations.",
+      "properties": {
+        "chunk-size": {
+          "type": "string",
+          "description": "Specifies how many cache entries are batched in each transfer request."
+        },
+        "timeout": {
+          "type": "string",
+          "description": "The time to wait for the backup site to acknowledge the state chunk."
+        },
+        "max-retries": {
+          "type": "integer",
+          "description": "Sets the maximum number of retry attempts for push state failures."
+        },
+        "wait-time": {
+          "type": "string",
+          "description": "Sets the amount of time to wait between retry attempts."
+        },
+        "mode": {
+          "type": "string",
+          "description": "Controls whether cross-site state transfer happens manually or automatically.",
+          "enum": [
+            "MANUAL",
+            "AUTO"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "BackupFor": {
+      "type": "object",
+      "description": "Defines the local cache as a backup for a remote cache with a different name.",
+      "properties": {
+        "remote-cache": {
+          "type": "string",
+          "description": "Specifies the name of the remote cache that uses the local cache as a backup."
+        },
+        "remote-site": {
+          "type": "string",
+          "description": "Specifies the name of the remote site that backs up data to the local cache."
+        }
+      },
+      "additionalProperties": false
+    },
+    "StateTransfer": {
+      "type": "object",
+      "description": "The state transfer configuration for distribution and replicated caches.",
+      "properties": {
+        "enabled": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "If enabled, the cache asks neighboring caches for state when it starts up."
+        },
+        "timeout": {
+          "type": "string",
+          "description": "The maximum amount of time to wait for state from neighboring caches."
+        },
+        "chunk-size": {
+          "type": "string",
+          "description": "The number of cache entries to batch in each transfer."
+        },
+        "await-initial-transfer": {
+          "type": "boolean",
+          "description": "If enabled, the cache waits for initial state transfer to complete before responding to requests."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PartitionHandling": {
+      "type": "object",
+      "description": "Configures the way this cache reacts to node crashes and split brains.",
+      "properties": {
+        "when-split": {
+          "type": "string",
+          "description": "The type of actions possible when a split brain scenario is encountered.",
+          "enum": [
+            "DENY_READ_WRITES",
+            "ALLOW_READS",
+            "ALLOW_READ_WRITES"
+          ]
+        },
+        "merge-policy": {
+          "type": "string",
+          "description": "The entry merge policy applied on partition merges. Use built-in values (NONE, PREFERRED_ALWAYS, PREFERRED_NON_NULL, REMOVE_ALL) or a fully qualified class name."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Groups": {
+      "type": "object",
+      "description": "Configures grouping of data.",
+      "properties": {
+        "enabled": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Enables or disables grouping."
+        },
+        "grouper": {
+          "type": "array",
+          "description": "List of grouper class names.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "CacheSecurity": {
+      "type": "object",
+      "description": "Configures cache-level security.",
+      "properties": {
+        "authorization": {
+          "$ref": "#/$defs/CacheAuthorization"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CacheAuthorization": {
+      "type": "object",
+      "description": "Configures authorization for this cache.",
+      "properties": {
+        "enabled": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Enables authorization checks for this cache."
+        },
+        "roles": {
+          "type": "array",
+          "description": "Sets the valid roles required to access this cache.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "CacheTracing": {
+      "type": "object",
+      "description": "Configures tracing for the cache.",
+      "properties": {
+        "enabled": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Enable or disable tracing on the given cache."
+        },
+        "categories": {
+          "type": "array",
+          "description": "Enable or disable tracing for specific categories.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "container",
+              "cluster",
+              "x_site",
+              "persistence",
+              "security"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

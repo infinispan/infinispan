@@ -1,0 +1,2089 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infinispan.org/infinispan-server",
+  "title": "Infinispan Server 16.2 Configuration",
+  "description": "Schema for Infinispan Server 16.2 configuration.",
+  "type": "object",
+  "properties": {
+    "server": {
+      "$ref": "#/$defs/server"
+    }
+  },
+  "required": ["server"],
+  "additionalProperties": false,
+
+  "$defs": {
+    "server": {
+      "type": "object",
+      "description": "Root server configuration element.",
+      "properties": {
+        "interfaces": {
+          "$ref": "#/$defs/interfaces"
+        },
+        "socket-bindings": {
+          "$ref": "#/$defs/socket-bindings"
+        },
+        "security": {
+          "$ref": "#/$defs/security"
+        },
+        "data-sources": {
+          "$ref": "#/$defs/data-sources"
+        },
+        "endpoints": {
+          "$ref": "#/$defs/endpoints"
+        }
+      },
+      "required": ["interfaces", "socket-bindings", "endpoints"],
+      "additionalProperties": false
+    },
+
+    "interfaces": {
+      "type": "object",
+      "description": "Network interface definitions.",
+      "properties": {
+        "interface": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/interface"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "interface": {
+      "type": "object",
+      "description": "Defines a network interface.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name to give to this interface."
+        },
+        "inet-address": {
+          "$ref": "#/$defs/interface-inet-address"
+        },
+        "any-address": {
+          "$ref": "#/$defs/interface-any-address"
+        },
+        "global": {
+          "$ref": "#/$defs/interface-global"
+        },
+        "link-local": {
+          "$ref": "#/$defs/interface-link-local"
+        },
+        "loopback": {
+          "$ref": "#/$defs/interface-loopback"
+        },
+        "non-loopback": {
+          "$ref": "#/$defs/interface-non-loopback"
+        },
+        "site-local": {
+          "$ref": "#/$defs/interface-site-local"
+        },
+        "match-host": {
+          "$ref": "#/$defs/interface-match-host"
+        },
+        "match-interface": {
+          "$ref": "#/$defs/interface-match-interface"
+        },
+        "match-address": {
+          "$ref": "#/$defs/interface-match-address"
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+
+    "interface-inet-address": {
+      "type": "object",
+      "description": "Selects a specific IP address, which can be public, private, or loopback. This is the default network interface.",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "The IP address."
+        }
+      },
+      "required": ["value"],
+      "additionalProperties": false
+    },
+
+    "interface-any-address": {
+      "type": "object",
+      "description": "Uses the INADDR_ANY wildcard address which will listen for inbound client requests on all interfaces.",
+      "additionalProperties": false
+    },
+
+    "interface-global": {
+      "type": "object",
+      "description": "Selects a global (non-loopback, non-site-local, non-link-local) IP address in an IPv4 or IPv6 address block.",
+      "additionalProperties": false
+    },
+
+    "interface-link-local": {
+      "type": "object",
+      "description": "Selects a link-local (private) IP address in an IPv4 or IPv6 address block.",
+      "additionalProperties": false
+    },
+
+    "interface-loopback": {
+      "type": "object",
+      "description": "Selects an IP address in an IPv4 or IPv6 loopback address block.",
+      "additionalProperties": false
+    },
+
+    "interface-non-loopback": {
+      "type": "object",
+      "description": "Selects an IP address in an IPv4 or IPv6 non-loopback address block.",
+      "additionalProperties": false
+    },
+
+    "interface-site-local": {
+      "type": "object",
+      "description": "Selects a site-local (private) IP address in an IPv4 or IPv6 address block.",
+      "additionalProperties": false
+    },
+
+    "interface-match-host": {
+      "type": "object",
+      "description": "Matches a host name using a regular expression.",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "A regular expression used to match a host name. For example 'a-z]+\\.mydomain'."
+        }
+      },
+      "required": ["value"],
+      "additionalProperties": false
+    },
+
+    "interface-match-interface": {
+      "type": "object",
+      "description": "Matches an interface name using a regular expression.",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "A regular expression used to match an interface name. For example 'eth[0-9]+'."
+        }
+      },
+      "required": ["value"],
+      "additionalProperties": false
+    },
+
+    "interface-match-address": {
+      "type": "object",
+      "description": "Matches an interface address using a regular expression.",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "A regular expression used to match an interface address. For example '10\\.[0-9]+\\.[0-9]+\\.[0-9]+'."
+        }
+      },
+      "required": ["value"],
+      "additionalProperties": false
+    },
+
+    "socket-bindings": {
+      "type": "object",
+      "description": "Socket binding definitions.",
+      "properties": {
+        "default-interface": {
+          "type": "string",
+          "description": "The network interface used by default."
+        },
+        "port-offset": {
+          "type": "string",
+          "description": "An optional offset to add to all the ports associated with this socket binding."
+        },
+        "socket-binding": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/socket-binding"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "socket-binding": {
+      "type": "object",
+      "description": "Defines a socket binding.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "A unique name for this socket binding."
+        },
+        "port": {
+          "type": "string",
+          "description": "The network port to associate with this socket binding."
+        },
+        "interface": {
+          "type": "string",
+          "description": "An optional network interface to use for this binding. If not specified, the socket-bindings.default-interface will be used."
+        }
+      },
+      "required": ["name", "port"],
+      "additionalProperties": false
+    },
+
+    "data-sources": {
+      "type": "object",
+      "description": "Data source definitions.",
+      "properties": {
+        "data-source": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/data-source"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "data-source": {
+      "type": "object",
+      "description": "Defines a data source.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name for the datasource (used for management)."
+        },
+        "jndi-name": {
+          "type": "string",
+          "description": "JNDI name for the datasource."
+        },
+        "statistics": {
+          "type": "boolean",
+          "description": "Enable statistics for this datasource.",
+          "default": false
+        },
+        "connection-factory": {
+          "$ref": "#/$defs/data-source-connection-factory"
+        },
+        "connection-pool": {
+          "$ref": "#/$defs/data-source-connection-pool"
+        }
+      },
+      "required": ["name", "jndi-name", "connection-factory", "connection-pool"],
+      "additionalProperties": false
+    },
+
+    "data-source-connection-factory": {
+      "type": "object",
+      "description": "Configuration for the connection factory.",
+      "properties": {
+        "driver": {
+          "type": "string",
+          "description": "Unique reference to the JDBC driver."
+        },
+        "url": {
+          "type": "string",
+          "description": "JDBC driver connection URL (e.g. 'jdbc:h2:tcp://localhost:1234')."
+        },
+        "transaction-isolation": {
+          "type": "string",
+          "description": "Set the java.sql.Connection transaction isolation level to use. Defaults to READ_COMMITTED.",
+          "enum": ["NONE", "READ_UNCOMMITTED", "READ_COMMITTED", "REPEATABLE_READ", "SERIALIZABLE"],
+          "default": "READ_COMMITTED"
+        },
+        "new-connection-sql": {
+          "type": "string",
+          "description": "SQL statement to be executed on a connection after creation."
+        },
+        "username": {
+          "type": "string",
+          "description": "Username to use for basic authentication with the database."
+        },
+        "password": {
+          "type": "string",
+          "description": "Password to use for basic authentication with the database."
+        },
+        "credential-reference": {
+          "$ref": "#/$defs/credential-reference"
+        },
+        "connection-property": {
+          "type": "array",
+          "description": "Properties for the JDBC driver.",
+          "items": {
+            "$ref": "#/$defs/property"
+          }
+        }
+      },
+      "required": ["driver"],
+      "additionalProperties": false
+    },
+
+    "data-source-connection-pool": {
+      "type": "object",
+      "description": "Configuration for the connection pool.",
+      "properties": {
+        "max-size": {
+          "type": "integer",
+          "description": "Maximum number of connections in the pool.",
+          "minimum": 0,
+          "default": 2147483647
+        },
+        "min-size": {
+          "type": "integer",
+          "description": "Minimum number of connections the pool should hold.",
+          "minimum": 0,
+          "default": 0
+        },
+        "initial-size": {
+          "type": "integer",
+          "description": "Initial number of connections the pool should hold.",
+          "minimum": 0,
+          "default": 0
+        },
+        "blocking-timeout": {
+          "type": "string",
+          "description": "Maximum time to block while waiting for a connection before throwing an exception. Default is 0 meaning that a call will wait indefinitely. Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        },
+        "background-validation": {
+          "type": "string",
+          "description": "Time between background validation runs. A duration of 0 means this feature is disabled. Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        },
+        "validate-on-acquisition": {
+          "type": "string",
+          "description": "Connections idle for longer than this time are validated before being acquired (foreground validation). A duration of 0 means this feature is disabled. Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        },
+        "leak-detection": {
+          "type": "string",
+          "description": "Time a connection has to be held before a leak warning. Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        },
+        "idle-removal": {
+          "type": "string",
+          "description": "Time a connection has to be idle before it can be removed. Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        }
+      },
+      "required": ["max-size"],
+      "additionalProperties": false
+    },
+
+    "security": {
+      "type": "object",
+      "description": "Security configuration.",
+      "properties": {
+        "credential-stores": {
+          "$ref": "#/$defs/credential-stores"
+        },
+        "security-realms": {
+          "$ref": "#/$defs/security-realms"
+        }
+      },
+      "required": ["security-realms"],
+      "additionalProperties": false
+    },
+
+    "credential-stores": {
+      "type": "object",
+      "description": "Definitions of credential stores.",
+      "properties": {
+        "credential-store": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/credential-store"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "credential-store": {
+      "type": "object",
+      "description": "An individual credential store definition.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Specifies the name of the credential keystore."
+        },
+        "path": {
+          "type": "string",
+          "description": "File name of the credential keystore. If the path is relative, the full path will be resolved using the 'relative-to' attribute."
+        },
+        "relative-to": {
+          "type": "string",
+          "description": "A property name whose value will be used to resolve relative paths."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the credential store file. Can be either pkcs12 or jceks. Defaults to pkcs12.",
+          "default": "pkcs12"
+        },
+        "clear-text-credential": {
+          "$ref": "#/$defs/clear-text-credential"
+        },
+        "masked-credential": {
+          "$ref": "#/$defs/masked-credential"
+        },
+        "command-credential": {
+          "$ref": "#/$defs/command-credential"
+        },
+        "credential-reference": {
+          "$ref": "#/$defs/credential-reference"
+        }
+      },
+      "required": ["name", "path"],
+      "oneOf": [
+        { "required": ["clear-text-credential"] },
+        { "required": ["masked-credential"] },
+        { "required": ["command-credential"] },
+        { "required": ["credential-reference"] }
+      ],
+      "additionalProperties": false
+    },
+
+    "clear-text-credential": {
+      "type": "object",
+      "description": "A clear-text credential.",
+      "properties": {
+        "clear-text": {
+          "type": "string",
+          "description": "The clear-text password."
+        }
+      },
+      "required": ["clear-text"],
+      "additionalProperties": false
+    },
+
+    "masked-credential": {
+      "type": "object",
+      "description": "Adds a masked password for the credential keystore.",
+      "properties": {
+        "masked": {
+          "type": "string",
+          "description": "Specifies a masked password in the format of 'MASKED_VALUE;SALT;ITERATION'."
+        }
+      },
+      "required": ["masked"],
+      "additionalProperties": false
+    },
+
+    "command-credential": {
+      "type": "object",
+      "description": "Executes an external command that supplies the password for the credential keystore.",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "An external command, including arguments, that returns the credential on the standard output."
+        }
+      },
+      "required": ["command"],
+      "additionalProperties": false
+    },
+
+    "credential-reference": {
+      "type": "object",
+      "description": "Credential reference to be used by the configuration.",
+      "properties": {
+        "store": {
+          "type": "string",
+          "description": "Credential store name used to fetch credential with given 'alias' from."
+        },
+        "alias": {
+          "type": "string",
+          "description": "Alias of credential in the credential store."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realms": {
+      "type": "object",
+      "description": "Security realm definitions.",
+      "properties": {
+        "security-realm": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/security-realm"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm": {
+      "type": "object",
+      "description": "Defines a security realm.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the security realm."
+        },
+        "default-realm": {
+          "type": "string",
+          "description": "Specifies which of the underlying realms will be used by default. It defaults to the first realm."
+        },
+        "cache-max-size": {
+          "type": "integer",
+          "description": "The maximum size for the identity cache for this realm. If the size is less than 1, the cache will be disabled. Defaults to 256.",
+          "default": 256
+        },
+        "cache-lifespan": {
+          "type": "string",
+          "description": "The lifespan of entries in the identity cache after which they expire and are reloaded from the realm provider. Defaults to 60s.",
+          "default": "60s"
+        },
+        "evidence-decoder": {
+          "$ref": "#/$defs/security-evidence-decoder"
+        },
+        "server-identities": {
+          "$ref": "#/$defs/security-realm-server-identities"
+        },
+        "ldap-realm": {
+          "$ref": "#/$defs/security-realm-ldap"
+        },
+        "local-realm": {
+          "$ref": "#/$defs/security-realm-local"
+        },
+        "properties-realm": {
+          "$ref": "#/$defs/security-realm-properties"
+        },
+        "token-realm": {
+          "$ref": "#/$defs/security-realm-token"
+        },
+        "truststore-realm": {
+          "$ref": "#/$defs/security-realm-trust"
+        },
+        "distributed-realm": {
+          "$ref": "#/$defs/security-realm-distributed"
+        },
+        "aggregate-realm": {
+          "$ref": "#/$defs/security-realm-aggregate"
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+
+    "security-evidence-decoder": {
+      "type": "object",
+      "description": "Evidence decoder configuration.",
+      "properties": {
+        "x500-subject-evidence-decoder": {
+          "$ref": "#/$defs/x500-subject-evidence-decoder"
+        },
+        "x509-subject-alt-name-evidence-decoder": {
+          "$ref": "#/$defs/x509-subject-alt-name-evidence-decoder"
+        }
+      },
+      "oneOf": [
+        { "required": ["x500-subject-evidence-decoder"] },
+        { "required": ["x509-subject-alt-name-evidence-decoder"] }
+      ],
+      "additionalProperties": false
+    },
+
+    "x500-subject-evidence-decoder": {
+      "type": "object",
+      "description": "An EvidenceDecoder that derives the principal associated with the given evidence from the subject from the first certificate in the certificate chain.",
+      "additionalProperties": false
+    },
+
+    "x509-subject-alt-name-evidence-decoder": {
+      "type": "object",
+      "description": "An EvidenceDecoder that derives the principal associated with the given evidence from an X.509 subject alternative name from the first certificate in the given evidence.",
+      "properties": {
+        "alt-name-type": {
+          "type": "string",
+          "description": "The subject alternative name type to decode from the given evidence.",
+          "enum": ["rfc822Name", "dNSName", "directoryName", "uniformResourceIdentifier", "ipAddress", "registeredID"]
+        },
+        "segment": {
+          "type": "integer",
+          "description": "The 0-based occurrence of the subject alternative name to map. Only used when there is more than one subject alternative name of the given alt-name-type.",
+          "default": 0
+        }
+      },
+      "required": ["alt-name-type"],
+      "additionalProperties": false
+    },
+
+    "security-realm-server-identities": {
+      "type": "object",
+      "description": "Server identity configuration.",
+      "properties": {
+        "ssl": {
+          "$ref": "#/$defs/security-realm-ssl"
+        },
+        "kerberos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/security-realm-kerberos"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-ssl": {
+      "type": "object",
+      "description": "SSL/TLS configuration.",
+      "properties": {
+        "keystore": {
+          "$ref": "#/$defs/security-realm-keystore"
+        },
+        "truststore": {
+          "$ref": "#/$defs/security-realm-truststore"
+        },
+        "engine": {
+          "$ref": "#/$defs/security-realm-ssl-engine"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-keystore": {
+      "type": "object",
+      "description": "Keystore configuration for SSL.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Specifies the location of the keystore on the host file system."
+        },
+        "relative-to": {
+          "type": "string",
+          "description": "Specifies a property name that resolves to a directory on the host file system.",
+          "default": "infinispan.server.config.path"
+        },
+        "keystore-password": {
+          "type": "string",
+          "description": "Deprecated: use the 'password' attribute instead."
+        },
+        "password": {
+          "type": "string",
+          "description": "The password required to open the keystore."
+        },
+        "alias": {
+          "type": "string",
+          "description": "The alias of the entry in the keystore to use as the server identity."
+        },
+        "key-password": {
+          "type": "string",
+          "description": "A password required to access a specific entry within the keystore."
+        },
+        "generate-self-signed-certificate-host": {
+          "type": "string",
+          "description": "If set and the keystore file does not exist, a self-signed certificate will be generated on first use. The value is used for the Common Name. Intended for testing only."
+        },
+        "provider": {
+          "type": "string",
+          "description": "The name of the provider to use to instantiate the KeyManagerFactory."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the keystore. Normally auto-detected."
+        },
+        "credential-reference": {
+          "$ref": "#/$defs/credential-reference"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-truststore": {
+      "type": "object",
+      "description": "Truststore configuration for SSL.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Specifies the location of the truststore on the host file system."
+        },
+        "relative-to": {
+          "type": "string",
+          "description": "Specifies a property name that resolves to a directory on the host file system.",
+          "default": "infinispan.server.config.path"
+        },
+        "password": {
+          "type": "string",
+          "description": "The password required to open the truststore."
+        },
+        "provider": {
+          "type": "string",
+          "description": "The name of the provider to use to instantiate the TrustManagerFactory."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the truststore. Normally auto-detected."
+        },
+        "credential-reference": {
+          "$ref": "#/$defs/credential-reference"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-ssl-engine": {
+      "type": "object",
+      "description": "SSL engine configuration.",
+      "properties": {
+        "enabled-protocols": {
+          "type": "string",
+          "description": "A space-separated list of SSL protocol names to enable in order of preference. For example, 'TLSv1.3'."
+        },
+        "enabled-ciphersuites": {
+          "type": "string",
+          "description": "The filter to be applied to the cipher suites made available by this SSL engine.",
+          "default": "DEFAULT"
+        },
+        "enabled-ciphersuites-tls13": {
+          "type": "string",
+          "description": "The cipher suite names to use for the TLSv1.3 engine.",
+          "default": "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-kerberos": {
+      "type": "object",
+      "description": "Kerberos identity configuration.",
+      "properties": {
+        "principal": {
+          "type": "string",
+          "description": "Specifies the principal that the KeyTab represents."
+        },
+        "keytab-path": {
+          "type": "string",
+          "description": "Sets the path to the KeyTab for retrieving credentials."
+        },
+        "relative-to": {
+          "type": "string",
+          "description": "Specifies the name of a named path or a standard path that the system provides."
+        },
+        "minimum-remaining-lifetime": {
+          "type": "integer",
+          "description": "Specifies, in seconds, how long a cached credential can remain before it is recreated.",
+          "default": 0
+        },
+        "request-lifetime": {
+          "type": "integer",
+          "description": "Specifies, in seconds, how much lifetime to request for newly created credentials."
+        },
+        "fail-cache": {
+          "type": "integer",
+          "description": "Specifies the amount of time, in seconds, to wait before attempting to obtain server credential if the previous attempt failed."
+        },
+        "server": {
+          "type": "boolean",
+          "description": "Specifies if the realm is server-side (default) or client-side.",
+          "default": true
+        },
+        "obtain-kerberos-ticket": {
+          "type": "boolean",
+          "description": "Controls if a KerberosTicket is also obtained and associated with the credential.",
+          "default": false
+        },
+        "debug": {
+          "type": "boolean",
+          "description": "Defines if the JAAS step to obtain the credential has debug logging enabled.",
+          "default": false
+        },
+        "wrap-gss-credential": {
+          "type": "boolean",
+          "description": "Specifies if generated GSS credentials are wrapped to prevent improper disposal.",
+          "default": false
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Specifies if the keytab file with adequate principal must exist when the service starts.",
+          "default": false
+        },
+        "mechanism-names": {
+          "type": "string",
+          "description": "Defines the mechanism names with which the credential can be used. Space-separated list.",
+          "default": "KRB5 SPNEGO"
+        },
+        "mechanism-oids": {
+          "type": "string",
+          "description": "Defines the mechanism OIDs with which the credential can be used. Space-separated list."
+        }
+      },
+      "required": ["principal", "keytab-path"],
+      "additionalProperties": false
+    },
+
+    "security-realm-ldap": {
+      "type": "object",
+      "description": "Defines an LDAP security realm.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Names the security realm to logically separate multiple realms of the same type.",
+          "default": "ldap"
+        },
+        "url": {
+          "type": "string",
+          "description": "Specifies the URL for LDAP server connections in the format ldap[s]://{hostname}:{port}."
+        },
+        "principal": {
+          "type": "string",
+          "description": "Specifies the user principal for LDAP server connections."
+        },
+        "credential": {
+          "type": "string",
+          "description": "Specifies the user credential for LDAP server connections."
+        },
+        "direct-verification": {
+          "type": "boolean",
+          "description": "Configures the realm to verify credentials by connecting to LDAP servers with the account."
+        },
+        "page-size": {
+          "type": "integer",
+          "description": "Sets the page size for realm iteration. The default value is 50.",
+          "default": 50
+        },
+        "connection-pooling": {
+          "type": "boolean",
+          "description": "Enables connection pooling.",
+          "default": false
+        },
+        "referral-mode": {
+          "type": "string",
+          "description": "Specifies if LDAP server referrals are followed. Values are 'ignore', 'follow' (default), and 'throw'.",
+          "enum": ["ignore", "follow", "throw"],
+          "default": "follow"
+        },
+        "connection-timeout": {
+          "type": "string",
+          "description": "Sets the timeout for LDAP server connections. Default is 5s. Supports time units: ms, s, m, h, d.",
+          "default": "5s"
+        },
+        "read-timeout": {
+          "type": "string",
+          "description": "Sets the read timeout for LDAP server operations. Default is 1m. Supports time units: ms, s, m, h, d.",
+          "default": "1m"
+        },
+        "client-ssl-context": {
+          "type": "string",
+          "description": "The name of a realm which provides a trust store with which to validate SSL client connections."
+        },
+        "credential-reference": {
+          "$ref": "#/$defs/credential-reference"
+        },
+        "name-rewriter": {
+          "$ref": "#/$defs/name-rewriter"
+        },
+        "identity-mapping": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ldap-identity-mapping"
+          }
+        }
+      },
+      "required": ["url"],
+      "additionalProperties": false
+    },
+
+    "name-rewriter": {
+      "type": "object",
+      "description": "Specifies a name rewriter that transforms names returned by a realm.",
+      "properties": {
+        "case-principal-transformer": {
+          "$ref": "#/$defs/case-principal-transformer"
+        },
+        "common-name-principal-transformer": {
+          "$ref": "#/$defs/common-name-principal-transformer"
+        },
+        "regex-principal-transformer": {
+          "$ref": "#/$defs/regex-principal-transformer"
+        }
+      },
+      "oneOf": [
+        { "required": ["case-principal-transformer"] },
+        { "required": ["common-name-principal-transformer"] },
+        { "required": ["regex-principal-transformer"] }
+      ],
+      "additionalProperties": false
+    },
+
+    "case-principal-transformer": {
+      "type": "object",
+      "description": "Specifies a PrincipalTransformer definition using case conversion.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Deprecated. Will be ignored."
+        },
+        "uppercase": {
+          "type": "boolean",
+          "description": "Whether to transform to UPPERCASE or lowercase. The default is true.",
+          "default": true
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "common-name-principal-transformer": {
+      "type": "object",
+      "description": "Specifies a PrincipalTransformer definition which extracts the first CommonName (CN) from a DistinguishedName (DN).",
+      "additionalProperties": false
+    },
+
+    "regex-principal-transformer": {
+      "type": "object",
+      "description": "Specifies a PrincipalTransformer definition using regular expressions and Matcher based replacement.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Deprecated. Will be ignored."
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Specifies the regular expression for this PrincipalTransformer."
+        },
+        "replacement": {
+          "type": "string",
+          "description": "Specifies the replacement string for the PrincipalTransformer."
+        },
+        "replace-all": {
+          "type": "boolean",
+          "description": "Replaces all occurrences instead of the first occurrence.",
+          "default": false
+        }
+      },
+      "required": ["pattern", "replacement"],
+      "additionalProperties": false
+    },
+
+    "ldap-identity-mapping": {
+      "type": "object",
+      "description": "Specifies configuration options that define how principals are mapped to corresponding entries in LDAP servers.",
+      "properties": {
+        "search-dn": {
+          "type": "string",
+          "description": "Names the context for query execution."
+        },
+        "rdn-identifier": {
+          "type": "string",
+          "description": "Specifies an LDAP attribute that contains the user name and appears in the path of new entries."
+        },
+        "search-recursive": {
+          "type": "boolean",
+          "description": "Performs recursive queries.",
+          "default": false
+        },
+        "search-time-limit": {
+          "type": "integer",
+          "description": "The time limit of LDAP search in milliseconds. Defaults to 10000 ms.",
+          "default": 10000
+        },
+        "filter-name": {
+          "type": "string",
+          "description": "Specifies the LDAP filter that retrieves an identity by name.",
+          "default": "(rdn_identifier={0})"
+        },
+        "attribute-mapping": {
+          "$ref": "#/$defs/ldap-attribute-mapping"
+        },
+        "user-password-mapper": {
+          "$ref": "#/$defs/ldap-user-password-mapper"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ldap-attribute-mapping": {
+      "type": "object",
+      "description": "Specifies the attribute mappings defined for this resource.",
+      "properties": {
+        "attribute": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ldap-attribute-filter"
+          }
+        },
+        "attribute-reference": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ldap-attribute-reference"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ldap-attribute-filter": {
+      "type": "object",
+      "description": "LDAP attribute filter mapping.",
+      "properties": {
+        "filter": {
+          "type": "string",
+          "description": "The filter to use to obtain the values for a specific attribute. String '{0}' will be replaced by username, '{1}' by user identity DN."
+        },
+        "filter-dn": {
+          "type": "string",
+          "description": "The name of the context where the filter should be performed."
+        },
+        "from": {
+          "type": "string",
+          "description": "The name of the LDAP attribute to map to an identity attribute."
+        },
+        "to": {
+          "type": "string",
+          "description": "The name of the identity attribute mapped from a specific LDAP attribute."
+        },
+        "search-recursive": {
+          "type": "boolean",
+          "description": "Indicates if attribute LDAP search queries are recursive.",
+          "default": true
+        },
+        "role-recursion": {
+          "type": "integer",
+          "description": "Sets recursive roles assignment - value determines maximum depth of recursion. (0 for no recursion)",
+          "default": 0
+        },
+        "role-recursion-name": {
+          "type": "string",
+          "description": "Determines LDAP attribute of role entry which will be substituted for '{0}' in filter-name when searching roles of role.",
+          "default": "cn"
+        },
+        "extract-rdn": {
+          "type": "string",
+          "description": "The RDN key to use as the value for an attribute, in case the value in its raw form is in X.500 format."
+        }
+      },
+      "required": ["filter"],
+      "additionalProperties": false
+    },
+
+    "ldap-attribute-reference": {
+      "type": "object",
+      "description": "LDAP attribute reference mapping.",
+      "properties": {
+        "reference": {
+          "type": "string",
+          "description": "The name of an LDAP attribute containing DN of entry to obtain value from."
+        },
+        "filter-dn": {
+          "type": "string",
+          "description": "The name of the context where the filter should be performed."
+        },
+        "from": {
+          "type": "string",
+          "description": "The name of the LDAP attribute to map to an identity attribute."
+        },
+        "to": {
+          "type": "string",
+          "description": "The name of the identity attribute mapped from a specific LDAP attribute."
+        },
+        "search-recursive": {
+          "type": "boolean",
+          "description": "Indicates if attribute LDAP search queries are recursive.",
+          "default": true
+        },
+        "role-recursion": {
+          "type": "integer",
+          "description": "Sets recursive roles assignment - value determines maximum depth of recursion. (0 for no recursion)",
+          "default": 0
+        },
+        "role-recursion-name": {
+          "type": "string",
+          "description": "Determines LDAP attribute of role entry which will be substituted for '{0}' in filter-name when searching roles of role.",
+          "default": "cn"
+        },
+        "extract-rdn": {
+          "type": "string",
+          "description": "The RDN key to use as the value for an attribute, in case the value in its raw form is in X.500 format."
+        }
+      },
+      "required": ["reference"],
+      "additionalProperties": false
+    },
+
+    "ldap-user-password-mapper": {
+      "type": "object",
+      "description": "Specifies the user password credential mapping defined for this resource.",
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "The name of the LDAP attribute to map to an identity user password credential."
+        },
+        "verifiable": {
+          "type": "boolean",
+          "description": "If the password credential is verifiable."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-local": {
+      "type": "object",
+      "description": "Defines a local security realm.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Names the security realm to logically separate multiple realms of the same type.",
+          "default": "local"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-properties": {
+      "type": "object",
+      "description": "Defines a properties-based security realm.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Names the security realm to logically separate multiple realms of the same type.",
+          "default": "properties"
+        },
+        "groups-attribute": {
+          "type": "string",
+          "description": "The attribute name for groups.",
+          "default": "Roles"
+        },
+        "user-properties": {
+          "$ref": "#/$defs/security-realm-user-properties"
+        },
+        "group-properties": {
+          "$ref": "#/$defs/security-realm-group-properties"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-user-properties": {
+      "type": "object",
+      "description": "User properties file configuration.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to the user properties file.",
+          "default": "users.properties"
+        },
+        "relative-to": {
+          "type": "string",
+          "description": "Base path for resolving relative paths.",
+          "default": "infinispan.server.config.path"
+        },
+        "digest-realm-name": {
+          "type": "string",
+          "description": "The digest realm name."
+        },
+        "plain-text": {
+          "type": "boolean",
+          "description": "Whether passwords are stored in plain text.",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-group-properties": {
+      "type": "object",
+      "description": "Group properties file configuration.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The path to the properties file to use for user to group mapping.",
+          "default": "groups.properties"
+        },
+        "relative-to": {
+          "type": "string",
+          "description": "The name of a system property which will be used to resolve the path to the group properties file.",
+          "default": "infinispan.server.config.path"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-token": {
+      "type": "object",
+      "description": "Defines a token-based security realm.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Names the security realm to logically separate multiple realms of the same type.",
+          "default": "token"
+        },
+        "auth-server-url": {
+          "type": "string",
+          "description": "The URL of the authentication server."
+        },
+        "client-id": {
+          "type": "string",
+          "description": "The client identifier."
+        },
+        "principal-claim": {
+          "type": "string",
+          "description": "The claim to use as the principal.",
+          "default": "username"
+        },
+        "jwt": {
+          "$ref": "#/$defs/jwt"
+        },
+        "oauth2-introspection": {
+          "$ref": "#/$defs/oauth2-introspection"
+        }
+      },
+      "required": ["auth-server-url", "client-id"],
+      "oneOf": [
+        { "required": ["jwt"] },
+        { "required": ["oauth2-introspection"] }
+      ],
+      "additionalProperties": false
+    },
+
+    "jwt": {
+      "type": "object",
+      "description": "JWT token validation configuration.",
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "description": "Space-separated list of allowed issuers for JWT tokens."
+        },
+        "audience": {
+          "type": "string",
+          "description": "Space-separated list of audiences supported by this configuration."
+        },
+        "public-key": {
+          "type": "string",
+          "description": "A default public key in PEM format used to validate the signature of tokens without kid header parameter."
+        },
+        "jku-timeout": {
+          "type": "string",
+          "description": "A timeout for cached jwks when using jku claim. Default is 2m. Supports time units: ms, s, m, h, d.",
+          "default": "2m"
+        },
+        "connection-timeout": {
+          "type": "string",
+          "description": "Sets the timeout for connections to the JKU server. Default is 2s. Supports time units: ms, s, m, h, d.",
+          "default": "2s"
+        },
+        "read-timeout": {
+          "type": "string",
+          "description": "Sets the read timeout for the JKU server. Default is 2s. Supports time units: ms, s, m, h, d.",
+          "default": "2s"
+        },
+        "client-ssl-context": {
+          "type": "string",
+          "description": "The name of a realm which provides a trust store with which to validate SSL client connections."
+        },
+        "host-name-verification-policy": {
+          "type": "string",
+          "description": "A HostnameVerifier that will be used to validate the hostname when using SSL/TLS. Can be ANY or DEFAULT."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "oauth2-introspection": {
+      "type": "object",
+      "description": "OAuth2 token introspection configuration.",
+      "properties": {
+        "client-id": {
+          "type": "string",
+          "description": "The identifier of a client registered within the OAuth2 Authorization Server."
+        },
+        "client-secret": {
+          "type": "string",
+          "description": "The secret of the client identified by the given clientId."
+        },
+        "introspection-url": {
+          "type": "string",
+          "description": "An URL pointing to a RFC-7662 OAuth2 Token Introspection compatible endpoint."
+        },
+        "connection-timeout": {
+          "type": "string",
+          "description": "Sets the timeout for connections to the OAuth2 server. Default is 2s. Supports time units: ms, s, m, h, d.",
+          "default": "2s"
+        },
+        "read-timeout": {
+          "type": "string",
+          "description": "Sets the read timeout for the OAuth2 server. Default is 2s. Supports time units: ms, s, m, h, d.",
+          "default": "2s"
+        },
+        "client-ssl-context": {
+          "type": "string",
+          "description": "The name of a realm which provides a trust store with which to validate SSL client connections."
+        },
+        "host-name-verification-policy": {
+          "type": "string",
+          "description": "A HostnameVerifier that will be used to validate the hostname when using SSL/TLS. Can be ANY or DEFAULT."
+        },
+        "credential-reference": {
+          "$ref": "#/$defs/credential-reference"
+        }
+      },
+      "required": ["client-id", "introspection-url"],
+      "additionalProperties": false
+    },
+
+    "security-realm-trust": {
+      "type": "object",
+      "description": "Defines a truststore security realm.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Names the security realm to logically separate multiple realms of the same type.",
+          "default": "trust"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-distributed": {
+      "type": "object",
+      "description": "A realm definition for authentication and authorization of identities distributed between multiple realms.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Names the security realm to logically separate multiple realms of the same type.",
+          "default": "distributed"
+        },
+        "realms": {
+          "type": "string",
+          "description": "A space-separated list of security realms that should be used for authentication until one succeeds."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "security-realm-aggregate": {
+      "type": "object",
+      "description": "A realm definition for authentication and authorization of identities aggregated between multiple realms.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Names the security realm to logically separate multiple realms of the same type.",
+          "default": "aggregate"
+        },
+        "authentication-realm": {
+          "type": "string",
+          "description": "The name of a security realm that should be used for authentication."
+        },
+        "authorization-realms": {
+          "type": "string",
+          "description": "A space-separated list of security realm names that should be used for authorization."
+        },
+        "name-rewriter": {
+          "$ref": "#/$defs/name-rewriter"
+        }
+      },
+      "required": ["authentication-realm"],
+      "additionalProperties": false
+    },
+
+    "endpoints": {
+      "type": "object",
+      "description": "Endpoint definitions.",
+      "properties": {
+        "socket-binding": {
+          "type": "string",
+          "description": "Specifies the socket the endpoint connector binds to."
+        },
+        "security-realm": {
+          "type": "string",
+          "description": "Names the security realm to use for authentication, cache authorization, and encryption."
+        },
+        "endpoint": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/endpoint"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "endpoint": {
+      "type": "object",
+      "description": "Defines a protocol endpoint.",
+      "properties": {
+        "socket-binding": {
+          "type": "string",
+          "description": "Specifies the socket the endpoint connector binds to."
+        },
+        "security-realm": {
+          "type": "string",
+          "description": "Names the security realm to use for authentication, cache authorization, and encryption."
+        },
+        "admin": {
+          "type": "boolean",
+          "description": "Enable administrative features on this endpoint. Defaults to true.",
+          "default": true
+        },
+        "metrics-auth": {
+          "type": "boolean",
+          "description": "Enable metrics authentication on this endpoint. Defaults to true.",
+          "default": true
+        },
+        "io-threads": {
+          "type": "integer",
+          "description": "Sets the number of I/O threads. Defaults to 2 * cpu cores."
+        },
+        "idle-timeout": {
+          "type": "string",
+          "description": "Specifies the maximum time that client connections can remain inactive. Defaults to 0 (no timeout). Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        },
+        "tcp-nodelay": {
+          "type": "boolean",
+          "description": "Enables TCP NODELAY on the TCP stack."
+        },
+        "tcp-keepalive": {
+          "type": "boolean",
+          "description": "Enables TCP KEEPALIVE on the TCP stack."
+        },
+        "send-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the send buffer."
+        },
+        "receive-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the receive buffer."
+        },
+        "require-ssl-client-auth": {
+          "type": "boolean",
+          "description": "Requires clients to use certificates for authentication."
+        },
+        "ip-filter": {
+          "$ref": "#/$defs/ip-filter"
+        },
+        "hotrod-connector": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/hotrod-connector"
+          }
+        },
+        "rest-connector": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/rest-connector"
+          }
+        },
+        "memcached-connector": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/memcached-connector"
+          }
+        },
+        "resp-connector": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resp-connector"
+          }
+        }
+      },
+      "required": ["socket-binding"],
+      "additionalProperties": false
+    },
+
+    "ip-filter": {
+      "type": "object",
+      "description": "IP filter rules.",
+      "properties": {
+        "accept": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ip-rule"
+          }
+        },
+        "reject": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ip-rule"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ip-rule": {
+      "type": "object",
+      "description": "An IP filter rule.",
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "A network mask using CIDR notation."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "protocol-connector-properties": {
+      "type": "object",
+      "description": "Common protocol connector properties.",
+      "properties": {
+        "socket-binding": {
+          "type": "string",
+          "description": "Specifies the socket this connector binds to."
+        },
+        "io-threads": {
+          "type": "integer",
+          "description": "Sets the number of I/O threads."
+        },
+        "idle-timeout": {
+          "type": "string",
+          "description": "Specifies the maximum time that client connections can remain inactive. Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        },
+        "tcp-nodelay": {
+          "type": "boolean",
+          "description": "Enables TCP NODELAY on the TCP stack."
+        },
+        "tcp-keepalive": {
+          "type": "boolean",
+          "description": "Enables TCP KEEPALIVE on the TCP stack."
+        },
+        "send-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the send buffer."
+        },
+        "receive-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the receive buffer."
+        },
+        "require-ssl-client-auth": {
+          "type": "boolean",
+          "description": "Requires clients to use certificates for authentication."
+        }
+      }
+    },
+
+    "hotrod-connector": {
+      "type": "object",
+      "description": "Hot Rod protocol connector.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Logically names this connector."
+        },
+        "socket-binding": {
+          "type": "string",
+          "description": "Specifies the socket this connector binds to."
+        },
+        "io-threads": {
+          "type": "integer",
+          "description": "Sets the number of I/O threads."
+        },
+        "idle-timeout": {
+          "type": "string",
+          "description": "Specifies the maximum time that client connections can remain inactive. Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        },
+        "tcp-nodelay": {
+          "type": "boolean",
+          "description": "Enables TCP NODELAY on the TCP stack."
+        },
+        "tcp-keepalive": {
+          "type": "boolean",
+          "description": "Enables TCP KEEPALIVE on the TCP stack."
+        },
+        "send-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the send buffer."
+        },
+        "receive-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the receive buffer."
+        },
+        "require-ssl-client-auth": {
+          "type": "boolean",
+          "description": "Requires clients to use certificates for authentication."
+        },
+        "external-host": {
+          "type": "string",
+          "description": "Sets an external address for this node to accept client connections."
+        },
+        "external-port": {
+          "type": "integer",
+          "description": "Sets an external port for this node."
+        },
+        "max-content-length": {
+          "type": "string",
+          "description": "Sets the maximum size a request from a remote client can be."
+        },
+        "security-realm": {
+          "type": "string",
+          "description": "Names the security realm to use for authentication, cache authorization, and encryption."
+        },
+        "network-prefix-override": {
+          "type": "boolean",
+          "description": "Configures whether to use the netmask that the host system provides for interfaces or override with netmasks that follow IANA private address conventions.",
+          "default": true
+        },
+        "ip-filter": {
+          "$ref": "#/$defs/ip-filter"
+        },
+        "topology-state-transfer": {
+          "$ref": "#/$defs/topology-state-transfer"
+        },
+        "authentication": {
+          "$ref": "#/$defs/authentication"
+        },
+        "encryption": {
+          "$ref": "#/$defs/encryption"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "rest-connector": {
+      "type": "object",
+      "description": "REST protocol connector.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Logically names this connector."
+        },
+        "socket-binding": {
+          "type": "string",
+          "description": "Specifies the socket this connector binds to."
+        },
+        "io-threads": {
+          "type": "integer",
+          "description": "Sets the number of I/O threads."
+        },
+        "idle-timeout": {
+          "type": "string",
+          "description": "Specifies the maximum time that client connections can remain inactive. Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        },
+        "tcp-nodelay": {
+          "type": "boolean",
+          "description": "Enables TCP NODELAY on the TCP stack."
+        },
+        "tcp-keepalive": {
+          "type": "boolean",
+          "description": "Enables TCP KEEPALIVE on the TCP stack."
+        },
+        "send-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the send buffer."
+        },
+        "receive-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the receive buffer."
+        },
+        "require-ssl-client-auth": {
+          "type": "boolean",
+          "description": "Requires clients to use certificates for authentication."
+        },
+        "context-path": {
+          "type": "string",
+          "description": "Sets the context path for REST connectors. Defaults to the root context."
+        },
+        "extended-headers": {
+          "type": "string",
+          "description": "Enables extended headers. Values are NEVER / ON_DEMAND (default).",
+          "enum": ["NEVER", "ON_DEMAND"],
+          "default": "ON_DEMAND"
+        },
+        "max-content-length": {
+          "type": "integer",
+          "description": "Sets the maximum allowed content length."
+        },
+        "compression-level": {
+          "type": "integer",
+          "description": "Sets the level for compressed requests and responses.",
+          "default": 6
+        },
+        "compression-threshold": {
+          "type": "integer",
+          "description": "The response body is compressed when the size exceeds the threshold. 0 will enable compression for all responses.",
+          "default": 0
+        },
+        "security-realm": {
+          "type": "string",
+          "description": "Names the security realm to use for authentication, cache authorization, and encryption."
+        },
+        "ip-filter": {
+          "$ref": "#/$defs/ip-filter"
+        },
+        "authentication": {
+          "$ref": "#/$defs/rest-authentication"
+        },
+        "cors-rules": {
+          "$ref": "#/$defs/cors-rules"
+        },
+        "encryption": {
+          "$ref": "#/$defs/encryption"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "memcached-connector": {
+      "type": "object",
+      "description": "Memcached protocol connector.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Logically names this connector."
+        },
+        "socket-binding": {
+          "type": "string",
+          "description": "Specifies the socket this connector binds to."
+        },
+        "io-threads": {
+          "type": "integer",
+          "description": "Sets the number of I/O threads."
+        },
+        "idle-timeout": {
+          "type": "string",
+          "description": "Specifies the maximum time that client connections can remain inactive. Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        },
+        "tcp-nodelay": {
+          "type": "boolean",
+          "description": "Enables TCP NODELAY on the TCP stack."
+        },
+        "tcp-keepalive": {
+          "type": "boolean",
+          "description": "Enables TCP KEEPALIVE on the TCP stack."
+        },
+        "send-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the send buffer."
+        },
+        "receive-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the receive buffer."
+        },
+        "require-ssl-client-auth": {
+          "type": "boolean",
+          "description": "Requires clients to use certificates for authentication."
+        },
+        "cache": {
+          "type": "string",
+          "description": "Names the cache that the Memcached connector exposes. Defaults to memcachedCache."
+        },
+        "client-encoding": {
+          "type": "string",
+          "description": "Sets client encoding for values. Applies to memcached text protocol only."
+        },
+        "max-content-length": {
+          "type": "string",
+          "description": "Sets the maximum size a request from a remote client can be."
+        },
+        "protocol": {
+          "type": "string",
+          "description": "The protocol supported by this connector. One of AUTO (default), TEXT or BINARY.",
+          "enum": ["AUTO", "TEXT", "BINARY"],
+          "default": "AUTO"
+        },
+        "security-realm": {
+          "type": "string",
+          "description": "Names the security realm to use for authentication, cache authorization, and encryption."
+        },
+        "ip-filter": {
+          "$ref": "#/$defs/ip-filter"
+        },
+        "authentication": {
+          "$ref": "#/$defs/memcached-authentication"
+        },
+        "encryption": {
+          "$ref": "#/$defs/encryption"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "resp-connector": {
+      "type": "object",
+      "description": "RESP protocol connector.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Logically names this connector."
+        },
+        "socket-binding": {
+          "type": "string",
+          "description": "Specifies the socket this connector binds to."
+        },
+        "io-threads": {
+          "type": "integer",
+          "description": "Sets the number of I/O threads."
+        },
+        "idle-timeout": {
+          "type": "string",
+          "description": "Specifies the maximum time that client connections can remain inactive. Supports time units: ms, s, m, h, d.",
+          "default": "0"
+        },
+        "tcp-nodelay": {
+          "type": "boolean",
+          "description": "Enables TCP NODELAY on the TCP stack."
+        },
+        "tcp-keepalive": {
+          "type": "boolean",
+          "description": "Enables TCP KEEPALIVE on the TCP stack."
+        },
+        "send-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the send buffer."
+        },
+        "receive-buffer-size": {
+          "type": "integer",
+          "description": "Sets the size of the receive buffer."
+        },
+        "require-ssl-client-auth": {
+          "type": "boolean",
+          "description": "Requires clients to use certificates for authentication."
+        },
+        "cache": {
+          "type": "string",
+          "description": "Names the cache that the RESP connector exposes. Defaults to respCache."
+        },
+        "max-content-length": {
+          "type": "string",
+          "description": "Sets the maximum size a request from a remote client can be."
+        },
+        "security-realm": {
+          "type": "string",
+          "description": "Specifies a security realm for the RESP connector."
+        },
+        "ip-filter": {
+          "$ref": "#/$defs/ip-filter"
+        },
+        "authentication": {
+          "$ref": "#/$defs/resp-authentication"
+        },
+        "encryption": {
+          "$ref": "#/$defs/encryption"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "topology-state-transfer": {
+      "type": "object",
+      "description": "Topology state transfer configuration for Hot Rod.",
+      "properties": {
+        "lock-timeout": {
+          "type": "string",
+          "description": "Configures lock acquisition timeouts for topology caches. Defaults to 10s. Supports time units: ms, s, m, h, d.",
+          "default": "10s"
+        },
+        "replication-timeout": {
+          "type": "string",
+          "description": "Configures replication timeouts for topology caches. Defaults to 10s. Supports time units: ms, s, m, h, d.",
+          "default": "10s"
+        },
+        "await-initial-retrieval": {
+          "type": "boolean",
+          "description": "Configures whether initial state retrieval should happen immediately at startup."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "authentication": {
+      "type": "object",
+      "description": "Hot Rod authentication configuration.",
+      "properties": {
+        "security-realm": {
+          "type": "string",
+          "description": "Names the security realm to use for authentication and authorization. Deprecated since 12.1."
+        },
+        "sasl": {
+          "$ref": "#/$defs/sasl"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "sasl": {
+      "type": "object",
+      "description": "The configuration of the SASL authentication layer for this server.",
+      "properties": {
+        "server-principal": {
+          "type": "string",
+          "description": "The principal to use as the server identity. Required for Kerberos-based SASL mechs (e.g. GSSAPI, GS2_KRB5)."
+        },
+        "server-name": {
+          "type": "string",
+          "description": "Names the server that is exposed to clients."
+        },
+        "mechanisms": {
+          "type": "string",
+          "description": "A space-separated list of allowed SASL mechanism names."
+        },
+        "qop": {
+          "type": "string",
+          "description": "A space-separated list of quality-of-protection values, in decreasing order of preference.",
+          "enum": ["auth", "auth-int", "auth-conf"]
+        },
+        "strength": {
+          "type": "string",
+          "description": "A space-separated list of cipher strength values, in decreasing order of preference.",
+          "enum": ["low", "medium", "high"]
+        },
+        "policy": {
+          "type": "string",
+          "description": "A space-separated list of policies to use to narrow down the available set of mechanisms.",
+          "enum": ["forward-secrecy", "no-active", "no-anonymous", "no-dictionary", "no-plain-text", "pass-credentials"]
+        },
+        "property": {
+          "type": "array",
+          "description": "Additional properties required by the specified mechanisms.",
+          "items": {
+            "$ref": "#/$defs/property"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "resp-authentication": {
+      "type": "object",
+      "description": "RESP authentication configuration.",
+      "properties": {
+        "security-realm": {
+          "type": "string",
+          "description": "The security realm to use for authentication/authorization. Deprecated since 12.1."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "rest-authentication": {
+      "type": "object",
+      "description": "REST authentication configuration.",
+      "properties": {
+        "security-realm": {
+          "type": "string",
+          "description": "The security realm to use for authentication/authorization. Deprecated since 12.1."
+        },
+        "mechanisms": {
+          "type": "string",
+          "description": "The authentication method to require. Can be NONE, BASIC, DIGEST, CLIENT_CERT, SPNEGO. Defaults to NONE.",
+          "default": "NONE"
+        },
+        "server-principal": {
+          "type": "string",
+          "description": "The principal to use as the server identity. Required for Kerberos-based mechs (e.g. SPNEGO)."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "memcached-authentication": {
+      "type": "object",
+      "description": "Memcached authentication configuration.",
+      "properties": {
+        "sasl": {
+          "$ref": "#/$defs/sasl"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "encryption": {
+      "type": "object",
+      "description": "Encryption configuration.",
+      "properties": {
+        "require-ssl-client-auth": {
+          "type": "boolean",
+          "description": "Requires clients to use certificates for authentication."
+        },
+        "security-realm": {
+          "type": "string",
+          "description": "Names the security realm that contains the SSL keystore. Deprecated since 12.1."
+        },
+        "sni": {
+          "type": "array",
+          "description": "TLS SNI mappings.",
+          "items": {
+            "$ref": "#/$defs/sni"
+          }
+        }
+      },
+      "required": ["security-realm"],
+      "additionalProperties": false
+    },
+
+    "sni": {
+      "type": "object",
+      "description": "An element specifying a TLS SNI mapping.",
+      "properties": {
+        "host-name": {
+          "type": "string",
+          "description": "TLS SNI host name."
+        },
+        "security-realm": {
+          "type": "string",
+          "description": "A corresponding security realm. If none is specified, the default will be used."
+        }
+      },
+      "required": ["host-name"],
+      "additionalProperties": false
+    },
+
+    "cors-rules": {
+      "type": "object",
+      "description": "Configures CORS (Cross Origin Resource Sharing) for the REST Server.",
+      "properties": {
+        "cors-rule": {
+          "type": "array",
+          "description": "CORS rules that specify the permissions for cross-domain requests based on the origin.",
+          "items": {
+            "$ref": "#/$defs/cors-rule"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "cors-rule": {
+      "type": "object",
+      "description": "Defines a CORS rule for one or more origins.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Defines a name for a CORS rule."
+        },
+        "allow-credentials": {
+          "type": "boolean",
+          "description": "Configures if CORS requests use credentials and sets the CORS 'Access-Control-Allow-Credentials' response header.",
+          "default": false
+        },
+        "max-age-seconds": {
+          "type": "integer",
+          "description": "Configures how long CORS preflight request headers can be cached and sets the CORS 'Access-Control-Max-Age' response header.",
+          "default": 0
+        },
+        "allowed-origins": {
+          "type": "string",
+          "description": "Specifies the CORS 'Access-Control-Allow-Origin' header that controls which origins can access resources."
+        },
+        "allowed-methods": {
+          "type": "string",
+          "description": "Space-separated list specifying the CORS 'Access-Control-Allow-Methods' header in the preflight response."
+        },
+        "allowed-headers": {
+          "type": "string",
+          "description": "Space-separated list specifying the CORS 'Access-Control-Allow-Headers' header in the preflight response."
+        },
+        "expose-headers": {
+          "type": "string",
+          "description": "Space-separated list specifying the CORS 'Access-Control-Expose-Headers' header in the preflight response."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "property": {
+      "type": "object",
+      "description": "A name/value property.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Defines the name of a property."
+        },
+        "value": {
+          "type": "string",
+          "description": "The value of the property."
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    }
+  }
+}
