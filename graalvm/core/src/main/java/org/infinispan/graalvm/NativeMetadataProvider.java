@@ -24,7 +24,11 @@ import org.infinispan.commons.graalvm.ReflectionProcessor;
 import org.infinispan.commons.graalvm.ReflectiveClass;
 import org.infinispan.commons.graalvm.Resource;
 import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
+import org.infinispan.marshall.protostream.impl.adapters.ListAdapter;
+import org.infinispan.marshall.protostream.impl.adapters.MapAdapter;
+import org.infinispan.marshall.protostream.impl.adapters.SetAdapter;
 import org.infinispan.notifications.Listener;
+import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.jboss.jandex.IndexView;
 import org.jgroups.Version;
 import org.jgroups.conf.ClassConfigurator;
@@ -239,38 +243,15 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
             )
             .addClassesWithAnnotation(false, true, Listener.class)
             .addClasses("org.infinispan.remoting.transport.jgroups.JGroupsTransport$ChannelCallbacks")
+            .addClasses(ListAdapter.class.getAnnotation(ProtoAdapter.class).subClassNames())
+            .addClasses(MapAdapter.class.getAnnotation(ProtoAdapter.class).subClassNames())
+            .addClasses(SetAdapter.class.getAnnotation(ProtoAdapter.class).subClassNames())
             .addClasses(
                   // XML parsing
                   "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl",
                   "com.sun.org.apache.xerces.internal.jaxp.datatype.DatatypeFactoryImpl",
                   "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl",
-                  "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
-
-                  // Internal List Implementations
-                  "java.util.Arrays$ArrayList",
-                  "java.util.ArrayList$SubList",
-                  "java.util.AbstractList$RandomAccessSubList",
-                  "java.util.Collections$EmptyList",
-                  "java.util.Collections$SingletonList",
-                  "java.util.Collections$SynchronizedRandomAccessList",
-                  "java.util.Collections$UnmodifiableRandomAccessList",
-                  "java.util.ImmutableCollections$ListN",
-                  "java.util.ImmutableCollections$List12",
-
-                  // Internal Map Implementations
-                  "java.util.HashMap",
-                  "java.util.Collections$EmptyMap",
-                  "java.util.Collections$SingletonMap",
-                  "java.util.ImmutableCollections$Map1",
-                  "java.util.ImmutableCollections$MapN",
-
-                  // Internal Set Implementations
-                  "java.util.Collections$EmptySet",
-                  "java.util.ImmutableCollections$SetN",
-                  "java.util.ImmutableCollections$Set12",
-                  "java.util.Collections$SingletonSet",
-                  "java.util.Collections$SynchronizedSet",
-                  "java.util.Collections$UnmodifiableSet"
+                  "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl"
             );
    }
 

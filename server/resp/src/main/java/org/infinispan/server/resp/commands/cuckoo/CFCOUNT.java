@@ -1,6 +1,5 @@
-package org.infinispan.server.resp.commands.bloom;
+package org.infinispan.server.resp.commands.cuckoo;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -14,19 +13,19 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * BF.EXISTS key item
+ * CF.COUNT key item
  * <p>
- * Determines whether a given item was added to a Bloom filter.
+ * Returns an estimation of the number of times an item was added to a Cuckoo filter.
  *
- * @see <a href="https://redis.io/commands/bf.exists/">BF.EXISTS</a>
+ * @see <a href="https://redis.io/commands/cf.count/">CF.COUNT</a>
  * @since 16.2
  */
-public class BFEXISTS extends RespCommand implements Resp3Command {
+public class CFCOUNT extends RespCommand implements Resp3Command {
 
-   public BFEXISTS() {
-      super("BF.EXISTS", 3, 1, 1, 1,
-            // No @slow: matches COMMAND INFO output, despite docs claiming @slow
-            AclCategory.BLOOM.mask() | AclCategory.READ.mask());
+   public CFCOUNT() {
+      super("CF.COUNT", 3, 1, 1, 1,
+            // No @fast: matches COMMAND INFO output, despite docs claiming @fast
+            AclCategory.CUCKOO.mask() | AclCategory.READ.mask());
    }
 
    @Override
@@ -38,9 +37,9 @@ public class BFEXISTS extends RespCommand implements Resp3Command {
       FunctionalMap.ReadOnlyMap<byte[], Object> cache =
             FunctionalMap.create(handler.typedCache(null)).toReadOnlyMap();
 
-      BloomFilterExistsFunction function = new BloomFilterExistsFunction(Collections.singletonList(item));
-      CompletionStage<List<Boolean>> result = cache.eval(key, function);
+      CuckooFilterCountFunction function = new CuckooFilterCountFunction(item);
+      CompletionStage<Long> result = cache.eval(key, function);
 
-      return handler.stageToReturn(result, ctx, (r, w) -> w.booleans(r.get(0)));
+      return handler.stageToReturn(result, ctx, (r, w) -> w.integers(r));
    }
 }

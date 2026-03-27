@@ -9,6 +9,7 @@ import org.infinispan.marshall.protostream.impl.MarshallableList;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.server.resp.commands.ProbabilisticErrors;
 import org.infinispan.util.function.SerializableFunction;
 
 /**
@@ -85,7 +86,7 @@ public final class BloomFilterInsertFunction
 
       if (filter == null) {
          if (noCreate) {
-            throw new IllegalStateException("ERR not found");
+            throw new IllegalStateException(ProbabilisticErrors.ERR_NOT_FOUND);
          }
          filter = new BloomFilter(errorRate, capacity, expansion, nonScaling);
       }

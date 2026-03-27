@@ -1,6 +1,5 @@
-package org.infinispan.server.resp.commands.bloom;
+package org.infinispan.server.resp.commands.cuckoo;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -10,37 +9,37 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.commands.cuckoo.CuckooFilterInfoFunction.CuckooFilterInfo;
+import org.infinispan.server.resp.serialization.Resp3Type;
 
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * BF.EXISTS key item
+ * CF.INFO key
  * <p>
- * Determines whether a given item was added to a Bloom filter.
+ * Returns information about a Cuckoo filter.
  *
- * @see <a href="https://redis.io/commands/bf.exists/">BF.EXISTS</a>
+ * @see <a href="https://redis.io/commands/cf.info/">CF.INFO</a>
  * @since 16.2
  */
-public class BFEXISTS extends RespCommand implements Resp3Command {
+public class CFINFO extends RespCommand implements Resp3Command {
 
-   public BFEXISTS() {
-      super("BF.EXISTS", 3, 1, 1, 1,
-            // No @slow: matches COMMAND INFO output, despite docs claiming @slow
-            AclCategory.BLOOM.mask() | AclCategory.READ.mask());
+   public CFINFO() {
+      super("CF.INFO", 2, 1, 1, 1,
+            AclCategory.CUCKOO.mask() | AclCategory.READ.mask() | AclCategory.FAST.mask());
    }
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       byte[] key = arguments.get(0);
-      byte[] item = arguments.get(1);
 
       FunctionalMap.ReadOnlyMap<byte[], Object> cache =
             FunctionalMap.create(handler.typedCache(null)).toReadOnlyMap();
 
-      BloomFilterExistsFunction function = new BloomFilterExistsFunction(Collections.singletonList(item));
-      CompletionStage<List<Boolean>> result = cache.eval(key, function);
+      CompletionStage<CuckooFilterInfo> result = cache.eval(key, CuckooFilterInfoFunction.INSTANCE);
 
-      return handler.stageToReturn(result, ctx, (r, w) -> w.booleans(r.get(0)));
+      return handler.stageToReturn(result, ctx, (info, w) ->
+            w.map(info.toMap(), Resp3Type.SIMPLE_STRING, Resp3Type.INTEGER));
    }
 }
