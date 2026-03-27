@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
@@ -106,9 +107,15 @@ public class OpenAPIResource implements ResourceHandler {
                   ? invocation.name()
                   : "-";
             List<Parameter> parameters = new ArrayList<>(5);
+            Set<String> declaredPathParams = invocation.parameters().stream()
+                  .filter(param -> param.in() == ParameterIn.PATH)
+                  .map(Parameter::name)
+                  .collect(Collectors.toSet());
+
             for (String param : PathItem.retrieveAllPathVariables(p)) {
-               Parameter parameter = new Parameter(param, ParameterIn.PATH, true, Schema.STRING, param);
-               parameters.add(parameter);
+               if (!declaredPathParams.contains(param)) {
+                  parameters.add(new Parameter(param, ParameterIn.PATH, true, Schema.STRING, param));
+               }
             }
             parameters.addAll(invocation.parameters());
             if (invocation.requestBody() != null) {
