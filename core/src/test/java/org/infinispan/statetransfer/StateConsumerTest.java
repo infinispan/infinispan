@@ -326,7 +326,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             new ControlledTimeService(),
             TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutorService),
             clusterPublisherManager,
-            transport
+            transport,
+            mock(StateTransferTracker.class)
             );
    }
 
