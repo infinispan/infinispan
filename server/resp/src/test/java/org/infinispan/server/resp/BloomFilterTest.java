@@ -667,6 +667,176 @@ public class BloomFilterTest extends SingleNodeRespBaseTest {
       assertThat(falsePositives).isLessThan(10);
    }
 
+   @Test
+   public void testBfInsertBadCapacity() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Capacity <= 0
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k()).add("CAPACITY").add("0").add("ITEMS").add("item1")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("Bad capacity");
+
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k() + "2").add("CAPACITY").add("-5").add("ITEMS").add("item1")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("Bad capacity");
+   }
+
+   @Test
+   public void testBfInsertBadErrorRate() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Error rate <= 0
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k()).add("ERROR").add("0").add("ITEMS").add("item1")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("Bad error rate");
+
+      // Error rate >= 1
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k() + "2").add("ERROR").add("1.5").add("ITEMS").add("item1")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("Bad error rate");
+   }
+
+   @Test
+   public void testBfInsertBadExpansion() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Expansion <= 0
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k()).add("EXPANSION").add("0").add("ITEMS").add("item1")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("Bad expansion");
+   }
+
+   @Test
+   public void testBfInsertMissingOptionValues() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // CAPACITY without value
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k()).add("CAPACITY")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+
+      // ERROR without value
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k() + "2").add("ERROR")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+
+      // EXPANSION without value
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k() + "3").add("EXPANSION")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   @Test
+   public void testBfInsertUnknownArgument() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k()).add("BADARG").add("ITEMS").add("item1")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   @Test
+   public void testBfInsertNoItems() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // No ITEMS keyword
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k()).add("CAPACITY").add("100")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+
+      // ITEMS with nothing after
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k() + "2").add("ITEMS")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   @Test
+   public void testBfInsertNocreateWithCapacity() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // NOCREATE + CAPACITY combination should fail
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k())
+                  .add("NOCREATE").add("CAPACITY").add("500").add("ITEMS").add("item1")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("NOCREATE");
+   }
+
+   @Test
+   public void testBfInsertNocreateWithError() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // NOCREATE + ERROR (non-default) combination should fail
+      assertThatThrownBy(() -> redis.dispatch(
+            command("BF.INSERT"),
+            new BooleanListOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k())
+                  .add("NOCREATE").add("ERROR").add("0.001").add("ITEMS").add("item1")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("NOCREATE");
+   }
+
+   @Test
+   public void testBfInfoSpecificFieldSizeAndExpansion() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Create filter
+      redis.dispatch(
+            command("BF.RESERVE"),
+            new StatusOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k()).add("0.01").add("1000").add("EXPANSION").add("3"));
+
+      redis.dispatch(
+            command("BF.ADD"),
+            new BooleanOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k()).add("item1"));
+
+      // Get SIZE
+      List<Object> info = redis.dispatch(
+            command("BF.INFO"),
+            new ArrayOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k()).add("SIZE"));
+      assertThat(info).hasSize(1);
+      assertThat((Long) info.get(0)).isGreaterThan(0L);
+
+      // Get EXPANSION
+      info = redis.dispatch(
+            command("BF.INFO"),
+            new ArrayOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).addKey(k()).add("EXPANSION"));
+      assertThat(info).hasSize(1);
+      assertThat((Long) info.get(0)).isEqualTo(3L);
+   }
+
    private SimpleCommand command(String name) {
       return new SimpleCommand(name);
    }

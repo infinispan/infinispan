@@ -14,6 +14,8 @@ import org.infinispan.server.resp.hll.internal.ExplicitSet;
             CompactSet.class,
             org.infinispan.server.resp.commands.bloom.BloomFilter.class,
             org.infinispan.server.resp.commands.bloom.BloomFilter.SubFilter.class,
+            org.infinispan.server.resp.commands.cuckoo.CuckooFilter.class,
+            org.infinispan.server.resp.commands.cuckoo.CuckooFilter.SubFilter.class,
       },
       schemaFileName = "persistence.resp.proto",
       schemaFilePath = "org/infinispan/server/resp",

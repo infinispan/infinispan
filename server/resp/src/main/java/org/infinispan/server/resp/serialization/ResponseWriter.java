@@ -318,6 +318,7 @@ public interface ResponseWriter {
       error("-ERR no such key");
    }
 
+
    default void wrongType() {
       error("-WRONGTYPE Operation against a key holding the wrong kind of value");
    }

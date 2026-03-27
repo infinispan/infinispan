@@ -13,6 +13,7 @@ import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.ProbabilisticErrors;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
@@ -47,7 +48,7 @@ public class BFRESERVE extends RespCommand implements Resp3Command {
       }
 
       if (capacity <= 0) {
-         handler.writer().customError("ERR (capacity should be larger than 0)");
+         handler.writer().customError(ProbabilisticErrors.ERR_CAPACITY);
          return handler.myStage();
       }
 
