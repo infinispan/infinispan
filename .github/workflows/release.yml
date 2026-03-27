@@ -231,5 +231,6 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: >
-          gh variable set "RELEASE_$(echo '${{ inputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "${{ inputs.nextVersion }}" --org infinispan;
+        run: |
+          
+          gh variable set "RELEASE_$(echo ${{ inputs.version }} | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo ${{ inputs.nextVersion }} | cut -f 1 -d '-')" --org infinispan;
