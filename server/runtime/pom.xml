@@ -153,6 +153,11 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-layout-template-json</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
          <groupId>org.latencyutils</groupId>
          <artifactId>LatencyUtils</artifactId>
          <scope>compile</scope>
