@@ -767,6 +767,12 @@
             <scope>provided</scope>
          </dependency>
          <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-layout-template-json</artifactId>
+            <version>${version.log4j}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analysis-common</artifactId>
             <version>${version.lucene}</version>
