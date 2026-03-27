@@ -1,6 +1,7 @@
 package org.infinispan.spring.starter.remote.actuator;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -108,7 +109,11 @@ public class RemoteInfinispanCacheMeterBinder<K, V> extends CacheMeterBinder<Rem
    }
 
    private boolean isNearCacheEnabled() {
-      return getCache().clientStatistics().getNearCacheSize() > 0;
+      RemoteCacheConfiguration remoteCacheConfiguration = getCache().getRemoteCacheContainer()
+            .getConfiguration()
+            .remoteCaches()
+            .get(getCache().getName());
+      return remoteCacheConfiguration != null && remoteCacheConfiguration.nearCacheMode().enabled();
    }
 
 }

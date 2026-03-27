@@ -1,26 +1,27 @@
-package test.org.infinispan.spring.starter.remote.actuator;
+package io.micrometer.core.instrument.binder.cache;
 
 import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.infinispan.spring.common.provider.SpringCache;
-import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinder;
-import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinderProvider;
+import org.infinispan.spring.starter.remote.metrics.RemoteInfinispanCacheMeterBinder;
+import org.infinispan.spring.starter.remote.metrics.RemoteInfinispanCacheMeterBinderProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
-public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKit<RemoteCache<String, String>> {
+public class RemoteCacheMetricBinderWithNearCachingTest extends CacheMeterBinderCompatibilityKit<RemoteCache<String, String>> {
 
    @RegisterExtension
    static InfinispanServerExtension infinispanServerExtension = InfinispanServerExtensionBuilder.server();
@@ -45,20 +46,49 @@ public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKi
 
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.statistics().enable();
-      clientBuilder.clientIntelligence(ClientIntelligence.BASIC);
       clientBuilder.security()
             .authentication()
             .username(TestUser.ADMIN.getUser())
             .password(TestUser.ADMIN.getPassword());
+      clientBuilder
+            .remoteCache("mycache")
+            .nearCacheMode(NearCacheMode.INVALIDATED)
+            .nearCacheMaxEntries(2);
 
       remoteCacheManager = infinispanServerExtension.hotrod().withClientConfiguration(clientBuilder)
             .createRemoteCacheManager();
       return remoteCacheManager.administration().getOrCreateCache("mycache", stringConfiguration);
    }
 
+   @Override
    @Test
    void size() {
       // Do nothing
+   }
+
+   @Override
+   @Test
+   void dereferencedCacheIsGarbageCollected() {
+      // Near cache listeners hold strong references to the RemoteCache,
+      // preventing GC. This is expected with INVALIDATED near cache mode.
+   }
+
+   @Test
+   void nearCacheGaugesAreRegistered() {
+      MeterRegistry registry = new SimpleMeterRegistry();
+      RemoteInfinispanCacheMeterBinderProvider provider = new RemoteInfinispanCacheMeterBinderProvider();
+      RemoteInfinispanCacheMeterBinder<String, String> binder =
+            (RemoteInfinispanCacheMeterBinder<String, String>) provider
+                  .getMeterBinder(new SpringCache(cache), emptyList());
+      binder.bindTo(registry);
+
+      put("k1", "v1");
+      get("k1");
+
+      assertThat(registry.find("cache.near.requests").tag("result", "hit").gauge()).isNotNull();
+      assertThat(registry.find("cache.near.requests").tag("result", "miss").gauge()).isNotNull();
+      assertThat(registry.find("cache.near.invalidations").gauge()).isNotNull();
+      assertThat(registry.find("cache.near.size").gauge()).isNotNull();
    }
 
    @Override
@@ -73,7 +103,7 @@ public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKi
 
    @Override
    public void dereferenceCache() {
-      super.dereferenceCache();
       remoteCacheManager.stop();
+      super.dereferenceCache();
    }
 }

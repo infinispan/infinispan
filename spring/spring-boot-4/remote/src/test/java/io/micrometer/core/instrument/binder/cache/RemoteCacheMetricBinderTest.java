@@ -1,10 +1,10 @@
-package test.org.infinispan.spring.starter.remote.metrics;
+package io.micrometer.core.instrument.binder.cache;
 
 import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -17,8 +17,8 @@ import org.infinispan.spring.starter.remote.metrics.RemoteInfinispanCacheMeterBi
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKit<RemoteCache<String, String>> {
 
@@ -45,7 +45,6 @@ public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKi
 
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.statistics().enable();
-      clientBuilder.clientIntelligence(ClientIntelligence.BASIC);
       clientBuilder.security()
             .authentication()
             .username(TestUser.ADMIN.getUser())
@@ -56,9 +55,27 @@ public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKi
       return remoteCacheManager.administration().getOrCreateCache("mycache", stringConfiguration);
    }
 
+   @Override
    @Test
    void size() {
       // Do nothing
+   }
+
+   @Test
+   void nearCacheGaugesAreNotPresent() {
+      MeterRegistry registry = new SimpleMeterRegistry();
+      RemoteInfinispanCacheMeterBinderProvider provider = new RemoteInfinispanCacheMeterBinderProvider();
+      RemoteInfinispanCacheMeterBinder<String, String> binder =
+            (RemoteInfinispanCacheMeterBinder<String, String>) provider
+                  .getMeterBinder(new SpringCache(cache), emptyList());
+      binder.bindTo(registry);
+
+      put("k1", "v1");
+      get("k1");
+
+      assertThat(registry.find("cache.near.requests").gauge()).isNull();
+      assertThat(registry.find("cache.near.invalidations").gauge()).isNull();
+      assertThat(registry.find("cache.near.size").gauge()).isNull();
    }
 
    @Override
