@@ -12,6 +12,7 @@ import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl;
 import org.infinispan.globalstate.impl.GlobalStateManagerImpl;
+import org.infinispan.manager.CacheStartupManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl;
 import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
@@ -55,7 +56,7 @@ import org.infinispan.xsite.events.XSiteEventsManagerImpl;
       GlobalStateManager.class, GlobalConfigurationManager.class,
       SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class,
       RankCalculator.class, EventLoggerNotifier.class, PrincipalRoleMapper.class, RolePermissionMapper.class,
-      XSiteCacheMapper.class, XSiteEventsManager.class, SharedContainerMaps.class
+      XSiteCacheMapper.class, XSiteEventsManager.class, SharedContainerMaps.class, CacheStartupManager.class,
 })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -110,6 +111,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
                NoOpXSiteEventsManager.INSTANCE;
       } else if (componentName.equals(SharedContainerMaps.class.getName())) {
          return new SharedContainerMaps();
+      } else if (componentName.equals(CacheStartupManager.class.getName())) {
+         return new CacheStartupManager();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

@@ -35,6 +35,19 @@ public interface LocalConfigurationStorage {
    void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags);
 
    /**
+    * Defines the cache configuration without starting the cache.
+    *
+    * @param name the name of the cache to define. Must not be {@code null}.
+    * @param template the template that should be used to configure the cache. Can be {@code null}.
+    * @param configuration the {@link Configuration} to use. Must not be {@code null}.
+    * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
+    * @return a stage that completes when the configuration is defined
+    */
+   default CompletionStage<Void> defineCacheConfiguration(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      return createCache(name, template, configuration, flags);
+   }
+
+   /**
     * Creates the cache using the supplied template, configuration and flags. This method may be invoked either with or
     * without a template. In both cases a concrete configuration will also be available. If a template name is present,
     * the {@link LocalConfigurationStorage} should use it, e.g. when persisting the configuration.
