@@ -27,11 +27,10 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class BFINSERT extends RespCommand implements Resp3Command {
 
-   public static final String ERR_WRONG_ARG_NUMBER = "ERR wrong number of arguments for 'bf.insert' command";
-
    public BFINSERT() {
       super("BF.INSERT", -4, 1, 1, 1,
-            AclCategory.BLOOM.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
+            // No @slow: matches COMMAND INFO output, despite docs claiming @slow
+            AclCategory.BLOOM.mask() | AclCategory.WRITE.mask());
    }
 
    @Override
@@ -51,7 +50,7 @@ public class BFINSERT extends RespCommand implements Resp3Command {
          switch (arg) {
             case "CAPACITY":
                if (i + 1 >= arguments.size()) {
-                  handler.writer().customError(ERR_WRONG_ARG_NUMBER);
+                  handler.writer().wrongArgumentNumber(this);
                   return handler.myStage();
                }
                capacity = toLong(arguments.get(++i));
@@ -73,7 +72,7 @@ public class BFINSERT extends RespCommand implements Resp3Command {
                break;
             case "EXPANSION":
                if (i + 1 >= arguments.size()) {
-                  handler.writer().customError(ERR_WRONG_ARG_NUMBER);
+                  handler.writer().wrongArgumentNumber(this);
                   return handler.myStage();
                }
                expansion = toInt(arguments.get(++i));
@@ -90,7 +89,7 @@ public class BFINSERT extends RespCommand implements Resp3Command {
                break;
             case "ITEMS":
                if (i + 1 >= arguments.size()) {
-                  handler.writer().customError(ERR_WRONG_ARG_NUMBER);
+                  handler.writer().wrongArgumentNumber(this);
                   return handler.myStage();
                }
                items = arguments.subList(i + 1, arguments.size());
@@ -104,7 +103,7 @@ public class BFINSERT extends RespCommand implements Resp3Command {
       }
 
       if (items == null || items.isEmpty()) {
-         handler.writer().customError(ERR_WRONG_ARG_NUMBER);
+         handler.writer().wrongArgumentNumber(this);
          return handler.myStage();
       }
 

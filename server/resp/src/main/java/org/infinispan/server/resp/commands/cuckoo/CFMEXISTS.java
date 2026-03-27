@@ -1,4 +1,4 @@
-package org.infinispan.server.resp.commands.bloom;
+package org.infinispan.server.resp.commands.cuckoo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,23 +10,24 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Type;
 
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * BF.MADD key item [item ...]
+ * CF.MEXISTS key item [item ...]
  * <p>
- * Adds one or more items to a Bloom filter. Creates the filter if it doesn't exist.
+ * Determines whether one or more items were added to a Cuckoo filter.
  *
- * @see <a href="https://redis.io/commands/bf.madd/">BF.MADD</a>
+ * @see <a href="https://redis.io/commands/cf.mexists/">CF.MEXISTS</a>
  * @since 16.2
  */
-public class BFMADD extends RespCommand implements Resp3Command {
+public class CFMEXISTS extends RespCommand implements Resp3Command {
 
-   public BFMADD() {
-      super("BF.MADD", -3, 1, 1, 1,
+   public CFMEXISTS() {
+      super("CF.MEXISTS", -3, 1, 1, 1,
             // No @slow: matches COMMAND INFO output, despite docs claiming @slow
-            AclCategory.BLOOM.mask() | AclCategory.WRITE.mask());
+            AclCategory.CUCKOO.mask() | AclCategory.READ.mask());
    }
 
    @Override
@@ -35,16 +36,13 @@ public class BFMADD extends RespCommand implements Resp3Command {
       byte[] key = arguments.get(0);
       List<byte[]> items = new ArrayList<>(arguments.subList(1, arguments.size()));
 
-      FunctionalMap.ReadWriteMap<byte[], Object> cache =
-            FunctionalMap.create(handler.typedCache(null)).toReadWriteMap();
+      FunctionalMap.ReadOnlyMap<byte[], Object> cache =
+            FunctionalMap.create(handler.typedCache(null)).toReadOnlyMap();
 
-      BloomFilterInsertFunction function = new BloomFilterInsertFunction(
-            items,
-            BloomFilter.DEFAULT_CAPACITY, BloomFilter.DEFAULT_ERROR_RATE,
-            BloomFilter.DEFAULT_EXPANSION, false, false);
-      CompletionStage<List<Boolean>> result = cache.eval(key, function);
+      CuckooFilterExistsFunction function = new CuckooFilterExistsFunction(items);
+      CompletionStage<List<Integer>> result = cache.eval(key, function);
 
       return handler.stageToReturn(result, ctx, (r, w) ->
-            w.array(r, (b, writer) -> writer.booleans(b)));
+            w.array(r, Resp3Type.INTEGER));
    }
 }
