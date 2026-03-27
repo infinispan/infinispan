@@ -298,7 +298,7 @@ public class ContainerResourceV3 extends ContainerResource {
             .name("Listen for configuration changes")
             .operationId("listenContainerConfig")
             .parameter("includeCurrentState", ParameterIn.QUERY, false, Schema.BOOLEAN,
-                      "Include current state of all caches and templates before streaming changes")
+                      "Include current state of all caches, templates, counters and schemas before streaming changes")
             .response(OK, "Server-Sent Events stream of configuration changes", TEXT_EVENT_STREAM)
             .permission(AuthorizationPermission.ADMIN)
             .auditContext(AuditContext.SERVER)
@@ -310,7 +310,7 @@ public class ContainerResourceV3 extends ContainerResource {
             .name("Listen for configuration and lifecycle events")
             .operationId("listenContainerLifecycle")
             .parameter("includeCurrentState", ParameterIn.QUERY, false, Schema.BOOLEAN,
-                      "Include current state of all caches and templates before streaming events")
+                      "Include current state of all caches, templates, counters and schemas before streaming events")
             .response(OK, "Server-Sent Events stream of configuration and lifecycle events", TEXT_EVENT_STREAM)
             .permission(AuthorizationPermission.ADMIN)
             .auditContext(AuditContext.SERVER)
