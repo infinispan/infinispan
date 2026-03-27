@@ -44,6 +44,7 @@ public class NativeMissingResilienceIT {
       Path source = Paths.get(directory);
       Path target = source.resolve("..").resolve("infinispan-server-copied");
       try {
+         Util.recursiveFileRemove(target);
          target.toFile().mkdir();
          Util.recursiveDirectoryCopy(source, target);
       } catch (IOException e) {
@@ -51,17 +52,23 @@ public class NativeMissingResilienceIT {
       }
 
       OTHER_SERVER_PATH = target.toAbsolutePath().toString();
+
+      InfinispanServerExtensionBuilder builder = InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
+            .numServers(1)
+            .runMode(ServerRunMode.CONTAINER)
+            .property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_PRESERVE_IMAGE, "false")
+            .property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_SNAPSHOT_IMAGE_NAME, "localhost/infinispan/server-invalid-lua-native-image")
+            .property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR, OTHER_SERVER_PATH);
+
+      Archive<?> jar = NativeMissingResilienceIT.createMangledLuaJar();
+      if (jar != null)
+         builder.artifacts(jar);
+
+      EXTENSION = builder.build();
    }
 
    @RegisterExtension
-   public static InfinispanServerExtension EXTENSION = InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
-         .numServers(1)
-         .runMode(ServerRunMode.CONTAINER)
-         .artifacts(NativeMissingResilienceIT.createMangledLuaJar())
-         .property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_PRESERVE_IMAGE, "false")
-         .property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_SNAPSHOT_IMAGE_NAME, "localhost/infinispan/server-invalid-lua-native-image")
-         .property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR, OTHER_SERVER_PATH)
-         .build();
+   public static InfinispanServerExtension EXTENSION;
 
    @Test
    public void testUnresponsiveNode() {
@@ -112,7 +119,7 @@ public class NativeMissingResilienceIT {
       try (Stream<Path> jars = Files.list(lib)) {
          Optional<Path> jar = jars
                .filter(Files::isRegularFile)
-               .filter(p -> p.getFileName().toString().startsWith("infinispan-lua51-platform-"))
+               .filter(p -> p.getFileName().toString().contains("-lua51-platform-"))
                .filter(p -> p.getFileName().toString().endsWith(".jar"))
                .findFirst();
          return jar.map(NativeMissingResilienceIT::createMangledLuaJar).orElse(null);
@@ -130,7 +137,7 @@ public class NativeMissingResilienceIT {
       try (Stream<Path> jars = Files.list(lib)) {
          Optional<Path> jar = jars
                .filter(Files::isRegularFile)
-               .filter(p -> p.getFileName().toString().startsWith("infinispan-lua51-platform-"))
+               .filter(p -> p.getFileName().toString().contains("-lua51-platform-"))
                .filter(p -> p.getFileName().toString().endsWith(".jar"))
                .findFirst();
          if (jar.isEmpty())
