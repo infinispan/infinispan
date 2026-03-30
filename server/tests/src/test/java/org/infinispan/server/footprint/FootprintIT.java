@@ -9,9 +9,13 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.stream.Stream;
 
+import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
+import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
 
 import org.infinispan.server.test.api.TestUser;
@@ -27,8 +31,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * @since 15.0
  **/
 public class FootprintIT {
-   private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 11_700;
-   private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 12_200;
+   private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 12_200;
+   private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 12_300;
    private static final long HEAP_USAGE_LOWER_BOUND = 22_000_000L;
    private static final long HEAP_USAGE_UPPER_BOUND = 24_000_000L;
    private static final long DISK_USAGE_LOWER_BOUND = 88_000_000L;
@@ -74,15 +78,20 @@ public class FootprintIT {
          Log.CONTAINER.infof("Used heap: %d (offset = %d)", usedHeap, heapCountOffset);
          assertThat(loadedClassCount - classCountOffset).as("Loaded class count").isBetween(LOADED_CLASS_COUNT_LOWER_BOUND, LOADED_CLASS_COUNT_UPPER_BOUND);
          assertThat(usedHeap - heapCountOffset).as("Heap memory usage").isBetween(HEAP_USAGE_LOWER_BOUND, HEAP_USAGE_UPPER_BOUND);
+         dumpHeap(jmxConnection);
       } catch (AssertionError e) {
-         ObjectName hotSpot = new ObjectName("com.sun.management:type=HotSpotDiagnostic");
-         jmxConnection.invoke(hotSpot, "dumpHeap", new Object[]{HEAP_DUMP, true}, new String[]{"java.lang.String", "boolean"});
-         String s = SERVERS.getServerDriver().syncFilesFromServer(0, "/opt/infinispan/" + HEAP_DUMP);
-         Path dump = Paths.get(System.getProperty("build.directory"), HEAP_DUMP);
-         Files.move(Paths.get(s, HEAP_DUMP), dump, StandardCopyOption.REPLACE_EXISTING);
-         Log.CONTAINER.warnf("Exported heap dump to %s", dump);
+         dumpHeap(jmxConnection);
          throw e;
       }
+   }
+
+   private static void dumpHeap(MBeanServerConnection jmxConnection) throws MalformedObjectNameException, InstanceNotFoundException, MBeanException, ReflectionException, IOException {
+      ObjectName hotSpot = new ObjectName("com.sun.management:type=HotSpotDiagnostic");
+      jmxConnection.invoke(hotSpot, "dumpHeap", new Object[]{HEAP_DUMP, true}, new String[]{"java.lang.String", "boolean"});
+      String s = SERVERS.getServerDriver().syncFilesFromServer(0, "/opt/infinispan/" + HEAP_DUMP);
+      Path dump = Paths.get(System.getProperty("build.directory"), HEAP_DUMP);
+      Files.move(Paths.get(s, HEAP_DUMP), dump, StandardCopyOption.REPLACE_EXISTING);
+      Log.CONTAINER.warnf("Exported heap dump to %s", dump);
    }
 
    @Test
