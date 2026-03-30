@@ -44,6 +44,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
+import org.infinispan.statetransfer.StateTransferTracker;
 import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -77,6 +78,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private final boolean resolveConflictsOnMerge;
    private final RebalanceType rebalanceType;
    private final Transport transport;
+   private final StateTransferTracker stateTransferTracker;
 
    private int initialTopologyId = INITIAL_TOPOLOGY_ID;
    // Minimal cache clustering configuration
@@ -109,7 +111,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    public ClusterCacheStatus(EmbeddedCacheManager cacheManager, GlobalComponentRegistry gcr, String cacheName,
                              AvailabilityStrategy availabilityStrategy,
                              RebalanceType rebalanceType, ClusterTopologyManagerImpl clusterTopologyManager,
-                             Transport transport,
+                             Transport transport, StateTransferTracker stateTransferTracker,
                              PersistentUUIDManager persistentUUIDManager, EventLogManager eventLogManager,
                              Optional<ScopedPersistentState> state, boolean resolveConflictsOnMerge) {
       this.cacheManager = cacheManager;
@@ -118,6 +120,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       this.availabilityStrategy = availabilityStrategy;
       this.clusterTopologyManager = clusterTopologyManager;
       this.transport = transport;
+      this.stateTransferTracker = stateTransferTracker;
       this.persistentState = state;
       this.resolveConflictsOnMerge = resolveConflictsOnMerge;
       this.rebalanceType = rebalanceType;
@@ -344,6 +347,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       // update the joiners list
       if (newTopology != null) {
          joiners = immutableRemoveAll(expectedMembers, newTopology.getCurrentCH().getMembers());
+         stateTransferTracker.forCache(cacheName).cacheTopologyUpdated(newTopology);
       }
       if (log.isTraceEnabled()) log.tracef("Cache %s topology updated: %s, members = %s, joiners = %s",
             cacheName, currentTopology, expectedMembers, joiners);
