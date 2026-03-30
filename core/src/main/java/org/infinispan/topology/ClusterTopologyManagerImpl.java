@@ -11,6 +11,7 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -73,6 +75,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.RebalanceType;
+import org.infinispan.statetransfer.StateTransferTracker;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.logging.Log;
@@ -116,6 +119,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    @Inject PersistentUUIDManager persistentUUIDManager;
    @Inject TimeService timeService;
    @Inject GlobalStateManager globalStateManager;
+   @Inject OrderedGracefulLeaveHandler gracefulLeaveHandler;
+   @Inject StateTransferTracker stateTransferTracker;
 
    private TopologyManagementHelper helper;
    private ConditionFuture<ClusterTopologyManagerImpl> joinViewFuture;
@@ -128,6 +133,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    private ClusterManagerStatus clusterManagerStatus = ClusterManagerStatus.INITIALIZING;
    @GuardedBy("updateLock")
    private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = new ConcurrentHashMap<>();
+   @GuardedBy("updateLock")
+   private final ConcurrentMap<String, CompletableFuture<ClusterCacheStatus>> pendingLeaves = new ConcurrentHashMap<>();
    private final AtomicInteger recoveryAttemptCount = new AtomicInteger();
 
    // The global rebalancing status
@@ -204,6 +211,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
       try {
          clusterManagerStatus = ClusterManagerStatus.STOPPING;
          joinViewFuture.stop();
+         pendingLeaves.values().forEach(cs -> cs.completeExceptionally(new IllegalLifecycleStateException()));
       } finally {
          releaseUpdateLock();
       }
@@ -297,32 +305,68 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    }
 
    @Override
-   public CompletionStage<Void> handleLeave(String cacheName, Address leaver) throws Exception {
+   public CompletionStage<Void> handleLeave(String cacheName, Address leaver, long timeout, TimeUnit unit) throws Exception {
       if (!clusterManagerStatus.isRunning()) {
          log.debugf("Ignoring leave request from %s for cache %s, the local cache manager is shutting down",
                     leaver, cacheName);
+
+         // If a node is leaving gracefully, we return an exception so it can retry on the next coordinator.
+         if (timeout > 0) {
+            return CompletableFuture.failedFuture(new IllegalLifecycleStateException());
+         }
+
          return CompletableFutures.completedNull();
       }
 
-      ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
-      if (cacheStatus == null) {
-         // This can happen if we've just become coordinator
-         log.tracef("Ignoring leave request from %s for cache %s because it doesn't have a cache status entry",
-                    leaver, cacheName);
-         return CompletableFutures.completedNull();
+      acquireUpdateLock();
+      ClusterCacheStatus cacheStatus;
+      try {
+         cacheStatus = cacheStatusMap.get(cacheName);
+         if (cacheStatus == null) {
+            // This can happen if we've just become coordinator
+            log.tracef("Ignoring leave request from %s for cache %s because it doesn't have a cache status entry",
+                  leaver, cacheName);
+            // If a node is leaving gracefully, we return an exception so it can retry on the next coordinator.
+            if (timeout > 0) {
+               CompletableFuture<ClusterCacheStatus> cs = pendingLeaves.computeIfAbsent(cacheName, ignore -> new CompletableFuture<>());
+               return cs.thenCompose(status ->
+                     gracefulLeaveHandler.enqueue(cacheName, leaver, timeout, unit, status));
+            }
+
+            return CompletableFutures.completedNull();
+         }
+
+         // Just to bypass in any case a retry happens, the status is still present, but all nodes already left.
+         if (cacheStatus.getExpectedMembers().isEmpty())
+            return CompletableFutures.completedNull();
+
+         if (cacheStatus.isGracefulStopped()) {
+            log.tracef("Ignoring leave request from %s for cache %s because it is graceful stopped",
+                  leaver, cacheName);
+            return CompletableFutures.completedNull();
+         }
+
+         if (timeout > 0) {
+            return gracefulLeaveHandler.enqueue(cacheName, leaver, timeout, unit, cacheStatus);
+         }
+      } finally {
+         releaseUpdateLock();
       }
 
-      if (cacheStatus.isGracefulStopped()) {
-         log.tracef("Ignoring leave request from %s for cache %s because it is graceful stopped",
-                    leaver, cacheName);
-         return CompletableFutures.completedNull();
-      }
-
+      // Release the topology lock before leaving.
+      // Concurrent leave requests could end up in a deadlock.
       return cacheStatus.doLeave(leaver);
    }
 
-   synchronized void removeCacheStatus(String cacheName) {
-      cacheStatusMap.remove(cacheName);
+   void removeCacheStatus(String cacheName) {
+      acquireUpdateLock();
+      try {
+         cacheStatusMap.remove(cacheName);
+         gracefulLeaveHandler.remove(cacheName);
+         stateTransferTracker.remove(cacheName);
+      } finally {
+         releaseUpdateLock();
+      }
    }
 
    @Override
@@ -509,6 +553,22 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
                });
             }
 
+            // Complete pending leaves AFTER recovery populated the status object.
+            acquireUpdateLock();
+            try {
+               Iterator<Entry<String, CompletableFuture<ClusterCacheStatus>>> it = pendingLeaves.entrySet().iterator();
+               while (it.hasNext()) {
+                  Entry<String, CompletableFuture<ClusterCacheStatus>> entry = it.next();
+                  ClusterCacheStatus ccs = cacheStatusMap.get(entry.getKey());
+                  if (ccs != null) {
+                     entry.getValue().complete(ccs);
+                     it.remove();
+                  }
+               }
+            } finally {
+               releaseUpdateLock();
+            }
+
             // Unblock any joiners waiting for the view
             joinViewFuture.updateAsync(this, nonBlockingExecutor);
          });
@@ -565,7 +625,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
          Optional<ScopedPersistentState> persistedState =
                globalStateManager.flatMap(gsm -> gsm.readScopedState(cacheName));
          return new ClusterCacheStatus(cacheManager, gcr, cacheName, availabilityStrategy, RebalanceType.from(cacheMode),
-                                       this, transport,
+                                       this, transport, stateTransferTracker,
                                        persistentUUIDManager, eventLogManager, persistedState, resolveConflictsOnMerge);
       });
    }

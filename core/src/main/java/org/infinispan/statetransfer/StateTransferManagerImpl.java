@@ -9,6 +9,7 @@ import java.util.function.Function;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.internal.InternalCacheNames;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -122,7 +123,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
          @Override
          public void onTopologyReceived(CacheTopology cacheTopology) {
-            stateTracker.cacheTopologyUpdated(cacheTopology);
+            stateTracker.forCache(cacheName).cacheTopologyUpdated(cacheTopology);
          }
       }, partitionHandlingManager);
 
@@ -249,14 +250,40 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
    }
 
-   @Stop
    @Override
-   public void stop() {
+   public boolean stop(long timeout, TimeUnit unit) throws InterruptedException {
+      // Replicated caches don't need to wait state transfer as all nodes have the full data set.
+      boolean res = true;
+      if (configuration.clustering().cacheMode().isDistributed() && timeout > 0) {
+         CompletableFuture<Void> cf = stateTracker.forCache(cacheName).onStateTransferCompleted((ignore, t) -> {
+            if (t != null)
+               log.errorf(t, "Failed waiting state transfer to complete for %s", cacheName);
+
+            return true;
+         }).toCompletableFuture();
+
+         res &= CompletableFutures.await(cf, timeout, unit);
+
+         // If the converted timeout is too small, it gets to 0. This means the transport will wait until completed.
+         // Instead, we set 1 and let the transport do the work. Very likely, timeout.
+         long t = unit.toMillis(timeout);
+         res &= localTopologyManager.leave(cacheName, t == 0 ? 1 : t, true);
+      }
+
+      return res;
+   }
+
+   @Stop
+   protected void internalStop() {
       if (log.isTraceEnabled()) {
          log.tracef("Shutting down StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
       initialStateTransferComplete.complete(null);
-      localTopologyManager.leave(cacheName, configuration.clustering().remoteTimeout());
+      try {
+         localTopologyManager.leave(cacheName, configuration.clustering().remoteTimeout(), false);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      }
    }
 
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.", displayName = "Is join completed?", dataType = DataType.TRAIT)
