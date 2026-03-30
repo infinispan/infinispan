@@ -25,12 +25,12 @@ jobs:
   published:
     runs-on: ubuntu-latest
     steps:
-      - uses: gerdemann/http-status-code@1.1.1
+      - uses: GOSCHEN/http-status-code@v1.1.0
         with:
-          url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ github.event.inputs.version }}/infinispan-distribution-${{ github.event.inputs.version }}.pom
+          url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ inputs.version }}/infinispan-distribution-${{ inputs.version }}.pom
           code: 200
           timeout: 10800000
-          interval: 10000
+          interval: 1200
 
   native-cli:
     needs: published
