@@ -76,7 +76,7 @@ public interface InternalCacheRegistry {
 
    /**
     * Returns whether the cache is private, i.e. it has been registered using the
-    * {@link #registerInternalCache(String, Configuration, EnumSet<Flag>)} method without the
+    * {@link #registerInternalCache(String, Configuration, EnumSet)} method without the
     * {@link Flag#USER} flag
     */
    boolean isPrivateCache(String name);

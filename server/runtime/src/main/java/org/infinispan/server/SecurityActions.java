@@ -25,8 +25,6 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
  * <p>
  * Do not move. Do not change class and method visibility to avoid being called from other
  * {@link java.security.CodeSource}s, thus granting privilege escalation to external code.
- *
- * @author Tristan Tarrant <tristan@infinispan.org>
  * @since 10.0
  */
 final class SecurityActions {
@@ -38,9 +36,7 @@ final class SecurityActions {
    }
 
    static void startCacheManager(final EmbeddedCacheManager cacheManager) {
-      Runnable action = () -> {
-         cacheManager.start();
-      };
+      Runnable action = cacheManager::start;
       doPrivileged(action);
    }
 

@@ -20,8 +20,8 @@ import jakarta.enterprise.util.TypeLiteral;
 @Listener
 public class TransactionRegisteredAdapter<K, V> extends AbstractAdapter<TransactionRegisteredEvent<K, V>> {
 
-   /**
-    * CDI does not allow parametrized type for events (like <code><K,V></code>). This is why this wrapped needs to be
+   /*
+    * CDI does not allow parametrized type for events (like <K, V>). This is why this wrapped needs to be
     * introduced. To ensure type safety, this needs to be linked to parent class (in other words this class can not
     * be static).
     */

@@ -55,7 +55,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    private volatile RpcManager rpcManager;
    private volatile CommandsFactory commandFactory;
 
-   /**
+   /*
     * This relies on XIDs for different TMs being unique. E.g. for JBossTM this is correct as long as we have the right
     * config for <IP,port/process,sequence number>. This is expected to stand true for all major TM on the market.
     */
