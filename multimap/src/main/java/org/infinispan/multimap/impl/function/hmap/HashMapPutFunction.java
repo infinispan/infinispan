@@ -16,7 +16,7 @@ import org.infinispan.util.KeyValuePair;
 
 /**
  * Serializable function use by {@link org.infinispan.multimap.impl.EmbeddedMultimapPairCache#set(Object, Map.Entry[])}.
- * </p>
+ * <p>
  * This function inserts a collection of key-value pairs into the multimap. If it not exists, a new one is created.
  *
  * @author José Bolina

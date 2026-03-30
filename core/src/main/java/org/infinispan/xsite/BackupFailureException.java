@@ -30,7 +30,7 @@ public class BackupFailureException extends RpcException {
 
    /**
     * Constructor used to indicate a cache failure related to a site. Should be added to an instance of BackupFailureException
-    * created with the {@link BackupFailureException(String)} constructor.
+    * created with the {@link #BackupFailureException(String) constructor}
     *
     * @param siteName  the name of the site which caused the failure
     * @param throwable the cause of the failure

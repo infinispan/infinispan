@@ -14,17 +14,6 @@ import org.infinispan.notifications.cachemanagerlistener.event.Event;
  */
 public class CacheEventHolder {
 
-   /**
-    * Main data structure of this event holder.
-    * <p>
-    *    From top to bottom:
-    *    <ul>
-    *       <li><code>Map<Class, Map></code> - holds Cache annotation as keys and event map as value</li>
-    *       <li><code>Map<Class, List></code> - holds Event class as keys and a list of occurred event as value</li>
-    *       <li><code>List</code> - holds list of occurred events</li>
-    *    </ul>
-    * </p>
-    */
    private final Map<Class<?>, Map<Class<?>, List<Object>>> eventMap = new HashMap<>();
 
    private void addEventClass(Class<?> cacheAnnotationClass, Class<?> eventClass) {

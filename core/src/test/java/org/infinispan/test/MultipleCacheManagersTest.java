@@ -75,8 +75,8 @@ import jakarta.transaction.TransactionManager;
  *    3) next test method will run on same cacheManager instance. This way the test is much faster, as CacheManagers
  *       are expensive to create.
  * </pre>
- * If, however, you would like your cache managers destroyed after every <i>test method</i> instead of the </i>test
- * class</i>, you could set the <code>cleanup</code> field to {@link MultipleCacheManagersTest.CleanupPhase#AFTER_METHOD} in
+ * If, however, you would like your cache managers destroyed after every <i>test method</i> instead of the <i>test class</i>,
+ * you could set the <code>cleanup</code> field to {@link MultipleCacheManagersTest.CleanupPhase#AFTER_METHOD} in
  * your test's constructor.  E.g.:
  * <pre>
   * public void MyTest extends MultipleCacheManagersTest {

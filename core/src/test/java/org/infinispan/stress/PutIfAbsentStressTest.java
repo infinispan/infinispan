@@ -18,14 +18,10 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-/**
+/*
  * Verifies the atomic semantic of Infinispan's implementations of
  * java.util.concurrent.ConcurrentMap<K, V>.putIfAbsent(K key, V value); which is an interesting
  * concurrent locking case.
- *
- * @since 4.0
- * @see java.util.concurrent.ConcurrentMap#putIfAbsent(Object, Object)
- * @author Sanne Grinovero
  */
 @Test(groups = "stress", testName = "stress.PutIfAbsentStressTest",
       description = "Since this test is slow to run, it should be disabled by default and run by hand as necessary.", timeOut = 15*60*1000)

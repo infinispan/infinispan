@@ -18,12 +18,9 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-/**
+/*
  * This test verifies that an entry can be expired from the Hot Rod server
- * using the default expiry lifespan or maxIdle. </p>
- *
- * @author William Burns
- * @since 8.0
+ * using the default expiry lifespan or maxIdle.
  */
 @Test(groups = "functional", testName = "client.hotrod.MixedExpiryTest")
 public class MixedExpiryTest extends MultiHotRodServersTest {

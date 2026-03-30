@@ -24,7 +24,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-/**
+/*
  * SFS content created on multiple branches using the below code:
  * <pre>
  *    public static void main(String[] args) throws Exception {

@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 
 /**
  * Functional test for exponential back-off with IRAC.
- * </p>
+  <p>
  * This test uses 3 sites with a cluster of size 1 for simplification. We issue all commands from site 1,
  * which has sites 2 and 3 as backups. The requests from 1 -> 2 will complete on the first try,
  * whereas 1 -> 3 will need the back-off to kick in.
