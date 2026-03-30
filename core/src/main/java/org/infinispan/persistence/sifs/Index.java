@@ -71,6 +71,8 @@ class Index {
    private final Compactor compactor;
    private final int minNodeSize;
    private final int maxNodeSize;
+   // Lock is to protect the flowableProcessors, thus it should be held only to read them
+   // and unlock as soon as possible to avoid other locking issues
    private final StampedLock lock = new StampedLock();
    @GuardedBy("lock")
    private final Segment[] segments;
@@ -149,7 +151,7 @@ class Index {
       this.temporaryTable = temporaryTable;
       // Limits the amount of concurrent updates we do to the underlying indices to be based on the number of cache
       // segments. Note that this uses blocking threads so this number is still limited by that as well
-      int concurrency = Math.max(cacheSegments >> 4, 1);
+      int concurrency = Math.max(cacheSegments >> 4, 2);
       this.executor = new LimitedExecutor("sifs-index", executor, concurrency);
       this.emptySegment = new Segment(this, -1, temporaryTable);
       this.emptySegment.complete(null);
@@ -361,8 +363,9 @@ class Index {
    }
 
    private CompletionStage<Void> actualSubmitClear(long writeStampToUnlock) {
+      // Collect clear requests while holding the lock, then release immediately
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
       try {
-         AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
          for (FlowableProcessor<IndexRequest> processor : flowableProcessors) {
             // Ignore emptyFlowable as we use this to signal that we don't own that segment anymore
             if (processor == emptyFlowable) {
@@ -372,25 +375,22 @@ class Index {
             processor.onNext(clearRequest);
             stage.dependsOn(clearRequest);
          }
-
-         return stage.freeze().whenComplete((ignore, t) -> {
-            if (t != null) {
-               log.clearError(t);
-            } else {
-               log.tracef("Clear has completed");
-               // Clear is done, now purge the size segments
-               for (int i = 0; i < sizePerSegment.length(); ++i) {
-                  sizePerSegment.set(i, 0);
-               }
-            }
-            // Unlock has to happen after clearing sizePerSegment to have it stay consistent
-            lock.unlockWrite(writeStampToUnlock);
-         });
       } catch (Throwable t) {
          lock.unlockWrite(writeStampToUnlock);
-         log.debugf(t, "Clear encountered exception");
+         log.debugf(t, "Clear encountered exception while submitting requests");
          throw t;
+      } finally {
+         lock.unlockWrite(writeStampToUnlock);
       }
+
+      // Now wait for clear requests to complete without holding the lock
+      return stage.freeze().whenComplete((ignore, t) -> {
+         if (t != null) {
+            log.clearError(t);
+         } else {
+            log.tracef("Clear has completed");
+         }
+      });
    }
 
    public CompletionStage<Object> handleRequest(IndexRequest indexRequest) {
@@ -817,6 +817,7 @@ class Index {
                }
                indexFileSize = INDEX_FILE_HEADER_SIZE;
                freeBlocks.clear();
+               index.sizePerSegment.set(id, 0);
                index.nonBlockingManager.complete(request, null);
                return;
             case SYNC_REQUEST:
