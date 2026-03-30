@@ -228,8 +228,9 @@ jobs:
             private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
       - name: Update GitHub Organization Variable to next release version
+        if: ${{ !contains(inputs.version, '.Dev') }}
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: >
+        run: |
           gh variable set "RELEASE_$(echo '${{ inputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "${{ inputs.nextVersion }}" --org infinispan;
