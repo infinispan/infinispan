@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -73,6 +74,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.RebalanceType;
+import org.infinispan.statetransfer.StateTransferTracker;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.logging.Log;
@@ -116,6 +118,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    @Inject PersistentUUIDManager persistentUUIDManager;
    @Inject TimeService timeService;
    @Inject GlobalStateManager globalStateManager;
+   @Inject OrderedGracefulLeaveHandler gracefulLeaveHandler;
+   @Inject StateTransferTracker stateTransferTracker;
 
    private TopologyManagementHelper helper;
    private ConditionFuture<ClusterTopologyManagerImpl> joinViewFuture;
@@ -297,7 +301,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    }
 
    @Override
-   public CompletionStage<Void> handleLeave(String cacheName, Address leaver) throws Exception {
+   public CompletionStage<Void> handleLeave(String cacheName, Address leaver, long timeout, TimeUnit unit) throws Exception {
       if (!clusterManagerStatus.isRunning()) {
          log.debugf("Ignoring leave request from %s for cache %s, the local cache manager is shutting down",
                     leaver, cacheName);
@@ -318,11 +322,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
          return CompletableFutures.completedNull();
       }
 
+      if (timeout > 0) {
+         return gracefulLeaveHandler.enqueue(cacheName, leaver, timeout, unit, cacheStatus);
+      }
+
       return cacheStatus.doLeave(leaver);
    }
 
    synchronized void removeCacheStatus(String cacheName) {
       cacheStatusMap.remove(cacheName);
+      gracefulLeaveHandler.remove(cacheName);
+      stateTransferTracker.remove(cacheName);
    }
 
    @Override
@@ -565,7 +575,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
          Optional<ScopedPersistentState> persistedState =
                globalStateManager.flatMap(gsm -> gsm.readScopedState(cacheName));
          return new ClusterCacheStatus(cacheManager, gcr, cacheName, availabilityStrategy, RebalanceType.from(cacheMode),
-                                       this, transport,
+                                       this, transport, stateTransferTracker,
                                        persistentUUIDManager, eventLogManager, persistedState, resolveConflictsOnMerge);
       });
    }

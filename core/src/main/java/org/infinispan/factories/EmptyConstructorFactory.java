@@ -18,6 +18,7 @@ import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.RolePermissionMapper;
+import org.infinispan.statetransfer.StateTransferTracker;
 import org.infinispan.stats.ClusterContainerStats;
 import org.infinispan.stats.ContainerStats;
 import org.infinispan.stats.impl.ClusterContainerStatsImpl;
@@ -55,7 +56,7 @@ import org.infinispan.xsite.events.XSiteEventsManagerImpl;
       GlobalStateManager.class, GlobalConfigurationManager.class,
       SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class,
       RankCalculator.class, EventLoggerNotifier.class, PrincipalRoleMapper.class, RolePermissionMapper.class,
-      XSiteCacheMapper.class, XSiteEventsManager.class, SharedContainerMaps.class
+      XSiteCacheMapper.class, XSiteEventsManager.class, SharedContainerMaps.class, StateTransferTracker.class,
 })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -110,6 +111,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
                NoOpXSiteEventsManager.INSTANCE;
       } else if (componentName.equals(SharedContainerMaps.class.getName())) {
          return new SharedContainerMaps();
+      } else if (componentName.equals(StateTransferTracker.class.getName())) {
+         return new StateTransferTracker();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
