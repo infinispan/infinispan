@@ -14,7 +14,6 @@ import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.statetransfer.StateProviderImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.statetransfer.StateTransferManagerImpl;
-import org.infinispan.statetransfer.StateTransferTracker;
 
 /**
  * Constructs {@link org.infinispan.statetransfer.StateTransferManager},
@@ -27,7 +26,7 @@ import org.infinispan.statetransfer.StateTransferTracker;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {StateTransferManager.class, StateConsumer.class, StateProvider.class, StateReceiver.class,
-      ConflictManager.class, InternalConflictManager.class, StateTransferTracker.class})
+      ConflictManager.class, InternalConflictManager.class})
 public class StateTransferComponentFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    public Object construct(String componentName) {
@@ -44,8 +43,6 @@ public class StateTransferComponentFactory extends AbstractNamedCacheComponentFa
          return new StateReceiverImpl<>();
       } else if (componentName.equals(ConflictManager.class.getName()) || componentName.equals(InternalConflictManager.class.getName())) {
          return new DefaultConflictManager<>();
-      } else if (componentName.equals(StateTransferTracker.class.getName())) {
-         return new StateTransferTracker();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

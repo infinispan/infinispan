@@ -344,6 +344,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
                                  ClusterPublisherManager clusterPublisherManager, NodeVersion oldestMemberVersion) {
       Transport transport = mock(Transport.class);
       when(transport.getOldestMember()).thenReturn(oldestMemberVersion);
+      StateTransferTracker stt = mock(StateTransferTracker.class);
+      when(stt.forCache(any())).thenReturn(mock(StateTransferTracker.CacheStateTransferTracker.class));
       TestingUtil.inject(stateConsumer,
             mockCache(),
             TestingUtil.named(NON_BLOCKING_EXECUTOR, pooledExecutorService),
@@ -369,7 +371,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutorService),
             clusterPublisherManager,
             transport,
-            mock(StateTransferTracker.class)
+            stt
             );
    }
 

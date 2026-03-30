@@ -550,4 +550,9 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    public boolean containsFlag(Flag flag) {
       return cache.containsFlag(flag);
    }
+
+   @Override
+   public boolean stop(long timeout, TimeUnit unit) throws InterruptedException {
+      return cache.stop(timeout, unit);
+   }
 }
