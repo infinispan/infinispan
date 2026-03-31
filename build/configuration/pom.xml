@@ -63,7 +63,7 @@
 
       <!-- Dependency versions -->
       <version.aesh>3.3</version.aesh>
-      <version.aesh-readline>3.3</version.aesh-readline>
+      <version.aesh-readline>3.5</version.aesh-readline>
       <version.ant>1.10.15</version.ant>
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
