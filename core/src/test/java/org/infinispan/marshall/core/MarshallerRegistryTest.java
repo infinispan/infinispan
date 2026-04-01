@@ -99,16 +99,16 @@ public class MarshallerRegistryTest extends SingleCacheManagerTest {
    public void testBuilderApi() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
 
-      // Test adding via builder API
+      // Test adding via builder API with class name
       gcb.serialization()
-            .addNamedMarshaller()
-            .name("builderTest")
-            .marshallerClass(JavaSerializationMarshaller.class.getName());
+            .addNamedMarshaller("builderTest", JavaSerializationMarshaller.class.getName());
 
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gcb, new ConfigurationBuilder());
       try {
          MarshallerRegistry registry = TestingUtil.extractGlobalComponent(cm, MarshallerRegistry.class);
          assertNotNull("Named marshaller should exist", registry.getMarshaller("builderTest"));
+         assertTrue("Should be JavaSerializationMarshaller",
+               registry.getMarshaller("builderTest") instanceof JavaSerializationMarshaller);
       } finally {
          cm.stop();
       }

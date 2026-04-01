@@ -6,7 +6,9 @@ import static org.infinispan.configuration.global.SerializationConfiguration.SER
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
@@ -22,7 +24,7 @@ import org.infinispan.protostream.config.Configuration;
 public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<SerializationConfiguration> {
    private final AttributeSet attributes;
    private final AllowListConfigurationBuilder allowListBuilder;
-   private final List<NamedMarshallerConfigurationBuilder> namedMarshallerBuilders = new ArrayList<>();
+   private final Map<String, NamedMarshallerConfigurationBuilder> namedMarshallerBuilders = new LinkedHashMap<>();
 
    SerializationConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
@@ -83,10 +85,12 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * @throws IllegalArgumentException if a marshaller with the given name already exists
     */
    public SerializationConfigurationBuilder addNamedMarshaller(String name, String marshallerClassName) {
-      checkDuplicateMarshallerName(name);
+      if (namedMarshallerBuilders.containsKey(name)) {
+         throw new IllegalArgumentException("A marshaller with name '" + name + "' is already registered");
+      }
       NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
       builder.name(name).marshallerClass(marshallerClassName);
-      namedMarshallerBuilders.add(builder);
+      namedMarshallerBuilders.put(name, builder);
       return this;
    }
 
@@ -99,43 +103,25 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * @throws IllegalArgumentException if a marshaller with the given name already exists
     */
    public SerializationConfigurationBuilder addNamedMarshaller(String name, Marshaller marshaller) {
-      checkDuplicateMarshallerName(name);
+      if (namedMarshallerBuilders.containsKey(name)) {
+         throw new IllegalArgumentException("A marshaller with name '" + name + "' is already registered");
+      }
       NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
       builder.name(name).marshaller(marshaller);
-      namedMarshallerBuilders.add(builder);
+      namedMarshallerBuilders.put(name, builder);
       return this;
-   }
-
-   /**
-    * Returns a builder for creating a named marshaller.
-    *
-    * @return a new named marshaller builder
-    */
-   public NamedMarshallerConfigurationBuilder addNamedMarshaller() {
-      NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
-      namedMarshallerBuilders.add(builder);
-      return builder;
-   }
-
-   private void checkDuplicateMarshallerName(String name) {
-      for (NamedMarshallerConfigurationBuilder builder : namedMarshallerBuilders) {
-         String existingName = builder.attributes().attribute(NamedMarshallerConfiguration.NAME).get();
-         if (name.equals(existingName)) {
-            throw new IllegalArgumentException("A marshaller with name '" + name + "' is already registered");
-         }
-      }
    }
 
    @Override
    public void validate() {
-      namedMarshallerBuilders.forEach(NamedMarshallerConfigurationBuilder::validate);
+      // No validation needed - all builders are added with both name and marshaller
    }
 
    @Override
    public
    SerializationConfiguration create() {
       List<NamedMarshallerConfiguration> namedMarshallers = new ArrayList<>(namedMarshallerBuilders.size());
-      for (NamedMarshallerConfigurationBuilder builder : namedMarshallerBuilders) {
+      for (NamedMarshallerConfigurationBuilder builder : namedMarshallerBuilders.values()) {
          namedMarshallers.add(builder.create());
       }
       return new SerializationConfiguration(attributes.protect(), allowListBuilder.create(), namedMarshallers);
@@ -151,7 +137,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       for (NamedMarshallerConfiguration config : template.namedMarshallers()) {
          NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
          builder.read(config, combine);
-         namedMarshallerBuilders.add(builder);
+         namedMarshallerBuilders.put(config.name(), builder);
       }
 
       return this;

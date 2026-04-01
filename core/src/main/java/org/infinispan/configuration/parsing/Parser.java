@@ -38,7 +38,6 @@ import org.infinispan.configuration.global.GlobalJmxConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalSecurityConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalStateConfigurationBuilder;
-import org.infinispan.configuration.global.NamedMarshallerConfigurationBuilder;
 import org.infinispan.configuration.global.SerializationConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolBuilderAdapter;
@@ -176,6 +175,13 @@ public class Parser extends CacheParser {
                parseAllowList(reader, builder.serialization().allowList(), Element.ALLOW_LIST);
                break;
             }
+            case NAMED_MARSHALLERS: {
+               // Empty elements for YAML/JSON list handling
+               if (reader.getAttributeCount() > 0) {
+                  parseNamedMarshaller(reader, holder.getClassLoader(), builder.serialization());
+               }
+               break;
+            }
             case NAMED_MARSHALLER: {
                parseNamedMarshaller(reader, holder.getClassLoader(), builder.serialization());
                break;
@@ -209,27 +215,12 @@ public class Parser extends CacheParser {
 
    private void parseNamedMarshaller(final ConfigurationReader reader, final ClassLoader classLoader,
                                       final SerializationConfigurationBuilder builder) {
-      NamedMarshallerConfigurationBuilder marshallerBuilder = builder.addNamedMarshaller();
-      int attributes = reader.getAttributeCount();
-      ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
+      // Both name and marshaller attributes are required
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName(), Attribute.MARSHALLER.getLocalName());
+      String name = attributes[0];
+      String marshallerClass = attributes[1];
 
-      for (int i = 0; i < attributes; i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case NAME: {
-               marshallerBuilder.name(value);
-               break;
-            }
-            case MARSHALLER: {
-               marshallerBuilder.marshallerClass(value);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
+      builder.addNamedMarshaller(name, marshallerClass);
       ParseUtils.requireNoContent(reader);
    }
 

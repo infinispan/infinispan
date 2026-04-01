@@ -118,6 +118,7 @@ public enum Element {
     SERIALIZATION_CONTEXT_INITIALIZER("context-initializer"),
     SERIALIZATION_CONTEXT_INITIALIZERS("context-initializers"),
     NAMED_MARSHALLER("named-marshaller"),
+    NAMED_MARSHALLERS("named-marshallers"),
     SHARED_PERSISTENT_LOCATION,
     SCHEDULED_THREAD_POOL,
     SECURITY,
