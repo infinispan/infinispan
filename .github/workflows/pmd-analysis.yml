@@ -1,0 +1,63 @@
+name: PMD Static Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pmd-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - name: PMD analysis
+        id: pmd
+        uses: rigazilla/pmd-github-action@min-priority
+        with:
+          version: '7.15.0'
+          rulesets: '.github/resources/pmd-ruleset.xml'
+          analyzeModifiedFilesOnly: true
+          createGitHubAnnotations: true
+          uploadSarifReport: true
+      
+      - name: Inline comments in PR
+        if: github.event_name == 'pull_request'
+        uses: sett-and-hive/sarif-to-comment-action@main
+        with:
+          sarif-file: 'pmd-report.sarif'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.head_ref }}
+          pr-number: ${{ github.event.number }}
+          repository: ${{ github.repository }}
+          
+      - name: Fail build on new errors
+        if: >
+          steps.pmd.outputs.errors != '0' &&
+          !(
+            github.event_name == 'push' &&
+            (
+              contains(github.event.head_commit.message, '[skip-pmd]') ||
+              contains(github.event.head_commit.message, '[SKIP-PMD]') ||
+              contains(github.event.head_commit.message, 'skip pmd') ||
+              contains(github.event.head_commit.message, 'SKIP PMD')
+            )
+            ||
+            github.event_name == 'pull_request' &&
+            (
+              contains(github.event.pull_request.title, '[skip-pmd]') ||
+              contains(github.event.pull_request.title, '[SKIP-PMD]') ||
+              contains(github.event.pull_request.title, 'skip pmd') ||
+              contains(github.event.pull_request.title, 'SKIP PMD')
+            )
+          )
+        run: exit 1
