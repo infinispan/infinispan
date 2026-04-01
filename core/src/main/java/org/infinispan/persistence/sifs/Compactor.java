@@ -103,6 +103,19 @@ class Compactor {
       recordFreeSpace(getStats(file, -1, -1), file, size);
    }
 
+   // Adds the free size if the file is present or is a log file (which may not yet be present)
+   public void freeIfPresent(int file, int size) {
+      Stats stats;
+      // Log file check is first since a file goes from being a log file to being in the stats
+      if (fileProvider.isLogFile(file)) {
+         // Technically the file could be compacted and removed between these calls but at worst it just has
+         // a file with a stat that is not completed and is effectively ignored
+         free(file, size);
+      } else if ((stats = fileStats.get(file)) != null) {
+         recordFreeSpace(stats, file, size);
+      }
+   }
+
    public void completeFile(int file, int currentSize, long nextExpirationTime) {
       completeFile(file, currentSize, nextExpirationTime, true);
    }

@@ -696,9 +696,9 @@ class Index {
                                  // Now we free all entries in the index, this will include expired and removed entries
                                  // Removed doesn't currently update free stats per ISPN-15246 - so we remove those as well
                                  segment.root.publish((keyAndMetadataRecord, leafNode, fileProvider, timeService) -> {
-                                          compactor.free(leafNode.file, keyAndMetadataRecord.getHeader().totalLength());
+                                          compactor.freeIfPresent(leafNode.file, keyAndMetadataRecord.getHeader().totalLength());
                                           return null;
-                                       }).ignoreElements()
+                                       }, true).ignoreElements()
                                        .toCompletionStage(null)
                            )
                            .thenRun(segment::delete));
@@ -1095,7 +1095,7 @@ class Index {
                return leafNode.loadValue(keyAndMetadataRecord, fileProvider);
             }
             return keyAndMetadataRecord;
-         }).doFinally(() -> lock.unlockRead(stamp));
+         }, false).doFinally(() -> lock.unlockRead(stamp));
       } catch (Throwable t) {
          lock.unlockRead(stamp);
          throw t;
