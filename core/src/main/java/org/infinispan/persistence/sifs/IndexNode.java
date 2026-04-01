@@ -1242,7 +1242,7 @@ class IndexNode {
             throws IOException, IndexNodeOutdatedException;
    }
 
-   <R> Flowable<R> publish(PublishFunction<R> publishFunction) {
+   <R> Flowable<R> publish(PublishFunction<R> publishFunction, boolean continueOnOutdated) {
       long currentTime = segment.getTimeService().wallClockTime();
 
       // Needs defer as we mutate the lastRetrievedKey so inner FlowableCreate can be subscribed to multiple times
@@ -1256,7 +1256,7 @@ class IndexNode {
                // Reset so we can loop
                done.set(false);
                recursiveNode(publishFunction, this, segment, lastRetrievedKey, emitter, currentTime,
-                     new ByRef.Boolean(false), done);
+                     new ByRef.Boolean(false), done, continueOnOutdated);
                // This handles two of the done cases - in which case we can't continue
                if (emitter.requested() == 0 || emitter.isCancelled()) {
                   return;
@@ -1268,7 +1268,7 @@ class IndexNode {
    }
 
    <R> void recursiveNode(PublishFunction<R> publishFunction, IndexNode node, Index.Segment segment, ByRef<byte[]> lastRetrievedKey, FlowableEmitter<R> emitter,
-         long currentTime, ByRef.Boolean foundData, ByRef.Boolean done) throws IOException {
+         long currentTime, ByRef.Boolean foundData, ByRef.Boolean done, boolean continueOnOutdated) throws IOException {
       Lock readLock = node.lock.readLock();
       readLock.lock();
       try {
@@ -1279,7 +1279,7 @@ class IndexNode {
             // Need to search all inner nodes starting from that point until we hit the last entry for the segment
             for (int i = point; i < node.innerNodes.length && !done.get(); ++i) {
                recursiveNode(publishFunction, node.innerNodes[i].getIndexNode(segment), segment, lastRetrievedKey, emitter,
-                     currentTime, foundData, done);
+                     currentTime, foundData, done, continueOnOutdated);
             }
          } else if (node.leafNodes != null) {
             int suggestedIteration;
@@ -1332,6 +1332,11 @@ class IndexNode {
                   }
                   previousKey = record.getKey();
                } catch (IndexNodeOutdatedException e) {
+                  if (continueOnOutdated) {
+                     // Continue to next indexed key instead of restarting from previous key
+                     log.tracef("Ignoring IndexNodeOutdatedException for segment %s iteration", segment.getId());
+                     continue;
+                  }
                   // Current key was outdated, we have to try from the previous entry we saw (note it is skipped)
                   if (previousKey != null) {
                      lastRetrievedKey.set(previousKey);
