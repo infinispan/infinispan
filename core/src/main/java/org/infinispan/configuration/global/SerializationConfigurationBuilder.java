@@ -22,6 +22,7 @@ import org.infinispan.protostream.config.Configuration;
 public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<SerializationConfiguration> {
    private final AttributeSet attributes;
    private final AllowListConfigurationBuilder allowListBuilder;
+   private final List<NamedMarshallerConfigurationBuilder> namedMarshallerBuilders = new ArrayList<>();
 
    SerializationConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
@@ -73,15 +74,71 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
+   /**
+    * Adds a named marshaller by class name.
+    *
+    * @param name the name for this marshaller
+    * @param marshallerClassName the fully qualified class name of the marshaller
+    * @return this builder for method chaining
+    * @throws IllegalArgumentException if a marshaller with the given name already exists
+    */
+   public SerializationConfigurationBuilder addNamedMarshaller(String name, String marshallerClassName) {
+      checkDuplicateMarshallerName(name);
+      NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
+      builder.name(name).marshallerClass(marshallerClassName);
+      namedMarshallerBuilders.add(builder);
+      return this;
+   }
+
+   /**
+    * Adds a named marshaller by instance.
+    *
+    * @param name the name for this marshaller
+    * @param marshaller the marshaller instance
+    * @return this builder for method chaining
+    * @throws IllegalArgumentException if a marshaller with the given name already exists
+    */
+   public SerializationConfigurationBuilder addNamedMarshaller(String name, Marshaller marshaller) {
+      checkDuplicateMarshallerName(name);
+      NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
+      builder.name(name).marshaller(marshaller);
+      namedMarshallerBuilders.add(builder);
+      return this;
+   }
+
+   /**
+    * Returns a builder for creating a named marshaller.
+    *
+    * @return a new named marshaller builder
+    */
+   public NamedMarshallerConfigurationBuilder addNamedMarshaller() {
+      NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
+      namedMarshallerBuilders.add(builder);
+      return builder;
+   }
+
+   private void checkDuplicateMarshallerName(String name) {
+      for (NamedMarshallerConfigurationBuilder builder : namedMarshallerBuilders) {
+         String existingName = builder.attributes().attribute(NamedMarshallerConfiguration.NAME).get();
+         if (name.equals(existingName)) {
+            throw new IllegalArgumentException("A marshaller with name '" + name + "' is already registered");
+         }
+      }
+   }
+
    @Override
    public void validate() {
-      // No-op, no validation required
+      namedMarshallerBuilders.forEach(NamedMarshallerConfigurationBuilder::validate);
    }
 
    @Override
    public
    SerializationConfiguration create() {
-      return new SerializationConfiguration(attributes.protect(), allowListBuilder.create());
+      List<NamedMarshallerConfiguration> namedMarshallers = new ArrayList<>(namedMarshallerBuilders.size());
+      for (NamedMarshallerConfigurationBuilder builder : namedMarshallerBuilders) {
+         namedMarshallers.add(builder.create());
+      }
+      return new SerializationConfiguration(attributes.protect(), allowListBuilder.create(), namedMarshallers);
    }
 
    @Override
@@ -89,6 +146,14 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    SerializationConfigurationBuilder read(SerializationConfiguration template, Combine combine) {
       this.attributes.read(template.attributes(), combine);
       this.allowListBuilder.read(template.allowList(), combine);
+
+      namedMarshallerBuilders.clear();
+      for (NamedMarshallerConfiguration config : template.namedMarshallers()) {
+         NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
+         builder.read(config, combine);
+         namedMarshallerBuilders.add(builder);
+      }
+
       return this;
    }
 

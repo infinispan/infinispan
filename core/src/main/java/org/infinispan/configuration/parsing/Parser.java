@@ -38,6 +38,7 @@ import org.infinispan.configuration.global.GlobalJmxConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalSecurityConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalStateConfigurationBuilder;
+import org.infinispan.configuration.global.NamedMarshallerConfigurationBuilder;
 import org.infinispan.configuration.global.SerializationConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolBuilderAdapter;
@@ -175,6 +176,10 @@ public class Parser extends CacheParser {
                parseAllowList(reader, builder.serialization().allowList(), Element.ALLOW_LIST);
                break;
             }
+            case NAMED_MARSHALLER: {
+               parseNamedMarshaller(reader, holder.getClassLoader(), builder.serialization());
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -192,6 +197,32 @@ public class Parser extends CacheParser {
          switch (attribute) {
             case CLASS: {
                builder.addContextInitializer(Util.getInstance(value, classLoader));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseNamedMarshaller(final ConfigurationReader reader, final ClassLoader classLoader,
+                                      final SerializationConfigurationBuilder builder) {
+      NamedMarshallerConfigurationBuilder marshallerBuilder = builder.addNamedMarshaller();
+      int attributes = reader.getAttributeCount();
+      ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
+
+      for (int i = 0; i < attributes; i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case NAME: {
+               marshallerBuilder.name(value);
+               break;
+            }
+            case MARSHALLER: {
+               marshallerBuilder.marshallerClass(value);
                break;
             }
             default: {

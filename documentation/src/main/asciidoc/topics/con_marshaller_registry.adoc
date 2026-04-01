@@ -1,0 +1,40 @@
+[id='marshaller-registry_{context}']
+= Marshaller registry
+The marshaller registry is a global-scoped component that manages named marshaller instances in {brandname}.
+
+Unlike the default marshaller, which applies to all cache operations, named marshallers provide flexibility to use different serialization strategies for different scenarios within the same cache manager.
+
+.Key concepts
+
+Default marshaller::
+{brandname} automatically registers the configured default marshaller with the name "default" in the registry.
+You can retrieve it using `MarshallerRegistry.getDefaultMarshaller()` or by name using `getMarshaller("default")`.
+
+Named marshallers::
+Additional marshallers that you register with unique names.
+Each named marshaller is initialized with the cache manager's class allow list and is ready to use immediately after cache manager startup.
+
+Marshaller lookup::
+The `MarshallerRegistry` provides methods to retrieve marshallers by name and check if a marshaller exists.
+If you request a marshaller that doesn't exist, the registry returns `null`.
+
+.Integration with MediaType
+
+Named marshallers integrate seamlessly with {brandname}'s `MediaType` mechanism.
+You can specify a marshaller name as a parameter in a `MediaType`, and the `DefaultTranscoder` will automatically use that marshaller when converting data.
+
+For example, when you create a `MediaType` with `.withMarshaller("myCustomMarshaller")`, any transcoding operations involving that media type will use the named marshaller instead of the default one.
+
+.Scope and lifecycle
+
+The marshaller registry is a global component, meaning:
+
+* It is shared across all caches in the cache manager
+* Named marshallers are registered during cache manager startup
+* All registered marshallers are initialized with the same class allow list
+* Attempting to register duplicate marshaller names results in an exception
+
+[role="_additional-resources"]
+.Additional resources
+* xref:using-custom-marshallers_{context}[Using custom marshallers]
+* link:{javadocroot}/org/infinispan/marshall/core/MarshallerRegistry.html[MarshallerRegistry API documentation]

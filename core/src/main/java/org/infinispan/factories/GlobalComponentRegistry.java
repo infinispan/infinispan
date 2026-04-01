@@ -126,6 +126,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.registerComponent(InternalCacheRegistry.class.getName(), new InternalCacheRegistryImpl(), true);
          basicComponentRegistry.registerComponent(EntryMergePolicyFactoryRegistry.class.getName(), new EntryMergePolicyFactoryRegistry(), true);
          basicComponentRegistry.registerComponent(GlobalXSiteAdminOperations.class.getName(), new GlobalXSiteAdminOperations(), true);
+         basicComponentRegistry.registerComponent(org.infinispan.marshall.core.MarshallerRegistry.class.getName(), new org.infinispan.marshall.core.MarshallerRegistryImpl(), true);
 
          // Allow caches to depend only on module initialization instead of the entire GCR
          basicComponentRegistry.registerComponent(ModuleInitializer.class, new ModuleInitializer(), true);

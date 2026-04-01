@@ -29,12 +29,14 @@ public class SerializationConfiguration {
    private final Attribute<List<SerializationContextInitializer>> contextInitializers;
    private final AttributeSet attributes;
    private final AllowListConfiguration allowListConfig;
+   private final List<NamedMarshallerConfiguration> namedMarshallers;
 
-   SerializationConfiguration(AttributeSet attributes, AllowListConfiguration allowListConfig) {
+   SerializationConfiguration(AttributeSet attributes, AllowListConfiguration allowListConfig, List<NamedMarshallerConfiguration> namedMarshallers) {
       this.attributes = attributes.checkProtection();
       this.marshaller = attributes.attribute(MARSHALLER);
       this.contextInitializers = attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS);
       this.allowListConfig = allowListConfig;
+      this.namedMarshallers = namedMarshallers;
    }
 
    public Marshaller marshaller() {
@@ -55,6 +57,10 @@ public class SerializationConfiguration {
 
    public AllowListConfiguration allowList() {
       return allowListConfig;
+   }
+
+   public List<NamedMarshallerConfiguration> namedMarshallers() {
+      return namedMarshallers;
    }
 
    @Override
