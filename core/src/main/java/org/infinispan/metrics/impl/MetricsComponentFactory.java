@@ -3,6 +3,9 @@ package org.infinispan.metrics.impl;
 import static org.infinispan.commons.util.Util.loadClassStrict;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
+import java.util.Objects;
+import java.util.Optional;
+
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.ComponentFactory;
@@ -10,6 +13,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metrics.config.MicrometerMeterRegistryConfiguration;
 import org.infinispan.remoting.transport.jgroups.JGroupsMetricsManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsMetricsManagerImpl;
 import org.infinispan.remoting.transport.jgroups.NoOpJGroupsMetricManager;
@@ -84,26 +88,54 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
          return registry;
       }
 
-      String registryClass = "io.micrometer.prometheusmetrics.PrometheusMeterRegistry";
-      try {
-         loadClassStrict(registryClass, classLoader);
-         registry = new PrometheusRegistry();
-      } catch (ClassNotFoundException ignore) {
-         logMissingMicrometerImpl(registryClass);
-         try {
-            registryClass = "io.micrometer.prometheus.PrometheusMeterRegistry";
-            loadClassStrict(registryClass, classLoader);
-            registry = new PrometheusSimpleClientRegistry();
-         } catch (ClassNotFoundException e) {
-            logMissingMicrometerImpl(registryClass);
-            log.warnFallbackToNoOpMetrics(NoMetricRegistry.class.getSimpleName());
-            registry = NoMetricRegistry.NO_OP_INSTANCE;
-         }
-      }
-      return registry;
+      registry = tryLoadPrometheusRegistry(classLoader)
+            .or(() -> tryLoadDeprecatedPrometheusRegistry(classLoader))
+            .or(() -> tryLoadGenericMetricRegistry(globalConfig))
+            .orElseGet(MetricsComponentFactory::fallbackMetricRegistry);
+      return Objects.requireNonNull(registry);
    }
 
-   private void logMissingMicrometerImpl(String clazz) {
+   private static Optional<MetricsRegistry> tryLoadPrometheusRegistry(ClassLoader classLoader) {
+      var registryClass = "io.micrometer.prometheusmetrics.PrometheusMeterRegistry";
+      try {
+         loadClassStrict(registryClass, classLoader);
+         return Optional.of(new PrometheusRegistry());
+      } catch (ClassNotFoundException ignore) {
+         logMissingMicrometerImpl(registryClass);
+      }
+      return Optional.empty();
+   }
+
+   private static Optional<MetricsRegistry> tryLoadDeprecatedPrometheusRegistry(ClassLoader classLoader) {
+      var registryClass = "io.micrometer.prometheus.PrometheusMeterRegistry";
+      try {
+         loadClassStrict(registryClass, classLoader);
+         return Optional.of(new PrometheusSimpleClientRegistry());
+      } catch (ClassNotFoundException ignore) {
+         logMissingMicrometerImpl(registryClass);
+      }
+      return Optional.empty();
+   }
+
+   private static Optional<MetricsRegistry> tryLoadGenericMetricRegistry(GlobalConfiguration configuration) {
+      var registryClass = "io.micrometer.core.instrument.MeterRegistry";
+      try {
+         loadClassStrict(registryClass, configuration.classLoader());
+         return Optional.ofNullable(configuration.module(MicrometerMeterRegistryConfiguration.class))
+               .map(MicrometerMeterRegistryConfiguration::meterRegistry)
+               .map(ignored -> new GenericMetricRegistry());
+      } catch (ClassNotFoundException ignore) {
+         logMissingMicrometerImpl(registryClass);
+      }
+      return Optional.empty();
+   }
+
+   private static MetricsRegistry fallbackMetricRegistry() {
+      log.warnFallbackToNoOpMetrics(NoMetricRegistry.class.getSimpleName());
+      return NoMetricRegistry.NO_OP_INSTANCE;
+   }
+
+   private static void logMissingMicrometerImpl(String clazz) {
       log.debugf("Micrometer implementation '%s' not available on classpath", clazz);
    }
 }
