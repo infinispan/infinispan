@@ -141,8 +141,8 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
          ConsistentHash newCH = ReplicatedConsistentHashFactory.getInstance().create(1, 1,
                                                                              newMembers, null);
          CacheTopology suspectTopology =
-            new CacheTopology(initialTopology.getTopologyId(), initialTopology.getRebalanceId(), newCH, null, null,
-                              CacheTopology.Phase.NO_REBALANCE, newCH.getMembers(), null);
+            new CacheTopology(initialTopology.getTopologyId(), initialTopology.getRebalanceId(), false, newCH, null, null,
+                              CacheTopology.Phase.NO_REBALANCE, newCH.getMembers(), null, Collections.emptyList());
          distributionManager.setCacheTopology(suspectTopology);
 
          command.setTopologyId(rpcManager0.getTopologyId());

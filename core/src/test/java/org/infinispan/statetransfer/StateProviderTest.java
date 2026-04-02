@@ -169,9 +169,9 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.emptyList());
 
-      CacheTopology simpleTopology = new CacheTopology(1, 1, ch1, ch1, ch1,
+      CacheTopology simpleTopology = new CacheTopology(1, 1, false, ch1, ch1, ch1,
                                                        CacheTopology.Phase.READ_OLD_WRITE_ALL, ch1.getMembers(),
-                                                       persistentUUIDManager.mapAddresses(ch1.getMembers()));
+                                                       persistentUUIDManager.mapAddresses(ch1.getMembers()), Collections.emptyList());
       this.cacheTopology = new LocalizedCacheTopology(CacheMode.DIST_SYNC, simpleTopology, keyPartitioner, A, true);
       stateProvider.onTopologyUpdate(this.cacheTopology, false);
 
@@ -208,9 +208,9 @@ public class StateProviderTest {
       assertTrue(stateProvider.isStateTransferInProgress());
 
       log.debug("ch2: " + ch2);
-      simpleTopology = new CacheTopology(2, 1, ch2, ch2, ch2, CacheTopology.Phase.READ_OLD_WRITE_ALL,
+      simpleTopology = new CacheTopology(2, 1, false, ch2, ch2, ch2, CacheTopology.Phase.READ_OLD_WRITE_ALL,
                                                       ch2.getMembers(),
-                                                      persistentUUIDManager.mapAddresses(ch2.getMembers()));
+                                                      persistentUUIDManager.mapAddresses(ch2.getMembers()), Collections.emptyList());
       this.cacheTopology = new LocalizedCacheTopology(CacheMode.DIST_SYNC, simpleTopology, keyPartitioner, A, true);
       stateProvider.onTopologyUpdate(this.cacheTopology, true);
 
@@ -273,9 +273,9 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.emptyList());
 
-      CacheTopology simpleTopology = new CacheTopology(1, 1, ch1, ch1, ch1, CacheTopology.Phase.READ_OLD_WRITE_ALL,
+      CacheTopology simpleTopology = new CacheTopology(1, 1, false, ch1, ch1, ch1, CacheTopology.Phase.READ_OLD_WRITE_ALL,
                                                       ch1.getMembers(),
-                                                      persistentUUIDManager.mapAddresses(ch1.getMembers()));
+                                                      persistentUUIDManager.mapAddresses(ch1.getMembers()), Collections.emptyList());
       this.cacheTopology = new LocalizedCacheTopology(CacheMode.DIST_SYNC, simpleTopology, keyPartitioner, A, true);
       stateProvider.onTopologyUpdate(this.cacheTopology, false);
 
@@ -309,9 +309,9 @@ public class StateProviderTest {
 
       // TestingUtil.sleepThread(15000);
       log.debug("ch2: " + ch2);
-      simpleTopology = new CacheTopology(2, 1, ch2, ch2, ch2, CacheTopology.Phase.READ_OLD_WRITE_ALL,
+      simpleTopology = new CacheTopology(2, 1, false, ch2, ch2, ch2, CacheTopology.Phase.READ_OLD_WRITE_ALL,
                                                       ch2.getMembers(),
-                                                      persistentUUIDManager.mapAddresses(ch2.getMembers()));
+                                                      persistentUUIDManager.mapAddresses(ch2.getMembers()), Collections.emptyList());
       this.cacheTopology = new LocalizedCacheTopology(CacheMode.DIST_SYNC, simpleTopology, keyPartitioner, A, true);
       stateProvider.onTopologyUpdate(this.cacheTopology, false);
 

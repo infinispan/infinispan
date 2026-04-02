@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
@@ -42,30 +43,21 @@ public class CacheTopology {
    private final List<Address> actualMembers;
    // The persistent UUID of each actual member
    private final List<UUID> persistentUUIDs;
-
-   public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH,
-                        Phase phase, List<Address> actualMembers, List<UUID> persistentUUIDs) {
-      this(topologyId, rebalanceId, currentCH, pendingCH, null, phase, actualMembers, persistentUUIDs);
-   }
+   // The value media type of each actual member
+   private final List<MediaType> memberValueMediaTypes;
 
    public CacheTopology(int topologyId, int rebalanceId, boolean restoredTopology, ConsistentHash currentCH, ConsistentHash pendingCH,
-                        Phase phase, List<Address> actualMembers, List<UUID> persistentUUIDs) {
-      this(topologyId, rebalanceId, restoredTopology, currentCH, pendingCH, null, phase, actualMembers, persistentUUIDs);
-   }
-
-   public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH,
-                        ConsistentHash unionCH, Phase phase, List<Address> actualMembers, List<UUID> persistentUUIDs) {
-      this(topologyId, rebalanceId, false, currentCH, pendingCH, unionCH, phase, actualMembers, persistentUUIDs);
-   }
-
-   public CacheTopology(int topologyId, int rebalanceId, boolean restoredTopology, ConsistentHash currentCH, ConsistentHash pendingCH,
-                        ConsistentHash unionCH, Phase phase, List<Address> actualMembers, List<UUID> persistentUUIDs) {
+                        ConsistentHash unionCH, Phase phase, List<Address> actualMembers, List<UUID> persistentUUIDs,
+                        List<MediaType> memberValueMediaTypes) {
       if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers())) {
          throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
                "contain all the current consistent hash's members: currentCH=" + currentCH + ", pendingCH=" + pendingCH);
       }
       if (persistentUUIDs != null && persistentUUIDs.size() != actualMembers.size()) {
          throw new IllegalArgumentException("There must be one persistent UUID for each actual member");
+      }
+      if (memberValueMediaTypes != null && !memberValueMediaTypes.isEmpty() && memberValueMediaTypes.size() != actualMembers.size()) {
+         throw new IllegalArgumentException("There must be one value media type for each actual member");
       }
       this.topologyId = topologyId;
       this.rebalanceId = rebalanceId;
@@ -76,12 +68,14 @@ public class CacheTopology {
       this.actualMembers = actualMembers;
       this.persistentUUIDs = persistentUUIDs;
       this.restoredFromState = restoredTopology;
+      this.memberValueMediaTypes = memberValueMediaTypes != null ? memberValueMediaTypes : Collections.emptyList();
    }
 
    @ProtoFactory
    CacheTopology(int topologyId, int rebalanceId, boolean restoredFromState, Phase phase, List<UUID> membersPersistentUUIDs,
                  MarshallableObject<ConsistentHash> wrappedCurrentCH, MarshallableObject<ConsistentHash> wrappedPendingCH,
-                 MarshallableObject<ConsistentHash> wrappedUnionCH, List<Address> actualMembers) {
+                 MarshallableObject<ConsistentHash> wrappedUnionCH, List<Address> actualMembers,
+                 List<MediaType> memberValueMediaTypes) {
       this.topologyId = topologyId;
       this.rebalanceId = rebalanceId;
       this.restoredFromState = restoredFromState;
@@ -91,6 +85,7 @@ public class CacheTopology {
       this.phase = phase;
       this.persistentUUIDs = membersPersistentUUIDs;
       this.actualMembers = actualMembers;
+      this.memberValueMediaTypes = memberValueMediaTypes != null ? memberValueMediaTypes : Collections.emptyList();
    }
 
    @ProtoField(1)
@@ -144,6 +139,11 @@ public class CacheTopology {
    @ProtoField(9)
    public List<Address> getActualMembers() {
       return actualMembers;
+   }
+
+   @ProtoField(10)
+   public List<MediaType> getMemberValueMediaTypes() {
+      return memberValueMediaTypes;
    }
 
    /**

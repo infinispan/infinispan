@@ -139,7 +139,8 @@ public class DistributionManagerImpl implements DistributionManager {
       for (int i = 0; i < numSegments; i++)
          owners.add(0);
       ConsistentHash ch = new ReplicatedConsistentHash(members, null, Collections.emptyList(), owners);
-      CacheTopology cacheTopology = new CacheTopology(-1, -1, ch, null, CacheTopology.Phase.NO_REBALANCE, members, null);
+      CacheTopology cacheTopology = new CacheTopology(-1, -1, false, ch, null, null, CacheTopology.Phase.NO_REBALANCE,
+            members, null, null);
       return new LocalizedCacheTopology(cacheMode, cacheTopology, keyPartitioner, localAddress, false);
    }
 }

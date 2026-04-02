@@ -43,7 +43,7 @@ class MockLocalTopologyManager implements LocalTopologyManager {
 
    public void init(CacheJoinInfo joinInfo, CacheTopology topology, CacheTopology stableTopology,
                     AvailabilityMode availabilityMode) {
-      this.status = new CacheStatusResponse(joinInfo, topology, stableTopology, availabilityMode, Collections.emptyList());
+      this.status = new CacheStatusResponse(joinInfo, topology, stableTopology, availabilityMode, Collections.emptyList(), null);
    }
 
    public void verifyTopology(CacheTopology topology, int topologyId, List<Address> currentMembers,
@@ -95,7 +95,7 @@ class MockLocalTopologyManager implements LocalTopologyManager {
    public CompletionStage<Void> handleTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode,
                                                      int viewId, Address sender) {
       status = new CacheStatusResponse(status.getCacheJoinInfo(), cacheTopology,
-                                       status.getStableTopology(), availabilityMode, status.joinedMembers());
+                                       status.getStableTopology(), availabilityMode, status.joinedMembers(), null);
       topologies.add(cacheTopology);
       return CompletableFutures.completedNull();
    }
@@ -103,14 +103,14 @@ class MockLocalTopologyManager implements LocalTopologyManager {
    @Override
    public CompletionStage<Void> handleStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, Address sender, int viewId) {
       status = new CacheStatusResponse(status.getCacheJoinInfo(), status.getCacheTopology(),
-                                       cacheTopology, status.getAvailabilityMode(), status.joinedMembers());
+                                       cacheTopology, status.getAvailabilityMode(), status.joinedMembers(), null);
       return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletionStage<Void> handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId, Address sender) {
       status = new CacheStatusResponse(status.getCacheJoinInfo(), cacheTopology,
-                                       status.getStableTopology(), status.getAvailabilityMode(), status.joinedMembers());
+                                       status.getStableTopology(), status.getAvailabilityMode(), status.joinedMembers(), null);
       topologies.add(cacheTopology);
       return CompletableFutures.completedNull();
    }

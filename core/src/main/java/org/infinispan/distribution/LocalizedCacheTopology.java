@@ -42,7 +42,8 @@ public class LocalizedCacheTopology extends CacheTopology {
     */
    public static LocalizedCacheTopology makeSingletonTopology(CacheMode cacheMode, Address localAddress) {
       List<Address> members = Collections.singletonList(localAddress);
-       CacheTopology cacheTopology = new CacheTopology(-1, -1, null, null, Phase.NO_REBALANCE, members, null);
+       CacheTopology cacheTopology = new CacheTopology(-1, -1, false, null, null, null, Phase.NO_REBALANCE,
+             members, null, Collections.emptyList());
        return new LocalizedCacheTopology(CacheMode.LOCAL, cacheTopology, SingleSegmentKeyPartitioner.getInstance(),
              localAddress, false);
    }
@@ -62,9 +63,9 @@ public class LocalizedCacheTopology extends CacheTopology {
 
    public LocalizedCacheTopology(CacheMode cacheMode, CacheTopology cacheTopology, KeyPartitioner keyPartitioner,
                                  Address localAddress, boolean connected) {
-      super(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), cacheTopology.getCurrentCH(),
-            cacheTopology.getPendingCH(), cacheTopology.getUnionCH(), cacheTopology.getPhase(), cacheTopology.getActualMembers(),
-            cacheTopology.getMembersPersistentUUIDs());
+      super(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), cacheTopology.wasTopologyRestoredFromState(),
+            cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), cacheTopology.getUnionCH(), cacheTopology.getPhase(),
+            cacheTopology.getActualMembers(), cacheTopology.getMembersPersistentUUIDs(), cacheTopology.getMemberValueMediaTypes());
 
       ConsistentHash readCH = getReadConsistentHash();
       ConsistentHash writeCH = getWriteConsistentHash();
@@ -125,7 +126,8 @@ public class LocalizedCacheTopology extends CacheTopology {
    }
 
    private LocalizedCacheTopology(KeyPartitioner keyPartitioner, int numSegments, Address localAddress) {
-      super(-1, -1, null, null, null, Collections.singletonList(localAddress), null);
+      super(-1, -1, false, null, null, null, Phase.NO_REBALANCE, Collections.singletonList(localAddress),
+            null, Collections.emptyList());
       this.localAddress = localAddress;
       this.numSegments = numSegments;
       this.keyPartitioner = keyPartitioner;

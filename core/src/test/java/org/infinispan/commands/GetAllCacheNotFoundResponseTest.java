@@ -104,10 +104,12 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
       LocalizedCacheTopology cacheTopology = dm4.getCacheTopology();
       int newTopologyId = cacheTopology.getTopologyId() + 1;
       CacheTopology newTopology = new CacheTopology(newTopologyId, cacheTopology.getRebalanceId(),
+                                                    cacheTopology.wasTopologyRestoredFromState(),
                                                     cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
                                                     cacheTopology.getUnionCH(),
                                                     cacheTopology.getPhase(), cacheTopology.getActualMembers(),
-                                                    cacheTopology.getMembersPersistentUUIDs());
+                                                    cacheTopology.getMembersPersistentUUIDs(),
+                                                    cacheTopology.getMemberValueMediaTypes());
       dm4.setCacheTopology(newTopology);
       return fork(() -> stl4.notifyTransactionDataReceived(newTopologyId));
    }

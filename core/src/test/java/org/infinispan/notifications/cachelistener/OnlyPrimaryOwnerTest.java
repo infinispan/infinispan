@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -97,7 +98,7 @@ public class OnlyPrimaryOwnerTest {
          List<Address> members = Arrays.asList(PRIMARY, BACKUP, NON_OWNER);
          List<Address>[] ownership = new List[]{Arrays.asList(PRIMARY, BACKUP)};
          ConsistentHash ch = DefaultConsistentHash.create(2, 1, members, null, ownership);
-         CacheTopology cacheTopology = new CacheTopology(0, 0, ch, null, CacheTopology.Phase.NO_REBALANCE, null, null);
+         CacheTopology cacheTopology = new CacheTopology(0, 0, false, ch, null, null, CacheTopology.Phase.NO_REBALANCE, null, null, Collections.emptyList());
          Address localAddress = isPrimaryOwner ? PRIMARY : (isOwner ? BACKUP : NON_OWNER);
          return new LocalizedCacheTopology(CacheMode.DIST_SYNC, cacheTopology, key -> 0, localAddress, true);
       }

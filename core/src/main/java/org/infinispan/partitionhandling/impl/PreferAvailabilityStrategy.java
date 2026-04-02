@@ -6,11 +6,14 @@ import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -122,10 +125,11 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          }
          CacheTopology mergedTopology = new CacheTopology(p.topology.getTopologyId() + 1,
                                                           p.topology.getRebalanceId() + 1,
-                                                          p.readCH, null, null,
+                                                          false, p.readCH, null, null,
                                                           CacheTopology.Phase.NO_REBALANCE,
                                                           survivingMembers,
-                                                          persistentUUIDManager.mapAddresses(survivingMembers));
+                                                          persistentUUIDManager.mapAddresses(survivingMembers),
+                                                          buildMediaTypesForMembers(survivingMembers, p.topology));
 
          context.updateTopologiesAfterMerge(mergedTopology, p.stableTopology, null);
 
@@ -187,9 +191,10 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          // Start conflict resolution by using the preferred topology's read CH as a base
          // And the union of all distinct consistent hashes as the source
          ConsistentHash conflictHash = context.calculateConflictHash(preferredPartition.readCH, distinctHashes, actualMembers);
-         mergedTopology = new CacheTopology(mergeTopologyId, mergeRebalanceId, conflictHash,
-                                            null, CacheTopology.Phase.CONFLICT_RESOLUTION,
-                                            actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+         mergedTopology = new CacheTopology(mergeTopologyId, mergeRebalanceId, false, conflictHash,
+                                            null, null, CacheTopology.Phase.CONFLICT_RESOLUTION,
+                                            actualMembers, persistentUUIDManager.mapAddresses(actualMembers),
+                                            buildMediaTypesForMembers(actualMembers, preferredPartition.topology));
       } else {
          actualMembers.retainAll(preferredPartition.readCH.getMembers());
 
@@ -201,9 +206,10 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
 
          // Cancel any pending rebalance and only use the read CH,
          // because we don't recover the rebalance confirmation status (yet).
-         mergedTopology = new CacheTopology(mergeTopologyId, mergeRebalanceId, preferredPartition.readCH, null,
-                                            CacheTopology.Phase.NO_REBALANCE, actualMembers,
-                                            persistentUUIDManager.mapAddresses(actualMembers));
+         mergedTopology = new CacheTopology(mergeTopologyId, mergeRebalanceId, false, preferredPartition.readCH, null,
+                                            null, CacheTopology.Phase.NO_REBALANCE, actualMembers,
+                                            persistentUUIDManager.mapAddresses(actualMembers),
+                                            buildMediaTypesForMembers(actualMembers, preferredPartition.topology));
       }
 
       context.updateTopologiesAfterMerge(mergedTopology, preferredPartition.stableTopology, null);
@@ -343,6 +349,30 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    @Override
    public void onManualAvailabilityChange(AvailabilityStrategyContext context, AvailabilityMode newAvailabilityMode) {
       // The cache should always be AVAILABLE
+   }
+
+   private static List<MediaType> buildMediaTypesForMembers(List<Address> members, CacheTopology sourceTopology) {
+      if (sourceTopology == null || sourceTopology.getMemberValueMediaTypes().isEmpty()) {
+         return Collections.emptyList();
+      }
+      // Build a map from address to media type from the source topology
+      Map<Address, MediaType> mediaTypeMap = new HashMap<>();
+      List<Address> sourceMembers = sourceTopology.getActualMembers();
+      List<MediaType> sourceMediaTypes = sourceTopology.getMemberValueMediaTypes();
+      for (int i = 0; i < sourceMembers.size(); i++) {
+         mediaTypeMap.put(sourceMembers.get(i), sourceMediaTypes.get(i));
+      }
+      // Build the media types list in the order of the target members
+      List<MediaType> result = new ArrayList<>(members.size());
+      for (Address member : members) {
+         MediaType mediaType = mediaTypeMap.get(member);
+         if (mediaType == null) {
+            // If we don't have media type information for all members, return an empty list
+            return Collections.emptyList();
+         }
+         result.add(mediaType);
+      }
+      return result;
    }
 
    private static class Partition {

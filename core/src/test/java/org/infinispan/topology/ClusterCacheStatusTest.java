@@ -34,7 +34,7 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    private static final String CACHE_NAME = "test";
    private static final CacheJoinInfo JOIN_INFO =
       new CacheJoinInfo(DefaultConsistentHashFactory.getInstance(), 8, 2, 1000,
-            CacheMode.DIST_SYNC, 1.0f, null, Optional.empty());
+            CacheMode.DIST_SYNC, 1.0f, null, Optional.empty(), null);
    private static final Address A = Address.random("A");
    private static final Address B = Address.random("B");
    private static final Address C = Address.random("C");
@@ -137,6 +137,6 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
       var persistentUUID = new UUID(a.hashCode(), a.hashCode());
       return new CacheJoinInfo(JOIN_INFO.getConsistentHashFactory(), JOIN_INFO.getNumSegments(), JOIN_INFO.getNumOwners(),
             JOIN_INFO.getTimeout(), JOIN_INFO.getCacheMode(), JOIN_INFO.getCapacityFactor(),
-            persistentUUID, Optional.empty());
+            persistentUUID, Optional.empty(), JOIN_INFO.getValueMediaType());
    }
 }

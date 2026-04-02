@@ -3,6 +3,7 @@ package org.infinispan.topology;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
@@ -32,10 +33,11 @@ public class CacheJoinInfo {
    // Per-node state info
    private final UUID persistentUUID;
    private final Optional<Integer> persistentStateChecksum;
+   private final MediaType valueMediaType;
 
    public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, int numSegments, int numOwners, long timeout,
                         CacheMode cacheMode, float capacityFactor,
-                        UUID persistentUUID, Optional<Integer> persistentStateChecksum) {
+                        UUID persistentUUID, Optional<Integer> persistentStateChecksum, MediaType valueMediaType) {
       this.consistentHashFactory = consistentHashFactory;
       this.numSegments = numSegments;
       this.numOwners = numOwners;
@@ -44,14 +46,15 @@ public class CacheJoinInfo {
       this.capacityFactor = capacityFactor;
       this.persistentUUID = persistentUUID;
       this.persistentStateChecksum = persistentStateChecksum;
+      this.valueMediaType = valueMediaType;
    }
 
    @ProtoFactory
    CacheJoinInfo(MarshallableObject<ConsistentHashFactory<?>> wrappedConsistentHashFactory, int numSegments, int numOwners,
                  long timeout, CacheMode cacheMode, float capacityFactor,
-                 UUID persistentUUID, Integer persistentStateChecksum) {
+                 UUID persistentUUID, Integer persistentStateChecksum, MediaType valueMediaType) {
       this(MarshallableObject.unwrap(wrappedConsistentHashFactory), numSegments, numOwners, timeout, cacheMode, capacityFactor,
-            persistentUUID, Optional.ofNullable(persistentStateChecksum));
+            persistentUUID, Optional.ofNullable(persistentStateChecksum), valueMediaType);
    }
 
    public ConsistentHashFactory getConsistentHashFactory() {
@@ -98,6 +101,11 @@ public class CacheJoinInfo {
       return persistentStateChecksum;
    }
 
+   @ProtoField(10)
+   public MediaType getValueMediaType() {
+      return valueMediaType;
+   }
+
    @Override
    public int hashCode() {
       final int prime = 31;
@@ -110,6 +118,7 @@ public class CacheJoinInfo {
       result = prime * result + Long.hashCode(timeout);
       result = prime * result + ((persistentUUID == null) ? 0 : persistentUUID.hashCode());
       result = prime * result + ((persistentStateChecksum == null) ? 0 : persistentStateChecksum.hashCode());
+      result = prime * result + ((valueMediaType == null) ? 0 : valueMediaType.hashCode());
       return result;
    }
 
@@ -143,8 +152,13 @@ public class CacheJoinInfo {
       } else if (!persistentUUID.equals(other.persistentUUID))
          return false;
       if (persistentStateChecksum == null) {
-         return other.persistentStateChecksum == null;
-      } else return persistentStateChecksum.equals(other.persistentStateChecksum);
+         if (other.persistentStateChecksum != null)
+            return false;
+      } else if (!persistentStateChecksum.equals(other.persistentStateChecksum))
+         return false;
+      if (valueMediaType == null) {
+         return other.valueMediaType == null;
+      } else return valueMediaType.equals(other.valueMediaType);
    }
 
    @Override
@@ -158,6 +172,7 @@ public class CacheJoinInfo {
             ", persistentUUID=" + persistentUUID +
             ", persistentStateChecksum=" + persistentStateChecksum +
             ", capacityFactor=" + getCapacityFactor() +
+            ", valueMediaType=" + valueMediaType +
             '}';
    }
 }
