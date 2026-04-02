@@ -59,6 +59,7 @@
             <filtering>false</filtering>
             <includes>
                <include>schema/*-${infinispan.core.schema.version}.xsd</include>
+               <include>schema/*-${infinispan.core.schema.version}.json</include>
             </includes>
          </resource>
          <resource>

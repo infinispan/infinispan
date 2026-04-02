@@ -1,0 +1,54 @@
+{
+  "$id": "https://infinispan.org/infinispan-clustered-locks-config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infinispan Clustered Locks Configuration",
+  "description": "Clustered lock configuration for Infinispan.",
+  "type": "object",
+  "properties": {
+    "clustered-locks": {
+      "$ref": "#/$defs/ClusteredLocks"
+    }
+  },
+  "$defs": {
+    "ClusteredLocks": {
+      "type": "object",
+      "description": "Configures clustered locks.",
+      "properties": {
+        "num-owners": {
+          "type": "string",
+          "description": "Sets the number of copies of the clustered lock's status to keep in the cluster, or -1 to keep it on all the nodes."
+        },
+        "reliability": {
+          "type": "string",
+          "description": "Sets the reliability mode for the partitions when the cluster splits.",
+          "enum": [
+            "AVAILABLE",
+            "CONSISTENT"
+          ]
+        },
+        "clustered-lock": {
+          "type": "array",
+          "description": "Configures a clustered lock.",
+          "items": {
+            "$ref": "#/$defs/ClusteredLock"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ClusteredLock": {
+      "type": "object",
+      "description": "Configures a clustered lock.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Sets the clustered lock's name. It must be unique."
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

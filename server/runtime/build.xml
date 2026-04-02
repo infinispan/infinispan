@@ -96,10 +96,28 @@
             <include name="jgroups-*.jar"/>
          </fileset>
          <patternset>
-            <include name="**/*.xsd"/>
+            <include name="*.xsd"/>
+            <include name="schema/*.xsd"/>
+            <include name="schema/*.json"/>
          </patternset>
          <mapper type="flatten"/>
       </unzip>
+      <fileset id="json.schemas" dir="${output.dir}/docs/schema">
+         <include name="*.json"/>
+         <exclude name="schema.json"/>
+         <exclude name="schema.xsd.json"/>
+      </fileset>
+      <pathconvert property="json.schema.list" refid="json.schemas" pathsep="&quot;, &quot;">
+         <mapper type="flatten"/>
+      </pathconvert>
+      <echo file="${output.dir}/docs/schema/schema.json">[&quot;${json.schema.list}&quot;]</echo>
+      <fileset id="xsd.schemas" dir="${output.dir}/docs/schema">
+         <include name="*.xsd"/>
+      </fileset>
+      <pathconvert property="xsd.schema.list" refid="xsd.schemas" pathsep="&quot;, &quot;">
+         <mapper type="flatten"/>
+      </pathconvert>
+      <echo file="${output.dir}/docs/schema/schema.xsd.json">[&quot;${xsd.schema.list}&quot;]</echo>
    </target>
 
    <target name="default">
