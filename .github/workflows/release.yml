@@ -8,11 +8,11 @@ on:
         required: true
         default: "main"
       version:
-        description: "Release version"
-        required: true
+        description: "Release version (blank = derive from pom.xml, only if micro > 0)"
+        required: false
       nextVersion:
-        description: "Next version"
-        required: true
+        description: "Next version (blank = next micro SNAPSHOT)"
+        required: false
       type:
          type: choice
          description: The type of release
@@ -26,6 +26,9 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
+      nextVersion: ${{ steps.resolve-versions.outputs.NEXT_VERSION }}
 
     steps:
       - name: Set up Java
@@ -50,19 +53,56 @@ jobs:
           git config user.email "infinispan@infinispan.org"
           git config user.name "Infinispan"
 
+      - name: Resolve versions
+        id: resolve-versions
+        run: |
+          POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "POM version: $POM_VERSION"
+
+          RELEASE_VERSION="${{ inputs.version }}"
+          if [ -z "$RELEASE_VERSION" ]; then
+            # Derive from pom.xml: strip -SNAPSHOT suffix
+            if [[ "$POM_VERSION" != *-SNAPSHOT ]]; then
+              echo "::error::POM version '$POM_VERSION' is not a SNAPSHOT version"
+              exit 1
+            fi
+            RELEASE_VERSION="${POM_VERSION%-SNAPSHOT}"
+            # Extract micro version and check it's non-zero
+            MICRO=$(echo "$RELEASE_VERSION" | cut -d. -f3)
+            if [ "$MICRO" = "0" ]; then
+              echo "::error::Cannot derive release version from '$POM_VERSION' (micro is 0). Please specify 'Release version' explicitly."
+              exit 1
+            fi
+          fi
+
+          NEXT_VERSION="${{ inputs.nextVersion }}"
+          if [ -z "$NEXT_VERSION" ]; then
+            # Bump micro: 16.1.2 -> 16.1.3-SNAPSHOT
+            MAJOR=$(echo "$RELEASE_VERSION" | cut -d. -f1)
+            MINOR=$(echo "$RELEASE_VERSION" | cut -d. -f2)
+            MICRO=$(echo "$RELEASE_VERSION" | cut -d. -f3)
+            NEXT_MICRO=$((MICRO + 1))
+            NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_MICRO}-SNAPSHOT"
+          fi
+
+          echo "Release version: $RELEASE_VERSION"
+          echo "Next version: $NEXT_VERSION"
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+          echo "NEXT_VERSION=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
       - name: Update proto.lock files
         run: |
           mvn -B clean install -DskipTests -DcommitProtoLockChanges=true -Dcheckstyle.skip
 
       - name: Set release version
         run: |
-          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ inputs.version }}
-          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ inputs.version }}
-          sed -i "s/^:ispn_version:.*\$/:ispn_version: ${{ inputs.version }}/" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc
-          git commit --no-verify -a -m "Releasing ${{ inputs.version }}"
+          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
+          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
+          sed -i "s/^:ispn_version:.*\$/:ispn_version: ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}/" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc
+          git commit --no-verify -a -m "Releasing ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}"
 
       - name: Publish to Central
-        run: mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release -DskipTests clean deploy -Dinfinispan.brand.version=${{ inputs.version }}
+        run: mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release -DskipTests clean deploy -Dinfinispan.brand.version=${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
         env:
           MAVEN_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
@@ -70,13 +110,13 @@ jobs:
 
       - name: Tag Release
         run: |
-          git tag -a ${{ inputs.version }} -m ${{ inputs.version }} 
+          git tag -a ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} -m ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
 
       - name: Next Version
         run: |
-          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ inputs.nextVersion }}
-          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ inputs.nextVersion }}
-          git commit --no-verify -a -m "Next version ${{ inputs.nextVersion }}"
+          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ steps.resolve-versions.outputs.NEXT_VERSION }}
+          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ steps.resolve-versions.outputs.NEXT_VERSION }}
+          git commit --no-verify -a -m "Next version ${{ steps.resolve-versions.outputs.NEXT_VERSION }}"
 
       - name: Push changes
         run: |
@@ -85,27 +125,27 @@ jobs:
       - name: Create default release
         if: ${{ inputs.type == 'default' }}
         run: |
-           gh release create ${{ inputs.version }} --generate-notes --latest=false
+           gh release create ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} --generate-notes --latest=false
         env:
            GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
       -  name: Create pre-release
          if: ${{ inputs.type == 'prerelease' }}
          run: |
-            gh release create ${{ inputs.version }} --generate-notes --latest=false --prerelease
+            gh release create ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} --generate-notes --latest=false --prerelease
          env:
             GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
       -  name: Create latest release
          if: ${{ inputs.type == 'latest' }}
          run: |
-            gh release create ${{ inputs.version }} --generate-notes --latest=true
+            gh release create ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} --generate-notes --latest=true
          env:
             GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
       - name: Attach server distribution
         run: |
-          gh release upload ${{ inputs.version }} distribution/target/distribution/infinispan-server-${{ inputs.version }}.zip
+          gh release upload ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
@@ -115,13 +155,13 @@ jobs:
     steps:
       - uses: GOSCHEN/http-status-code@v1.1.0
         with:
-          url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ inputs.version }}/infinispan-distribution-${{ inputs.version }}.pom
+          url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ needs.release.outputs.version }}/infinispan-distribution-${{ needs.release.outputs.version }}.pom
           code: 200
           timeout: 10800000
           interval: 1200
 
   native-cli:
-    needs: published
+    needs: [published, release]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -156,7 +196,7 @@ jobs:
       - name: Checkout Release Tag
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.version }}
+          ref: ${{ needs.release.outputs.version }}
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Build native executable
@@ -172,53 +212,66 @@ jobs:
       - name: Upload CLI native executable
         id: upload-cli-native-executable
         run: |
-          gh release upload ${{ inputs.version }} quarkus/cli/target/infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}.zip
+          gh release upload ${{ needs.release.outputs.version }} quarkus/cli/target/infinispan-cli-${{ needs.release.outputs.version }}-${{ matrix.asset_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
   images:
-    needs: published
-    if: startsWith(inputs.version, '16.')
+    needs: [published, release]
+    if: startsWith(needs.release.outputs.version, '16.')
     uses: ./.github/workflows/release_image.yml
     secrets: inherit
     with:
       branch: ${{ inputs.branch }}
-      version: ${{ inputs.version }}
+      version: ${{ needs.release.outputs.version }}
       type: ${{ inputs.type }}
 
   images-legacy:
-    needs: published
-    if: startsWith(inputs.version, '15.') || startsWith(inputs.version, '14.') || startsWith(inputs.version, '13.')
+    needs: [published, release]
+    if: startsWith(needs.release.outputs.version, '15.') || startsWith(needs.release.outputs.version, '14.') || startsWith(needs.release.outputs.version, '13.')
     uses: infinispan/infinispan-images/.github/workflows/release.yml@main
     secrets: inherit
     with:
       branch: main
-      ispnVersion: ${{ inputs.version }}
+      ispnVersion: ${{ needs.release.outputs.version }}
       repository: infinispan/infinispan-images
       type: ${{ inputs.type }}
 
   operator-main:
-    needs: images
-    if: ${{ !contains(inputs.version, '.Dev') }}
+    needs: [images, release]
+    if: ${{ !contains(needs.release.outputs.version, '.Dev') }}
     uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@main
     secrets: inherit
     with:
-      image: quay.io/infinispan/server:${{ inputs.version }}
+      image: quay.io/infinispan/server:${{ needs.release.outputs.version }}
       ref: main
       repository: infinispan/infinispan-operator
 
   operator-2-4-x:
-    needs: images-legacy
-    if: contains(inputs.version, '.Final') && (startsWith(inputs.version, '15.'))
+    needs: [images-legacy, release]
+    if: contains(needs.release.outputs.version, '.Final') && (startsWith(needs.release.outputs.version, '15.'))
     uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@2.5.6
     secrets: inherit
     with:
-      image: quay.io/infinispan/server:${{ inputs.version }}
+      image: quay.io/infinispan/server:${{ needs.release.outputs.version }}
       ref: 2.4.x
       repository: infinispan/infinispan-operator
 
-  update-org-vars:    
-    needs: published
+  update-website:
+    needs: [published, native-cli, release]
+    if: always() && needs.published.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update website release data
+        uses: peter-evans/repository-dispatch@v4
+        with:
+          token: ${{ secrets.API_TOKEN_GITHUB }}
+          repository: infinispan/infinispan.github.io
+          event-type: release_updated
+          client-payload: '{"project": "infinispan", "version": "${{ needs.release.outputs.version }}"}'
+
+  update-org-vars:
+    needs: [published, release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v3
@@ -232,4 +285,4 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: >
-          gh variable set "RELEASE_$(echo '${{ inputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "${{ inputs.nextVersion }}" --org infinispan;
+          gh variable set "RELEASE_$(echo '${{ needs.release.outputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "${{ needs.release.outputs.nextVersion }}" --org infinispan;
