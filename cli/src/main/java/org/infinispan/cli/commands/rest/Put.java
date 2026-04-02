@@ -52,13 +52,6 @@ public class Put extends RestCliCommand {
    @Option(name = "if-absent", shortName = 'a')
    boolean ifAbsent;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {

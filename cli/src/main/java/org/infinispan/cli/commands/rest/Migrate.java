@@ -36,13 +36,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "migrate", description = "Migration operations", groupCommands = {Migrate.Store.class, Migrate.Cluster.class})
 public class Migrate extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -60,14 +53,6 @@ public class Migrate extends CliCommand {
 
       @Option(shortName = 'v', hasValue = false)
       boolean verbose;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -91,14 +76,6 @@ public class Migrate extends CliCommand {
    @GroupCommandDefinition(name = "cluster", description = "Performs data migration between clusters", groupCommands = {Migrate.ClusterConnect.class, Migrate.ClusterDisconnect.class, Migrate.ClusterSourceConnection.class, Migrate.ClusterSynchronize.class}, activator = ConnectionActivator.class)
    public static class Cluster extends CliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          // This command serves only to wrap the sub-commands
@@ -116,14 +93,6 @@ public class Migrate extends CliCommand {
       @Option(completer = FileOptionCompleter.class, shortName = 'f', description = "JSON containing a 'remote-store' element with the configuration")
       org.aesh.io.Resource file;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          if (file == null) {
@@ -140,14 +109,6 @@ public class Migrate extends CliCommand {
       @Option(completer = CacheCompleter.class, shortName = 'c', description = "The name of the cache.")
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.cache(cache != null ? cache : CacheResource.cacheName(resource)).disconnectSource();
@@ -161,14 +122,6 @@ public class Migrate extends CliCommand {
       @Option(completer = CacheCompleter.class, shortName = 'c', description = "The name of the cache.")
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.cache(cache != null ? cache : CacheResource.cacheName(resource)).sourceConnection();
@@ -181,19 +134,11 @@ public class Migrate extends CliCommand {
       @Option(completer = CacheCompleter.class, shortName = 'c')
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
       @Option(shortName = 'b', name = "read-batch", description = "The amount of entries to process in a batch", converter = NullableIntegerConverter.class)
       Integer readBatch;
 
       @Option(shortName = 't', description = "The number of threads to use. Defaults to the number of cores on the server", converter = NullableIntegerConverter.class)
       Integer threads;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

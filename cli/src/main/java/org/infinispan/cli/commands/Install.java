@@ -50,8 +50,6 @@ public class Install extends CliCommand {
    @Option(description = "Sets the path to a Maven settings file that resolves Maven artifacts. Can be either a local path or a URL.", name = "maven-settings")
    String mavenSettings;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
 
    @Option(description = "Overwrites artifacts in the lib folder. By default installation fails if artifacts already exist.", shortName = 'o', hasValue = false)
    boolean overwrite;
@@ -67,11 +65,6 @@ public class Install extends CliCommand {
 
    @Option(description = "Deletes all contents from the lib directory before downloading artifacts.", hasValue = false)
    boolean clean;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

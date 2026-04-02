@@ -14,7 +14,8 @@ final class AccessLogSupport {
 
    private static final long MAX_OPERATION_DURATION = TimeUnit.MINUTES.toMillis(1);
 
-   private AccessLogSupport() { }
+   private AccessLogSupport() {
+   }
 
    public static AccessLogResult getGlobalStatistics(Stream<AccessLogEntry> source) {
       Map<String, Histogram> statistics = source.reduce(new HashMap<>(), (acc, curr) -> {
@@ -27,7 +28,7 @@ final class AccessLogSupport {
    }
 
    public static AccessLogResult getStatisticsByClient(Stream<AccessLogEntry> source) {
-      Map<String, AccessLogResult> results =  source.collect(Collectors.groupingBy(AccessLogEntry::client))
+      Map<String, AccessLogResult> results = source.collect(Collectors.groupingBy(AccessLogEntry::client))
             .entrySet().stream()
             .map(AccessLogSupport::parseNested)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -43,7 +44,7 @@ final class AccessLogSupport {
    }
 
    public static AccessLogResult getLongestOperationsByClient(Stream<AccessLogEntry> source, int limit) {
-      Map<String, AccessLogResult> results =  source.collect(Collectors.groupingBy(AccessLogEntry::client))
+      Map<String, AccessLogResult> results = source.collect(Collectors.groupingBy(AccessLogEntry::client))
             .entrySet().stream()
             .map(e -> parseNested(e, limit))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

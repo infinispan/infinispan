@@ -25,13 +25,6 @@ import org.infinispan.client.rest.RestResponse;
 @GroupCommandDefinition(name = "roles", description = "Manages user roles for security authorization", activator = ConnectionActivator.class, groupCommands = {Roles.Ls.class, Roles.Grant.class, Roles.Deny.class, Roles.Create.class, Roles.Update.class, Roles.Remove.class, Roles.Describe.class})
 public class Roles extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation commandInvocation) {
@@ -44,14 +37,6 @@ public class Roles extends CliCommand {
 
       @Argument(description = "The principal for which the roles should be listed. If unspecified all available roles are listed.")
       String principal;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      protected boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -68,14 +53,6 @@ public class Roles extends CliCommand {
       @OptionList(shortName = 'r', required = true, completer = RolesCompleter.class)
       List<String> roles;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      protected boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.security().grant(principal, roles);
@@ -90,14 +67,6 @@ public class Roles extends CliCommand {
 
       @OptionList(shortName = 'r', required = true, completer = RolesCompleter.class)
       List<String> roles;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      protected boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -118,14 +87,6 @@ public class Roles extends CliCommand {
       List<String> permissions;
 
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      protected boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.security().createRole(name, description, permissions);
@@ -145,14 +106,6 @@ public class Roles extends CliCommand {
       List<String> permissions;
 
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      protected boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.security().updateRole(name, description, permissions);
@@ -165,14 +118,6 @@ public class Roles extends CliCommand {
       @Argument(description = "Specifies the role to delete.", required = true, completer = RolesCompleter.class)
       String name;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      protected boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.security().removeRole(name);
@@ -184,14 +129,6 @@ public class Roles extends CliCommand {
 
       @Argument(description = "Specifies the role to describe.", required = true, completer = RolesCompleter.class)
       String name;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      protected boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

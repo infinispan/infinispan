@@ -38,13 +38,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "create", description = "Creates a cache or a counter", activator = ConnectionActivator.class, groupCommands = {Create.Cache.class, Create.Counter.class})
 public class Create extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -70,14 +63,6 @@ public class Create extends CliCommand {
 
       @Option(defaultValue = "false", name = "volatile", shortName = 'v')
       boolean volatileCache;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) throws RequiredOptionException {
@@ -125,14 +110,6 @@ public class Create extends CliCommand {
 
       @Option(shortName = 'c', name = "concurrency-level", defaultValue = "16", description = "concurrency level for weak counters, defaults to 16")
       Integer concurrencyLevel;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {

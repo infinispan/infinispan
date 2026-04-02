@@ -24,13 +24,6 @@ import org.kohsuke.MetaInfServices;
       activator = ConnectionActivator.class, groupCommands = {Topology.SetStable.class})
 public class Topology extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   protected boolean isHelp() {
-      return help;
-   }
 
    @Override
    protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -41,19 +34,11 @@ public class Topology extends CliCommand {
    @CommandDefinition(name = "set-stable", description = "Set the current topology as stable.", activator = ConnectionActivator.class)
    public static class SetStable extends RestCliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
       @Option(shortName = 'f', hasValue = false, overrideRequired = true)
       protected boolean force;
 
       @Argument(description = "The cache name to mark topology stable.", completer = CacheCompleter.class)
       String cacheName;
-
-      @Override
-      protected boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws Exception {

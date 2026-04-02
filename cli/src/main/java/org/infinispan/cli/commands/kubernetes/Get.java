@@ -31,13 +31,6 @@ import io.fabric8.kubernetes.client.KubernetesClient;
       })
 public class Get extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -55,16 +48,8 @@ public class Get extends CliCommand {
       @Option(name = "all-namespaces", shortName = 'A', description = "Displays the requested object(s) across all namespaces.")
       boolean allNamespaces;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
       @Option(shortName = 's', hasValue = false, description = "Displays all secrets that the cluster uses.")
       protected boolean secrets;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {

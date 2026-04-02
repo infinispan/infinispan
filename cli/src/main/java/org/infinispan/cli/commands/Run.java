@@ -40,13 +40,6 @@ public class Run extends CliCommand {
    @Option(description = "Whether to echo commands to the output", hasValue = false)
    boolean echo;
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

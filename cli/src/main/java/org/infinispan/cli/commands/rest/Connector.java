@@ -9,7 +9,6 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
-import org.aesh.command.option.Option;
 import org.aesh.command.option.OptionList;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
@@ -33,13 +32,6 @@ public class Connector extends CliCommand {
    public static final String TYPE = "type";
    public static final String NAME = "name";
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -50,14 +42,6 @@ public class Connector extends CliCommand {
 
    @CommandDefinition(name = "ls", description = "Lists connectors", activator = ConnectionActivator.class)
    public static class Ls extends RestCliCommand {
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -71,14 +55,6 @@ public class Connector extends CliCommand {
       @Argument(required = true, completer = ConnectorCompleter.class)
       String name;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.server().connector(name);
@@ -90,14 +66,6 @@ public class Connector extends CliCommand {
 
       @Argument(required = true, completer = ConnectorCompleter.class)
       String name;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -111,14 +79,6 @@ public class Connector extends CliCommand {
       @Argument(required = true, completer = ConnectorCompleter.class)
       String name;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.server().connectorStop(name);
@@ -127,14 +87,6 @@ public class Connector extends CliCommand {
 
    @GroupCommandDefinition(name = "ipfilter", description = "Manages connector IP filters", activator = ConnectionActivator.class, groupCommands = {IpFilter.Ls.class, IpFilter.Clear.class, IpFilter.Set.class})
    public static class IpFilter extends CliCommand {
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      protected boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -147,14 +99,6 @@ public class Connector extends CliCommand {
          @Argument(required = true, completer = ConnectorCompleter.class)
          String name;
 
-         @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-         protected boolean help;
-
-         @Override
-         public boolean isHelp() {
-            return help;
-         }
-
          @Override
          protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
             return client.server().connectorIpFilters(name);
@@ -166,14 +110,6 @@ public class Connector extends CliCommand {
 
          @Argument(required = true, completer = ConnectorCompleter.class)
          String name;
-
-         @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-         protected boolean help;
-
-         @Override
-         public boolean isHelp() {
-            return help;
-         }
 
          @Override
          protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -189,14 +125,6 @@ public class Connector extends CliCommand {
 
          @OptionList(description = "One or more filter rules as \"[ACCEPT|REJECT]/CIDR\"", completer = IpFilterRuleCompleter.class, required = true)
          List<String> rules;
-
-         @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-         protected boolean help;
-
-         @Override
-         public boolean isHelp() {
-            return help;
-         }
 
          @Override
          protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

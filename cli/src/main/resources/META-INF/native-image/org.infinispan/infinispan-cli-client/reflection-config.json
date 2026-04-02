@@ -1,0 +1,22 @@
+[
+  {
+    "name": "org.aesh.command.impl.parser.AeshOptionParser",
+    "methods": [{"name": "<init>", "parameterTypes": []}]
+  },
+  {
+    "name": "org.infinispan.cli.impl.ExitCodeResultHandler",
+    "methods": [{"name": "<init>", "parameterTypes": []}]
+  },
+  {
+    "name": "org.infinispan.cli.logging.Messages_$bundle",
+    "methods": [{"name": "<init>", "parameterTypes": []}]
+  },
+  {
+    "name": "org.infinispan.commons.logging.Log_$logger",
+    "methods": [{"name": "<init>", "parameterTypes": ["org.jboss.logging.Logger"]}]
+  },
+  {
+    "name": "org.wildfly.security.password.impl.PasswordFactorySpiImpl",
+    "methods": [{"name": "<init>", "parameterTypes": []}]
+  }
+]

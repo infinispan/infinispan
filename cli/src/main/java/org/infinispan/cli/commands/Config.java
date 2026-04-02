@@ -48,13 +48,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "config", description = "Configuration operations", groupCommands = {Config.Set.class, Config.Get.class, Config.Reset.class, Config.Convert.class})
 public class Config extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -68,14 +61,6 @@ public class Config extends CliCommand {
 
       @Arguments(description = "The property name and value", required = true, completer = ConfigPropertyCompleter.class)
       List<String> args;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -102,14 +87,6 @@ public class Config extends CliCommand {
       @Argument(description = "The name of the property", required = true, completer = ConfigPropertyCompleter.class)
       String name;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          Context context = invocation.getContext();
@@ -120,14 +97,6 @@ public class Config extends CliCommand {
 
    @CommandDefinition(name = "reset", description = "Resets all configuration properties to their default values")
    public static class Reset extends CliCommand {
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          Context context = invocation.getContext();
@@ -148,14 +117,6 @@ public class Config extends CliCommand {
 
       @Option(description = "Sets the format of the output configuration.", required = true, completer = MediaTypeCompleter.class, shortName = 'f')
       String format;
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

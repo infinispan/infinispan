@@ -8,7 +8,6 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Arguments;
-import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.ServerCompleter;
@@ -26,13 +25,6 @@ import org.kohsuke.MetaInfServices;
 @GroupCommandDefinition(name = "shutdown", description = "Stops server instances and clusters.", activator = ConnectionActivator.class, groupCommands = {Shutdown.Server.class, Shutdown.Cluster.class, Shutdown.Container.class})
 public class Shutdown extends CliCommand {
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -47,14 +39,6 @@ public class Shutdown extends CliCommand {
       @Arguments(description = "Specifies server instances to stop.", completer = ServerCompleter.class)
       List<String> servers;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return servers == null || servers.isEmpty() ? client.server().stop() : client.cluster().stop(servers);
@@ -64,14 +48,6 @@ public class Shutdown extends CliCommand {
    @CommandDefinition(name = "cluster", description = "Stops all nodes in the cluster after storing cluster state and persisting entries if there is a cache store.", activator = ConnectionActivator.class)
    public static class Cluster extends RestCliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
-
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.cluster().stop();
@@ -80,14 +56,6 @@ public class Shutdown extends CliCommand {
 
    @CommandDefinition(name = "container", description = "Stops the data container without terminating the server process.", activator = ConnectionActivator.class)
    public static class Container extends RestCliCommand {
-
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {

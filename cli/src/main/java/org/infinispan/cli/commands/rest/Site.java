@@ -58,13 +58,6 @@ public class Site extends CliCommand {
 
    private static final Supplier<RequiredOptionException> MISSING_CACHE_OR_GLOBAL = () -> MSG.requiresOneOf("cache", "all-caches");
 
-   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-   protected boolean help;
-
-   @Override
-   public boolean isHelp() {
-      return help;
-   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -84,13 +77,6 @@ public class Site extends CliCommand {
       @Option(shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
@@ -120,13 +106,6 @@ public class Site extends CliCommand {
       @Option(required = true, shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
@@ -153,13 +132,6 @@ public class Site extends CliCommand {
       @Option(required = true, shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
@@ -186,13 +158,6 @@ public class Site extends CliCommand {
       @Option(required = true, shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
@@ -219,13 +184,6 @@ public class Site extends CliCommand {
       @Option(required = true, shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
@@ -249,13 +207,6 @@ public class Site extends CliCommand {
       @Option(required = true, shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -273,13 +224,6 @@ public class Site extends CliCommand {
       @Option(required = true, shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -297,13 +241,6 @@ public class Site extends CliCommand {
       @Option(required = true, shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -319,13 +256,6 @@ public class Site extends CliCommand {
    @CommandDefinition(name = "view", description = "Prints the global sites view", activator = ConnectionActivator.class)
    public static class View extends CliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -344,13 +274,6 @@ public class Site extends CliCommand {
    @CommandDefinition(name = "name", description = "Prints the local site name", activator = ConnectionActivator.class)
    public static class Name extends CliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -373,13 +296,6 @@ public class Site extends CliCommand {
          })
    public static class StateTransferMode extends CliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -392,19 +308,12 @@ public class Site extends CliCommand {
    @CommandDefinition(name = "get", description = "Retrieves the cross-site state transfer mode.", activator = ConnectionActivator.class)
    public static class GetStateTransferMode extends RestCliCommand implements CacheAwareCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
 
       @Option(shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
       @Option(shortName = 's', required = true, completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       public Optional<String> getCacheName(Resource activeResource) {
@@ -421,8 +330,6 @@ public class Site extends CliCommand {
    @CommandDefinition(name = "set", description = "Sets the cross-site state transfer mode.", activator = ConnectionActivator.class)
    public static class SetStateTransferMode extends RestCliCommand implements CacheAwareCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
 
       @Option(shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
@@ -432,11 +339,6 @@ public class Site extends CliCommand {
 
       @Option(shortName = 'm', required = true, completer = XSiteStateTransferModeCompleter.class, description = "The state transfer mode to set.")
       protected String mode;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
@@ -453,13 +355,6 @@ public class Site extends CliCommand {
    @CommandDefinition(name = "relay-nodes", description = "Returns the list of relay nodes.", activator = ConnectionActivator.class)
    public static class RelayNodes extends CliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -477,13 +372,6 @@ public class Site extends CliCommand {
    @CommandDefinition(name = "is-relay-node", description = "Returns true if the node handles relay messages between clusters.", activator = ConnectionActivator.class)
    public static class IsRelayNode extends CliCommand {
 
-      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
-      protected boolean help;
-
-      @Override
-      public boolean isHelp() {
-         return help;
-      }
 
       @Override
       protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
