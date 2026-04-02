@@ -103,6 +103,13 @@ class Compactor {
       recordFreeSpace(getStats(file, -1, -1), file, size);
    }
 
+   public void freeIfPresent(int file, int size) {
+      Stats stats = fileStats.get(file);
+      if (stats != null) {
+         recordFreeSpace(stats, file, size);
+      }
+   }
+
    public void completeFile(int file, int currentSize, long nextExpirationTime) {
       completeFile(file, currentSize, nextExpirationTime, true);
    }
