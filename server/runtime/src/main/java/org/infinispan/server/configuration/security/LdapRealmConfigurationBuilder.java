@@ -122,10 +122,6 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
       return this;
    }
 
-   @Override
-   public int compareTo(RealmProviderBuilder o) {
-      return 0; // Irrelevant
-   }
 
    boolean isDirectVerificationEnabled() {
       Attribute<Boolean> attribute = attributes.attribute(LdapRealmConfiguration.DIRECT_EVIDENCE_VERIFICATION);
