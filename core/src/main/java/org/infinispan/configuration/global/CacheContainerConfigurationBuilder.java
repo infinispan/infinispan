@@ -25,6 +25,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<CacheContainerConfiguration> {
 
    private final AttributeSet attributes;
+   private final GlobalMemoryMonitorConfigurationBuilder memoryMonitor;
    private final GlobalMetricsConfigurationBuilder metrics;
    private final GlobalTracingConfigurationBuilder tracing;
    private final GlobalJmxConfigurationBuilder jmx;
@@ -39,6 +40,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    CacheContainerConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
       this.attributes = CacheContainerConfiguration.attributeDefinitionSet();
+      this.memoryMonitor = new GlobalMemoryMonitorConfigurationBuilder(globalConfig);
       this.metrics = new GlobalMetricsConfigurationBuilder(globalConfig);
       this.tracing = new GlobalTracingConfigurationBuilder(globalConfig);
       this.jmx = new GlobalJmxConfigurationBuilder(globalConfig);
@@ -78,6 +80,10 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
 
    public String defaultCacheName() {
       return attributes.attribute(DEFAULT_CACHE).get();
+   }
+
+   public GlobalMemoryMonitorConfigurationBuilder memoryMonitor() {
+      return memoryMonitor;
    }
 
    @Override
@@ -216,6 +222,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       }
 
       Arrays.asList(
+            memoryMonitor,
             metrics,
             tracing,
             jmx,
@@ -248,6 +255,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
             attributes.protect(),
             globalState.create(),
             jmx.create(),
+            memoryMonitor.create(),
             metrics.create(),
             security.create(),
             serialization.create(),
@@ -264,6 +272,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    public Builder<?> read(CacheContainerConfiguration template, Combine combine) {
       attributes.read(template.attributes(), combine);
       this.globalState.read(template.globalState(), combine);
+      this.memoryMonitor.read(template.memoryMonitor(), combine);
       this.metrics.read(template.metrics(), combine);
       this.jmx.read(template.jmx(), combine);
       this.transport.read(template.transport(), combine);

@@ -22,6 +22,11 @@ public abstract class AbstractGlobalConfigurationBuilder implements GlobalConfig
    }
 
    @Override
+   public GlobalMemoryMonitorConfigurationBuilder memoryMonitor() {
+      return globalConfig.memoryMonitor();
+   }
+
+   @Override
    public GlobalMetricsConfigurationBuilder metrics() {
       return globalConfig.metrics();
    }

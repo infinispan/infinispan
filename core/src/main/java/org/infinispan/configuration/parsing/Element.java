@@ -90,6 +90,7 @@ public enum Element {
     MAX_COUNT_CONTAINER,
     MAX_SIZE_CONTAINER,
     MEMORY,
+    MEMORY_MONITOR,
     METRICS,
     MODULES,
     OBJECT,

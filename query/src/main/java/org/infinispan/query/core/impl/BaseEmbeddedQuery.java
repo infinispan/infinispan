@@ -20,11 +20,13 @@ import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.query.BaseQuery;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.MemoryMonitor;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.infinispan.query.objectfilter.ObjectFilter.FilterResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.security.actions.SecurityActions;
 import org.jboss.logging.Logger;
 
 /**
@@ -37,6 +39,7 @@ import org.jboss.logging.Logger;
 public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
 
    private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, BaseEmbeddedQuery.class.getName());
+   private static final org.infinispan.query.core.impl.Log coreLog = org.infinispan.query.core.impl.Log.getLog(BaseEmbeddedQuery.class);
 
    /**
     * Initial capacity of the collection used for collecting results when performing internal sorting.
@@ -129,6 +132,7 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
                return new QueryResultImpl((int) collector.getCount(), results);
             } else {
                log.warnPerfSortedNonIndexed(queryString);
+               checkMemoryPressure();
                final int[] count = new int[1];
                // Collect and sort results in a PriorityQueue, in reverse order for now. We'll reverse them again before returning.
                // We keep the FilterResult wrapper in the queue rather than the actual value because we need FilterResult.getSortProjection() to perform sorting.
@@ -153,6 +157,13 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
                return new QueryResultImpl<>(queueSize, (List<T>) results);
             }
          }
+      }
+   }
+
+   private void checkMemoryPressure() {
+      MemoryMonitor monitor = SecurityActions.getGlobalComponentRegistry(cache.getCacheManager()).getComponent(MemoryMonitor.class);
+      if (monitor != null && (monitor.isMemoryLow() || monitor.isGcPressureExceeded())) {
+         throw coreLog.queryRejectedLowMemory(queryString);
       }
    }
 

@@ -45,6 +45,7 @@ class CacheContainerConfiguration {
    private final boolean zeroCapacityAvailable;
    private final GlobalStateConfiguration globalState;
    private final GlobalJmxConfiguration jmx;
+   private final GlobalMemoryMonitorConfiguration memoryMonitor;
    private final GlobalMetricsConfiguration metrics;
    private final GlobalSecurityConfiguration security;
    private final SerializationConfiguration serialization;
@@ -58,6 +59,7 @@ class CacheContainerConfiguration {
    CacheContainerConfiguration(AttributeSet attributes,
                                GlobalStateConfiguration globalState,
                                GlobalJmxConfiguration jmx,
+                               GlobalMemoryMonitorConfiguration memoryMonitor,
                                GlobalMetricsConfiguration metrics,
                                GlobalSecurityConfiguration security,
                                SerializationConfiguration serialization,
@@ -74,6 +76,7 @@ class CacheContainerConfiguration {
       this.tracing = tracing;
       this.globalState = globalState;
       this.jmx = jmx;
+      this.memoryMonitor = memoryMonitor;
       this.metrics = metrics;
       this.security = security;
       this.serialization = serialization;
@@ -102,6 +105,10 @@ class CacheContainerConfiguration {
 
    public boolean getZeroCapacityNode() {
       return zeroCapacityAvailable && zeroCapacityNode.get();
+   }
+
+   public GlobalMemoryMonitorConfiguration memoryMonitor() {
+      return memoryMonitor;
    }
 
    public GlobalMetricsConfiguration metrics() {
