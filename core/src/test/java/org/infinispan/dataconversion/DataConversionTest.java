@@ -245,6 +245,56 @@ public class DataConversionTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test
+   public void testOctetStreamWrapperForUserObjects() throws Exception {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.serialization().marshaller(new JavaSerializationMarshaller());
+      gcb.serialization().allowList().addClasses(Person.class);
+      try (DefaultCacheManager manager = new DefaultCacheManager(gcb.build())) {
+
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         // Configure storage to use octet-stream
+         builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+         builder.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+         Cache<String, Person> cache = manager.createCache("octet-stream-cache", builder.build());
+
+         // Put a user object with APPLICATION_OBJECT media type
+         Person person = new Person("John");
+         cache.put("key1", person);
+
+         // Retrieve using storage media type to verify wrapper
+         InternalCacheEntry<?, ?> cacheEntry = peekInternalCacheEntry(cache);
+         assertNotNull(cacheEntry);
+
+         // The value should be stored as SerializedObjectWrapper
+         Object storedValue = cacheEntry.getValue();
+         assertEquals(storedValue.getClass(), org.infinispan.commons.marshall.SerializedObjectWrapper.class);
+
+         // Verify we can retrieve and deserialize the object correctly
+         Person retrieved = cache.get("key1");
+         assertNotNull(retrieved);
+         assertEquals(retrieved.getName(), person.getName());
+
+         // Test that the same cache can also hold a String value
+         Cache<String, String> cacheStringValue = manager.getCache("octet-stream-cache");
+         cacheStringValue.put("key-string", "value");
+
+         assertEquals(cacheStringValue.get("key-string"), "value");
+      }
+   }
+
+   private static InternalCacheEntry<?, ?> peekInternalCacheEntry(Cache<?, ?> storageCache) {
+      AdvancedCache<?, ?> advancedCache = storageCache.getAdvancedCache();
+      DataContainer<?, ?> dataContainer = advancedCache.getDataContainer();
+
+      // Use KeyValueDataConversion to convert the key to storage format
+      DataConversion keyDataConversion = advancedCache.getKeyDataConversion();
+      Object storageKey = keyDataConversion.toStorage("key1");
+
+      return dataContainer.peek(storageKey);
+   }
+
    @SuppressWarnings("unused")
    static class TestInterceptor extends BaseCustomAsyncInterceptor {
 

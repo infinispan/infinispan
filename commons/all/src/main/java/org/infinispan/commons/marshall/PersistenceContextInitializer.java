@@ -14,7 +14,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 @ProtoSchema(
       includeClasses = {
             MediaType.class,
-            WrappedByteArray.class
+            WrappedByteArray.class,
+            SerializedObjectWrapper.class
       },
       schemaFileName = "persistence.commons.proto",
       schemaFilePath = "org/infinispan/commons",
