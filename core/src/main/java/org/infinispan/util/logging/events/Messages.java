@@ -69,6 +69,9 @@ public interface Messages {
    @Message(value = "After merge (or coordinator change), cache still hasn't recovered a majority of members and must stay in degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 320)
    String keepingDegradedModeAfterMergeMinorityPartition(Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
 
+   @Message(value = "Component (%s) in phase %s done in %d ms", id = 719)
+   String cacheComponentPhaseCompleted(String component, String phase, long duration);
+
    @Message(value = "After merge (or coordinator change), the coordinator failed to recover cluster. Cluster members are %s.", id = 100004)
    String clusterRecoveryFailed(Collection<Address> members);
 

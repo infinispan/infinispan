@@ -1,7 +1,5 @@
 package org.infinispan.factories.impl;
 
-import static org.infinispan.factories.KnownComponentNames.CACHE_NAME;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -55,9 +53,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       this.next = next;
       this.status = ComponentStatus.RUNNING;
       this.mutatorThreads = new ConcurrentHashMap<>();
-      this.tracker = log.isTraceEnabled()
-            ? ComponentRegistryTracker.timeTracking(this, isGlobal)
-            : ComponentRegistryTracker.disabled();
+      this.tracker = new DefaultComponentRegistryTracker(this, isGlobal);
 
       // No way to look up the next scope's BasicComponentRegistry, but that's not a problem
       registerComponent(BasicComponentRegistry.class, this, false);
@@ -71,17 +67,6 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    @Override
    public <T> ComponentRef<T> lazyGetComponent(Class<T> componentType) {
       return getComponent0(componentType.getName(), componentType, false);
-   }
-
-   @Override
-   public void blameInitialization() {
-      if (tracker != null && log.isTraceEnabled()) {
-         String name = scope == Scopes.NAMED_CACHE
-               ? getComponent(CACHE_NAME, String.class).running()
-               : scope.name();
-         log.tracef("Component initialization metrics %s:%n%s", name, tracker.dump());
-         tracker.clear();
-      }
    }
 
    @Override
@@ -728,12 +713,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       if (tracker != null) {
          switch (state) {
             case EMPTY, STOPPING, STOPPED, FAILED -> { }
-            case INSTANTIATING -> tracker.instantiating(name);
-            case INSTANTIATED -> tracker.instantiated(name);
-            case WIRING -> tracker.wiring(name);
-            case WIRED -> tracker.wired(name);
-            case STARTING -> tracker.starting(name);
-            case STARTED -> tracker.started(name);
+            default -> tracker.stateChanged(name, state, peekMutatorPath());
          }
       }
 
@@ -774,8 +754,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    }
 
    private String pushMutatorPath(String name, String className) {
-      ComponentPath currentPath = mutatorThreads.get(Thread.currentThread());
-      mutatorThreads.put(Thread.currentThread(), new ComponentPath(name, className, currentPath));
+      mutatorThreads.compute(Thread.currentThread(), (k, currentPath) -> new ComponentPath(name, className, currentPath));
       return name;
    }
 

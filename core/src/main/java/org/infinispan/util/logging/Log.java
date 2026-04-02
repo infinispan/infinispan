@@ -2443,4 +2443,6 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Shared container not available: %s", id = 718)
    IllegalStateException sharedContainerNotFound(String containerMapName);
+
+   // Message 719 in org.infinispan.util.logging.events.Messages
 }
