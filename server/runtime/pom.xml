@@ -158,6 +158,10 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
+         <groupId>net.glassless</groupId>
+         <artifactId>glassless-provider</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.latencyutils</groupId>
          <artifactId>LatencyUtils</artifactId>
          <scope>compile</scope>
