@@ -133,6 +133,7 @@ public class StateProviderTest {
       lpm = mock(LocalPublisherManager.class);
       when(distributionManager.getCacheTopology()).thenAnswer(invocation -> cacheTopology);
       stt = mock(StateTransferTracker.class);
+      when(stt.forCache(any())).thenReturn(mock(StateTransferTracker.CacheStateTransferTracker.class));
    }
 
    public void test1() {

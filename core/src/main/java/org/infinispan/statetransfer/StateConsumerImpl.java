@@ -915,7 +915,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
          requestedTransactionalSegments.clear();
          stateRequestExecutor.shutdownNow();
-         stateTracker.completeStateConsumer(Integer.MIN_VALUE);
+         stateTracker.forCache(cacheName).completeStateConsumer(Integer.MIN_VALUE);
          progressTracker.finishedAllTasks();
       } catch (Throwable t) {
          log.errorf(t, "Failed to stop StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
@@ -975,7 +975,7 @@ public class StateConsumerImpl implements StateConsumer {
                }
                completable.subscribe(() -> {
                   notifyEndOfStateTransferIfNeeded();
-                  stateTracker.completeStateConsumer(topologyId);
+                  stateTracker.forCache(cacheName).completeStateConsumer(topologyId);
                }, t -> log.debug("State iteration encountered exception!: ", t));
             });
          }
@@ -1512,7 +1512,7 @@ public class StateConsumerImpl implements StateConsumer {
       boolean wasEmpty = transfersBySource.isEmpty();
       transfersBySource.computeIfAbsent(inboundTransfer.getSource(), s -> new ArrayList<>()).add(inboundTransfer);
       if (wasEmpty) {
-         stateTracker.startStateConsumer(topologyId);
+         stateTracker.forCache(cacheName).startStateConsumer(topologyId);
       }
    }
 
@@ -1538,7 +1538,7 @@ public class StateConsumerImpl implements StateConsumer {
 
          if (transfersBySource.isEmpty()) {
             progressTracker.finishedAllTasks();
-            stateTracker.completeStateConsumer(stateTransferTopologyId.get());
+            stateTracker.forCache(cacheName).completeStateConsumer(stateTransferTopologyId.get());
          }
       } finally {
          transferMapsLock.unlock();

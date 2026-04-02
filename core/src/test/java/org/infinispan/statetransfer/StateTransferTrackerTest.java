@@ -13,8 +13,10 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "statetransfer.StateTransferTrackerTest")
 public class StateTransferTrackerTest {
 
+   private static final String CACHE_NAME = "test-cache";
+
    public void testListenerCompletion() {
-      StateTransferTracker stt = new StateTransferTracker();
+      StateTransferTracker.CacheStateTransferTracker stt = new StateTransferTracker().forCache(CACHE_NAME);
 
       assertThat(stt.isStateTransferInProgress()).isFalse();
 
@@ -53,7 +55,7 @@ public class StateTransferTrackerTest {
    }
 
    public void testListenerCompleteDirectly() {
-      StateTransferTracker stt = new StateTransferTracker();
+      StateTransferTracker.CacheStateTransferTracker stt = new StateTransferTracker().forCache(CACHE_NAME);
 
       assertThat(stt.isStateTransferInProgress()).isFalse();
 
@@ -72,7 +74,7 @@ public class StateTransferTrackerTest {
    }
 
    public void testListenerInstalledAfterTasks() {
-      StateTransferTracker stt = new StateTransferTracker();
+      StateTransferTracker.CacheStateTransferTracker stt = new StateTransferTracker().forCache(CACHE_NAME);
       assertThat(stt.isStateTransferInProgress()).isFalse();
 
       int topologyId = 1;
@@ -97,7 +99,7 @@ public class StateTransferTrackerTest {
    }
 
    public void testSupersededByHigherTopology() {
-      StateTransferTracker stt = new StateTransferTracker();
+      StateTransferTracker.CacheStateTransferTracker stt = new StateTransferTracker().forCache(CACHE_NAME);
       assertThat(stt.isStateTransferInProgress()).isFalse();
 
       int topologyId = 1;
@@ -117,7 +119,7 @@ public class StateTransferTrackerTest {
    }
 
    public void testInstallingTopologyOnly() {
-      StateTransferTracker stt = new StateTransferTracker();
+      StateTransferTracker.CacheStateTransferTracker stt = new StateTransferTracker().forCache(CACHE_NAME);
       assertThat(stt.isStateTransferInProgress()).isFalse();
 
       CompletableFuture<Void> cs = stt.onStateTransferCompleted((ct, t) -> true).toCompletableFuture();
@@ -128,7 +130,7 @@ public class StateTransferTrackerTest {
    }
 
    public void testOnlyProvider() {
-      StateTransferTracker stt = new StateTransferTracker();
+      StateTransferTracker.CacheStateTransferTracker stt = new StateTransferTracker().forCache(CACHE_NAME);
       assertThat(stt.isStateTransferInProgress()).isFalse();
 
       int topologyId = 42;
@@ -146,7 +148,7 @@ public class StateTransferTrackerTest {
    }
 
    public void testListenerKeptInstalled() {
-      StateTransferTracker stt = new StateTransferTracker();
+      StateTransferTracker.CacheStateTransferTracker stt = new StateTransferTracker().forCache(CACHE_NAME);
       assertThat(stt.isStateTransferInProgress()).isFalse();
 
       int expectedTopology = 42;
@@ -175,6 +177,23 @@ public class StateTransferTrackerTest {
       stt.cacheTopologyUpdated(createCacheTopology(expectedTopology, true));
       assertThat(stt.isStateTransferInProgress()).isFalse();
       assertThat(cs).isDone();
+   }
+
+   public void testStableTopologyDuringInFlightTransfer() {
+      StateTransferTracker.CacheStateTransferTracker stt = new StateTransferTracker().forCache(CACHE_NAME);
+
+      stt.startStateConsumer(5);
+
+      CompletableFuture<Void> cs = stt.onStateTransferCompleted((ct, t) -> true).toCompletableFuture();
+      assertThat(cs).isNotDone();
+
+      // A stable topology with a higher ID arrives while consumer for topology 5 is still pending.
+      // Before the fix, consumer.complete(5, null) would throw CancellationException because
+      // the consumer's tracked ID (5) != the stable topology ID, causing the listener to never fire.
+      stt.cacheTopologyUpdated(createCacheTopology(7, true));
+
+      assertThat(stt.isStateTransferInProgress()).isFalse();
+      assertThat(cs).isCompleted();
    }
 
    private static CacheTopology createCacheTopology(int id, boolean stable) {
