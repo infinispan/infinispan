@@ -76,7 +76,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    public void setUp() throws Throwable {
       // We need to use an actual thread pool - due to a circular dependency in ClusterTopologyManagerImpl invoking
       // a command via the non blocking executor that loads up the LocalTopologyManagerImpl that Injects the ClusterTopologyManagerImpl
-      ExecutorService realExecutor = Executors.newSingleThreadExecutor();
+      ExecutorService realExecutor = Executors.newFixedThreadPool(2);
       nonBlockingExecutorService = new DummyTaskCountExecutorService(realExecutor);
       blockingExecutorService = new DummyTaskCountExecutorService(realExecutor);
       BlockingTaskAwareExecutorService nonBlockingExecutor =
