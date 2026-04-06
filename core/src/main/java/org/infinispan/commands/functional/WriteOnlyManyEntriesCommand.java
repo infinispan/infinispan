@@ -1,15 +1,18 @@
 package org.infinispan.commands.functional;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.DataConvertibleCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.encoding.DataConverter;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.Params;
@@ -23,7 +26,7 @@ import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_MANY_ENTRIES_COMMAND)
-public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteManyCommand<K, V> {
+public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteManyCommand<K, V> implements DataConvertibleCommand {
 
    private Map<?, ?> arguments;
    private BiConsumer<T, WriteEntryView<K, V>> f;
@@ -105,6 +108,24 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
    @Override
    public boolean isWriteOnly() {
       return true;
+   }
+
+   @Override
+   public void transformValue(DataConverter dataConverter) {
+      if (arguments != null && !arguments.isEmpty()) {
+         Map<Object, Object> transformedArguments = new HashMap<>(arguments.size());
+         for (Map.Entry<?, ?> entry : arguments.entrySet()) {
+            Object transformedValue = entry.getValue() != null ? dataConverter.toStorage(entry.getValue()) : null;
+            transformedArguments.put(entry.getKey(), transformedValue);
+         }
+         this.arguments = transformedArguments;
+      }
+   }
+
+   @Override
+   public Object transformResult(Object result, DataConverter dataConverter) {
+      // Functional commands handle their own result transformation via StatsEnvelope
+      return result;
    }
 
    @Override

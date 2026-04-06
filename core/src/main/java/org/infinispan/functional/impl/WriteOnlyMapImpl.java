@@ -61,7 +61,8 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
    public <T> CompletableFuture<Void> eval(K key, T argument, BiConsumer<T, WriteEntryView<K, V>> f) {
       log.tracef("Invoked eval(k=%s, v=%s, %s)", key, argument, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
-      Object argumentEncoded = valueDataConversion.toStorage(argument);
+      // Keep argument in APPLICATION_OBJECT format - CallInterceptor will handle conversion
+      Object argumentEncoded = argument;
       WriteOnlyKeyValueCommand<K, V, T> cmd = fmap.commandsFactory.buildWriteOnlyKeyValueCommand(keyEncoded, argumentEncoded,
             (BiConsumer) f, fmap.keyPartitioner.getSegment(keyEncoded), params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, 1);

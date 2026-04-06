@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,11 +36,14 @@ import java.util.function.Supplier;
 import javax.management.ObjectName;
 import javax.sql.DataSource;
 
+import org.infinispan.commands.DataConvertibleCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TracedCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.Marshaller;
@@ -53,12 +57,14 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
+import org.infinispan.encoding.DataConverter;
 import org.infinispan.external.JGroupsProtocolComponent;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
@@ -71,6 +77,7 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractRequest;
@@ -96,6 +103,7 @@ import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.telemetry.SafeAutoClosable;
 import org.infinispan.telemetry.impl.DisabledInfinispanSpan;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -187,6 +195,11 @@ public class JGroupsTransport implements Transport {
    @Inject protected CacheManagerJmxRegistration jmxRegistration;
    @Inject protected JGroupsMetricsManager metricsManager;
    @Inject InfinispanTelemetry telemetry;
+   @Inject protected ComponentRef<org.infinispan.topology.LocalTopologyManager> localTopologyManagerRef;
+   @Inject protected org.infinispan.marshall.core.EncoderRegistry encoderRegistry;
+
+   // Track cache names for requests to enable response transformation
+   private final ConcurrentHashMap<Long, String> requestCacheNames = new ConcurrentHashMap<>();
 
    private final Lock viewUpdateLock = new ReentrantLock();
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
@@ -958,6 +971,15 @@ public class JGroupsTransport implements Transport {
       }
       long requestId = requests.newRequestId();
       logRequest(requestId, command, target, "single");
+
+      // Store cache name for response transformation
+      if (command instanceof org.infinispan.commands.remote.CacheRpcCommand) {
+         org.infinispan.util.ByteString cacheName = ((org.infinispan.commands.remote.CacheRpcCommand) command).getCacheName();
+         if (cacheName != null) {
+            requestCacheNames.put(requestId, cacheName.toString());
+         }
+      }
+
       SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, metricsManager.trackRequest(target));
       addRequest(request);
       if (request.onNewView(clusterView.getMembersSet())) {
@@ -985,6 +1007,15 @@ public class JGroupsTransport implements Transport {
       if (targets.isEmpty()) {
          return CompletableFuture.completedFuture(collector.finish());
       }
+
+      // Store cache name for response transformation
+      if (command instanceof org.infinispan.commands.remote.CacheRpcCommand) {
+         org.infinispan.util.ByteString cacheName = ((org.infinispan.commands.remote.CacheRpcCommand) command).getCacheName();
+         if (cacheName != null) {
+            requestCacheNames.put(requestId, cacheName.toString());
+         }
+      }
+
       Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
             new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget, metricsManager);
@@ -1190,11 +1221,123 @@ public class JGroupsTransport implements Transport {
    }
 
    void doSendForCluster(Address address, ExtendedUUID target, Object command, long requestId, DeliverOrder deliverOrder) {
+      // Transform command to APPLICATION_OBJECT format for all sends
+      // This ensures that when the receiving node re-broadcasts (in REPL mode),
+      // all nodes receive the value in APPLICATION_OBJECT format and can convert to their own storage format
+      Object commandToSend = command;
+      if (command instanceof CacheRpcCommand) {
+         String cacheName = ((CacheRpcCommand) command).getCacheName().toString();
+         MediaType localMediaType = getLocalValueMediaType(cacheName);
+         // Transform to APPLICATION_OBJECT (common/user format) if we're not already in that format
+         if (localMediaType != null && !localMediaType.equals(org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT)) {
+            commandToSend = createTransformedCommand((ReplicableCommand) command, cacheName,
+                  org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT);
+         }
+      }
+
       Message message = new BytesMessage(target);
-      marshallRequest(message, command, requestId);
+      marshallRequest(message, commandToSend, requestId);
       setMessageFlagsForCluster(message, deliverOrder);
       send(message);
       metricsManager.recordMessageSent(address, message.size(), requestId == Request.NO_REQUEST_ID);
+   }
+
+   private Object createTransformedCommand(ReplicableCommand command, String cacheName, MediaType targetMediaType) {
+      if (!(command instanceof DataConvertibleCommand)) {
+         return command;
+      }
+
+      MediaType localMediaType = getLocalValueMediaType(cacheName);
+      if (localMediaType == null || targetMediaType == null || localMediaType.equals(targetMediaType)) {
+         return command; // No transformation needed
+      }
+
+      // PutKeyValueCommand
+      if (command instanceof org.infinispan.commands.write.PutKeyValueCommand) {
+         org.infinispan.commands.write.PutKeyValueCommand original = (org.infinispan.commands.write.PutKeyValueCommand) command;
+
+         // Create a copy with transformed value
+         Object transformedValue = transformValue(original.getValue(), localMediaType, targetMediaType);
+
+         // Create a new command instance with the transformed value
+         org.infinispan.commands.write.PutKeyValueCommand transformed =
+               new org.infinispan.commands.write.PutKeyValueCommand(
+                     original.getCacheName(),
+                     original.getKey(),
+                     transformedValue,
+                     original.isPutIfAbsent(),
+                     original.isReturnEntryNecessary(),
+                     original.getMetadata(),
+                     original.getSegment(),
+                     original.getFlagsBitSet(),
+                     original.getCommandInvocationId());
+
+         transformed.setTopologyId(original.getTopologyId());
+         transformed.setValueMatcher(original.getValueMatcher());
+         transformed.setInternalMetadata(original.getInternalMetadata());
+
+         return transformed;
+      }
+
+      // ReplaceCommand
+      if (command instanceof org.infinispan.commands.write.ReplaceCommand) {
+         org.infinispan.commands.write.ReplaceCommand original = (org.infinispan.commands.write.ReplaceCommand) command;
+
+         // Transform both old and new values
+         Object transformedOldValue = original.getOldValue() != null ?
+               transformValue(original.getOldValue(), localMediaType, targetMediaType) : null;
+         Object transformedNewValue = transformValue(original.getNewValue(), localMediaType, targetMediaType);
+
+         // Create a new command instance with transformed values
+         org.infinispan.commands.write.ReplaceCommand transformed =
+               new org.infinispan.commands.write.ReplaceCommand(
+                     original.getCacheName(),
+                     original.getKey(),
+                     transformedOldValue,
+                     transformedNewValue,
+                     original.isReturnEntry(),
+                     original.getMetadata(),
+                     original.getSegment(),
+                     original.getFlagsBitSet(),
+                     original.getCommandInvocationId());
+
+         transformed.setTopologyId(original.getTopologyId());
+         transformed.setValueMatcher(original.getValueMatcher());
+         transformed.setInternalMetadata(original.getInternalMetadata());
+
+         return transformed;
+      }
+
+      // For other command types, return original (can be extended later)
+      return command;
+   }
+
+   private Object transformValue(Object value, MediaType fromMediaType, MediaType toMediaType) {
+      if (value == null) {
+         return null;
+      }
+
+      // Convert from local storage format to user format (APPLICATION_OBJECT)
+      MediaType userMediaType = org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+
+      if (!encoderRegistry.isConversionSupported(fromMediaType, userMediaType)) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Conversion not supported from %s to %s", fromMediaType, userMediaType);
+         }
+         return value;
+      }
+
+      org.infinispan.commons.dataconversion.Transcoder transcoder =
+            encoderRegistry.getTranscoder(fromMediaType, userMediaType);
+
+      // Unwrap if needed
+      Object unwrapped = value;
+      if (value instanceof org.infinispan.commons.marshall.WrappedBytes) {
+         unwrapped = ((org.infinispan.commons.marshall.WrappedBytes) value).getBytes();
+      }
+
+      // Transcode to user format
+      return transcoder.transcode(unwrapped, fromMediaType, userMediaType);
    }
 
    private void marshallRequest(Message message, Object command, long requestId) {
@@ -1335,8 +1478,21 @@ public class JGroupsTransport implements Transport {
     * Send a command to the entire cluster.
     */
    private void sendCommandToAll(ReplicableCommand command, long requestId, DeliverOrder deliverOrder) {
+      // Transform command to APPLICATION_OBJECT format for broadcast
+      // This ensures all receiving nodes get the value in a common format
+      Object commandToSend = command;
+      if (command instanceof CacheRpcCommand) {
+         String cacheName = ((CacheRpcCommand) command).getCacheName().toString();
+         MediaType localMediaType = getLocalValueMediaType(cacheName);
+         // Transform to APPLICATION_OBJECT (common/user format) if we're not already in that format
+         if (localMediaType != null && !localMediaType.equals(org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT)) {
+            commandToSend = createTransformedCommand(command, cacheName,
+                  org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT);
+         }
+      }
+
       Message message = new BytesMessage();
-      marshallRequest(message, command, requestId);
+      marshallRequest(message, commandToSend, requestId);
       setMessageFlagsForCluster(message, deliverOrder);
       send(message);
       clusterView.getMembersSet().stream()
@@ -1402,6 +1558,26 @@ public class JGroupsTransport implements Transport {
    private void sendCommand(Collection<Address> targets, ReplicableCommand command, long requestId,
                             DeliverOrder deliverOrder) {
       Objects.requireNonNull(targets);
+
+      // Transform to APPLICATION_OBJECT format for multi-target sends
+      // This ensures all receiving nodes get the value in a common format
+      Object commandToSend = command;
+      if (command instanceof CacheRpcCommand) {
+         String cacheName = ((CacheRpcCommand) command).getCacheName().toString();
+         MediaType localMediaType = getLocalValueMediaType(cacheName);
+         // Transform to APPLICATION_OBJECT (common/user format) if we're not already in that format
+         if (localMediaType != null && !localMediaType.equals(org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT)) {
+            commandToSend = createTransformedCommand(command, cacheName,
+                  org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT);
+         }
+      }
+
+      // Send the (possibly transformed) command to all targets
+      sendCommandToAddresses(targets, commandToSend, requestId, deliverOrder);
+   }
+
+   private void sendCommandToAddresses(Collection<Address> targets, Object command, long requestId,
+                                       DeliverOrder deliverOrder) {
       Message message = new BytesMessage();
       marshallRequest(message, command, requestId);
       setMessageFlagsForCluster(message, deliverOrder);
@@ -1428,6 +1604,21 @@ public class JGroupsTransport implements Transport {
             copy = copy.copy(true, true);
          }
       }
+   }
+
+   private Map<MediaType, List<Address>> groupTargetsByMediaType(String cacheName, Collection<Address> targets) {
+      Map<MediaType, List<Address>> result = new HashMap<>();
+      MediaType localMediaType = getLocalValueMediaType(cacheName);
+
+      for (Address target : targets) {
+         MediaType targetMediaType = getValueMediaTypeForAddress(cacheName, target);
+         if (targetMediaType == null) {
+            targetMediaType = localMediaType; // Assume same as local if unknown
+         }
+         result.computeIfAbsent(targetMediaType, k -> new ArrayList<>()).add(target);
+      }
+
+      return result;
    }
 
    TimeService getTimeService() {
@@ -1478,6 +1669,7 @@ public class JGroupsTransport implements Transport {
    private void sendResponse(org.jgroups.Address target, Response response, long requestId, Object command) {
       if (log.isTraceEnabled())
          log.tracef("%s sending response for request %d to %s: %s", getAddress(), requestId, target, response);
+
       ByteBuffer bytes;
       JChannel channel = this.channel;
       if (channel == null) {
@@ -1516,6 +1708,71 @@ public class JGroupsTransport implements Transport {
       }
    }
 
+   private Response transformReceivedResponse(org.jgroups.Address src, org.infinispan.remoting.responses.ValidResponse response, String cacheName) {
+      // Only check for success or unsuccess.. other types don't have response values
+      if (!(response instanceof SuccessfulResponse<?> || response instanceof UnsuccessfulResponse<?>)) {
+         return response;
+      }
+      Object responseValue = response.getResponseValue();
+      if (responseValue == null) {
+         return response;
+      }
+
+      // Skip transformation for Boolean results (from conditional operations)
+      if (responseValue instanceof Boolean) {
+         return response;
+      }
+
+      // Skip transformation for internal response types (PublisherResponse, StatsEnvelope, etc.)
+      String responseClassName = responseValue.getClass().getName();
+      if (responseClassName.contains(".publisher.") ||
+          responseClassName.contains(".reactive.") ||
+          responseClassName.contains("InternalCacheValue") ||
+          responseClassName.contains("Status") ||
+          responseClassName.contains("Response") ||
+          responseClassName.contains("StatsEnvelope")) {
+         return response;
+      }
+
+      // Convert JGroups address to Infinispan address
+      Address sourceAddress;
+      if (src instanceof org.jgroups.util.ExtendedUUID) {
+         sourceAddress = AddressCache.fromExtendedUUID((org.jgroups.util.ExtendedUUID) src);
+      } else {
+         return response; // Can't determine source address
+      }
+
+      // Get source node's media type
+      MediaType sourceMediaType = getValueMediaTypeForAddress(cacheName, sourceAddress);
+      if (sourceMediaType == null) {
+         return response;
+      }
+
+      // Get local media type
+      MediaType localMediaType = getLocalValueMediaType(cacheName);
+      if (localMediaType == null || localMediaType.equals(sourceMediaType)) {
+         return response;
+      }
+
+      if (!encoderRegistry.isConversionSupported(sourceMediaType, localMediaType)) {
+         return response;
+      }
+
+      // Transform the value from source's media type to local media type
+      org.infinispan.commons.dataconversion.Transcoder transcoder =
+            encoderRegistry.getTranscoder(sourceMediaType, localMediaType);
+
+      Object transformedValue = transcoder.transcode(responseValue, sourceMediaType, localMediaType);
+
+      // Wrap byte arrays as WrappedByteArray
+      if (transformedValue instanceof byte[]) {
+         transformedValue = new org.infinispan.commons.marshall.WrappedByteArray((byte[]) transformedValue);
+      }
+
+      // Return a new SuccessfulResponse with the transformed value
+      return org.infinispan.remoting.responses.SuccessfulResponse.create(transformedValue);
+   }
+
    private void processRequest(org.jgroups.Address src, short flags, byte[] buffer, int offset, int length,
                                long requestId) {
       try {
@@ -1528,11 +1785,147 @@ public class JGroupsTransport implements Transport {
          }
 
          Object command = marshaller.objectFromByteBuffer(buffer, offset, length);
+
+         // Transform incoming command from APPLICATION_OBJECT to local storage format
+         // Commands are sent in APPLICATION_OBJECT format, so we convert to local storage format on receive
+         if (command instanceof DataConvertibleCommand && command instanceof CacheRpcCommand) {
+            String cacheName = ((CacheRpcCommand) command).getCacheName().toString();
+            MediaType localMediaType = getLocalValueMediaType(cacheName);
+            MediaType userMediaType = org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+
+            // Only convert if local storage format differs from APPLICATION_OBJECT
+            if (localMediaType != null && !localMediaType.equals(userMediaType)) {
+
+               // Skip transformation for commands with FunctionMapper/BiFunctionMapper
+               // These mappers handle encoding conversion themselves via dependency injection
+               boolean skipTransform = false;
+               if (command instanceof org.infinispan.commands.write.ComputeIfAbsentCommand) {
+                  org.infinispan.commands.write.ComputeIfAbsentCommand cmd = (org.infinispan.commands.write.ComputeIfAbsentCommand) command;
+                  if (cmd.getMappingFunction() instanceof org.infinispan.cache.impl.FunctionMapper) {
+                     skipTransform = true;
+                  }
+               } else if (command instanceof org.infinispan.commands.write.ComputeCommand) {
+                  org.infinispan.commands.write.ComputeCommand cmd = (org.infinispan.commands.write.ComputeCommand) command;
+                  if (cmd.getRemappingBiFunction() instanceof org.infinispan.cache.impl.BiFunctionMapper) {
+                     skipTransform = true;
+                  }
+               }
+
+               if (skipTransform) {
+                  // FunctionMapper/BiFunctionMapper will be re-injected with local dependencies
+               } else if (!encoderRegistry.isConversionSupported(userMediaType, localMediaType)) {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Conversion not supported from user media type %s to local media type %s",
+                           userMediaType, localMediaType);
+                  }
+               } else {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Transforming incoming command %s from user media type %s to local media type %s",
+                           command, userMediaType, localMediaType);
+                  }
+
+                  // Get the transcoder
+                  org.infinispan.commons.dataconversion.Transcoder transcoder =
+                        encoderRegistry.getTranscoder(userMediaType, localMediaType);
+
+                  // Create a DataConverter that converts APPLICATION_OBJECT → local storage format
+                  DataConverter transcodingConverter = new DataConverter() {
+                     @Override
+                     public Object fromStorage(Object stored) {
+                        // Not used for incoming commands
+                        return stored;
+                     }
+
+                     @Override
+                     public Object toStorage(Object toStore) {
+                        if (toStore == null) {
+                           return null;
+                        }
+                        // Transcode from APPLICATION_OBJECT to local storage format
+                        Object transcoded = transcoder.transcode(toStore, userMediaType, localMediaType);
+
+                        // Wrap with WrappedByteArray if the transcoded result is a byte array
+                        if (transcoded instanceof byte[]) {
+                           transcoded = new org.infinispan.commons.marshall.WrappedByteArray((byte[]) transcoded);
+                        }
+                        return transcoded;
+                     }
+                  };
+
+                  ((DataConvertibleCommand) command).transformValue(transcodingConverter);
+               }
+            }
+         }
+
          Reply reply;
          if (requestId != Request.NO_REQUEST_ID) {
             if (log.isTraceEnabled())
                log.tracef("%s received request %d from %s: %s", getAddress(), requestId, src, command);
-            reply = response -> sendResponse(src, response, requestId, command);
+
+            // Wrap reply to apply result transformation for DataConvertibleCommand
+            // Transform results from local storage format to APPLICATION_OBJECT so requester can convert to their format
+            // Skip functional commands - they handle their own result transformation via StatsEnvelope
+            Reply originalReply = response -> sendResponse(src, response, requestId, command);
+            if (command instanceof DataConvertibleCommand &&
+                !(command instanceof org.infinispan.commands.functional.FunctionalCommand)) {
+               DataConvertibleCommand dataCommand = (DataConvertibleCommand) command;
+               String cacheName = ((CacheRpcCommand) command).getCacheName().toString();
+               MediaType localMediaType = getLocalValueMediaType(cacheName);
+               MediaType responseMediaType = org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+
+               // Transform response values from local storage format to APPLICATION_OBJECT
+               // This allows the requester to transform from APPLICATION_OBJECT to their own format
+               if (localMediaType != null && !localMediaType.equals(responseMediaType) &&
+                   encoderRegistry.isConversionSupported(localMediaType, responseMediaType)) {
+                  // Get the transcoder for local → APPLICATION_OBJECT
+                  org.infinispan.commons.dataconversion.Transcoder transcoder =
+                        encoderRegistry.getTranscoder(localMediaType, responseMediaType);
+
+                  // Create a DataConverter that converts from local storage → APPLICATION_OBJECT
+                  DataConverter resultConverter = new DataConverter() {
+                     @Override
+                     public Object fromStorage(Object stored) {
+                        if (stored == null) {
+                           return null;
+                        }
+                        // Unwrap WrappedByteArray if needed
+                        Object toTranscode = stored;
+                        if (stored instanceof org.infinispan.commons.marshall.WrappedByteArray) {
+                           toTranscode = ((org.infinispan.commons.marshall.WrappedByteArray) stored).getBytes();
+                        }
+                        return transcoder.transcode(toTranscode, localMediaType, responseMediaType);
+                     }
+
+                     @Override
+                     public Object toStorage(Object toStore) {
+                        // Not used for result transformation
+                        return toStore;
+                     }
+                  };
+
+                  // Wrap the reply to transform results to APPLICATION_OBJECT
+                  reply = response -> {
+                     if (response instanceof org.infinispan.remoting.responses.SuccessfulResponse) {
+                        org.infinispan.remoting.responses.SuccessfulResponse successResponse =
+                              (org.infinispan.remoting.responses.SuccessfulResponse) response;
+                        Object responseValue = successResponse.getResponseValue();
+
+                        // Apply transformResult from the command to convert to APPLICATION_OBJECT
+                        Object transformedValue = dataCommand.transformResult(responseValue, resultConverter);
+
+                        // Create new response with transformed value
+                        if (transformedValue != responseValue) {
+                           response = org.infinispan.remoting.responses.SuccessfulResponse.create(transformedValue);
+                        }
+                     }
+                     originalReply.reply(response);
+                  };
+               } else {
+                  reply = originalReply;
+               }
+            } else {
+               reply = originalReply;
+            }
          } else {
             if (log.isTraceEnabled())
                log.tracef("%s received command from %s: %s", getAddress(), src, command);
@@ -1568,14 +1961,27 @@ public class JGroupsTransport implements Transport {
          }
          if (log.isTraceEnabled())
             log.tracef("%s received response for request %d from %s: %s", getAddress(), requestId, src, response);
+
+         // Transform response from source media type to local media type
+         String cacheName = requestCacheNames.get(requestId);
+         if (cacheName != null && response instanceof org.infinispan.remoting.responses.ValidResponse) {
+            response = transformReceivedResponse(src, (org.infinispan.remoting.responses.ValidResponse) response, cacheName);
+         }
+
          if (src instanceof SiteUUID siteUUID) {
             requests.addResponse(requestId, siteUUID.getSite(), response);
          } else {
             assert src instanceof ExtendedUUID;
             requests.addResponse(requestId, AddressCache.fromExtendedUUID((ExtendedUUID) src), response);
          }
+
+         // Clean up cache name tracking - do this after adding response
+         // so the request can use it if needed
+         requestCacheNames.remove(requestId);
       } catch (Throwable t) {
          CLUSTER.errorProcessingResponse(requestId, src, t);
+         // Clean up on error too
+         requestCacheNames.remove(requestId);
       }
    }
 
@@ -1586,6 +1992,81 @@ public class JGroupsTransport implements Transport {
 
    private Optional<RELAY2> findRelay2() {
       return Optional.ofNullable(channel.getProtocolStack().findProtocol(RELAY2.class));
+   }
+
+   /**
+    * Gets the value media type for a specific address from the cache topology.
+    *
+    * @param cacheName the cache name
+    * @param targetAddress the address to look up
+    * @return the MediaType for that address, or null if not found
+    */
+   private MediaType getValueMediaTypeForAddress(String cacheName, Address targetAddress) {
+      org.infinispan.topology.LocalTopologyManager localTopologyManager = localTopologyManagerRef.wired();
+      if (localTopologyManager == null) {
+         return null;
+      }
+
+      CacheTopology topology = localTopologyManager.getCacheTopology(cacheName);
+      if (topology == null) {
+         return null;
+      }
+
+      List<Address> actualMembers = topology.getActualMembers();
+      List<MediaType> memberValueMediaTypes = topology.getMemberValueMediaTypes();
+
+      if (memberValueMediaTypes == null || memberValueMediaTypes.isEmpty()) {
+         return null;
+      }
+
+      int index = actualMembers.indexOf(targetAddress);
+      if (index >= 0 && index < memberValueMediaTypes.size()) {
+         return memberValueMediaTypes.get(index);
+      }
+
+      return null;
+   }
+
+   /**
+    * Gets the local storage value media type for a cache.
+    *
+    * @param cacheName the cache name
+    * @return the local MediaType, or null if not found
+    */
+   private MediaType getLocalValueMediaType(String cacheName) {
+      return getValueMediaTypeForAddress(cacheName, address);
+   }
+
+   /**
+    * Transforms a response's values if the source has a different storage media type.
+    * <p>
+    * TODO: To implement response transformation, we need to:
+    * 1. Store the cache name with the request ID so we can look it up when the response arrives
+    * 2. Extract values from SuccessfulResponse and its subclasses
+    * 3. Handle InternalCacheValue wrappers
+    * 4. Convert from source media type to local media type
+    * 5. Reconstruct the appropriate SuccessfulResponse with converted values
+    *
+    * @param response the response to potentially transform
+    * @param cacheName the cache name
+    * @param sourceAddress the source address
+    */
+   private void transformResponseFromSource(Response response, String cacheName, Address sourceAddress) {
+      MediaType localMediaType = getLocalValueMediaType(cacheName);
+      MediaType sourceMediaType = getValueMediaTypeForAddress(cacheName, sourceAddress);
+
+      if (localMediaType == null || sourceMediaType == null) {
+         return;
+      }
+
+      if (!localMediaType.equals(sourceMediaType)) {
+         // TODO: Implement response value transformation
+         // Requires infrastructure to track cache name per request ID
+         if (log.isTraceEnabled()) {
+            log.tracef("TODO: Transform response %s from source media type %s to local media type %s for address %s",
+                  response, sourceMediaType, localMediaType, sourceAddress);
+         }
+      }
    }
 
    private class ChannelCallbacks implements RouteStatusListener, UpHandler, ChannelListener, AddressGenerator {

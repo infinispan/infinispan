@@ -5,10 +5,12 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.DataConvertibleCommand;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.encoding.DataConverter;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
@@ -24,7 +26,7 @@ import org.infinispan.util.ByteString;
  * @since 4.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.REPLACE_COMMAND)
-public class ReplaceCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
+public class ReplaceCommand extends AbstractDataWriteCommand implements MetadataAwareCommand, DataConvertibleCommand {
 
    private Object oldValue;
    private Object newValue;
@@ -177,6 +179,26 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public final boolean isReturnValueExpected() {
      return true;
+   }
+
+   @Override
+   public void transformValue(DataConverter dataConverter) {
+      if (oldValue != null) {
+         oldValue = dataConverter.toStorage(oldValue);
+      }
+      if (newValue != null) {
+         newValue = dataConverter.toStorage(newValue);
+      }
+   }
+
+   @Override
+   public Object transformResult(Object result, DataConverter dataConverter) {
+      // For conditional replace, result is Boolean - don't transform
+      // For non-conditional replace, result is old value - transform it
+      if (result instanceof Boolean) {
+         return result;
+      }
+      return result != null ? dataConverter.fromStorage(result) : null;
    }
 
    @Override

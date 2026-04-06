@@ -480,7 +480,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(Object key,
          Function<ReadWriteEntryView<K, V>, R> f, int segment, Params params, DataConversion keyDataConversion,
          DataConversion valueDataConversion) {
-      return init(new ReadWriteKeyCommand<>(cacheName, key, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
+      return init(new ReadWriteKeyCommand<>(cacheName, key, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params,
+            keyDataConversion, valueDataConversion));
    }
 
    @Override
@@ -496,13 +497,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
          Object key, Consumer<WriteEntryView<K, V>> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new WriteOnlyKeyCommand<>(cacheName, key, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
+      return init(new WriteOnlyKeyCommand<>(cacheName, key, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params,
+            keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V, T> WriteOnlyKeyValueCommand<K, V, T> buildWriteOnlyKeyValueCommand(Object key, Object argument, BiConsumer<T, WriteEntryView<K, V>> f,
          int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new WriteOnlyKeyValueCommand<>(cacheName, key, argument, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
+      return init(new WriteOnlyKeyValueCommand<>(cacheName, key, argument, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params,
+            keyDataConversion, valueDataConversion));
    }
 
    @Override

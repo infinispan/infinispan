@@ -170,6 +170,9 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject XSiteStateTransferManager xSiteStateTransferManager;
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
+   @Inject protected ComponentRef<org.infinispan.topology.LocalTopologyManager> localTopologyManagerRef;
+   @Inject protected org.infinispan.marshall.core.EncoderRegistry encoderRegistry;
+   @Inject protected org.infinispan.encoding.impl.StorageConfigurationManager storageConfigurationManager;
    @Inject TimeService timeService;
    @Inject ClusterPublisherManager<Object, Object> clusterPublisherManager;
    @Inject Transport transport;
@@ -815,13 +818,97 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private CompletableFuture<?> invokePut(int segmentId, InvocationContext ctx, CacheEntry<?, ?> e) {
+      return invokePut(segmentId, ctx, e, null);
+   }
+
+   private CompletableFuture<?> invokePut(int segmentId, InvocationContext ctx, CacheEntry<?, ?> e, org.infinispan.remoting.transport.Address sourceAddress) {
       // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
       InternalMetadataImpl metadata = new InternalMetadataImpl((InternalCacheEntry<?, ?>) e);
-      PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), segmentId,
+
+      Object value = e.getValue();
+      // Convert value from source's storage media type to local storage media type if needed
+      if (sourceAddress != null) {
+         value = convertValueFromSource(value, sourceAddress);
+      }
+
+      PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), value, segmentId,
                                                                        metadata, STATE_TRANSFER_FLAGS);
       put.setInternalMetadata(e.getInternalMetadata());
       ctx.setLockOwner(put.getKeyLockOwner());
       return interceptorChain.invokeAsync(ctx, put);
+   }
+
+   private Object convertValueFromSource(Object value, org.infinispan.remoting.transport.Address sourceAddress) {
+      if (value == null) {
+         return null;
+      }
+
+      org.infinispan.topology.LocalTopologyManager localTopologyManager = localTopologyManagerRef.wired();
+      if (localTopologyManager == null) {
+         return value;
+      }
+
+      org.infinispan.topology.CacheTopology topology = localTopologyManager.getCacheTopology(cacheName);
+      if (topology == null) {
+         return value;
+      }
+
+      // Get source media type
+      org.infinispan.commons.dataconversion.MediaType sourceMediaType = getValueMediaTypeForAddress(topology, sourceAddress);
+      if (sourceMediaType == null) {
+         return value;
+      }
+
+      // Get local storage media type
+      org.infinispan.commons.dataconversion.MediaType localStorageMediaType = configuration.encoding().valueDataType().mediaType();
+      if (localStorageMediaType == null) {
+         return value;
+      }
+
+      if (sourceMediaType.equals(localStorageMediaType)) {
+         // Same media type, no conversion needed
+         return value;
+      }
+
+      // Value from source is in source's wrapped storage format
+      // We need to: unwrap source value -> transcode -> wrap for local storage
+
+      // First unwrap the source value
+      Object unwrappedValue = value;
+      if (value instanceof org.infinispan.commons.marshall.WrappedBytes) {
+         unwrappedValue = ((org.infinispan.commons.marshall.WrappedBytes) value).getBytes();
+      }
+
+      // Transcode from source to local storage format
+      if (!encoderRegistry.isConversionSupported(sourceMediaType, localStorageMediaType)) {
+         log.warnf("Conversion not supported from source media type %s to local storage media type %s for address %s",
+               sourceMediaType, localStorageMediaType, sourceAddress);
+         return value;
+      }
+
+      org.infinispan.commons.dataconversion.Transcoder transcoder = encoderRegistry.getTranscoder(sourceMediaType, localStorageMediaType);
+      Object transcoded = transcoder.transcode(unwrappedValue, sourceMediaType, localStorageMediaType);
+
+      // Wrap the transcoded value using the local storage wrapper
+      org.infinispan.commons.dataconversion.Wrapper valueWrapper = storageConfigurationManager.getWrapper(false);
+      return valueWrapper.wrap(transcoded);
+   }
+
+   private org.infinispan.commons.dataconversion.MediaType getValueMediaTypeForAddress(
+         org.infinispan.topology.CacheTopology topology, org.infinispan.remoting.transport.Address targetAddress) {
+      List<org.infinispan.remoting.transport.Address> actualMembers = topology.getActualMembers();
+      List<org.infinispan.commons.dataconversion.MediaType> memberValueMediaTypes = topology.getMemberValueMediaTypes();
+
+      if (memberValueMediaTypes == null || memberValueMediaTypes.isEmpty()) {
+         return null;
+      }
+
+      int index = actualMembers.indexOf(targetAddress);
+      if (index >= 0 && index < memberValueMediaTypes.size()) {
+         return memberValueMediaTypes.get(index);
+      }
+
+      return null;
    }
 
    private void logApplyException(Throwable t, Object key) {
@@ -1058,6 +1145,15 @@ public class StateConsumerImpl implements StateConsumer {
       Flowable<SegmentPublisherSupplier.Notification<CacheEntry<Object, Object>>> notificationFlowable =
             Flowable.fromPublisher(clusterPublisherManager.entryPublisherForTopology(topologyId, chunkSize, sources));
 
+      // Build a reverse map from segment to source address for value conversion
+      Map<Integer, Address> segmentToSource = new HashMap<>();
+      for (Map.Entry<Address, IntSet> entry : sources.entrySet()) {
+         Address source = entry.getKey();
+         entry.getValue().forEach((int segment) -> {
+            segmentToSource.put(segment, source);
+         });
+      }
+
       int concurrency = 20;
       if (transactionManager == null) {
          Map<Integer, AggregateCompletionStage<Integer>> segmentCompletions = new HashMap<>();
@@ -1077,7 +1173,8 @@ public class StateConsumerImpl implements StateConsumer {
                   }
                   int segment = n.valueSegment();
                   InvocationContext ctx = icf.createSingleKeyNonTxInvocationContext();
-                  CompletionStage<?> stage = invokePut(segment, ctx, n.value()).exceptionally(t -> {
+                  Address sourceAddress = segmentToSource.get(segment);
+                  CompletionStage<?> stage = invokePut(segment, ctx, n.value(), sourceAddress).exceptionally(t -> {
                      logApplyException(t, n.value().getKey());
                      return null;
                   });
@@ -1111,7 +1208,9 @@ public class StateConsumerImpl implements StateConsumer {
                   for (SegmentPublisherSupplier.Notification<CacheEntry<Object, Object>> n : l) {
                      CacheEntry<?, ?> e = n.value();
                      key = e.getKey();
-                     CompletableFuture<?> future = invokePut(n.valueSegment(), ctx, e);
+                     int segment = n.valueSegment();
+                     Address sourceAddress = segmentToSource.get(segment);
+                     CompletableFuture<?> future = invokePut(segment, ctx, e, sourceAddress);
                      if (!future.isDone()) {
                         throw new IllegalStateException("State transfer in-tx put should always be synchronous");
                      }

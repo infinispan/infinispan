@@ -25,7 +25,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.DATA_CONVERSION)
 @ProtoReserved(numbers = {2,3}, names = {"encoderId", "wrapperId"})
 @Scope(Scopes.NONE)
-public final class DataConversion {
+public final class DataConversion implements DataConverter {
 
    private final MediaType requestMediaType;
    private final boolean isKey;

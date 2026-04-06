@@ -60,6 +60,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.encoding.impl.DataConversionInternal;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.functional.EntryView;
@@ -495,7 +496,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             List<Mutation<Object, Object, ?>> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, command, key);
             mutationsOnKey.add(command.toMutation(key));
             TxReadOnlyKeyCommand remoteRead = commandsFactory.buildTxReadOnlyKeyCommand(key, null, mutationsOnKey, segment,
-                  command.getParams(), command.getKeyDataConversion(), command.getValueDataConversion());
+                  command.getParams(), (DataConversion) command.getKeyDataConversion(), (DataConversion) command.getValueDataConversion());
             remoteRead.setTopologyId(command.getTopologyId());
 
             CompletionStage<SuccessfulResponse> remoteGet =
@@ -716,7 +717,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                }
             }
          }
-         return commandsFactory.buildTxReadOnlyManyCommand(keys, mutations, cmd.getParams(), cmd.getKeyDataConversion(), cmd.getValueDataConversion());
+         return commandsFactory.buildTxReadOnlyManyCommand(keys, mutations, cmd.getParams(), (DataConversion) cmd.getKeyDataConversion(), (DataConversion) cmd.getValueDataConversion());
       }
 
       @Override

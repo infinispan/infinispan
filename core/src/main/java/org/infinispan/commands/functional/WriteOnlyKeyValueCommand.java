@@ -3,12 +3,14 @@ package org.infinispan.commands.functional;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.DataConvertibleCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.encoding.DataConverter;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.Params;
@@ -21,7 +23,7 @@ import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_KEY_VALUE_COMMAND)
-public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCommand<K, V> {
+public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCommand<K, V> implements DataConvertibleCommand {
 
    private BiConsumer<T, WriteEntryView<K, V>> f;
    private Object argument;
@@ -94,6 +96,19 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
 
    public Object getArgument() {
       return argument;
+   }
+
+   @Override
+   public void transformValue(DataConverter dataConverter) {
+      if (argument != null) {
+         argument = dataConverter.toStorage(argument);
+      }
+   }
+
+   @Override
+   public Object transformResult(Object result, DataConverter dataConverter) {
+      // Functional commands handle their own result transformation via StatsEnvelope
+      return result;
    }
 
    @Override
