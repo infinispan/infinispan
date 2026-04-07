@@ -340,6 +340,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    @Override
    public CompletionStage<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      log.debugf("Removing cache %s with flags %s", name, flags);
       ScopedState cacheScopedState = new ScopedState(CACHE_SCOPE, name);
       if (getStateCache().containsKey(cacheScopedState)) {
          try {

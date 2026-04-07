@@ -1,6 +1,7 @@
 package org.infinispan.server.test.core;
 
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
+import static org.infinispan.commons.util.concurrent.CompletionStages.await;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -25,6 +26,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.counter.api.CounterManager;
@@ -35,6 +37,8 @@ import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.testing.Eventually;
 import org.infinispan.testing.Testing;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
@@ -46,6 +50,7 @@ import net.spy.memcached.MemcachedClient;
  * @since 11
  */
 public class TestClient {
+   private static final Log LOG = LogFactory.getLog(TestClient.class);
    protected InfinispanServerTestConfiguration configuration;
    protected TestServer testServer;
    protected List<AutoCloseable> resources;
@@ -113,11 +118,28 @@ public class TestClient {
 
    public void clearResources() {
       if (hotrodCacheMap != null) {
-         hotrodCacheMap.forEach( (n, rcm) -> rcm.administration().removeCache(n));
+         for (Map.Entry<String, RemoteCacheManager> entry : hotrodCacheMap.entrySet()) {
+            try {
+               LOG.infof("Removing cache %s", entry.getKey());
+               entry.getValue().administration().removeCache(entry.getKey());
+            } catch (Exception e) {
+               LOG.warnf(e, "Failed stopping cache %s", entry.getKey());
+            }
+         }
          hotrodCacheMap.clear();
       }
       if (restCacheMap != null) {
-         restCacheMap.forEach( (n, rc) -> rc.cache(n).delete());
+         for (Map.Entry<String, RestClient> entry : restCacheMap.entrySet()) {
+            try {
+               LOG.infof("Removing REST cache: %s", entry.getKey());
+               RestResponse res = await(entry.getValue().cache(entry.getKey()).delete());
+               res.close();
+            } catch (InterruptedException ignored) {
+               Thread.currentThread().interrupt();
+            } catch (Exception e) {
+               LOG.warnf(e, "Failed stopping REST cache: %s", entry.getKey());
+            }
+         }
          restCacheMap.clear();
       }
       if (resources != null) {
