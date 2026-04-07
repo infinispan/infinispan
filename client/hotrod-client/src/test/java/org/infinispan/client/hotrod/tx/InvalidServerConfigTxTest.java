@@ -13,6 +13,8 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.testng.annotations.Test;
 
 import jakarta.transaction.TransactionManager;
@@ -30,9 +32,7 @@ public class InvalidServerConfigTxTest extends SingleHotRodServerTest {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       String name = method.getName();
       cacheManager.defineConfiguration(name, builder.build());
-      remoteCacheManager.getConfiguration().addRemoteCache(name, c -> {
-         c.transactionMode(TransactionMode.NONE);
-      });
+      remoteCacheManager.getConfiguration().addRemoteCache(name, c -> c.transactionMode(TransactionMode.NONE));
       assertFalse(remoteCacheManager.isTransactional(name));
       RemoteCache<String, String> cache = remoteCacheManager.getCache(name);
       assertFalse(cache.isTransactional());
@@ -44,9 +44,21 @@ public class InvalidServerConfigTxTest extends SingleHotRodServerTest {
       builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       String name = method.getName();
       cacheManager.defineConfiguration(name, builder.build());
-      remoteCacheManager.getConfiguration().addRemoteCache(name, c -> {
-         c.transactionMode(TransactionMode.NONE);
-      });
+      remoteCacheManager.getConfiguration().addRemoteCache(name, c -> c.transactionMode(TransactionMode.NONE));
+      assertFalse(remoteCacheManager.isTransactional(name));
+      RemoteCache<String, String> cache = remoteCacheManager.getCache(name);
+      assertFalse(cache.isTransactional());
+   }
+
+   public void testInvalidTransactionManager(Method method) {
+      ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
+      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+      builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      builder.transaction().transactionManagerLookup(new JBossStandaloneJTAManagerLookup());
+      String name = method.getName();
+      cacheManager.defineConfiguration(name, builder.build());
+      remoteCacheManager.getConfiguration().addRemoteCache(name, c -> c.transactionMode(TransactionMode.NONE));
+
       assertFalse(remoteCacheManager.isTransactional(name));
       RemoteCache<String, String> cache = remoteCacheManager.getCache(name);
       assertFalse(cache.isTransactional());
@@ -56,11 +68,10 @@ public class InvalidServerConfigTxTest extends SingleHotRodServerTest {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      builder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       String name = method.getName();
       cacheManager.defineConfiguration(name, builder.build());
-      remoteCacheManager.getConfiguration().addRemoteCache(name, c -> {
-         c.transactionMode(TransactionMode.NON_XA);
-      });
+      remoteCacheManager.getConfiguration().addRemoteCache(name, c -> c.transactionMode(TransactionMode.NON_XA));
 
       assertTrue(remoteCacheManager.isTransactional(name));
       RemoteCache<String, String> cache = remoteCacheManager.getCache(name);

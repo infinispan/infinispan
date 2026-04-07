@@ -43,7 +43,7 @@ public interface Log extends BasicLogger {
    UnsupportedOperationException invalidOperation();
 
    @Message(value = "Event not handled by current Hot Rod event implementation: '%s'", id = 6009)
-   IllegalStateException unexpectedEvent(Event e);
+   IllegalStateException unexpectedEvent(Event<?, ?> e);
 
    @LogMessage(level = WARN)
    @Message(value = "Conditional operation '%s' should be used with transactional caches, otherwise data inconsistency issues could arise under failure situations", id = 6010)
@@ -101,4 +101,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Client %s keeps providing outdated topology %s", id = 6026)
    void clientNotUpdatingTopology(SocketAddress socketAddress, int topologyId);
+
+   @Message(value = "Cache '%s' must use EmbeddedTransactionManager instead of '%s'. Set transaction-manager-lookup to EmbeddedTransactionManagerLookup", id = 6027)
+   IllegalStateException unexpectedTransactionManager(String cacheName, String transactionManagerClass);
 }
