@@ -47,6 +47,18 @@
               ]
             }
           ]
+        },
+        {
+          "description": "Hot Rod transaction does not work with decorated RemoteCache",
+          "issue": "https://github.com/infinispan/infinispan/issues/14926",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.hotrod.HotRodTransactionalCacheOperations",
+              "test-methods": [
+                "testTransactionalCache"
+              ]
+            }
+          ]
         }
       ]
     }
