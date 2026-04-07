@@ -22,6 +22,8 @@ import org.infinispan.server.hotrod.test.TxResponse;
 import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -51,10 +53,20 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
             "java.lang.IllegalStateException: ISPN006021: Cache 'wrong_isolation_cache' must have REPEATABLE_READ isolation level");
    }
 
-   public void testSynchronizationMode() {
-      final String cacheName = "sync_cache";
+   public void testWrongTransactionManager() {
+      final String cacheName = "wrong_tm_cache";
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+      builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      builder.transaction().transactionManagerLookup(new JBossStandaloneJTAManagerLookup());
+      doWrongConfigurationTest(cacheName, builder,
+            "java.lang.IllegalStateException: ISPN006027: Cache 'wrong_tm_cache' must use EmbeddedTransactionManager instead of 'com.arjuna.ats.internal.jta.transaction.arjunacore.TransactionManagerImple'. Set transaction-manager-lookup to EmbeddedTransactionManagerLookup");
+   }
+
+   public void testSynchronizationMode() {
+      final String cacheName = "sync_cache";
+      ConfigurationBuilder builder = createTransactionalConfiguration();
       builder.transaction().useSynchronization(true);
       builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       doCorrectConfigurationTest(cacheName, builder);
@@ -62,8 +74,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
 
    public void testXa() {
       final String cacheName = "xa_cache";
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      ConfigurationBuilder builder = createTransactionalConfiguration();
       builder.transaction().useSynchronization(false);
       builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       doCorrectConfigurationTest(cacheName, builder);
@@ -71,8 +82,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
 
    public void testFullXa() {
       final String cacheName = "full_xa_cache";
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      ConfigurationBuilder builder = createTransactionalConfiguration();
       builder.transaction().useSynchronization(false);
       builder.transaction().recovery().enable();
       builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
@@ -81,8 +91,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
 
    public void testOptimisticConfiguration() {
       final String cacheName = "opt-cache";
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      ConfigurationBuilder builder = createTransactionalConfiguration();
       builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
       doCorrectConfigurationTest(cacheName, builder);
    }
@@ -100,6 +109,13 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
    @Override
    protected byte protocolVersion() {
       return HotRodVersion.HOTROD_27.getVersion();
+   }
+
+   private ConfigurationBuilder createTransactionalConfiguration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
+      return builder;
    }
 
    private void doWrongConfigurationTest(String cacheName, ConfigurationBuilder builder, String errorMsg) {

@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.context.Flag;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.tx.PrepareCoordinator;
@@ -26,6 +27,7 @@ import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import jakarta.transaction.TransactionManager;
 
 class TransactionRequestProcessor extends CacheRequestProcessor {
    private static final Log log = Log.getLog(TransactionRequestProcessor.class);
@@ -137,11 +139,10 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
             return;
          }
 
-         //forces the write-lock. used by pessimistic transaction. it ensures the key is not written after is it read and validated
-         //optimistic transaction will use the write-skew check.
-         AdvancedCache<byte[], byte[]> txCache = prepareCoordinator.decorateCache(cache);
-
          try {
+            //forces the write-lock. used by pessimistic transaction. it ensures the key is not written after is it read and validated
+            //optimistic transaction will use the write-skew check.
+            AdvancedCache<byte[], byte[]> txCache = cache.withFlags(Flag.FORCE_WRITE_LOCK, Flag.IGNORE_RETURN_VALUES);
             boolean rollback = false;
             for (TransactionWrite write : writes) {
                if (isValid(write, txCache)) {
@@ -183,6 +184,11 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       if (configuration.locking().lockIsolationLevel() != IsolationLevel.REPEATABLE_READ) {
          throw log.unexpectedIsolationLevel(cache.getName());
       }
+      TransactionManager tm = cache.getTransactionManager();
+      if (!(tm instanceof EmbeddedTransactionManager)) {
+         throw log.unexpectedTransactionManager(cache.getName(), tm.getClass().getName());
+      }
+
    }
 
    /**
