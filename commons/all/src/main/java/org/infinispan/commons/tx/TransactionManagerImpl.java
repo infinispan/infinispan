@@ -51,9 +51,13 @@ public abstract class TransactionManagerImpl implements TransactionManager {
       CURRENT_TRANSACTION.set(tx);
    }
 
+   public static Transaction getCurrentTransaction() {
+      return CURRENT_TRANSACTION.get();
+   }
+
    @Override
    public Transaction getTransaction() {
-      return CURRENT_TRANSACTION.get();
+      return getCurrentTransaction();
    }
 
    @Override

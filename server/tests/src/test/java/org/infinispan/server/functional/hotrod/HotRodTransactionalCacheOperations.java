@@ -9,9 +9,11 @@ import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.test.Combinations;
+import org.infinispan.commons.test.skip.SkipJunit;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.server.test.junit5.RollingUpgradeHandlerExtension;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -20,7 +22,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.support.ParameterDeclarations;
 
 import java.util.EnumSet;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,8 +48,6 @@ public class HotRodTransactionalCacheOperations {
       @Override
       public Stream<? extends Arguments> provideArguments(ParameterDeclarations parameters, ExtensionContext context) {
          return Combinations.combine(Flag.class).stream()
-               // Remove filter after https://github.com/infinispan/infinispan/issues/14926
-               .filter(Set::isEmpty)
                .flatMap(f ->
                      Stream.of(TransactionMode.NON_XA, TransactionMode.NON_DURABLE_XA, TransactionMode.FULL_XA)
                            .map(mode -> Arguments.of(mode, f)));
@@ -58,6 +57,7 @@ public class HotRodTransactionalCacheOperations {
    @ParameterizedTest(name = "{0}-{1}")
    @ArgumentsSource(ArgsProvider.class)
    public void testTransactionalCache(TransactionMode txMode, EnumSet<Flag> flags) throws Exception {
+      SkipJunit.skipCondition(() -> SERVERS instanceof RollingUpgradeHandlerExtension);
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.remoteCache(SERVERS.getMethodName())
             .transactionMode(TransactionMode.NON_XA)

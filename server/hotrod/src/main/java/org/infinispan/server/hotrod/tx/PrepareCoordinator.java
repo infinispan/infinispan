@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod.tx;
 
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.validOnly;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -14,8 +15,6 @@ import jakarta.transaction.RollbackException;
 import jakarta.transaction.SystemException;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.cache.impl.CacheImpl;
-import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -24,13 +23,11 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
@@ -58,6 +55,8 @@ import org.infinispan.util.ByteString;
  */
 public class PrepareCoordinator {
 
+   private static final Log log = Log.getLog(MethodHandles.lookup().lookupClass());
+
    private final AdvancedCache<?, ?> cache;
    private final XidImpl xid;
    private final PerCacheTxTable perCacheTxTable;
@@ -66,7 +65,6 @@ public class PrepareCoordinator {
    private final GlobalTxTable globalTxTable;
    private final long transactionTimeout;
    private EmbeddedTransaction tx;
-   private LocalTxInvocationContext localTxInvocationContext;
    private final boolean recoverable;
 
    public PrepareCoordinator(AdvancedCache<byte[], byte[]> cache, XidImpl xid, boolean recoverable,
@@ -124,7 +122,10 @@ public class PrepareCoordinator {
     * @return {@code true} if the transaction can be started, {@code false} otherwise.
     */
    public boolean startTransaction() {
-      EmbeddedTransaction tx = new EmbeddedTransaction(EmbeddedTransactionManager.getInstance());
+      EmbeddedTransaction tx = beginTransaction();
+      if (tx == null) {
+         return false;
+      }
       tx.setXid(xid);
       LocalTransaction localTransaction = transactionTable
             .getOrCreateLocalTransaction(tx, false, this::newGlobalTransaction);
@@ -135,10 +136,10 @@ public class PrepareCoordinator {
       if (createGlobalState(gtx) != Status.OK) {
          //no need to rollback. nothing is enlisted in the transaction.
          transactionTable.removeLocalTransaction(localTransaction);
+         EmbeddedTransactionManager.dissociateTransaction();
          return false;
       } else {
          this.tx = tx;
-         localTxInvocationContext = new LocalTxInvocationContext(localTransaction);
          perCacheTxTable.createLocalTx(xid, tx);
          transactionTable.enlistClientTransaction(tx, localTransaction);
          return true;
@@ -157,7 +158,7 @@ public class PrepareCoordinator {
          tx.rollback();
       } catch (SystemException e) {
          //ignore exception (heuristic exceptions)
-         //TODO logging
+         log.debug("Ignoring exception while rolling back transaction", e);
       } finally {
          perCacheTxTable.removeLocalTx(xid);
       }
@@ -205,13 +206,6 @@ public class PrepareCoordinator {
    }
 
    /**
-    * Decorates the cache with the transaction created.
-    */
-   public <K, V> AdvancedCache<K, V> decorateCache(AdvancedCache<K, V> cache) {
-      return cache.transform(this::transform);
-   }
-
-   /**
     * Commits a remote 1PC transaction that is already in MARK_COMMIT state
     */
    public int onePhaseCommitRemoteTransaction(GlobalTransaction gtx, List<WriteCommand> modifications) {
@@ -252,28 +246,6 @@ public class PrepareCoordinator {
    private Status loggingCompleted(boolean committed) {
       TxFunction function = new SetCompletedTransactionFunction(committed);
       return globalTxTable.update(cacheXid, function, transactionTimeout);
-   }
-
-   private <K, V> AdvancedCache<K, V> transform(AdvancedCache<K, V> cache) {
-      if (cache instanceof CacheImpl) {
-         return withTransaction((CacheImpl<K, V>) cache);
-      } else {
-         return cache;
-      }
-   }
-
-   private <K, V> AdvancedCache<K, V> withTransaction(CacheImpl<K, V> cache) {
-      return new DecoratedCache<>(cache, FlagBitSets.FORCE_WRITE_LOCK) {
-         @Override
-         protected InvocationContext readContext(int size) {
-            return localTxInvocationContext;
-         }
-
-         @Override
-         protected InvocationContext writeContext(int size) {
-            return localTxInvocationContext;
-         }
-      };
    }
 
    private int onePhaseCommitTransaction() {
@@ -321,5 +293,17 @@ public class PrepareCoordinator {
    private GlobalTransaction newGlobalTransaction() {
       TransactionFactory factory =  ComponentRegistry.componentOf(cache, TransactionFactory.class);
       return factory.newGlobalTransaction(cache.getCacheManager().getAddress(), false, true);
+   }
+
+   private EmbeddedTransaction beginTransaction() {
+      try {
+         EmbeddedTransactionManager tm = (EmbeddedTransactionManager) cache.getTransactionManager();
+         tm.begin();
+         return tm.getTransaction();
+      } catch (Exception e) {
+         // EmbeddedTransactionManager throws NotSupportedException if a transaction is already running.
+         // It should not happen.
+         throw new IllegalStateException("Unable to begin transaction. Please report this exception. Current transaction: %s, client xid=%s".formatted(EmbeddedTransactionManager.getCurrentTransaction(), cacheXid), e);
+      }
    }
 }

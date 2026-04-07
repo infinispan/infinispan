@@ -86,8 +86,6 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
    @Override
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       for (EmbeddedCacheManager cm : cacheManagers) {
          //use the same time service in all managers
          replaceComponent(cm, TimeService.class, timeService, true);
