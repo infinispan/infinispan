@@ -1,5 +1,6 @@
 package org.infinispan.server.hotrod.tx;
 
+import static org.infinispan.server.hotrod.LifecycleCallbacks.GLOBAL_TX_TABLE_CACHE_NAME;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
@@ -22,7 +23,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.HotRodVersion;
-import org.infinispan.server.hotrod.LifecycleCallbacks;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.RemoteTransaction;
@@ -37,6 +37,7 @@ import org.infinispan.testing.skip.SkipTestNG;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.ByteString;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -75,7 +76,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       byte[] v1 = v(method, "v1");
       byte[] v2 = v(method, "v2");
 
-      RemoteTransaction tx = RemoteTransaction.startTransaction(clients().get(0));
+      RemoteTransaction tx = RemoteTransaction.startTransaction(clients().getFirst());
       tx.set(k1, v1);
       tx.set(k2, v2);
       tx.getAndAssert(k1, v1);
@@ -99,7 +100,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       byte[] v1 = v(method, "v1");
       byte[] v2 = v(method, "v2");
 
-      RemoteTransaction tx = RemoteTransaction.startTransaction(clients().get(0));
+      RemoteTransaction tx = RemoteTransaction.startTransaction(clients().getFirst());
       tx.set(k1, v1);
       tx.set(k2, v2);
       tx.getAndAssert(k1, v1);
@@ -117,7 +118,6 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       assertServerTransactionTableEmpty();
    }
 
-   @Test(groups = "unstable", description = "ISPN-8432")
    public void testOriginatorLeft(Method method) {
       //optimistic mode is not official supported and we don't store any versioning
       //this test is failing without the versions
@@ -127,7 +127,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       byte[] v1 = v(method, "v1");
       byte[] v2 = v(method, "v2");
 
-      RemoteTransaction tx = RemoteTransaction.startTransaction(clients().get(0));
+      RemoteTransaction tx = RemoteTransaction.startTransaction(clients().getFirst());
       tx.set(k1, v1);
       tx.set(k2, v2);
       tx.getAndAssert(k1, v1);
@@ -138,8 +138,8 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       killNode(0);
 
       //index 0 is removed, index 0 is the old index 1
-      tx.commitAndAssert(clients().get(0), XAResource.XA_OK);
-      tx.forget(clients().get(0));
+      tx.commitAndAssert(clients().getFirst(), XAResource.XA_OK);
+      tx.forget(clients().getFirst());
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -152,7 +152,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       byte[] v1 = v(method, "v1");
       byte[] v2 = v(method, "v2");
 
-      RemoteTransaction tx = RemoteTransaction.startTransaction(clients().get(0));
+      RemoteTransaction tx = RemoteTransaction.startTransaction(clients().getFirst());
       tx.set(k1, v1);
       tx.set(k2, v2);
       tx.getAndAssert(k1, v1);
@@ -161,7 +161,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       tx.prepareAndAssert(XAResource.XA_OK);
 
       killNode(0);
-      waitForClusterToForm(LifecycleCallbacks.GLOBAL_TX_TABLE_CACHE_NAME);
+      waitForClusterToForm(GLOBAL_TX_TABLE_CACHE_NAME);
 
       //set the tx state to running
       GlobalTxTable transactionTable = extractGlobalComponent(manager(0), GlobalTxTable.class);
@@ -172,9 +172,9 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       transactionTable.update(cacheXid, function, 60000);
 
       //index 0 is removed, index 0 is the old index 1
-      tx.prepareAndAssert(clients().get(0), XAResource.XA_OK);
-      tx.commitAndAssert(clients().get(0), XAResource.XA_OK);
-      tx.forget(clients().get(0));
+      tx.prepareAndAssert(clients().getFirst(), XAResource.XA_OK);
+      tx.commitAndAssert(clients().getFirst(), XAResource.XA_OK);
+      tx.forget(clients().getFirst());
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -200,6 +200,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
    protected ConfigurationBuilder createCacheConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      builder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       builder.transaction().lockingMode(lockingMode);
       switch (transactionMode) {
          case NON_XA:
@@ -271,5 +272,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
 
       killClient(clients().remove(index));
       stopClusteredServer(servers().remove(index));
+      TestingUtil.waitForNoRebalance(caches(cacheName()));
+      TestingUtil.waitForNoRebalance(caches(GLOBAL_TX_TABLE_CACHE_NAME));
    }
 }

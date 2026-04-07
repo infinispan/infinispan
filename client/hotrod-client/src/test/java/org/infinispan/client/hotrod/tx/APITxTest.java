@@ -35,6 +35,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.testing.Exceptions;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -327,9 +328,10 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
    }
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cacheBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      cacheBuilder.transaction().lockingMode(lockingMode);
+      cacheBuilder.transaction().lockingMode(lockingMode)
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       cacheBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       createHotRodServers(NR_NODES, new ConfigurationBuilder());
       defineInAll(CACHE_NAME, cacheBuilder);
@@ -646,6 +648,7 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
    }
 
    private RemoteCache<K, V> txRemoteCache() {
+      //noinspection resource
       return client(0).getCache(CACHE_NAME);
    }
 
