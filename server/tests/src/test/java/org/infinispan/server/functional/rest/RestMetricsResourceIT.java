@@ -268,13 +268,10 @@ public class RestMetricsResourceIT {
       assertEquals(1, Arrays.stream(writes).sum());
 
       // The arrays must have the same position set
-      // If the request is sent to the primary owner, it is recorded as a hit.
-      // Because "IGNORE_RETURN_VALUES" flag is set, the back owner records it as a miss.
-      if (writes[0] == 1) {
-         assertArrayEquals(writes, rm_hits);
-      } else {
-         assertArrayEquals(writes, rm_misses);
-      }
+      // Remove of an existing entry always returns the old value to the originator, even in non-primary.
+      // We'll always have a hit and no misses.
+      assertArrayEquals(writes, rm_hits);
+      assertEquals(0, Arrays.stream(rm_misses).sum());
    }
 
    private static void assertDetailedMetrics(List<Metric> allMetrics, String name, Consumer<AbstractDoubleAssert<?>> consumer) {
