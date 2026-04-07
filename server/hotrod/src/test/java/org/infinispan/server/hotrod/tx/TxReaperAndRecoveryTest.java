@@ -86,8 +86,6 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
    @Override
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       for (EmbeddedCacheManager cm : cacheManagers) {
          //use the same time service in all managers
          replaceComponent(cm, TimeService.class, timeService, true);
@@ -302,14 +300,14 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
       assertEquals(Status.PREPARED, getState(xid2).getStatus());
       assertEquals(Status.PREPARED, getState(xid3).getStatus());
 
-      TestResponse response = clients().get(0).recovery();
+      TestResponse response = clients().getFirst().recovery();
       assertTrue(response instanceof RecoveryTestResponse);
       actual = new HashSet<>(((RecoveryTestResponse) response).getXids());
       assertEquals(expected, actual);
 
       for (XidImpl xid : expected) {
-         clients().get(0).rollbackTx(xid);
-         clients().get(0).forgetTx(xid);
+         clients().getFirst().rollbackTx(xid);
+         clients().getFirst().forgetTx(xid);
       }
       assertTrue(globalTxTable(0).isEmpty());
    }

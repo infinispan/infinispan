@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.EnumSet;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.Flag;
@@ -47,8 +46,6 @@ public class HotRodTransactionalCacheOperations {
       @Override
       public Stream<? extends Arguments> provideArguments(ParameterDeclarations parameters, ExtensionContext context) {
          return Combinations.combine(Flag.class).stream()
-               // Remove filter after https://github.com/infinispan/infinispan/issues/14926
-               .filter(Set::isEmpty)
                .flatMap(f ->
                      Stream.of(TransactionMode.NON_XA, TransactionMode.NON_DURABLE_XA, TransactionMode.FULL_XA)
                            .map(mode -> Arguments.of(mode, f)));
