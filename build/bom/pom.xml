@@ -113,11 +113,6 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-client-hotrod-legacy</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-client-rest</artifactId>
             <version>${project.version}</version>
          </dependency>
@@ -309,11 +304,6 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring-embedded</artifactId>
             <version>${project.version}</version>
-         </dependency>
-         <dependency>
-             <groupId>org.infinispan</groupId>
-             <artifactId>infinispan-spring6-common</artifactId>
-             <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
