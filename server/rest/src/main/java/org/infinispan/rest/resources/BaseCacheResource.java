@@ -19,6 +19,7 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.rest.CacheControl;
 import org.infinispan.rest.DateUtils;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -209,7 +210,7 @@ public class BaseCacheResource {
                responseBuilder.status(HttpResponseStatus.OK)
                      .lastModified(lastMod)
                      .eTag(etag)
-                     .cacheControl(CacheOperationsHelper.calcCacheControl(expires))
+                     .cacheControl(CacheControl.noCache())
                      .expires(expires)
                      .timeToLive(meta.lifespan())
                      .maxIdle(meta.maxIdle())

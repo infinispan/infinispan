@@ -361,13 +361,13 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       assertEquals(200, response.status());
       assertNotNull(response.header("Cache-Control"));
-      assertTrue(response.header("Cache-Control").contains("max-age"));
+      assertTrue(response.header("Cache-Control").contains("no-cache"));
       assertEquals("v1", response.body());
 
       // 6. GET with REST key2, short min-fresh
       response = join(cacheFactory.getRestCacheClient().get(key2, headers));
       assertEquals(200, response.status());
-      assertTrue(response.header("Cache-Control").contains("max-age"));
+      assertTrue(response.header("Cache-Control").contains("no-cache"));
       assertEquals("v2", response.body());
    }
 
