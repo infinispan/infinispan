@@ -9,7 +9,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.rest.CacheControl;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 
 public class CacheOperationsHelper {
@@ -56,17 +55,6 @@ public class CacheOperationsHelper {
          default:
             return false;
       }
-   }
-
-   public static CacheControl calcCacheControl(Date expires) {
-      if (expires == null) {
-         return null;
-      }
-      int maxAgeSeconds = calcFreshness(expires);
-      if (maxAgeSeconds > 0)
-         return CacheControl.maxAge(maxAgeSeconds);
-      else
-         return CacheControl.noCache();
    }
 
 

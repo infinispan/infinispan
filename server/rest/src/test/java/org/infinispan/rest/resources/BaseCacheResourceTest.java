@@ -885,6 +885,31 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).containsReturnedText("<string>foo</string>");
    }
 
+   @Test
+   public void shouldAlwaysSendNoCacheCacheControl() {
+      // Cache entries are mutable data. Cache-Control must always be no-cache so that
+      // browsers revalidate with the server on every request. Without this, browsers
+      // could serve stale cached responses and updated values are not visible.
+
+      // Entry with expiration
+      RestCacheClient expirationCache = client.cache("expiration");
+      CompletionStage<RestResponse> response = expirationCache.post("cacheControlKey", "value");
+      ResponseAssertion.assertThat(response).isOk();
+
+      RestResponse getResponse = join(expirationCache.get("cacheControlKey"));
+      ResponseAssertion.assertThat(getResponse).isOk();
+      ResponseAssertion.assertThat(getResponse).hasCacheControlHeaders("no-cache");
+
+      // Entry without expiration
+      RestCacheClient defaultCache = client.cache("default");
+      response = defaultCache.post("cacheControlKey", "value");
+      ResponseAssertion.assertThat(response).isOk();
+
+      getResponse = join(defaultCache.get("cacheControlKey"));
+      ResponseAssertion.assertThat(getResponse).isOk();
+      ResponseAssertion.assertThat(getResponse).hasCacheControlHeaders("no-cache");
+   }
+
    protected Map<String, String> createHeaders(RequestHeader header, String value) {
       Map<String, String> headers = new HashMap<>();
       headers.put(header.toString(), value);
