@@ -392,7 +392,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       assert channel.eventLoop().inEventLoop();
       if (configuration.version() == ProtocolVersion.PROTOCOL_VERSION_AUTO) {
          // Here for the purpose of tests to override explicitly as needed
-         if (codec == null) {
+         if (codec != null) {
             this.codec = codec;
          }
          channel.attr(OperationChannel.OPERATION_CHANNEL_ATTRIBUTE_KEY).get().setCodec(codec);
