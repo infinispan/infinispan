@@ -18,6 +18,7 @@ import org.infinispan.persistence.sifs.TemporaryTable;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.statetransfer.StateTransferLockImpl;
+import org.infinispan.statetransfer.StateTransferTracker;
 import org.infinispan.topology.ClusterCacheStatus;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.LocalTopologyManagerImpl;
@@ -74,6 +75,9 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
          builder.allowBlockingCallsInside(PersistenceManagerImpl.class.getName(), "acquireReadLock");
 
          builder.allowBlockingCallsInside(JGroupsTransport.class.getName(), "withView");
+
+         // StateTransferTracker holds the lock briefly to update topology state and complete futures
+         builder.allowBlockingCallsInside(StateTransferTracker.class.getName(), "acquireLock");
       }
       // This invokes the actual runnable - we have to make sure it doesn't block as normal
       builder.disallowBlockingCallsInside(LimitedExecutor.class.getName(), "actualRun");
