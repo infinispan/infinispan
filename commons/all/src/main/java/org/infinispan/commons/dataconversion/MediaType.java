@@ -125,6 +125,7 @@ public final class MediaType {
    private static final String CHARSET_PARAM_NAME = "charset";
    private static final String CLASS_TYPE_PARAM_NAME = "type";
    private static final String ENCODING_PARAM_NAME = "encoding";
+   private static final String MARSHALLER_PARAM_NAME = "marshaller";
    private static final double DEFAULT_WEIGHT = 1.0;
    private static final Charset DEFAULT_CHARSET = UTF_8;
    public static final String HEX = "hex";
@@ -329,6 +330,14 @@ public final class MediaType {
 
    public String getEncoding() {
       return getParameter(ENCODING_PARAM_NAME).orElse(null);
+   }
+
+   public MediaType withMarshaller(String marshallerName) {
+      return withParameter(MARSHALLER_PARAM_NAME, marshallerName);
+   }
+
+   public String getMarshaller() {
+      return getParameter(MARSHALLER_PARAM_NAME).orElse(null);
    }
 
    public boolean hasStringType() {

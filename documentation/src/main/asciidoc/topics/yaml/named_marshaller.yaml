@@ -1,0 +1,8 @@
+infinispan:
+  cache-container:
+    serialization:
+      named-marshaller:
+        - name: "customJavaMarshaller"
+          marshaller: "org.infinispan.commons.marshall.JavaSerializationMarshaller"
+        - name: "myCustomMarshaller"
+          marshaller: "org.infinispan.example.MyCustomMarshaller"

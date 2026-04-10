@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -50,8 +51,8 @@ public class TestClusterCacheStatus {
       ConsistentHash currentCH = joinInfo.getConsistentHashFactory()
                                          .create(joinInfo.getNumOwners(),
                                                  joinInfo.getNumSegments(), members, null);
-      CacheTopology topology = new CacheTopology(1, 1, currentCH, null, null, CacheTopology.Phase.NO_REBALANCE, members,
-                                                 persistentUUIDs(members));
+      CacheTopology topology = new CacheTopology(1, 1, false, currentCH, null, null, CacheTopology.Phase.NO_REBALANCE, members,
+                                                 persistentUUIDs(members), Collections.emptyList());
       return new TestClusterCacheStatus(joinInfo, topology, topology);
    }
 
@@ -69,20 +70,20 @@ public class TestClusterCacheStatus {
       ConsistentHash pendingCH = joinInfo.getConsistentHashFactory().updateMembers(topology.getCurrentCH(), targetMembers,
                                                                                    null);
       pendingCH = joinInfo.getConsistentHashFactory().rebalance(pendingCH);
-      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId() + 1, topology.getCurrentCH(),
-                                   pendingCH, null, phase, targetMembers, persistentUUIDs(targetMembers));
+      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId() + 1, false, topology.getCurrentCH(),
+                                   pendingCH, null, phase, targetMembers, persistentUUIDs(targetMembers), Collections.emptyList());
    }
 
    public void advanceRebalance(CacheTopology.Phase phase) {
-      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId(), topology.getCurrentCH(),
+      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId(), false, topology.getCurrentCH(),
                                    topology.getPendingCH(), topology.getUnionCH(), phase, topology.getActualMembers(),
-                                   persistentUUIDs(topology.getMembers()));
+                                   persistentUUIDs(topology.getMembers()), Collections.emptyList());
    }
 
    public void finishRebalance() {
-      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId(), topology.getPendingCH(),
+      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId(), false, topology.getPendingCH(),
                                    null, null, CacheTopology.Phase.NO_REBALANCE,
-                                   topology.getActualMembers(), persistentUUIDs(topology.getActualMembers()));
+                                   topology.getActualMembers(), persistentUUIDs(topology.getActualMembers()), Collections.emptyList());
    }
 
    public void cancelRebalance() {
@@ -90,8 +91,8 @@ public class TestClusterCacheStatus {
       assertNotSame(CacheTopology.Phase.CONFLICT_RESOLUTION, topology.getPhase());
       // Use the read CH as the current CH
       topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId() + 1,
-                                   readConsistentHash(), null, null, CacheTopology.Phase.NO_REBALANCE,
-                                   topology.getActualMembers(), persistentUUIDs(topology.getActualMembers()));
+                                   false, readConsistentHash(), null, null, CacheTopology.Phase.NO_REBALANCE,
+                                   topology.getActualMembers(), persistentUUIDs(topology.getActualMembers()), Collections.emptyList());
    }
 
    /**
@@ -125,9 +126,9 @@ public class TestClusterCacheStatus {
                                       joinInfo.getConsistentHashFactory()
                                               .updateMembers(topology.getUnionCH(), updatedMembers, null) :
                                       null;
-      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId(), updatedCH, updatedPendingCH,
+      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId(), false, updatedCH, updatedPendingCH,
                                    updatedUnionCH, topology.getPhase(), updatedMembers,
-                                   persistentUUIDs(updatedMembers));
+                                   persistentUUIDs(updatedMembers), Collections.emptyList());
    }
 
    public void startConflictResolution(ConsistentHash conflictCH, Address... mergeMembers) {
@@ -135,9 +136,9 @@ public class TestClusterCacheStatus {
    }
 
    public void startConflictResolution(ConsistentHash conflictCH, List<Address> mergeMembers) {
-      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId() + 1,
-                                   conflictCH, null, CacheTopology.Phase.CONFLICT_RESOLUTION, mergeMembers,
-                                   persistentUUIDs(mergeMembers));
+      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId() + 1, false,
+                                   conflictCH, null, null, CacheTopology.Phase.CONFLICT_RESOLUTION, mergeMembers,
+                                   persistentUUIDs(mergeMembers), Collections.emptyList());
    }
 
    public static ConsistentHash conflictResolutionConsistentHash(TestClusterCacheStatus... caches) {
@@ -169,7 +170,7 @@ public class TestClusterCacheStatus {
       // Copy the generic CacheJoinInfo and replace the persistent UUID
       return new CacheJoinInfo(joinInfo.getConsistentHashFactory(), joinInfo.getNumSegments(), joinInfo.getNumOwners(),
             joinInfo.getTimeout(), joinInfo.getCacheMode(), joinInfo.getCapacityFactor(),
-            persistentUUID(a), joinInfo.getPersistentStateChecksum());
+            persistentUUID(a), joinInfo.getPersistentStateChecksum(), joinInfo.getValueMediaType());
    }
 
    public CacheTopology topology() {
@@ -183,9 +184,10 @@ public class TestClusterCacheStatus {
    public void incrementIds(int topologyIdDelta, int rebalanceIdDelta) {
       topology = new CacheTopology(topology.getTopologyId() + topologyIdDelta,
                                    topology.getRebalanceId() + rebalanceIdDelta,
+                                   topology.wasTopologyRestoredFromState(),
                                    topology.getCurrentCH(), topology.getPendingCH(), topology.getUnionCH(),
                                    topology.getPhase(), topology.getActualMembers(),
-                                   topology.getMembersPersistentUUIDs());
+                                   topology.getMembersPersistentUUIDs(), topology.getMemberValueMediaTypes());
    }
 
    public void incrementStableIds(int topologyIdDelta, int rebalanceIdDelta) {
@@ -194,9 +196,10 @@ public class TestClusterCacheStatus {
       assertNull(stableTopology.getUnionCH());
       stableTopology = new CacheTopology(stableTopology.getTopologyId() + topologyIdDelta,
                                          stableTopology.getRebalanceId() + rebalanceIdDelta,
+                                         stableTopology.wasTopologyRestoredFromState(),
                                          stableTopology.getCurrentCH(), null, null,
                                          stableTopology.getPhase(), stableTopology.getActualMembers(),
-                                         stableTopology.getMembersPersistentUUIDs());
+                                         stableTopology.getMembersPersistentUUIDs(), stableTopology.getMemberValueMediaTypes());
    }
 
    public void incrementIds() {
@@ -213,9 +216,10 @@ public class TestClusterCacheStatus {
          newRebalanceId = Math.max(cache.topology.getRebalanceId() + 1, newRebalanceId);
       }
       topology = new CacheTopology(newTopologyId, newRebalanceId,
+                                   topology.wasTopologyRestoredFromState(),
                                    topology.getCurrentCH(), topology.getPendingCH(), topology.getUnionCH(),
                                    topology.getPhase(), topology.getActualMembers(),
-                                   topology.getMembersPersistentUUIDs());
+                                   topology.getMembersPersistentUUIDs(), topology.getMemberValueMediaTypes());
    }
 
    public void updateActualMembers(Address... actualMembers) {
@@ -225,7 +229,8 @@ public class TestClusterCacheStatus {
    public void updateActualMembers(List<Address> actualMembers) {
       assertTrue(topology.getMembers().containsAll(actualMembers));
       topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId() + 1,
+                                   topology.wasTopologyRestoredFromState(),
                                    topology.getCurrentCH(), topology.getPendingCH(), topology.getUnionCH(),
-                                   topology.getPhase(), actualMembers, persistentUUIDs(actualMembers));
+                                   topology.getPhase(), actualMembers, persistentUUIDs(actualMembers), Collections.emptyList());
    }
 }

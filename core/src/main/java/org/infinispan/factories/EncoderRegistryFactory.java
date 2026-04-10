@@ -16,6 +16,7 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.core.EncoderRegistryImpl;
+import org.infinispan.marshall.core.MarshallerRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 
 /**
@@ -33,6 +34,7 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
 
    @Inject EmbeddedCacheManager embeddedCacheManager;
    @Inject SerializationContextRegistry ctxRegistry;
+   @Inject MarshallerRegistry marshallerRegistry;
 
    @Override
    public Object construct(String componentName) {
@@ -40,8 +42,9 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       EncoderRegistryImpl encoderRegistry = new EncoderRegistryImpl();
       ClassAllowList classAllowList = embeddedCacheManager.getClassAllowList();
 
-      // Default and binary transcoder use the user marshaller to convert data to/from a byte array
-      encoderRegistry.registerTranscoder(new DefaultTranscoder(userMarshaller));
+      // Default transcoder uses the user marshaller to convert data to/from a byte array
+      // It also supports named marshallers via the marshaller registry lookup function
+      encoderRegistry.registerTranscoder(new DefaultTranscoder(userMarshaller, marshallerRegistry::getMarshaller));
       encoderRegistry.registerTranscoder(new BinaryTranscoder(userMarshaller));
       // Core transcoders are always available
       encoderRegistry.registerTranscoder(new ProtostreamTranscoder(ctxRegistry, classLoader));

@@ -1433,6 +1433,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Node %s attempting to join cache %s with incompatible state", id = 410)
    CacheJoinException nodeWithIncompatibleStateJoiningCache(Address joiner, String cacheName);
 
+   @Message(value = "Cannot join cache %s: incompatible value media types - local node has %s but cluster has %s", id = 719)
+   CacheJoinException incompatibleValueMediaTypes(String cacheName, org.infinispan.commons.dataconversion.MediaType localMediaType,
+                                                   org.infinispan.commons.dataconversion.MediaType clusterMediaType);
+
 //   @LogMessage(level = WARN)
 //   @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 411)
 //   void warnAboutUberJarDuplicates();

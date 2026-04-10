@@ -62,7 +62,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
 
    private CacheJoinInfo makeJoinInfo() {
       return new CacheJoinInfo(replicatedChf, 16, 1, 1000,
-            CacheMode.REPL_SYNC, 1.0f, UUID.randomUUID(), Optional.empty());
+            CacheMode.REPL_SYNC, 1.0f, UUID.randomUUID(), Optional.empty(), null);
    }
 
    /**
@@ -185,13 +185,13 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
                                                      joinInfoA.getNumSegments(), singletonList(A), null);
       ConsistentHash pendingCH = replicatedChf.create(joinInfoA.getNumOwners(),
                                                       joinInfoA.getNumSegments(), asList(A, B), null);
-      CacheTopology initialTopology = new CacheTopology(4, 2, stableCH, pendingCH,
+      CacheTopology initialTopology = new CacheTopology(4, 2, false, stableCH, pendingCH, null,
                                                         CacheTopology.Phase.READ_NEW_WRITE_ALL, asList(A, B),
                                                         asList(joinInfoA.getPersistentUUID(),
-                                                               joinInfoB.getPersistentUUID()));
-      CacheTopology stableTopology = new CacheTopology(1, 1, stableCH, null,
+                                                               joinInfoB.getPersistentUUID()), Collections.emptyList());
+      CacheTopology stableTopology = new CacheTopology(1, 1, false, stableCH, null, null,
                                                        CacheTopology.Phase.NO_REBALANCE, singletonList(A),
-                                                       singletonList(joinInfoA.getPersistentUUID()));
+                                                       singletonList(joinInfoA.getPersistentUUID()), Collections.emptyList());
       ltm.init(joinInfoA, initialTopology, stableTopology, AvailabilityMode.AVAILABLE);
       // Normally LocalTopologyManagerImpl.start()/doHandleTopologyUpdate() registers the persistent UUIDs
       // TODO Write test with asymmetric caches leaving the PersistentUUIDManager cache incomplete

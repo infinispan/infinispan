@@ -6,10 +6,12 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.DataConvertibleCommand;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.encoding.DataConverter;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
@@ -21,7 +23,7 @@ import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.COMPUTE_COMMAND)
-public class ComputeCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
+public class ComputeCommand extends AbstractDataWriteCommand implements MetadataAwareCommand, DataConvertibleCommand {
 
    private BiFunction<?, ?, ?> remappingBiFunction;
    private Metadata metadata;
@@ -135,6 +137,22 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public LoadType loadType() {
       return LoadType.OWNER;
+   }
+
+   @Override
+   public void transformValue(DataConverter dataConverter) {
+      BiFunction<Object, Object, Object> originalFunction = (BiFunction<Object, Object, Object>) remappingBiFunction;
+      remappingBiFunction = (key, oldValue) -> {
+         Object convertedOldValue = dataConverter.toStorage(oldValue);
+         Object result = originalFunction.apply(key, convertedOldValue);
+         return dataConverter.toStorage(result);
+      };
+   }
+
+   @Override
+   public Object transformResult(Object result, DataConverter dataConverter) {
+      // Transform the result from local storage format to the requester's format
+      return result != null ? dataConverter.fromStorage(result) : null;
    }
 
    @Override

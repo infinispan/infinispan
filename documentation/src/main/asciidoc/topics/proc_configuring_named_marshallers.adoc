@@ -1,0 +1,52 @@
+[id='configuring-named-marshallers_{context}']
+= Configuring named marshallers
+{brandname} provides a marshaller registry that allows you to register multiple marshallers with unique names.
+Named marshallers enable you to use different serialization strategies for different data types or use cases within the same cache manager.
+
+[NOTE]
+====
+Named marshallers are registered at the global level and are available to all caches in the cache manager.
+In addition to the marshallers you register, {brandname} automatically registers a "default" marshaller that corresponds to the configured default marshaller.
+====
+
+.Procedure
+
+. Register one or more named marshallers in your {brandname} configuration.
+. Use the named marshallers either by retrieving them from the `MarshallerRegistry` or by specifying them in `MediaType` parameters.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/named_marshaller.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/named_marshaller.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/named_marshaller.yaml[]
+----
+
+.Programmatic
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/NamedMarshaller.java[]
+----
+
+[TIP]
+====
+You can register a marshaller by specifying either:
+
+* A fully qualified class name as a string - {brandname} will instantiate the marshaller
+* A marshaller instance - useful when the marshaller requires specific constructor parameters
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/marshall/core/MarshallerRegistry.html[MarshallerRegistry API documentation]
+* link:{javadocroot}/org/infinispan/commons/dataconversion/MediaType.html#withMarshaller(java.lang.String)[MediaType.withMarshaller() API documentation]

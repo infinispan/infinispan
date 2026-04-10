@@ -5,11 +5,13 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.DataConvertibleCommand;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.encoding.DataConverter;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
@@ -26,7 +28,7 @@ import org.infinispan.util.ByteString;
  * @since 4.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.REMOVE_COMMAND)
-public class RemoveCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
+public class RemoveCommand extends AbstractDataWriteCommand implements MetadataAwareCommand, DataConvertibleCommand {
    private boolean returnEntry = false;
    private transient boolean nonExistent = false;
    protected transient boolean successful = true;
@@ -197,6 +199,23 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    public final boolean isReturnValueExpected() {
       // IGNORE_RETURN_VALUES ignored for conditional remove
       return isConditional() || super.isReturnValueExpected();
+   }
+
+   @Override
+   public void transformValue(DataConverter dataConverter) {
+      if (value != null) {
+         value = dataConverter.toStorage(value);
+      }
+   }
+
+   @Override
+   public Object transformResult(Object result, DataConverter dataConverter) {
+      // For conditional remove, result is Boolean - don't transform
+      // For non-conditional remove, result is old value - transform it
+      if (result instanceof Boolean) {
+         return result;
+      }
+      return result != null ? dataConverter.fromStorage(result) : null;
    }
 
    @Override

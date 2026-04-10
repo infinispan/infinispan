@@ -382,7 +382,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
                Map<Address, CacheStatusResponse> cacheResponses =
                      responsesByCache.computeIfAbsent(cacheName, k -> new HashMap<>());
                cacheResponses.put(sender, new CacheStatusResponse(info, cacheTopology, stableTopology,
-                                                                  csr.getAvailabilityMode(), csr.joinedMembers()));
+                                                                  csr.getAvailabilityMode(), csr.joinedMembers(),
+                                                                  csr.getMemberValueMediaTypes()));
             }
          }
          return null;

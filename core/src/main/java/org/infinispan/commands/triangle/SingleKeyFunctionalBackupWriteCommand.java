@@ -128,7 +128,8 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
          case READ_WRITE_KEY_VALUE:
             //noinspection unchecked
             ReadWriteKeyValueCommand cmd = new ReadWriteKeyValueCommand(cacheName, key, value, (BiFunction) function, segmentId,
-                  getCommandInvocationId(), MATCH_ALWAYS, params, keyDataConversion, valueDataConversion);
+                  getCommandInvocationId(), MATCH_ALWAYS, params,
+                  keyDataConversion, valueDataConversion);
             cmd.setPrevValueAndMetadata(prevValue, prevMetadata);
             return cmd;
          case WRITE_ONLY:

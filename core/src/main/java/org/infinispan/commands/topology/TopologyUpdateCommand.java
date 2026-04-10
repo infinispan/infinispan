@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -58,11 +59,13 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
    @ProtoField(10)
    final int viewId;
 
+   final List<MediaType> memberValueMediaTypes;
+
    @ProtoFactory
    TopologyUpdateCommand(String cacheName, WrappedMessage currentCH, WrappedMessage pendingCH,
                          CacheTopology.Phase phase, List<Address> actualMembers,
                          List<UUID> persistentUUIDs, AvailabilityMode availabilityMode,
-                         int rebalanceId, int topologyId, int viewId) {
+                         int rebalanceId, int topologyId, int viewId, List<MediaType> memberValueMediaTypes) {
       this.cacheName = cacheName;
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
@@ -73,6 +76,7 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
       this.rebalanceId = rebalanceId;
       this.topologyId = topologyId;
       this.viewId = viewId;
+      this.memberValueMediaTypes = memberValueMediaTypes;
    }
 
    public TopologyUpdateCommand(String cacheName, Address origin, CacheTopology cacheTopology,
@@ -87,15 +91,21 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
       this.availabilityMode = availabilityMode;
       this.actualMembers = cacheTopology.getActualMembers();
       this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
+      this.memberValueMediaTypes = cacheTopology.getMemberValueMediaTypes();
       this.viewId = viewId;
    }
 
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
-      CacheTopology topology = new CacheTopology(topologyId, rebalanceId, getCurrentCH(), getPendingCH(), phase,
-            actualMembers, persistentUUIDs);
+      CacheTopology topology = new CacheTopology(topologyId, rebalanceId, false, getCurrentCH(), getPendingCH(),
+            null, phase, actualMembers, persistentUUIDs, memberValueMediaTypes);
       return gcr.getLocalTopologyManager()
             .handleTopologyUpdate(cacheName, topology, availabilityMode, viewId, origin);
+   }
+
+   @ProtoField(11)
+   List<MediaType> getMemberValueMediaTypes() {
+      return memberValueMediaTypes;
    }
 
    public String getCacheName() {

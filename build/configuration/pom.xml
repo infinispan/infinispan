@@ -74,7 +74,7 @@
       <version.bouncycastle>1.83</version.bouncycastle>
       <version.byteman>4.0.26</version.byteman>
       <version.caffeine>3.2.3</version.caffeine>
-      <version.checker-qual>3.54.0</version.checker-qual>
+      <version.checker-qual>3.55.1</version.checker-qual>
       <version.commons.compress>1.28.0</version.commons.compress>
       <version.console>16.2.0</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
@@ -84,7 +84,7 @@
       <version.glassfish.jaxb>4.0.7</version.glassfish.jaxb>
       <version.groovy>2.4.21</version.groovy>
       <version.hamcrest>2.2</version.hamcrest>
-      <version.hibernate.core>6.6.46.Final</version.hibernate.core>
+      <version.hibernate.core>6.6.47.Final</version.hibernate.core>
       <version.hibernate.search>8.3.0.Final</version.hibernate.search>
       <version.hibernate.models>1.1.0</version.hibernate.models>
       <version.infinispan>16.2.0-SNAPSHOT</version.infinispan>
@@ -199,7 +199,7 @@
       <version.maven.enforcer>3.6.2</version.maven.enforcer>
       <version.maven.exec>3.6.3</version.maven.exec>
       <version.maven.extra-enforcer-rules>1.12.0</version.maven.extra-enforcer-rules>
-      <version.maven.git-commit-id>9.1.0</version.maven.git-commit-id>
+      <version.maven.git-commit-id>9.2.0</version.maven.git-commit-id>
       <version.maven.help>3.5.1</version.maven.help>
       <version.maven.install>3.1.4</version.maven.install>
       <version.maven.invoker>3.9.1</version.maven.invoker>

@@ -49,8 +49,8 @@ abstract class FunctionalBackupWriteCommand extends BackupWriteCommand {
                                           int segmentId, Object function) {
       super(cacheName, command, sequence, segmentId);
       this.params = command.getParams();
-      this.keyDataConversion = command.getKeyDataConversion();
-      this.valueDataConversion = command.getValueDataConversion();
+      this.keyDataConversion = (DataConversion) command.getKeyDataConversion();
+      this.valueDataConversion = (DataConversion) command.getValueDataConversion();
       this.function = function;
    }
 
@@ -58,8 +58,8 @@ abstract class FunctionalBackupWriteCommand extends BackupWriteCommand {
                                           int segmentId, Object function) {
       super(cacheName, command, sequence, segmentId);
       this.params = command.getParams();
-      this.keyDataConversion = command.getKeyDataConversion();
-      this.valueDataConversion = command.getValueDataConversion();
+      this.keyDataConversion = (DataConversion) command.getKeyDataConversion();
+      this.valueDataConversion = (DataConversion) command.getValueDataConversion();
       this.function = function;
    }
 }

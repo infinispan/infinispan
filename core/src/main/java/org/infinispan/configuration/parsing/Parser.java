@@ -175,6 +175,17 @@ public class Parser extends CacheParser {
                parseAllowList(reader, builder.serialization().allowList(), Element.ALLOW_LIST);
                break;
             }
+            case NAMED_MARSHALLERS: {
+               // Empty elements for YAML/JSON list handling
+               if (reader.getAttributeCount() > 0) {
+                  parseNamedMarshaller(reader, holder.getClassLoader(), builder.serialization());
+               }
+               break;
+            }
+            case NAMED_MARSHALLER: {
+               parseNamedMarshaller(reader, holder.getClassLoader(), builder.serialization());
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -199,6 +210,17 @@ public class Parser extends CacheParser {
             }
          }
       }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseNamedMarshaller(final ConfigurationReader reader, final ClassLoader classLoader,
+                                      final SerializationConfigurationBuilder builder) {
+      // Both name and marshaller attributes are required
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName(), Attribute.MARSHALLER.getLocalName());
+      String name = attributes[0];
+      String marshallerClass = attributes[1];
+
+      builder.addNamedMarshaller(name, marshallerClass);
       ParseUtils.requireNoContent(reader);
    }
 

@@ -234,14 +234,14 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
    private static void noRebalance(StateConsumer stateConsumer, PersistentUUIDManager persistentUUIDManager, int topologyId, int rebalanceId, ConsistentHash ch) {
       stateConsumer.onTopologyUpdate(
-            new CacheTopology(topologyId, rebalanceId, ch, null, CacheTopology.Phase.NO_REBALANCE,
-                  ch.getMembers(), persistentUUIDManager.mapAddresses(ch.getMembers())), false);
+            new CacheTopology(topologyId, rebalanceId, false, ch, null, null, CacheTopology.Phase.NO_REBALANCE,
+                  ch.getMembers(), persistentUUIDManager.mapAddresses(ch.getMembers()), Collections.emptyList()), false);
    }
 
    private static void rebalanceStart(StateConsumer stateConsumer, PersistentUUIDManager persistentUUIDManager, int topologyId, int rebalanceId, ConsistentHash current, ConsistentHash pending, ConsistentHash union) {
       stateConsumer.onTopologyUpdate(
-            new CacheTopology(topologyId, rebalanceId, current, pending, union, CacheTopology.Phase.READ_OLD_WRITE_ALL,
-                  union.getMembers(), persistentUUIDManager.mapAddresses(union.getMembers())), true);
+            new CacheTopology(topologyId, rebalanceId, false, current, pending, union, CacheTopology.Phase.READ_OLD_WRITE_ALL,
+                  union.getMembers(), persistentUUIDManager.mapAddresses(union.getMembers()), Collections.emptyList()), true);
    }
 
    private static void assertRebalanceStart(StateConsumerImpl stateConsumer, ConsistentHash current, ConsistentHash pending, Address member, Set<Integer> flatRequestedSegments) {

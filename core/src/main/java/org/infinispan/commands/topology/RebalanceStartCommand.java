@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -50,10 +51,13 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
 
    private final List<Address> actualMembers;
 
+   private final List<MediaType> memberValueMediaTypes;
+
    @ProtoFactory
    RebalanceStartCommand(String cacheName, WrappedMessage currentCH, WrappedMessage pendingCH,
                                 CacheTopology.Phase phase, List<UUID> persistentUUIDs,
-                                int rebalanceId, int topologyId, int viewId, List<Address> actualMembers) {
+                                int rebalanceId, int topologyId, int viewId, List<Address> actualMembers,
+                                List<MediaType> memberValueMediaTypes) {
       this.cacheName = cacheName;
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
@@ -63,6 +67,7 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
       this.topologyId = topologyId;
       this.viewId = viewId;
       this.actualMembers = actualMembers;
+      this.memberValueMediaTypes = memberValueMediaTypes;
    }
 
    public RebalanceStartCommand(String cacheName, Address origin, CacheTopology cacheTopology, int viewId) {
@@ -75,12 +80,14 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
       this.phase = cacheTopology.getPhase();
       this.actualMembers = cacheTopology.getActualMembers();
       this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
+      this.memberValueMediaTypes = cacheTopology.getMemberValueMediaTypes();
       this.viewId = viewId;
    }
 
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
-      CacheTopology topology = new CacheTopology(topologyId, rebalanceId, getCurrentCH(), getPendingCH(), phase, actualMembers, persistentUUIDs);
+      CacheTopology topology = new CacheTopology(topologyId, rebalanceId, false, getCurrentCH(), getPendingCH(),
+            null, phase, actualMembers, persistentUUIDs, memberValueMediaTypes);
       return gcr.getLocalTopologyManager()
             .handleRebalance(cacheName, topology, viewId, origin);
    }
@@ -88,6 +95,11 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
    @ProtoField(9)
    List<Address> getActualMembers() {
       return actualMembers;
+   }
+
+   @ProtoField(10)
+   List<MediaType> getMemberValueMediaTypes() {
+      return memberValueMediaTypes;
    }
 
    public String getCacheName() {

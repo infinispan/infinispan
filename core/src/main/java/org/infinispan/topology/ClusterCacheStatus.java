@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.TimeoutException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -81,6 +82,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private volatile List<Address> expectedMembers;
    // Capacity factors for all the members
    private volatile Map<Address, Float> capacityFactors;
+   // Value media types for all the members
+   private volatile Map<Address, MediaType> memberValueMediaTypes;
    // Cache members that have not yet received state. Always included in the members list.
    private volatile List<Address> joiners;
    // Persistent state (if it exists)
@@ -120,6 +123,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       this.stableTopology = null;
       this.expectedMembers = Collections.emptyList();
       this.capacityFactors = Collections.emptyMap();
+      this.memberValueMediaTypes = Collections.emptyMap();
       this.joiners = Collections.emptyList();
       this.persistentUUIDManager = persistentUUIDManager;
       eventLogger = eventLogManager.getEventLogger().context(cacheName);
@@ -197,7 +201,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                rebalanceConfirmationCollector = null;
             }
             CacheTopology newTopology = new CacheTopology(currentTopology.getTopologyId() + 1,
-                    currentTopology.getRebalanceId(), currentTopology.getCurrentCH(), newPendingCH, newPhase, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+                    currentTopology.getRebalanceId(), false, currentTopology.getCurrentCH(), newPendingCH, null,
+                    newPhase, actualMembers, persistentUUIDManager.mapAddresses(actualMembers), buildMediaTypesList(actualMembers));
             setCurrentTopology(newTopology);
 
             CLUSTER.updatingAvailabilityMode(cacheName, oldAvailabilityMode, newAvailabilityMode, newTopology);
@@ -272,6 +277,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       HashMap<Address, Float> newCapacityFactors = new HashMap<>(capacityFactors);
       newCapacityFactors.put(joiner, joinInfo.getCapacityFactor());
       capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
+      HashMap<Address, MediaType> newMemberValueMediaTypes = new HashMap<>(memberValueMediaTypes);
+      newMemberValueMediaTypes.put(joiner, joinInfo.getValueMediaType());
+      memberValueMediaTypes = Immutables.immutableMapWrap(newMemberValueMediaTypes);
       expectedMembers = immutableAdd(expectedMembers, joiner);
       persistentUUIDManager.addPersistentAddressMapping(joiner, joinInfo.getPersistentUUID());
       joiners = immutableAdd(joiners, joiner);
@@ -296,6 +304,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       HashMap<Address, Float> newCapacityFactors = new HashMap<>(capacityFactors);
       newCapacityFactors.remove(leaver);
       capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
+      HashMap<Address, MediaType> newMemberValueMediaTypes = new HashMap<>(memberValueMediaTypes);
+      newMemberValueMediaTypes.remove(leaver);
+      memberValueMediaTypes = Immutables.immutableMapWrap(newMemberValueMediaTypes);
       joiners = immutableRemove(joiners, leaver);
       if (log.isTraceEnabled()) log.tracef("Removed node %s from cache %s: members = %s, joiners = %s", leaver,
             cacheName, expectedMembers, joiners);
@@ -452,9 +463,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       int currentTopologyId = currentTopology.getTopologyId();
       List<Address> members = currentTopology.getMembers();
       var newTopology = new CacheTopology(currentTopologyId + 1, currentTopology.getRebalanceId(),
-            currentTopology.getCurrentCH(), currentTopology.getPendingCH(),
+            false, currentTopology.getCurrentCH(), currentTopology.getPendingCH(), null,
             CacheTopology.Phase.READ_ALL_WRITE_ALL, members,
-            persistentUUIDManager.mapAddresses(members));
+            persistentUUIDManager.mapAddresses(members), buildMediaTypesList(members));
 
       setCurrentTopology(newTopology);
 
@@ -486,8 +497,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       List<Address> members = currentTopology.getMembers();
       newTopology = new CacheTopology(currentTopology.getTopologyId() + 1, currentTopology.getRebalanceId(),
-            currentTopology.getCurrentCH(), currentTopology.getPendingCH(), CacheTopology.Phase.READ_NEW_WRITE_ALL, members,
-            persistentUUIDManager.mapAddresses(members));
+            false, currentTopology.getCurrentCH(), currentTopology.getPendingCH(), null,
+            CacheTopology.Phase.READ_NEW_WRITE_ALL, members,
+            persistentUUIDManager.mapAddresses(members), buildMediaTypesList(members));
       setCurrentTopology(newTopology);
 
       rebalanceConfirmationCollector = new RebalanceConfirmationCollector(cacheName, currentTopology.getTopologyId() + 1,
@@ -509,8 +521,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       List<Address> members = currentTopology.getMembers();
       newTopology = new CacheTopology(currentTopology.getTopologyId() + 1, currentTopology.getRebalanceId(),
-            currentTopology.getPendingCH(), null, CacheTopology.Phase.NO_REBALANCE, members,
-            persistentUUIDManager.mapAddresses(members));
+            false, currentTopology.getPendingCH(), null, null, CacheTopology.Phase.NO_REBALANCE, members,
+            persistentUUIDManager.mapAddresses(members), buildMediaTypesList(members));
       setCurrentTopology(newTopology);
 
       rebalanceConfirmationCollector = null;
@@ -583,8 +595,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          // Losing members during state transfer could lead to a state where we have more than two topologies
          // concurrently in the cluster. We need to make sure that all the topologies are compatible (properties set
          // in CacheTopology docs hold) - we just remove lost members.
-         CacheTopology newTopology = new CacheTopology(topologyId + 1, rebalanceId, newCurrentCH, newPendingCH,
-                 newPhase, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+         CacheTopology newTopology = new CacheTopology(topologyId + 1, rebalanceId, false, newCurrentCH, newPendingCH,
+                 null, newPhase, actualMembers, persistentUUIDManager.mapAddresses(actualMembers), buildMediaTypesList(actualMembers));
          setCurrentTopology(newTopology);
 
          if (rebalanceConfirmationCollector != null) {
@@ -643,6 +655,19 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       List<T> result = new ArrayList<>(list);
       result.retainAll(otherList);
       return Collections.unmodifiableList(result);
+   }
+
+   private List<MediaType> buildMediaTypesList(List<Address> members) {
+      List<MediaType> mediaTypes = new ArrayList<>(members.size());
+      for (Address member : members) {
+         MediaType mediaType = memberValueMediaTypes.get(member);
+         if (mediaType == null) {
+            // If we don't have media type information for all members, return an empty list
+            return Collections.emptyList();
+         }
+         mediaTypes.add(mediaType);
+      }
+      return mediaTypes;
    }
 
    @Override
@@ -754,19 +779,36 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             }
          }
 
+         // Collect existing members' media types before adding the new joiner
+         // This allows the joining node to validate compatibility with all existing members
+         List<MediaType> existingMemberMediaTypes = new ArrayList<>();
+         for (Address member : expectedMembers) {
+            MediaType mediaType = memberValueMediaTypes.get(member);
+            if (mediaType == null) {
+               // null media type indicates a newer version node that doesn't send media type info
+               // If we don't have media type info for all members, send an empty list
+               existingMemberMediaTypes = Collections.emptyList();
+               break;
+            }
+            existingMemberMediaTypes.add(mediaType);
+         }
+
+         // TODO: Notify all other nodes of the pending node's value media type before sending response
+         // This would require broadcasting the joiner's media type to all existing members
+
          boolean isFirstMember = getCurrentTopology() == null;
          boolean memberJoined = addMember(joiner, joinInfo);
          if (!memberJoined) {
             if (log.isTraceEnabled()) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
                                                  "members = %s, joiners = %s, availability = %s", joiner, cacheName, expectedMembers, joiners, availabilityMode);
-            return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, expectedMembers);
+            return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, expectedMembers, existingMemberMediaTypes);
          }
          final List<Address> current = Collections.unmodifiableList(expectedMembers);
          if (status == ComponentStatus.INSTANTIATED) {
             if (persistentState.isPresent()) {
                if (log.isTraceEnabled()) log.tracef("Node %s joining. Attempting to reform previous cluster", joiner);
                if (restoreTopologyFromState()) {
-                  return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, current);
+                  return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, current, existingMemberMediaTypes);
                }
             } else {
                if (isFirstMember) {
@@ -792,7 +834,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (topologyBeforeRebalance != null)
             availabilityStrategy.onJoin(this, joiner);
 
-         return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode, current);
+         return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode, current, existingMemberMediaTypes);
       } finally {
          releaseLock();
       }
@@ -826,8 +868,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          throw CLUSTER.extraneousMembersJoinRestoredCache(extraneousMembers, cacheName);
       }
       int topologyId = currentTopology == null ? initialTopologyId : currentTopology.getTopologyId() + 1;
-      CacheTopology initialTopology = new CacheTopology(topologyId, INITIAL_REBALANCE_ID, true, ch, null,
-            CacheTopology.Phase.NO_REBALANCE, ch.getMembers(), persistentUUIDManager.mapAddresses(ch.getMembers()));
+      List<Address> chMembers = ch.getMembers();
+      CacheTopology initialTopology = new CacheTopology(topologyId, INITIAL_REBALANCE_ID, true, ch, null, null,
+            CacheTopology.Phase.NO_REBALANCE, chMembers, persistentUUIDManager.mapAddresses(chMembers), buildMediaTypesList(chMembers));
       return cacheTopologyCreated(initialTopology);
    }
 
@@ -891,8 +934,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                var chf = joinInfo.getConsistentHashFactory();
                ch = chf.create(joinInfo.getNumOwners(), joinInfo.getNumSegments(), members, getCapacityFactors());
             }
-            CacheTopology topology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, true, ch, null,
-                    CacheTopology.Phase.NO_REBALANCE, members, persistentUUIDManager.mapAddresses(members));
+            CacheTopology topology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, true, ch, null, null,
+                    CacheTopology.Phase.NO_REBALANCE, members, persistentUUIDManager.mapAddresses(members), buildMediaTypesList(members));
             restoreTopologyFromState(cacheTopologyCreated(topology));
             return true;
          }
@@ -910,8 +953,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       List<Address> initialMembers = getExpectedMembers();
       ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(joinInfo.getNumOwners(),
             joinInfo.getNumSegments(), initialMembers, getCapacityFactors());
-      CacheTopology initialTopology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, initialCH, null,
-            CacheTopology.Phase.NO_REBALANCE, initialMembers, persistentUUIDManager.mapAddresses(initialMembers));
+      CacheTopology initialTopology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, false, initialCH, null,
+            null, CacheTopology.Phase.NO_REBALANCE, initialMembers, persistentUUIDManager.mapAddresses(initialMembers),
+            buildMediaTypesList(initialMembers));
       setCurrentTopology(initialTopology);
       setStableTopology(initialTopology);
       return initialTopology;
@@ -1038,8 +1082,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          }
 
          if (updateTopology) {
-            CacheTopology newTopology = new CacheTopology(newTopologyId, cacheTopology.getRebalanceId(), balancedCH, null,
-                    CacheTopology.Phase.NO_REBALANCE, balancedCH.getMembers(), persistentUUIDManager.mapAddresses(balancedCH.getMembers()));
+            List<Address> balancedMembers = balancedCH.getMembers();
+            CacheTopology newTopology = new CacheTopology(newTopologyId, cacheTopology.getRebalanceId(), false, balancedCH, null,
+                    null, CacheTopology.Phase.NO_REBALANCE, balancedMembers, persistentUUIDManager.mapAddresses(balancedMembers),
+                    buildMediaTypesList(balancedMembers));
             log.tracef("Updating cache %s topology without rebalance: %s", cacheName, newTopology);
             setCurrentTopology(newTopology);
 
@@ -1054,8 +1100,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             } else {
                throw new IllegalStateException();
             }
-            CacheTopology newTopology = new CacheTopology(newTopologyId, newRebalanceId, currentCH, balancedCH,
-                    newPhase, balancedCH.getMembers(), persistentUUIDManager.mapAddresses(balancedCH.getMembers()));
+            List<Address> balancedMembers = balancedCH.getMembers();
+            CacheTopology newTopology = new CacheTopology(newTopologyId, newRebalanceId, false, currentCH, balancedCH,
+                    null, newPhase, balancedMembers, persistentUUIDManager.mapAddresses(balancedMembers),
+                    buildMediaTypesList(balancedMembers));
             log.tracef("Updating cache %s topology for rebalance: %s", cacheName, newTopology);
             setCurrentTopology(newTopology);
 
@@ -1212,8 +1260,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
          // Install a NO_REBALANCE topology with pendingCh == null to signal conflict resolution has finished
          CacheTopology conflictTopology = conflictResolution.topology;
-         CacheTopology newTopology = new CacheTopology(conflictTopology.getTopologyId() + 1, conflictTopology.getRebalanceId(), conflictTopology.getCurrentCH(),
-                 null, CacheTopology.Phase.NO_REBALANCE, conflictTopology.getActualMembers(), persistentUUIDManager.mapAddresses(conflictTopology.getActualMembers()));
+         List<Address> conflictMembers = conflictTopology.getActualMembers();
+         CacheTopology newTopology = new CacheTopology(conflictTopology.getTopologyId() + 1, conflictTopology.getRebalanceId(),
+                 false, conflictTopology.getCurrentCH(), null, null, CacheTopology.Phase.NO_REBALANCE, conflictMembers,
+                 persistentUUIDManager.mapAddresses(conflictMembers), buildMediaTypesList(conflictMembers));
 
          conflictResolution = null;
          setCurrentTopology(newTopology);
@@ -1261,7 +1311,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          ConsistentHash newHash = chf.updateMembers(conflictTopology.getCurrentCH(), members, capacityFactors);
 
          conflictTopology = new CacheTopology(currentTopology.getTopologyId() + 1, currentTopology.getRebalanceId(),
-                 newHash, null, CacheTopology.Phase.CONFLICT_RESOLUTION, members, persistentUUIDManager.mapAddresses(members));
+                 false, newHash, null, null, CacheTopology.Phase.CONFLICT_RESOLUTION, members,
+                 persistentUUIDManager.mapAddresses(members), buildMediaTypesList(members));
          currentTopology = conflictTopology;
 
          log.debugf("Cache %s restarting conflict resolution with topology %s", cacheName, currentTopology);

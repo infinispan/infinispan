@@ -5,12 +5,14 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.DataConvertibleCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.encoding.DataConverter;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.impl.Params;
@@ -24,7 +26,7 @@ import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.READ_WRITE_KEY_VALUE_COMMAND)
-public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKeyCommand<K, V> {
+public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKeyCommand<K, V> implements DataConvertibleCommand {
 
    private Object argument;
    private BiFunction<T, ReadWriteEntryView<K, V>, R> f;
@@ -95,6 +97,19 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
    @Override
    public LoadType loadType() {
       return LoadType.OWNER;
+   }
+
+   @Override
+   public void transformValue(DataConverter dataConverter) {
+      if (argument != null) {
+         argument = dataConverter.toStorage(argument);
+      }
+   }
+
+   @Override
+   public Object transformResult(Object result, DataConverter dataConverter) {
+      // Functional commands handle their own result transformation via StatsEnvelope
+      return result;
    }
 
    @Override

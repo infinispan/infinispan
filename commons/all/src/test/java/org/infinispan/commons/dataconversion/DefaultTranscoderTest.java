@@ -37,27 +37,40 @@ public class DefaultTranscoderTest {
       final byte[] byteArray = {1, 2, 3};
       final KeyValueWithPrevious<String, Long> pojo = new KeyValueWithPrevious<>("string", 1L, 0L);
 
-      testObjectOctetStream(string, string.getBytes(UTF_8));
-      testObjectOctetStream(byteArray, byteArray);
-      testObjectOctetStream(pojo, marshaller.objectToByteBuffer(pojo));
+      testObjectOctetStream(string, marshaller.objectToByteBuffer(string), true);
+      testObjectOctetStream(byteArray, byteArray, false);
+      testObjectOctetStream(pojo, marshaller.objectToByteBuffer(pojo), true);
    }
 
-   private void testObjectOctetStream(Object data, byte[] expectOctetStream) {
+   private void testObjectOctetStream(Object data, byte[] expectOctetStream, boolean expectWrapped) {
       Object toOctetStream = defaultTranscoder.transcode(data, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM);
       Object toOctetStreamHex = defaultTranscoder.transcode(data, APPLICATION_OBJECT, hexEncoded(APPLICATION_OCTET_STREAM));
       Object toOctetStreamBase64 = defaultTranscoder.transcode(data, APPLICATION_OBJECT, base64Encoded(APPLICATION_OCTET_STREAM));
 
-      assertSame(expectOctetStream, toOctetStream);
-      assertSame(Base16Codec.encode(expectOctetStream), toOctetStreamHex);
-      assertSame(Base64.getEncoder().encode(expectOctetStream), toOctetStreamBase64);
+      if (expectWrapped) {
+         assertSame(expectOctetStream, ((org.infinispan.commons.marshall.SerializedObjectWrapper) toOctetStream).getBytes());
+         assertSame(Base16Codec.encode(expectOctetStream), toOctetStreamHex);
+         assertSame(Base64.getEncoder().encode(expectOctetStream), toOctetStreamBase64);
+      } else {
+         assertSame(expectOctetStream, toOctetStream);
+         assertSame(Base16Codec.encode(expectOctetStream), toOctetStreamHex);
+         assertSame(Base64.getEncoder().encode(expectOctetStream), toOctetStreamBase64);
+      }
 
       Object fromOctetStream = defaultTranscoder.transcode(toOctetStream, APPLICATION_OCTET_STREAM, APPLICATION_OBJECT);
       Object fromOctetStreamHex = defaultTranscoder.transcode(toOctetStreamHex, hexEncoded(APPLICATION_OCTET_STREAM), APPLICATION_OBJECT);
       Object fromOctetStreamBase64 = defaultTranscoder.transcode(toOctetStreamBase64, base64Encoded(APPLICATION_OCTET_STREAM), APPLICATION_OBJECT);
 
-      assertSame(expectOctetStream, fromOctetStream);
-      assertSame(expectOctetStream, fromOctetStreamHex);
-      assertSame(expectOctetStream, fromOctetStreamBase64);
+      if (expectWrapped) {
+         // For wrapped objects, we should get back the deserialized object
+         assertEquals(data, fromOctetStream);
+         assertSame(expectOctetStream, fromOctetStreamHex);
+         assertSame(expectOctetStream, fromOctetStreamBase64);
+      } else {
+         assertSame(expectOctetStream, fromOctetStream);
+         assertSame(expectOctetStream, fromOctetStreamHex);
+         assertSame(expectOctetStream, fromOctetStreamBase64);
+      }
    }
 
    @Test
@@ -75,7 +88,7 @@ public class DefaultTranscoderTest {
    }
 
    @Test
-   public void testObjectText() throws Exception {
+   public void testObjectText() {
       String textData = "this is text";
       byte[] utf8 = textData.getBytes(UTF_8);
 
@@ -153,6 +166,31 @@ public class DefaultTranscoderTest {
 
       Object toText = defaultTranscoder.transcode(encodedText, APPLICATION_WWW_FORM_URLENCODED, TEXT_PLAIN);
       assertSame(textData.getBytes(UTF_8), toText);
+   }
+
+   @Test
+   public void testSerializedObjectWrapperRoundTrip() throws Exception {
+      // Create a user object
+      final KeyValueWithPrevious<String, Long> pojo = new KeyValueWithPrevious<>("string", 1L, 0L);
+
+      // Transcode from APPLICATION_OBJECT to APPLICATION_OCTET_STREAM
+      Object toOctetStream = defaultTranscoder.transcode(pojo, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM);
+
+      // Verify it's wrapped
+      assertEquals(toOctetStream.getClass(), org.infinispan.commons.marshall.SerializedObjectWrapper.class);
+
+      org.infinispan.commons.marshall.SerializedObjectWrapper wrapper =
+            (org.infinispan.commons.marshall.SerializedObjectWrapper) toOctetStream;
+
+      // Verify the wrapped bytes match marshalled pojo
+      byte[] expectedBytes = marshaller.objectToByteBuffer(pojo);
+      assertSame(expectedBytes, wrapper.getBytes());
+
+      // Transcode back from APPLICATION_OCTET_STREAM to APPLICATION_OBJECT
+      Object fromOctetStream = defaultTranscoder.transcode(toOctetStream, APPLICATION_OCTET_STREAM, APPLICATION_OBJECT);
+
+      // Verify it deserializes correctly
+      assertEquals(fromOctetStream, pojo);
    }
 
 

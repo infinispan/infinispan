@@ -8,6 +8,9 @@ include::{topics}/proc_adding_deserialization_allowlist.adoc[leveloffset=+1]
 include::{topics}/proc_using_jboss_marshaller.adoc[leveloffset=+1]
 include::{topics}/proc_using_java_serialization.adoc[leveloffset=+1]
 include::{topics}/proc_using_custom_marshallers.adoc[leveloffset=+1]
+include::{topics}/con_marshaller_registry.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_named_marshallers.adoc[leveloffset=+1]
+include::{topics}/proc_using_named_marshallers.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

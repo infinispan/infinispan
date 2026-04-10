@@ -5,6 +5,8 @@ import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.ownersC
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +14,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
@@ -263,8 +266,9 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
             ConsistentHash preferredHash = ownersConsistentHash(mergedTopology, joinInfo.getConsistentHashFactory());
             ConsistentHash conflictHash = context.calculateConflictHash(preferredHash, distinctHashes, expectedMembers);
 
-            mergedTopology = new CacheTopology(++maxTopologyId, maxRebalanceId + 1, conflictHash, null,
-                  CacheTopology.Phase.CONFLICT_RESOLUTION, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+            mergedTopology = new CacheTopology(++maxTopologyId, maxRebalanceId + 1, false, conflictHash, null,
+                  null, CacheTopology.Phase.CONFLICT_RESOLUTION, actualMembers, persistentUUIDManager.mapAddresses(actualMembers),
+                  buildMediaTypesForMembers(actualMembers, mergedTopology));
 
             // Update the currentTopology and try to resolve conflicts
             context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, mergedAvailabilityMode);
@@ -275,9 +279,10 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          // There's no pendingCH, therefore the topology is in stable phase
          actualMembers.retainAll(mergedTopology.getMembers());
          mergedTopology = new CacheTopology(maxTopologyId + 1, mergedTopology.getRebalanceId(),
-                                            mergedTopology.getCurrentCH(), null,
+                                            false, mergedTopology.getCurrentCH(), null, null,
                                             CacheTopology.Phase.NO_REBALANCE, actualMembers,
-                                            persistentUUIDManager.mapAddresses(actualMembers));
+                                            persistentUUIDManager.mapAddresses(actualMembers),
+                                            buildMediaTypesForMembers(actualMembers, mergedTopology));
       }
 
       context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, mergedAvailabilityMode);
@@ -343,5 +348,29 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       context.updateCurrentTopology(newMembers);
       // Then queue a rebalance to include the joiners as well
       context.queueRebalance(context.getExpectedMembers());
+   }
+
+   private static List<MediaType> buildMediaTypesForMembers(List<Address> members, CacheTopology sourceTopology) {
+      if (sourceTopology == null || sourceTopology.getMemberValueMediaTypes().isEmpty()) {
+         return Collections.emptyList();
+      }
+      // Build a map from address to media type from the source topology
+      Map<Address, MediaType> mediaTypeMap = new HashMap<>();
+      List<Address> sourceMembers = sourceTopology.getActualMembers();
+      List<MediaType> sourceMediaTypes = sourceTopology.getMemberValueMediaTypes();
+      for (int i = 0; i < sourceMembers.size(); i++) {
+         mediaTypeMap.put(sourceMembers.get(i), sourceMediaTypes.get(i));
+      }
+      // Build the media types list in the order of the target members
+      List<MediaType> result = new ArrayList<>(members.size());
+      for (Address member : members) {
+         MediaType mediaType = mediaTypeMap.get(member);
+         if (mediaType == null) {
+            // If we don't have media type information for all members, return an empty list
+            return Collections.emptyList();
+         }
+         result.add(mediaType);
+      }
+      return result;
    }
 }

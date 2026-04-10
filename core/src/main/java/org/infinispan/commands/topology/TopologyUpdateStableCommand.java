@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -50,6 +51,8 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
    @ProtoField(8)
    final boolean topologyRestored;
 
+   final List<MediaType> memberValueMediaTypes;
+
    @ProtoField(9)
    List<Address> getActualMembers() {
       return actualMembers;
@@ -58,7 +61,7 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
    @ProtoFactory
    TopologyUpdateStableCommand(String cacheName, List<UUID> persistentUUIDs, int rebalanceId, int topologyId,
                                int viewId, WrappedMessage currentCH, WrappedMessage pendingCH, List<Address> actualMembers,
-                               boolean topologyRestored) {
+                               boolean topologyRestored, List<MediaType> memberValueMediaTypes) {
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
       this.cacheName = cacheName;
@@ -68,6 +71,7 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
       this.topologyId = topologyId;
       this.viewId = viewId;
       this.topologyRestored = topologyRestored;
+      this.memberValueMediaTypes = memberValueMediaTypes;
    }
 
    public TopologyUpdateStableCommand(String cacheName, Address origin, CacheTopology cacheTopology, int viewId) {
@@ -79,6 +83,7 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
       this.pendingCH = new WrappedMessage(cacheTopology.getPendingCH());
       this.actualMembers = cacheTopology.getActualMembers();
       this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
+      this.memberValueMediaTypes = cacheTopology.getMemberValueMediaTypes();
       this.viewId = viewId;
       this.topologyRestored = cacheTopology.wasTopologyRestoredFromState();
    }
@@ -86,9 +91,14 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       CacheTopology topology = new CacheTopology(topologyId, rebalanceId, topologyRestored, getCurrentCH(), getPendingCH(),
-            CacheTopology.Phase.NO_REBALANCE, actualMembers, persistentUUIDs);
+            null, CacheTopology.Phase.NO_REBALANCE, actualMembers, persistentUUIDs, memberValueMediaTypes);
       return gcr.getLocalTopologyManager()
             .handleStableTopologyUpdate(cacheName, topology, origin, viewId);
+   }
+
+   @ProtoField(10)
+   List<MediaType> getMemberValueMediaTypes() {
+      return memberValueMediaTypes;
    }
 
    public ConsistentHash getCurrentCH() {

@@ -107,7 +107,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
             configuration.clustering().cacheMode(),
             capacityFactor,
             localTopologyManager.getPersistentUUID(),
-            persistentStateChecksum);
+            persistentStateChecksum,
+            configuration.encoding().valueDataType().mediaType());
 
       CompletionStage<CacheTopology> stage = localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
          @Override

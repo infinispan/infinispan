@@ -6,7 +6,9 @@ import static org.infinispan.configuration.global.SerializationConfiguration.SER
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
@@ -22,6 +24,7 @@ import org.infinispan.protostream.config.Configuration;
 public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<SerializationConfiguration> {
    private final AttributeSet attributes;
    private final AllowListConfigurationBuilder allowListBuilder;
+   private final Map<String, NamedMarshallerConfigurationBuilder> namedMarshallerBuilders = new LinkedHashMap<>();
 
    SerializationConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
@@ -73,15 +76,55 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
+   /**
+    * Adds a named marshaller by class name.
+    *
+    * @param name the name for this marshaller
+    * @param marshallerClassName the fully qualified class name of the marshaller
+    * @return this builder for method chaining
+    * @throws IllegalArgumentException if a marshaller with the given name already exists
+    */
+   public SerializationConfigurationBuilder addNamedMarshaller(String name, String marshallerClassName) {
+      if (namedMarshallerBuilders.containsKey(name)) {
+         throw new IllegalArgumentException("A marshaller with name '" + name + "' is already registered");
+      }
+      NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
+      builder.name(name).marshallerClass(marshallerClassName);
+      namedMarshallerBuilders.put(name, builder);
+      return this;
+   }
+
+   /**
+    * Adds a named marshaller by instance.
+    *
+    * @param name the name for this marshaller
+    * @param marshaller the marshaller instance
+    * @return this builder for method chaining
+    * @throws IllegalArgumentException if a marshaller with the given name already exists
+    */
+   public SerializationConfigurationBuilder addNamedMarshaller(String name, Marshaller marshaller) {
+      if (namedMarshallerBuilders.containsKey(name)) {
+         throw new IllegalArgumentException("A marshaller with name '" + name + "' is already registered");
+      }
+      NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
+      builder.name(name).marshaller(marshaller);
+      namedMarshallerBuilders.put(name, builder);
+      return this;
+   }
+
    @Override
    public void validate() {
-      // No-op, no validation required
+      // No validation needed - all builders are added with both name and marshaller
    }
 
    @Override
    public
    SerializationConfiguration create() {
-      return new SerializationConfiguration(attributes.protect(), allowListBuilder.create());
+      List<NamedMarshallerConfiguration> namedMarshallers = new ArrayList<>(namedMarshallerBuilders.size());
+      for (NamedMarshallerConfigurationBuilder builder : namedMarshallerBuilders.values()) {
+         namedMarshallers.add(builder.create());
+      }
+      return new SerializationConfiguration(attributes.protect(), allowListBuilder.create(), namedMarshallers);
    }
 
    @Override
@@ -89,6 +132,14 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    SerializationConfigurationBuilder read(SerializationConfiguration template, Combine combine) {
       this.attributes.read(template.attributes(), combine);
       this.allowListBuilder.read(template.allowList(), combine);
+
+      namedMarshallerBuilders.clear();
+      for (NamedMarshallerConfiguration config : template.namedMarshallers()) {
+         NamedMarshallerConfigurationBuilder builder = new NamedMarshallerConfigurationBuilder(getGlobalConfig());
+         builder.read(config, combine);
+         namedMarshallerBuilders.put(config.name(), builder);
+      }
+
       return this;
    }
 

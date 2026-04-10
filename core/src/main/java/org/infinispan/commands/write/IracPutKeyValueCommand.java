@@ -3,11 +3,13 @@ package org.infinispan.commands.write;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.DataConvertibleCommand;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.encoding.DataConverter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
@@ -35,7 +37,7 @@ import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
  * @since 12.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_PUT_KEY_VALUE_COMMAND)
-public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
+public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements MetadataAwareCommand, DataConvertibleCommand {
 
    private Object value;
    private Metadata metadata;
@@ -207,6 +209,17 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
    @Override
    public int hashCode() {
       return Objects.hash(super.hashCode(), value, metadata, privateMetadata);
+   }
+
+   @Override
+   public void transformValue(DataConverter dataConverter) {
+      value = dataConverter.toStorage(value);
+   }
+
+   @Override
+   public Object transformResult(Object result, DataConverter dataConverter) {
+      // Transform the result (old value) from local storage format to requester's format
+      return result != null ? dataConverter.fromStorage(result) : null;
    }
 
    @Override

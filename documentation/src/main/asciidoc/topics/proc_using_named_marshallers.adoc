@@ -1,0 +1,59 @@
+[id='using-named-marshallers_{context}']
+= Using named marshallers
+After you configure named marshallers, you can use them directly via the `MarshallerRegistry` or specify them in `MediaType` parameters for automatic transcoding.
+
+.Prerequisites
+
+* Configure at least one named marshaller.
+
+.Procedure
+
+To use named marshallers, do one of the following:
+
+* Retrieve a named marshaller from the `MarshallerRegistry` and use it directly to marshal and unmarshal objects.
+* Specify a named marshaller in a `MediaType` parameter and let {brandname} transcoders automatically use it.
+
+.Direct usage via MarshallerRegistry
+[source,java,options="nowrap",subs=attributes+]
+----
+// Retrieve the marshaller registry
+MarshallerRegistry registry = cacheManager.getGlobalComponentRegistry()
+      .getComponent(MarshallerRegistry.class);
+
+// Get a named marshaller
+Marshaller customMarshaller = registry.getMarshaller("myCustomMarshaller");
+
+// Get the default marshaller
+Marshaller defaultMarshaller = registry.getDefaultMarshaller();
+
+// Use the marshaller directly
+byte[] serialized = customMarshaller.objectToByteBuffer(myObject);
+Object deserialized = customMarshaller.objectFromByteBuffer(serialized);
+----
+
+.Automatic usage with MediaType
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/NamedMarshallerMediaType.java[]
+----
+
+[NOTE]
+====
+When you specify a marshaller in a `MediaType`, the `DefaultTranscoder` automatically uses that marshaller instead of the default marshaller.
+This allows you to use different marshallers for different entries in the same cache without manual marshalling.
+====
+
+.Use cases
+
+Named marshallers are useful when you need to:
+
+* Use different serialization formats for different data types in the same cache
+* Support multiple versions of a serialization format for backward compatibility
+* Isolate marshalling logic for different application modules
+* Test different marshallers without changing the default configuration
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/marshall/core/MarshallerRegistry.html[MarshallerRegistry API documentation]
+* link:{javadocroot}/org/infinispan/commons/dataconversion/MediaType.html[MediaType API documentation]
+* link:{javadocroot}/org/infinispan/commons/dataconversion/DefaultTranscoder.html[DefaultTranscoder API documentation]

@@ -37,6 +37,7 @@ import org.infinispan.commands.topology.RebalancePolicyUpdateCommand;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -292,6 +293,31 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private CompletionStage<CacheTopology> handleJoinResponse(String cacheName, LocalCacheStatus cacheStatus,
                                                             CacheStatusResponse initialStatus) {
       log.debugf("Cache %s received join response %s", cacheName, initialStatus);
+
+      // Validate media type compatibility with all existing members
+      List<org.infinispan.commons.dataconversion.MediaType> existingMemberMediaTypes = initialStatus.getMemberValueMediaTypes();
+      if (existingMemberMediaTypes != null && !existingMemberMediaTypes.isEmpty()) {
+         ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
+         if (cr != null) {
+            org.infinispan.marshall.core.EncoderRegistry encoderRegistry =
+               cr.getComponent(org.infinispan.marshall.core.EncoderRegistry.class);
+            if (encoderRegistry != null) {
+               org.infinispan.commons.dataconversion.MediaType ourMediaType = cacheStatus.getJoinInfo().getValueMediaType();
+               // Check compatibility with each existing member's media type
+               for (org.infinispan.commons.dataconversion.MediaType memberMediaType : existingMemberMediaTypes) {
+                  // null media type indicates a newer version node that doesn't send media type info
+                  if (memberMediaType == null) {
+                     continue;
+                  }
+                  boolean canHandle = encoderRegistry.isConversionSupported(memberMediaType, ourMediaType);
+                  if (!canHandle) {
+                     throw CLUSTER.incompatibleValueMediaTypes(cacheName, ourMediaType, memberMediaType);
+                  }
+               }
+            }
+         }
+      }
+
       CacheTopology ct = getJoinTopology(initialStatus);
       if (initialStatus.availabilityMode == AvailabilityMode.STOPPED) {
          stopCache(cacheName);
@@ -401,12 +427,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                   continue;
                }
 
+               CacheTopology currentTopology = cacheStatus.getCurrentTopology();
+               List<MediaType> memberMediaTypes = currentTopology != null ?
+                     currentTopology.getMemberValueMediaTypes() : Collections.emptyList();
                caches.put(e.getKey(), new CacheStatusResponse(cacheStatus.getJoinInfo(),
-                                                              cacheStatus.getCurrentTopology(),
+                                                              currentTopology,
                                                               cacheStatus.getStableTopology(),
                                                               cacheStatus.getPartitionHandlingManager()
                                                                          .getAvailabilityMode(),
-                                                              cacheStatus.knownMembers()));
+                                                              cacheStatus.knownMembers(),
+                                                              memberMediaTypes));
             }
          }
 
@@ -511,7 +541,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
                                                       cacheTopology.wasTopologyRestoredFromState(),
                                                       currentCH, pendingCH, unionCH, cacheTopology.getPhase(),
-                                                      cacheTopology.getActualMembers(), persistentUUIDs);
+                                                      cacheTopology.getActualMembers(), persistentUUIDs,
+                                                      cacheTopology.getMemberValueMediaTypes());
       boolean updateAvailabilityModeFirst = availabilityMode != AvailabilityMode.AVAILABLE;
 
       CompletionStage<Void> stage =
@@ -614,12 +645,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             CacheTopology resetTopology = new CacheTopology(newCacheTopology.getTopologyId() - 1,
                                                             newCacheTopology.getRebalanceId() - 1,
                                                             newCacheTopology.wasTopologyRestoredFromState(),
-                                                            newCacheTopology.getCurrentCH(), null,
+                                                            newCacheTopology.getCurrentCH(), null, null,
                                                             CacheTopology.Phase.NO_REBALANCE,
                                                             newCacheTopology.getActualMembers(), persistentUUIDManager
                                                                   .mapAddresses(
                                                                         newCacheTopology
-                                                                              .getActualMembers()));
+                                                                              .getActualMembers()),
+                                                            newCacheTopology.getMemberValueMediaTypes());
             log.debugf("Installing fake cache topology %s for cache %s", resetTopology, cacheName);
             return handler.updateConsistentHash(resetTopology);
          }
@@ -724,7 +756,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                                     cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH,
                                                     cacheTopology.getPhase(),
                                                     cacheTopology.getActualMembers(),
-                                                    cacheTopology.getMembersPersistentUUIDs());
+                                                    cacheTopology.getMembersPersistentUUIDs(),
+                                                    cacheTopology.getMemberValueMediaTypes());
 
       CompletionStage<Void> stage =
             resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
