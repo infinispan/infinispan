@@ -121,6 +121,7 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
             fork((Callable<Void>) () -> {
                log.info("KILLING the c1 cache");
                TestingUtil.killCacheManagers(manager(c1));
+               TestingUtil.installNewView(manager(0), manager(2));
                return null;
             });
          }

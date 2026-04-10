@@ -976,7 +976,12 @@ public class StateConsumerImpl implements StateConsumer {
                completable.subscribe(() -> {
                   notifyEndOfStateTransferIfNeeded();
                   stateTracker.completeStateConsumer(topologyId);
-               }, t -> log.debug("State iteration encountered exception!: ", t));
+               }, t -> {
+                  log.debug("State iteration encountered exception!: ", t);
+                  removeTransfers(sources.keySet());
+                  notifyEndOfStateTransferIfNeeded();
+                  stateTracker.completeStateConsumer(topologyId);
+               });
             });
          }
       }
@@ -1451,9 +1456,19 @@ public class StateConsumerImpl implements StateConsumer {
                   IntSet unfinishedSegments = inboundTransfer.getUnfinishedSegments();
                   inboundTransfer.cancel();
                   addedSegments.addAll(unfinishedSegments);
-                  transfersBySegment.keySet().removeAll(unfinishedSegments);
+                  for (Integer segment : unfinishedSegments) {
+                     List<InboundTransferTask> removed = transfersBySegment.remove(segment);
+                     if (removed != null) {
+                        progressTracker.removeTasks(removed.size());
+                     }
+                  }
                }
             }
+         }
+
+         if (transfersBySource.isEmpty()) {
+            progressTracker.finishedAllTasks();
+            stateTracker.completeStateConsumer(stateTransferTopologyId.get());
          }
 
          // exclude those that are already in progress from a valid source
@@ -1545,12 +1560,30 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
+   private void removeTransfers(Collection<Address> sources) {
+      log.tracef("Removing inbound transfers from sources %s", sources);
+      transferMapsLock.lock();
+      try {
+         for (Address source : sources) {
+            List<InboundTransferTask> tasks = transfersBySource.remove(source);
+            if (tasks == null) continue;
+
+            for (InboundTransferTask task : tasks) {
+               removeTransfer(task);
+            }
+         }
+      } finally {
+         transferMapsLock.unlock();
+      }
+   }
+
    protected void onTaskCompletion(final InboundTransferTask inboundTransfer) {
       if (log.isTraceEnabled()) log.tracef("Inbound transfer finished: %s", inboundTransfer);
-      if (inboundTransfer.isCompletedSuccessfully()) {
-         removeTransfer(inboundTransfer);
-         notifyEndOfStateTransferIfNeeded();
+      if (!inboundTransfer.isCompletedSuccessfully()) {
+         log.inboundStateTransferFailure(inboundTransfer.getSource(), inboundTransfer.getSegments(), cacheName);
       }
+      removeTransfer(inboundTransfer);
+      notifyEndOfStateTransferIfNeeded();
    }
 
    public interface KeyInvalidationListener {

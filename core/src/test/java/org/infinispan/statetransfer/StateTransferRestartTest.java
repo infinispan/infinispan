@@ -81,6 +81,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
             DISCARD d3 = TestingUtil.getDiscardForCache(c1.getCacheManager());
             d3.discardAll(true);
             TestingUtil.killCacheManagers(manager(c1));
+            TestingUtil.installNewView(manager(0), manager(2));
          } catch (Exception e) {
             log.info("there was some exception while killing cache");
          }

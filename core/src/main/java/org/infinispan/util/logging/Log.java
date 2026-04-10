@@ -2444,4 +2444,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Shared container not available: %s", id = 718)
    IllegalStateException sharedContainerNotFound(String containerMapName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Inbound transfer from %s failed for segments %s of cache %s, possible data loss", id = 719)
+   void inboundStateTransferFailure(Address source, IntSet segments, String cacheName);
 }

@@ -43,8 +43,10 @@ import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.ProgressTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -70,6 +72,7 @@ import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -298,10 +301,49 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       stateConsumer.applyState(entry.getKey(), 22, chunks);
    }
 
+   /**
+    * Creates consistent hashes for a 4→3 member topology change (addresses[3] leaves).
+    * Returns [ch2 (3 members), ch3 (rebalanced), ch23 (union)].
+    */
+   private static DefaultConsistentHash[] createRebalanceHashes(Address[] addresses) {
+      List<Address> members4 = Arrays.asList(addresses[0], addresses[1], addresses[2], addresses[3]);
+      List<Address> members3 = Arrays.asList(addresses[0], addresses[1], addresses[2]);
+      DefaultConsistentHashFactory chf = DefaultConsistentHashFactory.getInstance();
+      DefaultConsistentHash ch1 = chf.create(2, 40, members4, null);
+      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members3, null);
+      DefaultConsistentHash ch3 = chf.rebalance(ch2);
+      DefaultConsistentHash ch23 = chf.union(ch2, ch3);
+      return new DefaultConsistentHash[] { ch2, ch3, ch23 };
+   }
+
+   private static SegmentPublisherSupplier.Notification<?> segmentComplete(int segment) {
+      return new SegmentPublisherSupplier.Notification<>() {
+         @Override
+         public int completedSegment() {
+            return segment;
+         }
+
+         @Override
+         public boolean isValue() {
+            return false;
+         }
+
+         @Override
+         public boolean isSegmentComplete() {
+            return true;
+         }
+      };
+   }
+
    private void injectComponents(StateConsumer stateConsumer, AsyncInterceptorChain interceptorChain, RpcManager rpcManager,
                                  ClusterPublisherManager clusterPublisherManager) {
+      injectComponents(stateConsumer, interceptorChain, rpcManager, clusterPublisherManager, NodeVersion.INSTANCE);
+   }
+
+   private void injectComponents(StateConsumer stateConsumer, AsyncInterceptorChain interceptorChain, RpcManager rpcManager,
+                                 ClusterPublisherManager clusterPublisherManager, NodeVersion oldestMemberVersion) {
       Transport transport = mock(Transport.class);
-      when(transport.getOldestMember()).thenReturn(NodeVersion.INSTANCE);
+      when(transport.getOldestMember()).thenReturn(oldestMemberVersion);
       TestingUtil.inject(stateConsumer,
             mockCache(),
             TestingUtil.named(NON_BLOCKING_EXECUTOR, pooledExecutorService),
@@ -473,6 +515,113 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertRebalanceStart(stateConsumer, ch2, ch3, addresses[1], flatRequestedSegments);
 
       completeAndCheckRebalance(stateConsumer, transfer2, requestedSegments, 24);
+
+      stateConsumer.stop();
+   }
+
+   // Reproducer for #17220.
+   // New pull-based path, publisher error (source cache removed mid-transfer).
+   // The error handler only logs, the dummy InboundTransferTasks are never cleaned from tracking maps.
+   public void testPublisherErrorCleansTrackingMaps() throws Exception {
+      PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
+      Address[] addresses = createMembers(persistentUUIDManager);
+      DefaultConsistentHash[] chs = createRebalanceHashes(addresses);
+      DefaultConsistentHash ch2 = chs[0], ch3 = chs[1], ch23 = chs[2];
+
+      ClusterPublisherManager cpm = mock(ClusterPublisherManager.class);
+      UnicastProcessor<SegmentPublisherSupplier.Notification<?>> processor = UnicastProcessor.create();
+      when(cpm.entryPublisherForTopology(anyInt(), anyInt(), any()))
+            .thenReturn(processor);
+
+      StateConsumerImpl stateConsumer = new StateConsumerImpl();
+      injectComponents(stateConsumer, mock(AsyncInterceptorChain.class),
+            mockRpcManager(new ConcurrentHashMap<>(), new ConcurrentSkipListSet<>(), addresses[0]), cpm);
+      stateConsumer.start();
+
+      noRebalance(stateConsumer, persistentUUIDManager, 1, 1, ch2);
+      rebalanceStart(stateConsumer, persistentUUIDManager, 2, 2, ch2, ch3, ch23);
+      assertTrue(stateConsumer.hasActiveTransfers());
+
+      // Source cache removed mid-transfer, publisher errors out
+      processor.onError(new IllegalLifecycleStateException("Cache is stopping"));
+
+      // With the bug: error handler at StateConsumerImpl:979 only logs.
+      // Dummy InboundTransferTasks are never cleaned from tracking maps.
+      eventually(() -> !stateConsumer.hasActiveTransfers());
+      assertEquals(stateConsumer.inflightRequestCount(), 0);
+
+      stateConsumer.stop();
+   }
+
+   // Reproducer for #17220.
+   // Old push-based path (mixed cluster), source cache removed.
+   // CacheNotFoundResponse completes the future exceptionally. onTaskCompletion() checks isCompletedSuccessfully() which returns false.
+   // The else branch is empty, no cleanup.
+   public void testOldPathFailedTransferCleansTrackingMaps() {
+      PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
+      Address[] addresses = createMembers(persistentUUIDManager);
+      DefaultConsistentHash[] chs = createRebalanceHashes(addresses);
+      DefaultConsistentHash ch2 = chs[0], ch3 = chs[1], ch23 = chs[2];
+
+      RpcManager rpcManager = mockRpcManager(new ConcurrentHashMap<>(), new ConcurrentSkipListSet<>(), addresses[0]);
+      // Source cache was removed.
+      // StateTransferStartCommand returns CacheNotFoundResponse
+      when(rpcManager.invokeCommand(any(Address.class), any(StateTransferStartCommand.class),
+            any(ResponseCollector.class), any(RpcOptions.class)))
+            .thenReturn(CompletableFuture.completedFuture(CacheNotFoundResponse.INSTANCE));
+
+      StateConsumerImpl stateConsumer = new StateConsumerImpl();
+      // Force old push-based path: oldest member version < 16.2
+      injectComponents(stateConsumer, mock(AsyncInterceptorChain.class),
+            rpcManager, mock(ClusterPublisherManager.class),
+            NodeVersion.from((byte) 16, (byte) 0, (byte) 0));
+      stateConsumer.start();
+
+      noRebalance(stateConsumer, persistentUUIDManager, 1, 1, ch2);
+      rebalanceStart(stateConsumer, persistentUUIDManager, 2, 2, ch2, ch3, ch23);
+
+      // The RPC runs asynchronously via stateRequestExecutor.
+      // It should complete even with failed transfers.
+      eventually(() -> !stateConsumer.hasActiveTransfers());
+      assertEquals(stateConsumer.inflightRequestCount(), 0);
+
+      stateConsumer.stop();
+   }
+
+   // Reproducer for #17220.
+   // RestartBrokenTransfers() removes tasks from tracking maps but does not update ProgressTracker.
+   // After source departure, maps are clean but ProgressTracker retains stale pending tasks.
+   public void testRestartBrokenTransfersUpdatesProgressTracker() throws Exception {
+      PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
+      Address[] addresses = createMembers(persistentUUIDManager);
+      DefaultConsistentHash[] chs = createRebalanceHashes(addresses);
+      DefaultConsistentHash ch2 = chs[0], ch3 = chs[1], ch23 = chs[2];
+
+      // Fresh processor per call: the noRebalance topology update re-enters
+      // doDataPortionOfStateTransfer, which calls entryPublisherForTopology again
+      ClusterPublisherManager cpm = mock(ClusterPublisherManager.class);
+      when(cpm.entryPublisherForTopology(anyInt(), anyInt(), any()))
+            .thenAnswer(invocation -> UnicastProcessor.create());
+
+      StateConsumerImpl stateConsumer = new StateConsumerImpl();
+      injectComponents(stateConsumer, mock(AsyncInterceptorChain.class),
+            mockRpcManager(new ConcurrentHashMap<>(), new ConcurrentSkipListSet<>(), addresses[0]), cpm);
+      stateConsumer.start();
+
+      noRebalance(stateConsumer, persistentUUIDManager, 1, 1, ch2);
+      rebalanceStart(stateConsumer, persistentUUIDManager, 2, 2, ch2, ch3, ch23);
+      assertTrue(stateConsumer.hasActiveTransfers());
+
+      // All other nodes leave, restartBrokenTransfers() detects departed sources
+      List<Address> membersAlone = Collections.singletonList(addresses[0]);
+      DefaultConsistentHash chAlone = DefaultConsistentHashFactory.getInstance()
+            .updateMembers(ch2, membersAlone, null);
+      noRebalance(stateConsumer, persistentUUIDManager, 3, 3, chAlone);
+
+      // restartBrokenTransfers() cleans transfersBySource/transfersBySegment directly, but does NOT call progressTracker.removeTasks()
+      assertFalse(stateConsumer.hasActiveTransfers());
+      ProgressTracker progressTracker = TestingUtil.extractField(stateConsumer, "progressTracker");
+      assertEquals(progressTracker.pendingTasks(), 0);
 
       stateConsumer.stop();
    }
