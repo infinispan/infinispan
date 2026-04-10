@@ -67,6 +67,16 @@ public class StateTransferTracker {
 
    private final List<Entry> listeners = new CopyOnWriteArrayList<>();
 
+   // This method is here solely for Blockhound, do not move/modify unless changing CoreBlockHoundIntegration
+   private void acquireLock() {
+      lock.lock();
+   }
+
+   // This method isn't really needed, but here for symmetry with acquireLock
+   private void releaseLock() {
+      lock.unlock();
+   }
+
    /**
     * Checks if a state transfer is currently in progress.
     *
@@ -78,11 +88,11 @@ public class StateTransferTracker {
     * @return {@code true} if state transfer is active; {@code false} otherwise.
     */
    public boolean isStateTransferInProgress() {
-      lock.lock();
+      acquireLock();
       try {
          return stable.isPending();
       } finally {
-         lock.unlock();
+         releaseLock();
       }
    }
 
@@ -111,7 +121,7 @@ public class StateTransferTracker {
     * @return A {@link CompletionStage} that completes when the listener returns {@code true}.
     */
    public CompletionStage<Void> onStateTransferCompleted(BiPredicate<CacheTopology, Throwable> listener) {
-      lock.lock();
+      acquireLock();
       try {
          if (log.isTraceEnabled())
             log.tracef("waiting state completion %s (consumer=%s) (provider=%s)%n", cacheName, consumer.isPending(), provider.isPending());
@@ -129,7 +139,7 @@ public class StateTransferTracker {
          listeners.add(new Entry(cf, listener));
          return cf;
       } finally {
-         lock.unlock();
+         releaseLock();
       }
    }
 
@@ -146,7 +156,7 @@ public class StateTransferTracker {
    public void cacheTopologyUpdated(CacheTopology cacheTopology) {
       boolean isStableTopology = cacheTopology.getPendingCH() == null;
       if (isStableTopology) {
-         lock.lock();
+         acquireLock();
          try {
             log.tracef("Installed stable topology for %s with %s, state transfer is done now", cacheName, cacheTopology);
             int previousTopologyId = currentTopology != null ? currentTopology.getTopologyId() : Integer.MIN_VALUE;
@@ -166,7 +176,7 @@ public class StateTransferTracker {
             consumer.complete(previousTopologyId, null);
             provider.complete(currentTopology.getTopologyId(), null);
          } finally {
-            lock.unlock();
+            releaseLock();
          }
       }
    }
@@ -182,12 +192,12 @@ public class StateTransferTracker {
     * @param topologyId The topology ID associated with this state transfer start.
     */
    public void startStateConsumer(int topologyId) {
-      lock.lock();
+      acquireLock();
       try {
          log.tracef("starting state consumer %s", cacheName);
          checkTopologyId(topologyId);
       } finally {
-         lock.unlock();
+         releaseLock();
       }
    }
 
@@ -197,12 +207,12 @@ public class StateTransferTracker {
     * @param topologyId The topology ID that completed.
     */
    public void completeStateConsumer(int topologyId) {
-      lock.lock();
+      acquireLock();
       try {
          log.tracef("stopping state consumer %s", cacheName);
          consumer.complete(topologyId, null);
       } finally {
-        lock.unlock();
+        releaseLock();
       }
    }
 
@@ -217,12 +227,12 @@ public class StateTransferTracker {
     * @param topologyId The topology ID associated with this state transfer start.
     */
    public void startStateProvider(int topologyId) {
-      lock.lock();
+      acquireLock();
       try {
          log.tracef("starting state provider %s", cacheName);
          checkTopologyId(topologyId);
       } finally {
-         lock.unlock();
+         releaseLock();
       }
    }
 
@@ -232,12 +242,12 @@ public class StateTransferTracker {
     * @param topologyId The topology ID that completed.
     */
    public void completeStateProvider(int topologyId) {
-      lock.lock();
+      acquireLock();
       try {
          log.tracef("stopping state provider %s", cacheName);
          provider.complete(topologyId, null);
       } finally {
-         lock.unlock();
+         releaseLock();
       }
    }
 
