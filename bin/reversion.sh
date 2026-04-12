@@ -158,7 +158,7 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     addNamespace "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
 
     # Update the server configurations
-    CONFIGS=$(find server/runtime/src/main/server/server/conf/ -name '*.xml' -type -f)
+    CONFIGS=$(find server/runtime/src/main/server/server/conf/ -name '*.xml' -type f)
     for CONFIG in $CONFIGS; do
          rewriteXML "$CONFIG" "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
     done
