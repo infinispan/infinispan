@@ -25,6 +25,7 @@ import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api._private.CounterEncodeUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.hotrod.tx.ControlByte;
 
 init {
@@ -78,7 +79,10 @@ deadend {
 root request
    : { posBefore = buf.readerIndex(); }
      magic { if (accessLogging) { requestStart = Instant.now(); } }
-     header { if (log.isTraceEnabled()) log.tracef("Parsed header: %s", header); }
+     header {
+        if (log.isTraceEnabled()) log.tracef("Parsed header: %s", header);
+        ConnectionMetadata.getInstance(cacheProcessor.channel()).protocolVersion(HotRodVersion.forVersion(header.version).toString());
+     }
      parameters
    ;
 
