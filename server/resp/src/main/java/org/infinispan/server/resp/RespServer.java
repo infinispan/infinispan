@@ -52,7 +52,6 @@ import io.netty.channel.group.ChannelMatcher;
  */
 public class RespServer extends AbstractProtocolServer<RespServerConfiguration> {
    private static final Log log = Log.getLog(RespServer.class);
-   public static final String RESP_SERVER_FEATURE = "resp-server";
    public static final MediaType RESP_KEY_MEDIA_TYPE = MediaType.APPLICATION_OCTET_STREAM;
    private Configuration defaultCacheConfiguration;
    private MetadataRepository metadataRepository;
@@ -87,9 +86,6 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
 
    private void defineCacheConfiguration() {
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
-      if (!globalConfiguration.features().isAvailable(RESP_SERVER_FEATURE)) {
-         throw CONFIG.featureDisabled(RESP_SERVER_FEATURE);
-      }
       String cacheName = configuration.defaultCacheName();
       Configuration explicitConfiguration = SecurityActions.getCacheConfiguration(cacheManager, cacheName);
       if (explicitConfiguration == null) {
