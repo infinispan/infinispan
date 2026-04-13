@@ -11,8 +11,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -286,7 +287,7 @@ public class NettyRestRequest implements RestRequest {
    public FormParts formData() {
       DefaultHttpDataFactory factory = new DefaultHttpDataFactory(true);
       HttpPostMultipartRequestDecoder decoder = new HttpPostMultipartRequestDecoder(factory, request);
-      Map<String, FormPart> parts = new HashMap<>(2);
+      Map<String, FormPart> parts = new LinkedHashMap<>(2);
       try {
          for (InterfaceHttpData data : decoder.getBodyHttpDatas()) {
             String name = data.getName();
@@ -308,6 +309,11 @@ public class NettyRestRequest implements RestRequest {
          @Override
          public FormPart get(String name) {
             return parts.get(name);
+         }
+
+         @Override
+         public Collection<FormPart> parts() {
+            return parts.values();
          }
 
          @Override

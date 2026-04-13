@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,6 +114,7 @@ import org.infinispan.rest.ServerSentEvent;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.distribution.CacheDistributionInfo;
 import org.infinispan.rest.framework.ContentSource;
+import org.infinispan.rest.framework.FormPart;
 import org.infinispan.rest.framework.FormParts;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
@@ -647,8 +649,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          if (parts.size() != 2) {
             throw Log.REST.cacheCompareWrongContent();
          }
-         String s1 = parts.get("one").contents().asString();
-         String s2 = parts.get("two").contents().asString();
+         // We know the iterator will have 2 entries.
+         Iterator<FormPart> it = parts.parts().iterator();
+         String s1 = it.next().contents().asString();
+         String s2 = it.next().contents().asString();
          ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
          Map<String, ConfigurationBuilder> b1 = parserRegistry.parse(s1, null).getNamedConfigurationBuilders();
          Map<String, ConfigurationBuilder> b2 = parserRegistry.parse(s2, null).getNamedConfigurationBuilders();

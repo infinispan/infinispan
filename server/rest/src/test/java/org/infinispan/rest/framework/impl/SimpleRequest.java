@@ -1,6 +1,7 @@
 package org.infinispan.rest.framework.impl;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -211,6 +212,11 @@ public class SimpleRequest implements RestRequest {
          @Override
          public FormPart get(String name) {
             return null;
+         }
+
+         @Override
+         public Collection<FormPart> parts() {
+            return List.of();
          }
 
          @Override

@@ -24,6 +24,7 @@ import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.rest.RequestHeader.ACCEPT_HEADER;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
+import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
@@ -2196,6 +2197,31 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                   "    ISPN000961: Incompatible attribute 'local-cache.encoding.key.media-type' existing value='text/plain', new value='application/x-protostream'\n" +
                   "    ISPN000961: Incompatible attribute 'local-cache.encoding.value.media-type' existing value='text/plain', new value='application/x-protostream'",
             join(response).body());
+   }
+
+   @Test
+   public void testComparisonWithArbitraryPartNames() {
+      RestRawClient rawClient = client.raw();
+
+      String json20 = "{\"distributed-cache\":{\"memory\":{\"storage\":\"HEAP\",\"max-count\":\"20\"}}}";
+      String json30 = "{\"distributed-cache\":{\"memory\":{\"storage\":\"HEAP\",\"max-count\":\"30\"}}}";
+
+      String first = k(0);
+      String second = k(1);
+
+      MultiPartRestEntity multiPart = RestEntity.multiPart();
+      multiPart.addPart(first, json20);
+      multiPart.addPart(second, json20);
+
+      CompletionStage<RestResponse> response = rawClient.post(endpoint("configCompare"), multiPart);
+      assertThat(response).isOk();
+
+      multiPart = RestEntity.multiPart();
+      multiPart.addPart(first, json20);
+      multiPart.addPart(second, json30);
+
+      response = rawClient.post(endpoint("configCompare"), multiPart);
+      assertThat(response).isConflicted();
    }
 
    @Test
