@@ -5,7 +5,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiPredicate;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -51,7 +50,9 @@ public class StateTransferTracker {
    @Inject
    protected String cacheName;
 
-   private final ReentrantLock lock = new ReentrantLock();
+   // Use a plain object monitor instead of ReentrantLock to avoid BlockHound flagging
+   // short-lived synchronization on non-blocking threads (ActionSequencer/Netty event loop).
+   private final Object lock = new Object();
 
    @GuardedBy("lock")
    private final FutureHandler<Void> consumer = new FutureHandler<>();
@@ -78,11 +79,8 @@ public class StateTransferTracker {
     * @return {@code true} if state transfer is active; {@code false} otherwise.
     */
    public boolean isStateTransferInProgress() {
-      lock.lock();
-      try {
+      synchronized (lock) {
          return stable.isPending();
-      } finally {
-         lock.unlock();
       }
    }
 
@@ -111,8 +109,7 @@ public class StateTransferTracker {
     * @return A {@link CompletionStage} that completes when the listener returns {@code true}.
     */
    public CompletionStage<Void> onStateTransferCompleted(BiPredicate<CacheTopology, Throwable> listener) {
-      lock.lock();
-      try {
+      synchronized (lock) {
          if (log.isTraceEnabled())
             log.tracef("waiting state completion %s (consumer=%s) (provider=%s)%n", cacheName, consumer.isPending(), provider.isPending());
 
@@ -128,8 +125,6 @@ public class StateTransferTracker {
          CompletableFuture<Void> cf = new CompletableFuture<>();
          listeners.add(new Entry(cf, listener));
          return cf;
-      } finally {
-         lock.unlock();
       }
    }
 
@@ -146,8 +141,7 @@ public class StateTransferTracker {
    public void cacheTopologyUpdated(CacheTopology cacheTopology) {
       boolean isStableTopology = cacheTopology.getPendingCH() == null;
       if (isStableTopology) {
-         lock.lock();
-         try {
+         synchronized (lock) {
             log.tracef("Installed stable topology for %s with %s, state transfer is done now", cacheName, cacheTopology);
             int previousTopologyId = currentTopology != null ? currentTopology.getTopologyId() : Integer.MIN_VALUE;
             this.currentTopology = cacheTopology;
@@ -165,8 +159,6 @@ public class StateTransferTracker {
             // A node only consume before a stable topology, you still provide with the stable topology.
             consumer.complete(previousTopologyId, null);
             provider.complete(currentTopology.getTopologyId(), null);
-         } finally {
-            lock.unlock();
          }
       }
    }
@@ -182,12 +174,9 @@ public class StateTransferTracker {
     * @param topologyId The topology ID associated with this state transfer start.
     */
    public void startStateConsumer(int topologyId) {
-      lock.lock();
-      try {
+      synchronized (lock) {
          log.tracef("starting state consumer %s", cacheName);
          checkTopologyId(topologyId);
-      } finally {
-         lock.unlock();
       }
    }
 
@@ -197,12 +186,9 @@ public class StateTransferTracker {
     * @param topologyId The topology ID that completed.
     */
    public void completeStateConsumer(int topologyId) {
-      lock.lock();
-      try {
+      synchronized (lock) {
          log.tracef("stopping state consumer %s", cacheName);
          consumer.complete(topologyId, null);
-      } finally {
-        lock.unlock();
       }
    }
 
@@ -217,12 +203,9 @@ public class StateTransferTracker {
     * @param topologyId The topology ID associated with this state transfer start.
     */
    public void startStateProvider(int topologyId) {
-      lock.lock();
-      try {
+      synchronized (lock) {
          log.tracef("starting state provider %s", cacheName);
          checkTopologyId(topologyId);
-      } finally {
-         lock.unlock();
       }
    }
 
@@ -232,12 +215,9 @@ public class StateTransferTracker {
     * @param topologyId The topology ID that completed.
     */
    public void completeStateProvider(int topologyId) {
-      lock.lock();
-      try {
+      synchronized (lock) {
          log.tracef("stopping state provider %s", cacheName);
          provider.complete(topologyId, null);
-      } finally {
-         lock.unlock();
       }
    }
 
