@@ -11,6 +11,7 @@ import java.net.InetSocketAddress;
 
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.hotrod.test.HotRodClient;
+import org.infinispan.server.hotrod.test.Op;
 import org.testng.annotations.Test;
 
 import io.netty.channel.Channel;
@@ -51,6 +52,30 @@ public class HotRodConnectionMetadataTest extends HotRodSingleNodeTest {
 
          ConnectionMetadata metadata = getConnectionMetadata(client31);
          assertEquals("HOTROD/3.1", metadata.protocolVersion());
+      }
+   }
+
+   public void testProtocolVersionUpdatedOnVersionChange(Method m) {
+      // Use a v2.1 client so the Encoder doesn't write media type bytes (added in v2.8).
+      // This lets us safely send Ops at different versions < 2.8 on the same connection,
+      // simulating what happens during protocol auto-negotiation.
+      try (HotRodClient client = new HotRodClient("127.0.0.1", hotRodServer.getPort(), cacheName,
+            HotRodVersion.HOTROD_21.getVersion(), false)) {
+         // Send a GET at version 2.1
+         Op getV21 = new Op(0xA0, HotRodVersion.HOTROD_21.getVersion(), HotRodConstants.GET_REQUEST,
+               cacheName, k(m), 0, 0, null, 0, 0, (byte) 1, 0);
+         client.execute(getV21);
+
+         ConnectionMetadata metadata = getConnectionMetadata(client);
+         assertEquals("HOTROD/2.1", metadata.protocolVersion());
+
+         // Send a GET at version 2.5 on the SAME connection
+         Op getV25 = new Op(0xA0, HotRodVersion.HOTROD_25.getVersion(), HotRodConstants.GET_REQUEST,
+               cacheName, k(m), 0, 0, null, 0, 0, (byte) 1, 0);
+         client.execute(getV25);
+
+         // Metadata should update to reflect the new version
+         assertEquals("HOTROD/2.5", metadata.protocolVersion());
       }
    }
 
