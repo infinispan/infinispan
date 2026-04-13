@@ -81,11 +81,4 @@ public enum ProtocolVersion {
       throw new IllegalArgumentException("Illegal version " + version);
    }
 
-   public ProtocolVersion choose(ProtocolVersion serverVersion) {
-      if (serverVersion == null) {
-         return this;
-      }
-
-      return (serverVersion.compareTo(this) >= 0) ? this : serverVersion;
-   }
 }
