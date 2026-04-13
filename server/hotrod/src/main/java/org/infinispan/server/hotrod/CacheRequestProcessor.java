@@ -29,7 +29,6 @@ import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.iteration.IterableIterationResult;
 import org.infinispan.server.core.iteration.IterationState;
-import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.hotrod.HotRodServer.ExtendedCacheInfo;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.streaming.GetStreamResponse;
@@ -75,8 +74,6 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void pingResults(HotRodHeader header) {
-      ConnectionMetadata metadata = ConnectionMetadata.getInstance(channel);
-      metadata.protocolVersion(HotRodVersion.forVersion(header.version).toString());
       writeResponse(header, header.encoder().pingResponse(header, server, channel, OperationStatus.Success));
    }
 
