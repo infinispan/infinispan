@@ -27,14 +27,10 @@ public enum HotRodVersion {
    HOTROD_41(4, 1), // since 15.1
    ;
 
-   private final int major;
-   private final int minor;
    private final byte version;
    private final String text;
 
    HotRodVersion(int major, int minor) {
-      this.major = major;
-      this.minor = minor;
       this.version = (byte) (major * 10 + minor);
       this.text = version > 0 ? String.format("HOTROD/%d.%d", major, minor) : "UNKNOWN";
    }

@@ -91,22 +91,6 @@ public class HotRodHeader implements InfinispanSpanContext {
       return HotRodVersion.getEncoder(version);
    }
 
-   boolean isSkipCacheLoad() {
-      if (version < 20) {
-         return false;
-      } else {
-         return op.canSkipCacheLoading() && hasFlag(ProtocolFlag.SkipCacheLoader);
-      }
-   }
-
-   boolean isSkipIndexing() {
-      if (version < 20) {
-         return false;
-      } else {
-         return op.canSkipIndexing() && hasFlag(ProtocolFlag.SkipIndexing);
-      }
-   }
-
    AdvancedCache<byte[], byte[]> getOptimizedCache(AdvancedCache<byte[], byte[]> c,
                                                    boolean transactional, boolean clustered) {
       if (clustered && !transactional && op.isConditional()) {
