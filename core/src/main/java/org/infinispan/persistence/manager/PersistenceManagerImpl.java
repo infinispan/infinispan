@@ -12,9 +12,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -134,6 +136,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private volatile boolean clearOnStop;
    private volatile AutoCloseable availabilityTask;
    private volatile String unavailableExceptionMessage;
+
+   // We track pending submitted operations to the underlying stores.
+   // These operations need to complete before stopping the stores.
+   private final Queue<CompletionStage<?>> pendingStages = new ConcurrentLinkedDeque<>();
 
    // Writes to an invalidation cache skip the shared check
    private boolean isInvalidationCache;
@@ -388,8 +394,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
             return updatePersistenceAvailability(firstUnavailableStore.get());
          } else {
             release = false;
-            return stage.thenCompose(__ -> updatePersistenceAvailability(firstUnavailableStore.get()))
-                        .whenComplete((e, throwable) -> releaseReadLock(stamp));
+            CompletionStage<Void> cs = stage.thenCompose(__ -> updatePersistenceAvailability(firstUnavailableStore.get()));
+            return deferReadLockRelease(cs, stamp);
          }
       } finally {
          if (release) {
@@ -417,11 +423,29 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return CompletableFutures.completedNull();
    }
 
+   private <T> CompletionStage<T> deferReadLockRelease(CompletionStage<T> stage, long stamp) {
+      pendingStages.add(stage);
+      return stage.whenComplete((ignore, t) -> {
+         pendingStages.remove(stage);
+         releaseReadLock(stamp);
+      });
+   }
+
    @Override
    @Stop
    public void stop() {
       AggregateCompletionStage<Void> allStage = CompletionStages.aggregateCompletionStage();
-      long stamp = acquireWriteLock();
+
+      // Complete all pending stages before acquiring the write lock.
+      // If the write lock is not acquired, it means there is something holding the read lock, and it should include the
+      // pending operation to the pendingStages queue.
+      long stamp;
+      CompletionStage<?> stage;
+      while ((stage = pendingStages.poll()) != null || (stamp = tryAcquireWriteLock()) == 0) {
+         if (stage != null) {
+            stage.toCompletableFuture().completeExceptionally(new IllegalLifecycleStateException());
+         }
+      }
       try {
          stopAvailabilityTask();
 
@@ -658,9 +682,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public CompletionStage<Void> purgeExpired() {
       long stamp = acquireReadLock();
+      boolean release = true;
       try {
          if (!checkStoreAvailability()) {
-            releaseReadLock(stamp);
             return CompletableFutures.completedNull();
          }
          if (log.isTraceEnabled()) {
@@ -675,11 +699,16 @@ public class PersistenceManagerImpl implements PersistenceManager {
                aggregateCompletionStage.dependsOn(completable.toCompletionStage(null));
             }
          }
-         return aggregateCompletionStage.freeze()
-               .whenComplete((v, t) -> releaseReadLock(stamp));
-      } catch (Throwable t) {
-         releaseReadLock(stamp);
-         throw t;
+         CompletionStage<Void> stage = aggregateCompletionStage.freeze();
+         if (CompletionStages.isCompletedSuccessfully(stage)) {
+            return CompletableFutures.completedNull();
+         }
+         release = false;
+         return deferReadLockRelease(stage, stamp);
+      } finally {
+         if (release) {
+            releaseReadLock(stamp);
+         }
       }
    }
 
@@ -705,10 +734,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          CompletionStage<Void> stage = stageBuilder.freeze();
          if (CompletionStages.isCompletedSuccessfully(stage)) {
             return stage;
-         } else {
-            release = false;
-            return stage.whenComplete((e, throwable) -> releaseReadLock(stamp));
          }
+         release = false;
+         return deferReadLockRelease(stage, stamp);
       } finally {
          if (release) {
             releaseReadLock(stamp);
@@ -751,7 +779,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
             return CompletableFutures.booleanStage(removedAny.get());
          } else {
             release = false;
+            pendingStages.add(stage);
             return stage.handle((removed, throwable) -> {
+               pendingStages.remove(stage);
                releaseReadLock(stamp);
                if (throwable != null) {
                   throw CompletableFutures.asCompletionException(throwable);
@@ -886,10 +916,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
                loadFromStoresIterator(key, segment, iterator, includeStores);
          if (CompletionStages.isCompletedSuccessfully(stage)) {
             return stage;
-         } else {
-            release = false;
-            return stage.whenComplete((e, throwable) -> releaseReadLock(stamp));
          }
+         release = false;
+         return deferReadLockRelease(stage, stamp);
       } finally {
          if (release) {
             releaseReadLock(stamp);
@@ -936,6 +965,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
       }
       long stamp = acquireReadLock();
+      boolean release = true;
       try {
          if (!isAvailable()) {
             releaseReadLock(stamp);
@@ -952,7 +982,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      predicate.test(storeStatus.config));
 
          if (firstStoreStatus == null) {
-            releaseReadLock(stamp);
             return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
          }
 
@@ -977,16 +1006,22 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      return storeSegments > 0 ? size * segments.size() / storeSegments : size;
                   });
          }
-         return stage.whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
-      } catch (Throwable t) {
-         releaseReadLock(stamp);
-         throw t;
+         if (CompletionStages.isCompletedSuccessfully(stage)) {
+            return stage;
+         }
+
+         release = false;
+         return deferReadLockRelease(stage, stamp);
+      } finally {
+         if (release)
+            releaseReadLock(stamp);
       }
    }
 
    @Override
    public CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate, IntSet segments) {
       long stamp = acquireReadLock();
+      boolean release = true;
       try {
          checkStoreAvailability();
          if (log.isTraceEnabled()) {
@@ -995,17 +1030,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
          NonBlockingStore<?, ?> nonBlockingStore = getStoreLocked(storeStatus -> storeStatus.hasCharacteristic(
                Characteristic.BULK_READ) && predicate.test(storeStatus.config));
          if (nonBlockingStore == null) {
-            releaseReadLock(stamp);
             return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
          }
          if (segments == null) {
             segments = IntSets.immutableRangeSet(segmentCount);
          }
-         return nonBlockingStore.size(segments)
-               .whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
-      } catch (Throwable t) {
-         releaseReadLock(stamp);
-         throw t;
+         CompletionStage<Long> stage = nonBlockingStore.size(segments);
+         if (CompletionStages.isCompletedSuccessfully(stage)) {
+            return stage;
+         }
+
+         release = false;
+         return deferReadLockRelease(stage, stamp);
+      } finally {
+         if (release)
+            releaseReadLock(stamp);
       }
    }
 
@@ -1041,10 +1080,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          CompletionStage<Void> stage = stageBuilder.freeze();
          if (CompletionStages.isCompletedSuccessfully(stage)) {
             return stage;
-         } else {
-            release = false;
-            return stage.whenComplete((e, throwable) -> releaseReadLock(stamp));
          }
+         release = false;
+         return deferReadLockRelease(stage, stamp);
       } finally {
          if (release) {
             releaseReadLock(stamp);
@@ -1097,10 +1135,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          CompletionStage<Void> stage = stageBuilder.freeze();
          if (CompletionStages.isCompletedSuccessfully(stage)) {
             return stage;
-         } else {
-            release = false;
-            return stage.whenComplete((e, throwable) -> releaseReadLock(stamp));
          }
+         release = false;
+         return deferReadLockRelease(stage, stamp);
       } finally {
          if (release) {
             releaseReadLock(stamp);
@@ -1130,10 +1167,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          CompletionStage<Void> stage = stageBuilder.freeze();
          if (CompletionStages.isCompletedSuccessfully(stage)) {
             return stage;
-         } else {
-            release = false;
-            return stage.whenComplete((e, throwable) -> releaseReadLock(stamp));
          }
+         release = false;
+         return deferReadLockRelease(stage, stamp);
       } finally {
          if (release) {
             releaseReadLock(stamp);
@@ -1461,10 +1497,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          CompletionStage<Boolean> stage = stageBuilder.freeze();
          if (CompletionStages.isCompletedSuccessfully(stage)) {
             return stage;
-         } else {
-            release = false;
-            return stage.whenComplete((e, throwable) -> releaseReadLock(stamp));
          }
+         release = false;
+         return deferReadLockRelease(stage, stamp);
       } finally {
          if (release) {
             releaseReadLock(stamp);
@@ -1493,10 +1528,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          CompletionStage<Boolean> stage = stageBuilder.freeze();
          if (CompletionStages.isCompletedSuccessfully(stage)) {
             return stage;
-         } else {
-            release = false;
-            return stage.whenComplete((e, throwable) -> releaseReadLock(stamp));
          }
+         release = false;
+         return deferReadLockRelease(stage, stamp);
       } finally {
          if (release) {
             releaseReadLock(stamp);
@@ -1550,6 +1584,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
     */
    private long acquireWriteLock() {
       return lock.writeLock();
+   }
+
+   private long tryAcquireWriteLock() {
+      return lock.tryWriteLock();
    }
 
    /**
