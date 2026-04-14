@@ -17,6 +17,8 @@ import org.infinispan.server.resp.hll.internal.ExplicitSet;
             org.infinispan.server.resp.commands.cuckoo.CuckooFilter.class,
             org.infinispan.server.resp.commands.cuckoo.CuckooFilter.SubFilter.class,
             org.infinispan.server.resp.commands.countmin.CountMinSketch.class,
+            org.infinispan.server.resp.commands.topk.TopK.class,
+            org.infinispan.server.resp.commands.topk.TopK.TopKEntry.class,
       },
       schemaFileName = "persistence.resp.proto",
       schemaFilePath = "org/infinispan/server/resp",
