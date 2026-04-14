@@ -144,6 +144,12 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       persistedTemplates.forEach((name, configuration) -> {
          ensurePersistenceCompatibility(name, configuration);
          // The template was permanent, it still needs to be
+         ScopedState templateKey = new ScopedState(TEMPLATE_SCOPE, name);
+         // Skip putIfAbsentAsync RPC if the entry already exists from state transfer
+         if (getStateCache().containsKey(templateKey)) {
+            // Entry already exists in state cache, no need for RPC
+            return;
+         }
          CompletionStages.join(getOrCreateTemplate(name, configuration, adminFlags));
       });
 
@@ -151,6 +157,12 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       persistedCaches.forEach((name, configuration) -> {
          ensurePersistenceCompatibility(name, configuration);
          // The cache configuration was permanent, it still needs to be
+         ScopedState cacheKey = new ScopedState(CACHE_SCOPE, name);
+         // Skip putIfAbsentAsync RPC if the entry already exists from state transfer
+         if (getStateCache().containsKey(cacheKey)) {
+            // Entry already exists in state cache, no need for RPC
+            return;
+         }
          CompletionStages.join(createCacheInternal(name, null, configuration, adminFlags)
                .thenCompose(r -> {
                   if (r instanceof CacheState) {
