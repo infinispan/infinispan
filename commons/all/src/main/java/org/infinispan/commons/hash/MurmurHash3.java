@@ -17,6 +17,24 @@ import com.google.errorprone.annotations.ThreadSafe;
  * Only implementing x64 version, because this should always be faster on 64 bit
  * native processors, even 64 bit being ran with a 32 bit OS; this should also
  * be as fast or faster than the x86 version on some modern 32 bit processors.
+ * <p>
+ * <b>Note:</b> This implementation was ported from an early pre-release draft of
+ * MurmurHash3 (circa late 2010) and differs from the finalized version in several ways:
+ * <ul>
+ *    <li>h1/h2 are initialized by XORing the seed with magic constants
+ *        ({@code 0x9368e53c2f6af274} and {@code 0x586dcd208f7cd3fd}),
+ *        whereas the final version initializes both to {@code seed}.</li>
+ *    <li>c1/c2 are mutated each round ({@code c = c*5 + additive}),
+ *        whereas the final version keeps them as fixed constants.</li>
+ *    <li>Rotation amounts differ: this version uses 23/23/41,
+ *        the final version uses 31/33/27/31.</li>
+ *    <li>The h1/h2 update uses {@code h*3 + constant},
+ *        the final version uses {@code h*5 + constant}.</li>
+ * </ul>
+ * These differences are permanent: the hash function is part of Infinispan's consistent
+ * hashing protocol and wire format since 5.0. Changing it would break cluster compatibility
+ * and data distribution. It is <b>not</b> bit-compatible with the canonical
+ * {@code MurmurHash3_x64_128}.
  *
  * @author Patrick McFarland
  * @see <a href="http://sites.google.com/site/murmurhash/">MurmurHash website</a>
