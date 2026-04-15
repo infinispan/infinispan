@@ -976,6 +976,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    protected Publisher<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> entryPublisherForTopology(int topologyId, int batchSize, Map<Address, IntSet> targets,
                                                                                                            Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<CacheEntry<K, V>>> transformer) {
+      if (targets.isEmpty()) {
+         throw new IllegalArgumentException("targets cannot be empty!");
+      }
       // Have to make a copy as we remove from the map and remove from the IntSet
       Map<Address, IntSet> targetsCopy = targets.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
             e -> IntSets.mutableCopyFrom(e.getValue())));
