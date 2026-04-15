@@ -180,7 +180,6 @@
 
       <!-- dependencies version -->
       <versionx.org.infinispan.memcached-client>1.2.3</versionx.org.infinispan.memcached-client>
-      <versionx.com.clearspring.analytics.stream>2.9.8</versionx.com.clearspring.analytics.stream>
       <versionx.com.google.errorprone.error_prone_annotations>2.44.0</versionx.com.google.errorprone.error_prone_annotations>
       <versionx.com.google.guava.guava>33.5.0-jre</versionx.com.google.guava.guava>
       <versionx.com.h2database.h2>2.4.240</versionx.com.h2database.h2>
@@ -208,7 +207,6 @@
       <versionx.org.apache.mina.mina>2.2.4</versionx.org.apache.mina.mina>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.19.1</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.codehaus.mojo.xml-maven-plugin>1.2.0</versionx.org.codehaus.mojo.xml-maven-plugin>
-      <versionx.org.dom4j.dom4j>2.2.0</versionx.org.dom4j.dom4j>
       <versionx.org.javassist.javassist>3.29.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>4.0.0.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
       <versionx.org.jboss.jboss-common-core>2.5.0.Final</versionx.org.jboss.jboss-common-core>
@@ -229,7 +227,6 @@
       <versionx.org.wildfly.common.wildfly-common>1.7.0.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.4.2.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.xerial.sqlite>3.51.0.0</versionx.org.xerial.sqlite>
-      <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
    </properties>
 
    <dependencyManagement>
