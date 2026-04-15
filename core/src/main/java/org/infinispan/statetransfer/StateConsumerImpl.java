@@ -1032,6 +1032,11 @@ public class StateConsumerImpl implements StateConsumer {
          findSources(segmentsToProcess, sources, excludedSources, true);
       }
 
+      if (sources.isEmpty()) {
+         log.tracef("No suitable targets found for segments %s", segmentsToProcess);
+         return Flowable.empty();
+      }
+
       transferMapsLock.lock();
       try {
          if (log.isTraceEnabled()) {
