@@ -5,10 +5,26 @@ on:
     branches:
       - main
       - '*.0.x'
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE*'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.editorconfig'
+      - 'CODEOWNERS'
+      - 'documentation/**'
   pull_request:
     branches:
       - main
       - '*.0.x'
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE*'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.editorconfig'
+      - 'CODEOWNERS'
+      - 'documentation/**'
 
 concurrency:
   # Cancel jobs same head_branch same repo, works

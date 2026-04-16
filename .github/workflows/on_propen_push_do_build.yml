@@ -18,7 +18,66 @@ concurrency:
 
 jobs:
 
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      build-type: ${{ steps.check.outputs.build-type }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine build type
+        id: check
+        run: |
+          BUILD_TYPE=""
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.sha }})
+          else
+            BEFORE="${{ github.event.before }}"
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              BUILD_TYPE="full"
+            fi
+            CHANGED=$(git diff --name-only "$BEFORE" "${{ github.sha }}" 2>/dev/null || true)
+          fi
+
+          if [ -z "$BUILD_TYPE" ]; then
+            echo "Changed files:"
+            echo "$CHANGED"
+
+            # Files that don't affect build or tests
+            ACCESSORY_PATTERN='\.md$|^LICENSE|^\.gitignore$|^\.gitattributes$|^\.editorconfig$|^CODEOWNERS$'
+            NON_ACCESSORY=$(echo "$CHANGED" | grep -vE "$ACCESSORY_PATTERN" || true)
+
+            if [ -z "$NON_ACCESSORY" ]; then
+              BUILD_TYPE="skip"
+              echo "Only accessory files changed. Skipping build and tests."
+            else
+              NON_DOCS=$(echo "$NON_ACCESSORY" | grep -vE '^documentation/' || true)
+              if [ -z "$NON_DOCS" ]; then
+                BUILD_TYPE="docs-only"
+                echo "Only documentation files changed. Building docs only."
+              else
+                BUILD_TYPE="full"
+                echo "Code changes detected. Full build required."
+              fi
+            fi
+          fi
+
+          echo "Build type: $BUILD_TYPE"
+          echo "build-type=$BUILD_TYPE" >> "$GITHUB_OUTPUT"
+          echo -n "$BUILD_TYPE" > build-type.txt
+
+      - name: Upload build type
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-type
+          path: build-type.txt
+
   build:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build-type == 'full'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -37,4 +96,17 @@ jobs:
           name: server-version
           path: |
             server-version.txt
+
+  build-docs:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build-type == 'docs-only'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
+
+      - name: Build Documentation
+        run: ./mvnw install -B -pl documentation -am -DskipTests -Pdistribution
 
