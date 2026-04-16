@@ -1423,6 +1423,91 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
               .containsExactly(just(0, "neginf"));
    }
 
+   @Test
+   @SuppressWarnings("unchecked")
+   public void testAggregateCount() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+
+      // Setup: 3 sorted sets with varying membership
+      // s1: foo=1, bar=1
+      // s2: foo=2, bar=2
+      // s3: foo=3
+      redis.zadd("s1", just(1, "foo"), just(1, "bar"));
+      redis.zadd("s2", just(2, "foo"), just(2, "bar"));
+      redis.zadd("s3", just(3, "foo"));
+
+      // ZUNIONSTORE with AGGREGATE COUNT (no weights)
+      // foo appears in 3 sets -> score 3, bar appears in 2 sets -> score 2
+      assertThat(redis.dispatch(CommandType.ZUNIONSTORE, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).addKey("out").add(3)
+                  .add("s1").add("s2").add("s3").add("AGGREGATE").add("COUNT"))).isEqualTo(2);
+      assertThat(redis.zrangeWithScores("out", 0, -1)).containsExactly(
+            just(2, "bar"),
+            just(3, "foo"));
+
+      // ZINTERSTORE with AGGREGATE COUNT (no weights)
+      // Only foo is in all 3 sets -> score 3
+      assertThat(redis.dispatch(CommandType.ZINTERSTORE, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).addKey("out").add(3)
+                  .add("s1").add("s2").add("s3").add("AGGREGATE").add("COUNT"))).isEqualTo(1);
+      assertThat(redis.zrangeWithScores("out", 0, -1)).containsExactly(
+            just(3, "foo"));
+
+      // ZUNIONSTORE with AGGREGATE COUNT and WEIGHTS
+      // foo: weight 10 + 5 + 3 = 18, bar: weight 10 + 5 = 15
+      assertThat(redis.dispatch(CommandType.ZUNIONSTORE, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).addKey("out").add(3)
+                  .add("s1").add("s2").add("s3")
+                  .add("WEIGHTS").add(10).add(5).add(3)
+                  .add("AGGREGATE").add("COUNT"))).isEqualTo(2);
+      assertThat(redis.zrangeWithScores("out", 0, -1)).containsExactly(
+            just(15, "bar"),
+            just(18, "foo"));
+
+      // ZINTERSTORE with AGGREGATE COUNT and WEIGHTS
+      // Only foo is in all 3 sets: weight 10 + 5 + 3 = 18
+      assertThat(redis.dispatch(CommandType.ZINTERSTORE, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).addKey("out").add(3)
+                  .add("s1").add("s2").add("s3")
+                  .add("WEIGHTS").add(10).add(5).add(3)
+                  .add("AGGREGATE").add("COUNT"))).isEqualTo(1);
+      assertThat(redis.zrangeWithScores("out", 0, -1)).containsExactly(
+            just(18, "foo"));
+
+      // ZUNION with AGGREGATE COUNT and WITHSCORES
+      List<Object> result = redis.dispatch(CommandType.ZUNION, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).add(3)
+                  .add("s1").add("s2").add("s3")
+                  .add("AGGREGATE").add("COUNT").add("WITHSCORES"));
+      // Returns scored value pairs, sorted by score: bar(2), foo(3)
+      assertThat(result).hasSize(2);
+      List<Object> first = (List<Object>) result.get(0);
+      assertThat(first.get(0).toString()).isEqualTo("bar");
+      assertThat(Double.parseDouble(first.get(1).toString())).isEqualTo(2.0);
+      List<Object> second = (List<Object>) result.get(1);
+      assertThat(second.get(0).toString()).isEqualTo("foo");
+      assertThat(Double.parseDouble(second.get(1).toString())).isEqualTo(3.0);
+
+      // ZINTER with AGGREGATE COUNT and WITHSCORES
+      result = redis.dispatch(CommandType.ZINTER, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).add(3)
+                  .add("s1").add("s2").add("s3")
+                  .add("AGGREGATE").add("COUNT").add("WITHSCORES"));
+      // Only foo is in all 3 sets -> score 3
+      assertThat(result).hasSize(1);
+      first = (List<Object>) result.get(0);
+      assertThat(first.get(0).toString()).isEqualTo("foo");
+      assertThat(Double.parseDouble(first.get(1).toString())).isEqualTo(3.0);
+
+      // Single set with AGGREGATE COUNT: each element gets score = 1 (default weight)
+      assertThat(redis.dispatch(CommandType.ZUNIONSTORE, new IntegerOutput<>(codec),
+            new CommandArgs<>(codec).addKey("out").add(1)
+                  .add("s1").add("AGGREGATE").add("COUNT"))).isEqualTo(2);
+      assertThat(redis.zrangeWithScores("out", 0, -1)).containsExactly(
+            just(1, "bar"),
+            just(1, "foo"));
+   }
+
    public void testZINTER() {
       // ZINTER 1 s1
       assertThat(redis.zinter("s1")).isEmpty();

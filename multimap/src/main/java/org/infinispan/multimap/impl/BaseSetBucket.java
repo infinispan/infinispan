@@ -52,7 +52,7 @@ public interface BaseSetBucket<E> {
             if (existing == null) {
                unionScore = element.score();
             } else {
-               unionScore = function.apply(element.score(), SetUtil.calculate(existing, weight));
+               unionScore = function.apply(element.score(), function.weightedScore(existing, weight));
             }
             output.add(new ScoredValue<>(unionScore, element.wrappedValue()));
             merge.put(element.wrappedValue(), unionScore);
@@ -64,7 +64,7 @@ public interface BaseSetBucket<E> {
          ScoredValue<E> element = ite.next();
          Double existing = merge.get(element.wrappedValue());
          if (existing == null) {
-            output.add(new ScoredValue<>(SetUtil.calculate(element.score(), weight), element.wrappedValue()));
+            output.add(new ScoredValue<>(function.weightedScore(element.score(), weight), element.wrappedValue()));
          }
       }
 
@@ -86,7 +86,7 @@ public interface BaseSetBucket<E> {
    default Collection<ScoredValue<E>> inter(Collection<ScoredValue<E>> input, double weight, SortedSetBucket.AggregateFunction function) {
       if (input == null || input.isEmpty()) {
          return getAsSet().stream()
-               .map(s -> new ScoredValue<>(SetUtil.calculate(s.score(), weight), s.wrappedValue()))
+               .map(s -> new ScoredValue<>(function.weightedScore(s.score(), weight), s.wrappedValue()))
                .toList();
       }
 
@@ -94,7 +94,7 @@ public interface BaseSetBucket<E> {
       for (ScoredValue<E> element : input) {
          Double existing = getScore(element.wrappedValue());
          if (existing != null) {
-            double score = function.apply(element.score(), SetUtil.calculate(existing, weight));
+            double score = function.apply(element.score(), function.weightedScore(existing, weight));
             output.add(new ScoredValue<>(score, element.wrappedValue()));
          }
       }
@@ -108,12 +108,4 @@ public interface BaseSetBucket<E> {
 
    Double getScore(MultimapObjectWrapper<E> key);
 
-   final class SetUtil {
-      private SetUtil() { }
-
-
-      private static double calculate(Double existing, double weight) {
-         return weight == 0d ? 0d : existing * weight;
-      }
-   }
 }
