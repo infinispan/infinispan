@@ -13,6 +13,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -22,6 +23,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
@@ -56,7 +58,7 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
 
       persistenceManager().removeSegments(IntSets.immutableSet(0));
 
-      assertStopCompletes(store);
+      assertStopWaitsForCompletion(store);
    }
 
    public void testStopCompletesWhenAddSegmentsStageAbandoned() throws Exception {
@@ -65,7 +67,7 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
 
       persistenceManager().addSegments(IntSets.immutableSet(0));
 
-      assertStopCompletes(store);
+      assertStopWaitsForCompletion(store);
    }
 
    public void testStopCompletesWhenWriteStageAbandoned() throws Exception {
@@ -77,7 +79,7 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
       persistenceManager().writeToAllNonTxStores(
             MarshalledEntryUtil.create(key, "v", cache), keyPartitioner.getSegment(key), BOTH);
 
-      assertStopCompletes(store);
+      assertStopWaitsForCompletion(store);
    }
 
    public void testStopCompletesWhenDeleteStageAbandoned() throws Exception {
@@ -92,7 +94,7 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
       store.delayNextOperation();
       persistenceManager().deleteFromAllStores(key, segment, BOTH);
 
-      assertStopCompletes(store);
+      assertStopWaitsForCompletion(store);
    }
 
    public void testStopCompletesWhenClearStageAbandoned() throws Exception {
@@ -101,7 +103,7 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
 
       persistenceManager().clearAllStores(BOTH);
 
-      assertStopCompletes(store);
+      assertStopWaitsForCompletion(store);
    }
 
    public void testStopCompletesWhenLoadStageAbandoned() throws Exception {
@@ -110,7 +112,7 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
 
       persistenceManager().loadFromAllStores("k", false, true);
 
-      assertStopCompletes(store);
+      assertStopWaitsForCompletion(store);
    }
 
    public void testStopCompletesWhenSizeStageAbandoned() throws Exception {
@@ -119,7 +121,7 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
 
       persistenceManager().size(BOTH, IntSets.immutableRangeSet(256));
 
-      assertStopCompletes(store);
+      assertStopWaitsForCompletion(store);
    }
 
    public void testStopCompletesWhenApproximateSizeStageAbandoned() throws Exception {
@@ -128,7 +130,7 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
 
       persistenceManager().approximateSize(BOTH, IntSets.immutableRangeSet(256));
 
-      assertStopCompletes(store);
+      assertStopWaitsForCompletion(store);
    }
 
    public void testStopCompletesWhenPurgeExpiredStageAbandoned() throws Exception {
@@ -137,26 +139,70 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
 
       persistenceManager().purgeExpired();
 
-      assertStopCompletes(store);
+      assertStopWaitsForCompletion(store);
+   }
+
+   public void testStopForcesCompletionWhenRemoveSegmentsTimesOut() throws Exception {
+      EmbeddedCacheManager cm = createShortTimeoutCacheManager();
+      try {
+         Cache<Object, Object> c = cm.getCache();
+         ControllableStore store = getFirstStore(c);
+         store.delayNextOperation();
+
+         PersistenceManagerImpl pm = (PersistenceManagerImpl) extractComponent(c, PersistenceManager.class);
+         pm.removeSegments(IntSets.immutableSet(0));
+
+         assertStopForcesCompletion(pm);
+      } finally {
+         cm.stop();
+      }
+   }
+
+   public void testStopForcesCompletionWhenWriteTimesOut() throws Exception {
+      EmbeddedCacheManager cm = createShortTimeoutCacheManager();
+      try {
+         Cache<Object, Object> c = cm.getCache();
+         ControllableStore store = getFirstStore(c);
+         KeyPartitioner keyPartitioner = extractComponent(c, KeyPartitioner.class);
+         store.delayNextOperation();
+
+         PersistenceManagerImpl pm = (PersistenceManagerImpl) extractComponent(c, PersistenceManager.class);
+         String key = "k";
+         pm.writeToAllNonTxStores(
+               MarshalledEntryUtil.create(key, "v", c), keyPartitioner.getSegment(key), BOTH);
+
+         assertStopForcesCompletion(pm);
+      } finally {
+         cm.stop();
+      }
    }
 
    private PersistenceManager persistenceManager() {
       return extractComponent(cache, PersistenceManager.class);
    }
 
-   private void assertStopCompletes(ControllableStore store) throws Exception {
+   private EmbeddedCacheManager createShortTimeoutCacheManager() {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.transport().distributedSyncTimeout(1000);
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
+      cfg.persistence().addStore(ControllableStore.ConfigurationBuilder.class);
+      return TestCacheManagerFactory.createCacheManager(gcb, cfg);
+   }
+
+   private void assertStopWaitsForCompletion(ControllableStore store) throws Exception {
       PersistenceManagerImpl pm = (PersistenceManagerImpl) persistenceManager();
       assertTrue("Read lock should be held while stage is pending", pm.anyLocksHeld());
 
       Future<Void> stopFuture = fork(pm::stop);
-      try {
-         stopFuture.get(STOP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      } finally {
-         store.endDelay();
-         if (!stopFuture.isDone()) {
-            stopFuture.get(30, TimeUnit.SECONDS);
-         }
-      }
+      store.endDelay();
+      stopFuture.get(STOP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+   }
+
+   private void assertStopForcesCompletion(PersistenceManagerImpl pm) throws Exception {
+      assertTrue("Read lock should be held while stage is pending", pm.anyLocksHeld());
+
+      Future<Void> stopFuture = fork(pm::stop);
+      stopFuture.get(STOP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
    }
 
    /**
