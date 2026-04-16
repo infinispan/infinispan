@@ -174,7 +174,7 @@
       <version.spring.boot4>4.0.4</version.spring.boot4>
       <version.spring.session4>4.0.2</version.spring.session4>
 
-      <version.swagger-ui-dist>5.32.2</version.swagger-ui-dist>
+      <version.swagger-ui-dist>5.32.4</version.swagger-ui-dist>
       <version.xstream>1.4.21</version.xstream>
 
       <!-- Plugin dependencies -->
