@@ -11,6 +11,9 @@ import org.testng.annotations.Test;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
 
 @Test(groups = "functional", testName = "server.resp.BitOpsTest")
 public class BitOpsTest extends SingleNodeRespBaseTest {
@@ -457,5 +460,235 @@ public class BitOpsTest extends SingleNodeRespBaseTest {
       redis.bitopXor(k(4), k(1), k(2), k(3));
       assertThat(redis.get(k(4)).getBytes(StandardCharsets.ISO_8859_1))
             .isEqualTo(new byte[]{0x0f});
+   }
+
+   @Test
+   public void testBitOpDiff() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // X = 0xff, Y1 = 0x0f => DIFF = X AND NOT(Y1) = 0xff & 0xf0 = 0xf0
+      redis.set(k(1), "\u00ff");
+      redis.set(k(2), "\u000f");
+
+      long len = bitop(redis, "DIFF", k(3), k(1), k(2));
+      assertThat(len).isEqualTo(1);
+      assertThat(redis.get(k(3)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{(byte) 0xf0});
+   }
+
+   @Test
+   public void testBitOpDiffMultipleKeys() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // X = 0xff, Y1 = 0x0f, Y2 = 0x30 => OR(Y) = 0x3f => DIFF = 0xff & ~0x3f = 0xc0
+      redis.set(k(1), "\u00ff");
+      redis.set(k(2), "\u000f");
+      redis.set(k(3), "\u0030");
+
+      long len = bitop(redis, "DIFF", k(4), k(1), k(2), k(3));
+      assertThat(len).isEqualTo(1);
+      assertThat(redis.get(k(4)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{(byte) 0xc0});
+   }
+
+   @Test
+   public void testBitOpDiffSingleKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // DIFF with only X (no Ys) => result = X
+      redis.set(k(1), "\u00ab");
+
+      bitop(redis, "DIFF", k(2), k(1));
+      assertThat(redis.get(k(2)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{(byte) 0xab});
+   }
+
+   @Test
+   public void testBitOpDiff1() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // X = 0x0f, Y1 = 0xff => DIFF1 = OR(Y) AND NOT(X) = 0xff & 0xf0 = 0xf0
+      redis.set(k(1), "\u000f");
+      redis.set(k(2), "\u00ff");
+
+      long len = bitop(redis, "DIFF1", k(3), k(1), k(2));
+      assertThat(len).isEqualTo(1);
+      assertThat(redis.get(k(3)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{(byte) 0xf0});
+   }
+
+   @Test
+   public void testBitOpDiff1MultipleKeys() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // X = 0xf0, Y1 = 0x0f, Y2 = 0x30 => OR(Y) = 0x3f => DIFF1 = 0x3f & ~0xf0 = 0x0f
+      redis.set(k(1), "\u00f0");
+      redis.set(k(2), "\u000f");
+      redis.set(k(3), "\u0030");
+
+      long len = bitop(redis, "DIFF1", k(4), k(1), k(2), k(3));
+      assertThat(len).isEqualTo(1);
+      assertThat(redis.get(k(4)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{0x0f});
+   }
+
+   @Test
+   public void testBitOpDiff1SingleKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // DIFF1 with only X (no Ys) => OR(nothing) = 0 => result = 0
+      redis.set(k(1), "\u00ff");
+
+      bitop(redis, "DIFF1", k(2), k(1));
+      assertThat(redis.get(k(2)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{0x00});
+   }
+
+   @Test
+   public void testBitOpAndOr() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // X = 0xff, Y1 = 0x0f => ANDOR = X AND OR(Y) = 0xff & 0x0f = 0x0f
+      redis.set(k(1), "\u00ff");
+      redis.set(k(2), "\u000f");
+
+      long len = bitop(redis, "ANDOR", k(3), k(1), k(2));
+      assertThat(len).isEqualTo(1);
+      assertThat(redis.get(k(3)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{0x0f});
+   }
+
+   @Test
+   public void testBitOpAndOrMultipleKeys() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // X = 0xf0, Y1 = 0x0f, Y2 = 0x30 => OR(Y) = 0x3f => ANDOR = 0xf0 & 0x3f = 0x30
+      redis.set(k(1), "\u00f0");
+      redis.set(k(2), "\u000f");
+      redis.set(k(3), "\u0030");
+
+      long len = bitop(redis, "ANDOR", k(4), k(1), k(2), k(3));
+      assertThat(len).isEqualTo(1);
+      assertThat(redis.get(k(4)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{0x30});
+   }
+
+   @Test
+   public void testBitOpAndOrSingleKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // ANDOR with only X (no Ys) => OR(nothing) = 0 => result = 0
+      redis.set(k(1), "\u00ff");
+
+      bitop(redis, "ANDOR", k(2), k(1));
+      assertThat(redis.get(k(2)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{0x00});
+   }
+
+   @Test
+   public void testBitOpOne() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // k1 = 0xff, k2 = 0x0f => bits set in exactly one: 0xf0
+      redis.set(k(1), "\u00ff");
+      redis.set(k(2), "\u000f");
+
+      long len = bitop(redis, "ONE", k(3), k(1), k(2));
+      assertThat(len).isEqualTo(1);
+      assertThat(redis.get(k(3)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{(byte) 0xf0});
+   }
+
+   @Test
+   public void testBitOpOneMultipleKeys() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // k1 = 0xff, k2 = 0x0f, k3 = 0x0f
+      // Bit by bit: high nibble (0xf0) is in k1 only, low nibble (0x0f) is in k1+k2+k3
+      // Exactly one: only the high nibble bits qualify (set in k1 only) => not quite
+      // Actually per bit: high nibble bits are set in k1 only (count=1) => included
+      // Low nibble bits are set in all three (count=3) => excluded
+      // Result: 0xf0
+      redis.set(k(1), "\u00ff");
+      redis.set(k(2), "\u000f");
+      redis.set(k(3), "\u000f");
+
+      long len = bitop(redis, "ONE", k(4), k(1), k(2), k(3));
+      assertThat(len).isEqualTo(1);
+      assertThat(redis.get(k(4)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{(byte) 0xf0});
+   }
+
+   @Test
+   public void testBitOpOneSingleKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // ONE with single key => every set bit is in exactly one key
+      redis.set(k(1), "\u00ab");
+
+      bitop(redis, "ONE", k(2), k(1));
+      assertThat(redis.get(k(2)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{(byte) 0xab});
+   }
+
+   @Test
+   public void testBitOpOneVsXorDifference() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // Demonstrate that ONE differs from XOR for 3+ keys
+      // k1 = 0xff, k2 = 0xff, k3 = 0xff
+      // XOR: 0xff ^ 0xff ^ 0xff = 0xff (odd number set)
+      // ONE: each bit is set in 3 keys (not exactly 1) => 0x00
+      redis.set(k(1), "\u00ff");
+      redis.set(k(2), "\u00ff");
+      redis.set(k(3), "\u00ff");
+
+      redis.bitopXor(k(4), k(1), k(2), k(3));
+      assertThat(redis.get(k(4)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{(byte) 0xff});
+
+      bitop(redis, "ONE", k(5), k(1), k(2), k(3));
+      assertThat(redis.get(k(5)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{0x00});
+   }
+
+   @Test
+   public void testBitOpDiffWithMissingKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // X = 0xff, Y = missing (zero-padded) => DIFF = 0xff & ~0x00 = 0xff
+      redis.set(k(1), "\u00ff");
+
+      bitop(redis, "DIFF", k(3), k(1), k(2));
+      assertThat(redis.get(k(3)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{(byte) 0xff});
+   }
+
+   @Test
+   public void testBitOpDiffShorterKeys() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // X = 0xff 0xff, Y = 0x0f => zero-padded to 0x0f 0x00
+      // DIFF = (0xff & ~0x0f), (0xff & ~0x00) = 0xf0, 0xff
+      redis.set(k(1), "\u00ff\u00ff");
+      redis.set(k(2), "\u000f");
+
+      bitop(redis, "DIFF", k(3), k(1), k(2));
+      assertThat(redis.get(k(3)).getBytes(StandardCharsets.ISO_8859_1))
+            .isEqualTo(new byte[]{(byte) 0xf0, (byte) 0xff});
+   }
+
+   private long bitop(RedisCommands<String, String> redis, String op, String destKey, String... srcKeys) {
+      RedisCodec<String, String> codec = new StringCodec(StandardCharsets.ISO_8859_1);
+      CommandArgs<String, String> args = new CommandArgs<>(codec)
+            .add(op)
+            .addKey(destKey);
+      for (String srcKey : srcKeys) {
+         args.addKey(srcKey);
+      }
+      return redis.dispatch(new SimpleCommand("BITOP"), new IntegerOutput<>(codec), args);
+   }
+
+   private static class SimpleCommand implements ProtocolKeyword {
+      private final String name;
+
+      SimpleCommand(String name) {
+         this.name = name;
+      }
+
+      @Override
+      public byte[] getBytes() {
+         return name.getBytes(StandardCharsets.UTF_8);
+      }
+
+      @Override
+      public String name() {
+         return name;
+      }
    }
 }
