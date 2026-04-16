@@ -6,11 +6,27 @@ on:
       - feature/*
       - main
       - 15.*.x
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE*'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.editorconfig'
+      - 'CODEOWNERS'
+      - 'documentation/**'
   pull_request:
     branches:
       - feature/*
       - main
       - 15.*.x
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE*'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.editorconfig'
+      - 'CODEOWNERS'
+      - 'documentation/**'
 
 concurrency:
   # Cancel jobs same head_branch same repo, works

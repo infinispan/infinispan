@@ -29,6 +29,7 @@ jobs:
          pull-request-number: ${{ steps.workflow-run-info.outputs.pull-request-number }}
          source-head-branch: ${{ steps.workflow-run-info.outputs.source-head-branch }}
          source-event: ${{ github.event.workflow_run.event }}
+         build-type: ${{ steps.build-type.outputs.build-type }}
       steps:
          - uses: actions/checkout@v6
            with:
@@ -44,9 +45,23 @@ jobs:
             head-branch: ${{ github.event.workflow_run.head_branch }}
             event: ${{ github.event.workflow_run.event }}
 
+         - name: Download build type
+           uses: actions/download-artifact@v8.0.1
+           with:
+             name: build-type
+             run-id: ${{ github.event.workflow_run.id }}
+             github-token: ${{ github.token }}
+
+         - name: Read build type
+           id: build-type
+           run: |
+             BUILD_TYPE=$(cat build-type.txt)
+             echo "build-type=$BUILD_TYPE" >> "$GITHUB_OUTPUT"
+             echo "Build type: $BUILD_TYPE"
+
   ci-build-test-pr:
     needs: get-info
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.build-type == 'full' }}
     name: Maven Test
     runs-on: ubuntu-latest
     env:
@@ -262,7 +277,7 @@ jobs:
 
   targets-test:
     needs: get-info
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.build-type == 'full' }}
     name: ${{ matrix.targets == 'tomcat' && 'tomcat' || format('db ({0})', matrix.targets) }}
     runs-on: ubuntu-latest
     env:
@@ -427,7 +442,7 @@ jobs:
 
   rolling-upgrades-matrix:
     needs: get-info
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.build-type == 'full' }}
     name: "Rolling Upgrades (${{ matrix.targets.name }})"
     strategy:
       fail-fast: false
@@ -450,7 +465,7 @@ jobs:
 
   coverage:
     needs: [get-info, ci-build-test-pr, targets-test, rolling-upgrades-matrix]
-    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.source-event == 'pull_request' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.source-event == 'pull_request' && needs.get-info.outputs.build-type == 'full' }}
     name: Publish Coverage Report
     runs-on: ubuntu-latest
     env:

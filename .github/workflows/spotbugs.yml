@@ -4,6 +4,14 @@ on:
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE*'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.editorconfig'
+      - 'CODEOWNERS'
+      - 'documentation/**'
 
 jobs:
   spotbugs:
