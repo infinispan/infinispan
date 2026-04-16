@@ -20,22 +20,39 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  jdk-build:
+  resolve-ea-jdk:
+    name: Resolve latest EA JDK
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        jdk:
-          - '26-ea'
+    outputs:
+      ea-version: ${{ steps.resolve.outputs.ea-version }}
+    steps:
+      - name: Query Adoptium API for latest EA version
+        id: resolve
+        run: |
+          RELEASES=$(curl -s https://api.adoptium.net/v3/info/available_releases)
+          LATEST_GA=$(echo "$RELEASES" | jq '.most_recent_feature_release')
+          LATEST_VERSION=$(echo "$RELEASES" | jq '.most_recent_feature_version')
 
+          if [ "$LATEST_VERSION" -gt "$LATEST_GA" ]; then
+            echo "ea-version=${LATEST_VERSION}-ea" >> "$GITHUB_OUTPUT"
+            echo "Latest EA JDK: ${LATEST_VERSION}-ea"
+          else
+            echo "No EA version available (latest GA: $LATEST_GA)"
+            echo "ea-version=" >> "$GITHUB_OUTPUT"
+          fi
+
+  jdk-build:
+    needs: resolve-ea-jdk
+    if: needs.resolve-ea-jdk.outputs.ea-version != ''
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
-          java-version: ${{ matrix.jdk }}
-          distribution: 'zulu'
+          java-version: ${{ needs.resolve-ea-jdk.outputs.ea-version }}
+          distribution: 'temurin'
 
       - name: Build Infinispan
         run: ./mvnw -B install -DskipTests
@@ -49,8 +66,8 @@ jobs:
       - name: Check all matrix jobs
         run: |
           echo "Test job result: ${{ needs.jdk-build.result }}"
-          if [[ "${{ needs.jdk-build.result }}" != "success" ]]; then
-            echo "One or more matrix jobs failed"
+          if [[ "${{ needs.jdk-build.result }}" != "success" && "${{ needs.jdk-build.result }}" != "skipped" ]]; then
+            echo "JDK EA build failed"
             exit 1
           fi
-          echo "All additional JDKs build passed successfully"
+          echo "JDK EA build passed successfully"
