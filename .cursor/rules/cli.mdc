@@ -1,0 +1,7 @@
+---
+description: CLI module specific guidelines
+globs: cli/**
+alwaysApply: false
+---
+
+Read and follow the instructions in cli/AI-CODE.md.

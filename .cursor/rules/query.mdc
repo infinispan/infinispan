@@ -1,0 +1,7 @@
+---
+description: Query module specific guidelines
+globs: query/**
+alwaysApply: false
+---
+
+Read and follow the instructions in query/AI-CODE.md.

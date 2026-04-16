@@ -48,6 +48,10 @@ classes
 *.jfr
 jacoco-report
 jacoco
-# ignore ai md files
-GEMINI.md
+# ignore agent-specific instruction files
 CLAUDE.md
+GEMINI.md
+.augment*
+.clinerules
+.goosehints
+AGENTS.md

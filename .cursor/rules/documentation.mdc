@@ -1,0 +1,7 @@
+---
+description: Documentation module guidelines for Infinispan docs
+globs: documentation/**
+alwaysApply: false
+---
+
+Read and follow the instructions in documentation/AI-CODE.md.
