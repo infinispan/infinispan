@@ -259,11 +259,11 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
          assertFalse(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
 
-         // Start cm2 again successfully. It should have the same configuration as cm1.
+         // Start cm2 again successfully. It should have its own configuration since await-state-transfer is not global.
          global2 = statefulGlobalBuilder(state2, false);
          cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
          cm2.start();
-         assertFalse(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertTrue(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }
@@ -294,10 +294,10 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
          assertFalse(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
 
-         // Start cm2 again successfully. It should have the same configuration as cm1.
+         // Start cm2 again successfully. It should have its own configuration since await-state-transfer is not global.
          cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, statefulGlobalBuilder(state2, false), new ConfigurationBuilder(), new TransportFlags());
          cm2.start();
-         assertFalse(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertTrue(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
 
          // Restart both nodes and ensure configuration still updated.
          TestingUtil.killCacheManagers(cm1, cm2);
@@ -308,7 +308,7 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          cm1.start();
 
          assertFalse(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
-         assertFalse(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertTrue(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }

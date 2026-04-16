@@ -179,4 +179,9 @@ class MockLocalTopologyManager implements LocalTopologyManager {
    public CompletionStage<Void> stableTopologyCompletion(String cacheName) {
       return CompletableFutures.completedNull();
    }
+
+   @Override
+   public CompletionStage<Void> setCapacityFactor(String cacheName, float capacityFactor) {
+      return CompletableFutures.completedNull();
+   }
 }

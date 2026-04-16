@@ -292,6 +292,91 @@ public class AttributeTest {
       assertThatThrownBy(() -> unknownAttr.fromString("a")).isInstanceOf(CacheConfigurationException.class).hasMessageContaining("Cannot convert a to type java.nio.file.Path");
    }
 
+   @Test
+   public void testRuntimeValidatorRejectsBeforeCommit() {
+      AttributeDefinition<Float> def = AttributeDefinition.builder("factor", 1.0f).build();
+      Attribute<Float> attribute = def.toAttribute();
+      attribute.registerRuntimeValidator(value -> {
+         if (value < 0) throw new IllegalArgumentException("negative");
+      });
+
+      assertThatThrownBy(() -> attribute.set(-1.0f))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("negative");
+      assertThat(attribute.get()).isEqualTo(1.0f);
+      assertThat(attribute.isModified()).isFalse();
+   }
+
+   @Test
+   public void testRuntimeValidatorAcceptsValidValue() {
+      AttributeDefinition<Float> def = AttributeDefinition.builder("factor", 1.0f).build();
+      Attribute<Float> attribute = def.toAttribute();
+      attribute.registerRuntimeValidator(value -> {
+         if (value < 0) throw new IllegalArgumentException("negative");
+      });
+
+      attribute.set(0.5f);
+      assertThat(attribute.get()).isEqualTo(0.5f);
+      assertThat(attribute.isModified()).isTrue();
+   }
+
+   @Test
+   public void testRuntimeValidatorOnSetImplied() {
+      AttributeDefinition<Float> def = AttributeDefinition.builder("factor", 1.0f).build();
+      Attribute<Float> attribute = def.toAttribute();
+      attribute.registerRuntimeValidator(value -> {
+         if (value < 0) throw new IllegalArgumentException("negative");
+      });
+
+      assertThatThrownBy(() -> attribute.setImplied(-1.0f))
+            .isInstanceOf(IllegalArgumentException.class);
+      assertThat(attribute.get()).isEqualTo(1.0f);
+   }
+
+   @Test
+   public void testRuntimeValidatorSurvivesClone() {
+      AttributeDefinition<Float> def = AttributeDefinition.builder("factor", 1.0f).build();
+      Attribute<Float> attribute = def.toAttribute();
+      attribute.registerRuntimeValidator(value -> {
+         if (value < 0) throw new IllegalArgumentException("negative");
+      });
+      attribute.set(0.5f);
+
+      Attribute<Float> target = def.toAttribute();
+      target.registerRuntimeValidator(value -> {
+         if (value < 0) throw new IllegalArgumentException("negative");
+      });
+      target.read(attribute);
+      assertThat(target.get()).isEqualTo(0.5f);
+
+      assertThatThrownBy(() -> target.set(-1.0f))
+            .isInstanceOf(IllegalArgumentException.class);
+   }
+
+   @Test
+   public void testDefinitionAndRuntimeValidatorsBothRun() {
+      AttributeDefinition<Integer> def = AttributeDefinition.builder("count", 10)
+            .validator(value -> {
+               if (value < 0) throw new IllegalArgumentException("definition: negative");
+            })
+            .build();
+      Attribute<Integer> attribute = def.toAttribute();
+      attribute.registerRuntimeValidator(value -> {
+         if (value > 100) throw new IllegalArgumentException("runtime: too large");
+      });
+
+      assertThatThrownBy(() -> attribute.set(-1))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("definition: negative");
+
+      assertThatThrownBy(() -> attribute.set(200))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("runtime: too large");
+
+      attribute.set(50);
+      assertThat(attribute.get()).isEqualTo(50);
+   }
+
    static class Holder<T> {
       T object;
 

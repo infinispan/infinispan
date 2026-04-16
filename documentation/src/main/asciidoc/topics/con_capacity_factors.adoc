@@ -12,3 +12,66 @@ However, if nodes have different amounts of memory available to them, you can co
 
 The value for the capacity factor configuration must be a positive number and can be a fraction such as 1.5.
 You can also configure a capacity factor of `0` but is recommended only for nodes that join the cluster temporarily and should use the zero capacity configuration instead.
+
+== Changing capacity factors at runtime
+
+You can change the capacity factor of a node without restarting it.
+This triggers a rebalance so that segments are redistributed according to the new value.
+The call blocks until the state transfer finishes and the new segment ownership is in effect.
+
+=== Embedded API
+
+Modify the `capacity-factor` attribute directly on the cache configuration:
+
+[source,java]
+----
+cache.getCacheConfiguration().clustering().hash()
+      .attributes().attribute(HashConfiguration.CAPACITY_FACTOR).set(0.5f);
+----
+
+This changes the capacity factor for a single cache on the local node.
+To change multiple caches, repeat the call for each cache.
+
+NOTE: The in-memory attribute change does not survive restarts.
+To persist the change, use the administration API:
+
+[source,java]
+----
+cacheManager.administration()
+   .updateConfigurationAttribute("my-cache-name", "clustering.hash.capacity-factor", "0.5");
+----
+
+=== REST API
+
+Use the mutable attribute endpoint to update the capacity factor, or the CLI command:
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{name}?action=set-mutable-attributes&attribute-name=clustering.hash.capacity-factor&attribute-value=0.5
+----
+
+[source,options="nowrap",subs=attributes+]
+----
+alter cache --attribute=clustering.hash.capacity-factor --value 0.5 {name}
+----
+
+Changes made through the REST API are automatically persisted.
+
+=== Constraints
+
+* Negative values are not allowed.
+* At least one member of each cache must have a capacity factor greater than zero.
+* Nodes configured as zero-capacity nodes at startup cannot increase their capacity factor at runtime.
+* For replicated and invalidation caches, only the values `0` and `1` are allowed. Non-binary values are rejected because all members must own all segments.
+* Local caches are not affected by capacity factor changes.
+
+=== Graceful drain
+
+To remove a node from segment ownership before shutting it down, set its capacity factor to `0`.
+The node remains in the cluster and can still redirect operations, but it no longer owns any segments.
+
+[source,java]
+----
+cache.getCacheConfiguration().clustering().hash()
+      .attributes().attribute(HashConfiguration.CAPACITY_FACTOR).set(0f);
+----

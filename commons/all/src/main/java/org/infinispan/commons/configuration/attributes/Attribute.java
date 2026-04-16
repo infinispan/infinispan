@@ -30,6 +30,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
    private boolean protect;
    private boolean modified;
    private List<AttributeListener<T>> listeners;
+   private AttributeValidator<T> runtimeValidator;
 
    Attribute(AttributeDefinition<T> definition) {
       this.definition = definition;
@@ -63,10 +64,19 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       return this;
    }
 
+   public Attribute<T> registerRuntimeValidator(AttributeValidator<T> validator) {
+      this.runtimeValidator = validator;
+      return this;
+   }
+
    public Attribute<T> set(T value) {
       if (protect) {
          throw Log.CONFIG.protectedAttribute(definition.name());
       }
+      definition.validate(value);
+      if (runtimeValidator != null)
+         runtimeValidator.validate(value);
+
       T oldValue = this.value;
       this.value = value;
       this.modified = true;
@@ -78,6 +88,10 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       if (protect) {
          throw Log.CONFIG.protectedAttribute(definition.name());
       }
+      definition.validate(value);
+      if (runtimeValidator != null)
+         runtimeValidator.validate(value);
+
       T oldValue = this.value;
       this.value = value;
       this.modified = false;

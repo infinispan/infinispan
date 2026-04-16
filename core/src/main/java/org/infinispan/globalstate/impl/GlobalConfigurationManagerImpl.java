@@ -136,7 +136,18 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             boolean cacheScope = CACHE_SCOPE.equals(scope);
             Map<String, Configuration> map = cacheScope ? persistedCaches : persistedTemplates;
             ensureClusterCompatibility(name, state, map);
-            CompletionStage<Void> future = cacheScope ? createCacheLocally(name, state) : createTemplateLocally(name, state);
+
+            Configuration persisted = map.get(name);
+            CompletionStage<Void> future;
+            if (cacheScope) {
+               future = persisted != null
+                     ? createCacheLocally(name, state.getTemplate(), persisted, state.getFlags())
+                     : createCacheLocally(name, state);
+            } else {
+               future = persisted != null
+                     ? createTemplateLocally(name, persisted, state.getFlags())
+                     : createTemplateLocally(name, state);
+            }
             CompletionStages.join(future);
          }
       });
