@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -62,9 +63,12 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.ExpirationConfiguration;
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -97,6 +101,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -1111,6 +1116,40 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
             throw new CacheException(e);
          }
       }
+   }
+
+   @Override
+   public CompletionStage<Void> setCapacityFactor(float capacityFactor) {
+      CacheMode cacheMode = getCacheConfiguration().clustering().cacheMode();
+      if (!cacheMode.isClustered()) {
+         log.capacityFactorLocalCache(getName());
+         return CompletableFutures.completedNull();
+      }
+
+      if (capacityFactor < 0)
+         throw new IllegalArgumentException("Capacity factor must be >= 0, got " + capacityFactor);
+
+      if (globalCfg.isZeroCapacityNode() && capacityFactor > 0)
+         throw new IllegalStateException("Zero-capacity node cannot increase capacity factor for cache " + getName());
+
+      // Replicated and invalidation mode only accept capacity factor 0 or 1.
+      // We warn and silently skip it.
+      if (!cacheMode.isDistributed() && capacityFactor != 0f && capacityFactor != 1f) {
+         log.capacityFactorNonBinarySkipped(getName(), capacityFactor, cacheMode.friendlyCacheModeString());
+         return CompletableFutures.completedNull();
+      }
+
+      // We also update the capacity factor in the cache configuration.
+      // First, update in-memory only.
+      getCacheConfiguration().clustering().hash()
+            .attributes().attribute(HashConfiguration.CAPACITY_FACTOR).set(capacityFactor);
+      // This ensures the updated value tolerates restart and keeps the actual configuration in sync with the runtime value.
+      if (globalCfg.globalState().enabled()) {
+         EmbeddedCacheManagerAdmin admin = cacheManager.administration();
+         String name = Objects.requireNonNull(getCacheConfiguration().fullAttributeName(HashConfiguration.CAPACITY_FACTOR), "Attribute not found to update");
+         admin.updateConfigurationAttribute(getName(), name, String.valueOf(capacityFactor));
+      }
+      return localTopologyManager.setCapacityFactor(getName(), capacityFactor);
    }
 
    @ManagedAttribute(

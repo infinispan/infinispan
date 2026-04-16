@@ -559,6 +559,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V>,
    }
 
    @Override
+   public CompletionStage<Void> setCapacityFactor(float capacityFactor) {
+      return null;
+   }
+
+   @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
       return null;  // TODO: Customise this generated block
    }

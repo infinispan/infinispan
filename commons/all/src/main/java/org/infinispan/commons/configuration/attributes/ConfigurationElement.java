@@ -47,6 +47,25 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
       return attributes;
    }
 
+   /**
+    * Returns the dot-separated path to the given attribute definition within this element's hierarchy.
+    *
+    * @param def the attribute definition to locate
+    * @return the qualified attribute name, or {@code null} if not found
+    */
+   public String fullAttributeName(AttributeDefinition<?> def) {
+      if (attributes.contains(def))
+         return def.name();
+
+      for (ConfigurationElement<?> child : children) {
+         String childPath = child.fullAttributeName(def);
+         if (childPath != null) {
+            return child.elementName() + "." + childPath;
+         }
+      }
+      return null;
+   }
+
    public ConfigurationElement<?>[] children() {
       return children;
    }

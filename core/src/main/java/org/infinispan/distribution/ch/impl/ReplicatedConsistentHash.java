@@ -354,6 +354,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       final int prime = 31;
       int result = 1;
       result = prime * result + ((members == null) ? 0 : members.hashCode());
+      result = prime * result + CapacityFactorHelper.capacityFactorHashCode(capacityFactors);
       result = prime * result + ((membersWithoutState == null) ? 0 : membersWithoutState.hashCode());
       result = prime * result + primaryOwners.hashCode();
       return result;
@@ -378,6 +379,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
             return false;
       } else if (!membersWithoutState.equals(other.membersWithoutState))
          return false;
-      return Objects.equals(primaryOwners, other.primaryOwners);
+      return Objects.equals(primaryOwners, other.primaryOwners) && CapacityFactorHelper.isCapacityFactorsEquals(capacityFactors, other.capacityFactors);
    }
 }

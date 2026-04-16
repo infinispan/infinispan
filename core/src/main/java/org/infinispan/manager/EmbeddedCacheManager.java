@@ -3,6 +3,7 @@ package org.infinispan.manager;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
@@ -314,4 +315,19 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    Subject getSubject();
 
    EmbeddedCacheManager withSubject(Subject subject);
+
+   /**
+    * Updates the capacity factor for all running user caches on this node.
+    *
+    * <p>
+    * Each cache is updated sequentially, waiting for the previous update's state transfer to complete before proceeding.
+    * Caches that do not support the requested capacity value (replicated/invalidation with non-binary values) are skipped.
+    * </p>
+    *
+    * @param capacityFactor the new capacity factor (must be >= 0)
+    * @return a stage that completes when all cache updates are accepted
+    * @throws IllegalArgumentException if capacityFactor is negative
+    * @throws IllegalStateException if this is a zero-capacity node attempting to increase
+    */
+   CompletionStage<Void> setCapacityFactor(float capacityFactor);
 }

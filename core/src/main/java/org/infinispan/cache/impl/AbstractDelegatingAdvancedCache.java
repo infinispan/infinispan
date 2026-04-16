@@ -137,6 +137,11 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
       cache.setAvailability(availabilityMode);
    }
 
+   @Override
+   public CompletionStage<Void> setCapacityFactor(float capacityFactor) {
+      return cache.setCapacityFactor(capacityFactor);
+   }
+
    @ManagedAttribute(
          description = "Returns the cache availability",
          displayName = "Cache availability",

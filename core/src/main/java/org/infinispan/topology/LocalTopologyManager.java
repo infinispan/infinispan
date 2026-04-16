@@ -148,4 +148,13 @@ public interface LocalTopologyManager {
       return false;
    }
 
+   /**
+    * Updates the capacity factor for a cache on this node.
+    *
+    * @param cacheName the cache to update
+    * @param capacityFactor the new capacity factor
+    * @return a stage that completes when the coordinator accepts the change
+    */
+   CompletionStage<Void> setCapacityFactor(String cacheName, float capacityFactor);
+
 }

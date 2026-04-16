@@ -32,6 +32,7 @@ import org.infinispan.commands.topology.CacheAvailabilityUpdateCommand;
 import org.infinispan.commands.topology.CacheJoinCommand;
 import org.infinispan.commands.topology.CacheLeaveCommand;
 import org.infinispan.commands.topology.CacheShutdownRequestCommand;
+import org.infinispan.commands.topology.CapacityFactorUpdateCommand;
 import org.infinispan.commands.topology.RebalancePhaseConfirmCommand;
 import org.infinispan.commands.topology.RebalancePolicyUpdateCommand;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
@@ -892,6 +893,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    public boolean isCacheRecoveringShutdown(String cacheName) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       return cacheStatus != null && cacheStatus.needRecovery() && !cacheStatus.isTopologyRestored();
+   }
+
+   @Override
+   public CompletionStage<Void> setCapacityFactor(String cacheName, float capacityFactor) {
+      ReplicableCommand command = new CapacityFactorUpdateCommand(transport.getAddress(), cacheName, capacityFactor);
+      return helper.executeOnCoordinator(transport, command, getGlobalTimeout())
+            .thenApply(CompletableFutures.toNullFunction());
    }
 
    private void writeCHState(String cacheName) {

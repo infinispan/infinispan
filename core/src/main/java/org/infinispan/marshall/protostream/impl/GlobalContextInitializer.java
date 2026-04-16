@@ -79,6 +79,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.commands.topology.CacheShutdownCommand.class,
             org.infinispan.commands.topology.CacheShutdownRequestCommand.class,
             org.infinispan.commands.topology.CacheStatusRequestCommand.class,
+            org.infinispan.commands.topology.CapacityFactorUpdateCommand.class,
             org.infinispan.commands.topology.RebalancePhaseConfirmCommand.class,
             org.infinispan.commands.topology.RebalancePolicyUpdateCommand.class,
             org.infinispan.commands.topology.RebalanceStartCommand.class,
