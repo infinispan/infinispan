@@ -39,9 +39,6 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
    @Proto
    @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_BUCKET_AGGREGATE_FUNCTION)
    public enum AggregateFunction {
-      /**
-       *
-       */
       SUM {
          @Override
          public double apply(double first, double second) {
@@ -57,9 +54,23 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
          public double apply(double first, double second) {
             return Math.max(first, second);
          }
+      }, COUNT {
+         @Override
+         public double apply(double first, double second) {
+            return first + second;
+         }
+
+         @Override
+         public double weightedScore(double score, double weight) {
+            return weight;
+         }
       };
 
       public abstract double apply(double first, double second);
+
+      public double weightedScore(double score, double weight) {
+         return weight == 0d ? 0d : score * weight;
+      }
    }
 
    @Override
