@@ -52,6 +52,10 @@ public class BITOP extends RespCommand implements Resp3Command {
                      }
                      yield not(values.get(0));
                   }
+                  case "DIFF" -> diff(values);
+                  case "DIFF1" -> diff1(values);
+                  case "ANDOR" -> andor(values);
+                  case "ONE" -> one(values);
                   default -> throw new IllegalArgumentException("ERR syntax error");
                };
                return handler.cache().putAsync(destKey, result).thenApply(r -> (long) result.length);
@@ -69,13 +73,98 @@ public class BITOP extends RespCommand implements Resp3Command {
       return result;
    }
 
-   private byte[] bitop(String op, List<byte[]> values) {
+   private int maxLength(List<byte[]> values) {
       int maxLength = 0;
       for (byte[] value : values) {
          if (value != null && value.length > maxLength) {
             maxLength = value.length;
          }
       }
+      return maxLength;
+   }
+
+   private byte getByteAt(byte[] value, int i) {
+      return (value != null && i < value.length) ? value[i] : 0;
+   }
+
+   // X AND NOT(Y1 OR Y2 OR ... OR Yn)
+   private byte[] diff(List<byte[]> values) {
+      int maxLength = maxLength(values);
+      if (maxLength == 0) return new byte[0];
+
+      byte[] x = values.get(0);
+      List<byte[]> ys = values.subList(1, values.size());
+
+      byte[] result = new byte[maxLength];
+      for (int i = 0; i < maxLength; i++) {
+         byte orY = 0;
+         for (byte[] y : ys) {
+            orY |= getByteAt(y, i);
+         }
+         result[i] = (byte) (getByteAt(x, i) & ~orY);
+      }
+      return result;
+   }
+
+   // (Y1 OR Y2 OR ... OR Yn) AND NOT(X)
+   private byte[] diff1(List<byte[]> values) {
+      int maxLength = maxLength(values);
+      if (maxLength == 0) return new byte[0];
+
+      byte[] x = values.get(0);
+      List<byte[]> ys = values.subList(1, values.size());
+
+      byte[] result = new byte[maxLength];
+      for (int i = 0; i < maxLength; i++) {
+         byte orY = 0;
+         for (byte[] y : ys) {
+            orY |= getByteAt(y, i);
+         }
+         result[i] = (byte) (orY & ~getByteAt(x, i));
+      }
+      return result;
+   }
+
+   // X AND (Y1 OR Y2 OR ... OR Yn)
+   private byte[] andor(List<byte[]> values) {
+      int maxLength = maxLength(values);
+      if (maxLength == 0) return new byte[0];
+
+      byte[] x = values.get(0);
+      List<byte[]> ys = values.subList(1, values.size());
+
+      byte[] result = new byte[maxLength];
+      for (int i = 0; i < maxLength; i++) {
+         byte orY = 0;
+         for (byte[] y : ys) {
+            orY |= getByteAt(y, i);
+         }
+         result[i] = (byte) (getByteAt(x, i) & orY);
+      }
+      return result;
+   }
+
+   // Bit set in exactly one of the source keys
+   private byte[] one(List<byte[]> values) {
+      int maxLength = maxLength(values);
+      if (maxLength == 0) return new byte[0];
+
+      byte[] result = new byte[maxLength];
+      for (int i = 0; i < maxLength; i++) {
+         byte one = 0;
+         byte more = 0;
+         for (byte[] value : values) {
+            byte v = getByteAt(value, i);
+            more |= (byte) (one & v);
+            one ^= v;
+         }
+         result[i] = (byte) (one & ~more);
+      }
+      return result;
+   }
+
+   private byte[] bitop(String op, List<byte[]> values) {
+      int maxLength = maxLength(values);
       if (maxLength == 0) return new byte[0];
 
       byte[] result = new byte[maxLength];
@@ -83,7 +172,7 @@ public class BITOP extends RespCommand implements Resp3Command {
          byte b = 0;
          boolean first = true;
          for (byte[] value : values) {
-            byte v = (value != null && i < value.length) ? value[i] : 0;
+            byte v = getByteAt(value, i);
             if (first) {
                b = v;
                first = false;
