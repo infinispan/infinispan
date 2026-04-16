@@ -28,7 +28,7 @@ public final class BitfieldFunction implements SerializableFunction<EntryView.Re
    }
 
    @ProtoField(1)
-   MarshallableList<BitfieldOperation> getValues() {
+   MarshallableList<BitfieldOperation> getOperations() {
       return MarshallableList.create(operations);
    }
 

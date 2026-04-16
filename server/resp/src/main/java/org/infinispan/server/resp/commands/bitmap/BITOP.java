@@ -1,17 +1,21 @@
 package org.infinispan.server.resp.commands.bitmap;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
+import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.ResponseWriter;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * BITOP
@@ -32,34 +36,31 @@ public class BITOP extends RespCommand implements Resp3Command {
       byte[] destKey = arguments.get(1);
       List<byte[]> srcKeys = arguments.subList(2, arguments.size());
 
-      List<CompletableFuture<byte[]>> futures = new ArrayList<>();
-      for (byte[] srcKey : srcKeys) {
-         futures.add(handler.cache().getAsync(srcKey));
-      }
+      CompletionStage<List<byte[]>> readStage = CompletionStages.performConcurrently(
+            srcKeys, ProcessorInfo.availableProcessors(),
+            Schedulers.from(new WithinThreadExecutor()),
+            k -> handler.cache().getAsync(k)
+                  .thenApply(v -> v != null ? v : new byte[0]), Collectors.toList());
 
-      return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-            .thenCompose(v -> {
-               List<byte[]> values = new ArrayList<>();
-               for (CompletableFuture<byte[]> future : futures) {
-                  values.add(future.join());
+      CompletionStage<Long> cs = readStage.thenCompose(values -> {
+         byte[] result = switch (operation) {
+            case "AND", "OR", "XOR" -> bitop(operation, values);
+            case "NOT" -> {
+               if (values.size() != 1) {
+                  throw new IllegalArgumentException("BITOP NOT must be called with a single source key.");
                }
-
-               byte[] result = switch (operation) {
-                  case "AND", "OR", "XOR" -> bitop(operation, values);
-                  case "NOT" -> {
-                     if (values.size() != 1) {
-                        throw new IllegalArgumentException("BITOP NOT must be called with a single source key.");
-                     }
-                     yield not(values.get(0));
-                  }
-                  case "DIFF" -> diff(values);
-                  case "DIFF1" -> diff1(values);
-                  case "ANDOR" -> andor(values);
-                  case "ONE" -> one(values);
-                  default -> throw new IllegalArgumentException("ERR syntax error");
-               };
-               return handler.cache().putAsync(destKey, result).thenApply(r -> (long) result.length);
-            }).thenCompose(res -> handler.stageToReturn(CompletableFuture.completedFuture(res), ctx, (r, ch) -> ch.integers(r)));
+               yield not(values.get(0));
+            }
+            case "DIFF" -> diff(values);
+            case "DIFF1" -> diff1(values);
+            case "ANDOR" -> andor(values);
+            case "ONE" -> one(values);
+            default -> throw new IllegalArgumentException("ERR syntax error");
+         };
+         return handler.cache().putAsync(destKey, result)
+               .thenApply(r -> (long) result.length);
+      });
+      return handler.stageToReturn(cs, ctx, ResponseWriter.INTEGER);
    }
 
    private byte[] not(byte[] value) {
