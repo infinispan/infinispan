@@ -1,0 +1,85 @@
+name: Test jstack Analysis
+on:
+  workflow_dispatch:
+
+jobs:
+  simulate-timeout:
+    name: Simulate Timeout and Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Simulate stuck test and capture jstack
+        shell: bash
+        run: |
+          mkdir -p jstack-output
+
+          # Create a Java program that simulates a stuck test
+          cat > /tmp/StuckTest.java << 'JAVA'
+          import java.util.concurrent.CompletableFuture;
+          import java.util.concurrent.TimeUnit;
+          public class StuckTest {
+              public static void main(String[] args) throws Exception {
+                  Thread.currentThread().setName("main");
+                  // Simulate a test waiting on a future that never completes
+                  CompletableFuture<Void> future = new CompletableFuture<>();
+                  System.out.println("StuckTest: waiting on future (will never complete)...");
+                  try {
+                      future.get(5, TimeUnit.MINUTES);
+                  } catch (Exception e) {
+                      // won't happen in time
+                  }
+              }
+          }
+          JAVA
+
+          javac /tmp/StuckTest.java -d /tmp
+
+          # Start the stuck process in the background
+          java -cp /tmp StuckTest &
+          STUCK_PID=$!
+
+          # Give it a moment to start
+          sleep 3
+
+          echo "Taking jstack of stuck process (PID $STUCK_PID)..."
+          jstack -l "$STUCK_PID" > "jstack-output/jstack-${STUCK_PID}.txt" || echo "jstack failed"
+
+          # Also create an empty dump to simulate a server process
+          touch "jstack-output/jstack-99999.txt"
+
+          # Kill the stuck process
+          kill "$STUCK_PID" 2>/dev/null || true
+
+          echo "=== Raw jstack output ==="
+          cat "jstack-output/jstack-${STUCK_PID}.txt"
+          echo "========================="
+
+      - name: Upload jstack files
+        uses: actions/upload-artifact@v7
+        with:
+          name: jstack-report
+          path: jstack-output/jstack-*.txt
+
+      - name: Run jstack analysis script
+        id: analyze
+        run: |
+          ANALYSIS=$(.github/scripts/analyze-jstack.sh jstack-output)
+          echo "=== Analysis Output ==="
+          echo "$ANALYSIS"
+          echo "======================="
+          echo "$ANALYSIS" > /tmp/jstack-comment.md
+          echo "has_analysis=true" >> "$GITHUB_OUTPUT"
+
+      - name: Show rendered markdown
+        run: |
+          echo "::notice title=Thread Dump Analysis::See job summary below"
+          {
+            cat /tmp/jstack-comment.md
+          } >> "$GITHUB_STEP_SUMMARY"
