@@ -233,6 +233,101 @@ jobs:
           -f "output[title]=Run Failed" \
           --method PATCH
 
+   jstack-analysis:
+      name: Analyze Thread Dumps
+      runs-on: ubuntu-latest
+      steps:
+        - name: Set run_id based on event type
+          id: run_id
+          run: |
+            echo "runid=${{ github.event.workflow_run.id }}" >> "$GITHUB_OUTPUT"
+
+        - uses: actions/checkout@v6
+          with:
+            sparse-checkout: |
+              .github/scripts/
+            sparse-checkout-cone-mode: false
+            fetch-depth: 1
+
+        - uses: actions/create-github-app-token@v3
+          id: app-token
+          with:
+            app-id: ${{ secrets.GH_APP_ISPN_ID }}
+            private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+
+        - name: Get Maven Test job status
+          id: job-status
+          env:
+            GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          run: |
+            JOB_STATUS=$(gh api "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs" \
+              --jq '.jobs[] | select(.name=="Maven Test") | .conclusion')
+            echo "job_status=$JOB_STATUS" >> "$GITHUB_OUTPUT"
+
+        - name: Download jstack artifact
+          if: steps.job-status.outputs.job_status == 'failure'
+          id: download-jstack
+          uses: actions/download-artifact@v8.0.1
+          continue-on-error: true
+          with:
+            name: jstack-report
+            path: jstack-files
+            github-token: ${{ github.token }}
+            run-id: ${{ steps.run_id.outputs.runid }}
+
+        - name: Download surefire report for PR number
+          if: steps.job-status.outputs.job_status == 'failure' && steps.download-jstack.outcome == 'success'
+          uses: actions/download-artifact@v8.0.1
+          continue-on-error: true
+          with:
+            name: surefire-test-report
+            path: surefire-report
+            github-token: ${{ github.token }}
+            run-id: ${{ steps.run_id.outputs.runid }}
+
+        - name: Get PR number
+          if: steps.job-status.outputs.job_status == 'failure' && steps.download-jstack.outcome == 'success'
+          id: pr-number
+          run: |
+            if [ -f surefire-report/pr-number.txt ]; then
+              PR=$(cat surefire-report/pr-number.txt)
+              if [ -n "$PR" ]; then
+                echo "number=$PR" >> "$GITHUB_OUTPUT"
+              fi
+            fi
+
+        - name: Analyze thread dumps
+          if: >
+            steps.job-status.outputs.job_status == 'failure'
+            && steps.download-jstack.outcome == 'success'
+            && steps.pr-number.outputs.number != ''
+          id: analyze
+          run: |
+            JSTACK_DIR=$(find jstack-files -name "jstack-*.txt" -printf '%h\n' | head -1)
+            if [ -z "$JSTACK_DIR" ]; then
+              echo "No jstack files found in artifact"
+              exit 0
+            fi
+            ANALYSIS=$(.github/scripts/analyze-jstack.sh "$JSTACK_DIR")
+            if [ -n "$ANALYSIS" ]; then
+              RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}"
+              {
+                echo "$ANALYSIS"
+                echo ""
+                echo "---"
+                echo "[View full run]($RUN_URL) | [Download thread dumps]($RUN_URL#:~:text=jstack-report)"
+              } > /tmp/jstack-comment.md
+              echo "has_analysis=true" >> "$GITHUB_OUTPUT"
+            fi
+
+        - name: Post PR comment
+          if: steps.analyze.outputs.has_analysis == 'true'
+          env:
+            GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          run: |
+            PR_URL="https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}"
+            gh pr comment "$PR_URL" -F /tmp/jstack-comment.md
+
    rolling-upgrades-report:
       runs-on: ubuntu-latest
       strategy:
