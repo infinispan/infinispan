@@ -1,13 +1,13 @@
 package org.infinispan.server.functional.resp;
 
-import java.util.concurrent.ExecutionException;
+import static org.infinispan.testing.Eventually.eventually;
 
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.redis.client.Redis;
@@ -34,11 +34,9 @@ public abstract class AbstractRespTest {
    }
 
    protected RedisAPI createDirectConnection(int index, Vertx vertx) {
-       try {
-         RedisConnection conn = CompletionStages.await(SERVERS.resp().withVertx(vertx).get(index).connect().toCompletionStage());
-         return RedisAPI.api(conn);
-      } catch (ExecutionException | InterruptedException e) {
-         throw new RuntimeException(e);
-      }
+      Redis redis = SERVERS.resp().withVertx(vertx).get(index);
+      Future<RedisConnection> f = redis.connect();
+      eventually(f::succeeded);
+      return RedisAPI.api(f.result());
    }
 }
