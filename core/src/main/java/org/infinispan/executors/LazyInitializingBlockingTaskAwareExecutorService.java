@@ -204,10 +204,29 @@ public final class LazyInitializingBlockingTaskAwareExecutorService
             if (blockingExecutor == null) {
                // The superclass methods only work if the blockingExecutor is a ThreadPoolExecutor
                this.executor = executorFactory.createExecutor(threadFactory);
+               ExecutorService wrappedExecutor = wrapExecutorForTests(executor);
                this.blockingExecutor =
-                  new BlockingTaskAwareExecutorServiceImpl(executor, timeService);
+                  new BlockingTaskAwareExecutorServiceImpl(wrappedExecutor, timeService);
             }
          }
       }
+   }
+
+   /**
+    * Test-only hook to wrap executors for ThreadContext/MDC/NDC propagation.
+    * Attempts to wrap the executor with ThreadContextExecutorService if available (test classpath).
+    * In production, the wrapper class doesn't exist so this is a no-op.
+    */
+   private static ExecutorService wrapExecutorForTests(ExecutorService executor) {
+      try {
+         Class<?> wrapperClass = Class.forName("org.infinispan.test.executors.ThreadContextExecutorService");
+         java.lang.reflect.Method wrapMethod = wrapperClass.getMethod("wrap", ExecutorService.class);
+         return (ExecutorService) wrapMethod.invoke(null, executor);
+      } catch (ClassNotFoundException e) {
+         // Wrapper class not available (production) - return unwrapped
+      } catch (Exception e) {
+         // Reflection failed - return unwrapped
+      }
+      return executor;
    }
 }

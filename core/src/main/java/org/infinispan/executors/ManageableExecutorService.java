@@ -28,8 +28,9 @@ public abstract class ManageableExecutorService<T extends ExecutorService> {
          dataType = DataType.TRAIT
    )
    public int getPoolSize() {
-      if (executor instanceof ThreadPoolExecutor) {
-         return ((ThreadPoolExecutor) executor).getPoolSize();
+      T unwrapped = unwrapExecutor(executor);
+      if (unwrapped instanceof ThreadPoolExecutor tp) {
+         return tp.getPoolSize();
       } else {
          return -1;
       }
@@ -41,8 +42,9 @@ public abstract class ManageableExecutorService<T extends ExecutorService> {
          dataType = DataType.TRAIT
    )
    public int getActiveCount() {
-      if (executor instanceof ThreadPoolExecutor) {
-         return ((ThreadPoolExecutor) executor).getActiveCount();
+      T unwrapped = unwrapExecutor(executor);
+      if (unwrapped instanceof ThreadPoolExecutor tp) {
+         return tp.getActiveCount();
       } else {
          return -1;
       }
@@ -55,18 +57,20 @@ public abstract class ManageableExecutorService<T extends ExecutorService> {
          writable = true
    )
    public int getMaximumPoolSize() {
-      if (executor instanceof ThreadPoolExecutor) {
-         return ((ThreadPoolExecutor) executor).getMaximumPoolSize();
+      T unwrapped = unwrapExecutor(executor);
+      if (unwrapped instanceof ThreadPoolExecutor tp) {
+         return tp.getMaximumPoolSize();
       } else {
          return -1;
       }
    }
 
    public void setMaximumPoolSize(int maximumPoolSize) {
-      if (executor instanceof ThreadPoolExecutor) {
-         ((ThreadPoolExecutor) executor).setMaximumPoolSize(maximumPoolSize);
-         if (!(((ThreadPoolExecutor)executor).getQueue() instanceof SynchronousQueue)) {
-            ((ThreadPoolExecutor) executor).setCorePoolSize(maximumPoolSize);
+      T unwrapped = unwrapExecutor(executor);
+      if (unwrapped instanceof ThreadPoolExecutor tp) {
+         tp.setMaximumPoolSize(maximumPoolSize);
+         if (!(tp.getQueue() instanceof SynchronousQueue)) {
+            tp.setCorePoolSize(maximumPoolSize);
          }
       } else {
          throw new UnsupportedOperationException();
@@ -79,8 +83,9 @@ public abstract class ManageableExecutorService<T extends ExecutorService> {
          dataType = DataType.TRAIT
    )
    public int getLargestPoolSize() {
-      if (executor instanceof ThreadPoolExecutor) {
-         return ((ThreadPoolExecutor) executor).getLargestPoolSize();
+      T unwrapped = unwrapExecutor(executor);
+      if (unwrapped instanceof ThreadPoolExecutor tp) {
+         return tp.getLargestPoolSize();
       } else {
          return -1;
       }
@@ -92,8 +97,9 @@ public abstract class ManageableExecutorService<T extends ExecutorService> {
          dataType = DataType.TRAIT
    )
    public int getQueueSize() {
-      if (executor instanceof ThreadPoolExecutor) {
-         return ((ThreadPoolExecutor) executor).getQueue().size();
+      T unwrapped = unwrapExecutor(executor);
+      if (unwrapped instanceof ThreadPoolExecutor tp) {
+         return tp.getQueue().size();
       } else {
          return -1;
       }
@@ -105,18 +111,36 @@ public abstract class ManageableExecutorService<T extends ExecutorService> {
          dataType = DataType.TRAIT
    )
    public long getKeepAliveTime() {
-      if (executor instanceof ThreadPoolExecutor) {
-         return ((ThreadPoolExecutor) executor).getKeepAliveTime(TimeUnit.MILLISECONDS);
+      T unwrapped = unwrapExecutor(executor);
+      if (unwrapped instanceof ThreadPoolExecutor tp) {
+         return tp.getKeepAliveTime(TimeUnit.MILLISECONDS);
       } else {
          return -1;
       }
    }
 
    public void setKeepAliveTime(long milliseconds) {
-      if (executor instanceof ThreadPoolExecutor) {
-         ((ThreadPoolExecutor) executor).setKeepAliveTime(milliseconds, TimeUnit.MILLISECONDS);
+      T unwrapped = unwrapExecutor(executor);
+      if (unwrapped instanceof ThreadPoolExecutor tp) {
+         tp.setKeepAliveTime(milliseconds, TimeUnit.MILLISECONDS);
       } else {
          throw new UnsupportedOperationException();
       }
+   }
+
+   /**
+    * Unwraps executor service wrappers to access the underlying ThreadPoolExecutor.
+    * Handles multiple layers of wrapping by unwrapping in a loop until the base executor is found.
+    */
+   @SuppressWarnings("unchecked")
+   private T unwrapExecutor(T executor) {
+      if (executor == null) {
+         return null;
+      }
+      ExecutorService current = executor;
+      while (current instanceof WrappedExecutorService) {
+         current = ((WrappedExecutorService) current).unwrap();
+      }
+      return (T) current;
    }
 }

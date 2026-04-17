@@ -46,10 +46,29 @@ public class LazyInitializingScheduledExecutorService extends ManageableExecutor
       if (executor == null) {
          synchronized (this) {
             if (executor == null) {
-               executor = executorFactory.createExecutor(threadFactory);
+               executor = wrapExecutorForTests(executorFactory.createExecutor(threadFactory));
             }
          }
       }
+   }
+
+   /**
+    * Test-only hook to wrap executors for ThreadContext/MDC/NDC propagation.
+    * Attempts to wrap the executor with ThreadContextExecutorService if available (test classpath).
+    * In production, the wrapper class doesn't exist so this is a no-op.
+    */
+   @SuppressWarnings("unchecked")
+   private static <T extends ScheduledExecutorService> T wrapExecutorForTests(T executor) {
+      try {
+         Class<?> wrapperClass = Class.forName("org.infinispan.test.executors.ThreadContextExecutorService");
+         java.lang.reflect.Method wrapMethod = wrapperClass.getMethod("wrap", java.util.concurrent.ExecutorService.class);
+         return (T) wrapMethod.invoke(null, executor);
+      } catch (ClassNotFoundException e) {
+         // Wrapper class not available (production) - return unwrapped
+      } catch (Exception e) {
+         // Reflection failed - return unwrapped
+      }
+      return executor;
    }
 
    @Override
