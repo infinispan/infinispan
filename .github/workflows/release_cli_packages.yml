@@ -1,0 +1,117 @@
+name: Package CLI Native Installers
+
+# Builds deb/rpm packages and publishes Homebrew/Scoop manifests
+# for the Infinispan CLI native executable.
+#
+# Expects native CLI ZIP artifacts to already be attached to the
+# GitHub release (uploaded by the native-cli job in release.yml).
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (must match an existing GitHub release with native CLI artifacts)"
+        required: true
+        type: string
+
+jobs:
+  linux-packages:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nfpm_arch: amd64
+            asset_name: linux-x86_64
+          - nfpm_arch: arm64
+            asset_name: linux-aarch_64
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install nfpm
+        run: |
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt-get update
+          sudo apt-get install -y nfpm
+
+      - name: Download native CLI artifact
+        run: |
+          mkdir -p artifacts
+          gh release download ${{ inputs.version }} \
+            --pattern "infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}.zip" \
+            --dir artifacts/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract binary
+        run: |
+          cd artifacts
+          unzip infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}.zip
+          chmod +x infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}/infinispan-cli
+
+      - name: Build deb package
+        working-directory: artifacts/infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}
+        run: |
+          nfpm package \
+            --config ../../packaging/cli/nfpm.yaml \
+            --packager deb \
+            --target ../
+        env:
+          VERSION: ${{ inputs.version }}
+          NFPM_ARCH: ${{ matrix.nfpm_arch }}
+
+      - name: Build rpm package
+        working-directory: artifacts/infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}
+        run: |
+          nfpm package \
+            --config ../../packaging/cli/nfpm.yaml \
+            --packager rpm \
+            --target ../
+        env:
+          VERSION: ${{ inputs.version }}
+          NFPM_ARCH: ${{ matrix.nfpm_arch }}
+
+      - name: Upload packages to release
+        run: |
+          gh release upload ${{ inputs.version }} \
+            artifacts/*.deb artifacts/*.rpm \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+  publish-package-managers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download all native CLI artifacts
+        run: |
+          mkdir -p artifacts
+          for platform in linux-x86_64 linux-aarch_64 osx-aarch_64 windows-x86_64; do
+            gh release download ${{ inputs.version }} \
+              --pattern "infinispan-cli-${{ inputs.version }}-${platform}.zip" \
+              --dir artifacts/ || echo "::warning::${platform} artifact not found, skipping"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run JReleaser
+        uses: jreleaser/release-action@v2
+        with:
+          arguments: full-release --project-version ${{ inputs.version }}
+        env:
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+      - name: Upload JReleaser output on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jreleaser-output
+          path: |
+            out/jreleaser/trace.log
+            out/jreleaser/output.properties

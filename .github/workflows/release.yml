@@ -257,6 +257,14 @@ jobs:
       ref: 2.4.x
       repository: infinispan/infinispan-operator
 
+  cli-packages:
+    needs: [native-cli, release]
+    if: needs.native-cli.result == 'success'
+    uses: ./.github/workflows/release_cli_packages.yml
+    secrets: inherit
+    with:
+      version: ${{ needs.release.outputs.version }}
+
   update-website:
     needs: [published, native-cli, release]
     if: always() && needs.published.result == 'success'
