@@ -46,7 +46,9 @@ jobs:
             event: ${{ github.event.workflow_run.event }}
 
          - name: Download build type
+           id: download-build-type
            uses: actions/download-artifact@v8.0.1
+           continue-on-error: true
            with:
              name: build-type
              run-id: ${{ github.event.workflow_run.id }}
@@ -55,7 +57,12 @@ jobs:
          - name: Read build type
            id: build-type
            run: |
-             BUILD_TYPE=$(cat build-type.txt)
+             if [ -f build-type.txt ]; then
+               BUILD_TYPE=$(cat build-type.txt)
+             else
+               BUILD_TYPE="full"
+               echo "build-type artifact not found (older branch?), defaulting to full build"
+             fi
              echo "build-type=$BUILD_TYPE" >> "$GITHUB_OUTPUT"
              echo "Build type: $BUILD_TYPE"
 
