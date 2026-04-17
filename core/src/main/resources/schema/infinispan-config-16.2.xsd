@@ -1479,18 +1479,6 @@
     <xs:attribute name="media-type" type="xs:string"/>
   </xs:complexType>
 
-  <xs:complexType name="keyEncodingType">
-    <xs:complexContent>
-      <xs:extension base="tns:encodingType"/>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="valueEncodingType">
-    <xs:complexContent>
-      <xs:extension base="tns:encodingType"/>
-    </xs:complexContent>
-  </xs:complexType>
-
   <xs:complexType name="encoding">
     <xs:annotation>
       <xs:documentation>
@@ -1498,8 +1486,8 @@
       </xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="key" type="tns:keyEncodingType" minOccurs="0"/>
-      <xs:element name="value" type="tns:valueEncodingType" minOccurs="0"/>
+      <xs:element name="key" type="tns:encodingType" minOccurs="0"/>
+      <xs:element name="value" type="tns:encodingType" minOccurs="0"/>
     </xs:sequence>
     <xs:attribute name="media-type" type="xs:string">
       <xs:annotation>

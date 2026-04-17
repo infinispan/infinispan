@@ -1,0 +1,121 @@
+{
+  "$id": "https://infinispan.org/infinispan-counters-config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infinispan Counters Configuration",
+  "description": "Distributed counter configuration for Infinispan.",
+  "type": "object",
+  "properties": {
+    "counters": {
+      "$ref": "#/$defs/Counters"
+    }
+  },
+  "$defs": {
+    "Counters": {
+      "type": "object",
+      "description": "Configures clustered counters.",
+      "properties": {
+        "num-owners": {
+          "type": "string",
+          "description": "Specifies how many copies of the counter's value to create on the cluster. A smaller number results in faster update operations but supports a lower number of node crashes."
+        },
+        "reliability": {
+          "type": "string",
+          "description": "Controls how to handle counters when network partitions split clusters.",
+          "enum": [
+            "AVAILABLE",
+            "CONSISTENT"
+          ]
+        },
+        "strong-counter": {
+          "type": "array",
+          "description": "Configures strong consistent counters. The value of a strong counter is stored in a single key for consistency.",
+          "items": {
+            "$ref": "#/$defs/StrongCounter"
+          }
+        },
+        "weak-counter": {
+          "type": "array",
+          "description": "Configures weak consistent counters. The value of a weak counter is stored in multiple keys.",
+          "items": {
+            "$ref": "#/$defs/WeakCounter"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "StrongCounter": {
+      "type": "object",
+      "description": "Configures a strong consistent counter.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/AbstractCounter"
+        }
+      ],
+      "properties": {
+        "name": true,
+        "initial-value": true,
+        "storage": true,
+        "lower-bound": {
+          "type": "string",
+          "description": "Sets the lower bound, inclusively, for strong consistent counters. You must specify a value that is less than or equal to the initial-value."
+        },
+        "upper-bound": {
+          "type": "string",
+          "description": "Sets the upper bound, inclusively, for strong consistent counters. You must specify a value that is greater than or equal to the initial-value."
+        },
+        "lifespan": {
+          "type": "string",
+          "description": "(Experimental) Specifies the maximum amount of time, in milliseconds, that strong counters can remain in the cluster. Counters are removed from the cluster when they exceed the lifespan and are reset to their initial values."
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "unevaluatedProperties": false
+    },
+    "WeakCounter": {
+      "type": "object",
+      "description": "Configures a weak consistent counter.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/AbstractCounter"
+        }
+      ],
+      "properties": {
+        "name": true,
+        "initial-value": true,
+        "storage": true,
+        "concurrency-level": {
+          "type": "string",
+          "description": "Sets the maximum number of concurrent updates to weak counter values."
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "unevaluatedProperties": false
+    },
+    "AbstractCounter": {
+      "type": "object",
+      "description": "Base counter configuration.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Specifies a unique name for each counter."
+        },
+        "initial-value": {
+          "type": "string",
+          "description": "Specifies the initial value for counters. For bounded counters, the initial value must be between the upper-bound and lower-bound."
+        },
+        "storage": {
+          "type": "string",
+          "description": "Controls how to store counters when you restart and stop clusters.",
+          "enum": [
+            "VOLATILE",
+            "PERSISTENT"
+          ]
+        }
+      }
+    }
+  }
+}
