@@ -22,6 +22,27 @@ function rewriteXSDs() {
     done
 }
 
+function rewriteJSONSchemas() {
+    SEPARATOR=$1
+    OLDMAJOR=$2
+    OLDMINOR=$3
+    NEWMAJOR=$4
+    NEWMINOR=$5
+
+    SCHEMAS=$(find . -path "*/src/main/resources/*$OLDMAJOR$SEPARATOR$OLDMINOR.json" -type f)
+    for OLDSCHEMA in $SCHEMAS; do
+        # Rewrite the filename
+        NEWSCHEMA=${OLDSCHEMA//${OLDMAJOR}${SEPARATOR}${OLDMINOR}/${NEWMAJOR}${SEPARATOR}${NEWMINOR}}
+        echo "$OLDSCHEMA ==> $NEWSCHEMA"
+        mv "$OLDSCHEMA" "$NEWSCHEMA"
+        # Update internal $ref and other version references to other JSON schema files
+        sed -i "s/-$OLDMAJOR$SEPARATOR$OLDMINOR\.json/-$NEWMAJOR$SEPARATOR$NEWMINOR.json/g" "$NEWSCHEMA"
+        sed -i "s/ $OLDMAJOR\.$OLDMINOR / $NEWMAJOR.$NEWMINOR /g" "$NEWSCHEMA"
+        git rm "$OLDSCHEMA"
+        git add "$NEWSCHEMA"
+    done
+}
+
 function rewriteXML() {
     XML=$1
     OLDMAJOR=$2
@@ -58,6 +79,16 @@ function copyXMLs() {
           echo Adding "$NEWPROPERTIES"
           cp "$PROPERTIES" "$NEWPROPERTIES"
           git add "$NEWPROPERTIES"
+       fi
+    done
+
+    JSON_FILES=$(find . -path "*/src/test/*${OLDMAJOR}${SEPARATOR}${OLDMINOR}.json" -type f)
+    for JSON in $JSON_FILES; do
+       if ! git check-ignore -q "$JSON"; then
+          NEWJSON=${JSON//${OLDMAJOR}${SEPARATOR}${OLDMINOR}/${NEWMAJOR}${SEPARATOR}${NEWMINOR}}
+          echo Adding "$NEWJSON"
+          cp "$JSON" "$NEWJSON"
+          git add "$NEWJSON"
        fi
     done
 }
@@ -179,6 +210,10 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     # Rewrite the XSDs
     rewriteXSDs . "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
     rewriteXSDs _ "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
+
+    # Rewrite the JSON schemas
+    rewriteJSONSchemas . "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
+    rewriteJSONSchemas _ "$OLDSCHEMAMAJOR" "$OLDSCHEMAMINOR" "$NEWSCHEMAMAJOR" "$NEWSCHEMAMINOR"
 
     echo "DONE!"
 fi

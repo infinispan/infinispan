@@ -1,0 +1,339 @@
+{
+  "$id": "https://infinispan.org/infinispan-cachestore-remote-config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infinispan Remote Cache Store Configuration",
+  "description": "Remote cache store configuration for Infinispan.",
+  "type": "object",
+  "properties": {
+    "remote-store": {
+      "$ref": "#/$defs/RemoteStore"
+    },
+    "remote-cache-containers": {
+      "$ref": "#/$defs/RemoteCacheContainers"
+    }
+  },
+  "$defs": {
+    "RemoteStore": {
+      "type": "object",
+      "description": "Defines a remote cache store that connects to a Hot Rod server.",
+      "allOf": [
+        {
+          "$ref": "infinispan-config-16.2.json#/$defs/AbstractStore"
+        }
+      ],
+      "properties": {
+        "shared": true,
+        "preload": true,
+        "purge": true,
+        "read-only": true,
+        "write-only": true,
+        "transactional": true,
+        "max-batch-size": true,
+        "segmented": true,
+        "write-behind": true,
+        "properties": true,
+        "remote-cache-container": {
+          "type": "string",
+          "description": "The name of the remote cache container to use."
+        },
+        "socket-timeout": {
+          "type": "string",
+          "description": "Enable/disable SO_TIMEOUT on socket connections to remote Hot Rod servers with the specified timeout, in milliseconds."
+        },
+        "tcp-no-delay": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Enable/disable TCP_NODELAY on socket connections to remote Hot Rod servers."
+        },
+        "balancing-strategy": {
+          "type": "string",
+          "description": "For replicated Hot Rod server clusters, the client balances requests to the servers according to this strategy."
+        },
+        "connect-timeout": {
+          "type": "string",
+          "description": "Defines the maximum socket connect timeout before giving up connecting to the server."
+        },
+        "force-return-values": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Whether or not to implicitly FORCE_RETURN_VALUE for all calls."
+        },
+        "marshaller": {
+          "type": "string",
+          "description": "Allows you to specify a custom Marshaller implementation to serialize and deserialize user objects."
+        },
+        "protocol-version": {
+          "type": "string",
+          "description": "Defines the protocol version that this client should use."
+        },
+        "cache": {
+          "type": "string",
+          "description": "The name of the remote cache in the remote Infinispan cluster, to which to connect to."
+        },
+        "uri": {
+          "type": "string",
+          "description": "URI for the remote cache that lets you configure connection strings with Hot Rod client properties."
+        },
+        "remote-server": {
+          "type": "array",
+          "description": "Defines remote Hot Rod server instances.",
+          "items": {
+            "$ref": "#/$defs/RemoteServer"
+          }
+        },
+        "connection-pool": {
+          "$ref": "#/$defs/RemoteConnectionPool"
+        },
+        "security": {
+          "$ref": "#/$defs/Security"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "RemoteServer": {
+      "type": "object",
+      "description": "Defines a remote Hot Rod server instance.",
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "The hostname or IP address of the remote Hot Rod server."
+        },
+        "port": {
+          "type": "string",
+          "description": "The port of the remote Hot Rod server."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RemoteConnectionPool": {
+      "type": "object",
+      "description": "Configuration of the connection pool for the remote store.",
+      "properties": {
+        "exhausted-action": {
+          "type": "string",
+          "description": "Specifies what happens when asking for a connection from a server's pool, and that pool is exhausted.",
+          "enum": [
+            "EXCEPTION",
+            "WAIT",
+            "CREATE_NEW"
+          ]
+        },
+        "max-active": {
+          "type": "string",
+          "description": "Controls the maximum number of connections per server that are allocated at one time."
+        },
+        "min-idle": {
+          "type": "string",
+          "description": "Sets a target value for the minimum number of idle connections (per server) that should always be available."
+        },
+        "max-pending-requests": {
+          "type": "string",
+          "description": "Specifies maximum number of requests sent over single connection at one instant."
+        },
+        "min-evictable-idle-time": {
+          "type": "string",
+          "description": "Specifies the minimum amount of time that a connection may sit idle in the pool before it is eligible for eviction due to idle time."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Security": {
+      "type": "object",
+      "description": "Hot Rod Security configuration.",
+      "properties": {
+        "authentication": {
+          "$ref": "#/$defs/Authentication"
+        },
+        "encryption": {
+          "$ref": "#/$defs/Encryption"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Authentication": {
+      "type": "object",
+      "description": "Hot Rod authentication configuration.",
+      "properties": {
+        "server-name": {
+          "type": "string",
+          "description": "The SASL server name."
+        },
+        "plain": {
+          "$ref": "#/$defs/AuthenticationPlain"
+        },
+        "digest": {
+          "$ref": "#/$defs/AuthenticationDigest"
+        },
+        "external": {
+          "$ref": "#/$defs/AuthenticationExternal"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AuthenticationPlain": {
+      "type": "object",
+      "description": "PLAIN SASL authentication mechanism.",
+      "properties": {
+        "username": {
+          "type": "string",
+          "description": "The username to use when connecting."
+        },
+        "password": {
+          "type": "string",
+          "description": "The password to use when connecting."
+        }
+      },
+      "required": [
+        "username",
+        "password"
+      ],
+      "additionalProperties": false
+    },
+    "AuthenticationDigest": {
+      "type": "object",
+      "description": "DIGEST SASL authentication mechanism.",
+      "properties": {
+        "username": {
+          "type": "string",
+          "description": "The username to use when connecting."
+        },
+        "password": {
+          "type": "string",
+          "description": "The password to use when connecting."
+        },
+        "realm": {
+          "type": "string",
+          "description": "The realm to use when connecting."
+        }
+      },
+      "required": [
+        "username",
+        "password",
+        "realm"
+      ],
+      "additionalProperties": false
+    },
+    "AuthenticationExternal": {
+      "type": "object",
+      "description": "EXTERNAL SASL authentication mechanism.",
+      "additionalProperties": false
+    },
+    "Encryption": {
+      "type": "object",
+      "description": "Hot Rod encryption configuration.",
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "description": "The TLS/SSL protocol to use. Defaults to TLSv1.2."
+        },
+        "sni-hostname": {
+          "type": "string",
+          "description": "The SNI hostname to use when connecting."
+        },
+        "keystore": {
+          "$ref": "#/$defs/Keystore"
+        },
+        "truststore": {
+          "$ref": "#/$defs/Truststore"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Keystore": {
+      "type": "object",
+      "description": "Keystore configuration for encryption.",
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "The path to the key store."
+        },
+        "password": {
+          "type": "string",
+          "description": "The password to use to access the key store."
+        },
+        "type": {
+          "type": "string",
+          "description": "The key store type (JKS, JCEKS)."
+        },
+        "key-alias": {
+          "type": "string",
+          "description": "If the key store contains multiple keys, use the one with the specified alias."
+        }
+      },
+      "required": [
+        "filename",
+        "password"
+      ],
+      "additionalProperties": false
+    },
+    "Truststore": {
+      "type": "object",
+      "description": "Truststore configuration for encryption.",
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "The path to the trust store."
+        },
+        "password": {
+          "type": "string",
+          "description": "The password to use to access the trust store."
+        },
+        "type": {
+          "type": "string",
+          "description": "The trust store type (JKS, JCEKS)."
+        }
+      },
+      "required": [
+        "filename",
+        "password"
+      ],
+      "additionalProperties": false
+    },
+    "WriteBehind": {
+      "$ref": "infinispan-config-16.2.json#/$defs/WriteBehind"
+    },
+    "RemoteCacheContainers": {
+      "type": "object",
+      "description": "Defines remote cache containers.",
+      "properties": {
+        "remote-cache-container": {
+          "type": "array",
+          "description": "Defines remote cache container configurations.",
+          "items": {
+            "$ref": "#/$defs/RemoteCacheContainer"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "RemoteCacheContainer": {
+      "type": "object",
+      "description": "Defines a remote cache container.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of this remote cache container."
+        },
+        "uri": {
+          "type": "string",
+          "description": "A Hot Rod URI."
+        },
+        "properties": {
+          "type": "object",
+          "description": "Additional properties for remote cache container configuration.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "uri"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

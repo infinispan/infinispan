@@ -1,0 +1,85 @@
+{
+  "$id": "https://infinispan.org/infinispan-cachestore-rocksdb-config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infinispan RocksDB Cache Store Configuration",
+  "description": "RocksDB cache store configuration for Infinispan.",
+  "type": "object",
+  "properties": {
+    "rocksdb-store": {
+      "$ref": "#/$defs/RocksdbStore"
+    }
+  },
+  "$defs": {
+    "RocksdbStore": {
+      "type": "object",
+      "description": "Defines a RocksDB cache store.",
+      "allOf": [
+        {
+          "$ref": "infinispan-config-16.2.json#/$defs/AbstractStore"
+        }
+      ],
+      "properties": {
+        "shared": true,
+        "preload": true,
+        "purge": true,
+        "read-only": true,
+        "write-only": true,
+        "transactional": true,
+        "max-batch-size": true,
+        "segmented": true,
+        "write-behind": true,
+        "properties": true,
+        "relative-to": {
+          "type": "string",
+          "description": "The base directory in which to store the cache state."
+        },
+        "path": {
+          "type": "string",
+          "description": "The path within relative-to in which to store the cache state. If undefined, the path defaults to the cache container name."
+        },
+        "expiration": {
+          "$ref": "#/$defs/RocksdbExpiration"
+        },
+        "compression": {
+          "$ref": "#/$defs/RocksdbCompression"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "RocksdbExpiration": {
+      "type": "object",
+      "description": "Defines the expiration settings for the RocksDB cache store.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The base directory in which to store expired cache state."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RocksdbCompression": {
+      "type": "object",
+      "description": "Defines the data compression to use in the RocksDB store.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of compression to be used by RocksDB store.",
+          "enum": [
+            "NONE",
+            "SNAPPY",
+            "ZLIB",
+            "BZLIB2",
+            "LZ4",
+            "LZ4HC",
+            "XPRESS",
+            "ZSTD"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "WriteBehind": {
+      "$ref": "infinispan-config-16.2.json#/$defs/WriteBehind"
+    }
+  }
+}
