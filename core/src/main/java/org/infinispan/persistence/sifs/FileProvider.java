@@ -52,6 +52,7 @@ public class FileProvider {
    private final Set<FileIterator> iterators = ConcurrentHashMap.newKeySet();
    private final String prefix;
    private final int maxFileSize;
+   private final boolean isIndex;
 
    private boolean canTryPmem = true;
 
@@ -69,12 +70,14 @@ public class FileProvider {
       ATTEMPT_PMEM = attemptPmem;
    }
 
-   public FileProvider(Path fileDirectory, int openFileLimit, String prefix, int maxFileSize) {
+   public FileProvider(Path fileDirectory, int openFileLimit, String prefix, int maxFileSize,
+                       boolean isIndex) {
       this.openFileLimit = openFileLimit;
       this.recordQueue = new ArrayBlockingQueue<>(openFileLimit);
       this.directoryFile = fileDirectory.toFile();
       this.prefix = prefix;
       this.maxFileSize = maxFileSize;
+      this.isIndex = isIndex;
       try {
          Files.createDirectories(fileDirectory);
       } catch (IOException e) {
@@ -238,7 +241,7 @@ public class FileProvider {
          if (create) {
             fileChannel = new FileOutputStream(file).getChannel();
          } else {
-            fileChannel = new RandomAccessFile(file, "rw").getChannel();
+            fileChannel = new RandomAccessFile(file, isIndex ? "rw" : "r").getChannel();
          }
       }
 
