@@ -46,7 +46,7 @@ public class ClusteredPersistentStringCommandTest extends PersistentStringComman
 
    @Override
    protected String parameters() {
-      return "[mode=" + mode + "]";
+      return "[mode=" + mode + ", authz=" + isAuthorizationEnabled() + "]";
    }
 
    @Override
