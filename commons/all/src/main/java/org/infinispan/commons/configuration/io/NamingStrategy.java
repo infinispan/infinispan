@@ -44,6 +44,25 @@ public enum NamingStrategy {
          return b.toString();
       }
    },
+   PASCAL_CASE {
+      @Override
+      public String convert(String s) {
+         StringBuilder b = new StringBuilder();
+         boolean capitalize = true;
+         for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '-' || c == '_') {
+               capitalize = true;
+            } else if (capitalize) {
+               b.append(Character.toUpperCase(c));
+               capitalize = false;
+            } else {
+               b.append(c);
+            }
+         }
+         return b.toString();
+      }
+   },
    SNAKE_CASE {
       @Override
       public String convert(String s) {
