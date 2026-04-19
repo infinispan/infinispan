@@ -428,11 +428,11 @@ public final class MavenSettings {
       int startLoc = -1;
 
       while ((startLoc = in.indexOf("${", cur)) >= 0) {
-         out.append(in.substring(cur, startLoc));
+         out.append(in, cur, startLoc);
          int endLoc = in.indexOf("}", startLoc);
          if (endLoc > 0) {
             String name = in.substring(startLoc + 2, endLoc);
-            String value = null;
+            String value;
             if (name.startsWith("env.")) {
                value = System.getenv(name.substring(4));
             } else {

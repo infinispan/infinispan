@@ -23,6 +23,7 @@ import org.jboss.logging.annotations.Suppressed;
 import org.jboss.logging.annotations.ValidIdRange;
 import org.jboss.logging.annotations.ValidIdRanges;
 
+
 /**
  * Infinispan's log abstraction layer on top of JBoss Logging.
   * It contains explicit methods for all INFO or above levels so that they can
@@ -305,6 +306,36 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Virtual threads support: %s", id = 974)
    void virtualThreadSupport(String status);
+
+   @Message(value = "Invalid value %s for attribute '%s': must be between 0 (exclusive) and 1.0 (inclusive)", id = 975)
+   CacheConfigurationException attributeMustBeFraction(Number value, String attribute);
+
+   @Message(value = "Invalid value %s for attribute '%s': must be positive", id = 976)
+   CacheConfigurationException attributeMustBePositive(Number value, String attribute);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Low memory detected. Memory usage has exceeded the configured threshold.", id = 977)
+   void lowMemoryDetected();
+
+   @LogMessage(level = WARN)
+   @Message(value = "GC pause of %d ms exceeded the configured threshold of %d ms.", id = 978)
+   void gcDurationExceeded(long duration, long threshold);
+
+   @LogMessage(level = WARN)
+   @Message(value = "GC pressure exceeded %d%% over the last %d s.", id = 979)
+   void gcPressureExceeded(int percentage, long windowSeconds);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Memory threshold monitoring is not available with the current garbage collector. GC duration and pressure monitoring are still active.", id = 980)
+   void memoryThresholdMonitoringUnavailable();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Could not find '%s' in any remote repository", id = 981)
+   void artifactNotFound(String s);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not download '%s' from '%s' repository (%s)%n", id = 982)
+   void artifactDownloadFailure(String artifact, String repository, String remote, @Cause Throwable t);
 
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
