@@ -10,7 +10,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 /**
  * Maven artifact coordinate specification.
@@ -18,7 +17,6 @@ import org.infinispan.commons.logging.LogFactory;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class MavenArtifact extends AbstractArtifact {
-   private final Log log = LogFactory.getLog(MavenArtifact.class);
    static final Pattern snapshotPattern = Pattern.compile("-\\d{8}\\.\\d{6}-\\d+$");
    private static final Pattern VALID_PATTERN = Pattern.compile("^([-_a-zA-Z0-9.]+):([-_a-zA-Z0-9.]+):([-_a-zA-Z0-9.]+)(?::([-_a-zA-Z0-9.]+))?$");
 
@@ -99,14 +97,14 @@ public final class MavenArtifact extends AbstractArtifact {
             return null;
          }
          for (String remoteRepository : remoteRepos) {
+            String remotePomPath = remoteRepository + artifactRelativeHttpPath + ".pom";
             try {
-               String remotePomPath = remoteRepository + artifactRelativeHttpPath + ".pom";
                downloadFile(new URL(remotePomPath), pom, verbose, force);
                if (Files.exists(pom)) { //download successful
                   return pom;
                }
             } catch (IOException e) {
-               log.warnf("Could not download '%s' from '%s' repository (%s)%n", artifactRelativePath, remoteRepository, e.getMessage());
+               Log.CONTAINER.artifactDownloadFailure(artifactRelativePath, remoteRepository, remotePomPath, e);
                // try next one
             }
          }
@@ -124,9 +122,9 @@ public final class MavenArtifact extends AbstractArtifact {
          final Path artifact = localRepository.resolve(artifactPath);
          final Path pom = localRepository.resolve(pomPath);
          for (String remoteRepository : remoteRepos) {
+            String remotePomPath = remoteRepository + artifactRelativeHttpPath + ".pom";
+            String remoteArtifactPath = remoteRepository + artifactRelativeHttpPath + classifier + "." + packaging;
             try {
-               String remotePomPath = remoteRepository + artifactRelativeHttpPath + ".pom";
-               String remoteArtifactPath = remoteRepository + artifactRelativeHttpPath + classifier + "." + packaging;
                downloadFile(new URL(remotePomPath), pom, verbose, force);
                if (!Files.exists(pom)) {
                   // no POM; skip it
@@ -137,13 +135,13 @@ public final class MavenArtifact extends AbstractArtifact {
                   return artifact;
                }
             } catch (IOException e) {
-               log.warnf("Could not download '%s' from '%s' repository%n", artifactRelativePath, remoteRepository);
+               Log.CONTAINER.artifactDownloadFailure(artifactRelativePath, remoteRepository, remoteArtifactPath, e);
             }
          }
       }
       //could not find it in remote
       if (verbose) {
-         log.errorf("Could not find '%s' in any remote repository", this);
+         Log.CONTAINER.artifactNotFound(this.toString());
       }
       return null;
    }

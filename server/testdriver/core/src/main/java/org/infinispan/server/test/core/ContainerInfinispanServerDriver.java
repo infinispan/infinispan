@@ -196,7 +196,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       createServerHierarchy(rootDir);
       // Build the command-line that launches the server
       List<String> args = new ArrayList<>();
-      args.add("bin/server.sh");
+      args.add("bin/launch.sh");
       args.add("-c");
       args.add(new File(configuration.configurationFile()).getName());
       args.add("--bind-address=0.0.0.0");
@@ -212,6 +212,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          args.add(Integer.toString(JMX_PORT));
       }
       args.add("-Dio.netty.leakDetection.level=paranoid");
+      args.addAll(configuration.args());
 
       String logFile = System.getProperty(INFINISPAN_TEST_SERVER_LOG_FILE);
       if (logFile != null) {
@@ -286,11 +287,17 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             builder
                .from(imageName)
                .env("INFINISPAN_SERVER_HOME", INFINISPAN_SERVER_HOME)
+               .env("ISPN_HOME", INFINISPAN_SERVER_HOME)
+               .env("HOME", INFINISPAN_SERVER_HOME)
                .env("INFINISPAN_VERSION", versionToUse)
+               .env("MANAGED_ENV", "TRUE") // we do not want launch.sh to generate users
                .label("name", "Infinispan Server")
                .label("version", versionToUse)
                .label("release", versionToUse)
                .label("architecture", imageArchitecture());
+            if (!configuration.env().isEmpty()) {
+               builder.env(configuration.env());
+            }
 
             builder
                .user(IMAGE_USER)
@@ -726,6 +733,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             .withDockerfileFromBuilder(builder -> builder
                .from(JDK_BASE_IMAGE_NAME)
                .env("INFINISPAN_SERVER_HOME", INFINISPAN_SERVER_HOME)
+               .env("ISPN_HOME", INFINISPAN_SERVER_HOME)
+               .env("HOME", INFINISPAN_SERVER_HOME)
                .env("INFINISPAN_VERSION", versionToUse)
                .label("name", "Infinispan Server")
                .label("version", versionToUse)
