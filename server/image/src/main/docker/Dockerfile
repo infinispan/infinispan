@@ -84,7 +84,6 @@ RUN rm -rf \
 # Install the Infinispan server distribution
 ADD src/main/docker/install-server.sh /tmp/
 RUN /tmp/install-server.sh ${NEWROOT} ${WORKDIR}
-ADD src/main/docker/launch.sh ${NEWROOT}${WORKDIR}/bin/
 # Build the AOT cache using a fixed memory configuration. This will work for heaps < 32GB
 ENV JAVA_HOME=${NEWROOT}/usr/lib/jvm/default-java
 ENV JAVA_OPTS="-XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Xms64m -Xmx512m"

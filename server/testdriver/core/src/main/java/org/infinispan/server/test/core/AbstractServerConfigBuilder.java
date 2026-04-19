@@ -1,7 +1,10 @@
 package org.infinispan.server.test.core;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.jboss.shrinkwrap.api.Archive;
@@ -31,6 +34,8 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
    private int portOffset = 0;
    private String[] dataFiles;
    private CertificateAuthority certificateAuthority;
+   private Map<String, String> env = new HashMap<>();
+   private List<String> args = new ArrayList<>();
 
    protected AbstractServerConfigBuilder(String configurationFile, boolean defaultFile) {
       this.configurationFile = configurationFile;
@@ -40,14 +45,14 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
       Properties sysProps = System.getProperties();
       for (String prop : sysProps.stringPropertyNames()) {
          if (prop.startsWith("org.infinispan")) {
-            properties.put(prop,  sysProps.getProperty(prop));
+            properties.put(prop, sysProps.getProperty(prop));
          }
       }
    }
 
    public InfinispanServerTestConfiguration createServerTestConfiguration() {
-      return new InfinispanServerTestConfiguration(configurationFile, numServers, expectedServers, runMode, this.properties, mavenArtifacts,
-                  archives, jmx, parallelStartup, defaultFile, listeners, clusterName, siteName, portOffset, features, dataFiles, certificateAuthority);
+      return new InfinispanServerTestConfiguration(configurationFile, numServers, expectedServers, runMode, properties, env, args, mavenArtifacts,
+            archives, jmx, parallelStartup, defaultFile, listeners, clusterName, siteName, portOffset, features, dataFiles, certificateAuthority);
    }
 
    public T mavenArtifacts(String... mavenArtifacts) {
@@ -99,8 +104,14 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
       return (T) this;
    }
 
+   public T env(String name, String value) {
+      this.env.put(name, value);
+      return (T) this;
+   }
+
    /**
     * Removes a property that was either previously defined or imported from the current running system properties
+    *
     * @param name the name of the property to remove
     * @return this to allow chain invocation
     */
@@ -154,6 +165,11 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
 
    public T certificateAuthority(CertificateAuthority certificateAuthority) {
       this.certificateAuthority = certificateAuthority;
+      return (T) this;
+   }
+
+   public T args(String... args) {
+      Collections.addAll(this.args, args);
       return (T) this;
    }
 }
