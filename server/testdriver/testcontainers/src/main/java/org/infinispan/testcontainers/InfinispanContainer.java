@@ -88,16 +88,20 @@ public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
     * One or more artifacts to deploy in Infinispan Server's <code>server/lib</code> directory.
     * Artifacts can be specified as URLs or as Maven coordinates (e.g. org.postgresql:postgresql:42.3.1)
     *
-    * @param artifacts
+    * @param artifacts one or more artifacts in URL or Maven GAV format
     * @return this
     */
    public InfinispanContainer withArtifacts(String... artifacts) {
-      if (artifacts != null || artifacts.length > 0) {
+      if (artifacts != null && artifacts.length > 0) {
          withEnv(SERVER_LIBS, String.join(" ", artifacts));
       }
       return this;
    }
 
+   /**
+    * Returns a Hot Rod connection string to connect to this container.
+    * @return
+    */
    public String getConnectionURI() {
       String user = getEnvMap().get(USER);
       String pass = getEnvMap().get(PASS);

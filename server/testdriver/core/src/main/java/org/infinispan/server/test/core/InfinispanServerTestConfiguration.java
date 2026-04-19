@@ -43,9 +43,11 @@ public class InfinispanServerTestConfiguration {
    private final String[] features;
    private final String[] dataFiles;
    private final CertificateAuthority certificateAuthority;
+   private final Map<String, String> env;
+   private final List<String> args;
 
    public InfinispanServerTestConfiguration(String configurationFile, int numServers, int expectedServers,
-                                            ServerRunMode runMode, Properties properties, String[] mavenArtifacts,
+                                            ServerRunMode runMode, Properties properties, Map<String, String> env, List<String> args, String[] mavenArtifacts,
                                             Archive<?>[] archives, boolean jmx, boolean parallelStartup,
                                             boolean defaultFile, List<InfinispanServerListener> listeners, String clusterName, String site,
                                             int portOffset, String[] features, String[] dataFiles, CertificateAuthority certificateAuthority) {
@@ -54,6 +56,8 @@ public class InfinispanServerTestConfiguration {
       this.expectedServers = expectedServers;
       this.runMode = runMode;
       this.properties = properties;
+      this.env = env;
+      this.args = args;
       this.mavenArtifacts = mavenArtifacts;
       this.archives = archives;
       this.jmx = jmx;
@@ -86,6 +90,14 @@ public class InfinispanServerTestConfiguration {
 
    public Properties properties() {
       return properties;
+   }
+
+   public Map<String, String> env() {
+      return env;
+   }
+
+   public List<String> args() {
+      return args;
    }
 
    public Archive<?>[] archives() {

@@ -23,6 +23,7 @@ import org.jboss.logging.annotations.Suppressed;
 import org.jboss.logging.annotations.ValidIdRange;
 import org.jboss.logging.annotations.ValidIdRanges;
 
+
 /**
  * Infinispan's log abstraction layer on top of JBoss Logging.
   * It contains explicit methods for all INFO or above levels so that they can
@@ -327,6 +328,14 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Memory threshold monitoring is not available with the current garbage collector. GC duration and pressure monitoring are still active.", id = 980)
    void memoryThresholdMonitoringUnavailable();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Could not find '%s' in any remote repository", id = 981)
+   void artifactNotFound(String s);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not download '%s' from '%s' repository (%s)%n", id = 982)
+   void artifactDownloadFailure(String artifact, String repository, String remote, @Cause Throwable t);
 
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
