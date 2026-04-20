@@ -20,7 +20,7 @@ public class RemoteStoreConfigWithContainersTest extends RemoteStoreConfigTest {
 
    @BeforeClass
    @Override
-   public void startUp() {
+   public void startUp() throws Throwable {
       System.setProperty("infinispan.server.port", String.valueOf(this.port));
       super.startUp();
       switch (storeCacheName) {

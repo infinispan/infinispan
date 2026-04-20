@@ -17,6 +17,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.Testing;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -30,17 +31,19 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
    private static final int INITIAL_NUM_ENTRIES = 10;
 
    @BeforeClass
-   public void setup() throws Exception {
-      ConfigurationBuilder sourceStoreBuilder = new ConfigurationBuilder();
-      sourceStoreBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)
-            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("sourceStore");
+   public void setup() throws Throwable {
+      Testing.retryOnFailure(() -> {
+         ConfigurationBuilder sourceStoreBuilder = new ConfigurationBuilder();
+         sourceStoreBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)
+               .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
+               .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("sourceStore");
 
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
-            .cache().name(CACHE_NAME).configuredWith(sourceStoreBuilder)
-            .build();
+         sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
+               .cache().name(CACHE_NAME).configuredWith(sourceStoreBuilder)
+               .build();
 
-      targetCluster = configureTargetCluster();
+         targetCluster = configureTargetCluster();
+      }, this::tearDown);
    }
 
    protected TestCluster configureTargetCluster() {

@@ -47,7 +47,7 @@ public class SingleFileGracefulShutdownMigrationXsiteTest extends AbstractStateT
 
    @BeforeClass(alwaysRun = true)
    @Override
-   public void createBeforeClass() {
+   public void createBeforeClass() throws Throwable {
       tmpDirectory = Testing.tmpDirectory(this.getClass());
       new File(tmpDirectory).mkdirs();
       File f = new File(tmpDirectory, LON);

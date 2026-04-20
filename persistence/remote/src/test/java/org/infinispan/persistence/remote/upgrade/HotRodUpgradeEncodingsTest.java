@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.Testing;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -49,14 +50,16 @@ public class HotRodUpgradeEncodingsTest extends AbstractInfinispanTest {
    }
 
    @BeforeClass
-   public void setup() {
-      ConfigurationBuilder configurationBuilder = getConfigurationBuilder();
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
-            .cache().name(CACHE_NAME)
-            .configuredWith(configurationBuilder)
-            .build();
+   public void setup() throws Throwable {
+      Testing.retryOnFailure(() -> {
+         ConfigurationBuilder configurationBuilder = getConfigurationBuilder();
+         sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
+               .cache().name(CACHE_NAME)
+               .configuredWith(configurationBuilder)
+               .build();
 
-      targetCluster = configureTargetCluster();
+         targetCluster = configureTargetCluster();
+      }, this::tearDown);
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

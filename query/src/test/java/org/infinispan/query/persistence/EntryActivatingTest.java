@@ -5,46 +5,52 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.test.QueryTestSCI;
-import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
  * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2011 Red Hat Inc.
  */
 @Test(groups = "functional", testName = "query.persistence.EntryActivatingTest")
-public class EntryActivatingTest extends AbstractInfinispanTest {
+public class EntryActivatingTest extends SingleCacheManagerTest {
 
-   Cache<String, Country> cache;
    WaitNonBlockingStore store;
-   CacheContainer cm;
    SearchMapping searchMapping;
 
-   @BeforeClass
-   public void setUp() {
-      recreateCacheManager();
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.persistence()
+            .passivation(true)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .preload(true)
+         .indexing()
+            .enable()
+            .storage(LOCAL_HEAP)
+            .addIndexedEntity(Country.class)
+         ;
+      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }
 
-   @AfterClass
-   public void tearDown() {
-      TestingUtil.killCacheManagers(cm);
+   @Override
+   protected void setup() throws Exception {
+      super.setup();
+      store = TestingUtil.getFirstStore(cache);
+      searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
    }
 
-   public void testPersistence() throws PersistenceException {
+   public void testPersistence() throws Exception {
       verifyFullTextHasMatches(0);
 
       Country italy = new Country();
@@ -66,7 +72,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
 
       verifyFullTextHasMatches(1);
 
-      Country country = cache.get("IT");
+      Country country = (Country) cache.get("IT");
       assert country != null;
       assert "Italy".equals(country.countryName);
 
@@ -74,10 +80,10 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
 
       cache.stop();
       assert searchMapping.isClose();
-      TestingUtil.killCacheManagers(cm);
+      teardown();
 
       // Now let's check the entry is not re-indexed during data preloading:
-      recreateCacheManager();
+      setup();
 
       // People should generally use a persistent index; we use RAMDirectory for
       // test cleanup, so for our configuration it needs now to contain zero
@@ -85,27 +91,9 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       verifyFullTextHasMatches(0);
    }
 
-   private void recreateCacheManager() {
-      ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.persistence()
-            .passivation(true)
-            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-            .preload(true)
-         .indexing()
-            .enable()
-            .storage(LOCAL_HEAP)
-            .addIndexedEntity(Country.class)
-         ;
-      cm = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
-      cache = cm.getCache();
-      store = TestingUtil.getFirstStore(cache);
-      searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
-   }
-
    private void verifyFullTextHasMatches(int i) {
       String query = String.format("FROM %s WHERE countryName:'Italy'", Country.class.getName());
       List<Object> list = cache.query(query).list();
       assertEquals(i, list.size());
    }
-
 }

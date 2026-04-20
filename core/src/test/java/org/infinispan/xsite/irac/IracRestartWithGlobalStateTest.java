@@ -72,7 +72,7 @@ public class IracRestartWithGlobalStateTest extends AbstractMultipleSitesTest {
 
    @BeforeClass(alwaysRun = true)
    @Override
-   public void createBeforeClass() {
+   public void createBeforeClass() throws Throwable {
       Util.recursiveFileRemove(tmpDirectory(getClass()));
       super.createBeforeClass();
    }

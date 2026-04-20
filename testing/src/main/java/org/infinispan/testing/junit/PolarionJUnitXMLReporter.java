@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.infinispan.testing.Testing;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 import org.testng.ITestContext;
@@ -33,8 +34,6 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
    private static final AtomicInteger m_numFailed = new AtomicInteger(0);
    private static final AtomicInteger m_numSkipped = new AtomicInteger(0);
    private static final Map<String, PolarionJUnitTest> m_allTests = Collections.synchronizedMap(new TreeMap<>());
-
-   private static final int rerunFailingTestsCount = Integer.parseInt(System.getProperty("rerunFailingTestsCount", "0"));
 
    /**
     * @see org.testng.IConfigurationListener2#beforeConfiguration(ITestResult)
@@ -303,6 +302,6 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       }
 
       int numberOfExecutions = meta.numberOfExecutions();
-      return numberOfExecutions > rerunFailingTestsCount && numberOfExecutions > invocationCount;
+      return numberOfExecutions > Testing.RERUN_FAILING_TESTS_COUNT && numberOfExecutions > invocationCount;
    }
 }

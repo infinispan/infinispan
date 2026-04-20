@@ -114,7 +114,7 @@ public final class CompressedFileAppender extends AbstractOutputStreamAppender<F
       final boolean isAdvertise = Boolean.parseBoolean(advertise);
       if (isLocking && isBuffered) {
          if (bufferedIo != null) {
-            LOGGER.warn("Locking and buffering are mutually exclusive. No buffering will occur for " + fileName);
+            LOGGER.warn("Locking and buffering are mutually exclusive. No buffering will occur for {}", fileName);
          }
          isBuffered = false;
       }
