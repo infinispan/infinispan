@@ -297,7 +297,7 @@ public class Exceptions {
          return re;
    }
 
-   public static void unchecked(ExceptionRunnable runnable) {
+   public static void unchecked(ThrowingRunnable runnable) {
       try {
          runnable.run();
       } catch (InterruptedException e) {

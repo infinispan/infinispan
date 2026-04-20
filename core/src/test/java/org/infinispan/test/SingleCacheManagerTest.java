@@ -5,6 +5,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.AfterClass;
@@ -47,13 +48,11 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    }
 
    @BeforeClass(alwaysRun = true)
-   protected void createBeforeClass() throws Exception {
-      try {
-         if (cleanupAfterTest()) setup();
-         else assert cleanupAfterMethod() : "you must either cleanup after test or after method";
-      } catch (Exception e) {
-         log.error("Unexpected!", e);
-         throw e;
+   protected void createBeforeClass() throws Throwable {
+      if (cleanupAfterTest()) {
+         Testing.retryOnFailure(this::setup, this::teardown);
+      } else {
+         assert cleanupAfterMethod() : "you must either cleanup after test or after method";
       }
    }
 

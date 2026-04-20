@@ -31,6 +31,7 @@ import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.testing.Testing;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.xsite.irac.DefaultIracManager;
 import org.infinispan.xsite.irac.IracManager;
@@ -57,8 +58,10 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    }
 
    @BeforeClass(alwaysRun = true) // run even for tests in the unstable group
-   public void createBeforeClass() {
-      if (cleanupAfterTest()) createSites();
+   public void createBeforeClass() throws Throwable {
+      if (cleanupAfterTest()) {
+         Testing.retryOnFailure(this::createSites, this::killSites);
+      }
    }
 
    @AfterMethod(alwaysRun = true) // run even if the test failed

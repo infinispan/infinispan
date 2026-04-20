@@ -12,6 +12,7 @@ import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationB
 import org.infinispan.persistence.remote.configuration.global.RemoteContainersConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -23,9 +24,11 @@ public class RemoteStoreSharedManagerFunctionalTest extends RemoteStoreFunctiona
    private HotRodServer hrServer;
 
    @BeforeClass
-   public void setupBefore() {
-      localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
-      hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
+   public void setupBefore() throws Throwable {
+      Testing.retryOnFailure(() -> {
+         localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+         hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
+      }, this::tearDown);
    }
 
    @AfterClass

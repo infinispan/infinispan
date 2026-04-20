@@ -50,6 +50,7 @@ import org.infinispan.test.fwk.TestFrameworkFailure;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.testing.TestResourceTracker;
+import org.infinispan.testing.Testing;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -112,7 +113,14 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    @BeforeClass(alwaysRun = true)
    public void createBeforeClass() throws Throwable {
       checkFactoryAnnotation();
-      if (cleanupAfterTest()) callCreateCacheManagers();
+      if (cleanupAfterTest()) {
+         Testing.retryOnFailure(this::callCreateCacheManagers, () -> {
+            TestingUtil.clearContent(cacheManagers);
+            TestingUtil.killCacheManagers(cacheManagers);
+            cacheManagers.clear();
+            listeners.clear();
+         });
+      }
    }
 
    private void callCreateCacheManagers() throws Throwable {

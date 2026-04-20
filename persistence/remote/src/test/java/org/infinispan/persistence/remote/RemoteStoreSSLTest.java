@@ -48,7 +48,6 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
             new GlobalConfigurationBuilder().defaultCacheName(REMOTE_CACHE),
             hotRodCacheConfiguration(builder));
 
-      ClassLoader cl = RemoteStoreSSLTest.class.getClassLoader();
       // Unfortunately BaseNonBlockingStoreTest stops and restarts the store, which can start a second hrServer - prevent that
       if (hrServer == null) {
          serverCache = serverCacheManager.getCache(REMOTE_CACHE);

@@ -17,6 +17,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.infinispan.testing.security.TestCertificates;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -31,29 +32,31 @@ public class RemoteSharedCacheManagerSSLTest extends RemoteStoreFunctionalTest {
    private HotRodServer hrServer;
 
    @BeforeClass
-   protected void setupBefore() {
-      localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+   protected void setupBefore() throws Throwable {
+      Testing.retryOnFailure(() -> {
+         localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
 
-      SimpleAuthenticator ssa = new SimpleAuthenticator();
-      HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
-      serverBuilder
-            .ssl()
-            .enable()
-            .requireClientAuth(true)
-            .keyStoreFileName(TestCertificates.certificate("server"))
-            .keyStorePassword(TestCertificates.KEY_PASSWORD)
-            .keyAlias("server")
-            .trustStoreFileName(TestCertificates.certificate("trust"))
-            .trustStorePassword(TestCertificates.KEY_PASSWORD);
-      serverBuilder
-            .authentication()
-            .enable()
-            .sasl()
-            .serverName("localhost")
-            .addAllowedMech("EXTERNAL")
-            .authenticator(ssa);
+         SimpleAuthenticator ssa = new SimpleAuthenticator();
+         HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
+         serverBuilder
+               .ssl()
+               .enable()
+               .requireClientAuth(true)
+               .keyStoreFileName(TestCertificates.certificate("server"))
+               .keyStorePassword(TestCertificates.KEY_PASSWORD)
+               .keyAlias("server")
+               .trustStoreFileName(TestCertificates.certificate("trust"))
+               .trustStorePassword(TestCertificates.KEY_PASSWORD);
+         serverBuilder
+               .authentication()
+               .enable()
+               .sasl()
+               .serverName("localhost")
+               .addAllowedMech("EXTERNAL")
+               .authenticator(ssa);
 
-      hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager, serverBuilder);
+         hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager, serverBuilder);
+      }, this::tearDown);
    }
 
    @AfterClass

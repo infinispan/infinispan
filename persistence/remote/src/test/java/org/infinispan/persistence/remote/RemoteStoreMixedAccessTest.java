@@ -18,6 +18,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -35,31 +36,33 @@ public class RemoteStoreMixedAccessTest extends AbstractInfinispanTest {
    private RemoteCache<String, String> remoteCache;
 
    @BeforeClass
-   public void setup() throws Exception {
-      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      serverBuilder.memory().maxCount(100)
-            .expiration().wakeUpInterval(10L);
-      serverCacheManager = TestCacheManagerFactory.createCacheManager(
-            hotRodCacheConfiguration(serverBuilder));
-      serverCache = serverCacheManager.getCache();
-      hrServer = HotRodClientTestingUtil.startHotRodServer(serverCacheManager);
+   public void setup() throws Throwable {
+      Testing.retryOnFailure(() -> {
+         ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+         serverBuilder.memory().maxCount(100)
+               .expiration().wakeUpInterval(10L);
+         serverCacheManager = TestCacheManagerFactory.createCacheManager(
+               hotRodCacheConfiguration(serverBuilder));
+         serverCache = serverCacheManager.getCache();
+         hrServer = HotRodClientTestingUtil.startHotRodServer(serverCacheManager);
 
-      ConfigurationBuilder clientBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      clientBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class)
-         .segmented(false)
-         .addServer()
-            .host(hrServer.getHost())
-            .port(hrServer.getPort())
-            .addProperty(RemoteStore.MIGRATION, "true");
-      clientCacheManager = TestCacheManagerFactory.createCacheManager(clientBuilder);
-      clientCache = clientCacheManager.getCache();
+         ConfigurationBuilder clientBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+         clientBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class)
+            .segmented(false)
+            .addServer()
+               .host(hrServer.getHost())
+               .port(hrServer.getPort())
+               .addProperty(RemoteStore.MIGRATION, "true");
+         clientCacheManager = TestCacheManagerFactory.createCacheManager(clientBuilder);
+         clientCache = clientCacheManager.getCache();
 
-      remoteCacheManager = new RemoteCacheManager(
-            HotRodClientTestingUtil.newRemoteConfigurationBuilder(hrServer)
-                  .build()
-      );
-      remoteCacheManager.start();
-      remoteCache = remoteCacheManager.getCache();
+         remoteCacheManager = new RemoteCacheManager(
+               HotRodClientTestingUtil.newRemoteConfigurationBuilder(hrServer)
+                     .build()
+         );
+         remoteCacheManager.start();
+         remoteCache = remoteCacheManager.getCache();
+      }, this::tearDown);
    }
 
    public void testMixedAccess() {

@@ -22,6 +22,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -36,10 +37,12 @@ public class RemoteStoreSharedCacheManagerTest extends AbstractInfinispanTest {
    private EmbeddedCacheManager storeCacheManager;
 
    @BeforeClass
-   protected void setup() {
-      storeCacheManager = TestCacheManagerFactory.createCacheManager();
-      storeCacheManager.createCache(CACHE_NAME, hotRodCacheConfiguration().build());
-      hotRodServer = HotRodTestingUtil.startHotRodServer(storeCacheManager, PORT);
+   protected void setup() throws Throwable {
+      Testing.retryOnFailure(() -> {
+         storeCacheManager = TestCacheManagerFactory.createCacheManager();
+         storeCacheManager.createCache(CACHE_NAME, hotRodCacheConfiguration().build());
+         hotRodServer = HotRodTestingUtil.startHotRodServer(storeCacheManager, PORT);
+      }, this::tearDown);
    }
 
    @AfterClass

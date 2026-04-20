@@ -117,7 +117,7 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
 
    @BeforeClass(alwaysRun = true)
    @Override
-   protected void createBeforeClass() throws Exception {
+   protected void createBeforeClass() throws Throwable {
       tmpDirectory = Testing.tmpDirectory(getClass());
       Util.recursiveFileRemove(tmpDirectory);
       boolean created = new File(tmpDirectory).mkdirs();

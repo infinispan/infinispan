@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.Testing;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -21,14 +22,16 @@ public class HotRodUpgradeStressTest extends AbstractInfinispanTest {
    private TestCluster sourceCluster, targetCluster;
 
    @BeforeClass
-   public void setup() throws Exception {
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
-            .cache().name(CACHE_NAME)
-            .build();
+   public void setup() throws Throwable {
+      Testing.retryOnFailure(() -> {
+         sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
+               .cache().name(CACHE_NAME)
+               .build();
 
-      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
-            .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort())
-            .build();
+         targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
+               .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort())
+               .build();
+      }, this::tearDown);
    }
 
    @AfterClass

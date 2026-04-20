@@ -15,13 +15,17 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Consumer;
 
+import org.jboss.logging.Logger;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
 public class Testing {
+   private static final Logger log = Logger.getLogger("TEST");
    public static final String TEST_PATH = "infinispanTempFiles";
    public static final long MAX_TEST_SECONDS = Long.parseUnsignedLong(System.getProperty("infinispan.test.maxTestSeconds", "300"));
+   public static final int RERUN_FAILING_TESTS_COUNT = Integer.parseInt(System.getProperty("rerunFailingTestsCount", "0"));
 
    /**
     * Creates a path to a unique (per test) temporary directory. By default, the directory is created in the platform's
@@ -100,5 +104,43 @@ public class Testing {
          }
          return FileVisitResult.CONTINUE;
       }
+   }
+
+   /**
+    * Retries the given setup action up to {@code rerunFailingTestsCount} times.
+    * This compensates for the fact that Maven Surefire's {@code rerunFailingTestsCount}
+    * only retries {@code @Test} method failures, not TestNG configuration method
+    * ({@code @BeforeClass}) failures.
+    */
+   public static <T> T retryOnFailure(ThrowingSupplier<T> supplier, Runnable cleanup) {
+      RuntimeException all = new RuntimeException();
+      for (int attempt = 0; attempt < Testing.RERUN_FAILING_TESTS_COUNT + 1; attempt++) {
+         try {
+            return supplier.get();
+         } catch (Throwable t) {
+            all.addSuppressed(t);
+            log.warnf(t, "Failure in test setup (attempt %d/%d), retrying",
+                  attempt + 1, Testing.RERUN_FAILING_TESTS_COUNT + 1);
+            try {
+               cleanup.run();
+            } catch (Throwable cleanupError) {
+               log.warnf(cleanupError, "Error during cleanup before retry");
+            }
+            try {
+               Thread.sleep(2000);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               throw new RuntimeException(e);
+            }
+         }
+      }
+      throw all;
+   }
+
+   public static void retryOnFailure(ThrowingRunnable runnable, Runnable cleanup) {
+      retryOnFailure(() -> {
+         runnable.run();
+         return null;
+      }, cleanup);
    }
 }

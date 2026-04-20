@@ -366,36 +366,10 @@ public abstract class AbstractInfinispanTest {
    }
 
    /**
-    * This will run two or more tasks concurrently.
-    *
-    * It synchronizes before starting at approximately the same time by ensuring they all start before
-    * allowing the tasks to proceed.
-    *
-    * @param tasks The tasks to run
-    * @throws InterruptedException Thrown if this thread is interrupted
-    * @throws ExecutionException Thrown if one of the callables throws any kind of Throwable.  The
-    *         thrown Throwable will be wrapped by this exception
-    * @throws TimeoutException If one of the tasks doesn't complete within the timeout
-    */
-   protected void runConcurrently(long timeout, TimeUnit timeUnit, Callable<?>... tasks) throws Exception {
-      runConcurrently(timeout, timeUnit,
-                      Arrays.stream(tasks).<ExceptionRunnable>map(task -> task::call)
-                         .toArray(ExceptionRunnable[]::new));
-   }
-
-   /**
     * Equivalent to {@code runConcurrently(30, SECONDS, tasks)}
     */
    protected void runConcurrently(ExceptionRunnable... tasks) throws Exception {
       runConcurrently(30, TimeUnit.SECONDS, tasks);
-   }
-
-   /**
-    * Equivalent to {@code runConcurrently(30, SECONDS, tasks)}
-    */
-   protected void runConcurrently(Callable<?>... tasks) throws Exception {
-      runConcurrently(
-         Arrays.stream(tasks).<ExceptionRunnable>map(task -> task::call).toArray(ExceptionRunnable[]::new));
    }
 
    protected static void eventually(Condition ec) {
@@ -413,7 +387,6 @@ public abstract class AbstractInfinispanTest {
          //ignored
       }
    }
-
 
    protected void nullOutFields() {
       // TestNG keeps test instances in memory forever, make them leaner by clearing direct references to caches
@@ -446,8 +419,7 @@ public abstract class AbstractInfinispanTest {
          if (fieldType instanceof Class<?>) {
             return clazz.isAssignableFrom((Class<?>) fieldType);
          }
-         if (fieldType instanceof ParameterizedType) {
-            ParameterizedType collectionType = (ParameterizedType) fieldType;
+         if (fieldType instanceof ParameterizedType collectionType) {
             Type elementType = collectionType.getActualTypeArguments()[0];
             if (elementType instanceof ParameterizedType) {
                return clazz.isAssignableFrom(((Class<?>) ((ParameterizedType) elementType).getRawType()));

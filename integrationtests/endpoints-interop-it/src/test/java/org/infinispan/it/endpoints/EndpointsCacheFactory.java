@@ -45,6 +45,7 @@ import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedProtocol;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.Testing;
 
 import net.spy.memcached.ClientMode;
 import net.spy.memcached.ConnectionFactoryBuilder;
@@ -338,8 +339,8 @@ public class EndpointsCacheFactory<K, V> {
 
       public EndpointsCacheFactory<K, V> build() throws Exception {
          EndpointsCacheFactory<K, V> endpointsCacheFactory = new EndpointsCacheFactory<>(
-                     cacheName, marshaller, cacheMode, numOwners, l1Enable, transcoder, contextInitializer, mediaType);
-         return endpointsCacheFactory.setup();
+               cacheName, marshaller, cacheMode, numOwners, l1Enable, transcoder, contextInitializer, mediaType);
+         return Testing.retryOnFailure(endpointsCacheFactory::setup, endpointsCacheFactory::teardown);
       }
    }
 
