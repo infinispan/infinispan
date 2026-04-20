@@ -865,6 +865,11 @@
             <version>${version.jakarta.json}</version>
          </dependency>
          <dependency>
+            <groupId>net.glassless</groupId>
+            <artifactId>glassless-provider</artifactId>
+            <version>${version.glassless}</version>
+         </dependency>
+         <dependency>
             <groupId>org.graalvm.sdk</groupId>
             <artifactId>graal-sdk</artifactId>
             <version>${version.graalvm}</version>
