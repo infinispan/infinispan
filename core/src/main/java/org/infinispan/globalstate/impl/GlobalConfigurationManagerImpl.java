@@ -14,6 +14,9 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -287,9 +290,31 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          if (internalCacheRegistry.isInternalCache(cacheName)) {
             throw CONFIG.cannotUpdateInternalCache(cacheName);
          }
+         Configuration existing = SecurityActions.getCacheConfiguration(cacheManager, cacheName);
+         if (existing != null) {
+            applyNonGlobalAttributes(existing, configuration);
+         }
          return getStateCache().putAsync(new ScopedState(CACHE_SCOPE, cacheName), state);
       } else {
          return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state);
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   private static void applyNonGlobalAttributes(ConfigurationElement<?> target, ConfigurationElement<?> source) {
+      for (Attribute<?> targetAttr : target.attributes().attributes()) {
+         AttributeDefinition<?> definition = targetAttr.getAttributeDefinition();
+         if (!definition.isGlobal() && !definition.isImmutable()) {
+            Attribute<?> sourceAttr = source.attributes().attribute(definition.name());
+            @SuppressWarnings("rawtypes")
+            Attribute unchecked = targetAttr;
+            unchecked.set(sourceAttr.get());
+         }
+      }
+      ConfigurationElement<?>[] targetChildren = target.children();
+      ConfigurationElement<?>[] sourceChildren = source.children();
+      for (int i = 0; i < targetChildren.length; i++) {
+         applyNonGlobalAttributes(targetChildren[i], sourceChildren[i]);
       }
    }
 
