@@ -1,11 +1,11 @@
 [id='configuring-server-fips_{context}']
-= Configuring {brandname} Server on a system with FIPS 140-2 compliant cryptography
+= Configuring {brandname} Server on a system with FIPS 140-3 compliant cryptography
 
-FIPS (Federal Information Processing Standards) are standards and guidelines for US federal computer systems. 
+FIPS (Federal Information Processing Standards) are standards and guidelines for US federal computer systems.
 Although FIPS are developed for use by the US federal government, many in the private sector voluntarily use these standards.
 
-FIPS 140-2 defines security requirements for cryptographic modules. 
-You can configure your {brandname} Server to use encryption ciphers that adhere to the FIPS 140-2 specification by using alternative JDK security providers.
+FIPS 140-3 defines security requirements for cryptographic modules.
+You can configure your {brandname} Server to use encryption ciphers that adhere to the FIPS 140-3 specification by using alternative JDK security providers.
 
 .Additional resources
 

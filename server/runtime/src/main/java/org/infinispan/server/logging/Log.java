@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.util.List;
 
 import javax.naming.NamingException;
@@ -299,4 +300,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.WARN)
    @Message(value = "Brute-force protection disabled for realm '%s'", id = 80078)
    void bruteForceProtectionDisabled(String realmName);
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Security provider: %s", id = 80079)
+   void usingGlaSSLess(Provider provider);
 }

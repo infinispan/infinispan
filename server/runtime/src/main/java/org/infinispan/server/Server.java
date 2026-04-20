@@ -137,6 +137,8 @@ import org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider;
 import org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider;
 import org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider;
 
+import net.glassless.provider.GlaSSLessProvider;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
@@ -290,6 +292,11 @@ public class Server extends BaseServerManagement implements AutoCloseable {
       SecurityActions.addSecurityProvider(WildFlyElytronSaslOAuth2Provider.getInstance());
       SecurityActions.addSecurityProvider(WildFlyElytronSaslGssapiProvider.getInstance());
       SecurityActions.addSecurityProvider(WildFlyElytronSaslGs2Provider.getInstance());
+      if (GlaSSLessProvider.isOpenSSLAvailable()) {
+         GlaSSLessProvider provider = new GlaSSLessProvider();
+         SecurityActions.addSecurityProvider(provider);
+         log.usingGlaSSLess(provider);
+      }
    }
 
    private void registerInitialContextFactoryBuilder() {
