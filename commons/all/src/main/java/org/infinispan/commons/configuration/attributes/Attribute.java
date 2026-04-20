@@ -257,7 +257,14 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
             if (definition.isGlobal() && !equals(other)) {
                throw Log.CONFIG.incompatibleAttribute(definition.name(), elementName, String.valueOf(value), String.valueOf(other.value));
             }
-         } else if (!equals(other)) {
+            return;
+         }
+
+         if (!definition.isGlobal())
+            return;
+
+         // Consume in case global.
+         if (!equals(other)) {
             if (other.isModified()) {
                set(other.get());
             } else {
@@ -265,9 +272,9 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
             }
             Log.CONFIG.debugf("Updated attribute '%s' to value '%s'", name(), value);
          }
-      } else {
-         throw new IllegalArgumentException(this + "!=" + other);
+         return;
       }
+      throw new IllegalArgumentException(this + "!=" + other);
    }
 
    @Override
