@@ -125,6 +125,11 @@ public class TestSystemPropertyNames {
    public static final String INFINISPAN_ROLLING_UPGRADE_TO_VERSION = INFINISPAN_ROLLING_UPGRADE_TEST + "to";
 
    /**
+    * Specifies that the image should be configured for FIPS
+    */
+   public static final String INFINISPAN_TEST_SERVER_FIPS_MODE = PREFIX + "fips";
+
+   /**
     * Specifies the name of the keycloak base image
     */
    public static final String KEYCLOAK_IMAGE = "org.infinispan.test.keycloakImage";
