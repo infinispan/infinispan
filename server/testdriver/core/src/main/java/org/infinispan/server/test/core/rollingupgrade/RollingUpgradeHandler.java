@@ -440,7 +440,7 @@ public class RollingUpgradeHandler {
 
       if (versionToUse.startsWith("image://")) {
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME, versionToUse.substring("image://".length()));
-         name += "image-" + AbstractInfinispanServerDriver.abbreviate(versionToUse);
+         name += "image-" + AbstractInfinispanServerDriver.abbreviate(versionToUse).replaceAll("@sha256:.+", "");
       } else if (versionToUse.startsWith("file://")) {
          // Need to strip the file: as testcontainers strips all `file:` occurrences which seems like a bug
          versionToUse = versionToUse.substring("file://".length());
