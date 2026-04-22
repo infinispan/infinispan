@@ -9,8 +9,11 @@ DIRNAME=$(dirname "$0")
 . "$DIRNAME/common.sh"
 
 # Execute the JVM
-   eval "$JAVA" $JAVA_OPTS \
-      -Dvisualvm.display.name="$PROCESS_NAME" \
-      -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
-      -jar "$ISPN_HOME"/lib/infinispan-cli-client-*.jar \
-      "$ARGUMENTS"
+eval "$JAVA" $JAVA_OPTS \
+  -Dvisualvm.display.name="$PROCESS_NAME" \
+  -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
+  -jar "$ISPN_HOME"/lib/infinispan-cli-client-*.jar \
+  "$ARGUMENTS"
+RC=$?
+help
+exit $RC

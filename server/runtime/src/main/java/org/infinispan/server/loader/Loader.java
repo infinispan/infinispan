@@ -26,6 +26,7 @@ import java.util.Properties;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
+@Deprecated(forRemoval = true, since = "16.0")
 public class Loader {
    /**
     * Property name indicating the path to the server installation. If unspecified, the current working directory will
@@ -45,7 +46,7 @@ public class Loader {
 
    public static final String DEFAULT_SERVER_ROOT_DIR = "server";
 
-   public static void main(String[] args) {
+   static void main(String[] args) {
       run(args, System.getProperties());
    }
 
