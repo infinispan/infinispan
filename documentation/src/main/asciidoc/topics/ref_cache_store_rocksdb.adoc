@@ -7,6 +7,27 @@ RocksDB cache stores, `RocksDBStore`, use two databases. One database provides
 a primary cache store for data in memory; the other database holds entries that
 {brandname} expires from memory.
 
+.Server installation
+
+The RocksDB cache store is not included in the {brandname} Server distribution by default.
+You must install both the {brandname} RocksDB cache store module and the RocksDB native library before you can configure RocksDB cache stores.
+
+Use the {brandname} CLI to install the required artifacts to the `server/lib` directory:
+
+[source,shell,options="nowrap",subs=attributes+]
+----
+[disconnected]> install org.infinispan:infinispan-cachestore-rocksdb:{ispn_version}
+[disconnected]> install org.rocksdb:rocksdbjni:{rocksdbversion}
+----
+
+You must restart the server after installing the artifacts.
+
+[NOTE]
+====
+The RocksDB native library version shown above is the version that was tested with this release of {brandname}.
+Newer versions of the library may or may not be compatible.
+====
+
 .Configuration parameters
 |===
 | Parameter | Description
