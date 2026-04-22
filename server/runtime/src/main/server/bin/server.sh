@@ -19,11 +19,11 @@ while true; do
       "$ARGUMENTS" "&"
    ISPN_PID=$!
    # Trap common signals and relay them to the server process
-   trap "kill -HUP  $ISPN_PID" HUP
-   trap "kill -TERM $ISPN_PID" INT
-   trap "kill -QUIT $ISPN_PID" QUIT
-   trap "kill -PIPE $ISPN_PID" PIPE
-   trap "kill -TERM $ISPN_PID" TERM
+   trap 'kill -HUP  $ISPN_PID' HUP
+   trap 'kill -TERM $ISPN_PID' INT
+   trap 'kill -QUIT $ISPN_PID' QUIT
+   trap 'kill -PIPE $ISPN_PID' PIPE
+   trap 'kill -TERM $ISPN_PID' TERM
    if [ "x$ISPN_PIDFILE" != "x" ]; then
       echo $ISPN_PID > "$ISPN_PIDFILE"
    fi
@@ -53,6 +53,7 @@ while true; do
    if [ "$ISPN_STATUS" -eq 10 ]; then
       echo "Restarting server..."
    else
+      help
       exit $ISPN_STATUS
    fi
 done
