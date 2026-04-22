@@ -128,4 +128,9 @@ public class DummyServerManagement extends BaseServerManagement {
    public Json securityOverviewReport() {
       return Json.object();
    }
+
+   @Override
+   public ClassLoader getClassLoader() {
+      return Thread.currentThread().getContextClassLoader();
+   }
 }
