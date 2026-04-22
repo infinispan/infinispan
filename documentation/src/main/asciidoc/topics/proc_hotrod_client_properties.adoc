@@ -10,13 +10,13 @@ the setup. The following example shows the declarative configuration for an auth
 include::properties/hotrod-client-auth.properties[]
 ----
 
-Provided that the `hotrod-client.properties` file is on the classpath, we can use the simplest client setup to connect to the server.
+Provided that the `hotrod-client.properties` file is on the classpath, you can use the simplest client setup to connect to the server.
 
 All the available properties are documented in the xref:properties/ref_hotrod_client_configuration_properties.adoc[Properties Reference Page].
 
 [TIP]
 ====
-If the configuration properties file is not on the classpath (e.g., external configuration, remote configuration hub),
+If the configuration properties file is not on the classpath (for example, external configuration, remote configuration hub),
 the ConfigurationBuilder can build a configuration from a java.util.Properties instance as follows.
 [source,java]
 ----

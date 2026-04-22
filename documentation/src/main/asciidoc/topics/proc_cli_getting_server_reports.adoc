@@ -29,12 +29,12 @@ Downloaded report 'infinispan-<hostname>-<timestamp>-report.tar.gz'
 == Understanding the report
 
 The report generated with the CLI contains different categories of files containing information about the environment and the application.
-We split the files into subcategories and briefly describe how to read each one.
+The files are split into subcategories and briefly described below.
 
 === Environment
 
 These files contain metrics of the environment the {brandname} server is running on.
-In addition to understanding how the application behaves, external factors might cause issues, such as misconfiguration in the network, many processes running in the same host, etc.
+In addition to understanding how the application behaves, external factors might cause issues, such as misconfiguration in the network or many processes running in the same host.
 The following files shed light on these factors for investigation:
 
 .Host:

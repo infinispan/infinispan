@@ -164,7 +164,7 @@ embedded fields will be treated as (multivalued) parent entity fields.
 
 === Nested objects joins: example
 
-Suppose we have a parent entity `Team` having `Player` as a multivalued nested embedded entity:
+Suppose there is a parent entity `Team` having `Player` as a multivalued nested embedded entity:
 
 [source,java]
 ----

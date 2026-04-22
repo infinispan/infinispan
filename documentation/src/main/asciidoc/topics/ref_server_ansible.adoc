@@ -1,7 +1,7 @@
 [discrete]
 == Ansible collection
 
-Automate installation of {brandname} clusters with our Ansible collection that optionally includes Keycloak caches and cross-site replication configuration.
+Automate installation of {brandname} clusters with the {brandname} Ansible collection that optionally includes Keycloak caches and cross-site replication configuration.
 The Ansible collection also lets you inject {brandname} caches into the static configuration for each server instance during installation.
 
 //Community content

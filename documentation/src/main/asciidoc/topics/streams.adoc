@@ -15,7 +15,7 @@ upon the entirety of your cache, possibly a very large data set, but in an effic
 Streams are the preferred method when dealing with data that exists in the cache because streams automatically adjust to cluster topology changes.
 ====
 
-Also, since we can control how the entries are iterated upon, we can more efficiently perform the operations in a cache that is distributed if you want it to perform all the operations across the cluster concurrently.
+Also, since {brandname} can control how the entries are iterated upon, it can more efficiently perform the operations in a distributed cache, allowing all the operations across the cluster to run concurrently.
 
 A stream is retrieved from the link:../../apidocs/org/infinispan/Cache.html#entrySet--[entrySet],
 link:../../apidocs/org/infinispan/Cache.html#keySet--[keySet] or
@@ -62,7 +62,7 @@ method on the `CacheStream`.  This is applied after the key filter but before an
 
 A stream used with a local or invalidation cache can be used just the same way you would use a stream on a
 regular collection. {brandname} handles all the translations, if necessary, behind the scenes and works with all
-the more interesting options (i.e. storeAsBinary and a cache loader).  Only data local to
+the more interesting options (that is, storeAsBinary and a cache loader).  Only data local to
 the node where the stream operation is performed will be used, for example, invalidation only uses local entries.
 
 == Example
@@ -89,16 +89,16 @@ This allows for data to be processed evenly, assuming segments are granular enou
 data on each node.
 
 When you are utilizing a distributed cache, the data can be reshuffled between nodes when a
-new node joins or leaves. Distributed Streams handle this reshuffling of data automatically so you don't
+new node joins or leaves. Distributed Streams handle this reshuffling of data automatically so you do not
 have to worry about monitoring when nodes leave or join the cluster.
-Reshuffled entries may be processed a second time, and we keep track of the processed entries at the
+Reshuffled entries may be processed a second time, and {brandname} keeps track of the processed entries at the
 key level or at the segment level (depending on the terminal operation) to limit the amount of
 duplicate processing.
 
 It is possible, but highly discouraged, to disable rehash awareness on the stream.  This should only be considered if
 your request can handle only seeing a subset of data if a rehash occurs.  This can be done by invoking
 link:../../apidocs/org/infinispan/CacheStream.html#disableRehashAware--[CacheStream.disableRehashAware()]
-The performance gain for most operations when a rehash doesn't occur is completely negligible.
+The performance gain for most operations when a rehash does not occur is completely negligible.
 The only exceptions are for iterator and forEach, which will use less memory, since they do not have
 to keep track of processed keys.
 
@@ -111,14 +111,14 @@ operations to be sent to the other nodes.
 
 The simplest way is to use a CacheStream instance and use a lambda just as you would normally.
 {brandname} overrides all the various Stream intermediate and terminal methods to take
-Serializable versions of the arguments (i.e. SerializableFunction, SerializablePredicate, etc.)
+Serializable versions of the arguments (that is, SerializableFunction, SerializablePredicate, and similar)
 You can find these methods at
 link:../../apidocs/org/infinispan/CacheStream.html[CacheStream].
 This relies on the spec to pick the most specific method as defined link:https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.5[here].
 
-In our previous example, we used a `Collector` to collect all the results into a `Map`.
+In the previous example, a `Collector` was used to collect all the results into a `Map`.
 Unfortunately, the link:{jdkdocroot}/java/util/stream/Collectors.html[Collectors]
-class doesn't produce Serializable instances.  Thus, if you need to use these, there are two ways to do so:
+class does not produce Serializable instances.  Thus, if you need to use these, there are two ways to do so:
 
 One option would be to use the
 link:../../apidocs/org/infinispan/stream/CacheCollectors.html[CacheCollectors]
@@ -269,8 +269,8 @@ interface, the `injectCache` method must be invoked before the accept method fro
 
 == Distributed Stream execution
 
-Distributed streams execution works in a fashion very similar to MapReduce.  Except, in this case, we are sending zero to many intermediate operations
-(map, filter etc.) and a single terminal operation to the various nodes.  The operation comes down to the following:
+Distributed streams execution works in a fashion very similar to MapReduce.  Except, in this case, zero to many intermediate operations are sent
+(map, filter, and others) and a single terminal operation to the various nodes.  The operation comes down to the following:
 
 . The desired segments are grouped by which node is the primary owner of the given segment
 
@@ -305,12 +305,12 @@ stopping remote and local operations once the final result is known.
 collect::
 The link:{jdkdocroot}/java/util/stream/Stream.html#collect-java.util.stream.Collector-[collect]
 method is interesting, in that it can do a few extra steps.  The remote node performs
-everything as normal, except it doesn't perform the final
+everything as normal, except it does not perform the final
 link:{jdkdocroot}/java/util/stream/Collector.html#finisher--[finisher]
 upon the result and instead sends back the fully combined results.  The local thread
 then link:{jdkdocroot}/java/util/stream/Collector.html#combiner--[combines]
 the remote and local result into a value which is then finally finished.  The key
-here to remember is that the final value doesn't have to be serializable, but rather
+here to remember is that the final value does not have to be serializable, but rather
 the values produced from the link:{jdkdocroot}/java/util/stream/Collector.html#supplier--[supplier]
 and link:{jdkdocroot}/java/util/stream/Collector.html#combiner--[combiner]
 methods.
@@ -337,7 +337,7 @@ The various reduce methods link:{jdkdocroot}/java/util/stream/Stream.html#reduce
 link:{jdkdocroot}/java/util/stream/Stream.html#reduce-T-java.util.function.BinaryOperator-[2] ,
 link:{jdkdocroot}/java/util/stream/Stream.html#reduce-U-java.util.function.BiFunction-java.util.function.BinaryOperator-[3] will end up serializing
 the result as much as the accumulator can do.  Then it will accumulate the local and remote results together locally, before combining if you have provided that.  Note that, this means
-a value coming from the combiner doesn't have to be Serializable.
+a value coming from the combiner does not have to be Serializable.
 
 == Key based rehash aware operators
 
@@ -362,7 +362,7 @@ already to reduce chances of processing the same entry again.  Unfortunately, th
 to have an at least once behavior when a node goes down unexpectedly.  In this case, that node could have
 been processing a batch and not yet completed one and those entries that were processed but not
 in a completed batch will be ran again when the rehash failure operation occurs.  Note that, adding a
-node will not cause this issue as the rehash failover doesn't occur until all responses are received.
+node will not cause this issue as the rehash failover does not occur until all responses are received.
 
 These operations' batch sizes are both controlled by the same value which can be configured by invoking
 link:../../apidocs/org/infinispan/CacheStream.html#distributedBatchSize-int-[distributedBatchSize]
@@ -409,8 +409,8 @@ The rest of the intermediate operations are fully distributed as one would expec
 *Word Count*
 
 Word count is a classic, if overused, example
-of MapReduce paradigm. Assume we have a mapping of key -> sentence stored on
-{brandname} nodes. Key is a String, each sentence is also a String, and we have
+of MapReduce paradigm. Assume you have a mapping of key -> sentence stored on
+{brandname} nodes. Key is a String, each sentence is also a String, and you need
 to count occurrence of all words in all sentences available. The implementation
 of such a distributed task could be defined as follows:
 
@@ -457,11 +457,11 @@ public class WordCountExample {
 
 In this case, it is pretty simple to do the word count from the previous example.
 
-However, what if we want to find the most frequent word in the example?  If you take a second
+However, what if you want to find the most frequent word in the example?  If you take a second
 to think about this case, you will realize you need to have all words counted  and available
-locally first. Thus, we actually have a few options.
+locally first. Thus, there are actually a few options.
 
-We could use a finisher on the collector, which is invoked on the user thread
+You could use a finisher on the collector, which is invoked on the user thread
 after all the results have been collected.
 Some redundant lines have been removed from the previous example.
 
@@ -492,11 +492,11 @@ public class WordCountExample {
 
 ----
 
-Unfortunately, the last step is only going to be ran in a single thread, which if we have a lot of
+Unfortunately, the last step is only going to be ran in a single thread, which if there are a lot of
 words, could be quite slow.  Maybe there is another way to parallelize this with Streams.
 
-We mentioned before we are in the local node after processing, so we could actually use
-a stream on the map results.  We can therefore use a parallel stream on the results.
+As mentioned before, the processing is on the local node after collection, so you could actually use
+a stream on the map results.  You can therefore use a parallel stream on the results.
 
 [source,java]
 ----
@@ -532,18 +532,18 @@ public class RemoveBadWords {
          .forEach((c, e) -> c.remove(e.getKey()));
 ----
 
-If we carefully note what is serialized and what is not, we notice that only the word along
+If you carefully note what is serialized and what is not, you notice that only the word along
 with the operations are serialized across to other nods as it is captured by the lambda.
 However, the real saving piece is that the cache operation is performed on the primary
 owner, thus reducing the amount of network traffic required to remove these values from the
-cache. The cache is not captured by the lambda, as we provide a special BiConsumer method
+cache. The cache is not captured by the lambda, as {brandname} provides a special BiConsumer method
 override that when invoked on each node passes the cache to the BiConsumer.
 
 One thing to keep in mind using the `forEach` command in this manner is that the underlying
 stream obtains no locks. The cache remove operation will still obtain locks naturally, but
 the value could have changed from what the stream saw. That means that the entry could
 have been changed after the stream read it but the remove actually removed it.
-We have specifically added a new variant which is called `LockedStream` to address this.
+{brandname} has specifically added a new variant which is called `LockedStream` to address this.
 
 *Plenty of other examples*
 

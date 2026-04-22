@@ -13,7 +13,7 @@ To indicate the fields that {brandname} indexes use the indexing annotations.
 You can use these annotations the same way for both embedded and remote queries.
 
 @Basic:: Supports any type of field.
-Use the `@Basic` annotation for numbers and short strings that don't require any transformation or processing.
+Use the `@Basic` annotation for numbers and short strings that do not require any transformation or processing.
 
 @Decimal:: Use this annotation for fields that represent decimal values.
 

@@ -44,7 +44,7 @@ net.core.rmem_max=26214400
 [lowerroman]
 .. Increase the TCP send socket size by adjusting the `net.ipv4.tcp_wmem` tuple.
 This tuple consists of three values, representing the `minimum`, `default`, and `maximum` values for the send buffer.
-To set it to the same size as the send socket above we would add the following line to _/etc/sysctl.conf_:
+To set it to the same size as the send socket above, add the following line to _/etc/sysctl.conf_:
 +
 ----
 net.ipv4.tcp_wmem = 4096  16384  655360
@@ -52,7 +52,7 @@ net.ipv4.tcp_wmem = 4096  16384  655360
 
 .. Increase the TCP receive socket by adjusting the `net.ipv4.tcp_rmem` tuple.
 This tuple consists of three values, representing the `minimum`, `default`, and `maximum` values for the receive buffer.
-To set it to the same size as the receive socket above we would add the following line to _/etc/sysctl.conf_:
+To set it to the same size as the receive socket above, add the following line to _/etc/sysctl.conf_:
 +
 ----
 net.ipv4.tcp_rmem = 4096  87380  26214400

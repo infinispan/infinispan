@@ -12,10 +12,10 @@ from play.Item i where i.myVector <-> [7,7,7]~3
 
 This query will find the items that have the `myVector` fields that are within `3` nearest neighbourhood from the vector `[7,7,7]`.
 
-Notice that in order to use this kind of search the entity, in our example `play.Item`, has to be `@Indexed` and
-the field, in our example `myVector`, should be annotated with `@Vector`.
+Notice that in order to use this kind of search the entity, in this example `play.Item`, has to be `@Indexed` and
+the field, in this example `myVector`, should be annotated with `@Vector`.
 
-We support two kinds of vector field types:
+Two kinds of vector field types are supported:
 
 * `byte` / `Byte` (to work with byte vectors)
 * `float` / `Float` (to work with float vectors)
@@ -26,7 +26,7 @@ You can have different vector fields on the same entity, but in any case you can
 
 Both the k-value and the vector can be passed as query parameter.
 The k-value scalar can be expressed with the usual placeholder `:k` in the Ickle text.
-For the vector we can use either a placeholder for each term of the vector:
+For the vector you can use either a placeholder for each term of the vector:
 
 [source,java]
 ----
@@ -67,7 +67,7 @@ and the second element will contain the score of the matching.
 
 Instead of applying the kNN search to the entire population of entities of a given type,
 you can limiting the searching set applying classic predicates (match, full-text-search, range, ...) to the kNN queries,
-defining what we call a filtering clause.
+defining a filtering clause.
 
 A filtering clause can contain any kind of predicates with the only exception of kNN predicates that cannot be included.
 
@@ -136,7 +136,7 @@ ifdef::backend-pdf[`d(x,y) = (1 - sum[i=1; i<n+1] ( x(i)*y(i) )/( sqrt( sum[i=1;
 |
 ifdef::backend-html5[stem:[s = \frac{1}{1+d}]]
 ifdef::backend-pdf[`s = 1/(1+d)`]
-| This similarity cannot be of `zero magnitude`, e.g. when a vector is all zeroes: `[0,0,0,... 0,0]`, the cosine is not defined and will result in an error.
+| This similarity cannot be of `zero magnitude`, for example when a vector is all zeroes: `[0,0,0,... 0,0]`, the cosine is not defined and will result in an error.
 |===
 
 === Beanwidth

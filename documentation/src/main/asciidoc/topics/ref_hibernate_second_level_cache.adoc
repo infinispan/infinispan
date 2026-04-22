@@ -73,7 +73,7 @@ link:https://docs.jboss.org/hibernate/orm/5.0/userguide/html_single/Hibernate_Us
 
 == Enabling second-level caches
 
-Apart from {brandname} specific configuration, it's worth noting that enabling second cache requires some changes to the descriptor file
+Apart from {brandname} specific configuration, it is worth noting that enabling second cache requires some changes to the descriptor file
 (`persistence.xml` for JPA or `application.properties` for Spring).
 To use second level cache, you first need to enable the second level cache so that entities and/or collections can be cached:
 
@@ -111,7 +111,7 @@ NOTE: As well as enabling query cache, forcing a query to be cached requires the
 For example, for JPA queries: `query.setHint("org.hibernate.cacheable", Boolean.TRUE)`.
 
 The best way to find out whether second level cache is working or not is to inspect the statistics.
-By inspecting the statistics you can verify if the cache is being hit, if any new data is stored in cache...etc.
+By inspecting the statistics you can verify if the cache is being hit and if any new data is stored in cache.
 Statistics are disabled by default, so it is recommended that you enable statistics:
 
 .Enable statistics
@@ -251,7 +251,7 @@ Entities and collections query caches are configured with the following eviction
 You can change these settings on a per entity or collection basis or per individual entity or collection type.
 More information in the link:#configuration_properties[Configuration Properties] section below.
 
-_No eviction/expiration is configured for timestamp caches_, nor it's allowed.
+_No eviction/expiration is configured for timestamp caches_, nor is it allowed.
 
 [[default_cluster_configuration_second_level]]
 === Default cluster configuration
@@ -281,7 +281,7 @@ This option can be changed so that both local and remote nodes contain the updat
 With replicated caches all nodes would contain the update, whereas with distributed caches only a subset of the nodes.
 How to change this option is explained in the link:#configuration_properties[Configuration Properties] section.
 
-All _entities and collections have initial state transfer disabled_ since there's no need for it.
+All _entities and collections have initial state transfer disabled_ since there is no need for it.
 
 Entities and collections are configured with the following eviction settings.
 You can change these settings on a per entity or collection basis or per individual entity or collection type.
@@ -321,7 +321,7 @@ As a result, _no eviction/expiration is allowed for timestamp caches either_.
 
 IMPORTANT: Asynchronous replication was selected as default for timestamps cache for performance reasons.
 A side effect of this choice is that when an entity/collection is updated, for a very brief period of time stale queries might be returned.
-It's important to note that due to how {brandname} deals with asynchronous replication, stale queries might be found even query is done right after an entity/collection update on same node.
+It is important to note that due to how {brandname} deals with asynchronous replication, stale queries might be found even when the query is done right after an entity/collection update on the same node.
 
 NOTE: Hibernate ORM must aggressively invalidate query results from the cache any time any instance of one of the entity types is modified.
 All cached query results referencing given entity type are invalidated, even if the change made to the specific entity instance would not have affected the query result.
@@ -334,7 +334,7 @@ This requires synchronization of the wall clock across the cluster to work as ex
 === Configuration properties
 
 As explained above, {brandname} second-level cache provider comes with default configuration in `infinispan-config.xml` that is suited for clustered use.
-If there's only single JVM accessing the DB, you can use more performant `infinispan-config-local.xml` by setting the `hibernate.cache.infinispan.cfg` property.
+If there is only a single JVM accessing the DB, you can use more performant `infinispan-config-local.xml` by setting the `hibernate.cache.infinispan.cfg` property.
 If you require further tuning of the cache, you can provide your own configuration.
 Caches that are not specified in the provided configuration will default to `infinispan-config.xml` (if the provided configuration uses clustering) or `infinispan-config-local.xml`.
 
@@ -415,9 +415,9 @@ Example:
 include::xml/hibernate_cache_properties.xml[]
 ----
 
-With the above configuration, you're overriding whatever eviction/expiration settings were defined for the default entity cache name in the {brandname} cache configuration used.
-This happens regardless of whether it's the default one or user defined.
-More specifically, we're defining the following:
+With the above configuration, you are overriding whatever eviction/expiration settings were defined for the default entity cache name in the {brandname} cache configuration used.
+This happens regardless of whether it is the default one or user defined.
+More specifically, the following is defined:
 
 * All entities to use LRU eviction strategy
 * The eviction thread to wake up every 2 seconds (2000 milliseconds)
@@ -426,7 +426,7 @@ More specifically, we're defining the following:
 * The maximum idle time for each entity instance to be 30 seconds (30000 milliseconds).
 
 You can also override eviction/expiration settings on a per entity/collection type basis.
-This allows overrides that only affects a particular entity (i.e. `com.acme.Person`) or collection type (i.e. `com.acme.Person.addresses`).
+This allows overrides that only affect a particular entity (such as `com.acme.Person`) or collection type (such as `com.acme.Person.addresses`).
 Example:
 
 [source,xml,options="nowrap",subs=attributes+]

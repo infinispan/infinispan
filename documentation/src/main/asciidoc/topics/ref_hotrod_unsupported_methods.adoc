@@ -4,7 +4,7 @@ The {brandname} `RemoteCache` API does not support all methods available in the
 `Cache` API and throws `UnsupportedOperationException` when unsupported methods
 are invoked.
 
-Most of these methods do not make sense on the remote cache (e.g. listener management operations), or correspond to methods that are not supported by local cache as well (e.g. containsValue).
+Most of these methods do not make sense on the remote cache (for example, listener management operations), or correspond to methods that are not supported by local cache as well (for example, containsValue).
 
 Certain atomic operations inherited from `ConcurrentMap` are also not supported
 with the `RemoteCache` API, for example:

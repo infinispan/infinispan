@@ -50,9 +50,9 @@ infinispan+logs://audit?lines=200
 
 *MIME Type*: text/plain
 
-*Description*: PRIMARY SOURCE OF INFORMATION FOR SERVER STATUS/WORKLOAD. Returns info about REST API usage patterns: request rates, errors (4xx/5xx), slow endpoints, client IPs. Useful also for security auditing, i.e. detecting DoS attacks or suspicious activity.
+*Description*: PRIMARY SOURCE OF INFORMATION FOR SERVER STATUS/WORKLOAD. Returns info about REST API usage patterns: request rates, errors (4xx/5xx), slow endpoints, client IPs. Useful also for security auditing, that is, detecting DoS attacks or suspicious activity.
 
-*Usage*: This resource provides access to the REST API access log, which records all HTTP requests to the {brandname} REST endpoint. Analyze this log to understand API usage patterns, identify performance bottlenecks, detect errors, and monitor client activity. It's also valuable for security auditing to detect denial-of-service attacks or unusual access patterns.
+*Usage*: This resource provides access to the REST API access log, which records all HTTP requests to the {brandname} REST endpoint. Analyze this log to understand API usage patterns, identify performance bottlenecks, detect errors, and monitor client activity. It is also valuable for security auditing to detect denial-of-service attacks or unusual access patterns.
 
 *Example URI*:
 [source]

@@ -1,12 +1,12 @@
 [id='quick_start']
 = {brandname} requirements
 
-It's easy to get started with {brandname}. All you need is Java, dependency
-management tooling, and either the {brandname} server or core libraries.
+Getting started with {brandname} is easy.
+All you need is Java, dependency management tooling, and either the {brandname} server or core libraries.
 
 == Software Requirements
 
-To run {brandname}, you'll need:
+To run {brandname}, you need:
 
 * Java {jdkminversion} JDK at a minimum.
 * Maven {mavenminversion} or later. {brandname} also works with Gradle and Ivy.

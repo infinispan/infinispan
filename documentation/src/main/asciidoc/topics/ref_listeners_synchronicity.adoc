@@ -5,7 +5,7 @@ By default, all async notifications are dispatched in the notification thread po
 Sync notifications will delay the operation from continuing until the listener method completes or the CompletionStage
 completes (the former causing the thread to block). Alternatively, you could annotate your listener as _asynchronous_ in
 which case the operation will continue immediately, while the notification is completed asynchronously on the notification thread pool.
-To do this, simply annotate your listener such:
+To do this, annotate your listener as follows:
 
 .Asynchronous Listener
 [source,java]
