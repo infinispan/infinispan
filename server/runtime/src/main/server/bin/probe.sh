@@ -16,3 +16,5 @@ eval "$JAVA" $JAVA_OPTS \
   -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
   -classpath "$ISPN_HOME"/boot/*:"$ISPN_HOME"/lib/*:"$ISPN_ROOT_DIR"/lib/* \
   "$MAIN_CLASS" "$ARGUMENTS"
+
+help
