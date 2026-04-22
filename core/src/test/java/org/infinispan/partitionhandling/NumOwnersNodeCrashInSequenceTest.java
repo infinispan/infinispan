@@ -3,6 +3,7 @@ package org.infinispan.partitionhandling;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.reset;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
@@ -180,6 +181,10 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       }
 
       log.debug("Changing partition availability mode back to AVAILABLE");
+      // Reset the spy so it doesn't interfere with the recovery rebalance.
+      // Under CI load, the StateSequencer advance calls in the spy can timeout,
+      // leaving the sequencer in a broken state that blocks recovery responses.
+      reset(spyRequests);
       cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, a0}, {a0, a1}, {a1, a0}});
       LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(a0), LocalTopologyManager.class);
       ltm.setCacheAvailability(TestingUtil.getDefaultCacheName(manager(a0)), AvailabilityMode.AVAILABLE);
