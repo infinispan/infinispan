@@ -49,6 +49,7 @@ while true; do
    if [ "$ISPN_STATUS" -eq 10 ]; then
       echo "Restarting Gossip Router..."
    else
+      help
       exit $ISPN_STATUS
    fi
 done
