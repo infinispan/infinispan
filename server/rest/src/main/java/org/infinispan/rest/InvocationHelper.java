@@ -25,7 +25,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @since 10.0
  */
 public class InvocationHelper {
-   private final ParserRegistry parserRegistry = new ParserRegistry();
+   private final ParserRegistry parserRegistry;
    private final RestCacheManager<Object> restCacheManager;
    private final RestServerConfiguration configuration;
    private final ServerManagement server;
@@ -38,6 +38,7 @@ public class InvocationHelper {
 
    public InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager,
                     RestServerConfiguration configuration, ServerManagement server, Executor executor) {
+      this.parserRegistry = new ParserRegistry(server.getClassLoader());
       this.protocolServer = protocolServer;
       this.restCacheManager = restCacheManager;
       this.configuration = configuration;
