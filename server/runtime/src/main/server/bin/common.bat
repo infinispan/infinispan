@@ -54,8 +54,13 @@ if %JAVA_VERSION% geq 25 (
    set "JAVA_OPTS=-XX:+UseCompactObjectHeaders %JAVA_OPTS%"
 )
 
+set HELP=false
 set DEBUG_MODE=false
 set DEBUG_PORT=8787
+set DEBUG_SUSPEND=n
+set DEBUG_SERVER=y
+set JMX_REMOTING=false
+set JMX_PORT=9999
 set "JAVA_OPTS_EXTRA="
 :ARGS_LOOP_START
 set "ARG=%~1"
@@ -71,6 +76,31 @@ if "%ARG%" == "" (
       set DEBUG_PORT=%2
       shift
    )
+) else if "%ARG%" == "--debug-suspend" (
+   set DEBUG_MODE=true
+   set DEBUG_SUSPEND=y
+) else if "%ARG%" == "--debug-client" (
+   set DEBUG_MODE=true
+   set DEBUG_SERVER=n
+) else if "%ARG%" == "--debug-server" (
+   set DEBUG_MODE=true
+   set DEBUG_SERVER=y
+) else if "%ARG%" == "--jmx" (
+   set JMX_REMOTING=true
+   if "%~2"=="" goto ARGS_LOOP_END
+   set "var="&for /f "delims=0123456789" %%i in ("%~2") do set var=%%i
+   if defined var (
+      rem Use the default port
+   ) else (
+      set JMX_PORT=%2
+      shift
+   )
+) else if "%ARG%" == "-h" (
+   set HELP=true
+   set "ARGUMENTS=%ARGUMENTS% %ARG%"
+) else if "%ARG%" == "--help" (
+   set HELP=true
+   set "ARGUMENTS=%ARGUMENTS% %ARG%"
 ) else if "%ARG:~0,2%"=="-D" (
    set "JAVA_OPTS_EXTRA=%JAVA_OPTS_EXTRA% %ARG%=%2"
    shift
@@ -90,9 +120,19 @@ rem Set debug settings if not already set
 if "%DEBUG_MODE%" == "true" (
    echo "%JAVA_OPTS%" | findstr /I "\-agentlib:jdwp" > nul
   if errorlevel == 1 (
-     set "PREPEND_JAVA_OPTS=JAVA_OPTS% -agentlib:jdwp=transport=dt_socket,address=%DEBUG_PORT%,server=y,suspend=n"
+     if "%JAVA_OPTS_DEBUG%" == "" set "JAVA_OPTS_DEBUG=-agentlib:jdwp=transport=dt_socket,address=%DEBUG_PORT%,server=%DEBUG_SERVER%,suspend=%DEBUG_SUSPEND%"
+     call set "JAVA_OPTS=%%JAVA_OPTS%% %%JAVA_OPTS_DEBUG%%"
   ) else (
      echo Debug already enabled in JAVA_OPTS, ignoring --debug argument
+  )
+)
+rem Enable JMX authenticator if needed
+if "%JMX_REMOTING%" == "true" (
+   echo "%JAVA_OPTS%" | findstr /I "\-Dcom.sun.management.jmxremote" > nul
+  if errorlevel == 1 (
+     set "JAVA_OPTS=%JAVA_OPTS% -Dcom.sun.management.jmxremote.port=%JMX_PORT% -Djava.security.auth.login.config=%DIRNAME%server-jaas.config -Dcom.sun.management.jmxremote.login.config=ServerJMXConfig -Dcom.sun.management.jmxremote.ssl=false"
+  ) else (
+     echo JMX already enabled in JAVA_OPTS, ignoring --jmx argument
   )
 )
 if "%GC_LOG%" == "true" (
