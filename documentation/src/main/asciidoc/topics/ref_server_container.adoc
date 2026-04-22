@@ -151,8 +151,9 @@ include::cmd_examples/server_docker_jvm_properties.adoc[]
 include::cmd_examples/server_podman_jvm_properties.adoc[]
 ----
 
-NOTE: Using `JAVA_OPTIONS` will append the options to those determined by the server launch script, such as those that configure
-the JVM memory sizing. You can completely override these options by setting the `JAVA_OPTS` env variable.
+NOTE: Using `JAVA_OPTIONS` appends options to those determined by the server launch script.
+You can override specific categories of JVM settings by setting `JAVA_OPTS_BASE`, `JAVA_OPTS_NETWORK`, or `JAVA_OPTS_MEMORY`.
+Setting `JAVA_OPTS` completely overrides all default JVM settings.
 
 === Deploying artifacts to the server lib directory
 Deploy artifacts to the server lib directory using the `SERVER_LIBS` env variable.
