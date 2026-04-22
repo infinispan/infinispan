@@ -799,6 +799,11 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    }
 
    @Override
+   public ClassLoader getClassLoader() {
+      return classLoader;
+   }
+
+   @Override
    public CompletionStage<Void> flushSecurityCaches() {
       return SecurityActions.getClusterExecutor(cacheManager)
             .submitConsumer(ecm -> {

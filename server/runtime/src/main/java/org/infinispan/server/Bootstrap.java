@@ -203,7 +203,7 @@ public class Bootstrap extends Main {
    }
 
    private void configureClasspath() {
-      ClassLoader serverClassLoader = null;
+      ClassLoader serverClassLoader = Thread.currentThread().getContextClassLoader();
       String lib = properties.getProperty(Loader.INFINISPAN_SERVER_LIB_PATH);
       if (lib != null) {
          for (String item : lib.split(File.pathSeparator)) {

@@ -202,6 +202,7 @@
                                 <code_tutorials>${infinispan.tutorials}</code_tutorials>
                                 <imagesdir>../../topics/images</imagesdir>
                                 <postgresqlversion>${postgresql.database.version}</postgresqlversion>
+                                <rocksdbversion>${version.rocksdb}</rocksdbversion>
                                 <source-highlighter>highlight.js</source-highlighter>
                                 <highlightjs-theme>github</highlightjs-theme>
                             </attributes>
@@ -276,6 +277,7 @@
                                         <code_tutorials>${infinispan.tutorials}</code_tutorials>
                                         <imagesdir>../../topics/images</imagesdir>
                                         <postgresqlversion>${postgresql.database.version}</postgresqlversion>
+                                        <rocksdbversion>${version.rocksdb}</rocksdbversion>
                                         <source-highlighter>pygments</source-highlighter>
                                     </attributes>
                                 </configuration>
