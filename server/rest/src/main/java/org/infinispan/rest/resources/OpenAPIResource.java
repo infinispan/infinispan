@@ -240,6 +240,11 @@ public class OpenAPIResource implements ResourceHandler {
             public Json securityOverviewReport() {
                return null;
             }
+
+            @Override
+            public ClassLoader getClassLoader() {
+               return Thread.currentThread().getContextClassLoader();
+            }
          }, null);
          ResourceManager resourceManager = new ResourceManagerImpl();
          OpenAPIResource openAPIResource = new OpenAPIResource(invocationHelper, resourceManager.registry());
