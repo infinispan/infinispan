@@ -32,6 +32,7 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -61,40 +62,22 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       configBuilder.clustering().hash().numSegments(4).stateTransfer().timeout(30000);
    }
 
-   public void testNodeCrashedBeforeStFinished0() throws Exception {
-      testNodeCrashedBeforeStFinished(0, 1, 2, 3);
+   @DataProvider(name = "nodePermutations")
+   public Object[][] nodePermutations() {
+      return new Object[][] {
+            {0, 1, 2, 3},
+            {0, 2, 1, 3},
+            {0, 3, 1, 2},
+            {1, 2, 0, 3},
+            {1, 3, 0, 2},
+            {2, 3, 0, 1},
+            {1, 2, 3, 0},
+            {2, 3, 1, 0},
+      };
    }
 
-   public void testNodeCrashedBeforeStFinished1() throws Exception {
-      testNodeCrashedBeforeStFinished(0, 2, 1, 3);
-   }
-
-   public void testNodeCrashedBeforeStFinished2() throws Exception {
-      testNodeCrashedBeforeStFinished(0, 3, 1, 2);
-   }
-
-   public void testNodeCrashedBeforeStFinished3() throws Exception {
-      testNodeCrashedBeforeStFinished(1, 2, 0, 3);
-   }
-
-   public void testNodeCrashedBeforeStFinished4() throws Exception {
-      testNodeCrashedBeforeStFinished(1, 3, 0, 2);
-   }
-
-   public void testNodeCrashedBeforeStFinished5() throws Exception {
-      testNodeCrashedBeforeStFinished(2, 3, 0, 1);
-   }
-
-   public void testNodeCrashedBeforeStFinished6() throws Exception {
-      testNodeCrashedBeforeStFinished(1, 2, 3, 0);
-   }
-
-   public void testNodeCrashedBeforeStFinished7() throws Exception {
-      testNodeCrashedBeforeStFinished(2, 3, 1, 0);
-   }
-
-
-   private void testNodeCrashedBeforeStFinished(final int a0, final int a1, final int c0, final int c1) throws Exception {
+   @Test(dataProvider = "nodePermutations")
+   public void testNodeCrashedBeforeStFinished(final int a0, final int a1, final int c0, final int c1) throws Exception {
 
       cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, c0}, {c0, c1}, {c1, a0}});
       configBuilder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(cchf);
