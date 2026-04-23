@@ -85,6 +85,16 @@ public class Bookmark extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         // Aesh sets unspecified options to empty string, normalize to null
+         url = emptyToNull(url);
+         username = emptyToNull(username);
+         password = emptyToNull(password);
+         truststore = emptyToNull(truststore);
+         truststorePassword = emptyToNull(truststorePassword);
+         keystore = emptyToNull(keystore);
+         keystorePassword = emptyToNull(keystorePassword);
+         hostnameVerifier = emptyToNull(hostnameVerifier);
+
          // Infer values from the current connection if not explicitly provided
          if (invocation.getContext().isConnected()) {
             Connection connection = invocation.getContext().connection();
@@ -378,6 +388,10 @@ public class Bookmark extends CliCommand {
       }
    }
 
+   private static String emptyToNull(String value) {
+      return value == null || value.isEmpty() ? null : value;
+   }
+
    private static void storeSecret(KeyStoreCredentialStore store, String bookmarkName, String secretKey, String value)
          throws CredentialStoreException {
       if (value != null) {
@@ -437,5 +451,53 @@ public class Bookmark extends CliCommand {
          return new String(credential.getPassword().castAndApply(ClearPassword.class, ClearPassword::getPassword));
       }
       return null;
+   }
+
+   /**
+    * Resolves a bookmark without interactive prompts. Tries empty master password first,
+    * then the {@code ISPN_BOOKMARK_PASSWORD} environment variable. Returns null if the
+    * bookmark does not exist. Throws if the credential store requires a master password
+    * that is not available.
+    */
+   public static ResolvedBookmark resolveNonInteractive(Path configPath, String bookmarkName) throws CredentialStoreException, IOException {
+      Path bookmarksFile = configPath.resolve(BOOKMARKS_FILE);
+      Properties bookmarks = new Properties();
+      if (Files.exists(bookmarksFile)) {
+         try (Reader r = Files.newBufferedReader(bookmarksFile)) {
+            bookmarks.load(r);
+         }
+      }
+      String url = bookmarks.getProperty(bookmarkName + ".url");
+      if (url == null) {
+         return null;
+      }
+      String username = bookmarks.getProperty(bookmarkName + ".username");
+      String truststore = bookmarks.getProperty(bookmarkName + ".truststore");
+      String keystore = bookmarks.getProperty(bookmarkName + ".keystore");
+      boolean trustAll = Boolean.parseBoolean(bookmarks.getProperty(bookmarkName + ".trustall"));
+      String hostnameVerifier = bookmarks.getProperty(bookmarkName + ".hostname-verifier");
+
+      String password = null;
+      String truststorePassword = null;
+      String keystorePassword = null;
+      Path storePath = configPath.resolve(CREDENTIAL_STORE_FILE);
+      if (Files.exists(storePath)) {
+         KeyStoreCredentialStore store;
+         try {
+            store = Credentials.getKeyStoreCredentialStore(storePath, Credentials.STORE_TYPE, false, new char[0]);
+         } catch (CredentialStoreException e) {
+            String envPassword = System.getenv("ISPN_BOOKMARK_PASSWORD");
+            if (envPassword != null) {
+               store = Credentials.getKeyStoreCredentialStore(storePath, Credentials.STORE_TYPE, false, envPassword.toCharArray());
+            } else {
+               throw e;
+            }
+         }
+         password = retrieveSecret(store, bookmarkName, "password");
+         truststorePassword = retrieveSecret(store, bookmarkName, "truststore-password");
+         keystorePassword = retrieveSecret(store, bookmarkName, "keystore-password");
+      }
+
+      return new ResolvedBookmark(url, username, password, truststore, truststorePassword, keystore, keystorePassword, trustAll, hostnameVerifier);
    }
 }

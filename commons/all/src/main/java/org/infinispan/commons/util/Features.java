@@ -48,9 +48,20 @@ public class Features {
       String name = FEATURE_PREFIX + featureName;
       String sysprop = System.getProperty(name);
       if (sysprop != null) {
-         return Boolean.parseBoolean(sysprop);
-      } else {
-         return Boolean.parseBoolean(features.getProperty(name, "true"));
+         boolean available = Boolean.parseBoolean(sysprop);
+         if (available) {
+            log.featureEnabled(featureName);
+         }
+         return available;
       }
+      String prop = features.getProperty(name);
+      if (prop != null) {
+         boolean available = Boolean.parseBoolean(prop);
+         if (available) {
+            log.featureEnabled(featureName);
+         }
+         return available;
+      }
+      return true;
    }
 }

@@ -5,9 +5,10 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOS
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -16,13 +17,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.counter.api.WeakCounter;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.counter.api.CounterConfiguration;
+import org.infinispan.counter.api.CounterType;
+import org.infinispan.counter.api.Storage;
+import org.infinispan.counter.impl.manager.InternalCounterAdmin;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.EventStream;
@@ -205,9 +213,32 @@ public class McpServerResource implements ResourceHandler {
                                     McpType.STRING,
                                     "The name of the cache",
                                     true
+                              ),
+                              new McpProperty(
+                                    "configuration",
+                                    McpType.STRING,
+                                    "The cache configuration in JSON format. If not provided, a default distributed synchronous cache with protostream encoding will be created.",
+                                    false
                               )
                         ),
                         this::createCache
+                  )
+            ),
+            entry(
+                  "deleteCache",
+                  new McpTool(
+                        "deleteCache",
+                        "Runtime data modification: deletes a cache",
+                        new McpInputSchema(
+                              McpType.OBJECT,
+                              new McpProperty(
+                                    CACHE_NAME,
+                                    McpType.STRING,
+                                    "The name of the cache to delete",
+                                    true
+                              )
+                        ),
+                        this::deleteCache
                   )
             ),
             entry(
@@ -228,6 +259,12 @@ public class McpServerResource implements ResourceHandler {
                                     McpType.STRING,
                                     "The key of the entry",
                                     true
+                              ),
+                              new McpProperty(
+                                    "mediaType",
+                                    McpType.STRING,
+                                    "The media type for the value (e.g. text/plain, application/json). Defaults to text/plain",
+                                    false
                               )
                         ),
                         this::getCacheValue
@@ -269,9 +306,50 @@ public class McpServerResource implements ResourceHandler {
                                     McpType.NUMBER,
                                     "The maximum idle time of the entry in milliseconds",
                                     false
+                              ),
+                              new McpProperty(
+                                    "mediaType",
+                                    McpType.STRING,
+                                    "The media type for the value (e.g. text/plain, application/json). Defaults to text/plain",
+                                    false
                               )
                         ),
                         this::setCacheValue
+                  )
+            ),
+            entry(
+                  "setCacheEntries",
+                  new McpTool(
+                        "setCacheEntries",
+                        "Runtime data modification: inserts/updates multiple entries in a cache in a single operation",
+                        new McpInputSchema(
+                              McpType.OBJECT,
+                              new McpProperty(
+                                    CACHE_NAME,
+                                    McpType.STRING,
+                                    "The name of the cache",
+                                    true
+                              ),
+                              new McpProperty(
+                                    "entries",
+                                    McpType.STRING,
+                                    "A JSON array of entry objects, each with 'key' (string), 'value' (string), and optionally 'mediaType' (string, defaults to text/plain). Example: [{\"key\":\"k1\",\"value\":\"v1\"},{\"key\":\"k2\",\"value\":\"{}\",\"mediaType\":\"application/json\"}]",
+                                    true
+                              ),
+                              new McpProperty(
+                                    "lifespan",
+                                    McpType.NUMBER,
+                                    "The lifespan of all entries in milliseconds",
+                                    false
+                              ),
+                              new McpProperty(
+                                    "maxIdle",
+                                    McpType.NUMBER,
+                                    "The maximum idle time of all entries in milliseconds",
+                                    false
+                              )
+                        ),
+                        this::setCacheValues
                   )
             ),
             entry(
@@ -327,6 +405,128 @@ public class McpServerResource implements ResourceHandler {
                         "Runtime data inventory: retrieves all the available schemas. For server status/health, use log resources instead.",
                         new McpInputSchema(McpType.OBJECT),
                         this::getSchemas
+                  )
+            ),
+            entry(
+                  "registerSchema",
+                  new McpTool(
+                        "registerSchema",
+                        "Runtime data modification: registers or updates a Protobuf schema",
+                        new McpInputSchema(
+                              McpType.OBJECT,
+                              new McpProperty(
+                                    "schemaName",
+                                    McpType.STRING,
+                                    "The schema name (e.g. person.proto)",
+                                    true
+                              ),
+                              new McpProperty(
+                                    "schema",
+                                    McpType.STRING,
+                                    "The Protobuf schema content",
+                                    true
+                              )
+                        ),
+                        this::registerSchema
+                  )
+            ),
+            entry(
+                  "getCacheConfiguration",
+                  new McpTool(
+                        "getCacheConfiguration",
+                        "Runtime data retrieval: retrieves the configuration of a cache in JSON format",
+                        new McpInputSchema(
+                              McpType.OBJECT,
+                              new McpProperty(
+                                    CACHE_NAME,
+                                    McpType.STRING,
+                                    "The name of the cache",
+                                    true
+                              )
+                        ),
+                        this::getCacheConfiguration
+                  )
+            ),
+            entry(
+                  "getCacheStats",
+                  new McpTool(
+                        "getCacheStats",
+                        "Runtime data retrieval: retrieves statistics for a cache (hits, misses, evictions, stores, timings, memory usage)",
+                        new McpInputSchema(
+                              McpType.OBJECT,
+                              new McpProperty(
+                                    CACHE_NAME,
+                                    McpType.STRING,
+                                    "The name of the cache",
+                                    true
+                              )
+                        ),
+                        this::getCacheStats
+                  )
+            ),
+            entry(
+                  "getClusterInfo",
+                  new McpTool(
+                        "getClusterInfo",
+                        "Runtime data retrieval: retrieves cluster information including members, coordinator, status, rebalancing state, and sites",
+                        new McpInputSchema(McpType.OBJECT),
+                        this::getClusterInfo
+                  )
+            ),
+            entry(
+                  "getServerConfiguration",
+                  new McpTool(
+                        "getServerConfiguration",
+                        "Runtime data retrieval: retrieves the full server configuration including endpoints, security, threading, JGroups, and cache container settings",
+                        new McpInputSchema(McpType.OBJECT),
+                        this::getServerConfiguration
+                  )
+            ),
+            entry(
+                  "createCounter",
+                  new McpTool(
+                        "createCounter",
+                        "Runtime data modification: creates a counter. Types: WEAK (fast, eventual consistency), UNBOUNDED_STRONG (precise, no bounds), BOUNDED_STRONG (precise, with upper/lower bounds)",
+                        new McpInputSchema(
+                              McpType.OBJECT,
+                              new McpProperty(
+                                    COUNTER_NAME,
+                                    McpType.STRING,
+                                    "The name of the counter",
+                                    true
+                              ),
+                              new McpProperty(
+                                    "type",
+                                    McpType.STRING,
+                                    "The counter type: WEAK, UNBOUNDED_STRONG, or BOUNDED_STRONG",
+                                    true
+                              ),
+                              new McpProperty(
+                                    "initialValue",
+                                    McpType.NUMBER,
+                                    "The initial value (default 0)",
+                                    false
+                              ),
+                              new McpProperty(
+                                    "storage",
+                                    McpType.STRING,
+                                    "The storage mode: VOLATILE (default, lost on restart) or PERSISTENT (survives restart)",
+                                    false
+                              ),
+                              new McpProperty(
+                                    "upperBound",
+                                    McpType.NUMBER,
+                                    "The upper bound (inclusive). Only for BOUNDED_STRONG counters",
+                                    false
+                              ),
+                              new McpProperty(
+                                    "lowerBound",
+                                    McpType.NUMBER,
+                                    "The lower bound (inclusive). Only for BOUNDED_STRONG counters",
+                                    false
+                              )
+                        ),
+                        this::createCounter
                   )
             ),
             entry(
@@ -388,6 +588,41 @@ public class McpServerResource implements ResourceHandler {
                         ),
                         this::decrementCounter
                   )
+            ),
+            entry(
+                  "getJvmMemory",
+                  new McpTool(
+                        "getJvmMemory",
+                        "JVM diagnostics: retrieves heap/non-heap memory usage, garbage collector stats, and memory pool details",
+                        new McpInputSchema(McpType.OBJECT),
+                        this::getJvmMemory
+                  )
+            ),
+            entry(
+                  "getJvmThreads",
+                  new McpTool(
+                        "getJvmThreads",
+                        "JVM diagnostics: retrieves thread counts, peak threads, deadlock detection, and optionally a full thread dump",
+                        new McpInputSchema(
+                              McpType.OBJECT,
+                              new McpProperty(
+                                    "threadDump",
+                                    McpType.BOOLEAN,
+                                    "Whether to include a full thread dump (default false, can be large)",
+                                    false
+                              )
+                        ),
+                        this::getJvmThreads
+                  )
+            ),
+            entry(
+                  "getJvmInfo",
+                  new McpTool(
+                        "getJvmInfo",
+                        "JVM diagnostics: retrieves JVM version, uptime, input arguments, available processors, and OS info",
+                        new McpInputSchema(McpType.OBJECT),
+                        this::getJvmInfo
+                  )
             )
       );
    }
@@ -396,6 +631,7 @@ public class McpServerResource implements ResourceHandler {
    public Invocations getInvocations() {
       return new Invocations.Builder("mcp", "Model Context Protocol")
             .invocation().methods(GET, POST).path("/v3/mcp")
+            .request("JSON-RPC 2.0 request", false, java.util.Map.of(MediaType.APPLICATION_JSON, org.infinispan.rest.framework.openapi.Schema.NONE))
             .handleWith(this::mcp)
             .create();
    }
@@ -405,9 +641,178 @@ public class McpServerResource implements ResourceHandler {
       return CompletableFuture.supplyAsync(() -> {
          Json schemas = Json.array();
          for (Map.Entry<Object, Object> entry : cache.entrySet()) {
-            schemas.add(Json.object().set("name", entry.getKey()).set("schema", entry.getValue()));
+            String name = entry.getKey().toString();
+            if (!name.endsWith(".errors")) {
+               schemas.add(Json.object().set("name", name).set("schema", entry.getValue()));
+            }
          }
-         return schemas;
+         return Json.array(textResult(schemas.toString()));
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<Json> registerSchema(RestRequest request, Json args) {
+      String schemaName = args.at("schemaName").asString();
+      if (!schemaName.endsWith(".proto")) {
+         schemaName = schemaName + ".proto";
+      }
+      String schema = args.at("schema").asString();
+      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
+            .getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);
+      String finalSchemaName = schemaName;
+      return cache.putAsync(schemaName, schema)
+            .thenCompose(__ -> cache.getAsync(finalSchemaName + ".errors"))
+            .thenApply(errors -> {
+               if (errors != null && !((String) errors).isEmpty()) {
+                  return Json.array(textResult("Schema '" + finalSchemaName + "' registered with errors: " + errors));
+               }
+               return Json.array(textResult("Schema '" + finalSchemaName + "' registered successfully"));
+            });
+   }
+
+   private CompletionStage<Json> getCacheConfiguration(RestRequest request, Json args) {
+      String cacheName = args.at(CACHE_NAME).asString();
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      if (!cacheManager.getCacheConfigurationNames().contains(cacheName)) {
+         return CompletableFuture.completedFuture(Json.array(textResult("Cache not found: " + cacheName)));
+      }
+      return CompletableFuture.supplyAsync(() -> {
+         EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
+         Configuration config = SecurityActions.getCacheConfiguration(subjectCacheManager, cacheName);
+         ByteArrayOutputStream entity = new ByteArrayOutputStream();
+         try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(MediaType.APPLICATION_JSON).prettyPrint(true).build()) {
+            invocationHelper.getParserRegistry().serialize(writer, cacheName, config);
+         } catch (Exception e) {
+            return Json.array(textResult("Error serializing configuration: " + e.getMessage()));
+         }
+         return Json.array(textResult(entity.toString(StandardCharsets.UTF_8)));
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<Json> getCacheStats(RestRequest request, Json args) {
+      String cacheName = args.at(CACHE_NAME).asString();
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      return CompletableFuture.supplyAsync(() -> {
+         Json stats = cache.getAdvancedCache().getStats().toJson();
+         return Json.array(textResult(stats.toString()));
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<Json> getClusterInfo(RestRequest request, Json args) {
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      Json info = cacheManager.getCacheManagerInfo().toJson();
+      return CompletableFuture.completedFuture(Json.array(textResult(info.toString())));
+   }
+
+   private CompletionStage<Json> getServerConfiguration(RestRequest request, Json args) {
+      return CompletableFuture.supplyAsync(() -> {
+         EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+         org.infinispan.configuration.global.GlobalConfiguration globalConfiguration =
+               SecurityActions.getCacheManagerConfiguration(cacheManager);
+         try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (ConfigurationWriter writer = ConfigurationWriter.to(baos).withType(MediaType.APPLICATION_JSON).prettyPrint(true).build()) {
+               invocationHelper.getParserRegistry().serialize(writer, globalConfiguration, java.util.Collections.emptyMap());
+            }
+            return Json.array(textResult(baos.toString(StandardCharsets.UTF_8)));
+         } catch (Exception e) {
+            return Json.array(textResult("Error serializing server configuration: " + e.getMessage()));
+         }
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<Json> getJvmMemory(RestRequest request, Json args) {
+      return CompletableFuture.supplyAsync(() -> {
+         Json result = Json.object();
+         java.lang.management.MemoryMXBean memoryBean = java.lang.management.ManagementFactory.getMemoryMXBean();
+         java.lang.management.MemoryUsage heap = memoryBean.getHeapMemoryUsage();
+         result.set("heap", Json.object()
+               .set("used_mb", heap.getUsed() / (1024 * 1024))
+               .set("committed_mb", heap.getCommitted() / (1024 * 1024))
+               .set("max_mb", heap.getMax() / (1024 * 1024))
+               .set("used_percent", heap.getMax() > 0 ? (heap.getUsed() * 100) / heap.getMax() : -1));
+         java.lang.management.MemoryUsage nonHeap = memoryBean.getNonHeapMemoryUsage();
+         result.set("non_heap", Json.object()
+               .set("used_mb", nonHeap.getUsed() / (1024 * 1024))
+               .set("committed_mb", nonHeap.getCommitted() / (1024 * 1024)));
+         Json gcArray = Json.array();
+         for (java.lang.management.GarbageCollectorMXBean gc : java.lang.management.ManagementFactory.getGarbageCollectorMXBeans()) {
+            gcArray.add(Json.object()
+                  .set("name", gc.getName())
+                  .set("collection_count", gc.getCollectionCount())
+                  .set("collection_time_ms", gc.getCollectionTime()));
+         }
+         result.set("garbage_collectors", gcArray);
+         Json pools = Json.array();
+         for (java.lang.management.MemoryPoolMXBean pool : java.lang.management.ManagementFactory.getMemoryPoolMXBeans()) {
+            java.lang.management.MemoryUsage usage = pool.getUsage();
+            if (usage != null) {
+               pools.add(Json.object()
+                     .set("name", pool.getName())
+                     .set("type", pool.getType().name())
+                     .set("used_mb", usage.getUsed() / (1024 * 1024))
+                     .set("max_mb", usage.getMax() / (1024 * 1024)));
+            }
+         }
+         result.set("memory_pools", pools);
+         return Json.array(textResult(result.toString()));
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<Json> getJvmThreads(RestRequest request, Json args) {
+      return CompletableFuture.supplyAsync(() -> {
+         java.lang.management.ThreadMXBean threadBean = java.lang.management.ManagementFactory.getThreadMXBean();
+         Json result = Json.object()
+               .set("thread_count", threadBean.getThreadCount())
+               .set("peak_thread_count", threadBean.getPeakThreadCount())
+               .set("daemon_thread_count", threadBean.getDaemonThreadCount())
+               .set("total_started_thread_count", threadBean.getTotalStartedThreadCount());
+         long[] deadlocked = threadBean.findDeadlockedThreads();
+         result.set("deadlocked_threads", deadlocked != null ? deadlocked.length : 0);
+         if (deadlocked != null) {
+            Json deadlockInfo = Json.array();
+            for (java.lang.management.ThreadInfo ti : threadBean.getThreadInfo(deadlocked, true, true)) {
+               if (ti != null) {
+                  deadlockInfo.add(Json.object()
+                        .set("name", ti.getThreadName())
+                        .set("state", ti.getThreadState().name())
+                        .set("lock_name", ti.getLockName())
+                        .set("lock_owner", ti.getLockOwnerName()));
+               }
+            }
+            result.set("deadlock_details", deadlockInfo);
+         }
+         boolean includeDump = args.has("threadDump") && args.at("threadDump").asBoolean();
+         if (includeDump) {
+            StringBuilder dump = new StringBuilder();
+            for (java.lang.management.ThreadInfo ti : threadBean.dumpAllThreads(true, true)) {
+               dump.append(ti.toString());
+            }
+            result.set("thread_dump", dump.toString());
+         }
+         return Json.array(textResult(result.toString()));
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<Json> getJvmInfo(RestRequest request, Json args) {
+      return CompletableFuture.supplyAsync(() -> {
+         Json result = Json.object();
+         java.lang.management.RuntimeMXBean runtime = java.lang.management.ManagementFactory.getRuntimeMXBean();
+         result.set("jvm_name", runtime.getVmName());
+         result.set("jvm_vendor", runtime.getVmVendor());
+         result.set("jvm_version", runtime.getVmVersion());
+         result.set("spec_version", runtime.getSpecVersion());
+         result.set("uptime_seconds", runtime.getUptime() / 1000);
+         result.set("start_time", runtime.getStartTime());
+         result.set("input_arguments", Json.make(runtime.getInputArguments()));
+         result.set("classpath", runtime.getClassPath());
+         java.lang.management.OperatingSystemMXBean os = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+         result.set("os", Json.object()
+               .set("name", os.getName())
+               .set("version", os.getVersion())
+               .set("arch", os.getArch())
+               .set("available_processors", os.getAvailableProcessors())
+               .set("system_load_average", os.getSystemLoadAverage()));
+         return Json.array(textResult(result.toString()));
       }, invocationHelper.getExecutor());
    }
 
@@ -759,7 +1164,8 @@ public class McpServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> mcpNotificationsInitialized(RestRequest request, Json json) {
-      return unimplemented(request, json, "notifications/initialized supported");
+      // Notifications have no id and expect no response body per the MCP spec
+      return CompletableFuture.completedFuture(invocationHelper.newResponse(request).build());
    }
 
    private CompletionStage<RestResponse> unimplemented(RestRequest request, Json json, String message) {
@@ -792,9 +1198,10 @@ public class McpServerResource implements ResourceHandler {
       Json arguments = params.at("arguments");
       Json response = rpcResponse(json);
       return mcpTool.callback().apply(request, arguments).handle((j, t) -> {
+         Json content = t != null ? Json.array(textResult(t.getMessage())) : j;
          response.set(McpConstants.RESULT, Json.object()
                .set("isError", t != null)
-               .set("content", j)
+               .set("content", content)
          );
          NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
          return builder.entity(response.toString()).contentType(MediaType.APPLICATION_JSON).status(HttpResponseStatus.OK).build();
@@ -809,10 +1216,30 @@ public class McpServerResource implements ResourceHandler {
    private CompletionStage<Json> createCache(RestRequest request, Json args) {
       String cacheName = args.at(CACHE_NAME).asString();
       EmbeddedCacheManagerAdmin admin = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC).encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE);
+      Json configJson = args.at("configuration");
+      Configuration configuration;
+      if (configJson != null && configJson.isString()) {
+         ConfigurationBuilderHolder holder = invocationHelper.getParserRegistry().parse(configJson.asString(), MediaType.APPLICATION_JSON);
+         ConfigurationBuilder cfgBuilder = holder.getCurrentConfigurationBuilder() != null
+               ? holder.getCurrentConfigurationBuilder()
+               : holder.getNamedConfigurationBuilders().values().iterator().next();
+         configuration = cfgBuilder.build(SecurityActions.getCacheManagerConfiguration(invocationHelper.getRestCacheManager().getInstance()));
+      } else {
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE);
+         configuration = builder.build();
+      }
       return CompletableFuture.supplyAsync(() -> {
-         admin.createCache(cacheName, builder.build());
+         admin.createCache(cacheName, configuration);
+         return Json.array();
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<Json> deleteCache(RestRequest request, Json args) {
+      String cacheName = args.at(CACHE_NAME).asString();
+      EmbeddedCacheManagerAdmin admin = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
+      return CompletableFuture.supplyAsync(() -> {
+         admin.removeCache(cacheName);
          return Json.array();
       }, invocationHelper.getExecutor());
    }
@@ -820,11 +1247,16 @@ public class McpServerResource implements ResourceHandler {
    private CompletionStage<Json> getCacheValue(RestRequest request, Json args) {
       String cacheName = args.at(CACHE_NAME).asString();
       String key = args.at("key").asString();
-      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      MediaType requestedMediaType = negotiateMediaType(cache, invocationHelper.getEncoderRegistry(), request);
+      MediaType requestedMediaType = args.has("mediaType")
+            ? MediaType.fromString(args.at("mediaType").asString())
+            : MediaType.TEXT_PLAIN;
       return invocationHelper.getRestCacheManager()
             .getInternalEntry(cacheName, key, MediaType.TEXT_PLAIN, requestedMediaType, request)
-            .thenApply(entry -> Json.array(textResult(entry.getValue().toString())));
+            .thenApply(entry -> {
+               Object value = entry.getValue();
+               String text = value instanceof byte[] bytes ? new String(bytes, StandardCharsets.UTF_8) : value.toString();
+               return Json.array(textResult(text));
+            });
    }
 
    private static Json textResult(String value) {
@@ -837,10 +1269,36 @@ public class McpServerResource implements ResourceHandler {
       String value = args.at("value").asString();
       Long lifespan = args.has("lifespan") ? args.at("lifespan").asLong() : null;
       Long maxidle = args.has("maxidle") ? args.at("maxidle").asLong() : null;
-      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, MediaType.TEXT_PLAIN, MediaType.TEXT_PLAIN, request);
+      MediaType valueMediaType = args.has("mediaType")
+            ? MediaType.fromString(args.at("mediaType").asString())
+            : MediaType.TEXT_PLAIN;
+      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, MediaType.TEXT_PLAIN, valueMediaType, request);
       Configuration config = SecurityActions.getCacheConfiguration(cache);
       final Metadata metadata = CacheOperationsHelper.createMetadata(config, lifespan, maxidle);
       return cache.putAsync(key, value, metadata).thenApply(__ -> Json.array());
+   }
+
+   private CompletionStage<Json> setCacheValues(RestRequest request, Json args) {
+      String cacheName = args.at(CACHE_NAME).asString();
+      Json entries = Json.read(args.at("entries").asString());
+      Long lifespan = args.has("lifespan") ? args.at("lifespan").asLong() : null;
+      Long maxidle = args.has("maxIdle") ? args.at("maxIdle").asLong() : null;
+      return CompletableFuture.supplyAsync(() -> {
+         int count = 0;
+         for (Json entry : entries.asJsonList()) {
+            String key = entry.at("key").asString();
+            String value = entry.at("value").asString();
+            MediaType valueMediaType = entry.has("mediaType")
+                  ? MediaType.fromString(entry.at("mediaType").asString())
+                  : MediaType.TEXT_PLAIN;
+            AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, MediaType.TEXT_PLAIN, valueMediaType, request);
+            Configuration config = SecurityActions.getCacheConfiguration(cache);
+            Metadata metadata = CacheOperationsHelper.createMetadata(config, lifespan, maxidle);
+            cache.put(key, value, metadata);
+            count++;
+         }
+         return Json.array(textResult("Successfully set " + count + " entries"));
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<Json> deleteCacheValue(RestRequest request, Json args) {
@@ -867,6 +1325,32 @@ public class McpServerResource implements ResourceHandler {
       }, invocationHelper.getExecutor());
    }
 
+   private CompletionStage<Json> createCounter(RestRequest request, Json args) {
+      String counterName = args.at(COUNTER_NAME).asString();
+      CounterType type = CounterType.valueOf(args.at("type").asString().toUpperCase());
+      CounterConfiguration.Builder builder = CounterConfiguration.builder(type);
+      if (args.has("initialValue")) {
+         builder.initialValue(args.at("initialValue").asLong());
+      }
+      if (args.has("storage")) {
+         builder.storage(Storage.valueOf(args.at("storage").asString().toUpperCase()));
+      }
+      if (args.has("upperBound")) {
+         builder.upperBound(args.at("upperBound").asLong());
+      }
+      if (args.has("lowerBound")) {
+         builder.lowerBound(args.at("lowerBound").asLong());
+      }
+      return invocationHelper.getCounterManager()
+            .defineCounterAsync(counterName, builder.build())
+            .thenApply(created -> {
+               if (created) {
+                  return Json.array(textResult("Counter '" + counterName + "' created successfully"));
+               }
+               return Json.array(textResult("Counter '" + counterName + "' already exists"));
+            });
+   }
+
    private CompletionStage<Json> getCounterNames(RestRequest request, Json args) {
       Collection<String> counterNames = invocationHelper.getCounterManager().getCounterNames();
       return CompletableFuture.completedFuture(Json.array(textResult(Json.make(counterNames).toString())));
@@ -874,23 +1358,33 @@ public class McpServerResource implements ResourceHandler {
 
    private CompletionStage<Json> getCounter(RestRequest request, Json args) {
       String counterName = args.at(COUNTER_NAME).asString();
-      return invocationHelper.getCounterManager().getWeakCounterAsync(counterName)
-            .thenApply(WeakCounter::getValue)
+      return invocationHelper.getCounterManager().getOrCreateAsync(counterName)
+            .thenCompose(InternalCounterAdmin::value)
             .thenApply(v -> Json.array(textResult(v.toString())));
    }
 
    private CompletionStage<Json> incrementCounter(RestRequest request, Json args) {
       String counterName = args.at(COUNTER_NAME).asString();
-      return invocationHelper.getCounterManager().getWeakCounterAsync(counterName)
-            .thenApply(WeakCounter::increment)
-            .thenApply(__ -> Json.array());
+      return invocationHelper.getCounterManager().getOrCreateAsync(counterName)
+            .thenCompose(counter -> {
+               if (counter.isWeakCounter()) {
+                  return counter.asWeakCounter().increment().thenApply(__ -> Json.array());
+               }
+               return counter.asStrongCounter().incrementAndGet()
+                     .thenApply(v -> Json.array(textResult(v.toString())));
+            });
    }
 
    private CompletionStage<Json> decrementCounter(RestRequest request, Json args) {
       String counterName = args.at(COUNTER_NAME).asString();
-      return invocationHelper.getCounterManager().getWeakCounterAsync(counterName)
-            .thenApply(WeakCounter::decrement)
-            .thenApply(__ -> Json.array());
+      return invocationHelper.getCounterManager().getOrCreateAsync(counterName)
+            .thenCompose(counter -> {
+               if (counter.isWeakCounter()) {
+                  return counter.asWeakCounter().decrement().thenApply(__ -> Json.array());
+               }
+               return counter.asStrongCounter().decrementAndGet()
+                     .thenApply(v -> Json.array(textResult(v.toString())));
+            });
    }
 
    /**
@@ -1013,7 +1507,7 @@ public class McpServerResource implements ResourceHandler {
             for (int i = bytesToRead - 1; i >= 0; i--) {
                char c = (char) buffer[i];
                if (c == '\n') {
-                  if (currentLine.length() > 0) {
+                  if (!currentLine.isEmpty()) {
                      lines.add(currentLine.reverse().toString());
                      currentLine = new StringBuilder();
                      if (lines.size() >= maxLines) {
@@ -1028,7 +1522,7 @@ public class McpServerResource implements ResourceHandler {
          }
 
          // Add any remaining content as the first line
-         if (currentLine.length() > 0 && lines.size() < maxLines) {
+         if (!currentLine.isEmpty() && lines.size() < maxLines) {
             lines.add(currentLine.reverse().toString());
          }
       }

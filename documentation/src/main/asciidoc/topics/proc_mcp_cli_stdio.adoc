@@ -1,0 +1,123 @@
+= Using the CLI as an MCP stdio transport bridge
+
+[WARNING]
+====
+The MCP feature is *experimental* and must be explicitly enabled.
+Start {brandname} Server with `-Dorg.infinispan.feature.mcp=true` before using the CLI MCP bridge.
+====
+
+The {brandname} CLI provides a stdio transport bridge that allows MCP clients to communicate with a running {brandname} server.
+The bridge reads JSON-RPC messages from standard input, forwards them to the server's MCP endpoint, and writes responses to standard output.
+
+This is the recommended way to connect local MCP clients, such as link:https://claude.ai/download[Claude Desktop], link:https://claude.com/claude-code[Claude Code], link:https://cursor.com[Cursor], or link:https://github.com/features/copilot[GitHub Copilot], to an {brandname} server.
+
+== Prerequisites
+
+* A running {brandname} server with the MCP feature enabled (see <<mcp_server>>).
+* The {brandname} CLI installed and available on your system.
+
+== CLI command
+
+The `mcp` command starts the stdio transport bridge.
+You can specify the server connection as a URL, a bookmark name, or the special value `local` which connects to `http://localhost:11222` without authentication.
+
+.Syntax
+[source,bash,options="nowrap",subs=attributes+]
+----
+infinispan-cli mcp <server-url|bookmark|local>
+----
+
+.Connecting to a local server without authentication
+[source,bash,options="nowrap",subs=attributes+]
+----
+bin/infinispan-cli mcp local
+----
+
+.Connecting to a server with a URL
+[source,bash,options="nowrap",subs=attributes+]
+----
+bin/infinispan-cli mcp http://myuser:mypassword@myserver:11222
+----
+
+.Connecting using a saved bookmark
+[source,bash,options="nowrap",subs=attributes+]
+----
+bin/infinispan-cli mcp mybookmark
+----
+
+== Configuring MCP clients
+
+MCP clients that support the stdio transport can be configured to use the {brandname} CLI as a bridge.
+The client launches the CLI process and communicates with it through standard input and output.
+
+=== Claude Code
+
+Create a `.mcp.json` file in your project directory:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+  "mcpServers": {
+    "infinispan": {
+      "command": "/path/to/infinispan-server/bin/infinispan-cli",
+      "args": ["mcp", "local"]
+    }
+  }
+}
+----
+
+=== Claude Desktop
+
+Add the following to your Claude Desktop configuration file (`claude_desktop_config.json`):
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+  "mcpServers": {
+    "infinispan": {
+      "command": "/path/to/infinispan-server/bin/infinispan-cli",
+      "args": ["mcp", "local"]
+    }
+  }
+}
+----
+
+=== Cursor
+
+Add the following to your Cursor MCP configuration (`.cursor/mcp.json`):
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+  "mcpServers": {
+    "infinispan": {
+      "command": "/path/to/infinispan-server/bin/infinispan-cli",
+      "args": ["mcp", "local"]
+    }
+  }
+}
+----
+
+=== Other MCP clients
+
+Any MCP client that supports the stdio transport can use the {brandname} CLI bridge.
+Configure the client to launch the CLI with the `mcp` command and the appropriate connection argument.
+
+== Connecting to secured servers
+
+When connecting to a server that requires authentication, provide credentials in the connection URL:
+
+[source,bash,options="nowrap",subs=attributes+]
+----
+bin/infinispan-cli mcp http://admin:password@myserver:11222
+----
+
+Alternatively, create a bookmark with the `bookmark set` CLI command and reference it by name:
+
+[source,bash,options="nowrap",subs=attributes+]
+----
+bin/infinispan-cli bookmark set myserver --url http://myserver:11222 --username admin --password password
+bin/infinispan-cli mcp myserver
+----
+
+For servers with TLS, use the `--trustall` option or configure a truststore through a bookmark.
