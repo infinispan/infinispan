@@ -384,7 +384,7 @@ GetWithVersion response (0x12):
 +0x02+ = if key does not exist +
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Value Length        | vInt       | If success, length of value
 | Value               | byte array | If success, the requested value
 |==============================================================================
@@ -792,7 +792,7 @@ Length is defined by total body length.
 .Multi-Get Operations
 A multi-get operation is a form of get operation that instead of requesting a
 single key, requests a set of keys. The Hot Rod protocol does not include such
-operation but remote Hot Rod clients could easily implement this type of
+operation but remote Hot Rod clients could implement this type of
 operations by either parallelizing/pipelining individual get requests.
 Another possibility would be for remote clients to use async or non-blocking
 get requests. For example, if a client wants N keys, it could send send N
@@ -923,7 +923,7 @@ applied the CSA to it.
 
 Adding support for virtual nodes has made version +1.0+ of the Hot Rod protocol
 impractical due to bandwidth it would have taken to return hash codes for all
-virtual nodes in the clusters (this number could easily be in the millions).
+virtual nodes in the clusters (this number could be in the millions).
 So, as of version +1.1+ of the Hot Rod protocol, clients are given the base
 hash id or hash code of each server, and then they have to calculate the real
 hash position of each server both with and without virtual nodes configured.
@@ -944,8 +944,7 @@ public static int getNormalizedHash(int nodeBaseHashCode, Hash hashFct) {
 ----
 
 2\.  With _virtual nodes enabled_ : In this case, each node represents N
-different virtual nodes, and to calculate each virtual node's hash code, we
-need to take the the range of numbers between 0 and N-1 and apply the
+different virtual nodes, and to calculate each virtual node's hash code, take the range of numbers between 0 and N-1 and apply the
 following logic:
 
 * For virtual node with 0 as id, use the technique used to retrieve a node's
@@ -1039,7 +1038,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 `INFINITE_MAXIDLE` bit is not set.
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Value Length        | vInt       | If success, length of value
 | Value               | byte array | If success, the requested value
 |==============================================================================
@@ -1925,7 +1924,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 `INFINITE_MAXIDLE` bit is not set.
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Value Length        | vInt       | If success, length of value
 | Value               | byte array | If success, the requested value
 |==============================================================================
@@ -3304,7 +3303,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 `INFINITE_MAXIDLE` bit is not set.
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Value Length        | vInt       | If success, length of value
 | Value               | byte array | If success, the requested value
 |==============================================================================
@@ -3380,7 +3379,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 `INFINITE_MAXIDLE` bit is not set.
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Value Length        | vInt       | If success, length of value
 | Value               | byte array | If success, the requested value
 |==============================================================================
@@ -3478,7 +3477,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 `INFINITE_MAXIDLE` bit is not set.
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Entry Version       | 8 bytes    | Possible values +
 0 = Unconditional put +
 -1 = Put If Absent +

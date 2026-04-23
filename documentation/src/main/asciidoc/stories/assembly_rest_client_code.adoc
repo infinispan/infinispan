@@ -2,7 +2,7 @@
 :context: rest
 = REST Client Examples
 
-Part of the point of a RESTful service is that you don't need to have tightly coupled client libraries/bindings. All you need is a HTTP client library. For Java, Apache HTTP Commons Client works just fine (and is used in the integration tests), or you can use java.net API.
+Part of the point of a RESTful service is that you do not need to have tightly coupled client libraries/bindings. All you need is an HTTP client library. For Java, Apache HTTP Commons Client works fine (and is used in the integration tests), or you can use java.net API.
 
 include::{topics}/ref_rest_client_ruby.adoc[leveloffset=+1]
 include::{topics}/ref_rest_client_python.adoc[leveloffset=+1]

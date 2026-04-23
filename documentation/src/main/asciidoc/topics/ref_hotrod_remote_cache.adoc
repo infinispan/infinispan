@@ -40,7 +40,7 @@ try (CloseableIterator<Map.Entry<K, V>> iterator = remoteCache.entrySet().iterat
 *What if I want a deep copy and not a backing collection?*
 
 Previous version of `RemoteCache` allowed for the retrieval of a deep copy
-of the `keySet`. This is still possible with the new backing map, you just
+of the `keySet`. This is still possible with the new backing map, but you
 have to copy the contents yourself. Also you can do this with `entrySet` and
 `values`, which was not supported before.
 

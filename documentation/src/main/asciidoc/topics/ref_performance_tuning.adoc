@@ -16,7 +16,7 @@ In order to achieve the best performance, please follow the recommendations belo
 
 == Hints for program developers
 
-There are also several hints for developers which can be easily applied to the client application and will boost up the performance.
+There are also several hints for developers that can be applied to the client application and will boost the performance.
 
 [discrete]
 === Ignore return values

@@ -6,7 +6,7 @@
 [id="jvm-settings-for-server_{context}"]
 = JVM settings for {brandname}
 
-You can define Java Virtual Machine (JVM) settings for {brandname} either by editing the `server.conf` configuration file, or by setting the `JAVA_OPTS` and `JAVA_OPTIONS` environment variables. Set the `JAVA_OPTIONS` variable if you just want to append JVM settings to those that are automatically set by the
+You can define Java Virtual Machine (JVM) settings for {brandname} either by editing the `server.conf` configuration file, or by setting the `JAVA_OPTS` and `JAVA_OPTIONS` environment variables. Set the `JAVA_OPTIONS` variable if you want to append JVM settings to those that are automatically set by the
 `server.conf` file. Set the `JAVA_OPTS` variable if you want to completely override the JVM settings.
 
 [IMPORTANT]

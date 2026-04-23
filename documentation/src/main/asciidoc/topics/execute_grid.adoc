@@ -11,7 +11,7 @@ can be retrieved by calling +executor()+ on the `EmbeddedCacheManager`. This exe
 in both clustered and non clustered configurations.
 
 NOTE: The ClusterExecutor is specifically designed for executing code where the code is not reliant
-upon the data in a cache and is used instead as a way to help users to execute code easily
+upon the data in a cache and is used instead as a way to help users execute code
 in the cluster.
 
 This manager was built specifically around Java's streaming API, thus all methods take a functional

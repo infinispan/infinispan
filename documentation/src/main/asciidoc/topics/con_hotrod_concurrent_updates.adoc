@@ -15,7 +15,7 @@ Assume that the ATM thinks it has the latest balance and based on its calculatio
 
 image::server_modules_7.png[Concurrent updates]
 
-Obviously, this would be wrong.
+This would be wrong.
 Two concurrent updates have resulted in an incorrect account balance.
 The second update should not have been allowed since the balance the second ATM had was incorrect.
 Even if the ATM would have retrieved the balance before calculating the new balance, someone could have updated between the new balance being retrieved and the update.
@@ -28,7 +28,7 @@ If the ATM and the {brandname} instance storing the bank account lived in the sa
 image::server_modules_8.png[align="center", title="P2P solution"]
 
 === Client-Server Solution
-In theory, Hot Rod could use the same p2p solution but sending the previous value would be not practical.  In this example, the previous value is just an integer but the value could be a lot bigger and hence forcing clients to send it to the server would be rather wasteful.  Instead, Hot Rod offers versioned operations to deal with this situation.
+In theory, Hot Rod could use the same p2p solution but sending the previous value would not be practical.  In this example, the previous value is an integer but the value could be a lot bigger and hence forcing clients to send it to the server would be rather wasteful.  Instead, Hot Rod offers versioned operations to deal with this situation.
 
 Together with each key/value pair, Hot Rod stores a version number which uniquely identifies each modification.
 Using an operation called getVersioned or getWithVersion, clients can retrieve not only the value associated with a key, but also the current version.
@@ -36,6 +36,6 @@ Looking at the previous example once again, the ATMs could call getVersioned and
 
 image::server_modules_9.png[align="center", title="Get versioned"]
 
-When the ATMs wanted to modify the balance, instead of just calling put, they could call replaceIfUnmodified operation passing the latest version number of which the clients are aware of.  The operation will only succeed if the version passed matches the version in the server.  So, the first modification by the ATM would be allowed since the client passes 1 as version and the server side version for the balance is also 1.  On the other hand, the second ATM would not be able to make the modification because after the first ATMs modification the version would have been incremented to 2, and now the passed version (1) and the server side version (2) would not match:
+When the ATMs wanted to modify the balance, instead of calling put, they could call replaceIfUnmodified operation passing the latest version number of which the clients are aware of.  The operation will only succeed if the version passed matches the version in the server.  So, the first modification by the ATM would be allowed since the client passes 1 as version and the server side version for the balance is also 1.  On the other hand, the second ATM would not be able to make the modification because after the first ATMs modification the version would have been incremented to 2, and now the passed version (1) and the server side version (2) would not match:
 
 image::server_modules_10.png[align="center", title="Replace if versions match"]

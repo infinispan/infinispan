@@ -495,7 +495,7 @@ the link:../server/server.html#configuring-metrics_statistics-jmx[Configuring In
 {brandname} now distributes Jakarta EE based jars.
 This is in addition to the javax compatible jars.
 
-Some modules that have Jakarta based jars are the following (note there are quite a few more, just some prime examples)
+Some modules that have Jakarta based jars are the following (note there are quite a few more, these are some prime examples)
 
 * infinispan-commons
 * infinispan-core
@@ -859,7 +859,7 @@ Users should migrate to the ```/v2/caches/{cacheName}/search/stats``` endpoint. 
 * `MassIndexer`, `CacheQuery`, and `SearchManager` were deprecated and are now removed.
 
 * Indexed type names must be declared for all indexed caches, regardless of their storage format.
-  This requirement was introduced in 11 in a more lenient form and failing to comply just logged a warning.
+  This requirement was introduced in 11 in a more lenient form and failing to comply logged a warning.
   Starting with version 12 this results in a fatal error preventing the cache to start.
   Please update your configurations accordingly.
 
@@ -1314,7 +1314,7 @@ however users should not rely on this code as it could be removed in the future 
 The internal marshalling capabilities of {brandname} have undergone a significant refactoring in 10.0. The marshalling of
 internal {brandname} objects and user objects are now truly isolated. This means that it is now possible to configure
 link:../../apidocs/org/infinispan/commons/marshall/Marshaller.html[Marshaller] implementations in embedded mode or on the
-server, without having to handle the marshalling of {brandname} internal classes. Consequently, it is possible to easily
+server, without having to handle the marshalling of {brandname} internal classes. Consequently, it is possible to
 change the marshaller implementation, in a similar manner to how users of the HotRod client are accustomed.
 
 As a consequence of the above changes, the default marshaller used for marshalling user types is no longer based upon JBoss Marshalling. Instead
@@ -2007,7 +2007,7 @@ link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCache
 link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html[`Cache`]
 and
 link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/manager/CacheContainer.html[`CacheContainer`]
-classes respectively. What's important is that Hot Rod clients must now code
+classes respectively. The important thing is that Hot Rod clients must now code
 against `BasicCache` and `BasicCacheContainer` rather than `Cache` and `CacheContainer`.
 So previous code that was written like this will no longer compile.
 
@@ -2022,7 +2022,7 @@ CacheContainer cacheContainer = new RemoteCacheManager();
 Cache cache = cacheContainer.getCache();
 ----
 
-Instead, if Hot Rod clients want to continue using interfaces higher up the hierarchy from the remote cache/container classes, they'll have to write:
+Instead, if Hot Rod clients want to continue using interfaces higher up the hierarchy from the remote cache/container classes, they have to write:
 
 [source,java]
 .Correct.java
@@ -2112,7 +2112,7 @@ Configuration c2 = new ConfigurationBuilder()
 
 This completely replaces the old system of defining a set of overrides on bean properties. Note that this means the behaviour of Infinispan configuration is somewhat different when used programmatically. Whilst before, you could define a default configuration, and any overrides would be applied on top of _your_ defaults when defined, now you must explicitly read in your defaults to the builder. This allows for much greater flexibility in your code (you can have a as many "default" configurations as you want), and makes your code more explicit and type safe (finding references works).
 
-The schema is unchanged from before. Infinispan 4.0 configurations are currently not being parsed. To upgrade, just change the schema definition from:
+The schema is unchanged from before. Infinispan 4.0 configurations are currently not being parsed. To upgrade, change the schema definition from:
 
 [source,xml]
 ----

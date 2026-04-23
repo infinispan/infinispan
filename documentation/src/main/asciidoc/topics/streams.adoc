@@ -7,7 +7,7 @@ very similar but utilizes the standard JRE APIs to do so.
 Java 8 introduced the concept of a link:{jdkdocroot}/java/util/stream/Stream.html[Stream],
 which allows functional-style operations on collections rather than having to procedurally
 iterate over the data yourself. Stream operations can be implemented in a fashion very
-similar to MapReduce. Streams, just like MapReduce allow you to perform processing
+similar to MapReduce. Streams, like MapReduce, allow you to perform processing
 upon the entirety of your cache, possibly a very large data set, but in an efficient way.
 
 [NOTE]
@@ -60,7 +60,7 @@ method on the `CacheStream`.  This is applied after the key filter but before an
 
 == Local/Invalidation
 
-A stream used with a local or invalidation cache can be used just the same way you would use a stream on a
+A stream used with a local or invalidation cache can be used the same way you would use a stream on a
 regular collection. {brandname} handles all the translations, if necessary, behind the scenes and works with all
 the more interesting options (that is, storeAsBinary and a cache loader).  Only data local to
 the node where the stream operation is performed will be used, for example, invalidation only uses local entries.
@@ -109,7 +109,7 @@ WARNING: Please rethink disabling rehash awareness unless you really know what y
 Since the operations are sent across to other nodes, they must be serializable by {brandname} marshalling.  This allows the
 operations to be sent to the other nodes.
 
-The simplest way is to use a CacheStream instance and use a lambda just as you would normally.
+The simplest way is to use a CacheStream instance and use a lambda as you would normally.
 {brandname} overrides all the various Stream intermediate and terminal methods to take
 Serializable versions of the arguments (that is, SerializableFunction, SerializablePredicate, and similar)
 You can find these methods at
@@ -317,11 +317,11 @@ methods.
 
 count::
 The link:{jdkdocroot}/java/util/stream/Stream.html#count--[count]
-method just adds the numbers together from each node.
+method adds the numbers together from each node.
 
 findAny findFirst::
 The link:{jdkdocroot}/java/util/stream/Stream.html#findAny--[findAny]
-operation returns just the first value they find, whether it was from a remote node
+operation returns the first value found, whether it was from a remote node
 or locally.  Note this supports early termination in that once a value is found it
 will not process others.  Note that, the findFirst method is special since it requires a sorted
 intermediate operation, which is detailed in the
@@ -345,7 +345,7 @@ The link:../../apidocs/org/infinispan/CacheStream.html#iterator--[iterator],
 link:../../apidocs/org/infinispan/CacheStream.html#spliterator--[spliterator]
 and link:../../apidocs/org/infinispan/CacheStream.html#forEach-java.util.function.Consumer-[forEach]
 are unlike the other terminal operators in that the rehash awareness has to keep
-track of what keys per segment have been processed instead of just segments.  This is needed
+track of what keys per segment have been processed instead of only segments.  This is needed
 to guarantee an exactly once (iterator & spliterator) or at least once behavior (forEach)
 even under cluster membership changes.
 
@@ -548,4 +548,4 @@ have been changed after the stream read it but the remove actually removed it.
 *Plenty of other examples*
 
 The `Streams` API is a JRE tool and there are lots of examples for using it.
-Just remember that your operations need to be Serializable in some way.
+Remember that your operations need to be Serializable in some way.

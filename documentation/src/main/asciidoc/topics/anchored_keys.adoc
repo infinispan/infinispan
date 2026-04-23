@@ -123,7 +123,7 @@ merge policy is configured automatically and cannot be changed.
 === Listeners
 Cluster listeners and client listeners are implemented and receive the correct notifications.
 
-Non-clustered embedded listeners currently receive notifications on all the nodes, not just the node
+Non-clustered embedded listeners currently receive notifications on all the nodes, not only the node
 where the value is stored.
 
 
@@ -148,7 +148,7 @@ contains copies of all the keys and their locations, plus the overhead of the ca
 Therefore, a node with anchored-keys caches should stop accepting new entries when it has less than
 `(<key size> + <per-key overhead>) * <number of entries not yet inserted>` bytes available.
 
-NOTE: The number of entries not yet inserted is obviously very hard to estimate.
+NOTE: The number of entries not yet inserted is very hard to estimate.
 In the future {brandname} may provide a way to limit the overhead of key location information,
 for example, by using a distributed cache.
 
@@ -172,7 +172,7 @@ compared to the state transfer of a distributed cache of a similar size.
 But for small values, there may not be a visible improvement.
 
 The initial state transfer does not block a joiner from starting,
-because it will just ask another node for the anchor owner.
+because it asks another node for the anchor owner.
 However, the remote lookups can be expensive, especially in embedded mode,
 but also in server mode, if the client is not `HASH_DISTRIBUTION_AWARE`.
 

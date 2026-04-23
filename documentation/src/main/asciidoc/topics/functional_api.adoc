@@ -56,7 +56,7 @@ is temporary.
 == Read-Only Map API
 
 Read-only operations have the advantage that no locks are acquired
-for the duration of the operation. Here's an example on how to the
+for the duration of the operation. The following is an example on how to the
 equivalent operation for
 link:{jdkdocroot}/java/util/Map.html#get-java.lang.Object-[Map.get(K)]:
 
@@ -182,7 +182,7 @@ The vast majority of operations within
 link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 and
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`]
-APIs fall within this category, and they can easily be implemented using the
+APIs fall within this category, and they can be implemented using the
 link:../../apidocs/org/infinispan/functional/FunctionalMap.ReadWriteMap.html[read-write map API]
 . Moreover, with
 link:../../apidocs/org/infinispan/functional/FunctionalMap.ReadWriteMap.html[read-write map API]
@@ -204,7 +204,7 @@ is a replace function that compares the
 value present in the map and if it is equal to the value passed in as
 first parameter, the second value is stored, returning a boolean
 indicating whether the replace was successfully completed. This operation
-can easily be implemented using the read-write map API:
+can be implemented using the read-write map API:
 
 [source,java]
 ----

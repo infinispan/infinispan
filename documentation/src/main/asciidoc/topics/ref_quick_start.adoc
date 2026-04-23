@@ -34,7 +34,7 @@ You can:
 
 == {brandname} simple tutorials
 
-See different capabilities in action with just a few simple steps.
+See different capabilities in action with a few steps.
 Clone the repository:
 
 ----
