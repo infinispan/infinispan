@@ -4,6 +4,8 @@ import static org.infinispan.commons.util.Util.EMPTY_STRING_ARRAY;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -141,6 +143,7 @@ import org.wildfly.security.keystore.KeyStoreUtil;
             Bind.class,
             Logging.class,
             Ls.class,
+            Mcp.class,
             Migrate.class,
             Patch.class,
             Put.class,
@@ -463,6 +466,16 @@ public class CLI extends CliCommand {
       for (int i = 0; i < args.length - 1; i++) {
          if (args[i].equals("-f") && args[i + 1].equals("-")) {
             shell = new StreamShell();
+         }
+      }
+      if (shell == null) {
+         for (String arg : args) {
+            if ("mcp".equals(arg)) {
+               // MCP needs direct access to stdin/stdout for JSON-RPC transport.
+               // Avoid CliShell which wraps stdin in a TerminalConnection.
+               shell = new StreamShell(InputStream.nullInputStream(), new PrintStream(System.err, true));
+               break;
+            }
          }
       }
       if (shell == null) {

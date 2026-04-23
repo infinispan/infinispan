@@ -50,6 +50,7 @@ Retrieves a value from a cache.
 *Parameters*:
 - `cacheName` (string, required): The name of the cache
 - `key` (string, required): The key of the entry
+- `mediaType` (string, optional): The media type for the value (for example, `text/plain`, `application/json`). Defaults to `text/plain`
 
 *Example*:
 [source,json]
@@ -59,6 +60,19 @@ Retrieves a value from a cache.
   "arguments": {
     "cacheName": "myCache",
     "key": "myKey"
+  }
+}
+----
+
+To retrieve an entry from a Protobuf-encoded cache as JSON:
+[source,json]
+----
+{
+  "name": "getCacheEntry",
+  "arguments": {
+    "cacheName": "people",
+    "key": "john",
+    "mediaType": "application/json"
   }
 }
 ----
@@ -74,6 +88,7 @@ Inserts or updates an entry in a cache.
 - `value` (string, required): The value of the entry
 - `lifespan` (number, optional): The lifespan of the entry in milliseconds
 - `maxIdle` (number, optional): The maximum idle time of the entry in milliseconds
+- `mediaType` (string, optional): The media type for the value (for example, `text/plain`, `application/json`). Defaults to `text/plain`
 
 *Example*:
 [source,json]
@@ -86,6 +101,20 @@ Inserts or updates an entry in a cache.
     "value": "myValue",
     "lifespan": 60000,
     "maxIdle": 30000
+  }
+}
+----
+
+To store a typed entry in a Protobuf-encoded cache:
+[source,json]
+----
+{
+  "name": "setCacheEntry",
+  "arguments": {
+    "cacheName": "people",
+    "key": "john",
+    "value": "{\"_type\":\"Person\",\"name\":\"John Doe\",\"age\":35,\"city\":\"London\"}",
+    "mediaType": "application/json"
   }
 }
 ----
@@ -150,7 +179,131 @@ Retrieves all the available Protobuf schemas.
 }
 ----
 
+==== registerSchema
+Registers or updates a Protobuf schema.
+The `.proto` extension is appended automatically if not provided.
+
+*Description*: Runtime data modification: registers or updates a Protobuf schema
+
+*Parameters*:
+- `schemaName` (string, required): The schema name (for example, `person.proto`)
+- `schema` (string, required): The Protobuf schema content
+
+*Example*:
+[source,json]
+----
+{
+  "name": "registerSchema",
+  "arguments": {
+    "schemaName": "person.proto",
+    "schema": "message Person {\n  required string name = 1;\n  optional int32 age = 2;\n}"
+  }
+}
+----
+
+=== Cache Introspection
+
+==== getCacheConfiguration
+Retrieves the full configuration of a cache in JSON format.
+
+*Description*: Runtime data retrieval: retrieves the configuration of a cache in JSON format
+
+*Parameters*:
+- `cacheName` (string, required): The name of the cache
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getCacheConfiguration",
+  "arguments": {
+    "cacheName": "myCache"
+  }
+}
+----
+
+==== getCacheStats
+Retrieves statistics for a cache, including hits, misses, evictions, stores, timings, and memory usage.
+
+NOTE: Statistics must be enabled in the cache configuration for this tool to return meaningful values.
+
+*Description*: Runtime data retrieval: retrieves statistics for a cache
+
+*Parameters*:
+- `cacheName` (string, required): The name of the cache
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getCacheStats",
+  "arguments": {
+    "cacheName": "myCache"
+  }
+}
+----
+
+=== Cluster Operations
+
+==== getClusterInfo
+Retrieves cluster information including members, coordinator, status, rebalancing state, and sites.
+
+*Description*: Runtime data retrieval: retrieves cluster information
+
+*Input Schema*: No parameters required
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getClusterInfo",
+  "arguments": {}
+}
+----
+
 === Counter Operations
+
+==== createCounter
+Creates a counter.
+
+*Description*: Runtime data modification: creates a counter
+
+*Parameters*:
+- `counterName` (string, required): The name of the counter
+- `type` (string, required): The counter type: `WEAK`, `UNBOUNDED_STRONG`, or `BOUNDED_STRONG`
+- `initialValue` (number, optional): The initial value. Defaults to zero
+- `storage` (string, optional): The storage mode: `VOLATILE` (default, lost on restart) or `PERSISTENT` (survives restart)
+- `upperBound` (number, optional): The upper bound (inclusive). Only for `BOUNDED_STRONG` counters
+- `lowerBound` (number, optional): The lower bound (inclusive). Only for `BOUNDED_STRONG` counters
+
+*Example*:
+[source,json]
+----
+{
+  "name": "createCounter",
+  "arguments": {
+    "counterName": "pageViews",
+    "type": "UNBOUNDED_STRONG",
+    "initialValue": 0,
+    "storage": "PERSISTENT"
+  }
+}
+----
+
+To create a bounded counter:
+[source,json]
+----
+{
+  "name": "createCounter",
+  "arguments": {
+    "counterName": "capacity",
+    "type": "BOUNDED_STRONG",
+    "initialValue": 50,
+    "lowerBound": 0,
+    "upperBound": 100
+  }
+}
+----
 
 ==== getCounterNames
 Retrieves all the available counter names.
@@ -222,6 +375,94 @@ Decrements the value of a counter.
   "arguments": {
     "counterName": "myCounter"
   }
+}
+----
+
+=== JVM Diagnostics
+
+==== getJvmMemory
+Retrieves heap and non-heap memory usage, garbage collector statistics, and memory pool details.
+
+*Description*: JVM diagnostics: retrieves heap/non-heap memory usage, garbage collector stats, and memory pool details
+
+*Input Schema*: No parameters required
+
+*Response Fields*:
+- `heap`: used, committed, and max memory in megabytes, plus usage percentage
+- `non_heap`: used and committed memory in megabytes
+- `garbage_collectors`: name, collection count, and collection time for each GC
+- `memory_pools`: name, type, used, and max memory for each pool
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getJvmMemory",
+  "arguments": {}
+}
+----
+
+==== getJvmThreads
+Retrieves thread counts, peak threads, deadlock detection, and optionally a full thread dump.
+
+*Description*: JVM diagnostics: retrieves thread counts, peak threads, deadlock detection, and optionally a full thread dump
+
+*Parameters*:
+- `threadDump` (boolean, optional): Whether to include a full thread dump. Defaults to `false`. The thread dump can be large.
+
+*Response Fields*:
+- `thread_count`: current number of live threads
+- `peak_thread_count`: peak live thread count since JVM start
+- `daemon_thread_count`: current number of daemon threads
+- `total_started_thread_count`: total threads started since JVM start
+- `deadlocked_threads`: number of deadlocked threads (zero means no deadlocks)
+- `deadlock_details`: details of deadlocked threads if any are detected
+- `thread_dump`: full thread dump, included only when `threadDump` is `true`
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getJvmThreads",
+  "arguments": {}
+}
+----
+
+To include a full thread dump:
+[source,json]
+----
+{
+  "name": "getJvmThreads",
+  "arguments": {
+    "threadDump": true
+  }
+}
+----
+
+==== getJvmInfo
+Retrieves JVM version, uptime, input arguments, available processors, and operating system information.
+
+*Description*: JVM diagnostics: retrieves JVM version, uptime, input arguments, available processors, and OS info
+
+*Input Schema*: No parameters required
+
+*Response Fields*:
+- `jvm_name`: JVM implementation name
+- `jvm_vendor`: JVM vendor
+- `jvm_version`: JVM version string
+- `spec_version`: Java specification version
+- `uptime_seconds`: JVM uptime in seconds
+- `start_time`: JVM start time in milliseconds since epoch
+- `input_arguments`: list of JVM input arguments (for example, `-Xmx512m`)
+- `classpath`: JVM classpath
+- `os`: operating system details including name, version, architecture, available processors, and system load average
+
+*Example*:
+[source,json]
+----
+{
+  "name": "getJvmInfo",
+  "arguments": {}
 }
 ----
 
