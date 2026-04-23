@@ -193,9 +193,10 @@ public class Bootstrap extends Main {
          return;
       }
 
-      configureLogging();
+      configureBootLogging();
       runBatch();
       configureClasspath();
+      configureLogging();
       logJVMInformation();
 
       Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
@@ -234,6 +235,13 @@ public class Bootstrap extends Main {
          serverClassLoader = classLoaderFromPath(serverRoot.toPath().resolve("lib"), serverClassLoader);
       }
       Thread.currentThread().setContextClassLoader(serverClassLoader);
+   }
+
+   private void configureBootLogging() {
+      String includeLoggingResource = System.getProperty("infinispan.server.resource.logging", "true");
+      if (Boolean.parseBoolean(includeLoggingResource)) {
+         BootstrapLogging.configureBootLogging();
+      }
    }
 
    // This method is here solely for replacement with Quarkus, do not remove or rename without updating Infinispan Quarkus
