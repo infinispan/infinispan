@@ -337,6 +337,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Could not download '%s' from '%s' repository (%s)%n", id = 982)
    void artifactDownloadFailure(String artifact, String repository, String remote, @Cause Throwable t);
 
+   @LogMessage(level = INFO)
+   @Message(value = "Feature '%s' is enabled", id = 983)
+   void featureEnabled(String featureName);
+
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
 }

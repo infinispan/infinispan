@@ -11,6 +11,8 @@
          <filterset refid="brandfilter"/>
       </copy>
       <chmod dir="${output.dir}/bin" perm="ugo+x" includes="*.sh"/>
+      <symlink link="${output.dir}/bin/infinispan" resource="${output.dir}/bin/server.sh"/>
+      <symlink link="${output.dir}/bin/infinispan-cli" resource="${output.dir}/bin/cli.sh"/>
       <copy todir="${output.dir}/lib">
          <fileset refid="maven.project.dependencies"/>
          <chainedmapper>

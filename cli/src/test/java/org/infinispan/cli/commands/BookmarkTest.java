@@ -213,6 +213,32 @@ public class BookmarkTest {
    }
 
    @Test
+   public void testSetEmptyStringsTreatedAsUnset() throws Exception {
+      // Aesh sets unspecified options to empty string, not null
+      StubConnection connection = new StubConnection("https://inferred-host:11222", "inferreduser");
+      StubContext context = new StubContext(configPath, connection, new Properties());
+
+      Bookmark.SetBookmark cmd = new Bookmark.SetBookmark();
+      cmd.name = "emptytest";
+      cmd.url = "";
+      cmd.username = "";
+      cmd.password = "";
+      cmd.truststore = "";
+      cmd.truststorePassword = "";
+      cmd.keystore = "";
+      cmd.keystorePassword = "";
+      cmd.hostnameVerifier = "";
+      cmd.execute(new ContextAwareCommandInvocation(new StubCommandInvocation(shell), context));
+
+      shell.clear();
+      runGet("emptytest");
+      String output = shell.getBuffer();
+      // Empty strings should be treated as unset, so connection values should be inferred
+      assertTrue(output, output.contains("url = https://inferred-host:11222"));
+      assertTrue(output, output.contains("username = inferreduser"));
+   }
+
+   @Test
    public void testSetInfersFromConnection() throws Exception {
       StubConnection connection = new StubConnection("https://prod-server:11222", "admin");
       Properties contextProps = new Properties();
