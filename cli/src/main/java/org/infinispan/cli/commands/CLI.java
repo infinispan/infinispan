@@ -31,10 +31,6 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandResult;
 import org.aesh.command.CommandRuntime;
 import org.aesh.command.GroupCommandDefinition;
-import org.aesh.command.activator.CommandActivator;
-import org.aesh.command.activator.OptionActivator;
-import org.aesh.command.completer.CompleterInvocation;
-import org.aesh.command.converter.ConverterInvocation;
 import org.aesh.command.impl.completer.CommandSuggestionProvider;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.impl.registry.AeshCommandRegistryBuilder;
@@ -46,7 +42,6 @@ import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.registry.CommandRegistryException;
 import org.aesh.command.settings.SettingsBuilder;
 import org.aesh.command.shell.Shell;
-import org.aesh.command.validator.ValidatorInvocation;
 import org.aesh.console.ReadlineConsole;
 import org.aesh.io.FileResource;
 import org.aesh.io.Resource;
@@ -359,7 +354,7 @@ public class CLI extends CliCommand {
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
-      SettingsBuilder<CommandInvocation, ConverterInvocation, CompleterInvocation, ValidatorInvocation, OptionActivator, CommandActivator> settings = SettingsBuilder.builder();
+      SettingsBuilder<CommandInvocation> settings = SettingsBuilder.builder();
       settings
             .enableAlias(true)
             .aliasManager(aliasManager)

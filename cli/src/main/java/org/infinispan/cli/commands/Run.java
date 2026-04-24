@@ -96,8 +96,12 @@ public class Run extends CliCommand {
                         return CommandResult.FAILURE;
                      case FAIL_AT_END:
                         failed = true;
-                     case IGNORE:
                         ExitCodeResultHandler.reset();
+                        break;
+                     case IGNORE:
+                        failed = false;
+                        ExitCodeResultHandler.reset();
+                        break;
                   }
                }
             }
