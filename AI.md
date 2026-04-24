@@ -24,4 +24,3 @@ When creating GitHub issues, read and follow the instructions in AI-ISSUES.md.
 
 ## Pull request review instructions
 When reviewing PRs, read and follow the instructions in REVIEW.md.
-
