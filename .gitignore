@@ -51,3 +51,4 @@ jacoco
 # ignore ai md files
 GEMINI.md
 CLAUDE.md
+.mcp.json
