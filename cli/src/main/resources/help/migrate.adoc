@@ -41,7 +41,7 @@ Synchronize data between the source cluster and the target cluster.
 Disconnects the target cluster from the source cluster.
 
 *migrate cluster source-connection*::
-Gets connection configuration of the target cluster. The command will print "Not Found" if the connections hasn't been established.
+Gets connection configuration of the target cluster. The command will print "Not Found" if the connection has not been established.
 
 Migrate stores
 

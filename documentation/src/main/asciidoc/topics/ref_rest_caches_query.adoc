@@ -14,7 +14,7 @@ include::json/rest_query_results.json[]
 ----
 
 * `hit_count` shows the total number of results from the query.
-* `hit_count_exact` is `true` which means the `hit_count` is exact. When it's `false`, it implies that the hit count value is a lower bound.
+* `hit_count_exact` is `true` which means the `hit_count` is exact. When the value is `false`, it implies that the hit count value is a lower bound.
 * `hits` represents an array of individual matches from the query.
 * `hit` refers to each object that corresponds to a match in the query.
 +
@@ -212,7 +212,7 @@ In the ```query``` section:
 * `indexed_local` Provides details about indexed queries.
 * `indexed_distributed` Provides details about distributed indexed queries.
 * `hybrid` Provides details about queries that used the index only partially.
-* `non_indexed` Provides details about queries that didn't use the index.
+* `non_indexed` Provides details about queries that did not use the index.
 * `entity_load` Provides details about cache operations to fetch objects after indexed queries execution.
 
 [NOTE]

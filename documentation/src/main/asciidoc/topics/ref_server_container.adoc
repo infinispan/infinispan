@@ -35,7 +35,9 @@ include::cmd_examples/server_podman.adoc[]
 
 > When utilising podman it is necessary for the `--net=host` to be passed when not executing as `sudo`.
 
-By default, the image has authentication enabled on all exposed endpoints. When executing the above command the image automatically generates a username/password pair with the `admin` role, prints the values to stdout and then starts the Infinispan server with the authenticated endpoints exposed on port `11222`. Therefore, it's necessary to utilise the printed credentials when accessing the exposed endpoints via clients.
+By default, the image has authentication enabled on all exposed endpoints.
+When executing the above command the image automatically generates a username/password pair with the `admin` role, prints the values to stdout and then starts the {brandname} server with the authenticated endpoints exposed on port `11222`.
+Therefore, it is necessary to use the printed credentials when accessing the exposed endpoints via clients.
 
 It is also possible to provide an administrator username/password combination via environment variables:
 
@@ -51,7 +53,7 @@ include::cmd_examples/server_docker_user.adoc[]
 include::cmd_examples/server_podman_user.adoc[]
 ----
 
-> We recommend utilising the auto-generated credentials or USER & PASS env variables for initial development only. Providing authentication and authorization configuration via an [Identities Batch file](#identities-batch) allows for much greater control.
+> It is recommended to use the auto-generated credentials or USER & PASS env variables for initial development only. Providing authentication and authorization configuration via an [Identities Batch file](#identities-batch) allows for much greater control.
 
 == Hot Rod Clients
 When connecting a Hot Rod client to the image, the following SASL properties must be configured on your client (with the username and password properties changed as required):
@@ -115,7 +117,8 @@ include::cmd_examples/server_podman_configuration.adoc[]
 ----
 
 === Kubernetes/OpenShift Clustering
-When running in a managed environment such as Kubernetes, it is not possible to utilise multicasting for initial node discovery, therefore we must utilise the JGroups http://jgroups.org/manual4/index.html#_dns_ping[DNS_PING] protocol to discover cluster members. To enable this, we must provide the `jgroups.dnsPing.query` property and configure the `kubernetes` stack.
+When running in a managed environment such as Kubernetes, it is not possible to use multicasting for initial node discovery, therefore you must use the JGroups http://jgroups.org/manual4/index.html#_dns_ping[DNS_PING] protocol to discover cluster members.
+To enable this, you must provide the `jgroups.dnsPing.query` property and configure the `kubernetes` stack.
 
 To utilise the tcp stack with DNS_PING, execute the following config:
 

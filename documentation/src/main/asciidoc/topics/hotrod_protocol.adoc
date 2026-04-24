@@ -66,7 +66,7 @@ encoding on top of the vInt encoding.
 More details link:http://developers.google.com/protocol-buffers/docs/encoding#types[here]
 
 * vLong : Refers to unsigned variable length long values similar to vInt but
-applied to longer values. They're between 1 and 9 bytes long.
+applied to longer values. They are between 1 and 9 bytes long.
 * String : Strings are always represented using UTF-8 encoding.
 
 === Request Header
@@ -217,10 +217,10 @@ error message itself as String.
 
 === Topology Change Headers
 The following section discusses how the response headers look for
-topology-aware or hash-distribution-aware clients when there's been a cluster
-or view formation change. Note that it's the server that makes the decision on
+topology-aware or hash-distribution-aware clients when there has been a cluster
+or view formation change. Note that it is the server that makes the decision on
 whether it sends back the new topology based on the current topology id and
-the one the client sent. If they're different, it will send back the new topology.
+the one the client sent. If they are different, it will send back the new topology.
 
 === Topology-Aware Client Topology Change Header
 This is what topology-aware clients receive as response header when a
@@ -296,7 +296,7 @@ applied the CSA to it.
 | ...etc||
 |==============================================================================
 
-It's important to note that since hash headers rely on the consistent hash
+It is important to note that since hash headers rely on the consistent hash
 algorithm used by the server and this is a factor of the cache interacted with,
 hash-distribution-aware headers can only be returned to operations that target
 a particular cache. Currently ping command does not target any cache
@@ -384,7 +384,7 @@ GetWithVersion response (0x12):
 +0x02+ = if key does not exist +
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Value Length        | vInt       | If success, length of value
 | Value               | byte array | If success, the requested value
 |==============================================================================
@@ -414,8 +414,8 @@ Response (0x20):
 | Response status     | 1 byte     |
 +0x00+ = success, data follows +
 | More                | 1 byte     | One byte representing whether more
-entries need to be read from the stream. So, when it's set to 1, it means
-that an entry follows, whereas when it's set to 0, it's the end of stream and
+entries need to be read from the stream. So, when it is set to 1, it means
+that an entry follows, whereas when it is set to 0, it is the end of stream and
 no more entries are left to read. For more information on BulkGet look
 link:http://community.jboss.org/docs/DOC-15592[here]
 | Key 1 Length        | vInt       | Length of key
@@ -451,7 +451,7 @@ which the entry is allowed to life. If number of seconds is bigger than 30 days,
 this number of seconds is treated as UNIX time and so, represents the number
 of seconds since 1/1/1970. If set to 0, lifespan is unlimited.
 | Max Idle            | vInt       | Number of seconds that a entry can be
-idle before it's evicted from the cache. If 0, no max idle time.
+idle before it is evicted from the cache. If 0, no max idle time.
 | Value Length        | vInt       | Length of value
 | Value               | byte-array | Value to be stored
 |==============================================================================
@@ -529,7 +529,7 @@ which the entry is allowed to life. If number of seconds is bigger than 30 days,
 this number of seconds is treated as UNIX time and so, represents the number
 of seconds since 1/1/1970. If set to 0, lifespan is unlimited.
 | Max Idle            | vInt       | Number of seconds that a entry can be
-idle before it's evicted from the cache. If 0, no max idle time.
+idle before it is evicted from the cache. If 0, no max idle time.
 | Entry Version       | 8 bytes    | Use the value returned by GetWithVersion operation.
 | Value Length        | vInt       | Length of value
 | Value               | byte-array | Value to be stored
@@ -630,7 +630,7 @@ are allowed to live. If number of seconds is bigger than 30 days,
 this number of seconds is treated as UNIX time and so, represents the number
 of seconds since 1/1/1970. If set to 0, lifespan is unlimited.
 | Max Idle            | vInt       | Number of seconds that each entry can be
-idle before it's evicted from the cache. If 0, no max idle time.
+idle before it is evicted from the cache. If 0, no max idle time.
 | Entry count         | vInt       | How many entries are being inserted
 | Key 1 Length        | vInt       | Length of key
 | Key 1               | byte array | Retrieved key
@@ -792,7 +792,7 @@ Length is defined by total body length.
 .Multi-Get Operations
 A multi-get operation is a form of get operation that instead of requesting a
 single key, requests a set of keys. The Hot Rod protocol does not include such
-operation but remote Hot Rod clients could easily implement this type of
+operation but remote Hot Rod clients could implement this type of
 operations by either parallelizing/pipelining individual get requests.
 Another possibility would be for remote clients to use async or non-blocking
 get requests. For example, if a client wants N keys, it could send send N
@@ -923,7 +923,7 @@ applied the CSA to it.
 
 Adding support for virtual nodes has made version +1.0+ of the Hot Rod protocol
 impractical due to bandwidth it would have taken to return hash codes for all
-virtual nodes in the clusters (this number could easily be in the millions).
+virtual nodes in the clusters (this number could be in the millions).
 So, as of version +1.1+ of the Hot Rod protocol, clients are given the base
 hash id or hash code of each server, and then they have to calculate the real
 hash position of each server both with and without virtual nodes configured.
@@ -944,8 +944,7 @@ public static int getNormalizedHash(int nodeBaseHashCode, Hash hashFct) {
 ----
 
 2\.  With _virtual nodes enabled_ : In this case, each node represents N
-different virtual nodes, and to calculate each virtual node's hash code, we
-need to take the the range of numbers between 0 and N-1 and apply the
+different virtual nodes, and to calculate each virtual node's hash code, take the range of numbers between 0 and N-1 and apply the
 following logic:
 
 * For virtual node with 0 as id, use the technique used to retrieve a node's
@@ -1039,7 +1038,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 `INFINITE_MAXIDLE` bit is not set.
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Value Length        | vInt       | If success, length of value
 | Value               | byte array | If success, the requested value
 |==============================================================================
@@ -1078,8 +1077,8 @@ Response (0x1E):
 | Response status     | 1 byte     |
 +0x00+ = success, data follows +
 | More                | 1 byte     | One byte representing whether more
-keys need to be read from the stream. So, when it's set to 1, it means
-that an entry follows, whereas when it's set to 0, it's the end of stream and
+keys need to be read from the stream. So, when it is set to 1, it means
+that an entry follows, whereas when it is set to 0, it is the end of stream and
 no more entries are left to read. For more information on BulkGet look
 link:http://community.jboss.org/docs/DOC-15592[here]
 | Key 1 Length        | vInt       | Length of key
@@ -1146,7 +1145,7 @@ TIP: This version of the protocol is implemented since Infinispan 7.0.0.Final.
 === Request Header
 
 The request header no longer contains `Transaction Type` and `Transaction ID`
-elements since they're not in use, and even if they were in use, there are
+elements since they are not in use, and even if they were in use, there are
 several operations for which they would not make sense, such as `ping` or
 `stats` commands. Once transactions are implemented, the protocol version will
 be upped, with the necessary changes in the request header.
@@ -1185,7 +1184,7 @@ third node, which was suspected. Generally, requests that return this error
 should be failed-over to other nodes.
 * +0x88+ = Illegal lifecycle state. When a client receives this error as response,
 it means that the server-side cache or Cache Manager are not available
-for requests because either stopped, they're stopping or similar situation.
+for requests because either stopped, they are stopping or similar situation.
 Generally, requests that return this error should be failed-over to other nodes.
 
 Some adjustments have been made to the responses for the following commands in
@@ -1202,7 +1201,7 @@ response. If the putIfAbsent worked, there would have not been a previous value,
 and hence it does not make sense returning anything extra.
 * Replace response returns `0x03` status code only when replace happened and the
 previous or replaced value follows in the response. If the replace did not happen,
-it means that the cache entry was not present, and hence there's no previous value
+it means that the cache entry was not present, and hence there is no previous value
 that can be returned.
 * ReplaceIfUnmodified returns `0x03` status code only when replace happened and
 the previous or replaced value follows in the response.
@@ -1289,7 +1288,7 @@ Response (0x22):
 | Field Name          | Size       | Value
 | Header | variable | Response header
 | Mech count | vInt | The number of mechs
-| Mech 1 | string | String containing the name of the SASL mech in its IANA-registered form (e.g. GSSAPI, SCRAM-SHA-256, etc)
+| Mech 1 | string | String containing the name of the SASL mech in its IANA-registered form (for example, GSSAPI, SCRAM-SHA-256)
 | Mech 2 | string |
 | ...etc |        |
 |==============================================================================
@@ -1617,7 +1616,7 @@ DEFAULT and INFINITE can be used for default server expiration and no expiration
 +0x07+ = DEFAULT +
 +0x08+ = INFINITE +
 | Lifespan            | vLong       | Duration which the entry is allowed to life. Only sent when time unit is not DEFAULT or INFINITE
-| Max Idle            | vLong       | Duration that each entry can be idle before it's evicted from the cache. Only sent when time unit is not DEFAULT or INFINITE
+| Max Idle            | vLong       | Duration that each entry can be idle before it is evicted from the cache. Only sent when time unit is not DEFAULT or INFINITE
 |==============================================================================
 
 == Hot Rod Protocol 2.3
@@ -1719,7 +1718,7 @@ hints on whether the server has compatibility mode enabled or not:
 * `0x08`: Not executed and return previous value, with compatibility mode is enabled.
 
 The Iteration Start operation can optionally send parameters if a custom filter is provided and
-it's parametrised:
+it is parametrised:
 
 === Operations
 
@@ -1925,7 +1924,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 `INFINITE_MAXIDLE` bit is not set.
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Value Length        | vInt       | If success, length of value
 | Value               | byte array | If success, the requested value
 |==============================================================================
@@ -1963,8 +1962,8 @@ Response (0x3A):
 |==============================================================================
 
 On top of these additions, this Hot Rod protocol version improves remote listener registration by adding a byte that indicates at a global level, which type of events the client is interested in.
-For example, a client can indicate that only created events, or only expiration and removal events...etc.
-More fine grained event interests, e.g. per key, can be defined using the key/value filter parameter.
+For example, a client can indicate that only created events, or only expiration and removal events are of interest.
+More fine-grained event interests, such as per key, can be defined using the key/value filter parameter.
 
 So, the new add listener request looks like this:
 
@@ -2053,7 +2052,7 @@ Multimap operations request and response follow the cache operations request and
 
 It includes 3 new operations for transactions:
 
-* Prepare, with the transaction write set (i.e. modified keys), it tries to prepare and validate the transaction in the server.
+* Prepare, with the transaction write set (that is, modified keys), it tries to prepare and validate the transaction in the server.
 * Commit, commits a prepared transaction.
 * Rollback, rollbacks a prepared transaction.
 
@@ -2099,11 +2098,11 @@ However, Java cannot create a single array that’s bigger than `Integer.MAX_VAL
 +0x01+ = `NOT_READ` +
 +0x02+ = `NON_EXISTING` +
 +0x04+ = `REMOVE_OPERATION` +
-Note that `NOT_READ` and `NON_EXISTING` can't be set at the same time.
+Note that `NOT_READ` and `NON_EXISTING` cannot be set at the same time.
 
 |Version Read
 |long
-|The version read. Only sent when `NOT_READ` and `NON_EXISTING` aren't present.
+|The version read. Only sent when `NOT_READ` and `NON_EXISTING` are not present.
 
 | TimeUnits
 | Byte
@@ -2119,27 +2118,27 @@ Possible values: +
 +0x06+ = `DAYS` +
 +0x07+ = `DEFAULT` +
 +0x08+ = `INFINITE` +
-Only sent when `REMOVE_OPERATION` isn't set.
+Only sent when `REMOVE_OPERATION` is not set.
 
 | Lifespan
 | vLong
 | Duration which the entry is allowed to life.
-Only sent when time unit is not `DEFAULT` or `INFINITE` and `REMOVE_OPERATION` isn't set.
+Only sent when time unit is not `DEFAULT` or `INFINITE` and `REMOVE_OPERATION` is not set.
 
 | Max Idle
 | vLong
-| Duration that each entry can be idle before it's evicted from the cache.
-Only sent when time unit is not `DEFAULT` or `INFINITE` and `REMOVE_OPERATION` isn't set.
+| Duration that each entry can be idle before it is evicted from the cache.
+Only sent when time unit is not `DEFAULT` or `INFINITE` and `REMOVE_OPERATION` is not set.
 
 |Value Length
 |vInt
 |Length of value.
-Only sent if `REMOVE_OPERATION` isn't set.
+Only sent if `REMOVE_OPERATION` is not set.
 
 |Value
 |byte-array
 |Value to be stored.
-Only sent if `REMOVE_OPERATION` isn't set.
+Only sent if `REMOVE_OPERATION` is not set.
 
 |===
 
@@ -2177,7 +2176,7 @@ Response. Prepare (0x3C), Commit (0x3E) and Rollback (0x40)
 |vInt
 |The XA code representing the prepare response. +
 Can be `XA_OK(0)`, `XA_RDONLY(3)` or any of the error codes (see `XaException`). +
-This field isn't present if the response state is different from `Successful`.
+This field is not present if the response state is different from `Successful`.
 |===
 
 .XID Format
@@ -2221,7 +2220,7 @@ NOTE: In counter related operation, the `Cache Name` field in Request Header can
 NOTE: Summary of `Status` value in the Response Header: +
 * `0x00`: Operation successful. +
 * `0x01`: Operation failed. +
-* `0x02`: The counter isn't defined. +
+* `0x02`: The counter is not defined. +
 * `0x04`: The counter reached a boundary. Only possible for `STRONG` counters.
 
 [cols="3,^2,10",options="header"]
@@ -2258,7 +2257,7 @@ Only present if the counter is `BOUNDED`.
 
 .Counter create operation
 
-Creates a counter if it doesn't exist.
+Creates a counter if it does not exist.
 
 .Request (0x4B)
 [cols="3,^2,10",options="header"]
@@ -2336,7 +2335,7 @@ See link:#counter_config_encode[CounterConfiguration encode].
 Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
-* `0x02`: Counter doesn't exist.
+* `0x02`: Counter does not exist.
 * See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter is defined operation
@@ -2372,7 +2371,7 @@ Checks if the counter is defined.
 Response Header `Status` possible values:
 
 * `0x00`: Counter is defined.
-* `0x01`: Counter isn't defined.
+* `0x01`: Counter is not defined.
 * See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter add-and-get operation
@@ -2414,12 +2413,12 @@ Only present if `Status==0x00`.
 
 |===
 
-NOTE: Since the `WeakCounter` doesn't have access to the new value, the `value` is zero.
+NOTE: Since the `WeakCounter` does not have access to the new value, the `value` is zero.
 
 Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
-* `0x02`: The counter isn't defined.
+* `0x02`: The counter is not defined.
 * `0x04`: The counter reached its boundary. Only possible for `STRONG` counters.
 * See the link:#hot_rod_response_header[Response Header] for error codes.
 
@@ -2456,7 +2455,7 @@ Resets the counter's value.
 Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
-* `0x02`: Counter isn't defined.
+* `0x02`: Counter is not defined.
 * See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter get operation
@@ -2497,7 +2496,7 @@ Only present if `Status==0x00`.
 Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
-* `0x02`: Counter isn't defined.
+* `0x02`: Counter is not defined.
 * See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter compare-and-swap operation
@@ -2546,7 +2545,7 @@ Only present if `Status==0x00`.
 Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
-* `0x02`: The counter isn't defined.
+* `0x02`: The counter is not defined.
 * `0x04`: The counter reached its boundary. Only possible for `STRONG` counters.
 * See the link:#hot_rod_response_header[Response Header] for error codes.
 
@@ -2590,7 +2589,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful and the connection used in the request will be used to send event (add) or the connection can be removed (remove).
 * `0x01`: Operation successful and the current connection is still in use.
-* `0x02`: The counter isn't defined.
+* `0x02`: The counter is not defined.
 * See the link:#hot_rod_response_header[Response Header] for error codes.
 
 .Counter Event (0x66)
@@ -2669,7 +2668,7 @@ NOTE: The counter is re-created if it is accessed again.
 Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
-* `0x02`: The counter isn't defined.
+* `0x02`: The counter is not defined.
 * See the link:#hot_rod_response_header[Response Header] for error codes.
 
 == Hot Rod Protocol 2.8
@@ -2692,8 +2691,7 @@ must be set to:
 The same holds for counter events: client can send further requests after Counter Add Listener.
 Previously meaningless `messageId` in counter event is always set to `0`.
 
-These modifications of the protocol do not require any changes on the client side (as the client simply
-won't send additional operations if it does not support that; the changes are more permissive to the clients)
+These modifications of the protocol do not require any changes on the client side (as the client does not send additional operations if it does not support that; the changes are more permissive to the clients)
 but the server has to handle load on the connection correctly.
 
 .MediaType
@@ -2711,7 +2709,7 @@ The data formats are described using a _MediaType_ object, that is represented a
 +0x01+ = Pre-defined MediaType supplied +
 +0x02+ = Custom MediaType supplied +
 | id  | vInt       | (Optional) For a pre-defined MediaType (type=0x01), the Id of the MediaType. The currently supported Ids can be found at link:https://github.com/infinispan/infinispan/blob/main/commons/src/main/java/org/infinispan/commons/dataconversion/MediaTypeIds.java[MediaTypeIds]
-| customString | string | (Optional) If a custom MediaType is supplied (type=0x02), the custom MediaType of the key, including type and subtype. E.g.: _text/plain_, _application/json_, etc.
+| customString | string | (Optional) If a custom MediaType is supplied (type=0x02), the custom MediaType of the key, including type and subtype. For example: _text/plain_, _application/json_.
 | paramSize | vInt | The size of the parameters for the MediaType
 | paramKey1 | string | (Optional) The first parameter's key
 | paramValue1 | string | (Optional) The first parameter's value
@@ -2861,7 +2859,7 @@ Request (0x7D):
 |Timeout
 |long
 |The idle timeout in milliseconds.
-If the transaction isn't recoverable (`Recoverable=0`), the server rollbacks the transaction if it has
+If the transaction is not recoverable (`Recoverable=0`), the server rollbacks the transaction if it has
 been idle for this amount of time.
 
 |Number of keys
@@ -2886,11 +2884,11 @@ However, Java cannot create a single array that’s bigger than `Integer.MAX_VAL
 +0x01+ = `NOT_READ` +
 +0x02+ = `NON_EXISTING` +
 +0x04+ = `REMOVE_OPERATION` +
-Note that `NOT_READ` and `NON_EXISTING` can't be set at the same time.
+Note that `NOT_READ` and `NON_EXISTING` cannot be set at the same time.
 
 |Version Read
 |long
-|The version read. Only sent when `NOT_READ` and `NON_EXISTING` aren't present.
+|The version read. Only sent when `NOT_READ` and `NON_EXISTING` are not present.
 
 | TimeUnits
 | Byte
@@ -2906,27 +2904,27 @@ Possible values: +
 +0x06+ = `DAYS` +
 +0x07+ = `DEFAULT` +
 +0x08+ = `INFINITE` +
-Only sent when `REMOVE_OPERATION` isn't set.
+Only sent when `REMOVE_OPERATION` is not set.
 
 | Lifespan
 | vLong
 | Duration which the entry is allowed to life.
-Only sent when time unit is not `DEFAULT` or `INFINITE` and `REMOVE_OPERATION` isn't set.
+Only sent when time unit is not `DEFAULT` or `INFINITE` and `REMOVE_OPERATION` is not set.
 
 | Max Idle
 | vLong
-| Duration that each entry can be idle before it's evicted from the cache.
-Only sent when time unit is not `DEFAULT` or `INFINITE` and `REMOVE_OPERATION` isn't set.
+| Duration that each entry can be idle before it is evicted from the cache.
+Only sent when time unit is not `DEFAULT` or `INFINITE` and `REMOVE_OPERATION` is not set.
 
 |Value Length
 |vInt
 |Length of value.
-Only sent if `REMOVE_OPERATION` isn't set.
+Only sent if `REMOVE_OPERATION` is not set.
 
 |Value
 |byte-array
 |Value to be stored.
-Only sent if `REMOVE_OPERATION` isn't set.
+Only sent if `REMOVE_OPERATION` is not set.
 
 |===
 
@@ -2944,7 +2942,7 @@ Response (0x7E)
 |vInt
 |The XA code representing the prepare response. +
 Can be `XA_OK(0)`, `XA_RDONLY(3)` or any of the error codes (see `XaException`). +
-This field isn't present if the response state is different from `Successful`.
+This field is not present if the response state is different from `Successful`.
 
 |===
 
@@ -3105,7 +3103,7 @@ Admin tasks return the result of the operation represented as a JSON string.
 //|==============================================================================
 //| Parameter       | Description | Required
 //|==============================================================================
-Returns the cache names as a JSON array of strings, e.g. ["cache1", "cache2"]
+Returns the cache names as a JSON array of strings, for example `["cache1", "cache2"]`
 
 .@@cache@reindex
 [cols="3,10,2",options="header"]
@@ -3257,7 +3255,7 @@ Only present if `Status==0x00`.
 Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
-* `0x02`: The counter isn't defined.
+* `0x02`: The counter is not defined.
 * `0x04`: The counter reached its boundary.
 Only possible for `STRONG` counters.
 * See the link:#hot_rod_response_header[Response Header] for error codes.
@@ -3305,7 +3303,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 `INFINITE_MAXIDLE` bit is not set.
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Value Length        | vInt       | If success, length of value
 | Value               | byte array | If success, the requested value
 |==============================================================================
@@ -3381,7 +3379,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 `INFINITE_MAXIDLE` bit is not set.
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Value Length        | vInt       | If success, length of value
 | Value               | byte array | If success, the requested value
 |==============================================================================
@@ -3479,7 +3477,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 `INFINITE_MAXIDLE` bit is not set.
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
-They just need to be unique per update at the key level.
+They need to be unique per update at the key level.
 | Entry Version       | 8 bytes    | Possible values +
 0 = Unconditional put +
 -1 = Put If Absent +

@@ -22,7 +22,7 @@ include::code_examples/EnableGroups.java[]
 include::xml/enable_groups.xml[]
 ----
 
-If you have control of the key class (you can alter the class definition, it's not part of an unmodifiable library), then we recommend using an intrinsic group.
+If you have control of the key class (you can alter the class definition, it is not part of an unmodifiable library), then use an intrinsic group.
 The intrinsic group is specified by adding the `@Group` annotation to a method, for example:
 
 [source,java]
@@ -32,7 +32,7 @@ include::code_examples/IntrinsicGroup.java[]
 
 NOTE: The group method must return a `String`
 
-If you don't have control over the key class, or the determination of the group is an orthogonal concern to the key class, we recommend using an extrinsic group.
+If you do not have control over the key class, or the determination of the group is an orthogonal concern to the key class, use an extrinsic group.
 An extrinsic group is specified by implementing the `Grouper` interface.
 
 [source,java]

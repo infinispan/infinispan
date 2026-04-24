@@ -42,7 +42,7 @@ and values can stay on the anchor owner, minimizing the amount of traffic.
 == Limitations
 
 Only one node can be added at a time::
-An external actor (e.g. a Kubernetes/OpenShift operator, or a human administrator)
+An external actor (for example, a Kubernetes/OpenShift operator, or a human administrator)
 must monitor the load on the current nodes, and add a new node whenever the newest node
 is close to "full".
 
@@ -123,7 +123,7 @@ merge policy is configured automatically and cannot be changed.
 === Listeners
 Cluster listeners and client listeners are implemented and receive the correct notifications.
 
-Non-clustered embedded listeners currently receive notifications on all the nodes, not just the node
+Non-clustered embedded listeners currently receive notifications on all the nodes, not only the node
 where the value is stored.
 
 
@@ -136,7 +136,7 @@ The client always contacts the primary owner, so any read has a
 Writes require the primary to send the value to one node and the anchor address
 to all the other nodes, which is currently done with `N-1` unicast RPCs.
 
-In theory we could send in parallel one unicast RPC for the value and one multicast RPC for the address,
+In theory it would be possible to send in parallel one unicast RPC for the value and one multicast RPC for the address,
 but that would need additional logic to ignore the address on the anchor owner
 and with TCP multicast RPCs are implemented as parallel unicasts anyway.
 
@@ -148,9 +148,9 @@ contains copies of all the keys and their locations, plus the overhead of the ca
 Therefore, a node with anchored-keys caches should stop accepting new entries when it has less than
 `(<key size> + <per-key overhead>) * <number of entries not yet inserted>` bytes available.
 
-NOTE: The number of entries not yet inserted is obviously very hard to estimate.
-In the future we may provide a way to limit the overhead of key location information,
-e.g. by using a distributed cache.
+NOTE: The number of entries not yet inserted is very hard to estimate.
+In the future {brandname} may provide a way to limit the overhead of key location information,
+for example, by using a distributed cache.
 
 The per-key overhead is lowest for off-heap storage, around 63 bytes:
 8 bytes for the entry reference in `MemoryAddressHash.memory`,
@@ -172,7 +172,7 @@ compared to the state transfer of a distributed cache of a similar size.
 But for small values, there may not be a visible improvement.
 
 The initial state transfer does not block a joiner from starting,
-because it will just ask another node for the anchor owner.
+because it asks another node for the anchor owner.
 However, the remote lookups can be expensive, especially in embedded mode,
 but also in server mode, if the client is not `HASH_DISTRIBUTION_AWARE`.
 

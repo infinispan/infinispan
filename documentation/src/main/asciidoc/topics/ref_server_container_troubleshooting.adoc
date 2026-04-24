@@ -15,7 +15,7 @@ include::cmd_examples/server_podman_debug.adoc[]
 
 
 == {brandname} Server
-It's also possible to debug the {brandname} Server in the image by setting the `DEBUG_PORT` environment variable as follows:
+It is also possible to debug the {brandname} Server in the image by setting the `DEBUG_PORT` environment variable as follows:
 
 .Docker
 [source,bash,options="nowrap",subs=attributes+,role="primary"]
@@ -31,7 +31,7 @@ include::cmd_examples/server_podman_debug_port.adoc[]
 
 
 == Image Tools
-In order to keep the image size as small as possible, we include a minimal set of tools and utilities to help debug issues with the container.
+In order to keep the image size as small as possible, the image includes a minimal set of tools and utilities to help debug issues with the container.
 
 
 |===

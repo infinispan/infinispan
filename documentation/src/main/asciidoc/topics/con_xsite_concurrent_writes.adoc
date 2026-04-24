@@ -43,7 +43,7 @@ Prepend cluster names with numbers as a simple way to represent the order of pri
 
 {brandname} performs conflict resolution with the asynchronous backup strategy (`strategy=async`) only.
 
-We do not recommend the use of synchronous backup strategy with an Active/Active configuration.
+The use of synchronous backup strategy with an Active/Active configuration is not recommended.
 In this configuration, concurrent writes result in deadlocks, and you may lose data consistency.
 However, you can use the synchronous backup strategy with an Active/Active configuration if both clusters access different data sets, in which case there is no risk of deadlocks from concurrent writes.
 

@@ -17,5 +17,5 @@ Likewise, a single relay node is easier to illustrate because each relay node in
 [NOTE]
 ====
 JGroups configuration refers to relay nodes as "site master" nodes.
-{brandname} uses relay node instead because it is more descriptive and presents a more intuitive choice for our users.
+{brandname} uses relay node instead because it is more descriptive and presents a more intuitive choice.
 ====

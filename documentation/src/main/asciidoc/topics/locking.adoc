@@ -41,7 +41,7 @@ Lock striping entails the use of a fixed-size, shared collection of locks for th
 Similar to the way the JDK's `ConcurrentHashMap` allocates locks, this allows for a highly scalable, fixed-overhead locking mechanism in exchange for potentially unrelated entries being blocked by the same lock.
 
 The alternative is to disable lock striping - which would mean a _new_ lock is created per entry.
-This approach _may_ give you greater concurrent throughput, but it will be at the cost of additional memory usage, garbage collection churn, etc.
+This approach _may_ give you greater concurrent throughput, but it will be at the cost of additional memory usage and garbage collection churn.
 
 .Default lock striping settings
 IMPORTANT: lock striping is disabled by default, due to potential deadlocks that can happen if locks for different keys end up in the same lock stripe.
@@ -102,7 +102,7 @@ new ConfigurationBuilder().locking().lockAcquisitionTimeout(10, TimeUnit.SECONDS
 
 == Consistency
 The fact that a single owner is locked (as opposed to all owners being locked) does not break the following consistency guarantee:
-if key `K` is hashed to nodes `{A, B}` and transaction `TX1` acquires a lock for `K`, let's say on `A`.
+if key `K` is hashed to nodes `{A, B}` and transaction `TX1` acquires a lock for `K`, say on `A`.
 If another transaction, `TX2`, is started on `B` (or any other node) and `TX2` tries to lock `K` then it will fail with a timeout as the lock is already held by `TX1`.
 The reason for this is the that the lock for a key `K` is always, deterministically, acquired on the same node of the cluster, regardless of where the transaction originates.
 

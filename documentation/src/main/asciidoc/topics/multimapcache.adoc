@@ -40,7 +40,7 @@ Oihana is a girl name
 
 .CompletableFuture<Collection<V>> get(K key)
 
-Asynchronous that returns a view collection of the values associated with key in this multimap cache, if any. Any changes to the retrieved collection won't change the values in this multimap cache.
+Asynchronous that returns a view collection of the values associated with key in this multimap cache, if any. Any changes to the retrieved collection do not change the values in this multimap cache.
 When this method returns an empty collection, it means the key was not found.
 
 .CompletableFuture<Boolean> remove(K key)
@@ -63,7 +63,7 @@ Asynchronous that returns true if this multimap contains the value in at least o
 Asynchronous that returns true if this multimap contains at least one key-value pair with the value.
 
 .CompletableFuture<Long> size()
-Asynchronous that returns the number of key-value pairs in the multimap cache. It doesn't return the distinct number of keys.
+Asynchronous that returns the number of key-value pairs in the multimap cache. It does not return the distinct number of keys.
 
 .boolean supportsDuplicates()
 Returns true if the multimap cache supports duplicates. This means that the content of the multimap can be

@@ -17,7 +17,7 @@ copy of data in memory.
 memory, an entry is removed or upon shutting down the node.
 
 When {brandname} activates entries, it restores data in memory but keeps the data in the store still.
-This allows for writes to be just as fast as without a store, and still maintains consistency.
+This allows for writes to be as fast as without a store, and still maintains consistency.
 When an entry is created or updated only the in memory will be updated and thus
 the store will be outdated for the time being.
 

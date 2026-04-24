@@ -8,7 +8,7 @@ Your code also runs in the same memory space where {brandname} stores your data,
 In terms of performance impact to your {brandname} deployment, that entirely depends on your code execution.
 More complex processing operations have higher performance penalties so you should approach running any code on {brandname} clusters with careful planning.
 Start out by testing your code and performing multiple execution runs on a smaller, sample data set.
-After you gather some metrics you can start identifying optimizations and understanding what performance implications of the code you're running.
+After you gather some metrics you can start identifying optimizations and understanding the performance implications of the code you are running.
 
 One definite consideration is that long running processes can start having a negative impact on normal read and write operations.
 So it is imperative that you monitor your deployment over time and continually assess performance.

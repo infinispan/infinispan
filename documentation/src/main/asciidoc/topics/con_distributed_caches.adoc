@@ -6,7 +6,7 @@ configured as `numOwners`.
 This allows distributed caches to scale linearly, storing more data as nodes are added to the cluster.
 
 As nodes join and leave the cluster, there will be times when a key has more or less than `numOwners` copies.
-In particular, if `numOwners` nodes leave in quick succession, some entries will be lost, so we say that a distributed cache tolerates `numOwners - 1` node failures.
+In particular, if `numOwners` nodes leave in quick succession, some entries will be lost, which means that a distributed cache tolerates `numOwners - 1` node failures.
 
 The number of copies represents a trade-off between performance and durability of data.
 The more copies you maintain, the lower performance will be, but also the lower the risk of losing data due to server or network failures.

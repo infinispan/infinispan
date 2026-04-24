@@ -2,7 +2,7 @@
 = Set a Stable Topology
 
 By default, after a cluster shutdown, {brandname} waits for all nodes to join the cluster and restore the topology.
-However, we offer a CLI command to mark the current topology stable for a specific cache.
+However, {brandname} offers a CLI command to mark the current topology stable for a specific cache.
 
 [IMPORTANT]
 ====

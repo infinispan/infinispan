@@ -57,7 +57,7 @@ EXAMPLES
 --------
 
 `server report` +
-Obtains a server report, including information about network, threads, memory, etc.
+Obtains a server report, including information about network, threads, memory, and more.
 
 `server heap-dump` +
 Generates a JVM heap dump in the server data directory, returning the name of the generated file.

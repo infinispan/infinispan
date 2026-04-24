@@ -14,7 +14,7 @@ Helps find relevant {brandname} documentation on the official website for a spec
 *Description*: Helps find relevant Infinispan documentation on the official website for a specific topic. Primary source of information MUST BE https://infinispan.org/documentation
 
 *Arguments*:
-- `topic` (required): What to search for in the documentation (e.g., 'cache configuration', 'Hot Rod client')
+- `topic` (required): What to search for in the documentation (for example, 'cache configuration', 'Hot Rod client')
 - `context` (optional): Additional context about your goal or use case
 
 *Usage*: This prompt guides the language model to search the official {brandname} documentation for information about a specific topic. When invoked, it provides a structured search request along with a comprehensive list of documentation URLs organized by topic area.
@@ -63,7 +63,7 @@ Helps find relevant {brandname} documentation with topic suggestions for common 
 *Description*: Helps find relevant Infinispan documentation with topic suggestions for common areas
 
 *Arguments*:
-- `topic` (required): What to search for in the documentation (e.g., 'cache configuration', 'Hot Rod client')
+- `topic` (required): What to search for in the documentation (for example, 'cache configuration', 'Hot Rod client')
 - `context` (optional): Additional context about your goal or use case
 
 *Usage*: This is a variation of the `find-documentation` prompt that provides auto-completion suggestions for common documentation topics. When using MCP clients that support completion, this prompt will offer a list of frequently accessed topic areas to choose from.

@@ -92,7 +92,7 @@ All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `IC
 |Property |Description |Type |Default
 
 |`protocol_version`
-|Hot Rod protocol version to use. Format: `MAJOR.MINOR` (e.g., `3.1`).
+|Hot Rod protocol version to use. Format: `MAJOR.MINOR` (for example,`3.1`).
 |String
 |Latest supported version
 
@@ -212,7 +212,7 @@ All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `IC
 |none
 
 |`key_store_type`
-|Type of the key store (e.g., `JKS`, `PKCS12`).
+|Type of the key store (for example,`JKS`, `PKCS12`).
 |String
 |JVM default
 
@@ -232,7 +232,7 @@ All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `IC
 |none
 
 |`trust_store_type`
-|Type of the trust store (e.g., `JKS`, `PKCS12`).
+|Type of the trust store (for example,`JKS`, `PKCS12`).
 |String
 |JVM default
 
@@ -247,12 +247,12 @@ All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `IC
 |none
 
 |`ssl_protocol`
-|SSL/TLS protocol version (e.g., `TLSv1.3`, `TLSv1.2`).
+|SSL/TLS protocol version (for example,`TLSv1.3`, `TLSv1.2`).
 |String
 |JVM default
 
 |`ssl_provider`
-|SSL provider to use (e.g., `JDK`, `OPENSSL`).
+|SSL provider to use (for example,`JDK`, `OPENSSL`).
 |String
 |JVM default
 
@@ -284,7 +284,7 @@ All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `IC
 |`false`
 
 |`sasl_mechanism`
-|SASL mechanism to use for authentication (e.g., `SCRAM-SHA-512`, `DIGEST-SHA-256`, `PLAIN`, `EXTERNAL`).
+|SASL mechanism to use for authentication (for example,`SCRAM-SHA-512`, `DIGEST-SHA-256`, `PLAIN`, `EXTERNAL`).
 |String
 |none
 
@@ -324,7 +324,7 @@ All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `IC
 |none
 
 |`sasl_properties.<name>`
-|SASL mechanism-specific properties. Replace `<name>` with the property name (e.g., `sasl_properties.qop`).
+|SASL mechanism-specific properties. Replace `<name>` with the property name (for example,`sasl_properties.qop`).
 |String
 |none
 |===
@@ -436,7 +436,7 @@ NOTE: Connection pool properties are deprecated and will be removed in a future 
 |Property |Description |Type |Default
 
 |`cluster.<cluster-name>`
-|Define a cluster by name with server addresses (e.g., `cluster.NYC=nyc1:11222;nyc2:11222`).
+|Define a cluster by name with server addresses (for example,`cluster.NYC=nyc1:11222;nyc2:11222`).
 |String
 |none
 
