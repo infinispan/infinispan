@@ -1,11 +1,26 @@
 #!/bin/sh
 
+HELP=false
+
+# Print help for options handled by the script
+help() {
+    if [ "$HELP" = "true" ]; then
+      echo "Script options:"
+      echo "  --debug <port>                Activate debug mode with an optional argument to override the default port (8787)."
+      echo "  --debug-client                Activate debug mode in client mode (defaults to server mode)."
+      echo "  --debug-suspend               Activate debug mode and suspend the JVM."
+      echo "  --jmx <port>                  Activate JMX remoting with an optional argument to override the default port (9999)."
+    fi
+}
+
 # Use --debug to activate debug mode with an optional argument to specify the port.
 # Usage: server.sh --debug
 #        server.sh --debug 9797
 # By default debug mode is disabled.
 DEBUG_MODE="${DEBUG:-false}"
 DEBUG_PORT="${DEBUG_PORT:-8787}"
+DEBUG_SUSPEND=n
+DEBUG_SERVER=y
 
 # Use --jmx to activate JMX remoting mode with an optional argument to specify the port.
 # Usage: server.sh --jmx
@@ -32,6 +47,18 @@ do
               DEBUG_PORT=$2
               shift
           fi
+          ;;
+      --debug-suspend)
+          DEBUG_MODE=true
+          DEBUG_SUSPEND=y
+          ;;
+      --debug-client)
+          DEBUG_MODE=true
+          DEBUG_SERVER=n
+          ;;
+      --debug-server)
+          DEBUG_MODE=true
+          DEBUG_SERVER=y
           ;;
       --jmx)
           JMX_REMOTING=true
@@ -61,6 +88,10 @@ do
           done < "$2"
           ARGUMENTS="$ARGUMENTS '$1' '$2'"
           shift
+          ;;
+      -h | --help)
+          HELP=true
+          ARGUMENTS="$ARGUMENTS '$1'"
           ;;
       *)
           ARGUMENTS="$ARGUMENTS '$1'"
@@ -148,7 +179,10 @@ JAVA_OPTS="$JAVA_OPTS_EXTRA $JAVA_OPTS"
 if [ "$DEBUG_MODE" = "true" ]; then
     DEBUG_OPT=$(echo "$JAVA_OPTS" | $GREP "\-agentlib:jdwp")
     if [ "$DEBUG_OPT" = "" ]; then
-        JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n"
+        if [ "$JAVA_OPTS_DEBUG" = "" ]; then
+            JAVA_OPTS_DEBUG="-agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=$DEBUG_SERVER,suspend=$DEBUG_SUSPEND"
+        fi
+        JAVA_OPTS="$JAVA_OPTS $JAVA_OPTS_DEBUG"
     else
         echo "Debug already enabled in JAVA_OPTS, ignoring --debug argument"
     fi

@@ -267,12 +267,9 @@ public class Bootstrap extends Main {
       out.printf("  -p, --bind-port=<port>        %s%n", MSG.serverHelpBindPort(Server.DEFAULT_BIND_PORT));
       out.printf("  -s, --server-root=<path>      %s%n", MSG.toolHelpServerRoot(Server.DEFAULT_SERVER_ROOT_DIR));
       out.printf("  -v, --version                 %s%n", MSG.toolHelpVersion());
+      out.printf("  --pre-start-batch=<file>      %s%n", MSG.serverHelpPreStartBatch());
       out.printf("  -D<name>=<value>              %s%n", MSG.serverHelpProperty());
       out.printf("  -P, --properties=<file>       %s%n", MSG.serverHelpProperties());
-      out.printf("  --aot                         %s%n", MSG.serverHelpAOT());
-      out.printf("  --debug <port>                %s%n", MSG.serverHelpDebug());
-      out.printf("  --jmx <port>                  %s%n", MSG.serverHelpJMX());
-      out.printf("  --pre-start-batch=<file>      %s%n", MSG.serverHelpPreStartBatch());
    }
 
    @Override
