@@ -72,4 +72,5 @@ public interface ServerManagement {
 
    Json securityOverviewReport();
 
+    ClassLoader getClassLoader();
 }

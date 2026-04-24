@@ -96,16 +96,6 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-rocksdb</artifactId>
-         <exclusions>
-            <exclusion>
-               <groupId>org.rocksdb</groupId>
-               <artifactId>rocksdbjni</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cli-client</artifactId>
       </dependency>
       <dependency>
