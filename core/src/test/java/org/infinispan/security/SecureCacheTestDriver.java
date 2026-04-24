@@ -150,6 +150,16 @@ public class SecureCacheTestDriver {
       cache.start();
    }
 
+   @TestCachePermission(value = AuthorizationPermission.LIFECYCLE)
+   public void testStop_long_TimeUnit(SecureCache<String, String> cache) {
+      try {
+         cache.stop(-1, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+         throw new RuntimeException(e);
+      }
+      cache.start();
+   }
+
    @TestCachePermission(AuthorizationPermission.LISTEN)
    public void testAddListener_Object_CacheEventFilter_CacheEventConverter(SecureCache<String, String> cache) {
       cache.addListener(listener, keyValueFilter, converter);

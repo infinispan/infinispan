@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.impl.PreferConsistencyStrategy;
 import org.infinispan.statetransfer.RebalanceType;
+import org.infinispan.statetransfer.StateTransferTracker;
 import org.infinispan.topology.ClusterCacheStatus;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.PersistentUUIDManager;
@@ -31,10 +32,11 @@ public class PreferConsistencyStrategyTest {
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       ClusterTopologyManagerImpl topologyManager = new ClusterTopologyManagerImpl();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
+      StateTransferTracker stateTransferTracker = mock(StateTransferTracker.class);
 
       preferConsistencyStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager);
       status = new ClusterCacheStatus(cacheManager, null, "does-not-matter", preferConsistencyStrategy, RebalanceType.FOUR_PHASE, topologyManager,
-                                      null, persistentUUIDManager, eventLogManager, Optional.empty(), false);
+                                      null, stateTransferTracker, persistentUUIDManager, eventLogManager, Optional.empty(), false);
    }
 
    public void testAvoidingNullPointerExceptionWhenUpdatingPartitionWithNullTopology() {

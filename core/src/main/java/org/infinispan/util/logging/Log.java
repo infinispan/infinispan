@@ -2448,4 +2448,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Inbound transfer from %s failed for segments %s of cache %s, possible data loss", id = 719)
    void inboundStateTransferFailure(Address source, IntSet segments, String cacheName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Stopping all caches in cache container", id = 720)
+   void stoppingAllCaches();
 }

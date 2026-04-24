@@ -1,6 +1,7 @@
 package org.infinispan.topology;
 
 import static java.util.Collections.singletonList;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -19,6 +20,7 @@ import org.infinispan.partitionhandling.impl.PreferAvailabilityStrategy;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.RebalanceType;
+import org.infinispan.statetransfer.StateTransferTracker;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.TestingEventLogManager;
@@ -43,6 +45,7 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    private ClusterTopologyManagerImpl topologyManager;
    private MockitoSession mockitoSession;
    private Transport transport;
+   private StateTransferTracker stateTransferTracker;
 
    @BeforeMethod(alwaysRun = true)
    public void setup() {
@@ -53,10 +56,12 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
       topologyManager = mock(ClusterTopologyManagerImpl.class);
       transport = mock(Transport.class);
+      stateTransferTracker = mock(StateTransferTracker.class);
+      when(stateTransferTracker.forCache(any())).thenReturn(mock(StateTransferTracker.CacheStateTransferTracker.class));
       PreferAvailabilityStrategy availabilityStrategy =
          new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager);
       status = new ClusterCacheStatus(cacheManager, null, CACHE_NAME, availabilityStrategy, RebalanceType.FOUR_PHASE,
-                                      topologyManager, transport, persistentUUIDManager, eventLogManager,
+                                      topologyManager, transport, stateTransferTracker, persistentUUIDManager, eventLogManager,
                                       Optional.empty(), false);
    }
 

@@ -21,10 +21,12 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
 import org.infinispan.commands.ReplicableCommand;
@@ -38,6 +40,7 @@ import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -345,16 +348,61 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    @Override
-   public void leave(String cacheName, long timeout) {
+   public boolean leave(String cacheName, long timeout, boolean keep) throws InterruptedException {
       log.debugf("Node %s leaving cache %s", transport.getAddress(), cacheName);
-      runningCaches.remove(cacheName);
 
-      ReplicableCommand command = new CacheLeaveCommand(cacheName, transport.getAddress());
-      try {
-         CompletionStages.join(helper.executeOnCoordinator(transport, command, timeout));
-      } catch (Exception e) {
-         log.debugf(e, "Error sending the leave request for cache %s to coordinator", cacheName);
+      // If we are not keeping the cache, we remove it before submitting the request.
+      // In cases where we need the cache to accept requests during the leave (e.g., transfer segments), we remove it after.
+      if (!keep) {
+         LocalCacheStatus lcs = runningCaches.remove(cacheName);
+         if (lcs == null)
+            return true;
       }
+
+      int viewId = transport.getViewId();
+      long deadline = keep ? timeService.expectedEndTime(timeout, MILLISECONDS) : -1;
+      ReplicableCommand command = new CacheLeaveCommand(cacheName, transport.getAddress(), keep ? timeout : -1);
+      try {
+         CompletionStages.await(helper.executeOnCoordinator(transport, command, timeout));
+         return true;
+      } catch (ExecutionException e) {
+         return handleLeaveFailure(e, cacheName, deadline, viewId + 1);
+      } finally {
+         runningCaches.remove(cacheName);
+      }
+   }
+
+   private boolean handleLeaveFailure(Throwable e, String cacheName, final long deadline, int viewId) throws InterruptedException {
+      log.debugf(e, "Error sending the leave request for cache %s to coordinator", cacheName);
+      Throwable t = Util.getRootCause(e);
+
+      if (t instanceof InterruptedException ie) {
+         throw ie;
+      }
+
+      if (t instanceof org.infinispan.commons.TimeoutException || t instanceof TimeoutException)
+         return false;
+
+      if (deadline > 0 && (t instanceof SuspectException || t instanceof IllegalLifecycleStateException)) {
+         long remaining = timeService.remainingTime(deadline, MILLISECONDS);
+         CompletionStage<Boolean> cs = withView(viewId, remaining, MILLISECONDS)
+               .thenApply(ignore -> {
+                  try {
+                     log.tracef("Retrying graceful leave of (%s -- %s) with %d ms remaining", transport.getAddress(), cacheName, remaining);
+                     return leave(cacheName, remaining, true);
+                  } catch (InterruptedException ex) {
+                     Thread.currentThread().interrupt();
+                     return false;
+                  }
+               });
+         try {
+            return CompletionStages.await(cs);
+         } catch (ExecutionException ex) {
+            return handleLeaveFailure(ex, cacheName, deadline, viewId);
+         }
+      }
+
+      return false;
    }
 
    @Override
@@ -395,7 +443,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                      final String name = cacheName;
                      join(name, cacheStatus)
                            .whenComplete((ignore, t) -> {
-                              if (t != null) leave(name, getGlobalTimeout());
+                              if (t != null) {
+                                 try {
+                                    leave(name, getGlobalTimeout(), false);
+                                 } catch (InterruptedException ignored1) {
+                                    Thread.currentThread().interrupt();
+                                 }
+                              }
                            });
                   }
                   continue;
