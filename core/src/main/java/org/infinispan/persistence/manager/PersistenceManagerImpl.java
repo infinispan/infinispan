@@ -18,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -439,11 +440,22 @@ public class PersistenceManagerImpl implements PersistenceManager {
       // Complete all pending stages before acquiring the write lock.
       // If the write lock is not acquired, it means there is something holding the read lock, and it should include the
       // pending operation to the pendingStages queue.
+      if (log.isDebugEnabled()) {
+         log.debugf("Waiting for %d pending operations to complete before stop. Timeout is %d ms",
+               pendingStages.size(), globalConfiguration.transport().distributedSyncTimeout());
+      }
       long stamp;
       CompletionStage<?> stage;
       while ((stage = pendingStages.poll()) != null || (stamp = tryAcquireWriteLock()) == 0) {
          if (stage != null) {
-            stage.toCompletableFuture().completeExceptionally(new IllegalLifecycleStateException());
+            try {
+               stage.toCompletableFuture().get(globalConfiguration.transport().distributedSyncTimeout(), MILLISECONDS);
+            } catch (ExecutionException | java.util.concurrent.TimeoutException e) {
+               stage.toCompletableFuture().completeExceptionally(new IllegalLifecycleStateException("Operation failed to complete during stop", e));
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               stage.toCompletableFuture().completeExceptionally(new IllegalLifecycleStateException("Thread interrupted while stopping", e));
+            }
          }
       }
       try {
