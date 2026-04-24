@@ -34,6 +34,7 @@
                                generate-self-signed-certificate-host="localhost"/>
                   </ssl>
                </server-identities-->
+               <local-realm/>
                <properties-realm/>
             </security-realm>
          </security-realms>
