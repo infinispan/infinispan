@@ -44,6 +44,7 @@ public class RebalancePolicyUpdateCommand extends AbstractCacheControlCommand {
    public String toString() {
       return "RebalanceEnableCommand{" +
             "cacheName='" + cacheName + '\'' +
+            ", enabled=" + enabled +
             '}';
    }
 }
