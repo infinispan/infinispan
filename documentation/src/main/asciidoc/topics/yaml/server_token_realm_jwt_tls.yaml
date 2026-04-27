@@ -1,0 +1,23 @@
+infinispan:
+  server:
+    security:
+      securityRealms:
+        - name: "keycloak"
+          serverIdentities:
+            ssl:
+              truststore:
+                path: "keycloak-trust.pfx"
+                password: "secret"
+        - name: "default"
+          tokenRealm:
+            name: "token"
+            authServerUrl: "https://oauth-server/auth/"
+            clientId: "my-client"
+            principalClaim: "sub"
+            jwt:
+              issuer: "https://oauth-server/realms/my-realm"
+              audience: "account"
+              clientSslContext: "keycloak"
+    endpoints:
+      socketBinding: "default"
+      securityRealm: "default"

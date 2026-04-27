@@ -1,0 +1,38 @@
+{
+  "infinispan" : {
+    "server" : {
+      "security" : {
+        "security-realms" : [ {
+          "name" : "keycloak",
+          "server-identities" : {
+            "ssl" : {
+              "truststore" : {
+                "path" : "keycloak-trust.pfx",
+                "password" : "secret"
+              }
+            }
+          }
+        },{
+          "name" : "default",
+          "token-realm" : {
+            "name" : "token",
+            "auth-server-url" : "https://oauth-server/auth/",
+            "client-id" : "my-client",
+            "principal-claim" : "sub",
+            "jwt" : {
+              "issuer" : "https://oauth-server/realms/my-realm",
+              "audience" : "account",
+              "client-ssl-context" : "keycloak"
+            }
+          }
+        } ]
+      },
+      "endpoints" : {
+        "endpoint" : {
+          "socket-binding" : "default",
+          "security-realm" : "default"
+        }
+      }
+    }
+  }
+}

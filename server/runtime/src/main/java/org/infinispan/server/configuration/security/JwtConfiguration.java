@@ -2,6 +2,9 @@ package org.infinispan.server.configuration.security;
 
 import java.nio.charset.StandardCharsets;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -9,6 +12,8 @@ import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
 import org.infinispan.server.security.HostnameVerificationPolicy;
+import org.infinispan.server.security.JwkManager;
+import org.infinispan.server.security.JwksTokenValidator;
 import org.wildfly.security.auth.realm.token.TokenValidator;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 
@@ -16,6 +21,7 @@ import org.wildfly.security.auth.realm.token.validator.JwtValidator;
  * @since 10.0
  */
 public class JwtConfiguration extends ConfigurationElement<JwtConfiguration> {
+
    static final AttributeDefinition<String[]> AUDIENCE = AttributeDefinition.builder(Attribute.AUDIENCE, null, String[].class).build();
    static final AttributeDefinition<String> CLIENT_SSL_CONTEXT = AttributeDefinition.builder(Attribute.CLIENT_SSL_CONTEXT, null, String.class).build();
    static final AttributeDefinition<String> HOST_NAME_VERIFICATION_POLICY = AttributeDefinition.builder(Attribute.HOST_NAME_VERIFICATION_POLICY, null, String.class).build();
@@ -43,7 +49,25 @@ public class JwtConfiguration extends ConfigurationElement<JwtConfiguration> {
       attributes.attribute(CONNECTION_TIMEOUT).apply(v -> validatorBuilder.connectionTimeout(v.intValue()));
       attributes.attribute(READ_TIMEOUT).apply(v -> validatorBuilder.readTimeout(v.intValue()));
       RealmConfiguration sslRealm = attributes.attribute(CLIENT_SSL_CONTEXT).isNull() ? realm : security.realms().getRealm(attributes.attribute(CLIENT_SSL_CONTEXT).get());
-      validatorBuilder.useSslContext(sslRealm.clientSSLContext());
+      if (sslRealm != null && sslRealm.hasClientSSLContext()) {
+         validatorBuilder.useSslContext(sslRealm.clientSSLContext());
+      }
+      if (attributes.attribute(PUBLIC_KEY).isNull() && !attributes.attribute(ISSUER).isNull()) {
+         SSLContext sslContext = sslRealm != null && sslRealm.hasClientSSLContext() ? sslRealm.clientSSLContext() : null;
+         HostnameVerifier hostnameVerifier = attributes.attribute(HOST_NAME_VERIFICATION_POLICY).isNull()
+               ? null : HostnameVerificationPolicy.valueOf(attributes.attribute(HOST_NAME_VERIFICATION_POLICY).get()).getVerifier();
+         int connTimeout = attributes.attribute(CONNECTION_TIMEOUT).get().intValue();
+         int rdTimeout = attributes.attribute(READ_TIMEOUT).get().intValue();
+         long jkuTimeout = attributes.attribute(JKU_TIMEOUT).get().longValue();
+
+         JwkManager jwkManager = new JwkManager(sslContext, hostnameVerifier, jkuTimeout, connTimeout, rdTimeout);
+         JwksTokenValidator jwksValidator = JwksTokenValidator.create(
+               validatorBuilder, jwkManager, attributes.attribute(ISSUER).get(),
+               sslContext, hostnameVerifier, connTimeout, rdTimeout);
+         if (jwksValidator != null) {
+            return jwksValidator;
+         }
+      }
       return validatorBuilder.build();
    }
 }
