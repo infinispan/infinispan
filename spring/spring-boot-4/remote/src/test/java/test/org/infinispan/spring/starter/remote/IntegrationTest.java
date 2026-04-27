@@ -20,7 +20,7 @@ import test.org.infinispan.spring.starter.remote.testconfiguration.InfinispanCac
       },
       properties = {
             "spring.main.banner-mode=off",
-            "infinispan.remote.client-properties=test-hotrod-client.properties"
+            "infinispan.remote.client-properties=classpath:test-hotrod-client.properties"
       }
 )
 public class IntegrationTest {

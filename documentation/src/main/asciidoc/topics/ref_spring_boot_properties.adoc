@@ -29,6 +29,37 @@ Properties in this file take the format of `infinispan.remote.*`, for example:
 infinispan.remote.server-list=127.0.0.1:11222
 ----
 
+[discrete]
+== Spring Boot starter properties
+
+|===
+|Property |Default |Description
+
+|`infinispan.remote.enabled`
+|`true`
+|Enable the remote cache starter.
+
+|`infinispan.remote.client-properties`
+|`classpath:hotrod-client.properties`
+|Location of the Hot Rod client properties file.
+
+|`infinispan.remote.use-schema-registration`
+|`true`
+|Enable auto-discovery and registration of Protobuf `GeneratedSchema` implementations.
+
+|`infinispan.remote.reactive`
+|`false`
+|Enable reactive support for caching.
+
+|`infinispan.remote.read-timeout`
+|`0`
+|Read timeout in milliseconds. `0` means no timeout.
+
+|`infinispan.remote.write-timeout`
+|`0`
+|Write timeout in milliseconds. `0` means no timeout.
+|===
+
 [role="_additional-resources"]
 .Additional resources
 * link:#spring-application-properties[Application Properties]
