@@ -403,7 +403,11 @@ class IndexNode {
          if (log.isTraceEnabled()) {
             log.tracef("Pushed %08x (length %d, %d children) to stack (insertion point %d)", System.identityHashCode(node), node.length(), node.innerNodes.length, insertionPoint);
          }
-         node = node.innerNodes[insertionPoint].getIndexNode(root.segment);
+         InnerNode child = node.innerNodes[insertionPoint];
+         node = child.getIndexNode(root.segment);
+         if (node == null) {
+            throw new IOException("Corrupt index: inner node at " + child.offset + ":" + child.length + " could not be loaded");
+         }
       }
       return node;
    }
@@ -1092,8 +1096,15 @@ class IndexNode {
             try {
                if (reference == null || (node = reference.get()) == null) {
                   if (offset < 0) return null;
-                  // Is this okay?
-                  node = new IndexNode(segment, offset, length);
+                  try {
+                     node = new IndexNode(segment, offset, length);
+                  } catch (IOException e) {
+                     // The index file was truncated beneath this node's range — the index is
+                     // transiently or permanently inconsistent. Return null so callers can
+                     // treat this subtree as "not found" rather than propagating a hard error.
+                     log.warnf(e, "Failed to load index node at %d:%d, treating as not found", offset, length);
+                     return null;
+                  }
                   reference = new SoftReference<>(node);
                   if (log.isTraceEnabled()) {
                      log.trace("Loaded inner node from " + offset + " - " + length);
