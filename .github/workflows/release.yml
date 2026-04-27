@@ -272,17 +272,17 @@ jobs:
             private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
       - name: Update GitHub Organization Variable to next release version
-        if: ${{ !contains(inputs.version, '.Dev') }}
+        if: ${{ !contains(needs.release.outputs.version, '.Dev') }}
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh variable set "RELEASE_$(echo '${{ inputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo ${{ inputs.nextVersion }} | cut -f 1 -d '-')" --org infinispan --visibility all;
+          gh variable set "RELEASE_$(echo '${{ needs.release.outputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo ${{ needs.release.outputs.nextVersion }} | cut -f 1 -d '-')" --org infinispan --visibility all;
 
       - name: Update RELEASE variable to the next main branch version if current release version matches
-        if: ${{ inputs.version == vars.RELEASE }}
+        if: ${{ needs.release.outputs.version == vars.RELEASE }}
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh variable set RELEASE -b "$(echo ${{ inputs.nextVersion }} | cut -f 1 -d '-')" --org infinispan  --visibility all;
+          gh variable set RELEASE -b "$(echo ${{ needs.release.outputs.nextVersion }} | cut -f 1 -d '-')" --org infinispan  --visibility all;
