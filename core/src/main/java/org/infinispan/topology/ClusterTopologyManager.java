@@ -94,6 +94,16 @@ public interface ClusterTopologyManager {
    CompletionStage<Void> setRebalancingEnabled(String cacheName, boolean enabled);
 
    /**
+    * Updates the capacity factor for a node in the specified cache.
+    *
+    * @param cacheName the cache to update
+    * @param node the node whose capacity factor to change
+    * @param capacityFactor the new capacity factor
+    * @return a stage that completes when the update is accepted
+    */
+   CompletionStage<Void> setCapacityFactor(String cacheName, Address node, float capacityFactor);
+
+   /**
     * Retrieves the rebalancing status of a cache
     */
    RebalancingStatus getRebalancingStatus(String cacheName);

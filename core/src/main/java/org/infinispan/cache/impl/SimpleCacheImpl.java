@@ -422,6 +422,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
    }
 
    @Override
+   public CompletionStage<Void> setCapacityFactor(float capacityFactor) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public CompletionStage<Boolean> touch(Object key, boolean touchEvenIfExpired) {
       return touch(key, -1, touchEvenIfExpired);
    }

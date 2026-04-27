@@ -224,6 +224,11 @@ public class SecureCacheTestDriver {
       cache.setAvailability(AvailabilityMode.AVAILABLE);
    }
 
+   @TestCachePermission(AuthorizationPermission.ADMIN)
+   public void testSetCapacityFactor_float(SecureCache<String, String> cache) {
+      cache.setCapacityFactor(1.0f);
+   }
+
    @TestCachePermission(AuthorizationPermission.READ)
    public void testGetAsync_Object(SecureCache<String, String> cache) {
       cache.getAsync("a");

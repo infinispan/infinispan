@@ -30,3 +30,12 @@ include::yaml/zero_capacity_node.yaml[]
 ----
 include::code_examples/ZeroCapacityNode.java[]
 ----
+
+[NOTE]
+====
+Zero-capacity nodes are a permanent, node-level setting that applies to all caches including internal caches.
+A zero-capacity node cannot increase its capacity factor at runtime.
+
+To temporarily remove segment ownership from a node that was not configured as zero-capacity, use the runtime capacity factor API instead.
+See link:{config_docs}#changing_capacity_factors_at_runtime[Capacity factors].
+====

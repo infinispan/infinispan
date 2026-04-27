@@ -36,10 +36,12 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategyContext;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
+import org.infinispan.statetransfer.StateTransferTracker;
 import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -95,6 +97,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private volatile boolean rebalanceInProgress = false;
    private boolean manuallyPutDegraded = false;
    private volatile ConflictResolution conflictResolution;
+
+   @GuardedBy("lock")
+   private CompletionStage<Void> pendingCapacityFactor = CompletableFutures.completedNull();
 
    private RebalanceConfirmationCollector rebalanceConfirmationCollector;
    private ComponentStatus status;
@@ -154,6 +159,74 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
             startQueuedRebalance();
          }
+      } finally {
+         releaseLock();
+      }
+   }
+
+   public CompletionStage<Void> updateCapacityFactor(Address node, float capacityFactor) {
+      acquireLock();
+      try {
+         if (!expectedMembers.contains(node)) {
+            log.debugf("Ignoring capacity factor update for %s in cache %s: not a member",  node, cacheName);
+            return CompletableFutures.completedNull();
+         }
+
+         InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class);
+         if (icr.isInternalCache(cacheName)) {
+            return CompletableFuture.failedFuture(new IllegalStateException("Not allowed to update capacity of internal cache: " + cacheName));
+         }
+
+         Float current = capacityFactors.get(node);
+         if (current != null && Float.compare(current, capacityFactor) == 0) {
+            log.debugf("Capacity factor for %s in cache %s is already %s/%f: doing nothing", node, cacheName, current, capacityFactor);
+            return CompletableFutures.completedNull();
+         }
+
+         HashMap<Address, Float> newCapacityFactors = new HashMap<>(capacityFactors);
+         newCapacityFactors.put(node, capacityFactor);
+         float newTotal = 0f;
+         for (Float value : newCapacityFactors.values()) {
+            if (value != null)
+               newTotal += value;
+         }
+
+         if (newTotal == 0) {
+            return CompletableFuture.failedFuture(new IllegalArgumentException("Cannot set capacity factor to " + capacityFactor
+                  + " for node " + node + " in cache " + cacheName + ": total capacity would be zero"));
+         }
+
+         capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
+         if (!clusterTopologyManager.isRebalancingEnabled()) {
+            log.capacityFactorUpdatedRebalancingDisabled(node, cacheName, capacityFactor);
+            queueRebalance(expectedMembers);
+            return CompletableFutures.completedNull();
+         }
+
+         ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
+         if (cr == null) {
+            log.debugf("Component registry for %s not found", cacheName);
+            return CompletableFutures.completedNull();
+         }
+
+         StateTransferTracker stt = cr.getComponent(StateTransferTracker.class);
+         if (stt == null) {
+            log.debugf("State transfer tracker not found, not waiting for state transfer for %s", cacheName);
+            return CompletableFutures.completedNull();
+         }
+
+         pendingCapacityFactor = pendingCapacityFactor.thenCompose(v ->
+               stt.onStateTransferCompleted((topology, t) -> {
+                  if (t != null) {
+                     log.debugf(t, "State transfer failed for %s", cacheName);
+                     return true;
+                  }
+
+                  Float actual = topology.getCurrentCH().getCapacityFactors().get(node);
+                  return actual != null && Float.compare(actual, capacityFactor) == 0;
+               }));
+         queueRebalance(expectedMembers);
+         return pendingCapacityFactor;
       } finally {
          releaseLock();
       }

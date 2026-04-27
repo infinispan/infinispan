@@ -12,3 +12,43 @@ However, if nodes have different amounts of memory available to them, you can co
 
 The value for the capacity factor configuration must be a positive number and can be a fraction such as 1.5.
 You can also configure a capacity factor of `0` but is recommended only for nodes that join the cluster temporarily and should use the zero capacity configuration instead.
+
+== Changing capacity factors at runtime
+
+You can change the capacity factor of a node without restarting it.
+This triggers a rebalance so that segments are redistributed according to the new value.
+
+To change the capacity factor for a single cache:
+
+[source,java]
+----
+cache.getAdvancedCache().setCapacityFactor(0.5f);
+----
+
+To change the capacity factor for all caches on a node:
+
+[source,java]
+----
+cacheManager.setCapacityFactor(0f);
+----
+
+The returned `CompletionStage` completes when the state transfer finishes and the new segment ownership is in effect.
+
+The following constraints apply:
+
+* Negative values are not allowed.
+* At least one member of each cache must have a capacity factor greater than zero.
+* Nodes configured as zero-capacity nodes at startup cannot increase their capacity factor at runtime.
+* For replicated and invalidation caches, only the values `0` and `1` are meaningful. Non-binary values are ignored because all members must own all segments.
+* Local caches are not affected by capacity factor changes.
+
+=== Graceful drain
+
+To remove a node from segment ownership before shutting it down, set its capacity factor to `0`.
+The node remains in the cluster and can still redirect operations, but it no longer owns any segments.
+
+[source,java]
+----
+CompletionStage<Void> cs = cacheManager.setCapacityFactor(0f);
+// wait for completion of `cs`, then shut down
+----

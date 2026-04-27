@@ -227,6 +227,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    private int hashCodeInternal() {
       int result = numOwners;
       result = 31 * result + members.hashCode();
+      result = 31 * result + CapacityFactorHelper.capacityFactorHashCode(capacityFactors);
       result = 31 * result + Arrays.hashCode(segmentOwners);
       return result;
    }
@@ -242,11 +243,12 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       if (segmentOwners.length != that.segmentOwners.length) return false;
       if (!members.equals(that.members)) return false;
       for (int i = 0; i < segmentOwners.length; i++) {
-         if (!segmentOwners[i].equals(that.segmentOwners[i]))
+         if (!segmentOwners[i].equals(that.segmentOwners[i])) {
             return false;
+         }
       }
 
-      return true;
+      return CapacityFactorHelper.isCapacityFactorsEquals(capacityFactors, that.capacityFactors);
    }
 
    @Override

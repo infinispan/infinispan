@@ -21,7 +21,7 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    // Because it assigns owners randomly, SyncConsistentHashFactory doesn't work very well with a low number
    // of segments. (With DefaultConsistentHashFactory, 60 segments was ok up to 6 nodes.)
    public static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SEGMENTS, 256).immutable().build();
-   public static final AttributeDefinition<Float> CAPACITY_FACTOR = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CAPACITY_FACTOR, 1.0f).immutable().global(false).build();
+   public static final AttributeDefinition<Float> CAPACITY_FACTOR = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CAPACITY_FACTOR, 1.0f).global(false).build();
    public static final AttributeDefinition<KeyPartitioner> KEY_PARTITIONER = AttributeDefinition
          .builder(org.infinispan.configuration.parsing.Attribute.KEY_PARTITIONER, null, KeyPartitioner.class)
          .copier(original -> {

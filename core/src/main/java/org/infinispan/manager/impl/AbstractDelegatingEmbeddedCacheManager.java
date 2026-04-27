@@ -251,4 +251,9 @@ public class AbstractDelegatingEmbeddedCacheManager extends InternalCacheManager
    protected GlobalComponentRegistry globalComponentRegistry() {
       return InternalCacheManager.of(cm);
    }
+
+   @Override
+   public CompletionStage<Void> setCapacityFactor(float capacityFactor) {
+      return cm.setCapacityFactor(capacityFactor);
+   }
 }
