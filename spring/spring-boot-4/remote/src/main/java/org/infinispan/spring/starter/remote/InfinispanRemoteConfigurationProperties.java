@@ -9,6 +9,11 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 
+/**
+ * Configuration properties for the Infinispan remote client, bound to {@code infinispan.remote.*}.
+ *
+ * @since 15.2
+ */
 @ConfigurationProperties(value = "infinispan.remote", ignoreInvalidFields = true)
 public class InfinispanRemoteConfigurationProperties extends org.infinispan.client.hotrod.impl.ConfigurationProperties {
    public static final String DEFAULT_CLIENT_PROPERTIES = "classpath:hotrod-client.properties";
@@ -25,9 +30,25 @@ public class InfinispanRemoteConfigurationProperties extends org.infinispan.clie
     */
    private String clientProperties = DEFAULT_CLIENT_PROPERTIES;
 
+   /**
+    * Enable reactive support for caching.
+    */
    private boolean reactive = false;
+
+   /**
+    * Read timeout in milliseconds. A value of 0 means no timeout.
+    */
    private long readTimeout = 0;
+
+   /**
+    * Write timeout in milliseconds. A value of 0 means no timeout.
+    */
    private long writeTimeout = 0;
+
+   /**
+    * Enable auto-discovery and registration of Protobuf GeneratedSchema implementations.
+    */
+   private boolean useSchemaRegistration = true;
 
    public String getClientProperties() {
       return clientProperties;
@@ -142,5 +163,13 @@ public class InfinispanRemoteConfigurationProperties extends org.infinispan.clie
 
    public void setWriteTimeout(long writeTimeout) {
       this.writeTimeout = writeTimeout;
+   }
+
+   public boolean isUseSchemaRegistration() {
+      return useSchemaRegistration;
+   }
+
+   public void setUseSchemaRegistration(boolean useSchemaRegistration) {
+      this.useSchemaRegistration = useSchemaRegistration;
    }
 }

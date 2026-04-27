@@ -5,6 +5,21 @@ Configure {brandname} to marshall Java objects into binary format so they can be
 By default {brandname} uses a Java Serialization marshaller, which requires you to add your classes to an allow list.
 As an alternative you can use ProtoStream, which requires you to annotate your classes and generate a `SerializationContextInitializer` for custom Java objects.
 
+[discrete]
+== Automatic Protobuf schema registration
+The Spring Boot starter automatically discovers `GeneratedSchema` implementations on the classpath, registers them with the client, and uploads them to the {brandname} server.
+This means you only need to define your `@Proto` model and `@ProtoSchema` interface; no manual configuration is required.
+
+To disable auto-registration, set the following property:
+
+[source,text,options=nowrap,subs=attributes+]
+----
+infinispan.remote.use-schema-registration=false
+----
+
+[discrete]
+== Manual marshaller configuration
+
 .Procedure
 
 . Open `hotrod-client.properties` or `application.properties` for editing.
