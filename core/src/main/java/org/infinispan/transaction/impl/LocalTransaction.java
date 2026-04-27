@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
@@ -93,7 +94,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    public void putLookedUpEntry(Object key, CacheEntry e) {
       checkIfRolledBack();
       if (lookedUpEntries == null)
-         lookedUpEntries = new HashMap<>(4);
+         lookedUpEntries = new ConcurrentHashMap<>(4);
 
       lookedUpEntries.put(key, e);
    }
@@ -102,7 +103,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
       checkIfRolledBack();
       if (lookedUpEntries == null) {
-         lookedUpEntries = new HashMap<>(entries);
+         lookedUpEntries = new ConcurrentHashMap<>(entries);
       } else {
          lookedUpEntries.putAll(entries);
       }
