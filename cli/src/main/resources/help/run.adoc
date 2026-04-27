@@ -18,9 +18,8 @@ If a filename is `-`, then commands will be read from stdin.
 OPTIONS
 -------
 
-*--echo*='NAME'::
-Specifies the cache from which to remove entries. Defaults to the currently
-selected cache.
+*--echo*='[true|false]'::
+Specifies whether to print the executed commands to the output. Defaults to `false`.
 
 *--on-error*='[FAIL_FAST|FAIL_AT_END|IGNORE]'::
 
