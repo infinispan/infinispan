@@ -187,7 +187,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    }
 
    private void configureImage(String fqcn, File rootDir) {
-      this.name = abbreviate(fqcn);
+      this.name = abbreviate(fqcn).replaceAll("@sha256:.+", "");
       this.fullName = fqcn;
       // If properties define the cluster stack let that take priority over the system property
       String jGroupsStack = !configuration.properties().containsKey(ServerConstants.INFINISPAN_CLUSTER_STACK) ?
