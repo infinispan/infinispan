@@ -3,17 +3,25 @@ package org.infinispan.spring.starter.remote;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.protostream.GeneratedSchema;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.spring.remote.provider.SchemaRegistration;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration;
 import org.springframework.boot.autoconfigure.cache.CacheType;
@@ -65,6 +73,9 @@ public class InfinispanRemoteAutoConfiguration {
    @Autowired
    private ApplicationContext ctx;
 
+   @Autowired(required = false)
+   private List<SerializationContextInitializer> contextInitializers;
+
    @Bean
    @Conditional({ConditionalOnCacheType.class, ConditionalOnConfiguration.class})
    @ConditionalOnMissingBean
@@ -99,8 +110,47 @@ public class InfinispanRemoteAutoConfiguration {
                "and update conditions.");
       }
 
+      // Auto discover and register schemas
+      List<GeneratedSchema> discoveredSchemas = new ArrayList<>();
+      if (infinispanProperties.isUseSchemaRegistration()) {
+         // Classpath scanning for GeneratedSchema implementations
+         try {
+            List<String> packages = AutoConfigurationPackages.get((BeanFactory) ctx);
+            discoveredSchemas = SchemaRegistration.discoverSchemas(
+                  ctx.getClassLoader(), packages);
+         } catch (IllegalStateException e) {
+            logger.fine("Auto-configuration packages not available, skipping schema classpath scanning");
+         }
+
+         // Collect user defined SerializationContextInitializer beans
+         Set<String> registeredClasses = new HashSet<>();
+         if (contextInitializers != null) {
+            for (SerializationContextInitializer sci : contextInitializers) {
+               if (sci instanceof GeneratedSchema gs && !discoveredSchemas.contains(gs)) {
+                  discoveredSchemas.add(gs);
+               }
+               builder.addContextInitializer(sci);
+               registeredClasses.add(sci.getClass().getName());
+            }
+         }
+
+         // Register classpath-discovered schemas with the builder
+         // Skipping those already registered as beans
+         for (GeneratedSchema schema : discoveredSchemas) {
+            if (!registeredClasses.contains(schema.getClass().getName())) {
+               builder.addContextInitializer(schema);
+            }
+         }
+      }
+
       cacheCustomizers.forEach(c -> c.customize(builder));
-      return new RemoteCacheManager(builder.build());
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
+
+      if (infinispanProperties.isUseSchemaRegistration()) {
+         SchemaRegistration.uploadSchemas(remoteCacheManager, discoveredSchemas);
+      }
+
+      return remoteCacheManager;
    }
 
    public static class ConditionalOnConfiguration extends AnyNestedCondition {
