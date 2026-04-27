@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -211,7 +212,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    private void initAffectedKeys() {
-      if (affectedKeys == null) affectedKeys = new HashSet<>(INITIAL_LOCK_CAPACITY);
+      if (affectedKeys == null) affectedKeys = ConcurrentHashMap.newKeySet(INITIAL_LOCK_CAPACITY);
    }
 
    @Override
