@@ -250,20 +250,36 @@ class IndexNode {
    public enum ReadOperation {
       GET_RECORD {
          @Override
-         protected EntryRecord apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
-            return leafNode.loadRecord(fileProvider, key, timeService);
+         protected EntryRecord apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException {
+            try {
+               return leafNode.loadRecord(fileProvider, key, timeService);
+            } catch (IndexNodeOutdatedException e) {
+               log.tracef("GET_RECORD: leaf %d:%d references deleted file, treating as not found", leafNode.file, leafNode.offset);
+               return null;
+            }
          }
       },
       GET_EXPIRED_RECORD {
          @Override
-         protected EntryRecord apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
-            return leafNode.loadRecord(fileProvider, key, null);
+         protected EntryRecord apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException {
+            try {
+               return leafNode.loadRecord(fileProvider, key, null);
+            } catch (IndexNodeOutdatedException e) {
+               log.tracef("GET_EXPIRED_RECORD: leaf %d:%d references deleted file, treating as not found", leafNode.file, leafNode.offset);
+               return null;
+            }
          }
       },
       GET_POSITION {
          @Override
-         protected EntryPosition apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
-            EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
+         protected EntryPosition apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException {
+            EntryRecord hak;
+            try {
+               hak = leafNode.loadHeaderAndKey(fileProvider);
+            } catch (IndexNodeOutdatedException e) {
+               log.tracef("GET_POSITION: leaf %d:%d references deleted file, treating as not found", leafNode.file, leafNode.offset);
+               return null;
+            }
             if (Arrays.equals(hak.getKey(), key)) {
                if (hak.getHeader().expiryTime() > 0 && hak.getHeader().expiryTime() <= timeService.wallClockTime()) {
                   if (log.isTraceEnabled()) {
@@ -282,8 +298,17 @@ class IndexNode {
       },
       GET_INFO {
          @Override
-         protected EntryInfo apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
-            EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
+         protected EntryInfo apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException {
+            EntryRecord hak;
+            try {
+               hak = leafNode.loadHeaderAndKey(fileProvider);
+            } catch (IndexNodeOutdatedException e) {
+               // The data file referenced by this leaf no longer exists (already compacted and deleted).
+               // The compactor uses GET_INFO to check whether the entry being compacted is the current one;
+               // if the leaf's file is gone the entry cannot be current, so return null (treat as not found).
+               log.tracef("GET_INFO: leaf %d:%d references deleted file, treating as not found", leafNode.file, leafNode.offset);
+               return null;
+            }
             if (Arrays.equals(hak.getKey(), key)) {
                log.tracef("Found matching leafNode %s", leafNode);
                return leafNode;
@@ -718,12 +743,20 @@ class IndexNode {
       byte[][] newKeyParts;
       LeafNode[] newLeafNodes;
       EntryRecord hak;
+      boolean leafFileExists;
       try {
          hak = oldLeafNode.loadHeaderAndKey(segment.getFileProvider());
+         leafFileExists = true;
       } catch (IndexNodeOutdatedException e) {
-         throw new IllegalStateException("Index cannot be outdated for segment updater thread", e);
+         // The file this leaf points to has been deleted (already compacted/deleted by another thread).
+         // Treat as an exact key match so we can update/remove the stale B-tree entry in-place.
+         // Skip free() calls below since the file is already gone.
+         log.tracef("copyWith: leaf %d:%d references deleted file, assuming key match to clean up stale entry",
+               oldLeafNode.file, oldLeafNode.offset);
+         hak = null;
+         leafFileExists = false;
       }
-      byte[] oldIndexKey = hak.getKey();
+      byte[] oldIndexKey = leafFileExists ? hak.getKey() : indexKey;
       int keyComp = compare(oldIndexKey, indexKey);
       Object objectKey = request.getKey();
       if (keyComp == 0) {
@@ -737,7 +770,9 @@ class IndexNode {
 
                   updateFileOffsetInFile(insertPart, file, offset, numRecords);
 
-                  segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
+                  if (leafFileExists) {
+                     segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
+                  }
                } else {
                   if (log.isTraceEnabled()) {
                      log.trace(String.format("Updating num records for %s %d:%d to %d", objectKey, oldLeafNode.file, oldLeafNode.offset, numRecords));
@@ -787,7 +822,9 @@ class IndexNode {
             } else {
                newLeafNodes = leafNodes;
             }
-            segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
+            if (leafFileExists) {
+               segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
+            }
          }
       } else {
          // IndexRequest cannot be MOVED or DROPPED when the key is not in the index
@@ -1098,8 +1135,9 @@ class IndexNode {
                   if (offset < 0) return null;
                   try {
                      node = new IndexNode(segment, offset, length);
-                  } catch (IOException e) {
-                     // The index file was truncated beneath this node's range — the index is
+                  } catch (IOException | RuntimeException e) {
+                     // The index file was truncated beneath this node's range (IOException) or
+                     // the buffer is too small (BufferUnderflowException) — the index is
                      // transiently or permanently inconsistent. Return null so callers can
                      // treat this subtree as "not found" rather than propagating a hard error.
                      log.warnf(e, "Failed to load index node at %d:%d, treating as not found", offset, length);
@@ -1149,11 +1187,13 @@ class IndexNode {
                      int readOffset = offset < 0 ? ~offset : offset;
                      EntryHeader header = EntryRecord.readEntryHeader(handle, readOffset);
                      if (header == null) {
-                        throw new IllegalStateException("Error reading header from " + file + ":" + readOffset + " | " + handle.getFileSize());
+                        // Offset is past the current end of the data file — the leaf is stale
+                        // (the entry was overwritten or the file was compacted since the leaf was written).
+                        throw new IndexNodeOutdatedException(file + ":" + readOffset + " | " + handle.getFileSize());
                      }
                      byte[] key = EntryRecord.readKey(handle, header, readOffset);
                      if (key == null) {
-                        throw new IllegalStateException("Error reading key from " + file + ":" + readOffset);
+                        throw new IndexNodeOutdatedException(file + ":" + readOffset + " (key truncated)");
                      }
                      headerAndKey = new EntryRecord(header, key);
                      keyReference = new SoftReference<>(headerAndKey);
