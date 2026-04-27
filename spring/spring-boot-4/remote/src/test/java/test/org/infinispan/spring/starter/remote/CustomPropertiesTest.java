@@ -34,7 +34,7 @@ import org.springframework.boot.test.context.SpringBootTest;
       },
       properties = {
             "spring.main.banner-mode=off",
-            "infinispan.remote.client-properties=custom-test-hotrod-client.properties"
+            "infinispan.remote.client-properties=classpath:custom-test-hotrod-client.properties"
       }
 )
 public class CustomPropertiesTest {

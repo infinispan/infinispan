@@ -3,17 +3,25 @@ package org.infinispan.spring.starter.remote;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.protostream.GeneratedSchema;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.spring.remote.provider.SchemaRegistration;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.cache.CacheType;
 import org.springframework.boot.autoconfigure.condition.AnyNestedCondition;
@@ -32,7 +40,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ConfigurationCondition;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 
 @Configuration
@@ -65,13 +75,17 @@ public class InfinispanRemoteAutoConfiguration {
    @Autowired
    private ApplicationContext ctx;
 
+   @Autowired(required = false)
+   private List<SerializationContextInitializer> contextInitializers;
+
    @Bean
    @Conditional({ConditionalOnCacheType.class, ConditionalOnConfiguration.class})
    @ConditionalOnMissingBean
    @Qualifier(REMOTE_CACHE_MANAGER_BEAN_QUALIFIER)
    public RemoteCacheManager remoteCacheManager() throws IOException {
 
-      boolean hasHotRodPropertiesFile = ctx.getResource(infinispanProperties.getClientProperties()).exists();
+      String clientPropertiesLocation = resolveResourceLocation(infinispanProperties.getClientProperties());
+      boolean hasHotRodPropertiesFile = ctx.getResource(clientPropertiesLocation).exists();
       boolean hasConfigurer = infinispanRemoteConfigurer != null;
       boolean hasProperties = StringUtils.hasText(infinispanProperties.getServerList()) || StringUtils.hasLength(infinispanProperties.getURI());
       ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -82,8 +96,7 @@ public class InfinispanRemoteAutoConfiguration {
       if (hasConfigurer) {
          builder.read(Objects.requireNonNull(infinispanRemoteConfigurer.getRemoteConfiguration()));
       } else if (hasHotRodPropertiesFile) {
-         String remoteClientPropertiesLocation = infinispanProperties.getClientProperties();
-         Resource hotRodClientPropertiesFile = ctx.getResource(remoteClientPropertiesLocation);
+         Resource hotRodClientPropertiesFile = ctx.getResource(clientPropertiesLocation);
          try (InputStream stream = hotRodClientPropertiesFile.getURL().openStream()) {
             Properties hotrodClientProperties = new Properties();
             hotrodClientProperties.load(stream);
@@ -99,8 +112,47 @@ public class InfinispanRemoteAutoConfiguration {
                "and update conditions.");
       }
 
+      // Auto-discover and register schemas
+      List<GeneratedSchema> discoveredSchemas = new ArrayList<>();
+      if (infinispanProperties.isUseSchemaRegistration()) {
+         // Classpath scanning for GeneratedSchema implementations
+         try {
+            List<String> packages = AutoConfigurationPackages.get((BeanFactory) ctx);
+            discoveredSchemas = SchemaRegistration.discoverSchemas(
+                  ctx.getClassLoader(), packages);
+         } catch (IllegalStateException e) {
+            logger.fine("Auto-configuration packages not available, skipping schema classpath scanning");
+         }
+
+         // Collect user-defined SerializationContextInitializer beans
+         Set<String> registeredClasses = new HashSet<>();
+         if (contextInitializers != null) {
+            for (SerializationContextInitializer sci : contextInitializers) {
+               if (sci instanceof GeneratedSchema gs && !discoveredSchemas.contains(gs)) {
+                  discoveredSchemas.add(gs);
+               }
+               builder.addContextInitializer(sci);
+               registeredClasses.add(sci.getClass().getName());
+            }
+         }
+
+         // Register classpath-discovered schemas with the builder, skipping those already registered as beans
+         for (GeneratedSchema schema : discoveredSchemas) {
+            if (!registeredClasses.contains(schema.getClass().getName())) {
+               builder.addContextInitializer(schema);
+            }
+         }
+      }
+
       cacheCustomizers.forEach(c -> c.customize(builder));
-      return new RemoteCacheManager(builder.build());
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
+
+      // Upload schemas to server
+      if (infinispanProperties.isUseSchemaRegistration()) {
+         SchemaRegistration.uploadSchemas(remoteCacheManager, discoveredSchemas);
+      }
+
+      return remoteCacheManager;
    }
 
    public static class ConditionalOnConfiguration extends AnyNestedCondition {
@@ -149,8 +201,22 @@ public class InfinispanRemoteAutoConfiguration {
             hotRodPropertiesPath = InfinispanRemoteConfigurationProperties.DEFAULT_CLIENT_PROPERTIES;
          }
 
-         return conditionContext.getResourceLoader().getResource(hotRodPropertiesPath).exists();
+         return conditionContext.getResourceLoader().getResource(resolveResourceLocation(hotRodPropertiesPath)).exists();
       }
+   }
+
+   /**
+    * In a WebApplicationContext, bare resource paths (without a protocol prefix) are resolved
+    * relative to the servlet context root, not the classpath. This method ensures bare paths
+    * are prefixed with "classpath:" so they resolve correctly in both web and non-web contexts.
+    * Paths that already have a protocol prefix (classpath:, file:, http:, etc.) are left unchanged.
+    */
+   public static String resolveResourceLocation(String location) {
+      if (ResourceUtils.isUrl(location) || location.startsWith(ResourceLoader.CLASSPATH_URL_PREFIX)
+            || location.startsWith("/")) {
+         return location;
+      }
+      return ResourceLoader.CLASSPATH_URL_PREFIX + location;
    }
 
 }
