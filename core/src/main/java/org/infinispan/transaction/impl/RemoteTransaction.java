@@ -2,10 +2,10 @@ package org.infinispan.transaction.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commands.write.WriteCommand;
@@ -42,13 +42,13 @@ public class RemoteTransaction extends AbstractCacheTransaction {
 
    public RemoteTransaction(List<WriteCommand> modifications, GlobalTransaction tx, int topologyId, long txCreationTime) {
       super(tx, topologyId, txCreationTime);
-      lookedUpEntries = new HashMap<>(modifications.size());
+      lookedUpEntries = new ConcurrentHashMap<>(modifications.size());
       setModifications(modifications);
    }
 
    public RemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
       super(tx, topologyId, txCreationTime);
-      lookedUpEntries = new HashMap<>(4);
+      lookedUpEntries = new ConcurrentHashMap<>(4);
    }
 
    @Override
