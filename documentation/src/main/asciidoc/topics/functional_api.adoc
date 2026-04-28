@@ -56,7 +56,7 @@ is temporary.
 == Read-Only Map API
 
 Read-only operations have the advantage that no locks are acquired
-for the duration of the operation. The following is an example on how to the
+for the duration of the operation. The following is an example on how to perform the
 equivalent operation for
 link:{jdkdocroot}/java/util/Map.html#get-java.lang.Object-[Map.get(K)]:
 
