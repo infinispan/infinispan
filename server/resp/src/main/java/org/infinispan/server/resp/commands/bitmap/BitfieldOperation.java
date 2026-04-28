@@ -8,18 +8,28 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.resp.logging.Messages;
 
+@Proto
 @ProtoTypeId(ProtoStreamTypeIds.RESP_BITFIELD_OPERATION)
 public record BitfieldOperation(Type type, int offset, long value, boolean signed, int bits, Overflow overflow) {
 
+   @ProtoTypeId(ProtoStreamTypeIds.RESP_BITFIELD_OVERFLOW)
    public enum Overflow {
-      NONE, WRAP, SAT, FAIL;
+      @ProtoEnumValue(number = 0) NONE,
+      @ProtoEnumValue(number = 1) WRAP,
+      @ProtoEnumValue(number = 2) SAT,
+      @ProtoEnumValue(number = 3) FAIL;
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.RESP_BITFIELD_OPERATION_TYPE)
    public enum Type {
-      GET, SET, INCRBY
+      @ProtoEnumValue(number = 0) GET,
+      @ProtoEnumValue(number = 1) SET,
+      @ProtoEnumValue(number = 2) INCRBY;
    }
 
    public static BitfieldOperation GET(byte[] encoding, byte[] offset) {
