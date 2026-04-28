@@ -63,26 +63,26 @@ public class FutureUpdate implements Function<EntryView.ReadWriteEntryView<Objec
 		return MarshallableObject.create(value);
 	}
 
-	@Override
-	public Void apply(EntryView.ReadWriteEntryView<Object, Object> view) {
-		Object storedValue = view.find().orElse(null);
-		if (storedValue instanceof Tombstone) {
-			// Note that the update has to keep tombstone even if the transaction was unsuccessful;
-			// before write we have removed the value and we have to protect the entry against stale putFromLoads
-			Tombstone tombstone = (Tombstone) storedValue;
-			Object result = tombstone.applyUpdate(uuid, timestamp, this.value);
-			if (result instanceof Tombstone) {
-				view.set(result, region.getExpiringMetaParam());
-			} else {
-				view.set(result);
-			}
-		}
-		// Else: this is an async future update, and it's timestamp may be vastly outdated
-		// We need to first execute the async update and then local one, because if we're on the primary
-		// owner the local future update would fail the async one.
-		// TODO: There is some discrepancy with TombstoneUpdate handling which does not fail the update
-		return null;
-	}
+   @Override
+   public Void apply(EntryView.ReadWriteEntryView<Object, Object> view) {
+      Object storedValue = view.find().orElse(null);
+      if (storedValue instanceof Tombstone) {
+         // Note that the update has to keep tombstone even if the transaction was unsuccessful;
+         // before write we have removed the value and we have to protect the entry against stale putFromLoads
+         Tombstone tombstone = (Tombstone) storedValue;
+         Object result = tombstone.applyUpdate(uuid, timestamp, this.value);
+         if (result instanceof Tombstone) {
+            view.set(result, region.getExpiringMetaParam());
+         } else {
+            view.set(result, region.getDataMetaParams());
+         }
+      }
+      // Else: this is an async future update, and it's timestamp may be vastly outdated
+      // We need to first execute the async update and then local one, because if we're on the primary
+      // owner the local future update would fail the async one.
+      // TODO: There is some discrepancy with TombstoneUpdate handling which does not fail the update
+      return null;
+   }
 
 	@Override
 	public void inject(ComponentRegistry registry) {
