@@ -7,7 +7,6 @@ import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
-import org.infinispan.functional.MetaParam;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -67,30 +66,30 @@ public class TombstoneUpdate<T> implements Function<EntryView.ReadWriteEntryView
 	public Void apply(EntryView.ReadWriteEntryView<Object, Object> view) {
 		Object storedValue = view.find().orElse(null);
 
-		if (value == null) {
-			if (storedValue != null && !(storedValue instanceof Tombstone)) {
-				// We have to keep Tombstone, because otherwise putFromLoad could insert a stale entry
-				// (after it has been already updated and *then* evicted)
-				view.set(new Tombstone(ZERO, timestamp), region.getExpiringMetaParam());
-			}
-			// otherwise it's eviction
-		} else if (storedValue instanceof Tombstone) {
-			Tombstone tombstone = (Tombstone) storedValue;
-			if (tombstone.getLastTimestamp() < timestamp) {
-				view.set(value);
-			}
-		} else if (storedValue == null) {
-			// async putFromLoads shouldn't cross the invalidation timestamp
-			if (region.getLastRegionInvalidation() < timestamp) {
-				view.set(value);
-			}
-		} else {
-			// Don't do anything locally. This could be the async remote write, though, when local
-			// value has been already updated: let it propagate to remote nodes, too
-			view.set(storedValue, view.findMetaParam(MetaParam.MetaLifespan.class).get());
-		}
-		return null;
-	}
+      if (value == null) {
+         if (storedValue != null && !(storedValue instanceof Tombstone)) {
+            // We have to keep Tombstone, because otherwise putFromLoad could insert a stale entry
+            // (after it has been already updated and *then* evicted)
+            view.set(new Tombstone(ZERO, timestamp), region.getExpiringMetaParam());
+         }
+         // otherwise it's eviction
+      } else if (storedValue instanceof Tombstone) {
+         Tombstone tombstone = (Tombstone) storedValue;
+         if (tombstone.getLastTimestamp() < timestamp) {
+            view.set(value, region.getDataMetaParams());
+         }
+      } else if (storedValue == null) {
+         // async putFromLoads shouldn't cross the invalidation timestamp
+         if (region.getLastRegionInvalidation() < timestamp) {
+            view.set(value, region.getDataMetaParams());
+         }
+      } else {
+         // Don't do anything locally. This could be the async remote write, though, when local
+         // value has been already updated: let it propagate to remote nodes, too
+         view.set(storedValue, region.getDataMetaParams());
+      }
+      return null;
+   }
 
 	@Override
 	public void inject(ComponentRegistry registry) {
