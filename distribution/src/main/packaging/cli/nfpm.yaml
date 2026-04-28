@@ -1,0 +1,50 @@
+# nfpm configuration for building .deb and .rpm packages of the Infinispan CLI.
+#
+# This config uses environment variable expansion. Required env vars:
+#   VERSION    - release version (e.g. 16.2.0)
+#   NFPM_ARCH  - target architecture in Go format: amd64, arm64
+#
+# The working directory must contain the native binary (infinispan-cli).
+#
+# Usage:
+#   VERSION=16.2.0 NFPM_ARCH=amd64 nfpm package -f nfpm.yaml -p deb -t output/
+#   VERSION=16.2.0 NFPM_ARCH=amd64 nfpm package -f nfpm.yaml -p rpm -t output/
+
+name: infinispan-cli
+arch: ${NFPM_ARCH}
+platform: linux
+version: ${VERSION}
+section: utils
+priority: optional
+
+maintainer: Infinispan Team <infinispan@infinispan.org>
+description: |
+  Command-line interface for Infinispan data grid.
+  Provides cache operations, cluster administration, and server
+  configuration for Infinispan clusters.
+vendor: Red Hat, Inc.
+homepage: https://infinispan.org
+license: Apache-2.0
+
+contents:
+  - src: infinispan-cli
+    dst: /usr/libexec/infinispan-cli-native
+    file_info:
+      mode: 0755
+  - src: completions/infinispan-cli_complete.bash
+    dst: /usr/share/bash-completion/completions/infinispan-cli
+  - src: completions/infinispan-cli_complete.zsh
+    dst: /usr/share/zsh/vendor-completions/_infinispan-cli
+  - src: completions/infinispan-cli.fish
+    dst: /usr/share/fish/vendor_completions.d/infinispan-cli.fish
+
+scripts:
+  postinstall: postinstall.sh
+  preremove: preremove.sh
+
+rpm:
+  group: Development/Tools
+
+deb:
+  fields:
+    Bugs: https://github.com/infinispan/infinispan/issues
