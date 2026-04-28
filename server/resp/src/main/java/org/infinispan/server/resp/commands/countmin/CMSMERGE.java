@@ -6,8 +6,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.ProcessorInfo;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.server.resp.AclCategory;
@@ -17,10 +15,8 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.ProbabilisticErrors;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * CMS.MERGE destKey numKeys src [src ...] [WEIGHTS weight [weight ...]]
@@ -88,9 +84,8 @@ public class CMSMERGE extends RespCommand implements Resp3Command {
 
       AdvancedCache<byte[], Object> cache = handler.typedCache(null);
 
-      CompletionStage<List<CountMinSketch>> sketches = CompletionStages.performConcurrently(
-            sourceKeys, ProcessorInfo.availableProcessors(),
-            Schedulers.from(new WithinThreadExecutor()),
+      CompletionStage<List<CountMinSketch>> sketches = CompletionStages.performSequentially(
+            sourceKeys.iterator(),
             srcKey -> cache.getAsync(srcKey)
                   .thenApply(obj -> {
                      if (obj == null) {
@@ -99,11 +94,7 @@ public class CMSMERGE extends RespCommand implements Resp3Command {
                      return (CountMinSketch) obj;
                   }), Collectors.toList());
 
-      CompletionStage<Boolean> result = CompletionStages.handleAndCompose(sketches, (sources, t) -> {
-         if (t != null) {
-            throw CompletableFutures.asCompletionException(t);
-         }
-
+      CompletionStage<Boolean> result = sketches.thenCompose(sources -> {
          FunctionalMap.ReadWriteMap<byte[], Object> rwCache =
                FunctionalMap.create(cache).toReadWriteMap();
 
