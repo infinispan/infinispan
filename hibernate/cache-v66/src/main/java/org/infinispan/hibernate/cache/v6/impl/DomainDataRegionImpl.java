@@ -35,6 +35,7 @@ import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.LockingInterceptor;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
+import org.infinispan.hibernate.cache.commons.access.SyncLocalExpirationManager;
 import org.infinispan.hibernate.cache.commons.access.UnorderedDistributionInterceptor;
 import org.infinispan.hibernate.cache.commons.access.UnorderedReplicationLogic;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
@@ -65,6 +66,7 @@ public class DomainDataRegionImpl
 
    private Strategy strategy;
    private final MetaParam.MetaLifespan expiringMetaParam;
+   private final MetaParam.Writable<?>[] dataMetaParams;
 
    protected enum Strategy {
       NONE, VALIDATION, TOMBSTONES, VERSIONED_ENTRIES
@@ -79,6 +81,20 @@ public class DomainDataRegionImpl
 
       tombstoneExpiration = factory.getPendingPutsCacheConfiguration().expiration().maxIdle();
       expiringMetaParam = new MetaParam.MetaLifespan(tombstoneExpiration);
+      dataMetaParams = buildDataMetaParams(cache.getCacheConfiguration());
+   }
+
+   private static MetaParam.Writable<?>[] buildDataMetaParams(Configuration configuration) {
+      long lifespan = configuration.expiration().lifespan();
+      long maxIdle = configuration.expiration().maxIdle();
+      if (lifespan > 0 && maxIdle > 0) {
+         return new MetaParam.Writable<?>[] { new MetaParam.MetaLifespan(lifespan), new MetaParam.MetaMaxIdle(maxIdle) };
+      } else if (lifespan > 0) {
+         return new MetaParam.Writable<?>[] { new MetaParam.MetaLifespan(lifespan) };
+      } else if (maxIdle > 0) {
+         return new MetaParam.Writable<?>[] { new MetaParam.MetaMaxIdle(maxIdle) };
+      }
+      return new MetaParam.Writable<?>[0];
    }
 
    @Override
@@ -224,16 +240,21 @@ public class DomainDataRegionImpl
       // undesired overhead. When get() triggers a RemoteExpirationCommand executed in async executor
       // this locks the entry for the duration of RPC, and putFromLoad with ZERO_LOCK_ACQUISITION_TIMEOUT
       // fails as it finds the entry being blocked.
+      // Additionally, ExpirationManagerImpl.checkExpiredMaxIdle calls cache.touch() which goes
+      // through the distribution interceptor causing async RPC. SyncLocalExpirationManager avoids
+      // this by skipping the max-idle touch during write wrapping.
       ComponentRef<InternalExpirationManager> ref = registry.getComponent(InternalExpirationManager.class);
       InternalExpirationManager expirationManager = ref.running();
       if (expirationManager instanceof ClusterExpirationManager) {
-         registry.replaceComponent(InternalExpirationManager.class.getName(), new ExpirationManagerImpl<>(), true);
+         registry.replaceComponent(InternalExpirationManager.class.getName(), new SyncLocalExpirationManager<>(), true);
          registry.getComponent(InternalExpirationManager.class).running();
          registry.rewire();
          // re-registering component does not stop the old one
          ((ClusterExpirationManager) expirationManager).stop();
       } else if (expirationManager instanceof ExpirationManagerImpl) {
-         // do nothing
+         registry.replaceComponent(InternalExpirationManager.class.getName(), new SyncLocalExpirationManager<>(), true);
+         registry.getComponent(InternalExpirationManager.class).running();
+         registry.rewire();
       } else {
          throw new IllegalStateException("Expected clustered expiration manager, found " + expirationManager);
       }
@@ -255,6 +276,11 @@ public class DomainDataRegionImpl
    @Override
    public MetaParam.MetaLifespan getExpiringMetaParam() {
       return expiringMetaParam;
+   }
+
+   @Override
+   public MetaParam.Writable<?>[] getDataMetaParams() {
+      return dataMetaParams;
    }
 
    @Override
