@@ -16,12 +16,12 @@ In order to achieve the best performance, please follow the recommendations belo
 
 == Hints for program developers
 
-There are also several hints for developers which can be easily applied to the client application and will boost up the performance.
+There are also several hints for developers that can be applied to the client application and will boost the performance.
 
 [discrete]
 === Ignore return values
 
-When you're not interested in returning value of the `#put(k, v)` or `#remove(k)` method, use `Flag.IGNORE_RETURN_VALUES` flag as shown below:
+When you are not interested in returning value of the `#put(k, v)` or `#remove(k)` method, use `Flag.IGNORE_RETURN_VALUES` flag as shown below:
 
 .Using Flag.IGNORE_RETURN_VALUES
 [source,java]
@@ -40,7 +40,7 @@ include::code_examples/ConfigurationBuilderUnreliableReturnValues.java[]
 [discrete]
 === Use simple cache for local caches
 
-When you don't need the full feature set of caches, you can set local cache to "simple" mode and achieve non-trivial speedup while still using {brandname} API.
+When you do not need the full feature set of caches, you can set local cache to "simple" mode and achieve non-trivial speedup while still using {brandname} API.
 
 This is an example comparison of the difference, randomly reading/writing into cache with 2048 entries as executed on 2x8-core Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz:
 
@@ -55,4 +55,4 @@ This is an example comparison of the difference, randomly reading/writing into c
 
 The CHM shows comparison for ConcurrentHashMap from JSR-166 with pluggable equality/hashCode function, which is used as the underlying storage in {brandname}.
 
-Even though we use http://openjdk.java.net/projects/code-tools/jmh/[JMH] to prevent some common pitfalls of microbenchmarking, consider these results only approximate. Your mileage may vary.
+Even though these benchmarks use http://openjdk.java.net/projects/code-tools/jmh/[JMH] to prevent some common pitfalls of microbenchmarking, consider these results only approximate. Your mileage may vary.

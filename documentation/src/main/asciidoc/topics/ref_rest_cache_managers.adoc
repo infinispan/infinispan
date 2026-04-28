@@ -37,7 +37,7 @@ If cross-site replication is not configured, {brandname} returns "local".
 * `relay_nodes_address` is an array of logical addresses for relay nodes.
 * `sites_view` The list of sites that participate in cross-site replication. +
 If cross-site replication is not configured, {brandname} returns an empty list.
-* `rebalancing_enabled` is true if rebalancing is enabled. Fetching this property might fail on the server. In that case the property won't be present in the payload.
+* `rebalancing_enabled` is true if rebalancing is enabled. Fetching this property might fail on the server. In that case the property is not present in the payload.
 * `tracing_enabled` is true if tracing is enabled.
 
 
@@ -255,7 +255,7 @@ and clustering, however REST calls to container resources will result in a 503 S
 [NOTE]
 ====
 This method is primarily intended for use by the {brandname} Operator. The expectation is that the Server processes will
-be manually terminated shortly after this endpoint is invoked. Once this method has been called, it's not possible to
+be manually terminated shortly after this endpoint is invoked. Once this method has been called, it is not possible to
 restart the container state.
 ====
 

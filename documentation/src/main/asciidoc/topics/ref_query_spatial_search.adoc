@@ -24,7 +24,7 @@ One or more `@GeoPoint`s can be added to the indexed entity.
 The only mandatory attribute is the `fieldName` attribute and it is used to denote the field name in the index domain.
 If more than one `@GeoPoint` are defined on the same entity, their names must be different.
 
-For each of them, we require to have on the same entity two double-typed fields:
+For each of them, the same entity must have two double-typed fields:
 
 * one annotated with `@Latitude`, that will store the latitude of the given point
 * one annotated with `@Longitude`, that will store the longitude of the given point
@@ -116,7 +116,7 @@ This predicate selects entities having points within a given distance from a cen
 ----
 include::code_examples/GeoQueries.java[tags=restaurants_withinCircle]
 ----
-<1> We select all the restaurants within 100 meters from a given center, in this case 41.91, 12.46.
+<1> Selects all the restaurants within 100 meters from a given center, in this case 41.91, 12.46.
 <2> Parameters can be extracted for all the values passed to the `within circle` predicate.
 ====
 
@@ -129,7 +129,7 @@ It is possible to change it, for instance using kilometers:
 ----
 include::code_examples/GeoQueries.java[tags=restaurants_withinCircleKm]
 ----
-<1> We select all the restaurants within 0.1 Km from a given center, in this case 41.91, 12.46.
+<1> Selects all the restaurants within 0.1 Km from a given center, in this case 41.91, 12.46.
 <2> Parameters can be extracted for all the values passed to the `within circle` predicate.
 ====
 
@@ -151,7 +151,7 @@ The `within box` predicate has arity 4 and it takes as argument:
 ----
 include::code_examples/GeoQueries.java[tags=restaurants_withinBox]
 ----
-<1> We select all the restaurants contained in the given box.
+<1> Selects all the restaurants contained in the given box.
 ====
 
 === Spatial predicate: `polygon`
@@ -166,7 +166,7 @@ Each point is enclosed by brackets.
 ----
 include::code_examples/GeoQueries.java[tags=restaurants_withinPolygon]
 ----
-<1> We select all the restaurants contained in the polygon identified by the provided vertex points.
+<1> Selects all the restaurants contained in the polygon identified by the provided vertex points.
 ====
 
 == Spatial sorting

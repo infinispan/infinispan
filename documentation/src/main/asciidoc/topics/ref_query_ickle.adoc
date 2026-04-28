@@ -39,7 +39,7 @@ Query<Book> query = cache.query("FROM org.infinispan.sample.Book WHERE title lik
 
 [NOTE]
 ====
-If you don't explicitly set the `maxResults` for a query instance, {brandname} limits the number of results returned by the query to `100`.
+If you do not explicitly set the `maxResults` for a query instance, {brandname} limits the number of results returned by the query to `100`.
 You can change the default limit by setting the `query.default-max-results` cache property.
 ====
 

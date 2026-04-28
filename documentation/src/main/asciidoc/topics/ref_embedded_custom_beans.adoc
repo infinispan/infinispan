@@ -11,7 +11,7 @@ You can customize the Cache Manager with the following configuration beans:
 
 [IMPORTANT]
 ====
-In Spring Boot 4, we removed the default cache `default` that could be
+In Spring Boot 4, the default cache `default` that could be
 customized with the `InfinispanConfigurationCustomizer`.
 Use `InfinispanCacheConfigurer` instead and define `default`.
 [source,java,options="nowrap"]

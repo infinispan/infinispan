@@ -108,7 +108,7 @@ A counter can be strong (`StrongCounter`) or weakly consistent (``WeakCounter``)
 They have a specific interface but they share some logic, namely, both of them are asynchronous
 ( a `CompletableFuture` is returned by each operation), provide an update event and can be reset to its initial value.
 
-If you don't want to use the async API, it is possible to return a synchronous counter via `sync()` method.
+If you do not want to use the async API, it is possible to return a synchronous counter via `sync()` method.
 The API is the same but without the `CompletableFuture` return value.
 
 The following methods are common to both interfaces:
@@ -133,7 +133,7 @@ NOTE: The counter is re-created if it is accessed after a removal.
 
 The strong counter provides uses a single key stored in {brandname} cache to provide the consistency needed.
 All the updates are performed under the key lock to updates its values.
-On other hand, the reads don't acquire any locks and reads the current value.
+On the other hand, the reads do not acquire any locks and read the current value.
 Also, with this scheme, it allows to bound the counter value and provide atomic operations like compare-and-set/swap.
 
 A `StrongCounter` can be retrieved from the `CounterManager` by using the `getStrongCounter()` method.
@@ -249,7 +249,7 @@ The `WeakCounter` adds the following methods:
 include::code_examples/CounterWeakMethod.java[]
 ----
 
-They are similar to the `StrongCounter`'s methods but they don't return the new value.
+They are similar to the `StrongCounter` methods but they do not return the new value.
 
 ==== Uses cases
 

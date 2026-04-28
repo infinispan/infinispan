@@ -21,7 +21,7 @@ However, with some careful planning and a good understanding of what you want to
 
 The most effective approach is to configure {brandname} to index only the fields that you need.
 Whether you store Plain Old Java Objects (POJOs) or use Protobuf schema, the more fields that you annotate, the longer it takes {brandname} to build the index.
-If you have a POJO with five fields but you only need to query two of those fields, do not configure {brandname} to index the three fields you don't need.
+If you have a POJO with five fields but you only need to query two of those fields, do not configure {brandname} to index the three fields you do not need.
 
 {brandname} gives you several options to tune indexing operations.
 For instance {brandname} stores indexes differently to data, saving indexes to disk instead of memory.
@@ -30,7 +30,7 @@ If you enable indexing and then observe slower writes, and think indexing causes
 This results in faster indexing operations, and helps mitigate degradation of write throughput, but consumes more memory.
 For most deployments, though, the default indexing configuration is suitable and does not slow down writes too much.
 
-In some scenarios it might be sensible not to index your caches, such as for write-heavy caches that you need to query infrequently and don't need results in milliseconds.
+In some scenarios it might be sensible not to index your caches, such as for write-heavy caches that you need to query infrequently and do not need results in milliseconds.
 It all depends on what you want to achieve.
 Faster queries means faster reads but comes at the expense of slower writes that come with indexing.
 

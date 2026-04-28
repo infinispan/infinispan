@@ -18,7 +18,7 @@ cache managers and reference them by name within your `remote-store` definitions
 [TIP]
 ====
 If there is only a single `remote-cache-container`, it will be used by default by all remote cache stores which
-don't specify one explicitly.
+do not specify one explicitly.
 ====
 
 .Segmentation

@@ -19,7 +19,7 @@ endif::downstream[]
 
 .Synchronous or asynchronous replication
 
-* Synchronous replication blocks the caller (e.g. on a `cache.put(key, value)`) until the modifications have been replicated successfully to all the nodes in the cluster.
+* Synchronous replication blocks the caller (for example, on a `cache.put(key, value)`) until the modifications have been replicated successfully to all the nodes in the cluster.
 * Asynchronous replication performs replication in the background, and write operations return immediately.
 Asynchronous replication is not recommended, because communication errors, or errors that happen on remote nodes are not reported to the caller.
 

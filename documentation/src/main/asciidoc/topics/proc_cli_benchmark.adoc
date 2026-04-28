@@ -8,7 +8,7 @@ Nevertheless, this approach is simple enough to verify for configuration changes
 
 ifdef::community[]
 The recommended metric to read from this benchmark is **throughput**.
-link:https://hyperfoil.io/[Hyperfoil] with our link:https://github.com/infinispan/infinispan-ansible-benchmark[Ansible Benchmark automation],
+link:https://hyperfoil.io/[Hyperfoil] with the link:https://github.com/infinispan/infinispan-ansible-benchmark[Ansible Benchmark automation],
 or link:https://github.com/jgroups-extras/IspnPerfTest[IspnPerfTest] for an embedded test provides a more flexible benchmarking alternative.
 However, these harnesses require an additional setup phase before running.
 endif::community[]

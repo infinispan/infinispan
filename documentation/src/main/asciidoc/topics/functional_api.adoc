@@ -56,7 +56,7 @@ is temporary.
 == Read-Only Map API
 
 Read-only operations have the advantage that no locks are acquired
-for the duration of the operation. Here's an example on how to the
+for the duration of the operation. The following is an example on how to perform the
 equivalent operation for
 link:{jdkdocroot}/java/util/Map.html#get-java.lang.Object-[Map.get(K)]:
 
@@ -87,18 +87,18 @@ method returns the key for which this function is being executed.
 * link:../../apidocs/org/infinispan/functional/EntryView.ReadEntryView.html#find()[`find()`]
 returns an `Optional` wrapping the value if present,
 otherwise it returns an empty optional. Unless the value is guaranteed to
-be associated with the key, it's recommended to use `find()` to verify
-whether there's a value associated with the key.
+be associated with the key, it is recommended to use `find()` to verify
+whether there is a value associated with the key.
 * link:../../apidocs/org/infinispan/functional/EntryView.ReadEntryView.html#get()[`get()`]
 returns the value associated with the key. If the key has no value
 associated with it, calling `get()` throws a `NoSuchElementException`.
 `get()` can be considered as a shortcut of `ReadEntryView.find().get()`
-which should be used only when the caller has guarantees that there's
+which should be used only when the caller has guarantees that there is
 definitely a value associated with the key.
 * link:../../apidocs/org/infinispan/functional/MetaParam.Lookup.html#findMetaParam(java.lang.Class)[`findMetaParam(Class<T> type)`]
 allows metadata parameter information
 associated with the cache entry to be looked up, for example: entry
-lifespan, last  accessed time...etc.
+lifespan, and last accessed time.
 See link:#meta_parameter[Metadata Parameter Handling] to find out more.
 
 == Write-Only Map API
@@ -174,7 +174,7 @@ parameters associated with this key.
 
 == Read-Write Map API
 
-The final type of operations we have are read-write operations, and within
+The final type of operations are read-write operations, and within
 this category CAS-like (Compare-And-Swap) operations can be found.
 This type of operations require previous value associated with the key
 to be read and for locks to be acquired before executing the function.
@@ -182,7 +182,7 @@ The vast majority of operations within
 link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 and
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`]
-APIs fall within this category, and they can easily be implemented using the
+APIs fall within this category, and they can be implemented using the
 link:../../apidocs/org/infinispan/functional/FunctionalMap.ReadWriteMap.html[read-write map API]
 . Moreover, with
 link:../../apidocs/org/infinispan/functional/FunctionalMap.ReadWriteMap.html[read-write map API]
@@ -201,10 +201,10 @@ include::code_examples/ReadWriteMap.java[]
 
 link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[`ConcurrentMap.replace(K, V, V)`]
 is a replace function that compares the
-value present in the map and if it's equals to the value passed in as
+value present in the map and if it is equal to the value passed in as
 first parameter, the second value is stored, returning a boolean
 indicating whether the replace was successfully completed. This operation
-can easily be implemented using the read-write map API:
+can be implemented using the read-write map API:
 
 [source,java]
 ----
@@ -234,10 +234,8 @@ and link:#write_only_entry_view[write-only entry views].
 == Metadata Parameter Handling
 link:../../apidocs/org/infinispan/functional/MetaParam.html[Metadata parameters]
 provide extra information about the cache entry, such
-as version information, lifespan, last accessed/used time, etc. Some of
-these can be provided by the user, e.g. version, lifespan, etc., but some
-others are computed internally and can only be queried, e.g. last
-accessed/used time.
+as version information, lifespan, and last accessed/used time.
+Some of these can be provided by the user, such as version and lifespan, but others are computed internally and can only be queried, such as last accessed/used time.
 
 The functional map API provides a flexible way to store metadata parameters
 along with an cache entry. To be able to store a metadata parameter, it must
@@ -312,7 +310,7 @@ untouched:
 include::code_examples/WriteOnlyMapSkipPersistence.java[]
 ----
 
-Note that there's no need for another link:../../apidocs/org/infinispan/functional/Param.PersistenceMode.html[`Param.PersistenceMode`] option to skip
+Note that there is no need for another link:../../apidocs/org/infinispan/functional/Param.PersistenceMode.html[`Param.PersistenceMode`] option to skip
 reading from the persistence store, because a write operation can skip
 reading previous value from the store by calling a write-only operation
 via the link:../../apidocs/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html[WriteOnlyMap].
@@ -339,7 +337,7 @@ enable user to register listeners for any cache entry write events
 that happen in either a read-write or write-only functional map.
 
 Listeners for write events cannot distinguish between cache entry
-created and cache entry modify/update events because they don't have
+created and cache entry modify/update events because they do not have
 access to the previous value. All they know is that a new non-null
 entry has been written.
 
@@ -405,7 +403,7 @@ used to de-register the function listener:
 include::code_examples/ReadWriteMapAutoCloseable.java[]
 ----
 
-If listening for two or more event types, it's better to pass in an
+If listening for two or more event types, it is better to pass in an
 implementation of
 link:../../apidocs/org/infinispan/functional/Listeners.WriteListeners.WriteListener.html[`ReadWriteListener`]
 interface via the
@@ -438,7 +436,7 @@ include::code_examples/WriteOnlyMapSerializable.java[]
 
 {brandname} provides overloads for all functional methods that make lambdas
 passed directly to the API serializable by default; the compiler automatically selects
-this overload if that's possible. Therefore you can call
+this overload if that is possible. Therefore you can call
 
 [source,java]
 ----
@@ -479,11 +477,11 @@ include::code_examples/ReadWriteMapMarshallableFunctions.java[]
 == Use Cases for Functional API
 
 This new API is meant to complement existing Key/Value {brandname} API
-offerings, so you'll still be able to use
+offerings, so you can still use
 link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 or
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`]
-standard APIs if that's what suits your use case best.
+standard APIs if that is what suits your use case best.
 
 The target audience for this new API is either:
 

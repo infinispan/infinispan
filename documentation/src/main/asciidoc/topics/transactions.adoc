@@ -21,11 +21,11 @@ This provides with a basic transaction manager which should only be used for emb
 This implementation has some severe limitations to do with concurrent transactions and recovery.
 
 * {jboss-tm-lookup}:
-If you're running {brandname} in a standalone environment, or in JBoss AS 7 and earlier, and WildFly 8, 9, and 10, this should be your default choice for transaction manager.
-It's a fully fledged transaction manager based on link:http://narayana.io/[JBoss Transactions] which overcomes all the deficiencies of the `EmbeddedTransactionManager`.
+If you are running {brandname} in a standalone environment, or in JBoss AS 7 and earlier, and WildFly 8, 9, and 10, this should be your default choice for transaction manager.
+It is a fully fledged transaction manager based on link:http://narayana.io/[JBoss Transactions] which overcomes all the deficiencies of the `EmbeddedTransactionManager`.
 
 * {wildfly-tm-lookup}:
-If you're running {brandname} in WildFly 11 or later, this should be your default choice for transaction manager.
+If you are running {brandname} in WildFly 11 or later, this should be your default choice for transaction manager.
 
 * {generic-tm-lookup}:
 This is a lookup class that locate transaction managers in the most popular Java EE application servers.
@@ -108,7 +108,7 @@ More details about the configuration settings are available in link:../../config
 
 These isolation levels determine when readers see a concurrent write, and are internally implemented using different subclasses of `MVCCEntry`, which have different behaviour in how state is committed back to the data container.
 
-Here's a more detailed example that should help understand the difference between `READ_COMMITTED` and `REPEATABLE_READ` in the context of {brandname}.
+The following is a more detailed example that should help understand the difference between `READ_COMMITTED` and `REPEATABLE_READ` in the context of {brandname}.
 With `READ_COMMITTED`, if between two consecutive read calls on the same key, the key has been updated by another transaction, the second read may return the new updated value:
 
 [source,java]
@@ -124,7 +124,7 @@ Thread1: tx1.commit()
 ----
 
 With `REPEATABLE_READ`, the final get will still return `v`.
-So, if you're going to retrieve the same key multiple times within a transaction, you should use `REPEATABLE_READ`.
+So, if you are going to retrieve the same key multiple times within a transaction, you should use `REPEATABLE_READ`.
 
 However, as read-locks are not acquired even for `REPEATABLE_READ`, this phenomena can occur:
 
@@ -256,13 +256,13 @@ If a link:../../apidocs/org/infinispan/commons/CacheException.html[CacheExceptio
 [[tx_sync_enlist]]
 == Enlisting Synchronizations
 By default {brandname} registers itself as a first class participant in distributed transactions through {xa}.
-There are situations where {brandname} is not required to be a participant in the transaction, but only to be notified by its lifecycle (prepare, complete): e.g. in the case {brandname} is used as a 2nd level cache in Hibernate.
+There are situations where {brandname} is not required to be a participant in the transaction, but only to be notified by its lifecycle (prepare, complete), for example when {brandname} is used as a second level cache in Hibernate.
 
 {brandname} allows transaction enlistment through {sync}.
-To enable it just use `NON_XA` transaction mode.
+To enable it, use `NON_XA` transaction mode.
 
 ``Synchronization``s have the advantage that they allow `TransactionManager` to optimize 2PC with a 1PC where only one other resource is enlisted with that transaction (link:https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.0/html/development_guide/java_transaction_api_jta#about_the_lrco_optimization_for_single_phase_commit_1pc[last resource commit optimization]).
-E.g. Hibernate second level cache: if {brandname} registers itself with the `TransactionManager` as a `XAResource` than at commit time, the `TransactionManager` sees two `XAResource` (cache and database) and does not make this optimization.
+For example, Hibernate second level cache: if {brandname} registers itself with the `TransactionManager` as a `XAResource` than at commit time, the `TransactionManager` sees two `XAResource` (cache and database) and does not make this optimization.
 Having to coordinate between two resources it needs to write the tx log to disk.
 On the other hand, registering {brandname} as a `Synchronization` makes the `TransactionManager` skip writing the log to the disk (performance improvement).
 
@@ -273,14 +273,14 @@ Batching is often a lot lighter and cheaper than a full-blown transaction.
 
 TIP: Generally speaking, one should use batching API whenever the only participant in the transaction is an {brandname} cluster.
 On the other hand, JTA transactions (involving `TransactionManager`) should be used whenever the transactions involves multiple systems.
-E.g. considering the "Hello world!" of transactions: transferring money from one bank account to the other.
+For example, consider the "Hello world!" of transactions: transferring money from one bank account to the other.
 If both accounts are stored within {brandname}, then batching can be used.
 If one account is in a database and the other is {brandname}, then distributed transactions are required.
 
 NOTE: You _do not_ have to have a transaction manager defined to use batching.
 
 === API
-Once you have configured your cache to use batching, you use it by calling `startBatch()` and `endBatch()` on `Cache`. E.g.,
+Once you have configured your cache to use batching, you use it by calling `startBatch()` and `endBatch()` on `Cache`. For example:
 
 [source,java]
 ----
@@ -305,7 +305,7 @@ cache.endBatch(false); // This will "discard" changes made in the batch
 
 === Batching and JTA
 Behind the scenes, the batching functionality starts a JTA transaction, and all the invocations in that scope are associated with it.
-For this it uses a very simple (e.g. no recovery) internal `TransactionManager` implementation.
+For this it uses a very simple (for example, no recovery) internal `TransactionManager` implementation.
 With batching, you get:
 
 . Locks you acquire during an invocation are held until the batch completes
@@ -333,7 +333,7 @@ Knowing the in-doubt transaction ids, the system administrator can now connect t
 
 === Configuring recovery   
 Recovery is _not_ enabled by default in {brandname}.
-If disabled, the `TransactionManager` won't be able to work with {brandname} to determine the in-doubt transactions.
+If disabled, the `TransactionManager` is not able to work with {brandname} to determine the in-doubt transactions.
 The link:#tx_configuration[Transaction configuration] section shows how to enable it.
 
 NOTE: `recovery-cache` attribute is not mandatory and it is configured per-cache.
@@ -385,10 +385,10 @@ The image below demonstrates JConsole connecting to an {brandname} node that has
 image::showInDoubtTx.png[align="center", title="Show in-doubt transactions"]
 
 The status of each in-doubt transaction is displayed(in this example " _PREPARED_ ").
-There might be multiple elements in the status field, e.g. "PREPARED" and "COMMITTED" in the case the transaction committed on certain nodes but not on all of them.  
+There might be multiple elements in the status field, for example "PREPARED" and "COMMITTED" in the case the transaction committed on certain nodes but not on all of them.
 
 * *STEP 2*: The system administrator visually maps the XID received from the transaction manager to an {brandname} internal id, represented as a number.
-This step is needed because the XID, a byte array, cannot conveniently be passed to the JMX tool (e.g. JConsole) and then re-assembled on {brandname}'s side.
+This step is needed because the XID, a byte array, cannot conveniently be passed to the JMX tool (for example, JConsole) and then re-assembled on {brandname}'s side.
 
 * *STEP 3*: The system administrator forces the transaction's commit/rollback through the corresponding jmx operation, based on the internal id.
 The image below is obtained by forcing the commit of the transaction based on its internal id.
@@ -399,5 +399,5 @@ TIP: All JMX operations described above can be executed on any node, regardless 
 
 ==== Force commit/rollback based on XID
 XID-based JMX operations for forcing in-doubt transactions' commit/rollback are available as well: these methods receive byte[] arrays describing the XID instead of the number associated with the transactions (as previously described at step 2).
-These can be useful e.g. if one wants to set up an automatic completion job for certain in-doubt transactions.
+These can be useful, for example, if one wants to set up an automatic completion job for certain in-doubt transactions.
 This process is plugged into transaction manager's recovery and has access to the transaction manager's XID objects.

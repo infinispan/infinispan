@@ -22,7 +22,7 @@ master password that is prompted interactively.
 
 The credential store file is created with owner-only read/write permissions
 on POSIX systems. The master password can be empty. When reading from the
-credential store (e.g. `connect`, `bookmark get`, `bookmark remove`), the
+credential store (for example, `connect`, `bookmark get`, `bookmark remove`), the
 CLI first attempts to open it with an empty password. If that fails, it
 prompts for the master password. This allows seamless connections using the
 `-c` option or the `connect` command without being prompted, as long as the

@@ -3,7 +3,7 @@
 
 == From Spring 6 to Spring 7
 {brandname} supports both Spring 6 and Spring 7.
-To migrate, simply update your Maven dependencies.
+To migrate, update your Maven dependencies.
 
 * `infinispan-spring6-embedded` by `infinispan-spring7-embedded`
 * `infinispan-spring6-remote` by `infinispan-spring7-remote`

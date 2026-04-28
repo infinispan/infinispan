@@ -11,12 +11,12 @@ can be retrieved by calling +executor()+ on the `EmbeddedCacheManager`. This exe
 in both clustered and non clustered configurations.
 
 NOTE: The ClusterExecutor is specifically designed for executing code where the code is not reliant
-upon the data in a cache and is used instead as a way to help users to execute code easily
+upon the data in a cache and is used instead as a way to help users execute code
 in the cluster.
 
 This manager was built specifically around Java's streaming API, thus all methods take a functional
-interface as an argument. Also since these arguments will be sent to other nodes they need to be serializable.  We even
-used a nice trick to ensure our lambdas are immediately Serializable.  That is by having the arguments implement both
+interface as an argument. Also since these arguments will be sent to other nodes they need to be serializable.  A nice
+trick is used to ensure the lambdas are immediately Serializable.  That is by having the arguments implement both
 Serializable and the real argument type (ie. Runnable or Function).  The JRE will pick the most specific class when
 determining which method to invoke, so in that case your lambdas will always be serializable.
 It is also possible to use link:{encoding_docs}#protostream_marshalling[ProtoStream marshalling] to reduce message size further.
@@ -43,7 +43,7 @@ To use this topology base filtering you must enable topology aware consistent ha
 You can also filter using a predicate based on the `Address` of the node. This can also
 be optionally combined with topology based filtering in the previous code snippet.
 
-We also allow the target node to be chosen by any means using a `Predicate` that
+The target node can also be chosen by any means using a `Predicate` that
 will filter out which nodes can be considered for execution. Note this can also be combined
 with Topology filtering at the same time to allow even more fine control of where you code
 is executed within the cluster.
@@ -97,13 +97,13 @@ This example shows how you can use the ClusterExecutor to estimate the value of 
 Pi approximation can greatly benefit from parallel distributed execution via
 Cluster Executor. Recall that the area of the square is stem:[S_a = 4r^{2}] and the area of the
 circle is stem:[C_a=\pi r^2]. Substituting stem:[r^2] from the second equation into the first
-one it turns out that stem:[\pi = 4\frac{C_a}{S_a}]. Now, image that we can shoot very large
-number of darts into a square; if we take ratio of darts that land inside a
-circle over a total number of darts shot, we will approximate the stem:[\frac{C_a}{S_a}] value. Since
-we know that stem:[\pi = 4\frac{C_a}{S_a}], we can approximate the value of stem:[\pi]. The
-more darts we shoot, the better approximation we get. In the example below, we
-shoot 1 billion darts, but instead of "shooting" them serially, we parallelize
-the work of dart shooting across the entire {brandname} cluster. Note that, this
+one it turns out that stem:[\pi = 4\frac{C_a}{S_a}]. Now, imagine shooting a very large
+number of darts into a square; taking the ratio of darts that land inside a
+circle over the total number of darts shot approximates the stem:[\frac{C_a}{S_a}] value. Since
+stem:[\pi = 4\frac{C_a}{S_a}], this ratio can be used to approximate the value of stem:[\pi]. The
+more darts you shoot, the better the approximation. In the example below, 1 billion
+darts are shot, but instead of "shooting" them serially, the work is parallelized
+across the entire {brandname} cluster. Note that, this
 works in a cluster of one as well, but likely slower.
 
 [source,java]

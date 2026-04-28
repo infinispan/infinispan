@@ -18,7 +18,7 @@ operation's return value is not reliable.
 Transactional caches return the correct previous value in cases 3 and 4.
 However, transactional caches also have a gotcha: in distributed mode, the
 read-committed isolation level is implemented as repeatable-read.
-That means this example of "double-checked locking" won't work:
+That means this example of "double-checked locking" does not work:
 
 [source,java]
 ----

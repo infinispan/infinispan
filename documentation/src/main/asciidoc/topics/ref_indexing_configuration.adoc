@@ -130,7 +130,7 @@ If the cache is protostream-encoded and the indexes initialized from a {brandnam
 the indexed entities must be the indexed Protobuf messages defined on some Proto schema.
 It is possible to change this behavior forcing the indexes be defined on the indexed entities that are discovered
 from the java entities locally accessible from the server VM.
-Useful in case we want to run embedded queries from a server task, in the case the cache is Protobuf encoded.
+Useful when you want to run embedded queries from a server task, in the case the cache is Protobuf encoded.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----

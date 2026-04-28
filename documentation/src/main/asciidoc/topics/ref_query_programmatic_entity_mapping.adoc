@@ -3,7 +3,7 @@
 
 You can programmatically map entities to the index as an alternative to annotating Java classes.
 
-In the following example we map an object `Author` which is to be stored in the grid and made searchable on two properties:
+In the following example an object `Author` is mapped to be stored in the grid and made searchable on two properties:
 
 [source,java]
 ----
