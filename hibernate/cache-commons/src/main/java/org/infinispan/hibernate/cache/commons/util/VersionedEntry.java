@@ -103,42 +103,42 @@ public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Obj
 			oldVersion = findVersion(oldValue);
 		}
 
-		if (oldVersion == null) {
-			assert oldValue == null || oldTimestamp != Long.MIN_VALUE : oldValue;
-			if (timestamp <= oldTimestamp) {
-				// either putFromLoad or regular update/insert - in either case this update might come
-				// when it was evicted/region-invalidated. In both cases, with old timestamp we'll leave
-				// the invalid value
-				assert oldValue == null;
-			} else {
-				view.set(value instanceof CacheEntry ? value : this);
-			}
-			return null;
-		} else {
-			Comparator<Object> versionComparator = null;
-			String subclass = findSubclass(value);
-			if (subclass != null) {
-				versionComparator = region.getComparator(subclass);
-				if (versionComparator == null) {
-					log.errorf("Cannot find comparator for %s", subclass);
-				}
-			}
-			if (versionComparator == null) {
-				view.set(new VersionedEntry(null, null, timestamp), region.getExpiringMetaParam());
-			} else {
-				int compareResult = versionComparator.compare(version, oldVersion);
-				if (log.isTraceEnabled()) {
-					log.tracef("Comparing %s and %s -> %d (using %s)", version, oldVersion, compareResult, versionComparator);
-				}
-				if (value == null && compareResult >= 0) {
-					view.set(this, region.getExpiringMetaParam());
-				} else if (compareResult > 0) {
-					view.set(value instanceof CacheEntry ? value : this);
-				}
-			}
-		}
-		return null;
-	}
+      if (oldVersion == null) {
+         assert oldValue == null || oldTimestamp != Long.MIN_VALUE : oldValue;
+         if (timestamp <= oldTimestamp) {
+            // either putFromLoad or regular update/insert - in either case this update might come
+            // when it was evicted/region-invalidated. In both cases, with old timestamp we'll leave
+            // the invalid value
+            assert oldValue == null;
+         } else {
+            view.set(value instanceof CacheEntry ? value : this, region.getDataMetaParams());
+         }
+         return null;
+      } else {
+         Comparator<Object> versionComparator = null;
+         String subclass = findSubclass(value);
+         if (subclass != null) {
+            versionComparator = region.getComparator(subclass);
+            if (versionComparator == null) {
+               log.errorf("Cannot find comparator for %s", subclass);
+            }
+         }
+         if (versionComparator == null) {
+            view.set(new VersionedEntry(null, null, timestamp), region.getExpiringMetaParam());
+         } else {
+            int compareResult = versionComparator.compare(version, oldVersion);
+            if (log.isTraceEnabled()) {
+               log.tracef("Comparing %s and %s -> %d (using %s)", version, oldVersion, compareResult, versionComparator);
+            }
+            if (value == null && compareResult >= 0) {
+               view.set(this, region.getExpiringMetaParam());
+            } else if (compareResult > 0) {
+               view.set(value instanceof CacheEntry ? value : this, region.getDataMetaParams());
+            }
+         }
+      }
+      return null;
+   }
 
 	private Object findVersion(Object entry) {
 		if (entry instanceof CacheEntry) {
