@@ -86,6 +86,7 @@ import org.infinispan.persistence.spi.StoreUnavailableException;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
 import org.infinispan.persistence.support.SingleSegmentPublisher;
+import org.infinispan.reactive.FlowableTimeoutAfterRequest;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.NonBlockingManager;
@@ -837,9 +838,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      } else {
                         flowable = (Flowable<MarshallableEntry<K,V>>) TIMEOUT_FLOWABLE;
                      }
-                     return Flowable.fromPublisher(storeStatus.<K, V>store().publishEntries(segments, filterToUse, fetchValue))
-                           .timeout(configuration.clustering().remoteTimeout(), TimeUnit.MILLISECONDS, rxTimeoutScheduler,
-                                 flowable);
+                     return new FlowableTimeoutAfterRequest<>(
+                           Flowable.fromPublisher(storeStatus.<K, V>store().publishEntries(segments, filterToUse, fetchValue)),
+                           configuration.clustering().remoteTimeout(), TimeUnit.MILLISECONDS,
+                           rxTimeoutScheduler, flowable);
                   }
                }
                return Flowable.empty();
@@ -882,9 +884,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
                                      } else {
                                         flowable = (Flowable<K>) TIMEOUT_FLOWABLE;
                                      }
-                                     return Flowable.fromPublisher(storeStatus.<K, Object>store().publishKeys(segments, filterToUse))
-                                           .timeout(configuration.clustering().remoteTimeout(), TimeUnit.MILLISECONDS, rxTimeoutScheduler,
-                                                 flowable);
+                                     return new FlowableTimeoutAfterRequest<>(
+                                           Flowable.fromPublisher(storeStatus.<K, Object>store().publishKeys(segments, filterToUse)),
+                                           configuration.clustering().remoteTimeout(), TimeUnit.MILLISECONDS,
+                                           rxTimeoutScheduler, flowable);
 
                                   }
                                }
