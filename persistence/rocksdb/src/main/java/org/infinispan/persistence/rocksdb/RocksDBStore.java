@@ -135,11 +135,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
             initDefaultHandler();
             MetadataImpl existingMeta = handler.loadMetadata();
             if (existingMeta == null && !configuration.purgeOnStartup()) {
-               String cacheName = ctx.getCache().getName();
-               // Metadata does not exist, therefore we must be reading from a pre-12.x store. Migrate the old data
-               PERSISTENCE.startMigratingPersistenceData(cacheName);
-               migrateFromV11();
-               PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
+               createMetadataIfMissing(ctx.getCache().getName());
             }
             // Update the metadata entry to use the current Infinispan version
             handler.writeMetadata();
@@ -164,7 +160,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    @SuppressWarnings("checkstyle:ForbiddenMethod")
-   private void migrateFromV11() throws IOException, RocksDBException {
+   private void createMetadataIfMissing(String cacheName) throws IOException, RocksDBException {
       IntSet segments;
       if (configuration.segmented()) {
          int numSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
@@ -177,6 +173,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       if (CompletionStages.join(handler.size(segments)) == 0)
          return;
 
+      PERSISTENCE.startMigratingPersistenceData(cacheName);
       Path newDbLocation = getQualifiedLocation("new_data");
       Path newExpiredDbLocation = getQualifiedLocation("new_expired");
       try {
@@ -222,6 +219,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
          // Open db handle to new db at original location
          initDefaultHandler();
+         PERSISTENCE.persistedDataSuccessfulMigrated(cacheName);
       } finally {
          // In the event of a failure, always remove the new dbs
          Util.recursiveFileRemove(newDbLocation);
