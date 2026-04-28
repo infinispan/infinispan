@@ -184,6 +184,33 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       cache.remove("k");
    }
 
+   public void testNoTimeoutWithoutRequest() throws InterruptedException {
+      PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
+      KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
+      String key = "waiting";
+      insertEntry(persistenceManager, keyPartitioner, key, "v");
+
+      DelayStore store1 = getStore(cache, 0, true);
+      store1.delayBeforeEmit(1);
+
+      TestSubscriber<Object> subscriber = TestSubscriber.create(0);
+      Flowable.fromPublisher(persistenceManager.publishEntries(true, true))
+            .subscribe(subscriber);
+
+      // Wait well beyond the timeout without requesting — should NOT error
+      Thread.sleep(EMIT_TIMEOUT_MS * 3);
+      subscriber.assertNoErrors();
+      subscriber.assertNotComplete();
+
+      // Now request — timer arms, but store is delayed so timeout fires
+      subscriber.request(Long.MAX_VALUE);
+      assertTrue("Subscriber should have completed with error", subscriber.await(15, TimeUnit.SECONDS));
+      subscriber.assertError(org.infinispan.commons.TimeoutException.class);
+
+      store1.endDelay();
+      eventually(() -> !persistenceManager.anyLocksHeld());
+   }
+
    public void testEmitTooSlow() throws InterruptedException {
       PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
