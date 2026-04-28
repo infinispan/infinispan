@@ -16,6 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.UnrecoverableKeyException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -42,6 +43,7 @@ import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.registry.CommandRegistryException;
 import org.aesh.command.settings.SettingsBuilder;
 import org.aesh.command.shell.Shell;
+import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.console.ReadlineConsole;
 import org.aesh.io.FileResource;
 import org.aesh.io.Resource;
@@ -121,6 +123,7 @@ import org.wildfly.security.keystore.KeyStoreUtil;
             Cd.class,
             Clear.class,
             ClearCache.class,
+            Completion.class,
             Config.class,
             Connect.class,
             Container.class,
@@ -455,6 +458,9 @@ public class CLI extends CliCommand {
    }
 
    public static void main(String... args) throws IOException {
+      if (handleDynamicCompletion(args)) {
+         return;
+      }
       System.setProperty("log4j2.disable.jmx", "true");
       System.setProperty("log4j.configurationFactory", "org.infinispan.commons.logging.log4j.XmlConfigurationFactory");
       Shell shell = null;
@@ -491,5 +497,39 @@ public class CLI extends CliCommand {
             return Paths.get(System.getProperty("user.dir"));
          }
       }
+   }
+
+   private static boolean handleDynamicCompletion(String[] args) {
+      if (args == null || args.length == 0 || !"--aesh-complete".equals(args[0])) {
+         return false;
+      }
+      int separatorIndex = -1;
+      for (int i = 1; i < args.length; i++) {
+         if ("--".equals(args[i])) {
+            separatorIndex = i;
+            break;
+         }
+      }
+      String[] partialArgs;
+      if (separatorIndex >= 0 && separatorIndex < args.length - 1) {
+         partialArgs = Arrays.copyOfRange(args, separatorIndex + 1, args.length);
+      } else {
+         partialArgs = EMPTY_STRING_ARRAY;
+      }
+      try {
+         AeshCommandRuntimeBuilder<CommandInvocation> runtimeBuilder = initialCommandRuntimeBuilder(
+               new StreamShell(), System.getProperties(), isKubernetesMode());
+         CommandRuntime<CommandInvocation> runtime = runtimeBuilder.build();
+         String partialLine = partialArgs.length > 0 ? String.join(" ", partialArgs) : "";
+         String buffer = partialLine.isEmpty() ? "cli " : "cli " + partialLine;
+         AeshCompleteOperation completeOperation = new AeshCompleteOperation(buffer, buffer.length());
+         runtime.complete(completeOperation);
+         for (org.aesh.terminal.formatting.TerminalString candidate : completeOperation.getCompletionCandidates()) {
+            System.out.println(candidate.getCharacters());
+         }
+      } catch (Exception e) {
+         System.err.println("Completion error: " + e.getMessage());
+      }
+      return true;
    }
 }
