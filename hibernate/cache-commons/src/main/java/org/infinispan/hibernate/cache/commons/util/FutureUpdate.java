@@ -74,7 +74,7 @@ public class FutureUpdate implements Function<EntryView.ReadWriteEntryView<Objec
          if (result instanceof Tombstone) {
             view.set(result, region.getExpiringMetaParam());
          } else {
-            view.set(result);
+            view.set(result, region.getDataMetaParams());
          }
       }
       // Else: this is an async future update, and it's timestamp may be vastly outdated
