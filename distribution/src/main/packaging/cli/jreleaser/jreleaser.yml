@@ -1,0 +1,92 @@
+# JReleaser configuration for Infinispan CLI native image distribution.
+#
+# This config handles publishing to package managers (Homebrew, Scoop).
+# The GitHub release and native CLI ZIP artifacts are created by the
+# main release.yml workflow — JReleaser only publishes package manager
+# manifests pointing to those existing release assets.
+#
+# Prerequisites:
+#   - Create repos: infinispan/homebrew-tap, infinispan/scoop-bucket
+#   - JRELEASER_GITHUB_TOKEN must have write access to those repos
+#
+# Usage:
+#   jreleaser full-release --project-version 16.2.0
+
+project:
+  name: infinispan-cli
+  description: Command-line interface for Infinispan data grid
+  longDescription: |
+    The Infinispan CLI provides a command-line interface for managing
+    and interacting with Infinispan clusters, including cache operations,
+    cluster administration, and server configuration.
+  links:
+    homepage: https://infinispan.org
+    documentation: https://infinispan.org/docs/stable/titles/cli/cli.html
+    bugTracker: https://github.com/infinispan/infinispan/issues
+    license: https://github.com/infinispan/infinispan/blob/main/LICENSE
+  license: Apache-2.0
+  authors:
+    - Infinispan Team
+  copyright: Red Hat, Inc.
+  languages:
+    java:
+      groupId: org.infinispan
+      artifactId: infinispan-quarkus-cli
+  inceptionYear: 2009
+  stereotype: CLI
+  tags:
+    - infinispan
+    - cache
+    - data-grid
+    - cli
+
+release:
+  github:
+    owner: infinispan
+    name: infinispan
+    # The release and tag already exist — don't create or modify them.
+    # JReleaser only needs this section to compute download URLs for
+    # the Homebrew formula and Scoop manifest.
+    tagName: "{{projectVersion}}"
+    skipRelease: true
+    skipTag: true
+    overwrite: false
+
+distributions:
+  infinispan-cli:
+    type: NATIVE_IMAGE
+    stereotype: CLI
+    executable:
+      name: infinispan-cli
+      windowsExtension: exe
+    artifacts:
+      - path: artifacts/infinispan-cli-{{projectVersion}}-linux-x86_64.zip
+        platform: linux-x86_64
+      - path: artifacts/infinispan-cli-{{projectVersion}}-linux-aarch_64.zip
+        platform: linux-aarch_64
+      - path: artifacts/infinispan-cli-{{projectVersion}}-osx-aarch_64.zip
+        platform: osx-aarch_64
+      - path: artifacts/infinispan-cli-{{projectVersion}}-windows-x86_64.zip
+        platform: windows-x86_64
+
+packagers:
+  brew:
+    active: ALWAYS
+    multiPlatform: true
+    repository:
+      owner: infinispan
+      name: homebrew-tap
+      commitMessage: "infinispan-cli {{tagName}}"
+    # After setup, users install with:
+    #   brew tap infinispan/tap
+    #   brew install infinispan-cli
+
+  scoop:
+    active: ALWAYS
+    repository:
+      owner: infinispan
+      name: scoop-bucket
+      commitMessage: "infinispan-cli {{tagName}}"
+    # After setup, users install with:
+    #   scoop bucket add infinispan https://github.com/infinispan/scoop-bucket
+    #   scoop install infinispan-cli
