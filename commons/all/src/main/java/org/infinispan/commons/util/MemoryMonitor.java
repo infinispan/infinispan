@@ -42,7 +42,7 @@ import com.sun.management.GcInfo;
  * a persistent alert.
  * <p>
  * All thresholds are mutable at runtime. A single instance is registered per cache manager in the
- * {@link org.infinispan.factories.GlobalComponentRegistry}.
+ * GlobalComponentRegistry.
  *
  * @since 16.2
  */
