@@ -34,7 +34,7 @@ runs:
 
     - name: Upload Java setup artifact
       if: ${{ inputs.setup == 'store' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: java-setup
         path: |
@@ -44,7 +44,7 @@ runs:
     # Load mode: restore metadata and setup Java again
     - name: Download Java setup artifact
       if: ${{ inputs.setup == 'load' }}
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: java-setup
         path: ./java-setup
@@ -80,7 +80,7 @@ runs:
 
     - id: cache-maven-repository
       name: Maven cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         # Two asterisks are needed to make the follow-up exclusion work
         # see https://github.com/actions/toolkit/issues/713 for the upstream issue
