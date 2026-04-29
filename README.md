@@ -6,8 +6,11 @@
 [![Commits](https://img.shields.io/github/commit-activity/m/infinispan/infinispan.svg?label=commits&style=for-the-badge&logo=git&logoColor=white)](https://github.com/infinispan/infinispan/pulse)
 [![License](https://img.shields.io/github/license/infinispan/infinispan?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Project Chat](https://img.shields.io/badge/zulip-join_chat-pink.svg?style=for-the-badge&logo=zulip)](https://infinispan.zulipchat.com/)
+[![GitHub Stars](https://img.shields.io/github/stars/infinispan/infinispan?style=for-the-badge&logo=github)](https://github.com/infinispan/infinispan/stargazers)
 
 # Infinispan, In-Memory Distributed Database #
+
+⭐ **If you use Infinispan, consider starring this repo, it helps the project grow and reach more developers!** ⭐
 
 Infinispan is an open-source in-memory database that offers flexible deployment options and robust capabilities for
 storing, managing, and processing data.
