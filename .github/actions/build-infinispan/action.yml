@@ -31,14 +31,14 @@ runs:
         .m2/repository/org/infinispan
 
     - name: Upload Infinispan Maven artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: m2-infinispan.tzts
         path: m2-infinispan.tzts
         retention-days: 1
 
     - name: Upload Infinispan dist
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: infinispan-dist
         path: distribution/target/distribution/infinispan-*.zip
