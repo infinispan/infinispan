@@ -32,13 +32,11 @@ import com.google.errorprone.annotations.ThreadSafe;
  * <li><b>State Provider:</b> The phase where this node provides state to other nodes. Observe, this applies to versions before 16.2.</li>
  * <li><b>Stable Topology:</b> The installation of a cache topology with no pending consistent hash ({@code pendingCH == null}).</li>
  * </ul>
- * </p>
  *
  * <p>
  * Listeners can be registered to wait for the completion of the state transfer. The tracker handles race conditions
  * where a new topology update (a new rebalance) supersedes an ongoing state transfer, ensuring listeners are notified
  * appropriately (usually via cancellation or by waiting for the newer topology).
- * </p>
  *
  * @since 15.0
  */
@@ -83,7 +81,6 @@ public class StateTransferTracker {
     * <p>
     * A state transfer is considered "in progress" if any of the three tracking components (Consumer, Provider, or Stable
     * Topology) are pending completion for the current topology generation.
-    * </p>
     *
     * @return {@code true} if state transfer is active; {@code false} otherwise.
     */
@@ -105,7 +102,6 @@ public class StateTransferTracker {
     * <li>{@link CacheTopology}: The stable topology that marked the completion of the transfer (or null if failed).</li>
     * <li>{@link Throwable}: An exception if the transfer failed or was cancelled (e.g., superseded by a newer topology).</li>
     * </ul>
-    * </p>
     *
     * <p>
     * The listener must return a {@link Boolean}:
@@ -115,7 +111,6 @@ public class StateTransferTracker {
     * <li>{@code false}: To indicate the listener wishes to stay registered (e.g., waiting for a future topology).
     *                   The returned {@link CompletionStage} will NOT complete yet.</li>
     * </ul>
-    * </p>
     *
     * @param listener The function to invoke upon completion.
     * @return A {@link CompletionStage} that completes when the listener returns {@code true}.
