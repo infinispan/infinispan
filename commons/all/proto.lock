@@ -267,6 +267,15 @@
           "optional" : true
         } ]
       }, {
+        "name" : "SerializedObjectWrapper",
+        "type_id" : 53,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bytes",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
         "name" : "WrappedByteArray",
         "type_id" : 1,
         "fields" : [ {

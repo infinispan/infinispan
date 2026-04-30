@@ -6947,6 +6947,11 @@
           "name" : "current",
           "type" : "org.infinispan.persistence.core.Address",
           "is_repeated" : true
+        }, {
+          "id" : 6,
+          "name" : "previous",
+          "type" : "org.infinispan.protostream.commons.UUID",
+          "is_repeated" : true
         } ]
       }, {
         "name" : "GetInDoubtTransactionsCommand",

@@ -32,19 +32,66 @@
           "name" : "json",
           "integer" : 8
         } ]
+      }, {
+        "name" : "BitfieldOperation.Type",
+        "type_id" : 6160,
+        "enum_fields" : [ {
+          "name" : "GET"
+        }, {
+          "name" : "SET",
+          "integer" : 1
+        }, {
+          "name" : "INCRBY",
+          "integer" : 2
+        } ]
+      }, {
+        "name" : "BitfieldOperation.Overflow",
+        "type_id" : 6161,
+        "enum_fields" : [ {
+          "name" : "NONE"
+        }, {
+          "name" : "WRAP",
+          "integer" : 1
+        }, {
+          "name" : "SAT",
+          "integer" : 2
+        }, {
+          "name" : "FAIL",
+          "integer" : 3
+        } ]
       } ],
       "messages" : [ {
-        "name" : "GlobMatchFilterConverter",
-        "type_id" : 6108,
+        "name" : "BitfieldOperation",
+        "type_id" : 6133,
         "fields" : [ {
           "id" : 1,
-          "name" : "glob",
-          "type" : "string",
+          "name" : "type",
+          "type" : "BitfieldOperation.Type",
           "optional" : true
         }, {
           "id" : 2,
-          "name" : "returnValue",
+          "name" : "offset",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "value",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "signed",
           "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "bits",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "overflow",
+          "type" : "BitfieldOperation.Overflow",
           "optional" : true
         } ]
       }, {
@@ -86,11 +133,25 @@
           "optional" : true
         } ]
       }, {
-        "name" : "JsonLenStrFunction",
-        "type_id" : 6122,
+        "name" : "CmsInitFunction",
+        "type_id" : 6154,
         "fields" : [ {
           "id" : 1,
-          "name" : "path",
+          "name" : "width",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "depth",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CuckooFilterCountFunction",
+        "type_id" : 6151,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "item",
           "type" : "bytes",
           "optional" : true
         } ]
@@ -104,18 +165,71 @@
           "optional" : true
         } ]
       }, {
-        "name" : "JsonMergeFunction",
-        "type_id" : 6123,
+        "name" : "CuckooFilterInfoFunction",
+        "type_id" : 6149,
+        "fields" : [ ],
+        "messages" : [ {
+          "name" : "CuckooFilterInfo",
+          "type_id" : 6152,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "size",
+            "type" : "int64",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "numBuckets",
+            "type" : "int64",
+            "optional" : true
+          }, {
+            "id" : 3,
+            "name" : "numFilters",
+            "type" : "int32",
+            "optional" : true
+          }, {
+            "id" : 4,
+            "name" : "itemsInserted",
+            "type" : "int64",
+            "optional" : true
+          }, {
+            "id" : 5,
+            "name" : "itemsDeleted",
+            "type" : "int64",
+            "optional" : true
+          }, {
+            "id" : 6,
+            "name" : "bucketSize",
+            "type" : "int32",
+            "optional" : true
+          }, {
+            "id" : 7,
+            "name" : "expansionRate",
+            "type" : "int32",
+            "optional" : true
+          }, {
+            "id" : 8,
+            "name" : "maxIterations",
+            "type" : "int32",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "CuckooFilterDelFunction",
+        "type_id" : 6150,
         "fields" : [ {
           "id" : 1,
-          "name" : "path",
+          "name" : "item",
           "type" : "bytes",
           "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "value",
+        } ]
+      }, {
+        "name" : "CmsQueryFunction",
+        "type_id" : 6156,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "items",
           "type" : "bytes",
-          "optional" : true
+          "is_repeated" : true
         } ]
       }, {
         "name" : "JsonGetFunction",
@@ -140,6 +254,291 @@
           "name" : "paths",
           "type" : "bytes",
           "is_repeated" : true
+        } ]
+      }, {
+        "name" : "BitfieldFunction",
+        "type_id" : 6134,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "operations",
+          "type" : "org.infinispan.global.core.MarshallableList",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "BloomFilterInfoFunction",
+        "type_id" : 6142,
+        "fields" : [ ],
+        "messages" : [ {
+          "name" : "BloomFilterInfo",
+          "type_id" : 6138,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "capacity",
+            "type" : "int64",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "size",
+            "type" : "int64",
+            "optional" : true
+          }, {
+            "id" : 3,
+            "name" : "filters",
+            "type" : "int32",
+            "optional" : true
+          }, {
+            "id" : 4,
+            "name" : "items",
+            "type" : "int64",
+            "optional" : true
+          }, {
+            "id" : 5,
+            "name" : "expansion",
+            "type" : "int32",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "JsonClearFunction",
+        "type_id" : 6117,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CuckooFilterReserveFunction",
+        "type_id" : 6147,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "capacity",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "bucketSize",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "maxIterations",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "expansion",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CmsMergeFunction",
+        "type_id" : 6158,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "sources",
+          "type" : "org.infinispan.persistence.resp.CountMinSketch",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "weights",
+          "type" : "double",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "ComposedFilterConverter",
+        "type_id" : 6105,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "filterConverters",
+          "type" : "org.infinispan.global.core.MarshallableList",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "EventListenerKeysFilter",
+        "type_id" : 6107,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "keys",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "JsonLenArrayFunction",
+        "type_id" : 6120,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonArrinsertFunction",
+        "type_id" : 6114,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "index",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "values",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "JsonObjkeysFunction",
+        "type_id" : 6126,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonArrayAppendFunction",
+        "type_id" : 6112,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "values",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "RespTypeFilterConverter",
+        "type_id" : 6109,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "type",
+          "type" : "RespTypes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "BloomFilterInsertFunction",
+        "type_id" : 6141,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "items",
+          "type" : "org.infinispan.global.core.MarshallableList",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "capacity",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "errorRate",
+          "type" : "double",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "expansion",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "noCreate",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "nonScaling",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CmsInfoFunction",
+        "type_id" : 6157,
+        "fields" : [ ],
+        "messages" : [ {
+          "name" : "CmsInfo",
+          "type_id" : 6159,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "width",
+            "type" : "int32",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "depth",
+            "type" : "int32",
+            "optional" : true
+          }, {
+            "id" : 3,
+            "name" : "count",
+            "type" : "int64",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "JsonDelFunction",
+        "type_id" : 6118,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "GlobMatchFilterConverter",
+        "type_id" : 6108,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "glob",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "returnValue",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "BloomFilterCardFunction",
+        "type_id" : 6143,
+        "fields" : [ ]
+      }, {
+        "name" : "JsonLenStrFunction",
+        "type_id" : 6122,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "JsonMergeFunction",
+        "type_id" : 6123,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "path",
+          "type" : "bytes",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CuckooFilterExistsFunction",
+        "type_id" : 6146,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "items",
+          "type" : "org.infinispan.global.core.MarshallableList",
+          "optional" : true
         } ]
       }, {
         "name" : "JsonTypeFunction",
@@ -193,15 +592,6 @@
           "optional" : true
         } ]
       }, {
-        "name" : "JsonClearFunction",
-        "type_id" : 6117,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "path",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      }, {
         "name" : "JsonArrpopFunction",
         "type_id" : 6115,
         "fields" : [ {
@@ -230,30 +620,26 @@
           "optional" : true
         } ]
       }, {
-        "name" : "ComposedFilterConverter",
-        "type_id" : 6105,
+        "name" : "CmsIncrByFunction",
+        "type_id" : 6155,
         "fields" : [ {
           "id" : 1,
-          "name" : "filterConverters",
-          "type" : "org.infinispan.global.core.MarshallableList",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "EventListenerKeysFilter",
-        "type_id" : 6107,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "keys",
+          "name" : "items",
           "type" : "bytes",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "increments",
+          "type" : "int64",
           "is_repeated" : true
         } ]
       }, {
-        "name" : "JsonLenArrayFunction",
-        "type_id" : 6120,
+        "name" : "BloomFilterExistsFunction",
+        "type_id" : 6139,
         "fields" : [ {
           "id" : 1,
-          "name" : "path",
-          "type" : "bytes",
+          "name" : "items",
+          "type" : "org.infinispan.global.core.MarshallableList",
           "optional" : true
         } ]
       }, {
@@ -266,36 +652,32 @@
           "optional" : true
         } ]
       }, {
-        "name" : "JsonDebugMemoryFunction",
-        "type_id" : 6132,
+        "name" : "BloomFilterReserveFunction",
+        "type_id" : 6140,
         "fields" : [ {
           "id" : 1,
-          "name" : "path",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "JsonArrinsertFunction",
-        "type_id" : 6114,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "path",
-          "type" : "bytes",
+          "name" : "errorRate",
+          "type" : "double",
           "optional" : true
         }, {
           "id" : 2,
-          "name" : "index",
-          "type" : "int32",
+          "name" : "capacity",
+          "type" : "int64",
           "optional" : true
         }, {
           "id" : 3,
-          "name" : "values",
-          "type" : "bytes",
-          "is_repeated" : true
+          "name" : "expansion",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "nonScaling",
+          "type" : "bool",
+          "optional" : true
         } ]
       }, {
-        "name" : "JsonObjkeysFunction",
-        "type_id" : 6126,
+        "name" : "JsonDebugMemoryFunction",
+        "type_id" : 6132,
         "fields" : [ {
           "id" : 1,
           "name" : "path",
@@ -306,20 +688,6 @@
         "name" : "TxEventConverterEmpty",
         "type_id" : 6110,
         "fields" : [ ]
-      }, {
-        "name" : "JsonArrayAppendFunction",
-        "type_id" : 6112,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "path",
-          "type" : "bytes",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "values",
-          "type" : "bytes",
-          "is_repeated" : true
-        } ]
       }, {
         "name" : "JsonNumIncrOpFunction",
         "type_id" : 6124,
@@ -335,21 +703,36 @@
           "optional" : true
         } ]
       }, {
-        "name" : "RespTypeFilterConverter",
-        "type_id" : 6109,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "type",
-          "type" : "RespTypes",
-          "optional" : true
-        } ]
-      }, {
         "name" : "JsonRespFunction",
         "type_id" : 6111,
         "fields" : [ {
           "id" : 1,
           "name" : "path",
           "type" : "bytes",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CuckooFilterInsertFunction",
+        "type_id" : 6148,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "items",
+          "type" : "org.infinispan.global.core.MarshallableList",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "capacity",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "noCreate",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "onlyIfNotExists",
+          "type" : "bool",
           "optional" : true
         } ]
       }, {
@@ -385,17 +768,10 @@
           "type" : "bytes",
           "optional" : true
         } ]
-      }, {
-        "name" : "JsonDelFunction",
-        "type_id" : 6118,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "path",
-          "type" : "bytes",
-          "optional" : true
-        } ]
       } ],
       "imports" : [ {
+        "path" : "persistence.resp.proto"
+      }, {
         "path" : "global.core.proto"
       } ],
       "package" : {
@@ -430,6 +806,188 @@
           } ]
         } ]
       }, {
+        "name" : "BloomFilter",
+        "type_id" : 6136,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "errorRate",
+          "type" : "double",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0.01"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "capacity",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "100"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "expansion",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "2"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "nonScaling",
+          "type" : "bool",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "false"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "subFilters",
+          "type" : "BloomFilter.SubFilter",
+          "is_repeated" : true
+        }, {
+          "id" : 6,
+          "name" : "itemCount",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ],
+        "messages" : [ {
+          "name" : "SubFilter",
+          "type_id" : 6137,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "capacity",
+            "type" : "int64",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "100"
+            } ]
+          }, {
+            "id" : 2,
+            "name" : "numHashFunctions",
+            "type" : "int32",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "7"
+            } ]
+          }, {
+            "id" : 3,
+            "name" : "bits",
+            "type" : "bytes",
+            "optional" : true
+          }, {
+            "id" : 4,
+            "name" : "count",
+            "type" : "int64",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "0"
+            } ]
+          } ]
+        } ]
+      }, {
+        "name" : "CuckooFilter",
+        "type_id" : 6144,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "capacity",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "1024"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "bucketSize",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "2"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "maxIterations",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "20"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "expansion",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "1"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "subFilters",
+          "type" : "CuckooFilter.CuckooSubFilter",
+          "is_repeated" : true
+        }, {
+          "id" : 6,
+          "name" : "itemsInserted",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 7,
+          "name" : "itemsDeleted",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ],
+        "messages" : [ {
+          "name" : "CuckooSubFilter",
+          "type_id" : 6145,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "numBuckets",
+            "type" : "int64",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "1024"
+            } ]
+          }, {
+            "id" : 2,
+            "name" : "bucketSize",
+            "type" : "int32",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "2"
+            } ]
+          }, {
+            "id" : 3,
+            "name" : "buckets",
+            "type" : "bytes",
+            "optional" : true
+          } ]
+        } ]
+      }, {
         "name" : "HyperLogLog",
         "type_id" : 6101,
         "fields" : [ {
@@ -451,6 +1009,42 @@
           "name" : "storage",
           "type" : "int64",
           "is_repeated" : true
+        } ]
+      }, {
+        "name" : "CountMinSketch",
+        "type_id" : 6153,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "width",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "2000"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "depth",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "7"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "counters",
+          "type" : "int64",
+          "is_repeated" : true
+        }, {
+          "id" : 4,
+          "name" : "totalCount",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
         } ]
       } ],
       "package" : {

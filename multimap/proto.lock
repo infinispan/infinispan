@@ -13,6 +13,9 @@
         }, {
           "name" : "MAX",
           "integer" : 2
+        }, {
+          "name" : "COUNT",
+          "integer" : 3
         } ]
       }, {
         "name" : "SortedSetOperationType",
