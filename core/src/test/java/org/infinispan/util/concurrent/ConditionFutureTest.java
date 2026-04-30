@@ -1,6 +1,9 @@
 package org.infinispan.util.concurrent;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.commons.util.concurrent.CompletionStages.isCompletedSuccessfully;
 import static org.infinispan.testing.Exceptions.expectCompletionException;
 import static org.testng.AssertJUnit.assertFalse;
@@ -8,6 +11,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -15,6 +19,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
@@ -110,5 +115,46 @@ public class ConditionFutureTest extends AbstractInfinispanTest {
       conditionFuture.update(1);
       assertTrue(stage1.toCompletableFuture().isDone());
       assertTrue(stage2.toCompletableFuture().isDone());
+   }
+
+   public void testTimeoutFires() throws Exception {
+      ConditionFuture<Integer> conditionFuture = new ConditionFuture<>(timeoutExecutor);
+      CompletionStage<Void> stage = conditionFuture.newConditionStage(i -> i > 0, 100, MILLISECONDS);
+      assertThat(stage.toCompletableFuture()).isNotDone();
+
+      assertThatThrownBy(() -> stage.toCompletableFuture().get(10, SECONDS))
+            .isInstanceOf(ExecutionException.class)
+            .hasCauseInstanceOf(TimeoutException.class);
+   }
+
+   public void testNewConditionStageAfterStop() {
+      ConditionFuture<Integer> conditionFuture = new ConditionFuture<>(timeoutExecutor);
+      conditionFuture.stop();
+
+      CompletionStage<Void> stage = conditionFuture.newConditionStage(i -> i > 0, 10, SECONDS);
+      assertThat(stage.toCompletableFuture()).isCompletedExceptionally();
+
+      expectCompletionException(IllegalLifecycleStateException.class, stage);
+   }
+
+   public void testUpdateAfterStop() {
+      ConditionFuture<Integer> conditionFuture = new ConditionFuture<>(timeoutExecutor);
+      conditionFuture.stop();
+
+      assertThatThrownBy(() -> conditionFuture.update(1))
+            .isInstanceOf(IllegalLifecycleStateException.class);
+   }
+
+   public void testSelectiveCompletion() {
+      ConditionFuture<Integer> conditionFuture = new ConditionFuture<>(timeoutExecutor);
+      CompletionStage<Void> low = conditionFuture.newConditionStage(i -> i >= 2, 10, SECONDS);
+      CompletionStage<Void> high = conditionFuture.newConditionStage(i -> i >= 5, 10, SECONDS);
+
+      conditionFuture.update(3);
+      assertThat(low.toCompletableFuture()).isDone();
+      assertThat(high.toCompletableFuture()).isNotDone();
+
+      conditionFuture.update(5);
+      assertThat(high.toCompletableFuture()).isDone();
    }
 }
