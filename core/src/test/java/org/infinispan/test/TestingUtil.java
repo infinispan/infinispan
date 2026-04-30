@@ -397,13 +397,6 @@ public class TestingUtil {
    public static void waitForNoRebalance(Cache... caches) {
       final int REBALANCE_TIMEOUT_SECONDS = 60; //Needs to be rather large to prevent sporadic failures on CI
       final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REBALANCE_TIMEOUT_SECONDS);
-      int zeroCapacityCaches = 0;
-      for (Cache<?, ?> c : caches) {
-         if (c.getCacheConfiguration().clustering().hash().capacityFactor() == 0f ||
-               c.getCacheManager().getCacheManagerConfiguration().isZeroCapacityNode()) {
-            zeroCapacityCaches++;
-         }
-      }
       for (Cache<?, ?> c : caches) {
          c = unwrapSecureCache(c);
          if (!c.getCacheConfiguration().clustering().cacheMode().isClustered()) {
@@ -427,7 +420,16 @@ public class TestingUtil {
                chContainsAllMembers = currentCH.getMembers().size() == caches.length;
                currentChIsBalanced = true;
 
-               int actualNumOwners = Math.min(numOwners, currentCH.getMembers().size() - zeroCapacityCaches);
+               int zeroCapacityMembers = 0;
+               Map<Address, Float> capacityFactors = currentCH.getCapacityFactors();
+               if (capacityFactors != null) {
+                  for (Float factor : capacityFactors.values()) {
+                     if (factor != null && Float.compare(factor, 0f) == 0) {
+                        zeroCapacityMembers++;
+                     }
+                  }
+               }
+               int actualNumOwners = Math.min(numOwners, currentCH.getMembers().size() - zeroCapacityMembers);
                for (int i = 0; i < currentCH.getNumSegments(); i++) {
                   if (currentCH.locateOwnersForSegment(i).size() < actualNumOwners) {
                      currentChIsBalanced = false;

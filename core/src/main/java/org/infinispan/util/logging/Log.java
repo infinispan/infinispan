@@ -2448,4 +2448,17 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Inbound transfer from %s failed for segments %s of cache %s, possible data loss", id = 719)
    void inboundStateTransferFailure(Address source, IntSet segments, String cacheName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Not allowed to change the capacity factor of local cache %s", id = 720)
+   void capacityFactorLocalCache(String cacheName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Capacity factor for cache %s cannot be set to %f: only 0 or 1 is allowed for %s caches. Skipping.", id = 721)
+   void capacityFactorNonBinarySkipped(String cacheName, float capacityFactor, String cacheMode);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Capacity factor for node %s in cache %s updated to %f but rebalancing is disabled. " +
+         "Data redistribution will not occur until rebalancing is re-enabled.", id = 722)
+   void capacityFactorUpdatedRebalancingDisabled(Object node, String cacheName, float capacityFactor);
 }

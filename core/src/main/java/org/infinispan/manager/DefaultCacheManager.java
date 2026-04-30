@@ -49,6 +49,7 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -588,6 +589,30 @@ public class DefaultCacheManager extends InternalCacheManager {
    @ManagedAttribute(description = "Indicates whether this node is coordinator", displayName = "Is coordinator?")
    public boolean isCoordinator() {
       return cacheManagerInfo.isCoordinator();
+   }
+
+   @Override
+   public CompletionStage<Void> setCapacityFactor(float capacityFactor) {
+      authorizer.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
+      assertIsNotTerminated();
+
+      InternalCacheRegistry icr = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+      CompletionStage<Void> stage = CompletableFutures.completedNull();
+      for (String cacheName : getCacheNames()) {
+         CompletionStage<Cache<?, ?>> cacheFuture = caches.get(cacheName);
+         if (cacheFuture == null || icr.isInternalCache(cacheName)) continue;
+
+         stage = stage.thenCompose(ignore -> CompletionStages.handleAndCompose(cacheFuture, (cache, t) -> {
+            if (t != null) {
+               log.debugf("Skipping capacity factor of failed cache: %s", cacheName);
+               return CompletableFutures.completedNull();
+            }
+
+            return cache.getAdvancedCache().setCapacityFactor(capacityFactor);
+         }));
+      }
+
+      return stage;
    }
 
    private <K, V> Cache<K, V> createCache(String cacheName) {

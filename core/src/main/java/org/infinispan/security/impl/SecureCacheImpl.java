@@ -98,6 +98,12 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    @Override
+   public CompletionStage<Void> setCapacityFactor(float capacityFactor) {
+      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
+      return super.setCapacityFactor(capacityFactor);
+   }
+
+   @Override
    public Properties getConfigurationAsProperties() {
       authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
       return super.getConfigurationAsProperties();

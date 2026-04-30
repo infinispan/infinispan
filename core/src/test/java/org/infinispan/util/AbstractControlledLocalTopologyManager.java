@@ -191,6 +191,11 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
 
    @Override
    public CompletionStage<Void> stableTopologyCompletion(String cacheName) {
-      return CompletableFutures.completedNull();
+      return delegate.stableTopologyCompletion(cacheName);
+   }
+
+   @Override
+   public CompletionStage<Void> setCapacityFactor(String cacheName, float capacityFactor) {
+      return delegate.setCapacityFactor(cacheName, capacityFactor);
    }
 }

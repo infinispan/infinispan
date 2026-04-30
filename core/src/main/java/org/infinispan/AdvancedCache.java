@@ -716,6 +716,22 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    void setAvailability(AvailabilityMode availabilityMode);
 
    /**
+    * Updates the capacity factor for this cache on the local node.
+    *
+    * <p>
+    * The capacity factor controls how many segments are assigned to this node relative to other members. The returned stage
+    * completes when the coordinator accepts the change. A value of 0 removes all segment ownership from this node.
+    * Negative values are rejected.
+    * </p>
+    *
+    * @param capacityFactor the new capacity factor (must be >= 0)
+    * @return a stage that completes when the coordinator accepts the change
+    * @throws IllegalArgumentException if capacityFactor is negative
+    * @throws IllegalStateException if this is a zero-capacity node attempting to increase
+    */
+   CompletionStage<Void> setCapacityFactor(float capacityFactor);
+
+   /**
     * Touches the given key if present. This will refresh its last access time, used for max idle, and count as a recent
     * access for eviction purposes.
     * <p>

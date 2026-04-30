@@ -734,6 +734,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    }
 
    @Override
+   public CompletionStage<Void> setCapacityFactor(String cacheName, Address node, float capacityFactor) {
+      ClusterCacheStatus ccs = cacheStatusMap.get(cacheName);
+      if (ccs == null) {
+         log.debugf("Ignoring capacity factor from %s for unknown cache %s", node, cacheName);
+         return CompletableFutures.completedNull();
+      }
+
+      return ccs.updateCapacityFactor(node, capacityFactor);
+   }
+
+   @Override
    public CompletionStage<Void> setRebalancingEnabled(boolean enabled) {
       if (enabled) {
          if (!isRebalancingEnabled()) {
