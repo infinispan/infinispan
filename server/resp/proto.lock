@@ -1,5 +1,60 @@
 {
   "definitions" : [ {
+    "protopath" : "org:/:infinispan:/:server:/:resp:/:persistence.resp.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "CompactSet",
+        "type_id" : 6103,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "store",
+          "type" : "int64",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "multiplicity",
+          "type" : "uint32",
+          "is_repeated" : true
+        }, {
+          "id" : 3,
+          "name" : "minimum",
+          "type" : "uint32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      }, {
+        "name" : "HyperLogLog",
+        "type_id" : 6101,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "explicit",
+          "type" : "ExplicitSet",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "compact",
+          "type" : "CompactSet",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ExplicitSet",
+        "type_id" : 6102,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "storage",
+          "type" : "int64",
+          "is_repeated" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.resp"
+      }
+    }
+  }, {
     "protopath" : "org:/:infinispan:/:erver:/:resp:/:global.resp.proto",
     "def" : {
       "enums" : [ {
@@ -391,61 +446,6 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.resp"
-      }
-    }
-  }, {
-    "protopath" : "org:/:infinispan:/:server:/:resp:/:persistence.resp.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "CompactSet",
-        "type_id" : 6103,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "store",
-          "type" : "int64",
-          "is_repeated" : true
-        }, {
-          "id" : 2,
-          "name" : "multiplicity",
-          "type" : "uint32",
-          "is_repeated" : true
-        }, {
-          "id" : 3,
-          "name" : "minimum",
-          "type" : "uint32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        } ]
-      }, {
-        "name" : "HyperLogLog",
-        "type_id" : 6101,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "explicit",
-          "type" : "ExplicitSet",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "compact",
-          "type" : "CompactSet",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "ExplicitSet",
-        "type_id" : 6102,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "storage",
-          "type" : "int64",
-          "is_repeated" : true
-        } ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.resp"
       }
     }
   } ]
