@@ -41,10 +41,10 @@ public class StateTransferLockImpl implements StateTransferLock {
    private final Lock readLock = ownershipLock.asReadLock();
 
    private volatile int topologyId = -1;
-   private ConditionFuture<StateTransferLockImpl> topologyFuture;
+   private final ConditionFuture<StateTransferLockImpl> topologyFuture = new ConditionFuture<>();
 
    private volatile int transactionDataTopologyId = -1;
-   private ConditionFuture<StateTransferLockImpl> transactionDataFuture;
+   private final ConditionFuture<StateTransferLockImpl> transactionDataFuture = new ConditionFuture<>();
 
    private long stateTransferTimeout;
    private long remoteTimeout;
@@ -52,8 +52,8 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Inject
    void inject(@ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
                Configuration configuration) {
-      topologyFuture = new ConditionFuture<>(timeoutExecutor);
-      transactionDataFuture = new ConditionFuture<>(timeoutExecutor);
+      topologyFuture.setTimeoutExecutor(timeoutExecutor);
+      transactionDataFuture.setTimeoutExecutor(timeoutExecutor);
 
       stateTransferTimeout = configuration.clustering().stateTransfer().timeout();
       remoteTimeout = configuration.clustering().remoteTimeout();
