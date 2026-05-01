@@ -1,14 +1,15 @@
 package org.infinispan.replication;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
@@ -68,8 +69,8 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
       Cache cache2 = cache(1, "testcache");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
-      assertNull("Should be null", cache1.get(k));
-      assertNull("Should be null", cache2.get(k));
+      assertThat(cache1.get(k)).isNull();
+      assertThat(cache2.get(k)).isNull();
 
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
@@ -83,8 +84,8 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
       assertEventuallyNotLocked(cache1, "testcache");
       assertEventuallyNotLocked(cache2, "testcache");
 
-      assert cache1.isEmpty();
-      assert cache2.isEmpty();
+      assertThat(cache1).isEmpty();
+      assertThat(cache2).isEmpty();
       cache1.clear();
       cache2.clear();
    }
@@ -102,19 +103,19 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
       // do a replace on empty key
       // https://jira.jboss.org/browse/ISPN-514
       Object old = cache1.replace(k, "blah");
-      assertNull("Should be null", cache1.get(k));
+      assertThat(cache1.get(k)).isNull();
 
       boolean replaced = cache1.replace(k, "Vladimir", "Blagojevic");
-      assert !replaced;
+      assertThat(replaced).isFalse();
 
-      assertNull("Should be null", cache1.get(k));
+      assertThat(cache1.get(k)).isNull();
       mgr.commit();
 
       assertEventuallyNotLocked(cache1, "testcache");
       assertEventuallyNotLocked(cache2, "testcache");
 
-      assert cache1.isEmpty();
-      assert cache2.isEmpty();
+      assertThat(cache1).isEmpty();
+      assertThat(cache2).isEmpty();
       cache1.clear();
       cache2.clear();
    }
@@ -125,8 +126,8 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
       final Cache cache2 = cache(1, "testcache");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
-      assertNull("Should be null", cache1.get(k));
-      assertNull("Should be null", cache2.get(k));
+      assertThat(cache1.get(k)).isNull();
+      assertThat(cache2.get(k)).isNull();
       final CountDownLatch latch = new CountDownLatch(1);
 
       Thread t = getTestThreadFactory("Worker").newThread(new Runnable() {
@@ -152,9 +153,14 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
                   }
                }
             } catch (Exception e) {
+               Throwable cause = e;
+               while (cause instanceof RemoteException) {
+                  cause = cause.getCause();
+               }
+               assertThat(cause).isInstanceOf(TimeoutException.class);
                if (useTx) {
                   try {
-                     mgr.commit();
+                     mgr.rollback();
                   } catch (Exception ignore) {
                   }
                }
@@ -174,7 +180,7 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
       t.start();
 
       // wait till the put in thread t times out
-      assert latch.await(10, TimeUnit.SECONDS) : "Concurrent put didn't time out!";
+      assertThat(latch.await(10, TimeUnit.SECONDS)).as("Concurrent put didn't time out!").isTrue();
 
       cache1.put(k, name);
       mgr.commit();
@@ -184,8 +190,8 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
 
 
       cache2.remove(k);
-      assert cache1.isEmpty();
-      assert cache2.isEmpty();
+      assertThat(cache1).isEmpty();
+      assertThat(cache2).isEmpty();
       cache1.clear();
       cache2.clear();
    }
@@ -199,8 +205,8 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
 
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
-      assertNull("Should be null", cache1.get(k));
-      assertNull("Should be null", cache2.get(k));
+      assertThat(cache1.get(k)).isNull();
+      assertThat(cache2.get(k)).isNull();
 
       String name = "Infinispan";
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
@@ -217,16 +223,16 @@ public class SyncLockingTest extends MultipleCacheManagersTest {
          mgr.rollback();
 
       if (useCommit) {
-         assertEquals(name, cache1.get(k));
-         assertEquals("Should have replicated", name, cache2.get(k));
+         assertThat(cache1.get(k)).isEqualTo(name);
+         assertThat(cache2.get(k)).as("Should have replicated").isEqualTo(name);
       } else {
-         assertEquals(null, cache1.get(k));
-         assertEquals("Should not have replicated", null, cache2.get(k));
+         assertThat(cache1.get(k)).isNull();
+         assertThat(cache2.get(k)).as("Should not have replicated").isNull();
       }
 
       cache2.remove(k);
-      assert cache1.isEmpty();
-      assert cache2.isEmpty();
+      assertThat(cache1).isEmpty();
+      assertThat(cache2).isEmpty();
       cache1.clear();
       cache2.clear();
    }
