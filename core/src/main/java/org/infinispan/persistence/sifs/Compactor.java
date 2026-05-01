@@ -595,7 +595,7 @@ class Compactor {
                      log.tracef("No index found for key %s, but it is a logFile, ignoring rest of the file", key);
                      break;
                   }
-                  log.tracef("No index found for key %s, dropping - assuming lost due to segments removed", key);
+                  log.tracef("No index found for key %s, dropping - assuming lost due to segment %d removed", key, segment);
                   scheduledOffset += header.totalLength();
                   continue;
                }

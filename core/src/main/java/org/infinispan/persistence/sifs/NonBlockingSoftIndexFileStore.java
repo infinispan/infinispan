@@ -51,6 +51,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.util.BPlusTree;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.reactivestreams.Publisher;
@@ -200,7 +201,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       marshallableEntryFactory = ctx.getMarshallableEntryFactory();
       byteBufferFactory = ctx.getByteBufferFactory();
       timeService = ctx.getTimeService();
-      maxKeyLength = configuration.maxNodeSize() - IndexNode.RESERVED_SPACE;
+      maxKeyLength = configuration.maxNodeSize() - BPlusTree.RESERVED_SPACE;
 
       Configuration cacheConfig = ctx.getCache().getCacheConfiguration();
 
@@ -238,7 +239,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       try {
          index = new Index(ctx.getNonBlockingManager(), fileProvider, getIndexLocation(), cacheSegments,
                configuration.minNodeSize(), configuration.maxNodeSize(), temporaryTable, compactor,
-               timeService, blockingManager.asExecutor("sifs-index"), maxOpenIndexFiles);
+               timeService, blockingManager.asExecutor("sifs-index"), maxOpenIndexFiles,
+               configuration.compactionThreshold());
       } catch (IOException e) {
          throw log.cannotOpenIndex(configuration.indexLocation(), e);
       }
