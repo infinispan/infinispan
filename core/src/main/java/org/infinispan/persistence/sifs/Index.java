@@ -9,31 +9,29 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PrimitiveIterator;
-import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.executors.LimitedExecutor;
+import org.infinispan.util.SoftBPlusTree;
+import org.infinispan.util.SoftBPlusTree.IndexNodeOutdatedException;
 import org.infinispan.util.concurrent.NonBlockingManager;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -53,16 +51,10 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
  */
 class Index {
    private static final Log log = Log.getLog(Index.class);
-   // PRE ISPN 14.0.22 GRACEFULLY VALUE = 0x512ACEF1;
-   private static final int GRACEFULLY = 0x512ACEF2;
+   private static final int GRACEFULLY = 0x512ACEF3;
    private static final int DIRTY = 0xD112770C;
-   // 4 bytes for graceful shutdown
-   // 4 bytes for segment max (this way the index can be regenerated if number of segments change
-   // 8 bytes root offset
-   // 2 bytes root occupied
-   // 8 bytes free block offset
-   // 8 bytes number of elements
-   private static final int INDEX_FILE_HEADER_SIZE = 34;
+   // magic(4) + segmentMax(4) + rootOffset(8) + rootOccupied(2) + freeBlocksOffset(8)
+   private static final int INDEX_FILE_HEADER_SIZE = 26;
 
    private final NonBlockingManager nonBlockingManager;
    private final FileProvider dataFileProvider;
@@ -85,6 +77,7 @@ class Index {
    private final TemporaryTable temporaryTable;
 
    private final Executor executor;
+   private final double compactionThreshold;
 
    // This is used to signal that a segment is not currently being used
    private final Segment emptySegment;
@@ -96,44 +89,12 @@ class Index {
    @GuardedBy("lock")
    private CompletionStage<Void> removeSegmentsStage = CompletableFutures.completedNull();
 
-   private final IndexNode.OverwriteHook movedHook = new IndexNode.OverwriteHook() {
-      @Override
-      public boolean check(IndexRequest request, int oldFile, int oldOffset) {
-         return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
-      }
-
-      @Override
-      public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
-         if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
-            sizePerSegment.decrementAndGet(cacheSegment);
-         }
-      }
-   };
-
-   private final IndexNode.OverwriteHook updateHook = new IndexNode.OverwriteHook() {
-      @Override
-      public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
-         nonBlockingManager.complete(request, overwritten);
-         if (request.getOffset() >= 0 && prevOffset < 0) {
-            sizePerSegment.incrementAndGet(cacheSegment);
-         } else if (request.getOffset() < 0 && prevOffset >= 0) {
-            sizePerSegment.decrementAndGet(cacheSegment);
-         }
-      }
-   };
-
-   private final IndexNode.OverwriteHook droppedHook = new IndexNode.OverwriteHook() {
-      @Override
-      public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
-         if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
-            sizePerSegment.decrementAndGet(cacheSegment);
-         }
-      }
-   };
+   // Overwrite hooks have been inlined into Segment.accept()
 
    public Index(NonBlockingManager nonBlockingManager, FileProvider dataFileProvider, Path indexDir, int cacheSegments,
                 int minNodeSize, int maxNodeSize, TemporaryTable temporaryTable, Compactor compactor,
-                TimeService timeService, Executor executor, int maxOpenFiles) throws IOException {
+                TimeService timeService, Executor executor, int maxOpenFiles,
+                double compactionThreshold) throws IOException {
       this.nonBlockingManager = nonBlockingManager;
       this.dataFileProvider = dataFileProvider;
       this.compactor = compactor;
@@ -148,6 +109,7 @@ class Index {
       this.segments = new Segment[cacheSegments];
       this.flowableProcessors = new FlowableProcessor[cacheSegments];
 
+      this.compactionThreshold = compactionThreshold;
       this.temporaryTable = temporaryTable;
       // Limits the amount of concurrent updates we do to the underlying indices to be based on the number of cache
       // segments. Note that this uses blocking threads so this number is still limited by that as well
@@ -301,48 +263,56 @@ class Index {
       }
    }
 
-   /**
-    * Get record or null if expired
-    */
    public EntryRecord getRecord(Object key, int cacheSegment, org.infinispan.commons.io.ByteBuffer serializedKey) throws IOException {
-      return getRecord(key, cacheSegment, toIndexKey(serializedKey), IndexNode.ReadOperation.GET_RECORD);
+      return getRecord(cacheSegment, toIndexKey(serializedKey), true);
    }
 
-   /**
-    * Get record (even if expired) or null if not present
-    */
    public EntryRecord getRecordEvenIfExpired(Object key, int cacheSegment, byte[] serializedKey) throws IOException {
-      return getRecord(key, cacheSegment, serializedKey, IndexNode.ReadOperation.GET_EXPIRED_RECORD);
+      return getRecord(cacheSegment, serializedKey, false);
    }
 
-   private EntryRecord getRecord(Object key, int cacheSegment, byte[] indexKey, IndexNode.ReadOperation readOperation) throws IOException {
+   private EntryRecord getRecord(int cacheSegment, byte[] indexKey, boolean checkExpiration) throws IOException {
       long stamp = lock.readLock();
       try {
-         return IndexNode.applyOnLeaf(segments[cacheSegment], cacheSegment, indexKey, segments[cacheSegment].rootReadLock(), readOperation);
+         IndexEntry entry = segments[cacheSegment].tree.get(indexKey);
+         if (entry == null) {
+            log.tracef("No entry found in index for segment %d", cacheSegment);
+            return null;
+         }
+         long wallClockTime = checkExpiration ? timeService.wallClockTime() : -1;
+         return entry.loadRecord(dataFileProvider, wallClockTime, true, true);
       } finally {
          lock.unlockRead(stamp);
       }
    }
 
-   /**
-    * Get position or null if expired
-    */
    public EntryPosition getPosition(Object key, int cacheSegment, org.infinispan.commons.io.ByteBuffer serializedKey) throws IOException {
       long stamp = lock.readLock();
       try {
-         return IndexNode.applyOnLeaf(segments[cacheSegment], cacheSegment, toIndexKey(serializedKey), segments[cacheSegment].rootReadLock(), IndexNode.ReadOperation.GET_POSITION);
+         byte[] indexKey = toIndexKey(serializedKey);
+         IndexEntry entry = segments[cacheSegment].tree.get(indexKey);
+         if (entry == null) {
+            log.tracef("No position found in index for key %s segment %d", key, cacheSegment);
+            return null;
+         }
+         EntryHeader header = entry.getHeader(dataFileProvider);
+         if (header == null) return null;
+         if (header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Found node on %d:%d but it is expired", entry.file, entry.offset);
+            }
+            return null;
+         }
+         return entry;
       } finally {
          lock.unlockRead(stamp);
       }
    }
 
-   /**
-    * Get position + numRecords, without expiration
-    */
    public EntryInfo getInfo(Object key, int cacheSegment, byte[] serializedKey) throws IOException {
       long stamp = lock.readLock();
       try {
-         return IndexNode.applyOnLeaf(segments[cacheSegment], cacheSegment, serializedKey, segments[cacheSegment].rootReadLock(), IndexNode.ReadOperation.GET_INFO);
+         return segments[cacheSegment].tree.get(serializedKey);
       } finally {
          lock.unlockRead(stamp);
       }
@@ -521,16 +491,27 @@ class Index {
       if (maxSeqId > 0) {
          return maxSeqId;
       }
-      long maxSeqId = 0;
+      ByRef.Long maxSeq = new ByRef.Long(0);
       long stamp = lock.readLock();
       try {
          for (Segment seg : segments) {
-            maxSeqId = Math.max(maxSeqId, IndexNode.calculateMaxSeqId(seg, seg.rootReadLock()));
+            CompletionStages.join(seg.tree.<Void>publish((key, info) -> {
+               try (FileProvider.Handle handle = dataFileProvider.getFile(info.file)) {
+                  if (handle != null) {
+                     int readOffset = info.offset < 0 ? ~info.offset : info.offset;
+                     EntryHeader header = EntryRecord.readEntryHeader(handle, readOffset);
+                     if (header != null) {
+                        maxSeq.set(Math.max(maxSeq.get(), header.seqId()));
+                     }
+                  }
+               }
+               return null;
+            }, true).ignoreElements().toCompletionStage(null));
          }
       } finally {
          lock.unlockRead(stamp);
       }
-      return maxSeqId;
+      return maxSeq.get();
    }
 
    public void start(IntSet segments) {
@@ -701,15 +682,19 @@ class Index {
                removedFlowables.get(offset).onComplete();
                Segment segment = removedSegments.get(offset);
                stage.dependsOn(
-                     segment.thenCompose(___ ->
-                                 // Now we free all entries in the index, this will include expired and removed entries
-                                 // Removed doesn't currently update free stats per ISPN-15246 - so we remove those as well
-                                 segment.root.publish((keyAndMetadataRecord, leafNode, fileProvider, timeService) -> {
-                                          compactor.freeIfPresent(leafNode.file, keyAndMetadataRecord.getHeader().totalLength());
-                                          return null;
-                                       }, true).ignoreElements()
-                                       .toCompletionStage(null)
-                           )
+                     segment.thenCompose(v ->
+                                 segment.tree.<Void>publish((key, info) -> {
+                                    try (FileProvider.Handle handle = dataFileProvider.getFile(info.file)) {
+                                       if (handle != null) {
+                                          int readOffset = info.offset < 0 ? ~info.offset : info.offset;
+                                          EntryHeader header = EntryRecord.readEntryHeader(handle, readOffset);
+                                          if (header != null) {
+                                             compactor.freeIfPresent(info.file, header.totalLength());
+                                          }
+                                       }
+                                    }
+                                    return null;
+                                 }, true).ignoreElements().toCompletionStage(null))
                            .thenRun(segment::delete));
             }
             stage.freeze()
@@ -726,24 +711,96 @@ class Index {
       });
    }
 
+   static final SoftBPlusTree.ValueSerializer<IndexEntry> INDEX_ENTRY_SERIALIZER =
+         new SoftBPlusTree.ValueSerializer<>() {
+            @Override
+            public void write(IndexEntry value, ByteBuffer buffer) {
+               buffer.putInt(value.file);
+               buffer.putInt(value.offset);
+               buffer.putInt(value.numRecords);
+            }
+
+            @Override
+            public IndexEntry read(ByteBuffer buffer) {
+               return new IndexEntry(buffer.getInt(), buffer.getInt(), buffer.getInt());
+            }
+
+            @Override
+            public int serializedSize(IndexEntry value) {
+               return 12;
+            }
+         };
+
+   /**
+    * Block-allocated node store backed by a file. Reuses freed blocks to
+    * avoid unbounded index file growth.
+    */
+   static class IndexFileNodeStore implements SoftBPlusTree.NodeStore {
+      private final FileProvider indexFileProvider;
+      private final int fileId;
+
+      IndexFileNodeStore(FileProvider indexFileProvider, int fileId) {
+         this.indexFileProvider = indexFileProvider;
+         this.fileId = fileId;
+      }
+
+      @Override
+      public void write(ByteBuffer data, long offset) throws IOException {
+         try (FileProvider.Handle handle = indexFileProvider.getFile(fileId)) {
+            long pos = offset;
+            while (data.hasRemaining()) {
+               pos += handle.write(data, pos);
+            }
+         }
+      }
+
+      @Override
+      public ByteBuffer read(long offset, int length) throws IOException {
+         ByteBuffer buffer = ByteBuffer.allocate(length);
+         try (FileProvider.Handle handle = indexFileProvider.getFile(fileId)) {
+            if (handle == null) {
+               throw new IndexNodeOutdatedException(fileId + ":" + offset);
+            }
+            int totalRead = 0;
+            while (totalRead < length) {
+               int n = handle.read(buffer, offset + totalRead);
+               if (n < 0) {
+                  throw new IOException("Truncated node store at offset " + offset);
+               }
+               totalRead += n;
+            }
+         }
+         buffer.flip();
+         return buffer;
+      }
+
+      @Override
+      public void truncate(long size) throws IOException {
+         try (FileProvider.Handle handle = indexFileProvider.getFile(fileId)) {
+            handle.truncate(size);
+         }
+      }
+   }
+
    static class Segment extends CompletableFuture<Void> implements Consumer<IndexRequest>, Action {
+      private static final short BLOCK_ALIGNMENT = 64;
+
       final Index index;
       private final TemporaryTable temporaryTable;
-      private final TreeMap<Short, List<IndexSpace>> freeBlocks = new TreeMap<>();
-      private final ReadWriteLock rootLock = new ReentrantReadWriteLock();
       private final int id;
-      private long indexFileSize = INDEX_FILE_HEADER_SIZE;
+      private final IndexFileNodeStore nodeStore;
+      private final SoftBPlusTree.KeyLoader<IndexEntry> keyLoader;
 
-      private volatile IndexNode root;
+      volatile SoftBPlusTree<IndexEntry> tree;
 
       private Segment(Index index, int id, TemporaryTable temporaryTable) {
          this.index = index;
          this.temporaryTable = temporaryTable;
-
          this.id = id;
-
-         // Just to init to empty
-         root = IndexNode.emptyWithLeaves(this);
+         this.nodeStore = new IndexFileNodeStore(index.indexFileProvider, id);
+         this.keyLoader = value -> (value).loadKey(index.dataFileProvider);
+         this.tree = new SoftBPlusTree<>(index.minNodeSize, index.maxNodeSize, nodeStore,
+               INDEX_ENTRY_SERIALIZER, keyLoader, BLOCK_ALIGNMENT, INDEX_FILE_HEADER_SIZE);
       }
 
       public int getId() {
@@ -754,37 +811,48 @@ class Index {
          int segmentMax = temporaryTable.getSegmentMax();
          FileProvider.Handle handle = index.indexFileProvider.getFile(id);
          try (handle) {
-            ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
-            boolean loaded;
-            if (handle.getFileSize() >= INDEX_FILE_HEADER_SIZE && read(handle, buffer, 0)
-                  && buffer.getInt(0) == GRACEFULLY && buffer.getInt(4) == segmentMax) {
-               long rootOffset = buffer.getLong(8);
-               short rootOccupied = buffer.getShort(16);
-               long freeBlocksOffset = buffer.getLong(18);
-               root = new IndexNode(this, rootOffset, rootOccupied);
-               loadFreeBlocks(freeBlocksOffset);
-               indexFileSize = freeBlocksOffset;
-               loaded = true;
-            } else {
-               // If the file was empty and we had no entries in our sizePerSegment we can treat this as loaded
-               // as this means we didn't own the segment before
-               loaded = handle.getFileSize() == 0 && index.sizePerSegment.get(id) == 0;
-               handle.truncate(0);
-               root = IndexNode.emptyWithLeaves(this);
-               // reserve space for shutdown
-               indexFileSize = INDEX_FILE_HEADER_SIZE;
+            if (handle.getFileSize() < INDEX_FILE_HEADER_SIZE) {
+               return handle.getFileSize() == 0 && index.sizePerSegment.get(id) == 0;
             }
-            buffer.putInt(0, DIRTY);
-            buffer.position(0);
-            buffer.limit(4);
-            write(handle, buffer, 0);
-
-            return loaded;
+            ByteBuffer header = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
+            if (!read(handle, header, 0)) {
+               return handle.getFileSize() == 0 && index.sizePerSegment.get(id) == 0;
+            }
+            if (header.getInt(0) != GRACEFULLY || header.getInt(4) != segmentMax) {
+               handle.truncate(0);
+               tree = new SoftBPlusTree<>(index.minNodeSize, index.maxNodeSize, nodeStore,
+                     INDEX_ENTRY_SERIALIZER, keyLoader, BLOCK_ALIGNMENT, INDEX_FILE_HEADER_SIZE);
+               return false;
+            }
+            long rootOffset = header.getLong(8);
+            short rootOccupiedSpace = header.getShort(16);
+            long freeBlocksOffset = header.getLong(18);
+            // Mark as dirty
+            ByteBuffer dirty = ByteBuffer.allocate(4);
+            dirty.putInt(0, DIRTY);
+            write(handle, dirty, 0);
+            if (rootOffset == 0) {
+               return true;
+            }
+            SoftBPlusTree<IndexEntry> softTree = new SoftBPlusTree<>(index.minNodeSize, index.maxNodeSize,
+                  nodeStore, INDEX_ENTRY_SERIALIZER, keyLoader, BLOCK_ALIGNMENT, INDEX_FILE_HEADER_SIZE);
+            softTree.setStoreSize(freeBlocksOffset);
+            // Restore free-block state from freeBlocksOffset
+            int freeBlocksLen = (int) (handle.getFileSize() - freeBlocksOffset);
+            if (freeBlocksLen > 0) {
+               ByteBuffer freeBlocksBuf = ByteBuffer.allocate(freeBlocksLen);
+               read(handle, freeBlocksBuf, freeBlocksOffset);
+               freeBlocksBuf.flip();
+               softTree.deserializeFreeBlocks(freeBlocksBuf);
+            }
+            SoftBPlusTree.NodeSpace rootSpace = new SoftBPlusTree.NodeSpace(rootOffset, rootOccupiedSpace);
+            softTree.loadTree(rootSpace);
+            tree = softTree;
+            return true;
          }
       }
 
       void delete() {
-         // Empty segment is negative, so there is no file
          if (id >= 0) {
             log.tracef("Deleting file for index %s", id);
             index.indexFileProvider.deleteFile(id);
@@ -792,34 +860,16 @@ class Index {
       }
 
       void reset() throws IOException {
-         try (FileProvider.Handle handle = index.indexFileProvider.getFile(id)) {
-            handle.truncate(0);
-            root = IndexNode.emptyWithLeaves(this);
-            // reserve space for shutdown
-            indexFileSize = INDEX_FILE_HEADER_SIZE;
-            ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
-            buffer.putInt(0, DIRTY);
-            buffer.position(0);
-            buffer.limit(4);
-
-            write(handle, buffer, 0);
-         }
-         freeBlocks.clear();
+         tree.clear();
       }
 
       @Override
       public void accept(IndexRequest request) throws Throwable {
          if (log.isTraceEnabled()) log.tracef("Indexing %s", request);
-         IndexNode.OverwriteHook overwriteHook;
-         IndexNode.RecordChange recordChange;
+         int cacheSegment = request.getSegment();
          switch (request.getType()) {
             case CLEAR:
-               root = IndexNode.emptyWithLeaves(this);
-               try (FileProvider.Handle handle = index.indexFileProvider.getFile(id)) {
-                  handle.truncate(0);
-               }
-               indexFileSize = INDEX_FILE_HEADER_SIZE;
-               freeBlocks.clear();
+               tree.clear();
                index.sizePerSegment.set(id, 0);
                index.nonBlockingManager.complete(request, null);
                return;
@@ -828,80 +878,147 @@ class Index {
                runnable.run();
                index.nonBlockingManager.complete(request, null);
                return;
-            case MOVED:
-               recordChange = IndexNode.RecordChange.MOVE;
-               overwriteHook = index.movedHook;
-               break;
             case UPDATE:
-               recordChange = IndexNode.RecordChange.INCREASE;
-               overwriteHook = index.updateHook;
+               handleUpdate(request, cacheSegment);
+               break;
+            case MOVED:
+               handleMoved(request, cacheSegment);
                break;
             case DROPPED:
-               recordChange = IndexNode.RecordChange.DECREASE;
-               overwriteHook = index.droppedHook;
+               handleDropped(request, cacheSegment);
                break;
             case FOUND_OLD:
-               recordChange = IndexNode.RecordChange.INCREASE_FOR_OLD;
-               overwriteHook = IndexNode.NOOP_HOOK;
+               handleFoundOld(request, cacheSegment);
                break;
             default:
                throw new IllegalArgumentException(request.toString());
          }
-         try {
-            IndexNode.setPosition(root, request, overwriteHook, recordChange);
-         } catch (Throwable e) {
-            request.completeExceptionally(e);
-         }
          temporaryTable.removeConditionally(request.getSegment(), request.getKey(), request.getFile(), request.getOffset());
          if (request.getType() != IndexRequest.Type.UPDATE) {
-            // The update type will complete it in the switch statement above
             index.nonBlockingManager.complete(request, null);
          }
       }
 
-      // This is ran when the flowable ends either via normal termination or error
+      private void handleUpdate(IndexRequest request, int cacheSegment) throws IOException {
+         byte[] indexKey = Index.toIndexKey(request.getSerializedKey());
+         int file = request.getFile();
+         int offset = request.getOffset();
+
+         IndexEntry existing = tree.get(indexKey);
+         if (existing != null) {
+            int numRecords = existing.numRecords + 1;
+            int oldTotalLength = loadTotalLength(existing);
+            index.compactor.free(existing.file, oldTotalLength);
+            tree.put(indexKey, new IndexEntry(file, offset, numRecords));
+            index.nonBlockingManager.complete(request, true);
+            if (offset >= 0 && existing.offset < 0) {
+               index.sizePerSegment.incrementAndGet(cacheSegment);
+            } else if (offset < 0 && existing.offset >= 0) {
+               index.sizePerSegment.decrementAndGet(cacheSegment);
+            }
+         } else {
+            tree.put(indexKey, new IndexEntry(file, offset, 1));
+            index.nonBlockingManager.complete(request, false);
+            if (offset >= 0) {
+               index.sizePerSegment.incrementAndGet(cacheSegment);
+            }
+         }
+      }
+
+      private void handleMoved(IndexRequest request, int cacheSegment) throws IOException {
+         byte[] indexKey = Index.toIndexKey(request.getSerializedKey());
+         int file = request.getFile();
+         int offset = request.getOffset();
+         int size = request.getSize();
+
+         IndexEntry existing = tree.get(indexKey);
+         if (existing != null
+               && existing.file == request.getPrevFile()
+               && existing.offset == request.getPrevOffset()) {
+            int oldTotalLength = loadTotalLength(existing);
+            index.compactor.free(existing.file, oldTotalLength);
+            tree.put(indexKey, new IndexEntry(file, offset, existing.numRecords));
+            if (offset < 0 && request.getPrevOffset() >= 0) {
+               index.sizePerSegment.decrementAndGet(cacheSegment);
+            }
+         } else {
+            index.compactor.free(file, size);
+         }
+      }
+
+      private void handleDropped(IndexRequest request, int cacheSegment) throws IOException {
+         byte[] indexKey = Index.toIndexKey(request.getSerializedKey());
+
+         IndexEntry existing = tree.get(indexKey);
+         if (existing == null) return;
+
+         boolean canDecrease = existing.numRecords > 1 || existing.file < 0
+               || (existing.file == request.getPrevFile()
+                     && (existing.offset == request.getPrevOffset()
+                           || existing.offset == ~request.getPrevOffset()));
+         if (!canDecrease) {
+            log.tracef("DECREASE ignored: numRecords: %d, existing %s, request %s",
+                  existing.numRecords, existing, request);
+            return;
+         }
+
+         int numRecords = existing.numRecords - 1;
+         if (numRecords > 0) {
+            tree.put(indexKey, new IndexEntry(existing.file, existing.offset, numRecords));
+         } else {
+            tree.remove(indexKey);
+            int oldTotalLength = loadTotalLength(existing);
+            index.compactor.free(existing.file, oldTotalLength);
+         }
+         if (request.getPrevFile() == existing.file && request.getPrevOffset() == existing.offset) {
+            index.sizePerSegment.decrementAndGet(cacheSegment);
+         }
+      }
+
+      private void handleFoundOld(IndexRequest request, int cacheSegment) throws IOException {
+         byte[] indexKey = Index.toIndexKey(request.getSerializedKey());
+         int file = request.getFile();
+         int size = request.getSize();
+
+         IndexEntry existing = tree.get(indexKey);
+         if (existing != null) {
+            tree.put(indexKey, new IndexEntry(existing.file, existing.offset, existing.numRecords + 1));
+            index.compactor.free(file, size);
+         } else {
+            tree.put(indexKey, new IndexEntry(file, request.getOffset(), 1));
+         }
+      }
+
+      private int loadTotalLength(IndexEntry entry) throws IOException {
+         EntryHeader header = entry.getHeader(index.dataFileProvider);
+         return header != null ? header.totalLength() : 0;
+      }
+
       @Override
       public void run() throws IOException {
          try {
-            IndexSpace rootSpace = allocateIndexSpace(root.length());
-            root.store(rootSpace);
+            SoftBPlusTree.NodeSpace rootSpace = tree.saveTree();
             try (FileProvider.Handle handle = index.indexFileProvider.getFile(id)) {
-               ByteBuffer buffer = ByteBuffer.allocate(4);
-               buffer.putInt(0, freeBlocks.size());
-               long offset = indexFileSize;
-               offset += write(handle, buffer, offset);
-               for (Map.Entry<Short, List<IndexSpace>> entry : freeBlocks.entrySet()) {
-                  List<IndexSpace> list = entry.getValue();
-                  int requiredSize = 8 + list.size() * 10;
-                  buffer = buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
-                  buffer.position(0);
-                  buffer.limit(requiredSize);
-                  // TODO: change this to short
-                  buffer.putInt(entry.getKey());
-                  buffer.putInt(list.size());
-                  for (IndexSpace space : list) {
-                     buffer.putLong(space.offset);
-                     buffer.putShort(space.length);
-                  }
-                  buffer.flip();
-                  offset += write(handle, buffer, offset);
-               }
-               int headerWithoutMagic = INDEX_FILE_HEADER_SIZE - 4;
-               buffer = buffer.capacity() < headerWithoutMagic ? ByteBuffer.allocate(headerWithoutMagic) : buffer;
-               buffer.position(0);
-               // we need to set limit ahead, otherwise the putLong could throw IndexOutOfBoundsException
-               buffer.limit(headerWithoutMagic);
-               buffer.putInt(index.segments.length);
-               buffer.putLong(rootSpace.offset);
-               buffer.putShort(rootSpace.length);
-               buffer.putLong(indexFileSize);
-               buffer.flip();
-               write(handle, buffer, 4);
+               // Write free blocks at current end of node data
+               ByteBuffer freeBlocksBuf = tree.serializeFreeBlocks();
+               long freeBlocksOffset = tree.getStoreSize();
+               write(handle, freeBlocksBuf, freeBlocksOffset);
 
-               buffer.position(0);
-               buffer.limit(4);
-               buffer.putInt(0, GRACEFULLY);
-               write(handle, buffer, 0);
+               // Write header bytes 4-25 (segmentMax, rootOffset, rootOccupied, freeBlocksOffset)
+               int headerWithoutMagic = INDEX_FILE_HEADER_SIZE - 4;
+               ByteBuffer header = ByteBuffer.allocate(headerWithoutMagic);
+               header.putInt(index.segments.length);
+               header.putLong(rootSpace != null ? rootSpace.offset() : 0);
+               header.putShort(rootSpace != null ? rootSpace.occupiedSpace() : 0);
+               header.putLong(freeBlocksOffset);
+               header.flip();
+               write(handle, header, 4);
+
+               // Write magic last so a crash leaves the file marked dirty
+               header.clear();
+               header.limit(4);
+               header.putInt(0, GRACEFULLY);
+               write(handle, header, 0);
             }
 
             complete(null);
@@ -910,59 +1027,8 @@ class Index {
          }
       }
 
-      private void loadFreeBlocks(long freeBlocksOffset) throws IOException {
-         ByteBuffer buffer = ByteBuffer.allocate(8);
-         buffer.limit(4);
-         long offset = freeBlocksOffset;
-         try (FileProvider.Handle handle = index.indexFileProvider.getFile(id)) {
-            if (!read(handle, buffer, offset)) {
-               throw new IOException("Cannot read free blocks lists!");
-            }
-            offset += 4;
-            int numLists = buffer.getInt(0);
-            for (int i = 0; i < numLists; ++i) {
-               buffer.position(0);
-               buffer.limit(8);
-               if (!read(handle, buffer, offset)) {
-                  throw new IOException("Cannot read free blocks lists!");
-               }
-               offset += 8;
-               // TODO: change this to short
-               int blockLength = buffer.getInt(0);
-               assert blockLength <= Short.MAX_VALUE;
-               int listSize = buffer.getInt(4);
-               // Ignore any free block that had no entries as it adds time complexity to our lookup
-               if (listSize > 0) {
-                  int requiredSize = 10 * listSize;
-                  buffer = buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
-                  buffer.position(0);
-                  buffer.limit(requiredSize);
-                  if (!read(handle, buffer, offset)) {
-                     throw new IOException("Cannot read free blocks lists!");
-                  }
-                  offset += requiredSize;
-                  buffer.flip();
-                  ArrayList<IndexSpace> list = new ArrayList<>(listSize);
-                  for (int j = 0; j < listSize; ++j) {
-                     list.add(new IndexSpace(buffer.getLong(), buffer.getShort()));
-                  }
-                  freeBlocks.put((short) blockLength, list);
-               }
-            }
-         }
-      }
-
       public FileProvider.Handle getIndexFile() throws IOException {
          return index.indexFileProvider.getFile(id);
-      }
-
-      public void forceIndexIfOpen(boolean metaData) throws IOException {
-         FileProvider.Handle handle = index.indexFileProvider.getFileIfOpen(id);
-         if (handle != null) {
-            try (handle) {
-               handle.force(metaData);
-            }
-         }
       }
 
       public FileProvider getFileProvider() {
@@ -973,114 +1039,12 @@ class Index {
          return index.compactor;
       }
 
-      public IndexNode getRoot() {
-         // this has to be called with rootLock locked!
-         return root;
-      }
-
-      public void setRoot(IndexNode root) {
-         rootLock.writeLock().lock();
-         this.root = root;
-         rootLock.writeLock().unlock();
-      }
-
-      public int getMaxNodeSize() {
-         return index.maxNodeSize;
-      }
-
-      public int getMinNodeSize() {
-         return index.minNodeSize;
-      }
-
-      // this should be accessed only from the updater thread
-      IndexSpace allocateIndexSpace(short length) {
-         // Use tailMap so that we only require O(logN) to find the iterator
-         // This avoids an additional O(logN) to do an entry removal
-         Iterator<Map.Entry<Short, List<IndexSpace>>> iter = freeBlocks.tailMap(length).entrySet().iterator();
-         while (iter.hasNext()) {
-            Map.Entry<Short, List<IndexSpace>> entry = iter.next();
-            short spaceLength = entry.getKey();
-            // Only use the space if it is only 25% larger to avoid too much fragmentation
-            if ((length + (length >> 2)) < spaceLength) {
-               break;
-            }
-            List<IndexSpace> list = entry.getValue();
-            if (!list.isEmpty()) {
-               IndexSpace spaceToReturn = list.remove(list.size() - 1);
-               if (list.isEmpty()) {
-                  iter.remove();
-               }
-               return spaceToReturn;
-            }
-            iter.remove();
-         }
-         long oldSize = indexFileSize;
-         indexFileSize += length;
-         return new IndexSpace(oldSize, length);
-      }
-
-      // this should be accessed only from the updater thread
-      void freeIndexSpace(long offset, short length) {
-         if (length <= 0) throw new IllegalArgumentException("Offset=" + offset + ", length=" + length);
-         // TODO: fragmentation!
-         // TODO: memory bounds!
-         if (offset + length < indexFileSize) {
-            freeBlocks.computeIfAbsent(length, k -> new ArrayList<>()).add(new IndexSpace(offset, length));
-         } else {
-            indexFileSize -= length;
-            try (FileProvider.Handle handle = index.indexFileProvider.getFile(id)) {
-               handle.truncate(indexFileSize);
-            } catch (IOException e) {
-               log.cannotTruncateIndex(e);
-            }
-         }
-      }
-
-      Lock rootReadLock() {
-         return rootLock.readLock();
-      }
-
       public TimeService getTimeService() {
          return index.timeService;
       }
    }
 
-   /**
-    * Offset-length pair
-    */
-   static class IndexSpace {
-      protected long offset;
-      protected short length;
-
-      IndexSpace(long offset, short length) {
-         this.offset = offset;
-         this.length = length;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (!(o instanceof IndexSpace)) return false;
-
-         IndexSpace innerNode = (IndexSpace) o;
-
-         return length == innerNode.length && offset == innerNode.offset;
-      }
-
-      @Override
-      public int hashCode() {
-         int result = (int) (offset ^ (offset >>> 32));
-         result = 31 * result + length;
-         return result;
-      }
-
-      @Override
-      public String toString() {
-         return String.format("[%d-%d(%d)]", offset, offset + length, length);
-      }
-   }
-
-   <V> Flowable<EntryRecord> publish(IntSet cacheSegments, boolean loadValues) {
+   Flowable<EntryRecord> publish(IntSet cacheSegments, boolean loadValues) {
       return Flowable.fromIterable(cacheSegments)
             .concatMap(cacheSegment -> publish(cacheSegment, loadValues));
    }
@@ -1089,23 +1053,16 @@ class Index {
       long stamp = lock.readLock();
       try {
          var segment = segments[cacheSegment];
-         if (segment.index.sizePerSegment.get(cacheSegment) == 0) {
+         if (sizePerSegment.get(cacheSegment) == 0) {
             lock.unlockRead(stamp);
             return Flowable.empty();
          }
-         return segment.root.publish((keyAndMetadataRecord, leafNode, fileProvider, currentTime) -> {
-            long expiryTime = keyAndMetadataRecord.getHeader().expiryTime();
-            // Ignore any key or value if it is expired or was removed
-            if (expiryTime > 0 && expiryTime < currentTime || keyAndMetadataRecord.getHeader().valueLength() <= 0) {
-               return null;
-            }
-            if (loadValues) {
-               log.tracef("Loading value record for leafNode: %s", leafNode);
+         SoftBPlusTree<IndexEntry> tree = segment.tree;
 
-               return leafNode.loadValue(keyAndMetadataRecord, fileProvider);
-            }
-            return keyAndMetadataRecord;
-         }, false).doFinally(() -> lock.unlockRead(stamp));
+         long wallClockTime = timeService.wallClockTime();
+         return tree.publish((key, entry) ->
+                     entry.loadRecord(dataFileProvider, wallClockTime, loadValues, false), false)
+               .doFinally(() -> lock.unlockRead(stamp));
       } catch (Throwable t) {
          lock.unlockRead(stamp);
          throw t;

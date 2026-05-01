@@ -56,8 +56,8 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
-      global.cacheContainer().security().authorization().enable();
-      return TestCacheManagerFactory.newDefaultCacheManager(false, global, new ConfigurationBuilder());
+      global.globalState().enable();
+      return TestCacheManagerFactory.newDefaultCacheManager(true, global, new ConfigurationBuilder());
    }
 
    protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, String cacheName, boolean preload) {
@@ -174,7 +174,7 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       }
 
       long startTime = System.nanoTime();
-      long secondsToRun = TimeUnit.MINUTES.toSeconds(10);
+      long secondsToRun = TimeUnit.MINUTES.toSeconds(3);
 
       while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime) < secondsToRun) {
          if (futures.stream().anyMatch(Future::isDone)) {

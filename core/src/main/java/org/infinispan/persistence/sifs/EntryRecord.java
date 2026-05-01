@@ -15,9 +15,9 @@ public class EntryRecord {
 
    private final EntryHeader header;
    private final byte[] key;
-   private byte[] value;
-   private EntryMetadata meta;
-   private byte[] internalMetadata;
+   private volatile byte[] value;
+   private volatile EntryMetadata meta;
+   private volatile byte[] internalMetadata;
 
    EntryRecord(EntryHeader header, byte[] key) {
       this.header = header;
