@@ -1,195 +1,250 @@
-/*
- * JBoss, Home of Professional Open Source.
- * Copyright 2015 Red Hat, Inc., and individual contributors
- * as indicated by the @author tags.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.infinispan.server.security.http.localuser;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.AuthorizeCallback;
 
-import org.wildfly.common.iteration.ByteIterator;
-import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.http.HttpAuthenticationException;
+import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
-import org.wildfly.security.http.HttpServerResponse;
-import org.wildfly.security.mechanism.http.UsernamePasswordAuthenticationMechanism;
 
 /**
- * Implementation of the HTTP Local authentication mechanism
+ * Implementation of the HTTP Local authentication mechanism.
+ * Uses a challenge file on the local filesystem to prove that
+ * the client is running on the same machine as the server.
  *
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  */
-final class LocalUserAuthenticationMechanism extends UsernamePasswordAuthenticationMechanism {
+final class LocalUserAuthenticationMechanism implements HttpServerAuthenticationMechanism {
    public static final String LOCALUSER_NAME = "LOCALUSER";
 
-   static final String SILENT = "silent";
-
-   public static final String LOCAL_USER_USE_SECURE_RANDOM = "wildfly.http.local-user.use-secure-random";
    public static final String LOCAL_USER_CHALLENGE_PATH = "wildfly.http.local-user.challenge-path";
    public static final String DEFAULT_USER = "wildfly.http.local-user.default-user";
-   private static final String CHALLENGE_PREFIX = "Localuser ";
-   private static final int PREFIX_LENGTH = CHALLENGE_PREFIX.length();
-   private static final byte UTF8NUL = 0x00;
 
-   private final boolean useSecureRandom;
+   private static final String CHALLENGE_PREFIX = "Localuser";
+   private static final String SESSION_TOKEN_PREFIX = "token:";
+   private static final String SESSION_TOKEN_HEADER = "X-Localuser-Token";
+   private static final int CHALLENGE_BYTES = 8;
+   private static final int SESSION_TOKEN_BYTES = 32;
+   private static final long CHALLENGE_TIMEOUT_SECONDS = 60;
+   private static final long SESSION_TOKEN_TTL_SECONDS = 3600;
 
-   /**
-    * If silent is true then this mechanism will only take effect if there is an Authorization header.
-    * <p>
-    * This allows you to combine basic auth with form auth, so human users will use form based auth, but allows
-    * programmatic clients to login using basic auth.
-    */
-   private final boolean silent;
-   private final File basePath;
+   private static final ConcurrentHashMap<String, byte[]> pendingChallenges = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<String, String> sessionTokens = new ConcurrentHashMap<>();
+   private static final ScheduledExecutorService cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+      Thread t = new Thread(r, "localuser-challenge-cleanup");
+      t.setDaemon(true);
+      return t;
+   });
 
-   /**
-    * Construct a new instance of {@code BasicAuthenticationMechanism}.
-    *
-    * @param callbackHandler the {@link CallbackHandler} to use to verify the supplied credentials and to notify to
-    *                        establish the current identity.
-    */
-   LocalUserAuthenticationMechanism(final CallbackHandler callbackHandler, final boolean silent) {
-      super(checkNotNullParam("callbackHandler", callbackHandler));
-      this.silent = silent;
-      this.useSecureRandom = true;
-      this.basePath = new File(System.getProperty("java.io.tmpdir"));
+   private final CallbackHandler callbackHandler;
+   private final File challengePath;
+   private final String defaultUser;
+
+   LocalUserAuthenticationMechanism(CallbackHandler callbackHandler, String challengePath, String defaultUser) {
+      this.callbackHandler = callbackHandler;
+      this.challengePath = challengePath != null ? new File(challengePath) : new File(System.getProperty("java.io.tmpdir"));
+      this.defaultUser = defaultUser != null ? defaultUser : "$local";
    }
 
-   /**
-    * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#getMechanismName()
-    */
    @Override
    public String getMechanismName() {
       return LOCALUSER_NAME;
    }
 
-   /**
-    * @throws HttpAuthenticationException
-    * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#evaluateRequest(HttpServerRequest)
-    */
    @Override
-   public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
+   public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
       List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
-      if (authorizationValues != null) {
-         for (String current : authorizationValues) {
-            if (current.startsWith(CHALLENGE_PREFIX)) {
-               byte[] decodedValue = ByteIterator.ofBytes(current.substring(PREFIX_LENGTH).getBytes(UTF_8)).asUtf8String().base64Decode().drain();
 
-               if (decodedValue.length == 0) {
-                  // Initial response, create the file
-                  final Random random = getRandom();
-                  File challengeFile;
-                  try {
-                     challengeFile = File.createTempFile("local", ".challenge", basePath);
-                  } catch (IOException e) {
-                     throw new RuntimeException(e);
-                  }
-                  final FileOutputStream fos;
-                  try {
-                     fos = new FileOutputStream(challengeFile);
-                  } catch (FileNotFoundException e) {
-                     throw new RuntimeException(e);
-                  }
-                  boolean ok = false;
-                  final byte[] bytes;
-                  try {
-                     bytes = new byte[8];
-                     random.nextBytes(bytes);
-                     try {
-                        fos.write(bytes);
-                        fos.close();
-                        ok = true;
-                     } catch (IOException e) {
-                        throw new RuntimeException(e);
-                     }
-                  } finally {
-                     if (!ok) {
-                        deleteChallenge(null);
-                     }
-                     try {
-                        fos.close();
-                     } catch (Throwable ignored) {
-                     }
-                  }
-                  //challengeBytes = bytes;
-                  final String path = challengeFile.getAbsolutePath();
-                  final byte[] response = CodePointIterator.ofString(path).asUtf8(true).drain();
-               } else {
-                  try {
-                     request.authenticationComplete();
-                     if (true) {
-                        succeed();
-                        request.authenticationComplete();
-                        return;
-                     } else {
-                        fail();
-                        request.authenticationFailed("auth failed", response -> prepareResponse(request, response));
-                        return;
-                     }
+      if (authorizationValues == null || authorizationValues.isEmpty()) {
+         // No Authorization header: advertise that we support Localuser
+         request.noAuthenticationInProgress(response -> {
+            response.addResponseHeader(WWW_AUTHENTICATE, CHALLENGE_PREFIX);
+            response.setStatusCode(UNAUTHORIZED);
+         });
+         return;
+      }
 
-                  } catch (IOException | UnsupportedCallbackException e) {
-                     throw new HttpAuthenticationException(e);
-                  }
-               }
+      for (String current : authorizationValues) {
+         if (!current.startsWith(CHALLENGE_PREFIX)) {
+            continue;
+         }
+
+         String token = current.substring(CHALLENGE_PREFIX.length()).trim();
+
+         if (token.isEmpty()) {
+            // Initial handshake: create challenge file with random bytes
+            handleInitialHandshake(request);
+         } else if (token.startsWith(SESSION_TOKEN_PREFIX)) {
+            // Session token: validate cached token
+            handleSessionToken(request, token.substring(SESSION_TOKEN_PREFIX.length()));
+         } else {
+            // Response round: validate the challenge response
+            handleChallengeResponse(request, token);
+         }
+         return;
+      }
+   }
+
+   private void handleInitialHandshake(HttpServerRequest request) throws HttpAuthenticationException {
+      try {
+         SecureRandom random = new SecureRandom();
+         File challengeFile = File.createTempFile("localuser-", ".challenge", challengePath);
+         byte[] bytes = new byte[CHALLENGE_BYTES];
+         random.nextBytes(bytes);
+
+         try (FileOutputStream fos = new FileOutputStream(challengeFile)) {
+            fos.write(bytes);
+         }
+
+         String filePath = challengeFile.getAbsolutePath();
+         pendingChallenges.put(filePath, bytes);
+
+         // Schedule cleanup after timeout
+         cleanupExecutor.schedule(() -> {
+            pendingChallenges.remove(filePath);
+            challengeFile.delete();
+         }, CHALLENGE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+         request.authenticationInProgress(response -> {
+            response.addResponseHeader(WWW_AUTHENTICATE, CHALLENGE_PREFIX + " " + filePath);
+            response.setStatusCode(UNAUTHORIZED);
+         });
+      } catch (IOException e) {
+         throw new HttpAuthenticationException(e);
+      }
+   }
+
+   private void handleSessionToken(HttpServerRequest request, String token) throws HttpAuthenticationException {
+      String user = sessionTokens.get(token);
+      if (user == null) {
+         request.authenticationFailed("Unknown or expired session token", response -> {
+            response.addResponseHeader(WWW_AUTHENTICATE, CHALLENGE_PREFIX);
+            response.setStatusCode(UNAUTHORIZED);
+         });
+         return;
+      }
+      try {
+         AuthorizeCallback authorizeCallback = new AuthorizeCallback(user, user);
+         callbackHandler.handle(new Callback[]{authorizeCallback});
+         if (authorizeCallback.isAuthorized()) {
+            request.authenticationComplete();
+         } else {
+            request.authenticationFailed("Authorization denied for " + user, response -> {
+               response.addResponseHeader(WWW_AUTHENTICATE, CHALLENGE_PREFIX);
+               response.setStatusCode(UNAUTHORIZED);
+            });
+         }
+      } catch (IOException | UnsupportedCallbackException e) {
+         throw new HttpAuthenticationException(e);
+      }
+   }
+
+   private void handleChallengeResponse(HttpServerRequest request, String token) throws HttpAuthenticationException {
+      // Token format: "<filepath> <hex_bytes>"
+      int spaceIdx = token.indexOf(' ');
+      if (spaceIdx < 0) {
+         request.authenticationFailed("Invalid LOCALUSER response format", response -> {
+            response.addResponseHeader(WWW_AUTHENTICATE, CHALLENGE_PREFIX);
+            response.setStatusCode(UNAUTHORIZED);
+         });
+         return;
+      }
+
+      String filePath = token.substring(0, spaceIdx);
+      String hexBytes = token.substring(spaceIdx + 1);
+
+      // Look up and remove the challenge
+      byte[] expectedBytes = pendingChallenges.remove(filePath);
+
+      // Delete the challenge file
+      new File(filePath).delete();
+
+      if (expectedBytes == null) {
+         request.authenticationFailed("Unknown or expired challenge", response -> {
+            response.addResponseHeader(WWW_AUTHENTICATE, CHALLENGE_PREFIX);
+            response.setStatusCode(UNAUTHORIZED);
+         });
+         return;
+      }
+
+      byte[] receivedBytes = hexToBytes(hexBytes);
+
+      // Constant-time comparison
+      if (MessageDigest.isEqual(expectedBytes, receivedBytes)) {
+         try {
+            AuthorizeCallback authorizeCallback = new AuthorizeCallback(defaultUser, defaultUser);
+            callbackHandler.handle(new Callback[]{authorizeCallback});
+            if (authorizeCallback.isAuthorized()) {
+               String sessionToken = generateSessionToken();
+               sessionTokens.put(sessionToken, defaultUser);
+               cleanupExecutor.schedule(() -> sessionTokens.remove(sessionToken),
+                     SESSION_TOKEN_TTL_SECONDS, TimeUnit.SECONDS);
+               request.authenticationComplete(response ->
+                     response.addResponseHeader(SESSION_TOKEN_HEADER, sessionToken));
+            } else {
+               request.authenticationFailed("Authorization denied for " + defaultUser, response -> {
+                  response.addResponseHeader(WWW_AUTHENTICATE, CHALLENGE_PREFIX);
+                  response.setStatusCode(UNAUTHORIZED);
+               });
             }
+         } catch (IOException | UnsupportedCallbackException e) {
+            throw new HttpAuthenticationException(e);
          }
-      }
-   }
-
-   private void prepareResponse(final HttpServerRequest request, HttpServerResponse response) {
-      if (silent) {
-         //if silent we only send a challenge if the request contained auth headers
-         //otherwise we assume another method will send the challenge
-         String authHeader = request.getFirstRequestHeaderValue(AUTHORIZATION);
-         if (authHeader == null) {
-            return;     //CHALLENGE NOT SENT
-         }
-      }
-      StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
-      response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());
-      response.setStatusCode(UNAUTHORIZED);
-   }
-
-   private void deleteChallenge(File challengeFile) {
-      if (challengeFile != null) {
-         challengeFile.delete();
-         challengeFile = null;
-      }
-   }
-
-   private Random getRandom() {
-      if (useSecureRandom) {
-         return new SecureRandom();
       } else {
-         return new Random();
+         request.authenticationFailed("Challenge response mismatch", response -> {
+            response.addResponseHeader(WWW_AUTHENTICATE, CHALLENGE_PREFIX);
+            response.setStatusCode(UNAUTHORIZED);
+         });
       }
+   }
+
+   private static String generateSessionToken() {
+      SecureRandom random = new SecureRandom();
+      byte[] bytes = new byte[SESSION_TOKEN_BYTES];
+      random.nextBytes(bytes);
+      return bytesToHex(bytes);
+   }
+
+   private static String bytesToHex(byte[] bytes) {
+      char[] hexChars = new char[bytes.length * 2];
+      for (int i = 0; i < bytes.length; i++) {
+         int v = bytes[i] & 0xFF;
+         hexChars[i * 2] = Character.forDigit(v >>> 4, 16);
+         hexChars[i * 2 + 1] = Character.forDigit(v & 0x0F, 16);
+      }
+      return new String(hexChars);
+   }
+
+   private static byte[] hexToBytes(String hex) {
+      int len = hex.length();
+      byte[] data = new byte[len / 2];
+      for (int i = 0; i < len; i += 2) {
+         data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+               + Character.digit(hex.charAt(i + 1), 16));
+      }
+      return data;
+   }
+
+   @Override
+   public void dispose() {
+      // Nothing to dispose
    }
 }
