@@ -12,6 +12,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.conflict.GetBucketEntriesCommand;
+import org.infinispan.commands.conflict.GetBucketHashesCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.Mutation;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -323,6 +325,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public ConflictResolutionStartCommand buildConflictResolutionStartCommand(int topologyId, IntSet segments) {
       return new ConflictResolutionStartCommand(cacheName, topologyId, segments);
+   }
+
+   @Override
+   public GetBucketHashesCommand buildGetBucketHashesCommand(int topologyId, IntSet segments, int bucketCount) {
+      return new GetBucketHashesCommand(cacheName, topologyId, segments, bucketCount);
+   }
+
+   @Override
+   public GetBucketEntriesCommand buildGetBucketEntriesCommand(int topologyId, int segmentId, IntSet bucketIds, int bucketCount) {
+      return new GetBucketEntriesCommand(cacheName, topologyId, segmentId, bucketIds, bucketCount);
    }
 
    @Override
