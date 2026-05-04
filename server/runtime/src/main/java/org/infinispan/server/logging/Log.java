@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.util.List;
 
 import javax.naming.NamingException;
@@ -291,4 +292,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Malformed entry in user properties file at line %d", id = 80076)
    IllegalStateException malformedUserProperties(int line);
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Security provider: %s", id = 80077)
+   void usingGlaSSLess(Provider provider);
 }
