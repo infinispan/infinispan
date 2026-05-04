@@ -1,6 +1,7 @@
 package org.infinispan.test;
 
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.test.AbstractInfinispanTest.eventually;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.fail;
 
@@ -99,6 +100,8 @@ import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.CacheStartupManager;
+import org.infinispan.manager.CacheStartupState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
@@ -1987,5 +1990,12 @@ public class TestingUtil {
    public static Set<Object> getListeners(EmbeddedCacheManager cacheManager) {
       CacheManagerNotifierImpl notifier = (CacheManagerNotifierImpl) extractGlobalComponent(cacheManager, CacheManagerNotifier.class);
       return notifier.getListeners();
+   }
+
+   public static void awaitCacheStartup(EmbeddedCacheManager ecm) {
+      CacheStartupManager csm = extractGlobalComponent(ecm, CacheStartupManager.class);
+      if (csm == null) return;
+
+      eventually(() -> csm.getAllStates().values().stream().noneMatch(s -> s == CacheStartupState.STARTING));
    }
 }
