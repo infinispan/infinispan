@@ -73,7 +73,7 @@
       <version.blockhound>1.0.16.RELEASE</version.blockhound>
       <version.bouncycastle>1.84</version.bouncycastle>
       <version.byteman>4.0.26</version.byteman>
-      <version.caffeine>3.2.3</version.caffeine>
+      <version.caffeine>3.2.4</version.caffeine>
       <version.checker-qual>3.55.1</version.checker-qual>
       <version.commons.compress>1.28.0</version.commons.compress>
       <version.console>16.2.1</version.console>
