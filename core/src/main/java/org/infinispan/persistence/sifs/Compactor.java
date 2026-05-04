@@ -600,7 +600,12 @@ class Compactor {
                   continue;
                }
                if (info.numRecords <= 0) {
-                  throw new IllegalArgumentException("Number of records " + info.numRecords + " for index of key " + key + " should be more than zero!");
+                  // numRecords=0 means the index entry has been logically deleted; treat as stale
+                  // (the data at scheduledFile:scheduledOffset is no longer the live record)
+                  log.warnf("Index entry for key %s at %d:%d has numRecords=%d; treating as stale and dropping",
+                        key, scheduledFile, scheduledOffset, info.numRecords);
+                  scheduledOffset += header.totalLength();
+                  continue;
                }
                if (info.file == scheduledFile && info.offset == scheduledOffset) {
                   assert header.valueLength() > 0;
