@@ -6,57 +6,201 @@
 [id="jvm-settings-for-server_{context}"]
 = JVM settings for {brandname}
 
-You can define Java Virtual Machine (JVM) settings for {brandname} either by editing the `server.conf` configuration file, or by setting the `JAVA_OPTS` and `JAVA_OPTIONS` environment variables. Set the `JAVA_OPTIONS` variable if you just want to append JVM settings to those that are automatically set by the
-`server.conf` file. Set the `JAVA_OPTS` variable if you want to completely override the JVM settings.
-
-[IMPORTANT]
-====
-If you are running {brandname} in a container do not set `Xmx` or `Xms`  because the values are automatically calculated from the container settings to be 70% of the container size.
-====
+You can define Java Virtual Machine (JVM) settings for {brandname} either by editing the `server.conf` configuration file,
+or by setting specific environment variables.
 
 [discrete]
-== Editing the configuration file
+== JVM option categories
 
-You can edit the required values in the `server.conf` configuration file. For example, to set the options to pass to the JVM, edit the following lines:
+{brandname} splits JVM options into the following environment variables:
 
-----
-if [ "$JAVA_OPTS" = "" ]; then
-   JAVA_OPTS="..."
-else
-   echo "JAVA_OPTS already set in environment; overriding default settings with values: $JAVA_OPTS"
-fi
-----
+`JAVA_OPTS_BASE`::
+Essential JVM flags that you should rarely need to change.
+Includes `-Djava.awt.headless=true`, `-XX:+ExitOnOutOfMemoryError`, and `--add-modules jdk.incubator.vector`.
 
-You can uncomment the existing example settings as well. For example, to configure Java Platform Debugger Architecture (JPDA) settings for remote socket debugging, update the file as follows:
+`JAVA_OPTS_NETWORK`::
+Network-related settings.
+Defaults to `-Djava.net.preferIPv4Stack=true`.
+Override this variable if you need IPv6 support.
 
-----
-# Sample JPDA settings for remote socket debugging
-JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n"
-----
+`JAVA_OPTS_MEMORY`::
+Memory configuration including heap size, metaspace, and RAM percentages.
++
+In non-container environments, defaults to `-XX:MetaspaceSize=64M -Xms64m -Xmx512m`.
++
+In container environments, defaults to `-XX:MetaspaceSize=64M -XX:InitialRAMPercentage=50 -XX:MinRAMPercentage=70 -XX:MaxRAMPercentage=70 -XX:+UseCompressedOops`.
 
-Additionally, you can add more settings to `JAVA_OPTS` like this:
+`JAVA_OPTS_DEBUG`::
+Debug options such as JPDA settings.
+This variable is only applied when you enable debug mode with the `--debug` flag or the `DEBUG` environment variable.
+When debug mode is active, defaults to `-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n`.
+You can further control debug behavior with the following flags:
++
+`--debug <port>`:::
+Activate debug mode with an optional argument to override the default port (8787).
+`--debug-suspend`:::
+Activate debug mode and suspend the JVM until a debugger connects.
+`--debug-client`:::
+Activate debug mode in client mode, where the JVM connects to a listening debugger instead of waiting for incoming connections.
+`--debug-server`:::
+Activate debug mode in server mode (the default), where the JVM listens for incoming debugger connections.
 
-----
-JAVA_OPTS="$JAVA_OPTS <key_1>=<value_1>, ..., <key_N>=<value_N> "
-----
+`JAVA_OPTIONS`::
+Additional options that are appended __after__ all other options.
 
-[discrete]
-== Setting an environment variable
-
-You can override the settings in `server.conf` configuration file by setting the `JAVA_OPTS` environment variable. For example:
+Each variable is independently overridable.
+For example, to change only the memory settings without affecting the base or network configuration:
 
 .Linux
 [source,shell,options="nowrap",subs=attributes+,role="primary"]
 ----
-export JAVA_OPTS="-Xmx1024M"
+export JAVA_OPTS_MEMORY="-XX:MetaspaceSize=128M -Xms512m -Xmx2g"
 ----
 
 .Windows
 [source,shell,options="nowrap",subs=attributes+,role="secondary"]
 ----
-set JAVA_OPTS="-Xmx1024M"
+set "JAVA_OPTS_MEMORY=-XX:MetaspaceSize=128M -Xms512m -Xmx2g"
 ----
 
+[IMPORTANT]
+====
+If you are running {brandname} in a container, do not set `-Xmx` or `-Xms`, but use the `-XX:InitialRAMPercentage`, `-XX:MinRAMPercentage` and `-XX:MaxRAMPercentage` options instead, since the values are automatically calculated based on the container size.
+Override the `JAVA_OPTS_MEMORY` variable instead if you need to adjust memory settings in containers.
+====
+
+[discrete]
+== Overriding all JVM options
+
+Setting the `JAVA_OPTS` environment variable completely overrides all category variables and uses only the specified value.
+This provides backward compatibility but requires you to include all necessary JVM options.
+
+.Linux
+[source,shell,options="nowrap",subs=attributes+,role="primary"]
+----
+export JAVA_OPTS="-Djava.awt.headless=true -XX:+ExitOnOutOfMemoryError -Xmx1024M"
+----
+
+.Windows
+[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+----
+set "JAVA_OPTS=-Djava.awt.headless=true -XX:+ExitOnOutOfMemoryError -Xmx1024M"
+----
+
+[discrete]
+== Editing the configuration file
+
+You can edit the default values for each category in the `server.conf` configuration file.
+The file checks each `JAVA_OPTS_*` variable independently:
+
+----
+if [ "$JAVA_OPTS" = "" ]; then
+   if [ "$JAVA_OPTS_BASE" = "" ]; then
+     JAVA_OPTS_BASE="..."
+   fi
+   if [ "$JAVA_OPTS_NETWORK" = "" ]; then
+     JAVA_OPTS_NETWORK="..."
+   fi
+   if [ "$JAVA_OPTS_MEMORY" = "" ]; then
+     JAVA_OPTS_MEMORY="..."
+   fi
+   JAVA_OPTS="$JAVA_OPTS_BASE $JAVA_OPTS_NETWORK $JAVA_OPTS_MEMORY $JAVA_OPTIONS"
+else
+   echo "JAVA_OPTS already set in environment; overriding default settings with values: $JAVA_OPTS"
+fi
+----
+
+To configure Java Platform Debugger Architecture (JPDA) settings for remote socket debugging, uncomment and customize the `JAVA_OPTS_DEBUG` variable:
+
+----
+JAVA_OPTS_DEBUG="-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n"
+----
+
+Alternatively, you can use the debug flags directly when starting the server:
+
+.Start with debug mode on port 9797
+----
+bin/server.sh --debug 9797
+----
+
+.Start with debug mode, suspending until a debugger connects
+----
+bin/server.sh --debug --debug-suspend
+----
+
+.Start in client mode, connecting to a debugger listening on port 9797
+----
+bin/server.sh --debug 9797 --debug-client
+----
+
+== Garbage collector selection
+
+The JVM includes several garbage collectors suited to different workloads.
+You can select a garbage collector by including the appropriate flag in `JAVA_OPTS_MEMORY`.
+
+=== G1GC (default)
+
+G1 is the default garbage collector and provides a good balance of throughput and latency for most workloads.
+It targets pause times under 200ms by default, which you can adjust with `-XX:MaxGCPauseMillis`.
+G1 is a generational collector that works well for heaps up to tens of gigabytes.
+
+.Linux
+[source,shell,options="nowrap",subs=attributes+,role="primary"]
+----
+export JAVA_OPTS_MEMORY="-XX:+UseG1GC -XX:MaxGCPauseMillis=150 -XX:MetaspaceSize=64M -Xms512m -Xmx4g"
+----
+
+.Windows
+[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+----
+set "JAVA_OPTS_MEMORY=-XX:+UseG1GC -XX:MaxGCPauseMillis=150 -XX:MetaspaceSize=64M -Xms512m -Xmx4g"
+----
+
+=== ZGC
+
+ZGC is a low-latency garbage collector designed for applications that require sub-millisecond pause times regardless of heap size.
+It handles heaps from hundreds of megabytes to multiple terabytes.
+As of JDK 24 (https://openjdk.org/jeps/490[JEP 490]), ZGC is always generational and the non-generational mode has been removed.
+You only need `-XX:+UseZGC` to enable it.
+
+Choose ZGC when your workload requires consistently low latency, such as latency-sensitive services or deployments with large heaps.
+
+.Linux
+[source,shell,options="nowrap",subs=attributes+,role="primary"]
+----
+export JAVA_OPTS_MEMORY="-XX:+UseZGC -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
+----
+
+.Windows
+[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+----
+set "JAVA_OPTS_MEMORY=-XX:+UseZGC -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
+----
+
+=== Shenandoah
+
+Shenandoah is a low-latency garbage collector with sub-millisecond pause times, similar to ZGC.
+As of JDK 25 (https://openjdk.org/jeps/521[JEP 521]), generational Shenandoah is a production feature that you can enable with `-XX:ShenandoahGCMode=generational`.
+Generational mode reduces memory footprint and improves sustained throughput compared to the default non-generational mode.
+
+Choose Shenandoah for low-latency workloads, particularly on OpenJDK-based distributions.
+
+[NOTE]
+====
+Shenandoah is available in OpenJDK builds but is not included in Oracle JDK distributions.
+====
+
+.Linux
+[source,shell,options="nowrap",subs=attributes+,role="primary"]
+----
+export JAVA_OPTS_MEMORY="-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
+----
+
+.Windows
+[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+----
+set "JAVA_OPTS_MEMORY=-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
+----
 
 == Garbage Collection Logging
 
