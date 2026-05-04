@@ -158,10 +158,14 @@ public class GracefulShutdownNetworkPartitionTest extends BaseStatefulPartitionH
 
       cache(numMembersInCluster - 1, CACHE_NAME);
 
-      // Kill the specified node while partition is still active
+      // Kill the specified node while partition is still active.
+      // Restore discovery cluster name before kill so LOCAL_PING.handleDisconnect()
+      // removes the entry from the shared test key, not the per-node isolation key
+      // set by disableDiscovery() during splitCluster().
       EmbeddedCacheManager killed = cacheManagers.remove(nodeToKill);
       Address killedAddr = killed.getAddress();
       JChannel killedChannel = channel(killed);
+      enableDiscoveryProtocol(killedChannel);
       TestingUtil.killCacheManagers(killed);
       for (int pi = 0; pi < 2; pi++) {
          if (partition(pi).channels().remove(killedChannel)) break;
@@ -172,13 +176,20 @@ public class GracefulShutdownNetworkPartitionTest extends BaseStatefulPartitionH
       partition(0).merge(partition(1), false);
       eventually(() -> cacheManagers.stream().allMatch(ecm -> ecm.getMembers().size() == numMembersInCluster - 1));
 
-      // Remove DISCARD from all surviving channels
+      // Stop discarding from all surviving channels
       for (int i = 0; i < cacheManagers.size(); i++) {
-         channel(manager(i)).getProtocolStack().removeProtocol(DISCARD.class);
+         DISCARD discard = channel(manager(i)).getProtocolStack().findProtocol(DISCARD.class);
+         if (discard != null) {
+            discard.discardAll(false);
+         }
       }
 
-      // Fix LOCAL_PING stale entries: clear and re-register coordinator first.
-      LOCAL_PING.clear();
+      // Reset LOCAL_PING entries with correct coordinator flags.
+      // After coordinator kill, no entry has coord=true. Disconnect all surviving
+      // nodes and reconnect coordinator-first so it gets the flag.
+      for (int i = 0; i < cacheManagers.size(); i++) {
+         ((LOCAL_PING) channel(manager(i)).getProtocolStack().findProtocol(LOCAL_PING.class)).handleDisconnect();
+      }
       for (int i = 0; i < cacheManagers.size(); i++) {
          JChannel ch = channel(manager(i));
          if (ch.getAddress().equals(ch.getView().getCoord())) {
