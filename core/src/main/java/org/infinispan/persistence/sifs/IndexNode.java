@@ -168,8 +168,14 @@ class IndexNode {
     * Can be called only from single writer thread (therefore the write lock guards only other readers)
     */
    private void replaceContent(IndexNode other) throws IOException {
+      // The disk write must happen inside the write lock so that when the lock is released,
+      // both the in-memory and on-disk states are consistent.  If the disk write were done
+      // after releasing the lock, a concurrent GC could evict the SoftReference held by a
+      // parent InnerNode; the parent would then reload this node from the (still-stale) disk
+      // image and obtain the old InnerNode references pointing to already-freed children,
+      // which causes "Cannot read record" IOExceptions under load.
+      lock.writeLock().lock();
       try {
-         lock.writeLock().lock();
          this.prefix = other.prefix;
          this.keyParts = other.keyParts;
          this.innerNodes = other.innerNodes;
@@ -177,14 +183,11 @@ class IndexNode {
          this.contentLength = -1;
          this.keyPartsLength = -1;
          this.totalLength = -1;
+         if (offset >= 0) {
+            store(new Index.IndexSpace(offset, occupiedSpace));
+         }
       } finally {
          lock.writeLock().unlock();
-      }
-
-      // don't have to acquire any lock here
-      // the only node with offset < 0 is the root - we can't lose reference to it
-      if (offset >= 0) {
-         store(new Index.IndexSpace(offset, occupiedSpace));
       }
    }
 
@@ -428,16 +431,23 @@ class IndexNode {
 
       Deque<IndexNode> garbage = new ArrayDeque<>();
       try {
-         JoinSplitResult result = manageLength(root.segment, stack, node, copy, garbage);
+         JoinSplitResult result = manageLength(root.segment, stack, node, copy);
          if (result == null) {
             return;
          }
          if (log.isTraceEnabled()) {
             log.tracef("Created (1) %d new nodes, GC %08x", result.newNodes.size(), System.identityHashCode(node));
          }
-         garbage.push(node);
+         // Defer adding node (and result.pendingGarbage) to garbage until AFTER the
+         // parent copyWith() succeeds. If copyWith throws, we must NOT free these nodes —
+         // the parent's InnerNode still references them and freeing would leave the B-tree
+         // with a stale pointer into freed/truncated index space.
+         IndexNode nodeToFree = node;
          for (;;) {
             if (stack.isEmpty()) {
+               // Tree update is fully committed at the root. Safe to free deferred nodes.
+               garbage.addAll(result.pendingGarbage);
+               garbage.push(nodeToFree);
                IndexNode newRoot;
                if (result.newNodes.size() == 1) {
                   newRoot = result.newNodes.get(0);
@@ -460,8 +470,13 @@ class IndexNode {
                log.tracef("Created %08x (length %d) from %08x with the %d new nodes (%d - %d)",
                      System.identityHashCode(copy), copy.length(), System.identityHashCode(path.node), result.newNodes.size(), result.from, result.to);
             }
-            result = manageLength(path.node.segment, stack, path.node, copy, garbage);
+            // copyWith succeeded: parent now references the new nodes. Safe to free old ones.
+            garbage.addAll(result.pendingGarbage);
+            garbage.push(nodeToFree);
+
+            result = manageLength(path.node.segment, stack, path.node, copy);
             if (result == null) {
+               // path.node was updated in-place (replaceContent) — it stays in the tree.
                if (log.isTraceEnabled()) {
                   log.tracef("No more index updates required");
                }
@@ -470,7 +485,8 @@ class IndexNode {
             if (log.isTraceEnabled()) {
                log.tracef("Created (2) %d new nodes, GC %08x", result.newNodes.size(), System.identityHashCode(path.node));
             }
-            garbage.push(path.node);
+            // Defer freeing path.node until the next level's copyWith succeeds.
+            nodeToFree = path.node;
          }
       } finally {
          while (!garbage.isEmpty()) {
@@ -493,15 +509,23 @@ class IndexNode {
       public final int from;
       public final int to;
       final List<IndexNode> newNodes;
+      // Nodes to free only AFTER the parent copyWith() succeeds. Freeing them before
+      // the parent is updated would leave stale InnerNode references in the live tree.
+      final List<IndexNode> pendingGarbage;
 
       private JoinSplitResult(int from, int to, List<IndexNode> newNodes) {
+         this(from, to, newNodes, Collections.emptyList());
+      }
+
+      private JoinSplitResult(int from, int to, List<IndexNode> newNodes, List<IndexNode> pendingGarbage) {
          this.from = from;
          this.to = to;
          this.newNodes = newNodes;
+         this.pendingGarbage = pendingGarbage;
       }
    }
 
-   private static JoinSplitResult manageLength(Index.Segment segment, Deque<Path> stack, IndexNode node, IndexNode copy, Deque<IndexNode> garbage) throws IOException {
+   private static JoinSplitResult manageLength(Index.Segment segment, Deque<Path> stack, IndexNode node, IndexNode copy) throws IOException {
       int from, to;
       if (copy.length() < segment.getMinNodeSize() && !stack.isEmpty()) {
          Path parent = stack.peek();
@@ -539,20 +563,44 @@ class IndexNode {
                   joinWith, sizeWithLeft, sizeWithRight, segment.getMaxNodeSize()));
          }
          IndexNode joiner = parent.node.innerNodes[joinWith].getIndexNode(segment);
-         byte[] middleKey = concat(parent.node.prefix, parent.node.keyParts[joinWith < parent.index ? parent.index - 1 : parent.index]);
-         if (joinWith < parent.index) {
-            copy = join(joiner, middleKey, copy);
-            from = joinWith;
-            to = parent.index;
+         if (joiner != null) {
+            byte[] middleKey = concat(parent.node.prefix, parent.node.keyParts[joinWith < parent.index ? parent.index - 1 : parent.index]);
+            if (joinWith < parent.index) {
+               copy = join(joiner, middleKey, copy);
+               from = joinWith;
+               to = parent.index;
+            } else {
+               copy = join(copy, middleKey, joiner);
+               from = parent.index;
+               to = joinWith;
+            }
+            // Defer freeing joiner until AFTER the parent copyWith() succeeds.
+            // Freeing it here (before copyWith) would leave a stale InnerNode in the
+            // parent if copyWith subsequently throws, corrupting the live B-tree.
+            List<IndexNode> joinerGarbage = Collections.singletonList(joiner);
+            if (copy.length() <= segment.getMaxNodeSize()) {
+               return new JoinSplitResult(from, to, Collections.singletonList(copy), joinerGarbage);
+            } else {
+               return new JoinSplitResult(from, to, copy.split(), joinerGarbage);
+            }
          } else {
-            copy = join(copy, middleKey, joiner);
-            from = parent.index;
-            to = joinWith;
+            // joiner's index data is inaccessible (stale or corrupt reference).
+            // Skip the merge — leave this node undersized rather than risk corruption.
+            log.warnf("Cannot load joiner node %d:%d for merge; skipping join for node %08x",
+                  parent.node.innerNodes[joinWith].offset, parent.node.innerNodes[joinWith].length,
+                  System.identityHashCode(node));
+            // Fall through to the replaceContent / split logic below.
          }
-         garbage.push(joiner);
-      } else if (copy.length() <= node.occupiedSpace) {
+      }
+      if (copy.length() <= node.occupiedSpace) {
          if (copy.innerNodes != null && copy.innerNodes.length == 1 && stack.isEmpty()) {
             IndexNode child = copy.innerNodes[0].getIndexNode(copy.segment);
+            if (child == null) {
+               // child's index data is inaccessible; keep current root shape rather than corrupting.
+               log.warnf("Cannot load child node for tree shrink at root; keeping current root");
+               node.replaceContent(copy);
+               return null;
+            }
             return new JoinSplitResult(0, 0, Collections.singletonList(child));
          } else {
             // special case where we only overwrite the key
@@ -576,13 +624,10 @@ class IndexNode {
       byte[][] newKeyParts = new byte[left.keyParts.length + right.keyParts.length + 1][];
       newPrefix = commonPrefix(newPrefix, middleKey);
       copyKeyParts(left.keyParts, 0, newKeyParts, 0, left.keyParts.length, left.prefix, newPrefix);
-      byte[] rightmostKey;
-      try {
-         rightmostKey = left.rightmostKey();
-      } catch (IndexNodeOutdatedException e) {
-         throw new IllegalStateException(e);
-      }
-      int commonLength = Math.abs(compare(middleKey, rightmostKey));
+      byte[] rightmostKey = left.rightmostKey();
+      // If all entries in the left subtree are stale/deleted, commonLength falls back to
+      // the full middleKey suffix — a safe separator since no real left keys remain.
+      int commonLength = rightmostKey != null ? Math.abs(compare(middleKey, rightmostKey)) : middleKey.length;
       newKeyParts[left.keyParts.length] = substring(middleKey, newPrefix.length, commonLength);
       copyKeyParts(right.keyParts, 0, newKeyParts, left.keyParts.length + 1, right.keyParts.length, right.prefix, newPrefix);
       if (left.innerNodes != null && right.innerNodes != null) {
@@ -613,15 +658,21 @@ class IndexNode {
       byte[][] newKeys = new byte[newNodes.size() - 1][];
       byte[] newPrefix = prefix;
       for (int i = 0; i < newKeys.length; ++i) {
-         try {
-            // TODO: if all keys within the subtree are null (deleted), the new key will be null
-            // will be fixed with proper index reduction
-            newKeys[i] = newNodes.get(i + 1).leftmostKey();
-            if (newKeys[i] == null) {
-               throw new IllegalStateException();
-            }
-         } catch (IndexNodeOutdatedException e) {
-            throw new IllegalStateException("Index cannot be outdated for segment updater thread", e);
+         // Prefer the leftmost key of the right node as the separator.
+         // If all leaves in that subtree reference deleted data files, fall back to
+         // the rightmost key of the left node.  Both are valid separators as long as
+         // they correctly order the two halves.
+         newKeys[i] = newNodes.get(i + 1).leftmostKey();
+         if (newKeys[i] == null) {
+            newKeys[i] = newNodes.get(i).rightmostKey();
+         }
+         if (newKeys[i] == null) {
+            // Both subtrees are entirely stale; no valid separator available.
+            // Use a zero-length key as a last resort — the entries will be cleaned
+            // up by the compactor, which will then reorganise the B-tree properly.
+            log.warnf("Cannot find separator key between split nodes %d and %d; using empty separator",
+                  System.identityHashCode(newNodes.get(i)), System.identityHashCode(newNodes.get(i + 1)));
+            newKeys[i] = new byte[0];
          }
          newPrefix = commonPrefix(newPrefix, newKeys[i]);
       }
@@ -634,31 +685,43 @@ class IndexNode {
       return new IndexNode(segment, newPrefix, newKeyParts, newInnerNodes);
    }
 
-   private byte[] leftmostKey() throws IOException, IndexNodeOutdatedException {
+   private byte[] leftmostKey() throws IOException {
       if (innerNodes != null) {
          for (InnerNode innerNode : innerNodes) {
-            byte[] key = innerNode.getIndexNode(segment).leftmostKey();
+            IndexNode child = innerNode.getIndexNode(segment);
+            if (child == null) continue;
+            byte[] key = child.leftmostKey();
             if (key != null) return key;
          }
       } else {
          for (LeafNode leafNode : leafNodes) {
-            EntryRecord hak = leafNode.loadHeaderAndKey(segment.getFileProvider());
-            if (hak.getKey() != null) return hak.getKey();
+            try {
+               EntryRecord hak = leafNode.loadHeaderAndKey(segment.getFileProvider());
+               if (hak.getKey() != null) return hak.getKey();
+            } catch (IndexNodeOutdatedException e) {
+               // leaf's data file has been compacted away; skip to next leaf
+            }
          }
       }
       return null;
    }
 
-   private byte[] rightmostKey() throws IOException, IndexNodeOutdatedException {
+   private byte[] rightmostKey() throws IOException {
       if (innerNodes != null) {
          for (int i = innerNodes.length - 1; i >= 0; --i) {
-            byte[] key = innerNodes[i].getIndexNode(segment).rightmostKey();
+            IndexNode child = innerNodes[i].getIndexNode(segment);
+            if (child == null) continue;
+            byte[] key = child.rightmostKey();
             if (key != null) return key;
          }
       } else {
          for (int i = leafNodes.length - 1; i >= 0; --i) {
-            EntryRecord hak = leafNodes[i].loadHeaderAndKey(segment.getFileProvider());
-            if (hak.getKey() != null) return hak.getKey();
+            try {
+               EntryRecord hak = leafNodes[i].loadHeaderAndKey(segment.getFileProvider());
+               if (hak.getKey() != null) return hak.getKey();
+            } catch (IndexNodeOutdatedException e) {
+               // leaf's data file has been compacted away; skip to previous leaf
+            }
          }
       }
       return null;
