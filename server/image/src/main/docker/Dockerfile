@@ -87,7 +87,9 @@ RUN /tmp/install-server.sh ${NEWROOT} ${WORKDIR}
 ADD src/main/docker/launch.sh ${NEWROOT}${WORKDIR}/bin/
 # Build the AOT cache using a fixed memory configuration
 ENV JAVA_HOME=${NEWROOT}/usr/lib/jvm/default-java
-ENV JAVA_OPTS="-XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Xms64m -Xmx512m"
+ENV JAVA_OPTS_BASE="-XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true --add-modules jdk.incubator.vector"
+ENV JAVA_OPTS_NETWORK="-Djava.net.preferIPv4Stack=true"
+ENV JAVA_OPTS_MEMORY="-Xms64m -Xmx512m"
 # Temporarily disabled
 #RUN ${NEWROOT}/${WORKDIR}/bin/server.sh --aot || true
 ADD src/main/docker/bashrc ${NEWROOT}/${WORKDIR}/.bashrc
@@ -117,6 +119,10 @@ ENV HOME=${WORKDIR}
 ENV ISPN_HOME=/opt/infinispan
 ENV USER=infinispan
 ENV JAVA_HOME=/usr/lib/jvm/default-java
+ENV JAVA_OPTS_BASE=""
+ENV JAVA_OPTS_NETWORK=""
+ENV JAVA_OPTS_MEMORY=""
+ENV JAVA_OPTS_DEBUG=""
 ENV LANG=C.UTF-8
 USER 65532
 EXPOSE 11222 11221 11223 2157 46655 57800 7800 7900 8080 8443
