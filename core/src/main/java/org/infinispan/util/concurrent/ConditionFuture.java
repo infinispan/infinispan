@@ -27,12 +27,18 @@ import org.infinispan.commons.TimeoutException;
  */
 public class ConditionFuture<T> {
    private final Map<Data, Predicate<T>> futures = Collections.synchronizedMap(new IdentityHashMap<>());
-   private final ScheduledExecutorService timeoutExecutor;
+   private volatile ScheduledExecutorService timeoutExecutor;
    private volatile T lastValue;
    private volatile boolean running = true;
 
+   public ConditionFuture() { }
+
    public ConditionFuture(ScheduledExecutorService timeoutExecutor) {
       this.timeoutExecutor = timeoutExecutor;
+   }
+
+   public void setTimeoutExecutor(ScheduledExecutorService executor) {
+      this.timeoutExecutor = Objects.requireNonNull(executor);
    }
 
    public CompletionStage<Void> newConditionStage(Predicate<T> test, long timeout, TimeUnit timeUnit) {
@@ -51,7 +57,7 @@ public class ConditionFuture<T> {
    public CompletionStage<Void> newConditionStage(Predicate<T> test, Supplier<Exception> exceptionGenerator, long timeout, TimeUnit timeUnit) {
       Objects.requireNonNull(test);
 
-      if (!running) {
+      if (!running || timeoutExecutor == null) {
          return CompletableFuture.failedFuture(new IllegalLifecycleStateException());
       }
 
@@ -69,14 +75,14 @@ public class ConditionFuture<T> {
 
       if (!running) {
          data.cancelFuture.cancel(false);
-         futures.remove(test);
+         futures.remove(data);
          data.completeExceptionally(new IllegalLifecycleStateException());
       }
 
       T localValue = lastValue;
       if (localValue != null && test.test(localValue)) {
          data.cancelFuture.cancel(false);
-         futures.remove(test);
+         futures.remove(data);
          data.complete(null);
       }
 
