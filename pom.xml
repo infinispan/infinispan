@@ -50,6 +50,7 @@
       <module>commons</module>
       <module>build/infinispan-defaults-maven-plugin</module>
       <module>core</module>
+      <module>core-testing</module>
       <module>jboss-marshalling</module>
       <module>counter-api</module>
       <module>counter</module>
