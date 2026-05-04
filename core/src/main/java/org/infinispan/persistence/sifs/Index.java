@@ -1027,13 +1027,25 @@ class Index {
          // TODO: memory bounds!
          if (offset + length < indexFileSize) {
             freeBlocks.computeIfAbsent(length, k -> new ArrayList<>()).add(new IndexSpace(offset, length));
-         } else {
+         } else if (offset + length == indexFileSize) {
             indexFileSize -= length;
+            // Remove any freeBlocks entries that now extend beyond the new file end; they
+            // were valid when added but would corrupt the file if reallocated after truncation
+            // because indexFileSize would not reflect the implicit file extension on write.
+            long newSize = indexFileSize;
+            freeBlocks.values().forEach(list -> list.removeIf(space -> space.offset + space.length > newSize));
+            freeBlocks.values().removeIf(List::isEmpty);
             try (FileProvider.Handle handle = index.indexFileProvider.getFile(id)) {
                handle.truncate(indexFileSize);
             } catch (IOException e) {
                log.cannotTruncateIndex(e);
             }
+         } else {
+            // offset + length > indexFileSize — should never happen with correct space tracking.
+            // Truncating would destroy all live data up to 'offset', so add to freeBlocks instead.
+            log.errorf("BUG: freeing index space [%d, %d) extends beyond tracked file size %d; adding to freeBlocks defensively",
+                  offset, offset + length, indexFileSize);
+            freeBlocks.computeIfAbsent(length, k -> new ArrayList<>()).add(new IndexSpace(offset, length));
          }
       }
 
