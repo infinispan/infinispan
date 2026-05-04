@@ -29,4 +29,21 @@
             </excludes>
         </fileSet>
     </fileSets>
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>completions</outputDirectory>
+            <includes>
+                <include>org.infinispan:infinispan-cli-client</include>
+            </includes>
+            <unpack>true</unpack>
+            <unpackOptions>
+                <includes>
+                    <include>infinispan-cli_complete.bash</include>
+                    <include>infinispan-cli_complete.zsh</include>
+                    <include>infinispan-cli.fish</include>
+                </includes>
+            </unpackOptions>
+            <useProjectArtifact>false</useProjectArtifact>
+        </dependencySet>
+    </dependencySets>
 </assembly>

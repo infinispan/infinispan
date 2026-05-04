@@ -1,0 +1,91 @@
+[id='cli_installing_native-{context}']
+= Installing the native {brandname} CLI
+Install the {brandname} CLI as a native executable on your system.
+
+The native CLI is a standalone binary that does not require a Java runtime.
+It is available for Linux, macOS, and Windows.
+
+== Linux packages (RPM and DEB)
+
+You can install the native CLI from the {brandname} package repository on RPM-based and DEB-based Linux distributions.
+
+=== RPM (Fedora, RHEL, CentOS)
+
+.Procedure
+
+. Add the {brandname} YUM repository.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+sudo curl -o /etc/yum.repos.d/infinispan.repo \
+  https://download.jboss.org/infinispan/packages/yum/infinispan.repo
+----
++
+. Install the CLI package.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+sudo dnf install infinispan-cli
+----
+
+=== DEB (Debian, Ubuntu)
+
+.Procedure
+
+. Import the {brandname} signing key.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+curl -fsSL https://download.jboss.org/infinispan/packages/apt/signing.key \
+  | sudo tee /etc/apt/keyrings/infinispan.asc > /dev/null
+----
++
+. Add the APT repository.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+cat << 'EOF' | sudo tee /etc/apt/sources.list.d/infinispan.sources
+Types: deb
+URIs: https://download.jboss.org/infinispan/packages/apt
+Suites: stable
+Components: main
+Signed-By: /etc/apt/keyrings/infinispan.asc
+Enabled: yes
+EOF
+----
++
+. Update the package index and install the CLI package.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+sudo apt update && sudo apt install infinispan-cli
+----
+
+== Homebrew (macOS and Linux)
+
+.Procedure
+
+. Add the {brandname} tap and install the CLI.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+brew tap infinispan/tap
+brew install infinispan-cli
+----
+
+== Scoop (Windows)
+
+.Procedure
+
+. Add the {brandname} bucket and install the CLI.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+scoop bucket add infinispan https://github.com/infinispan/scoop-bucket
+scoop install infinispan-cli
+----
+
+== Manual download
+
+You can download native CLI archives for all platforms from the link:https://github.com/infinispan/infinispan/releases[{brandname} releases page] on GitHub.
+Extract the archive and place the `infinispan-cli` binary on your `PATH`.

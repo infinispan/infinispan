@@ -1,0 +1,242 @@
+name: Package CLI Native Installers
+
+# Builds deb/rpm packages and publishes Homebrew/Scoop manifests
+# for the Infinispan CLI native executable.
+#
+# Expects native CLI ZIP artifacts to already be attached to the
+# GitHub release (uploaded by the native-cli job in release.yml).
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (must match an existing GitHub release with native CLI artifacts)"
+        required: true
+        type: string
+
+jobs:
+  linux-packages:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nfpm_arch: amd64
+            asset_name: linux-x86_64
+          - nfpm_arch: arm64
+            asset_name: linux-aarch_64
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install nfpm
+        run: |
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt-get update
+          sudo apt-get install -y nfpm
+
+      - name: Download native CLI artifact
+        run: |
+          mkdir -p artifacts
+          gh release download ${{ inputs.version }} \
+            --pattern "infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}.zip" \
+            --dir artifacts/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract binary
+        run: |
+          cd artifacts
+          unzip infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}.zip
+          chmod +x infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}/infinispan-cli
+
+      - name: Build deb package
+        working-directory: artifacts/infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}
+        run: |
+          nfpm package \
+            --config ../../distribution/src/main/packaging/cli/nfpm.yaml \
+            --packager deb \
+            --target ../
+        env:
+          VERSION: ${{ inputs.version }}
+          NFPM_ARCH: ${{ matrix.nfpm_arch }}
+
+      - name: Build rpm package
+        working-directory: artifacts/infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}
+        run: |
+          nfpm package \
+            --config ../../distribution/src/main/packaging/cli/nfpm.yaml \
+            --packager rpm \
+            --target ../
+        env:
+          VERSION: ${{ inputs.version }}
+          NFPM_ARCH: ${{ matrix.nfpm_arch }}
+
+      - name: Upload packages to release
+        run: |
+          gh release upload ${{ inputs.version }} \
+            artifacts/*.deb artifacts/*.rpm \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+  publish-linux-repos:
+    needs: linux-packages
+    runs-on: ubuntu-latest
+    env:
+      SFTP_HOST: filemgmt.jboss.org
+      SFTP_USER: infinispan
+      REMOTE_BASE: /downloads_htdocs/infinispan/packages
+      DOWNLOAD_BASE: https://download.jboss.org/infinispan/packages
+    steps:
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y createrepo-c dpkg-dev apt-utils
+
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}" | gpg --batch --import
+          GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format long | grep sec | head -1 | awk '{print $2}' | cut -d'/' -f2)
+          echo "GPG_KEY_ID=${GPG_KEY_ID}" >> "$GITHUB_ENV"
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.FILEMGMT_JBOSS_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$SFTP_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Sync existing repo from server
+        run: |
+          mkdir -p repo/yum/x86_64 repo/yum/aarch64 repo/apt/pool/main
+          # Download existing packages (ignore errors on first run)
+          sftp -b - "${SFTP_USER}@${SFTP_HOST}" << SFTP || true
+          lcd repo/yum/x86_64
+          cd ${REMOTE_BASE}/yum/x86_64
+          mget *.rpm
+          lcd ../aarch64
+          cd ${REMOTE_BASE}/yum/aarch64
+          mget *.rpm
+          lcd ../../apt/pool/main
+          cd ${REMOTE_BASE}/apt/pool/main
+          mget *.deb
+          SFTP
+
+      - name: Download new packages from release
+        run: |
+          mkdir -p packages
+          gh release download ${{ inputs.version }} \
+            --pattern "*.deb" --pattern "*.rpm" \
+            --dir packages/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build YUM repository
+        run: |
+          for rpm in packages/*.x86_64.rpm; do [ -f "$rpm" ] && cp "$rpm" repo/yum/x86_64/; done
+          for rpm in packages/*.aarch64.rpm; do [ -f "$rpm" ] && cp "$rpm" repo/yum/aarch64/; done
+          createrepo_c repo/yum/x86_64
+          createrepo_c repo/yum/aarch64
+          gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
+            --pinentry-mode loopback --detach-sign --armor repo/yum/x86_64/repodata/repomd.xml
+          gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
+            --pinentry-mode loopback --detach-sign --armor repo/yum/aarch64/repodata/repomd.xml
+          gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
+            --pinentry-mode loopback --armor --export "$GPG_KEY_ID" > repo/yum/signing.key
+          printf '%s\n' \
+            '[infinispan]' \
+            'name=Infinispan' \
+            'baseurl=https://download.jboss.org/infinispan/packages/yum/$basearch' \
+            'enabled=1' \
+            'gpgcheck=1' \
+            'gpgkey=https://download.jboss.org/infinispan/packages/yum/signing.key' \
+            > repo/yum/infinispan.repo
+
+      - name: Build APT repository
+        run: |
+          mkdir -p repo/apt/dists/stable/main/binary-amd64 repo/apt/dists/stable/main/binary-arm64
+          cp packages/*_amd64.deb repo/apt/pool/main/ 2>/dev/null || true
+          cp packages/*_arm64.deb repo/apt/pool/main/ 2>/dev/null || true
+          cd repo/apt
+          dpkg-scanpackages --arch amd64 pool/main > dists/stable/main/binary-amd64/Packages
+          dpkg-scanpackages --arch arm64 pool/main > dists/stable/main/binary-arm64/Packages
+          gzip -k dists/stable/main/binary-amd64/Packages
+          gzip -k dists/stable/main/binary-arm64/Packages
+          apt-ftparchive release \
+            -o APT::FTPArchive::Release::Origin=Infinispan \
+            -o APT::FTPArchive::Release::Label=Infinispan \
+            -o APT::FTPArchive::Release::Suite=stable \
+            -o APT::FTPArchive::Release::Codename=stable \
+            -o APT::FTPArchive::Release::Architectures="amd64 arm64" \
+            -o APT::FTPArchive::Release::Components=main \
+            -o APT::FTPArchive::Release::Description="Infinispan CLI packages" \
+            dists/stable > dists/stable/Release
+          gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
+            --pinentry-mode loopback --detach-sign --armor -o dists/stable/Release.gpg dists/stable/Release
+          gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
+            --pinentry-mode loopback --clearsign -o dists/stable/InRelease dists/stable/Release
+          gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
+            --pinentry-mode loopback --armor --export "$GPG_KEY_ID" > signing.key
+
+      - name: Upload repos to download server
+        run: |
+          sftp -b - "${SFTP_USER}@${SFTP_HOST}" << SFTP
+          -mkdir ${REMOTE_BASE}
+          -mkdir ${REMOTE_BASE}/yum
+          -mkdir ${REMOTE_BASE}/yum/x86_64
+          -mkdir ${REMOTE_BASE}/yum/x86_64/repodata
+          -mkdir ${REMOTE_BASE}/yum/aarch64
+          -mkdir ${REMOTE_BASE}/yum/aarch64/repodata
+          -mkdir ${REMOTE_BASE}/apt
+          -mkdir ${REMOTE_BASE}/apt/pool
+          -mkdir ${REMOTE_BASE}/apt/pool/main
+          -mkdir ${REMOTE_BASE}/apt/dists
+          -mkdir ${REMOTE_BASE}/apt/dists/stable
+          -mkdir ${REMOTE_BASE}/apt/dists/stable/main
+          -mkdir ${REMOTE_BASE}/apt/dists/stable/main/binary-amd64
+          -mkdir ${REMOTE_BASE}/apt/dists/stable/main/binary-arm64
+          SFTP
+          cd repo
+          find . -type f | while read -r file; do
+            remote="${REMOTE_BASE}/${file#./}"
+            echo "put ${file} ${remote}" | sftp -b - "${SFTP_USER}@${SFTP_HOST}"
+          done
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/id_rsa
+
+  publish-package-managers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download all native CLI artifacts
+        run: |
+          mkdir -p artifacts
+          for platform in linux-x86_64 linux-aarch_64 osx-aarch_64 windows-x86_64; do
+            gh release download ${{ inputs.version }} \
+              --pattern "infinispan-cli-${{ inputs.version }}-${platform}.zip" \
+              --dir artifacts/ || echo "::warning::${platform} artifact not found, skipping"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run JReleaser
+        uses: jreleaser/release-action@v2
+        with:
+          arguments: full-release --config-file distribution/src/main/packaging/cli/jreleaser/jreleaser.yml --project-version ${{ inputs.version }}
+        env:
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+      - name: Upload JReleaser output on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jreleaser-output
+          path: |
+            out/jreleaser/trace.log
+            out/jreleaser/output.properties
