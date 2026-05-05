@@ -100,6 +100,9 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
                   resolvedPath = path;
                   type = Double.class;
                   nullMarker = fieldIndexingMetadata.getNullMarker(resolvedPath.asArrayPath());
+               } else if (path instanceof AggregationFunctionPropertyPath) {
+                  resolvedPath = path;
+                  type = Double.class;
                } else if (path instanceof AggregationPropertyPath) {
                   AggregationPropertyPath<TypeMetadata> aggPath = (AggregationPropertyPath<TypeMetadata>) path;
                   // count(*) or count(alias) like count(s)
@@ -277,9 +280,15 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
    @Override
    public Object visitGroupingValue(IckleParser.GroupingValueContext ctx) {
-      String pathText = ctx.additiveExpression().getText();
-      PropertyPath<TypeDescriptor<TypeMetadata>> property = buildPropertyPath(pathText);
-      PropertyPath<TypeDescriptor<TypeMetadata>> resolved = resolveAlias(property);
+      PropertyPath<TypeDescriptor<TypeMetadata>> resolved;
+      IckleParser.DistanceFunctionContext distCtx = ctx.additiveExpression().distanceFunction();
+      if (distCtx != null) {
+         resolved = parseDistanceFunctionPath(distCtx);
+      } else {
+         String pathText = ctx.additiveExpression().getText();
+         PropertyPath<TypeDescriptor<TypeMetadata>> property = buildPropertyPath(pathText);
+         resolved = resolveAlias(property);
+      }
 
       if (groupBy == null) {
          groupBy = new ArrayList<>();
@@ -391,14 +400,18 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
          return visitChildren(ctx);
       }
 
-      String pathText = ctx.additiveExpression().getText();
-      PropertyPath<TypeDescriptor<TypeMetadata>> path = buildPropertyPath(pathText);
-      PropertyPath<TypeDescriptor<TypeMetadata>> resolvedPath = resolveAlias(path);
-
-      AggregationPropertyPath<TypeMetadata> aggPath = new AggregationPropertyPath<>(
-            aggFunc,
-            resolvedPath.getNodes()
-      );
+      AggregationPropertyPath<TypeMetadata> aggPath;
+      IckleParser.DistanceFunctionContext distCtx = ctx.additiveExpression().distanceFunction();
+      if (distCtx != null) {
+         FunctionPropertyPath<TypeMetadata> functionPath = parseDistanceFunctionPath(distCtx);
+         aggPath = new AggregationFunctionPropertyPath<>(
+               aggFunc, functionPath.getNodes(), functionPath.getFunction(), functionPath.getArgs());
+      } else {
+         String pathText = ctx.additiveExpression().getText();
+         PropertyPath<TypeDescriptor<TypeMetadata>> path = buildPropertyPath(pathText);
+         PropertyPath<TypeDescriptor<TypeMetadata>> resolvedPath = resolveAlias(path);
+         aggPath = new AggregationPropertyPath<>(aggFunc, resolvedPath.getNodes());
+      }
 
       if (phase == VirtualExpressionBuilder.Phase.SELECT) {
          if (projections == null) {
@@ -406,11 +419,10 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
          }
          projections.add(aggPath);
       } else if (phase == VirtualExpressionBuilder.Phase.HAVING) {
-         // Store for visitRelationalTail
          currentAggregationPath = aggPath;
       }
 
-      return null; // Don't visit children (already got what we need)
+      return null;
    }
 
    private static @Nullable AggregationFunction getAggregationFunction(IckleParser.SimpleAggFunctionContext ctx) {
@@ -893,20 +905,7 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
    @Override
    public Object visitDistanceFunction(IckleParser.DistanceFunctionContext ctx) {
-      String propertyPathText = ctx.propertyReference().getText();
-      PropertyPath<TypeDescriptor<TypeMetadata>> path = buildPropertyPath(propertyPathText);
-      PropertyPath<TypeDescriptor<TypeMetadata>> resolved = resolveAlias(path);
-
-      List<Object> args = new ArrayList<>();
-      args.add(toDouble(ctx.lat));
-      args.add(toDouble(ctx.lon));
-
-      if (ctx.distanceFunctionUnit() != null) {
-         args.add(ctx.distanceFunctionUnit().unitVal().getText());
-      }
-
-      FunctionPropertyPath<TypeMetadata> functionPath = new FunctionPropertyPath<>(
-            resolved.getNodes(), Function.DISTANCE, args);
+      FunctionPropertyPath<TypeMetadata> functionPath = parseDistanceFunctionPath(ctx);
 
       if (phase == VirtualExpressionBuilder.Phase.SELECT) {
          if (projections == null) {
@@ -922,6 +921,21 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
    private static double toDouble(IckleParser.AtomContext atomContext) {
       return Double.parseDouble(atomContext.getText());
+   }
+
+   private FunctionPropertyPath<TypeMetadata> parseDistanceFunctionPath(IckleParser.DistanceFunctionContext distCtx) {
+      String propText = distCtx.propertyReference().getText();
+      PropertyPath<TypeDescriptor<TypeMetadata>> path = buildPropertyPath(propText);
+      PropertyPath<TypeDescriptor<TypeMetadata>> resolved = resolveAlias(path);
+
+      List<Object> args = new ArrayList<>();
+      args.add(toDouble(distCtx.lat));
+      args.add(toDouble(distCtx.lon));
+      if (distCtx.distanceFunctionUnit() != null) {
+         args.add(distCtx.distanceFunctionUnit().unitVal().getText());
+      }
+
+      return new FunctionPropertyPath<>(resolved.getNodes(), Function.DISTANCE, args);
    }
 
    private PropertyPath<TypeDescriptor<TypeMetadata>> buildPropertyPath(String pathText) {
@@ -1352,6 +1366,10 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
    private PropertyPath<TypeDescriptor<TypeMetadata>> resolveAlias(PropertyPath<TypeDescriptor<TypeMetadata>> path) {
       List<PropertyPath.PropertyReference<TypeDescriptor<TypeMetadata>>> resolved = resolveAliasPath(path);
+      if (path instanceof AggregationFunctionPropertyPath<TypeMetadata> afp) {
+         return new AggregationFunctionPropertyPath<>(afp.getAggregationFunction(), resolved,
+               afp.getInnerFunction(), afp.getInnerArgs());
+      }
       if (path instanceof AggregationPropertyPath) {
          return new AggregationPropertyPath<>(((AggregationPropertyPath<TypeMetadata>) path).getAggregationFunction(), resolved);
       }

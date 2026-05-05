@@ -3,7 +3,7 @@ package org.infinispan.query.core.impl;
 import static org.infinispan.query.dsl.embedded.impl.QueryEngine.DEFAULT_ALIAS;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,9 @@ import org.infinispan.query.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.query.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.query.objectfilter.impl.syntax.SyntaxTreePrinter;
 import org.infinispan.query.objectfilter.impl.syntax.ValueExpr;
+import org.infinispan.query.objectfilter.impl.syntax.parser.AggregationFunctionPropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.AggregationPropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.FunctionPropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleQueryStringParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
@@ -103,7 +105,7 @@ public class QueryEngine<TypeMetadata> {
          throw log.groupingAndAggregationQueriesMustUseProjections();
       }
 
-      LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns = new LinkedHashMap<>();
+      Map<PropertyPath, RowPropertyHelper.ColumnMetadata> columns = new HashMap<>();
 
       if (parsingResult.getGroupBy() != null) {
          for (PropertyPath<?> p : parsingResult.getGroupBy()) {
@@ -116,7 +118,9 @@ public class QueryEngine<TypeMetadata> {
                   // this constraint will be relaxed later: https://issues.jboss.org/browse/ISPN-6015
                   throw log.multivaluedPropertyCannotBeUsedInGroupBy(p.toString());
                }
-               Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityMetadata(), p.asArrayPath());
+               Class<?> propertyType = p instanceof FunctionPropertyPath<?>
+                     ? Double.class
+                     : propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityMetadata(), p.asArrayPath());
                int idx = columns.size();
                columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
             }
@@ -178,17 +182,19 @@ public class QueryEngine<TypeMetadata> {
          }
       }
 
-      LinkedHashMap<String, Integer> inColumns = new LinkedHashMap<>();
+      Map<String, Integer> inColumns = new HashMap<>();
+      List<PropertyPath<?>> inColumnPaths = new ArrayList<>();
       List<FieldAccumulator> accumulators = new LinkedList<>();
       RowPropertyHelper.ColumnMetadata[] _columns = new RowPropertyHelper.ColumnMetadata[columns.size()];
       for (PropertyPath<?> p : columns.keySet()) {
          RowPropertyHelper.ColumnMetadata c = columns.get(p);
          _columns[c.getColumnIndex()] = c;
-         String asStringPath = p.asStringPath();
-         Integer inIdx = inColumns.get(asStringPath);
+         String inputKey = getInputColumnKey(p);
+         Integer inIdx = inColumns.get(inputKey);
          if (inIdx == null) {
             inIdx = inColumns.size();
-            inColumns.put(asStringPath, inIdx);
+            inColumns.put(inputKey, inIdx);
+            inColumnPaths.add(getInputColumnPath(p));
          }
          if (p instanceof AggregationPropertyPath) {
             FieldAccumulator acc = FieldAccumulator.makeAccumulator(((AggregationPropertyPath) p).getAggregationFunction(), inIdx, c.getColumnIndex(), c.getPropertyType());
@@ -200,13 +206,13 @@ public class QueryEngine<TypeMetadata> {
       firstPhaseQuery.append("SELECT ");
       {
          boolean isFirst = true;
-         for (String p : inColumns.keySet()) {
+         for (PropertyPath<?> p : inColumnPaths) {
             if (isFirst) {
                isFirst = false;
             } else {
                firstPhaseQuery.append(", ");
             }
-            firstPhaseQuery.append(DEFAULT_ALIAS).append('.').append(p);
+            appendFirstPhaseProjection(firstPhaseQuery, p);
          }
       }
       firstPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(DEFAULT_ALIAS);
@@ -264,12 +270,41 @@ public class QueryEngine<TypeMetadata> {
             startOffset, maxResults, baseQuery, queryStatistics, local);
    }
 
+   protected static String getInputColumnKey(PropertyPath<?> p) {
+      if (p instanceof AggregationFunctionPropertyPath<?> afp) {
+         return afp.toFunctionPropertyPath().toString();
+      }
+      if (p instanceof FunctionPropertyPath<?>) {
+         return p.toString();
+      }
+      return p.asStringPath();
+   }
+
+   protected static PropertyPath<?> getInputColumnPath(PropertyPath<?> p) {
+      if (p instanceof AggregationFunctionPropertyPath<?> afp) {
+         return afp.toFunctionPropertyPath();
+      }
+      return p;
+   }
+
+   protected static void appendFirstPhaseProjection(StringBuilder query, PropertyPath<?> p) {
+      if (p instanceof FunctionPropertyPath<?> fp) {
+         query.append("distance(").append(DEFAULT_ALIAS).append('.').append(fp.asStringPath());
+         for (Object arg : fp.getArgs()) {
+            query.append(", ").append(arg);
+         }
+         query.append(")");
+      } else {
+         query.append(DEFAULT_ALIAS).append('.').append(p.asStringPath());
+      }
+   }
+
    /**
     * Swaps all occurrences of PropertyPaths in given expression tree (the HAVING clause) with new PropertyPaths
     * according to the mapping found in {@code columns} map.
     */
    private BooleanExpr swapVariables(BooleanExpr expr, TypeMetadata targetEntityMetadata,
-                                     LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns,
+                                     Map<PropertyPath, RowPropertyHelper.ColumnMetadata> columns,
                                      Map<String, Object> namedParameters, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       class PropertyReplacer extends ExprVisitor {
 
@@ -349,7 +384,7 @@ public class QueryEngine<TypeMetadata> {
 
    private BaseQuery<?> buildQueryWithRepeatedAggregations(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults,
                                                            IckleParsingResult<TypeMetadata> parsingResult, String havingClause,
-                                                           LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns, boolean local) {
+                                                           Map<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns, boolean local) {
       // these types of aggregations can only be computed in memory
 
       StringBuilder firstPhaseQuery = new StringBuilder();
