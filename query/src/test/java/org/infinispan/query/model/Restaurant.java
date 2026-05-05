@@ -21,7 +21,7 @@ public record Restaurant(
       @Text String address,
       @Latitude(fieldName = "location") Double latitude,
       @Longitude(fieldName = "location") Double longitude,
-      @Basic Float score
+      @Basic(projectable = true) Float score
 ) {
 
    @ProtoSchema(
