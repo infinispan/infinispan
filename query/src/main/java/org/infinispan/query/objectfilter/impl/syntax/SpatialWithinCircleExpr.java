@@ -88,6 +88,7 @@ public final class SpatialWithinCircleExpr implements PrimaryPredicateExpr {
       lonChild.appendQueryString(sb);
       sb.append(", ");
       radiusChild.appendQueryString(sb);
+      sb.append(' ');
       sb.append(unitChild.getConstantValue());
       sb.append(" )");
    }
