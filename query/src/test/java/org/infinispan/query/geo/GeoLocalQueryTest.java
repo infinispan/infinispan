@@ -391,4 +391,62 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
       assertThat(trainRoutes).extracting(TrainRoute::name)
             .containsExactlyInAnyOrder("Milan-Como");
    }
+
+   @Test
+   public void mixedSpatialPredicates() {
+      cache.put(1, new Hiking("track 1", LatLng.of(41.907903484609356, 12.45540543756422),
+            LatLng.of(41.90369455835456, 12.459566517195528)));
+      cache.put(2, new Hiking("track 2", LatLng.of(41.90369455835456, 12.459566517195528),
+            LatLng.of(41.907930453801285, 12.455204785977637)));
+      cache.put(3, new Hiking("track 3", LatLng.of(41.907930453801285, 12.455204785977637),
+            LatLng.of(41.907903484609356, 12.45540543756422)));
+
+      // circle(start) AND polygon(end) => intersection [track 3]
+      Query<Hiking> query = cache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end within polygon(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", "(42.00, 12.00)");
+      query.setParameter("b", "(42.00, 12.459)");
+      query.setParameter("c", "(41.00, 12.459)");
+      query.setParameter("d", "(41.00, 12.00)");
+      assertThat(query.list()).extracting(Hiking::name)
+            .containsExactlyInAnyOrder("track 3");
+
+      // circle(start) AND box(end) => intersection [track 3]
+      query = cache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end within box(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", 42.00);
+      query.setParameter("b", 12.00);
+      query.setParameter("c", 41.00);
+      query.setParameter("d", 12.459);
+      assertThat(query.list()).extracting(Hiking::name)
+            .containsExactlyInAnyOrder("track 3");
+
+      // circle(start) AND NOT polygon(end) => [track 1]
+      query = cache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end not within polygon(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", "(42.00, 12.00)");
+      query.setParameter("b", "(42.00, 12.459)");
+      query.setParameter("c", "(41.00, 12.459)");
+      query.setParameter("d", "(41.00, 12.00)");
+      assertThat(query.list()).extracting(Hiking::name)
+            .containsExactlyInAnyOrder("track 1");
+
+      // circle(start) AND NOT box(end) => [track 1]
+      query = cache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end not within box(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", 42.00);
+      query.setParameter("b", 12.00);
+      query.setParameter("c", 41.00);
+      query.setParameter("d", 12.459);
+      assertThat(query.list()).extracting(Hiking::name)
+            .containsExactlyInAnyOrder("track 1");
+   }
 }
