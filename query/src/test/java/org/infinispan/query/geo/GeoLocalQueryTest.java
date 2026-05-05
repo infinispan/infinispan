@@ -393,6 +393,41 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
    }
 
    @Test
+   public void distanceAggregation() {
+      cache.put("La Locanda di Pietro", new Restaurant("La Locanda di Pietro",
+            "", "", 41.907903484609356, 12.45540543756422, 4.6f));
+      cache.put("Scialla The Original Street Food", new Restaurant("Scialla The Original Street Food",
+            "", "", 41.90369455835456, 12.459566517195528, 4.7f));
+      cache.put("Trattoria Pizzeria Gli Archi", new Restaurant("Trattoria Pizzeria Gli Archi",
+            "", "", 41.907930453801285, 12.455204785977637, 4.0f));
+      cache.put("Magazzino Scipioni", new Restaurant("Magazzino Scipioni",
+            "", "", 41.90817843995448, 12.457118458698043, 4.6f));
+
+      // Bug #15749 case 1: aggregate function wrapping distance in SELECT + GROUP BY
+      String ickle = String.format(
+            "select max(distance(r.location, 41.90847031512531, 12.455633288333539)) " +
+                  "from %s r group by distance(r.location, 41.90847031512531, 12.455633288333539)", RESTAURANT_ENTITY_NAME);
+      Query<Object[]> query = cache.query(ickle);
+      List<Object[]> results = query.list();
+      assertThat(results).isNotEmpty();
+      for (Object[] row : results) {
+         assertThat(row[0]).isInstanceOf(Double.class);
+      }
+
+      // Bug #15749 case 2: avg(distance) with group by on a different field
+      ickle = String.format(
+            "select r.score, avg(distance(r.location, 41.90847031512531, 12.455633288333539)) " +
+                  "from %s r group by r.score", RESTAURANT_ENTITY_NAME);
+      query = cache.query(ickle);
+      results = query.list();
+      assertThat(results).isNotEmpty();
+      for (Object[] row : results) {
+         assertThat(row[0]).isInstanceOf(Float.class);
+         assertThat(row[1]).isInstanceOf(Double.class);
+      }
+   }
+
+   @Test
    public void mixedSpatialPredicates() {
       cache.put(1, new Hiking("track 1", LatLng.of(41.907903484609356, 12.45540543756422),
             LatLng.of(41.90369455835456, 12.459566517195528)));
