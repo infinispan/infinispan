@@ -121,6 +121,7 @@ import org.wildfly.security.keystore.KeyStoreUtil;
             Cd.class,
             Clear.class,
             ClearCache.class,
+            Completion.class,
             Config.class,
             Connect.class,
             Container.class,

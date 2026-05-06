@@ -183,6 +183,51 @@
                      <cleanupDaemonThreads>false</cleanupDaemonThreads>
                   </configuration>
                </execution>
+               <execution>
+                  <id>generate-completion-bash</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>java</goal>
+                  </goals>
+                  <configuration>
+                     <mainClass>org.infinispan.cli.commands.Completion</mainClass>
+                     <arguments>
+                        <argument>--shell</argument>
+                        <argument>BASH</argument>
+                        <argument>${project.build.outputDirectory}/infinispan-cli_complete.bash</argument>
+                     </arguments>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>generate-completion-zsh</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>java</goal>
+                  </goals>
+                  <configuration>
+                     <mainClass>org.infinispan.cli.commands.Completion</mainClass>
+                     <arguments>
+                        <argument>--shell</argument>
+                        <argument>ZSH</argument>
+                        <argument>${project.build.outputDirectory}/infinispan-cli_complete.zsh</argument>
+                     </arguments>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>generate-completion-fish</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>java</goal>
+                  </goals>
+                  <configuration>
+                     <mainClass>org.infinispan.cli.commands.Completion</mainClass>
+                     <arguments>
+                        <argument>--shell</argument>
+                        <argument>FISH</argument>
+                        <argument>${project.build.outputDirectory}/infinispan-cli.fish</argument>
+                     </arguments>
+                  </configuration>
+               </execution>
             </executions>
          </plugin>
       </plugins>
