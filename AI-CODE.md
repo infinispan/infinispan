@@ -53,3 +53,10 @@ When working in a specific module, check for an AI-CODE.md in that module's dire
 * **Website:** The Infinispan website source code is in ../infinispan.github.io
 * **ProtoStream:** The ProtoStream source code is in ../protostream
 * **Console:** The Infinispan Console source code is in ../infinispan-console
+* **C++ client:** The C++ client source code is in ../infinispan-cpp-client
+* **JS client:** The JS Hot Rod client source code is in ../infinispan-js-client
+* **Go client:** The Go Hot Rod client source code is in ../infinispan-go-client
+* **.NET client:** The .NET Core client source code is in ../Infinispan.Hotrod.Core
+* **Python client:** The Python Hot Rod client source code is in ../infinispan-python-client
+* **Tutorials:** The Infinispan simple tutorials source code is in ../infinispan-simple-tutorials
+
