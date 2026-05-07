@@ -36,7 +36,7 @@ sudo dnf install infinispan-cli
 +
 [source,bash,options="nowrap",subs=attributes+]
 ----
-curl -fsSL https://download.jboss.org/infinispan/packages/apt/signing.key \
+curl -fsSL https://download.jboss.org/infinispan/packages/signing.key \
   | sudo tee /etc/apt/keyrings/infinispan.asc > /dev/null
 ----
 +

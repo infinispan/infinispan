@@ -144,15 +144,13 @@ jobs:
             --pinentry-mode loopback --detach-sign --armor repo/yum/x86_64/repodata/repomd.xml
           gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
             --pinentry-mode loopback --detach-sign --armor repo/yum/aarch64/repodata/repomd.xml
-          gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
-            --pinentry-mode loopback --armor --export "$GPG_KEY_ID" > repo/yum/signing.key
           printf '%s\n' \
             '[infinispan]' \
             'name=Infinispan' \
             'baseurl=https://download.jboss.org/infinispan/packages/yum/$basearch' \
             'enabled=1' \
             'gpgcheck=1' \
-            'gpgkey=https://download.jboss.org/infinispan/packages/yum/signing.key' \
+            'gpgkey=https://download.jboss.org/infinispan/packages/signing.key' \
             > repo/yum/infinispan.repo
 
       - name: Build APT repository
@@ -178,6 +176,7 @@ jobs:
             --pinentry-mode loopback --detach-sign --armor -o dists/stable/Release.gpg dists/stable/Release
           gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
             --pinentry-mode loopback --clearsign -o dists/stable/InRelease dists/stable/Release
+          cd ..
           gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
             --pinentry-mode loopback --armor --export "$GPG_KEY_ID" > signing.key
 
