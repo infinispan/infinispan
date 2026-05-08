@@ -1,7 +1,7 @@
 package org.infinispan.commons.io;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.testing.Eventually;
 import org.infinispan.testing.Testing;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @since 15.0

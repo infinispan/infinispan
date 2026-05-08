@@ -13,7 +13,7 @@ import javax.security.auth.x500.X500Principal;
 import org.infinispan.commons.io.FileWatcher;
 import org.infinispan.testing.Eventually;
 import org.infinispan.testing.Testing;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 
 /**

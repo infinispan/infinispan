@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.jupiter.InfinispanServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

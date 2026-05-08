@@ -15,8 +15,8 @@
  */
 package org.infinispan.query.objectfilter.impl.ql.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.List;

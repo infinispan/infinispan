@@ -55,6 +55,7 @@ public class ThreadLeakChecker {
                       "|HttpClient" +
                       // RxJava
                       "|RxCachedWorkerPoolEvictor" +
+                      "|RxComputationThreadPool" +
                       "|RxSchedulerPurge" +
                       "|globalEventExecutor" +
                       // Narayana
@@ -108,6 +109,11 @@ public class ThreadLeakChecker {
                       "|RMI RenewClean" +
                       "|RMI GC Daemon" +
                       "|RMI Scheduler" +
+                      "|JNA Cleaner" +
+                      // JGroups TimeScheduler3 daemon timer
+                      "|Timer-" +
+                      // JVM internal reference cleaner
+                      "|Cleaner-" +
                       ").*");
    private static final Pattern ARQUILLIAN_CONSOLE_CONSUMER_REGEX = Pattern.compile("org\\.jboss(\\.as)?\\.arquillian\\.container[^$]+\\$ConsoleConsumer");
    private static final boolean ENABLED =

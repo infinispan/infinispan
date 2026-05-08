@@ -16,7 +16,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.metrics.Constants;
 import org.infinispan.server.functional.XSite2ServersIT;
 import org.infinispan.server.test.core.Common;
-import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanXSiteServerExtension;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;

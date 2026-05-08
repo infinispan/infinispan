@@ -1,9 +1,9 @@
 package org.infinispan.commons.util;
 
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -15,12 +15,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.concurrent.FileSystemLock;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 public class FileSystemLockTest {
 
-   @After
+   @AfterEach
    public void afterEach() {
       Util.recursiveFileRemove(tmpDirectory(directoryName()));
    }

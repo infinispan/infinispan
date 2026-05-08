@@ -171,6 +171,7 @@
       <server.test.provisioning>thin</server.test.provisioning>
       <skipArtifactUpload>false</skipArtifactUpload>
       <junitListener>org.infinispan.testing.junit.JUnitTestListener</junitListener>
+      <jupiterListener>org.infinispan.testing.jupiter.JupiterTestListener</jupiterListener>
       <module.skipCopyDependencies>true</module.skipCopyDependencies>
       <packaging>jar</packaging>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -218,9 +219,9 @@
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
       <versionx.org.mariadb.jdbc>3.5.8</versionx.org.mariadb.jdbc>
       <versionx.org.postgresql>42.7.11</versionx.org.postgresql>
-      <versionx.org.testcontainers.testcontainers>1.21.4</versionx.org.testcontainers.testcontainers>
-      <!-- Test dependency. Only update if testcontainer dependency > 1.17.6 with newer docker-java version is available in GraalVM metadata repository -->
-      <versionx.com.github.docker-java>3.3.5</versionx.com.github.docker-java>
+      <versionx.org.testcontainers.testcontainers>2.0.5</versionx.org.testcontainers.testcontainers>
+      <!-- Test dependency. Careful about GraalVM metadata repository -->
+      <versionx.com.github.docker-java>3.7.1</versionx.com.github.docker-java>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.4.1</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.common.wildfly-common>1.7.0.Final</versionx.org.wildfly.common.wildfly-common>
@@ -242,7 +243,7 @@
          <dependency>
             <groupId>org.junit</groupId>
             <artifactId>junit-bom</artifactId>
-            <version>${version.junit5}</version>
+            <version>${version.jupiter}</version>
             <type>pom</type>
             <scope>import</scope>
          </dependency>
@@ -1054,11 +1055,6 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-testdriver-junit5</artifactId>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-tests</artifactId>
             <version>${version.infinispan}</version>
             <type>test-jar</type>
@@ -1237,12 +1233,6 @@
          <dependency>
             <groupId>org.jboss.arquillian.testng</groupId>
             <artifactId>arquillian-testng-container</artifactId>
-            <version>${version.arquillian}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.arquillian.testenricher</groupId>
-            <artifactId>arquillian-testenricher-cdi-jakarta</artifactId>
             <version>${version.arquillian}</version>
             <scope>test</scope>
          </dependency>
@@ -1644,7 +1634,12 @@
          </dependency>
          <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>jdbc</artifactId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
+            <version>${versionx.org.testcontainers.testcontainers}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-jdbc</artifactId>
             <version>${versionx.org.testcontainers.testcontainers}</version>
          </dependency>
          <dependency>

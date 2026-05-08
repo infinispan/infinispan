@@ -1,8 +1,8 @@
 package org.infinispan.cli.user;
 
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileReader;
@@ -14,8 +14,8 @@ import java.util.Collections;
 import java.util.Properties;
 
 import org.infinispan.commons.util.Util;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
@@ -29,13 +29,12 @@ import org.wildfly.security.password.spec.PasswordSpec;
  * @since 11.0
  **/
 public class UserToolTest {
-   private static String tmpDirectory;
    private static File serverDirectory;
    private static File confDirectory;
 
-   @Before
+   @BeforeEach
    public void createTestDirectory() {
-      tmpDirectory = tmpDirectory(UserToolTest.class);
+      String tmpDirectory = tmpDirectory(UserToolTest.class);
       Util.recursiveFileRemove(tmpDirectory);
       serverDirectory = new File(tmpDirectory, UserTool.DEFAULT_SERVER_ROOT);
       confDirectory = new File(serverDirectory, "conf");
@@ -111,15 +110,15 @@ public class UserToolTest {
    private void assertPassword(String clear, String encrypted) throws NoSuchAlgorithmException, InvalidKeySpecException {
       PasswordGuessEvidence evidence = new PasswordGuessEvidence(clear.toCharArray());
       String[] split = encrypted.split(";");
-      for (int i = 0; i < split.length; i++) {
-         int colon = split[i].indexOf(':');
-         String algorithm = split[i].substring(0, colon);
-         String encoded = split[i].substring(colon + 1);
+      for (String s : split) {
+         int colon = s.indexOf(':');
+         String algorithm = s.substring(0, colon);
+         String encoded = s.substring(colon + 1);
          byte[] passwordBytes = CodePointIterator.ofChars(encoded.toCharArray()).base64Decode().drain();
          PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm, WildFlyElytronPasswordProvider.getInstance());
          PasswordSpec passwordSpec = BasicPasswordSpecEncoding.decode(passwordBytes);
          PasswordCredential credential = new PasswordCredential(passwordFactory.generatePassword(passwordSpec));
-         assertTrue("Passwords don't match", credential.verify(UserTool.PROVIDERS, evidence));
+         assertTrue(credential.verify(UserTool.PROVIDERS, evidence), "Passwords don't match");
       }
    }
 }

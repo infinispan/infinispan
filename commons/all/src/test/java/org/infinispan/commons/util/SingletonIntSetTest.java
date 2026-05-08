@@ -1,11 +1,12 @@
 package org.infinispan.commons.util;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -16,7 +17,7 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author wburns
@@ -81,34 +82,34 @@ public class SingletonIntSetTest {
       assertArrayEquals(new int[]{3}, array);
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testAdd() throws Exception {
       IntSet sis = new SingletonIntSet(3);
-      sis.add(1);
+      assertThrows(UnsupportedOperationException.class, () -> sis.add(1));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testAdd1() throws Exception {
       IntSet sis = new SingletonIntSet(3);
-      sis.add(Integer.valueOf(1));
+      assertThrows(UnsupportedOperationException.class, () -> sis.add(Integer.valueOf(1)));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testSet() throws Exception {
       IntSet sis = new SingletonIntSet(3);
-      sis.set(1);
+      assertThrows(UnsupportedOperationException.class, () -> sis.set(1));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemove() throws Exception {
       IntSet sis = new SingletonIntSet(3);
-      sis.remove(3);
+      assertThrows(UnsupportedOperationException.class, () -> sis.remove(3));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemove1() throws Exception {
       IntSet sis = new SingletonIntSet(3);
-      sis.remove(Integer.valueOf(3));
+      assertThrows(UnsupportedOperationException.class, () -> sis.remove(Integer.valueOf(3)));
    }
 
    @Test
@@ -139,80 +140,80 @@ public class SingletonIntSetTest {
       assertFalse(sis.containsAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testAddAll() throws Exception {
       IntSet sis = new SingletonIntSet(3);
 
       IntSet rs = new RangeSet(5);
-      sis.addAll(rs);
+      assertThrows(UnsupportedOperationException.class, () -> sis.addAll(rs));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testAddAll1() throws Exception {
       IntSet sis = new SingletonIntSet(3);
 
       SmallIntSet sis2 = new SmallIntSet();
-      sis.addAll(sis2);
+      assertThrows(UnsupportedOperationException.class, () -> sis.addAll(sis2));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testAddAll2() throws Exception {
       Set<Integer> hashSet = Util.asSet(1, 4);
 
       IntSet sis = new SingletonIntSet(3);
-      sis.addAll(hashSet);
+      assertThrows(UnsupportedOperationException.class, () -> sis.addAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemoveAll() throws Exception {
       IntSet sis = new SingletonIntSet(3);
 
       IntSet rs = new RangeSet(6);
 
-      sis.removeAll(rs);
+      assertThrows(UnsupportedOperationException.class, () -> sis.removeAll(rs));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemoveAll1() throws Exception {
       IntSet sis = new SingletonIntSet(3);
 
       Set<Integer> hashSet = new HashSet<>();
 
-      sis.removeAll(hashSet);
+      assertThrows(UnsupportedOperationException.class, () -> sis.removeAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRetainAll() throws Exception {
       IntSet sis = new SingletonIntSet(3);
 
       IntSet rs = new RangeSet(5);
 
-      sis.retainAll(rs);
+      assertThrows(UnsupportedOperationException.class, () -> sis.retainAll(rs));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRetainAll1() throws Exception {
       IntSet sis = new SingletonIntSet(3);
 
       IntSet sis2 = new SingletonIntSet(3);
 
-      sis.retainAll(sis2);
+      assertThrows(UnsupportedOperationException.class, () -> sis.retainAll(sis2));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRetainAll2() throws Exception {
       IntSet sis = new SingletonIntSet(3);
 
       Set<Integer> hashSet = new HashSet<>();
 
-      sis.retainAll(hashSet);
+      assertThrows(UnsupportedOperationException.class, () -> sis.retainAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testClear() throws Exception {
       IntSet sis = new SingletonIntSet(3);
 
-      sis.clear();
+      assertThrows(UnsupportedOperationException.class, sis::clear);
    }
 
    @Test
@@ -298,16 +299,16 @@ public class SingletonIntSetTest {
       assertTrue(results.contains(3));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemoveIfPrimitive() {
       IntSet sis = new SingletonIntSet(3);
-      sis.removeIf((int i) -> i == 3);
+      assertThrows(UnsupportedOperationException.class, () -> sis.removeIf((int i) -> i == 3));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemoveIfObject() {
       IntSet sis = new SingletonIntSet(3);
-      sis.removeIf((Integer i) -> i == 3);
+      assertThrows(UnsupportedOperationException.class, () -> sis.removeIf((Integer i) -> i == 3));
    }
 
    @Test

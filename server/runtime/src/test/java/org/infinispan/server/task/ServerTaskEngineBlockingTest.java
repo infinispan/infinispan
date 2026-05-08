@@ -20,14 +20,14 @@ import org.infinispan.tasks.manager.TaskManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.testing.junit.JUnitThreadTrackerRule;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.infinispan.testing.jupiter.JupiterThreadTrackerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 public class ServerTaskEngineBlockingTest {
 
-   @ClassRule
-   public static final JUnitThreadTrackerRule tracker = new JUnitThreadTrackerRule();
+   @RegisterExtension
+   public static final JupiterThreadTrackerExtension tracker = new JupiterThreadTrackerExtension();
 
    @Test
    public void testBlockingTaskOnBlockingManager() {

@@ -1,7 +1,6 @@
 package org.infinispan.cli.printers;
 
-
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +9,7 @@ import java.util.Map;
 
 import org.infinispan.cli.AeshTestShell;
 import org.infinispan.cli.util.JsonReaderIterable;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @since 15.0
@@ -48,7 +47,7 @@ public class TablePrettyPrinterTest {
          // Ensure the column separators are in the right place
          for (int i = 0; i < COLUMNS - 1; i++) {
             pos += rowPrinter.columnWidth(i) + 1;
-            assertEquals(line + ":" + pos, separator, line.charAt(pos));
+            assertEquals(separator, line.charAt(pos), line + ":" + pos);
          }
       }
    }

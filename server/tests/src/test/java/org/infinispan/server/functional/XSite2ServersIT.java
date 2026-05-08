@@ -5,10 +5,10 @@ import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.
 
 import org.infinispan.server.functional.rest.XSiteRestMetricsOperations2;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
-import org.infinispan.server.test.junit5.InfinispanSuite;
-import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
-import org.infinispan.server.test.junit5.InfinispanXSiteServerExtensionBuilder;
+import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.jupiter.InfinispanSuite;
+import org.infinispan.server.test.jupiter.InfinispanXSiteServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanXSiteServerExtensionBuilder;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;

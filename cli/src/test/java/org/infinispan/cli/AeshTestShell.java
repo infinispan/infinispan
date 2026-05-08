@@ -9,7 +9,7 @@ import org.aesh.terminal.tty.Size;
 import org.aesh.terminal.utils.Config;
 import org.aesh.terminal.utils.Parser;
 import org.infinispan.testing.Eventually;
-import org.junit.ComparisonFailure;
+import org.opentest4j.AssertionFailedError;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -90,13 +90,13 @@ public class AeshTestShell implements Shell {
 
    public void assertEquals(String expected) {
       Eventually.eventually(
-            () -> new ComparisonFailure("Expected output was not equal to expected string after timeout", expected, bufferBuilder.toString()),
+            () -> new AssertionFailedError("Expected output was not equal to expected string after timeout", expected, bufferBuilder.toString()),
             () -> expected.contentEquals(bufferBuilder), 10_000, 50, TimeUnit.MILLISECONDS);
    }
 
    public void assertContains(String expected) {
       Eventually.eventually(
-            () -> new ComparisonFailure("Expected output did not contain expected string after timeout", expected, bufferBuilder.toString()),
+            () -> new AssertionFailedError("Expected output did not contain expected string after timeout", expected, bufferBuilder.toString()),
             () -> bufferBuilder.toString().contains(expected), 10_000, 50, TimeUnit.MILLISECONDS);
    }
 }

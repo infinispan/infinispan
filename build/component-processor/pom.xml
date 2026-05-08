@@ -29,13 +29,6 @@
          <artifactId>metainf-services</artifactId>
          <version>${version.metainf-services}</version>
       </dependency>
-
-      <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
-         <version>${version.junit}</version>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
    <build>

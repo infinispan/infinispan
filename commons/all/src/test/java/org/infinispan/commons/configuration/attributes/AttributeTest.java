@@ -2,13 +2,13 @@ package org.infinispan.commons.configuration.attributes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -26,7 +26,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AttributeTest {
    @Test
@@ -137,7 +137,7 @@ public class AttributeTest {
          listenerInvoked.set(true);
       });
       attribute.set(true);
-      assertTrue("Attribute listener was not invoked", listenerInvoked.get());
+      assertTrue(listenerInvoked.get(), "Attribute listener was not invoked");
    }
 
    @Test

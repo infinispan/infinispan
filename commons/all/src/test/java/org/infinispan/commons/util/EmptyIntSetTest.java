@@ -1,10 +1,11 @@
 package org.infinispan.commons.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -14,7 +15,7 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author wburns
@@ -73,29 +74,29 @@ public class EmptyIntSetTest {
       assertEquals(0, array.length);
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testAdd() throws Exception {
-      es.add(1);
+      assertThrows(UnsupportedOperationException.class, () -> es.add(1));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testAdd1() throws Exception {
-      es.add(Integer.valueOf(1));
+      assertThrows(UnsupportedOperationException.class, () -> es.add(Integer.valueOf(1)));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testSet() throws Exception {
-      es.set(1);
+      assertThrows(UnsupportedOperationException.class, () -> es.set(1));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemove() throws Exception {
-      es.remove(3);
+      assertThrows(UnsupportedOperationException.class, () -> es.remove(3));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemove1() throws Exception {
-      es.remove(Integer.valueOf(3));
+      assertThrows(UnsupportedOperationException.class, () -> es.remove(Integer.valueOf(3)));
    }
 
    @Test
@@ -126,58 +127,58 @@ public class EmptyIntSetTest {
       assertTrue(es.containsAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testAddAll() throws Exception {
       IntSet rs = new RangeSet(5);
-      es.addAll(rs);
+      assertThrows(UnsupportedOperationException.class, () -> es.addAll(rs));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testAddAll1() throws Exception {
       SmallIntSet sis2 = new SmallIntSet();
-      es.addAll(sis2);
+      assertThrows(UnsupportedOperationException.class, () -> es.addAll(sis2));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testAddAll2() throws Exception {
       Set<Integer> hashSet = new HashSet<>();
       hashSet.add(1);
       hashSet.add(4);
 
-      es.addAll(hashSet);
+      assertThrows(UnsupportedOperationException.class, () -> es.addAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemoveAll() throws Exception {
       IntSet rs = new RangeSet(6);
 
-      es.removeAll(rs);
+      assertThrows(UnsupportedOperationException.class, () -> es.removeAll(rs));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemoveAll1() throws Exception {
       Set<Integer> hashSet = Collections.emptySet();
 
-      es.removeAll(hashSet);
+      assertThrows(UnsupportedOperationException.class, () -> es.removeAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRetainAll() throws Exception {
       IntSet rs = new RangeSet(5);
 
-      es.retainAll(rs);
+      assertThrows(UnsupportedOperationException.class, () -> es.retainAll(rs));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRetainAll1() throws Exception {
       Set<Integer> hashSet = Collections.emptySet();
 
-      es.retainAll(hashSet);
+      assertThrows(UnsupportedOperationException.class, () -> es.retainAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testClear() throws Exception {
-      es.clear();
+      assertThrows(UnsupportedOperationException.class, () -> es.clear());
    }
 
    @Test
@@ -248,14 +249,14 @@ public class EmptyIntSetTest {
       assertEquals(0, results.size());
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemoveIfPrimitive() {
-      es.removeIf((int i) -> i == 3);
+      assertThrows(UnsupportedOperationException.class, () -> es.removeIf((int i) -> i == 3));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void testRemoveIfObject() {
-      es.removeIf((Integer i) -> i == 3);
+      assertThrows(UnsupportedOperationException.class, () -> es.removeIf((Integer i) -> i == 3));
    }
 
    @Test

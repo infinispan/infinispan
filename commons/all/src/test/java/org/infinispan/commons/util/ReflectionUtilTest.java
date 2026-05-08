@@ -11,7 +11,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import org.infinispan.commons.CacheException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ReflectionUtilTest {
 

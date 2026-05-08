@@ -38,7 +38,7 @@
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-testdriver-junit5</artifactId>
+         <artifactId>infinispan-server-testdriver-core</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -258,7 +258,7 @@
                <testNGArtifactName>none:none</testNGArtifactName>
                <properties>
                   <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${junitListener},org.infinispan.server.test.junit4.InfinispanServerTestListener</listener>
+                  <listener>${jupiterListener},org.infinispan.server.test.jupiter.InfinispanServerTestListener</listener>
                </properties>
                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${test.driverArgs} -Djdk.attach.allowAttachSelf=true</argLine>
             </configuration>

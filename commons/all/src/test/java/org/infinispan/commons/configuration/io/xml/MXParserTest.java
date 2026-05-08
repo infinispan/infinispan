@@ -1,13 +1,13 @@
 package org.infinispan.commons.configuration.io.xml;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.EOFException;
 import java.io.StringReader;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author <a href="mailto:trygvis@inamo.no">Trygve Laugst&oslash;l</a>
@@ -652,7 +652,7 @@ public class MXParserTest {
    }
 
    private static void assertPosition(int row, int col, MXParser parser) {
-      assertEquals("Current line", row, parser.getLineNumber());
-      assertEquals("Current column", col, parser.getColumnNumber());
+      assertEquals(row, parser.getLineNumber(), "Current line");
+      assertEquals(col, parser.getColumnNumber(), "Current column");
    }
 }

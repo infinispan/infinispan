@@ -13,8 +13,8 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.jupiter.InfinispanServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

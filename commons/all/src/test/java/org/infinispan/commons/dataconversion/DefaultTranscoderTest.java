@@ -5,8 +5,8 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -15,15 +15,15 @@ import java.util.Base64;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.util.KeyValueWithPrevious;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class DefaultTranscoderTest {
 
    private static DefaultTranscoder defaultTranscoder;
    private static JavaSerializationMarshaller marshaller;
 
-   @BeforeClass
+   @BeforeAll
    public static void prepare() {
       final ClassAllowList allowList = new ClassAllowList();
       allowList.addRegexps(".*");
@@ -76,7 +76,7 @@ public class DefaultTranscoderTest {
    @Test
    public void testObjectUrlEncoded() throws Exception {
       String data = "word1 word2";
-      final String encoded = URLEncoder.encode(data, "utf-8");
+      final String encoded = URLEncoder.encode(data, UTF_8);
       final byte[] encodedUTF = encoded.getBytes(UTF_8);
 
       Object toObject = defaultTranscoder.transcode(encodedUTF, APPLICATION_WWW_FORM_URLENCODED, APPLICATION_OBJECT);
@@ -105,7 +105,7 @@ public class DefaultTranscoderTest {
    @Test
    public void testOctetStreamUrlEncoded() throws UnsupportedEncodingException {
       String data = "word1 word2";
-      byte[] urlEncoded = URLEncoder.encode(data, "utf-8").getBytes(UTF_8);
+      byte[] urlEncoded = URLEncoder.encode(data, UTF_8).getBytes(UTF_8);
       byte[] utf8 = data.getBytes(UTF_8);
 
       Object toOctetStream = defaultTranscoder.transcode(urlEncoded, APPLICATION_WWW_FORM_URLENCODED, APPLICATION_OCTET_STREAM);
@@ -159,7 +159,7 @@ public class DefaultTranscoderTest {
    @Test
    public void testTextUrlEncoded() throws Exception {
       String textData = "this is text";
-      byte[] urlEncoded = URLEncoder.encode(textData, "utf-8").getBytes(UTF_8);
+      byte[] urlEncoded = URLEncoder.encode(textData, UTF_8).getBytes(UTF_8);
 
       Object encodedText = defaultTranscoder.transcode(textData, TEXT_PLAIN, APPLICATION_WWW_FORM_URLENCODED);
       assertSame(urlEncoded, encodedText);
@@ -177,7 +177,7 @@ public class DefaultTranscoderTest {
       Object toOctetStream = defaultTranscoder.transcode(pojo, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM);
 
       // Verify it's wrapped
-      assertEquals(toOctetStream.getClass(), org.infinispan.commons.marshall.SerializedObjectWrapper.class);
+      assertEquals(org.infinispan.commons.marshall.SerializedObjectWrapper.class, toOctetStream.getClass());
 
       org.infinispan.commons.marshall.SerializedObjectWrapper wrapper =
             (org.infinispan.commons.marshall.SerializedObjectWrapper) toOctetStream;
