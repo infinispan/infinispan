@@ -24,7 +24,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.tags.Security;
-import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.server.test.jupiter.InfinispanServer;
 import org.infinispan.testing.Exceptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;

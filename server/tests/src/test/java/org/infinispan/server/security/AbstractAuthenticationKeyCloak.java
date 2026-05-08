@@ -9,7 +9,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.junit.jupiter.api.Test;
 
 /**

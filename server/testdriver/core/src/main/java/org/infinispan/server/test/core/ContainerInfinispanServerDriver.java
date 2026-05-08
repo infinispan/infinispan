@@ -373,7 +373,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       int atIdx = imageName.indexOf('@');
       if (atIdx < 0) return imageName;
       int slashIdx = imageName.lastIndexOf('/', atIdx);
-      int colonIdx = imageName.indexOf(':', slashIdx >= 0 ? slashIdx : 0);
+      int colonIdx = imageName.indexOf(':', Math.max(slashIdx, 0));
       if (colonIdx >= 0 && colonIdx < atIdx) {
          return imageName.substring(0, colonIdx) + imageName.substring(atIdx);
       }
@@ -652,7 +652,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          TarArchiveInputStream tar = new TarArchiveInputStream(is);
          Path basePath = getRootDir().toPath().resolve(Integer.toString(server));
          Util.recursiveFileRemove(basePath.resolve(path));
-         for (TarArchiveEntry entry = tar.getNextTarEntry(); entry != null; entry = tar.getNextTarEntry()) {
+         for (TarArchiveEntry entry = tar.getNextEntry(); entry != null; entry = tar.getNextEntry()) {
             Path entryPath = basePath.resolve(entry.getName());
             if (entry.isDirectory()) {
                Files.createDirectories(entryPath);

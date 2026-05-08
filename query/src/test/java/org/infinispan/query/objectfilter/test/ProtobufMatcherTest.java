@@ -4,7 +4,7 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.query.objectfilter.test.model.TestDomainSCI;
-import org.junit.Before;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -16,7 +16,7 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
 
    private SerializationContext serCtx;
 
-   @Before
+   @BeforeClass
    public void setUp() {
       serCtx = ProtobufUtil.newSerializationContext();
       TestDomainSCI.INSTANCE.register(serCtx);

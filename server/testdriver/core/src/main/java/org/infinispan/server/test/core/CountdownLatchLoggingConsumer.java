@@ -22,6 +22,7 @@ public class CountdownLatchLoggingConsumer extends BaseConsumer<CountdownLatchLo
    public void accept(OutputFrame outputFrame) {
       String log = outputFrame.getUtf8String();
       if (pattern.matcher(log).matches()) {
+         System.out.println(">>>>>>>>>>" + pattern.pattern() + ">" + log);
          latch.countDown();
       }
    }

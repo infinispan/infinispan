@@ -18,7 +18,7 @@ import org.infinispan.protostream.sampledomain.TestDomainSCIImpl;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
-import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.server.test.jupiter.InfinispanServer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 

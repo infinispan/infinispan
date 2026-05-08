@@ -1,10 +1,10 @@
 package org.infinispan.cli.commands;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -40,11 +40,10 @@ import org.infinispan.cli.resources.Resource;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.WildFlyElytronCredentialStoreProvider;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
@@ -58,21 +57,18 @@ public class BookmarkTest {
 
    private static final String MASTER_PASSWORD = "testMasterPassword";
 
-   @BeforeClass
+   @BeforeAll
    public static void registerProviders() {
       java.security.Security.addProvider(WildFlyElytronCredentialStoreProvider.getInstance());
       java.security.Security.addProvider(WildFlyElytronPasswordProvider.getInstance());
    }
 
-   @Rule
-   public TemporaryFolder tempFolder = new TemporaryFolder();
-
+   @TempDir
    private Path configPath;
    private TestShell shell;
 
-   @Before
+   @BeforeEach
    public void setup() throws IOException {
-      configPath = tempFolder.newFolder("config").toPath();
       shell = new TestShell();
    }
 
@@ -176,7 +172,7 @@ public class BookmarkTest {
       // Verify properties file has no leftover keys
       Properties props = loadProps();
       for (String key : props.stringPropertyNames()) {
-         assertFalse("Key should not start with toremove.: " + key, key.startsWith("toremove."));
+         assertFalse(key.startsWith("toremove."), "Key should not start with toremove.: " + key);
       }
    }
 
@@ -234,8 +230,8 @@ public class BookmarkTest {
       runGet("emptytest");
       String output = shell.getBuffer();
       // Empty strings should be treated as unset, so connection values should be inferred
-      assertTrue(output, output.contains("url = https://inferred-host:11222"));
-      assertTrue(output, output.contains("username = inferreduser"));
+      assertTrue(output.contains("url = https://inferred-host:11222"), output);
+      assertTrue(output.contains("username = inferreduser"), output);
    }
 
    @Test
@@ -469,108 +465,108 @@ public class BookmarkTest {
    }
 
    private record StubContext(Path configPath, Connection connection, Properties properties) implements Context {
-         StubContext(Path configPath) {
-            this(configPath, null, new Properties());
-         }
+      StubContext(Path configPath) {
+         this(configPath, null, new Properties());
+      }
 
       @Override
-         public boolean isConnected() {
-            return connection != null;
-         }
-
-         @Override
-         public void connect(Shell shell, String connectionString) {
-         }
-
-         @Override
-         public void connect(Shell shell, String connectionString, String username, String password) {
-         }
-
-         @Override
-         public void disconnect() {
-         }
-
-         @Override
-         public String getProperty(String key) {
-            return properties.getProperty(key);
-         }
-
-         @Override
-         public String getProperty(Property key) {
-            return properties.getProperty(key.propertyName());
-         }
-
-         @Override
-         public String getProperty(Property property, String defaultValue) {
-            return properties.getProperty(property.propertyName(), defaultValue);
-         }
-
-         @Override
-         public void resetProperties() {
-         }
-
-         @Override
-         public void setProperty(String key, String value) {
-         }
-
-         @Override
-         public void saveProperties() {
-         }
-
-         @Override
-         public void setSslContext(SSLContextSettings sslContext) {
-         }
-
-         @Override
-         public void setRegistry(CommandRegistry registry) {
-         }
-
-         @Override
-         public void setConsole(ReadlineConsole console) {
-         }
-
-         @Override
-         public CommandRegistry getRegistry() {
-            return null;
-         }
-
-         @Override
-         public MediaType getEncoding() {
-            return null;
-         }
-
-         @Override
-         public void setEncoding(MediaType encoding) {
-         }
-
-         @Override
-         public void refreshPrompt() {
-         }
-
-         @Override
-         public CommandResult changeResource(Class<? extends Resource> fromResource, String resourceType, String name) throws CommandException {
-            return null;
-         }
-
-         @Override
-         public org.aesh.io.Resource getCurrentWorkingDirectory() {
-            return null;
-         }
-
-         @Override
-         public void setCurrentWorkingDirectory(org.aesh.io.Resource resource) {
-         }
-
-         @Override
-         public Set<String> exportedVariableNames() {
-            return Set.of();
-         }
-
-         @Override
-         public String exportedVariable(String name) {
-            return null;
-         }
+      public boolean isConnected() {
+         return connection != null;
       }
+
+      @Override
+      public void connect(Shell shell, String connectionString) {
+      }
+
+      @Override
+      public void connect(Shell shell, String connectionString, String username, String password) {
+      }
+
+      @Override
+      public void disconnect() {
+      }
+
+      @Override
+      public String getProperty(String key) {
+         return properties.getProperty(key);
+      }
+
+      @Override
+      public String getProperty(Property key) {
+         return properties.getProperty(key.propertyName());
+      }
+
+      @Override
+      public String getProperty(Property property, String defaultValue) {
+         return properties.getProperty(property.propertyName(), defaultValue);
+      }
+
+      @Override
+      public void resetProperties() {
+      }
+
+      @Override
+      public void setProperty(String key, String value) {
+      }
+
+      @Override
+      public void saveProperties() {
+      }
+
+      @Override
+      public void setSslContext(SSLContextSettings sslContext) {
+      }
+
+      @Override
+      public void setRegistry(CommandRegistry registry) {
+      }
+
+      @Override
+      public void setConsole(ReadlineConsole console) {
+      }
+
+      @Override
+      public CommandRegistry getRegistry() {
+         return null;
+      }
+
+      @Override
+      public MediaType getEncoding() {
+         return null;
+      }
+
+      @Override
+      public void setEncoding(MediaType encoding) {
+      }
+
+      @Override
+      public void refreshPrompt() {
+      }
+
+      @Override
+      public CommandResult changeResource(Class<? extends Resource> fromResource, String resourceType, String name) throws CommandException {
+         return null;
+      }
+
+      @Override
+      public org.aesh.io.Resource getCurrentWorkingDirectory() {
+         return null;
+      }
+
+      @Override
+      public void setCurrentWorkingDirectory(org.aesh.io.Resource resource) {
+      }
+
+      @Override
+      public Set<String> exportedVariableNames() {
+         return Set.of();
+      }
+
+      @Override
+      public String exportedVariable(String name) {
+         return null;
+      }
+   }
 
    private static class StubConnection implements Connection {
       private final String uri;
@@ -804,85 +800,85 @@ public class BookmarkTest {
    private record StubCommandInvocation(Shell shell) implements CommandInvocation {
 
       @Override
-         public Shell getShell() {
-            return shell;
-         }
-
-         @Override
-         public void setPrompt(Prompt prompt) {
-         }
-
-         @Override
-         public Prompt getPrompt() {
-            return null;
-         }
-
-         @Override
-         public String getHelpInfo(String commandName) {
-            return "";
-         }
-
-         @Override
-         public String getHelpInfo() {
-            return "";
-         }
-
-         @Override
-         public void stop() {
-         }
-
-         @Override
-         public CommandInvocationConfiguration getConfiguration() {
-            return null;
-         }
-
-         @Override
-         public KeyAction input() {
-            return null;
-         }
-
-         @Override
-         public KeyAction input(long timeout, TimeUnit unit) {
-            return null;
-         }
-
-         @Override
-         public String inputLine() {
-            return null;
-         }
-
-         @Override
-         public String inputLine(Prompt prompt) {
-            return null;
-         }
-
-         @Override
-         public void executeCommand(String input) {
-         }
-
-         @Override
-         public Executor buildExecutor(String line) {
-            return null;
-         }
-
-         @Override
-         public void print(String msg) {
-            shell.write(msg, false);
-         }
-
-         @Override
-         public void println(String msg) {
-            shell.writeln(msg, false);
-         }
-
-         @Override
-         public void print(String msg, boolean paging) {
-            shell.write(msg, paging);
-         }
-
-         @Override
-         public void println(String msg, boolean paging) {
-            shell.writeln(msg, paging);
-         }
+      public Shell getShell() {
+         return shell;
       }
+
+      @Override
+      public void setPrompt(Prompt prompt) {
+      }
+
+      @Override
+      public Prompt getPrompt() {
+         return null;
+      }
+
+      @Override
+      public String getHelpInfo(String commandName) {
+         return "";
+      }
+
+      @Override
+      public String getHelpInfo() {
+         return "";
+      }
+
+      @Override
+      public void stop() {
+      }
+
+      @Override
+      public CommandInvocationConfiguration getConfiguration() {
+         return null;
+      }
+
+      @Override
+      public KeyAction input() {
+         return null;
+      }
+
+      @Override
+      public KeyAction input(long timeout, TimeUnit unit) {
+         return null;
+      }
+
+      @Override
+      public String inputLine() {
+         return null;
+      }
+
+      @Override
+      public String inputLine(Prompt prompt) {
+         return null;
+      }
+
+      @Override
+      public void executeCommand(String input) {
+      }
+
+      @Override
+      public Executor buildExecutor(String line) {
+         return null;
+      }
+
+      @Override
+      public void print(String msg) {
+         shell.write(msg, false);
+      }
+
+      @Override
+      public void println(String msg) {
+         shell.writeln(msg, false);
+      }
+
+      @Override
+      public void print(String msg, boolean paging) {
+         shell.write(msg, paging);
+      }
+
+      @Override
+      public void println(String msg, boolean paging) {
+         shell.writeln(msg, paging);
+      }
+   }
 }

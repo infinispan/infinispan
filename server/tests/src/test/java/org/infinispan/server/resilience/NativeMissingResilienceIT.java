@@ -19,8 +19,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.core.tags.Resilience;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.jupiter.InfinispanServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -108,6 +108,8 @@ public class NativeMissingResilienceIT {
          assertThatThrownBy(() -> redis.eval("return redis.call('set', KEYS[1], ARGV[1])", ScriptOutputType.STATUS, new String[]{ "key", "value" }))
                .isInstanceOf(RedisCommandExecutionException.class)
                .hasMessageContaining("Lua engine is not active");
+      } finally {
+         client.shutdown();
       }
    }
 

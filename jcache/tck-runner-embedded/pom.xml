@@ -134,13 +134,6 @@
                   <listener>${junitListener}</listener>
                </properties>
             </configuration>
-            <dependencies>
-               <dependency>
-                  <groupId>org.apache.maven.surefire</groupId>
-                  <artifactId>surefire-junit47</artifactId>
-                  <version>${version.maven.surefire}</version>
-               </dependency>
-            </dependencies>
          </plugin>
       </plugins>
    </build>

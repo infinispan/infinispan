@@ -1,21 +1,21 @@
 package org.infinispan.commons.util;
 
 import static org.infinispan.testing.Eventually.eventually;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.time.ControlledTimeService;
-import org.junit.AfterClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 
 public class ProgressTrackerTest {
 
    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-   @AfterClass
+   @AfterAll
    public static void stopExecutor() {
       executor.shutdown();
    }

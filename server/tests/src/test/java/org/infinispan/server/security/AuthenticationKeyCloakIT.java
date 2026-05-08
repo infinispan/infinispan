@@ -2,8 +2,8 @@ package org.infinispan.server.security;
 
 import org.infinispan.server.test.core.KeyCloakServerExtension;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.jupiter.InfinispanServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

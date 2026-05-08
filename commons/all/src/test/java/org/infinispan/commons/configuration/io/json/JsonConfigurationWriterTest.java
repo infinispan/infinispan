@@ -1,11 +1,11 @@
 package org.infinispan.commons.configuration.io.json;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.StringWriter;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

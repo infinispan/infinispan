@@ -50,7 +50,7 @@
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>${version.junit6}</version>
+                <version>${version.jupiter}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>

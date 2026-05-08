@@ -7,8 +7,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.StringConfiguration;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.jupiter.InfinispanServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

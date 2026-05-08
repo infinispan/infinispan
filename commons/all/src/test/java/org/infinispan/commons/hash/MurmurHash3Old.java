@@ -10,9 +10,9 @@ import com.google.errorprone.annotations.ThreadSafe;
  * "https://code.google.com/p/smhasher/source/browse/trunk/MurmurHash3.cpp"
  * >original in C</a>
  *
- * Only implementing x64 version, because this should always be faster on 64 bit
- * native processors, even 64 bit being ran with a 32 bit OS; this should also
- * be as fast or faster than the x86 version on some modern 32 bit processors.
+ * Only implementing x64 version, because this should always be faster on 64-bit
+ * native processors, even 64 bit being run with a 32-bit OS; this should also
+ * be as fast or faster than the x86 version on some modern 32-bit processors.
  *
  * @author Patrick McFarland
  * @see <a href="http://sites.google.com/site/murmurhash/">MurmurHash website</a>

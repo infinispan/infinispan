@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.TestUser;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 

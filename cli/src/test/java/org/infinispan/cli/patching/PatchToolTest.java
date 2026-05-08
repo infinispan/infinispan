@@ -1,9 +1,9 @@
 package org.infinispan.cli.patching;
 
 import static org.infinispan.cli.util.Utils.sha256;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -29,7 +29,7 @@ import java.util.Properties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.testing.Exceptions;
 import org.infinispan.testing.Testing;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -75,9 +75,9 @@ public class PatchToolTest {
       Exceptions.expectException(FileAlreadyExistsException.class, () -> patchTool.createPatch("", patch, v3, v1, v2));
 
       // Ensure the zip file does not contain the .patches directory IGNOREME.txt files
-      try (FileSystem zipfs  = FileSystems.newFileSystem(URI.create("jar:" + patch.toUri().toString()), Collections.emptyMap())) {
+      try (FileSystem zipfs = FileSystems.newFileSystem(URI.create("jar:" + patch.toUri().toString()), Collections.emptyMap())) {
          Path root = zipfs.getRootDirectories().iterator().next();
-         Files.walkFileTree(root, new SimpleFileVisitor<Path>()  {
+         Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                assertNotEquals("/.patches", dir.toString());
@@ -85,7 +85,7 @@ public class PatchToolTest {
             }
 
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)  {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                assertNotEquals("IGNOREME.txt", file.getFileName().toString());
                return FileVisitResult.CONTINUE;
             }
@@ -137,7 +137,7 @@ public class PatchToolTest {
 
       // Alter a configuration file on v1
       Path v1config = v1.resolve("server").resolve("conf").resolve("infinispan.xml");
-      try(BufferedWriter w = new BufferedWriter(new FileWriter(v1config.toFile(), true))) {
+      try (BufferedWriter w = new BufferedWriter(new FileWriter(v1config.toFile(), true))) {
          w.newLine();
          w.write("<!-- Some modification -->");
       }
@@ -150,7 +150,7 @@ public class PatchToolTest {
       out.reset();
 
       // Ensure that the file has not been replaced
-      assertEquals("Expecting SHA-256 of " + v1config +" to stay the same", v1sha256, sha256(v1config));
+      assertEquals(v1sha256, sha256(v1config), "Expecting SHA-256 of " + v1config + " to stay the same");
       // And that there is a new file next to it
       assertTrue(v1.resolve("server").resolve("conf").resolve("infinispan.xml-1.1.0.Final").toFile().exists());
    }

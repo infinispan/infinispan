@@ -1,11 +1,11 @@
 package org.infinispan.commons.util;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -14,30 +14,34 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.stream.Stream;
 
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * @author wburns
  * @since 9.0
  */
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("data")
 public class MutableIntSetTest {
-   @Parameterized.Parameters
-   public static Object[] data() {
-      return new Object[] {
+
+
+   public static Stream<IntSet> data() {
+      return Stream.of(
             new SmallIntSet(),
-            new ConcurrentSmallIntSet(64),
-      };
+            new ConcurrentSmallIntSet(64)
+      );
    }
 
-   @Parameterized.Parameter
+   @Parameter
    public IntSet intSet;
 
-   @After
+   @AfterEach
    public void after() {
       intSet.clear();
    }
@@ -493,9 +497,11 @@ public class MutableIntSetTest {
 
       IntConsumer consumer = results::add;
 
-      while (spliterator.tryAdvance(consumer)) { }
+      while (spliterator.tryAdvance(consumer)) {
+      }
 
-      while (split.tryAdvance(consumer)) { }
+      while (split.tryAdvance(consumer)) {
+      }
 
       assertEquals(Util.asSet(1, 4, 7), results);
    }
@@ -511,16 +517,16 @@ public class MutableIntSetTest {
       intSet.add(33);
 
       byte[] bytes = intSet.toBitSet();
-      byte[] expectedBytes = new byte[] { 8, 0, 1, 0, 14};
+      byte[] expectedBytes = new byte[]{8, 0, 1, 0, 14};
       if (bytes.length == expectedBytes.length) {
          assertArrayEquals(expectedBytes, bytes);
       } else {
          for (int i = 0; i < expectedBytes.length; ++i) {
-            assertEquals("Byte at pos: " + i + " didn't match", expectedBytes[i], bytes[i]);
+            assertEquals(expectedBytes[i], bytes[i], "Byte at pos: " + i + " didn't match");
          }
          // Any extra bytes should be all 0
          for (int i = expectedBytes.length; i < bytes.length; ++i) {
-            assertEquals("Byte at pos: " + i + " didn't match", 0, bytes[i]);
+            assertEquals(0, bytes[i], "Byte at pos: " + i + " didn't match");
          }
       }
    }

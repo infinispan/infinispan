@@ -16,7 +16,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
-import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.server.test.jupiter.InfinispanServer;
 import org.junit.jupiter.api.Test;
 
 /**

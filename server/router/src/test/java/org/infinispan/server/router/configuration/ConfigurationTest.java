@@ -9,7 +9,7 @@ import org.infinispan.server.router.configuration.builder.RouterConfigurationBui
 import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.RouteDestination;
 import org.infinispan.server.router.routes.RouteSource;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class ConfigurationTest {

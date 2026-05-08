@@ -1,9 +1,10 @@
 package org.infinispan.commons.dataconversion;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.testing.Exceptions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @since 9.2
@@ -32,9 +33,9 @@ public class MediaTypeTest {
       assertMediaTypeNoParams(appJson, "application", "json");
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testParsingMultipleSubType() {
-      MediaType.fromString("application/json/on");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("application/json/on"));
    }
 
    @Test
@@ -44,39 +45,39 @@ public class MediaTypeTest {
       Exceptions.expectException(EncodingException.class, () -> MediaType.fromString(";param=value"));
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testParsingNoSubType() {
-      MediaType.fromString("something");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("something"));
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testParsingNoSubType2() {
-      MediaType.fromString("application; charset=utf-8");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("application; charset=utf-8"));
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testParsingNull() {
-      MediaType.fromString(null);
+      assertThrows(EncodingException.class, () -> MediaType.fromString(null));
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testParsingWhitespaceInType() {
-      MediaType.fromString("application /json");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("application /json"));
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testParsingWhitespaceInSubtype() {
-      MediaType.fromString("application/ json");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("application/ json"));
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testParsingWhitespaceInTypeSubtype() {
-      MediaType.fromString("application  / json");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("application  / json"));
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testParsingWhitespaceInParamName() {
-      MediaType.fromString("application/json; charset =utf-8");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("application/json; charset =utf-8"));
    }
 
    @Test
@@ -139,14 +140,14 @@ public class MediaTypeTest {
       assertEquals(mediaType, MediaType.fromString(mediaType.toString()));
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testUnQuotedParamWithSpaces() {
-      MediaType mediaType = MediaType.fromString("application/json ; charset= UTF-8");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("application/json ; charset= UTF-8"));
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testWrongQuoting() {
-      MediaType.fromString("application/json;charset= \"UTF-8");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("application/json;charset= \"UTF-8"));
    }
 
    @Test
@@ -157,9 +158,9 @@ public class MediaTypeTest {
             new String[]{"UTF-8", "value1", "value2"});
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testMultipleParametersWrongSeparator() {
-      MediaType.fromString("application/json; charset=UTF-8; param1=value1, param2=value2");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("application/json; charset=UTF-8; param1=value1, param2=value2"));
    }
 
    @Test
@@ -168,9 +169,9 @@ public class MediaTypeTest {
       assertEquals(0.8, mediaType.getWeight(), 0.0);
    }
 
-   @Test(expected = EncodingException.class)
+   @Test
    public void testParseInvalidWeight() {
-      MediaType.fromString("application/json ; q=high");
+      assertThrows(EncodingException.class, () -> MediaType.fromString("application/json ; q=high"));
    }
 
    @Test

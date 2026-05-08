@@ -20,7 +20,6 @@
 
    <modules>
       <module>core</module>
-      <module>junit5</module>
       <module>testcontainers</module>
    </modules>
 </project>

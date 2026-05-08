@@ -4,7 +4,7 @@ import static org.infinispan.testing.Eventually.eventually;
 
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
-import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.server.test.jupiter.InfinispanServer;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.core.Future;

@@ -68,7 +68,7 @@
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.antlr4>4.13.2</version.antlr4>
-      <version.arquillian>1.8.1.Final</version.arquillian>
+      <version.arquillian>1.10.1.Final</version.arquillian>
       <version.awaitility>4.3.0</version.awaitility>
       <version.blockhound>1.0.16.RELEASE</version.blockhound>
       <version.bouncycastle>1.84</version.bouncycastle>
@@ -120,8 +120,7 @@
       <version.json-smart>2.6.0</version.json-smart>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
-      <version.junit5>5.14.3</version.junit5>
-      <version.junit6>6.0.3</version.junit6>
+      <version.jupiter>6.0.3</version.jupiter>
       <version.log4j>2.26.0</version.log4j>
       <!-- version.lucene is defined in the lucene profiles below -->
       <version.lucene9>9.12.3</version.lucene9>
@@ -178,7 +177,7 @@
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.6.0</version.checkstyle.maven-plugin>
-      <version.native.maven.plugin>0.11.5</version.native.maven.plugin>
+      <version.native.maven.plugin>1.1.0</version.native.maven.plugin>
       <version.maven>3.9.16</version.maven>
       <version.maven.antlr4>4.13.2</version.maven.antlr4>
       <version.maven.antrun>3.2.0</version.maven.antrun>

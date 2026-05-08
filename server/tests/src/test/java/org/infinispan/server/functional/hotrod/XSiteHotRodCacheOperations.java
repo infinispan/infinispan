@@ -42,7 +42,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.functional.XSiteIT;
 import org.infinispan.server.test.api.TestClientXSiteDriver;
-import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.server.test.jupiter.InfinispanServer;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.junit.jupiter.api.Test;

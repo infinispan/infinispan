@@ -97,13 +97,13 @@
          <groupId>org.hdrhistogram</groupId>
       </dependency>
       <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-testing</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-testing</artifactId>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-api</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -164,7 +164,7 @@
                <disableXmlReport>false</disableXmlReport>
                <properties combine.self="override">
                   <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${junitListener}</listener>
+                  <listener>${jupiterListener}</listener>
                </properties>
             </configuration>
          </plugin>

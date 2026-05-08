@@ -65,6 +65,13 @@ public class TestSuiteProgress {
       log.info(message, exception);
    }
 
+   public void testAssumptionFailed(String name, String reason) {
+      skipped.incrementAndGet();
+      String message = "Test assumption failed: " + name;
+      progress(YELLOW, message);
+      log.info(message);
+   }
+
    public void configurationStarted(String name) {
       log.debug("Test configuration started: " + name);
    }

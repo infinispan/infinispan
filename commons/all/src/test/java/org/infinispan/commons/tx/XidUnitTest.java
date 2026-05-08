@@ -1,5 +1,9 @@
 package org.infinispan.commons.tx;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,8 +17,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Pedro Ruivo
@@ -30,44 +33,40 @@ public class XidUnitTest {
       GlobalContextInitializer.INSTANCE.register(ctx);
    }
 
-   @Test(expected = IllegalArgumentException.class)
+   @Test
    public void testInvalidGlobalTransaction() {
       long seed = System.currentTimeMillis();
       log.infof("[testInvalidGlobalTransaction] seed: %s", seed);
       Random random = new Random(seed);
-      Xid xid = XidImpl.create(random.nextInt(), Util.EMPTY_BYTE_ARRAY, new byte[]{0});
-      log.debugf("Invalid XID: %s", xid);
+      assertThrows(IllegalArgumentException.class, () -> XidImpl.create(random.nextInt(), Util.EMPTY_BYTE_ARRAY, new byte[]{0}));
    }
 
-   @Test(expected = IllegalArgumentException.class)
+   @Test
    public void testInvalidGlobalTransaction2() {
       long seed = System.currentTimeMillis();
       log.infof("[testInvalidGlobalTransaction2] seed: %s", seed);
       Random random = new Random(seed);
       byte[] globalTx = new byte[65]; //max is 64
       random.nextBytes(globalTx);
-      Xid xid = XidImpl.create(random.nextInt(), globalTx, new byte[]{0});
-      log.debugf("Invalid XID: %s", xid);
+      assertThrows(IllegalArgumentException.class, () -> XidImpl.create(random.nextInt(), globalTx, new byte[]{0}));
    }
 
-   @Test(expected = IllegalArgumentException.class)
+   @Test
    public void testInvalidBranch() {
       long seed = System.currentTimeMillis();
       log.infof("[testInvalidBranch] seed: %s", seed);
       Random random = new Random(seed);
-      Xid xid = XidImpl.create(random.nextInt(), new byte[]{0}, Util.EMPTY_BYTE_ARRAY);
-      log.debugf("Invalid XID: %s", xid);
+      assertThrows(IllegalArgumentException.class, () -> XidImpl.create(random.nextInt(), new byte[]{0}, Util.EMPTY_BYTE_ARRAY));
    }
 
-   @Test(expected = IllegalArgumentException.class)
+   @Test
    public void testInvalidBranch2() {
       long seed = System.currentTimeMillis();
       log.infof("[testInvalidBranch2] seed: %s", seed);
       Random random = new Random(seed);
       byte[] branch = new byte[65]; //max is 64
       random.nextBytes(branch);
-      Xid xid = XidImpl.create(random.nextInt(), new byte[]{0}, branch);
-      log.debugf("Invalid XID: %s", xid);
+      assertThrows(IllegalArgumentException.class, () -> XidImpl.create(random.nextInt(), new byte[]{0}, branch));
    }
 
    @Test
@@ -84,13 +83,13 @@ public class XidUnitTest {
       Xid xid = XidImpl.create(formatId, tx, branch);
       log.debugf("XID: %s", xid);
 
-      Assert.assertEquals(formatId, xid.getFormatId());
-      Assert.assertArrayEquals(tx, xid.getGlobalTransactionId());
-      Assert.assertArrayEquals(branch, xid.getBranchQualifier());
+      assertEquals(formatId, xid.getFormatId());
+      assertArrayEquals(tx, xid.getGlobalTransactionId());
+      assertArrayEquals(branch, xid.getBranchQualifier());
 
       Xid sameXid = XidImpl.create(formatId, tx, branch);
       log.debugf("same XID: %s", sameXid);
-      Assert.assertEquals(xid, sameXid);
+      assertEquals(xid, sameXid);
    }
 
    @Test
@@ -107,13 +106,13 @@ public class XidUnitTest {
       Xid xid = XidImpl.create(formatId, tx, branch);
 
       log.debugf("XID: %s", xid);
-      Assert.assertEquals(formatId, xid.getFormatId());
-      Assert.assertArrayEquals(tx, xid.getGlobalTransactionId());
-      Assert.assertArrayEquals(branch, xid.getBranchQualifier());
+      assertEquals(formatId, xid.getFormatId());
+      assertArrayEquals(tx, xid.getGlobalTransactionId());
+      assertArrayEquals(branch, xid.getBranchQualifier());
 
       Xid sameXid = XidImpl.create(formatId, tx, branch);
       log.debugf("same XID: %s", sameXid);
-      Assert.assertEquals(xid, sameXid);
+      assertEquals(xid, sameXid);
    }
 
    @Test
@@ -151,7 +150,7 @@ public class XidUnitTest {
       try (ByteArrayInputStream bis = new ByteArrayInputStream(marshalled)) {
          XidImpl otherXid = ProtobufUtil.fromWrappedStream(ctx, bis);
          log.debugf("other XID: %s", xid);
-         Assert.assertEquals(xid, otherXid);
+         assertEquals(xid, otherXid);
       }
    }
 }

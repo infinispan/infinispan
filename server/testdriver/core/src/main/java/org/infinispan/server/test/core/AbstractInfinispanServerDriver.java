@@ -1,5 +1,7 @@
 package org.infinispan.server.test.core;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -37,7 +39,6 @@ import org.infinispan.testing.Exceptions;
 import org.infinispan.testing.Testing;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
-import org.junit.Assume;
 
 import net.spy.memcached.ConnectionFactoryBuilder;
 
@@ -106,7 +107,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
          // if the feature isn't enabled, the test will be skipped
          Features features = new Features(this.getClass().getClassLoader());
          for (String feature : configuration.getFeatures()) {
-            Assume.assumeTrue(String.format("%s is disabled", feature), features.isAvailable(feature));
+            assumeTrue(features.isAvailable(feature), feature + " is disabled");
          }
       }
 
