@@ -1,9 +1,10 @@
 package org.infinispan.commons.hash;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.Random;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Dan Berindei
@@ -27,6 +28,6 @@ public class MurmurHash3StringCompatTest {
    private void testString(String s) {
       int h1 = MurmurHash3Old.getInstance().hash(s);
       int h2 = MurmurHash3.getInstance().hash(s);
-      Assert.assertEquals(h1, h2);
+      assertEquals(h1, h2);
    }
 }

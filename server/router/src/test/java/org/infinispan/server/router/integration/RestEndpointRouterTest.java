@@ -23,10 +23,10 @@ import org.infinispan.server.router.routes.rest.RestRouteSource;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.utils.RestTestingUtil;
 import org.infinispan.testing.TestResourceTracker;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class RestEndpointRouterTest {
 
@@ -35,17 +35,17 @@ public class RestEndpointRouterTest {
     private Router router;
     private RestClient restClient;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         TestResourceTracker.testStarted(MethodHandles.lookup().lookupClass().toString());
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         TestResourceTracker.testFinished(MethodHandles.lookup().lookupClass().toString());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Util.close(restClient);
         router.stop();

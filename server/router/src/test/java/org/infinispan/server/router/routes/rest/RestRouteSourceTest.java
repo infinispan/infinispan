@@ -1,22 +1,24 @@
 package org.infinispan.server.router.routes.rest;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.junit.jupiter.api.Test;
 
 public class RestRouteSourceTest {
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldValidatePath() {
-        new RestRouteSource(null).validate();
+       assertThrows(IllegalArgumentException.class, () -> new RestRouteSource(null).validate());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldValidateWithWhiteCharacters() {
-        new RestRouteSource("12312 234").validate();
+       assertThrows(IllegalArgumentException.class, () -> new RestRouteSource("12312 234").validate());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldValidateStartingSlash() {
-        new RestRouteSource("/test").validate();
+       assertThrows(IllegalArgumentException.class, () -> new RestRouteSource("/test").validate());
     }
 
     @Test

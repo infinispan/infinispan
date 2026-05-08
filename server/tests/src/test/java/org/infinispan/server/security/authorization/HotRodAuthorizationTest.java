@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,9 +41,8 @@ import org.infinispan.protostream.schema.Schema;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.testing.Exceptions;
-import org.infinispan.testing.skip.SkipJunit;
 import org.junit.jupiter.api.Test;
 
 abstract class HotRodAuthorizationTest {
@@ -170,7 +170,7 @@ abstract class HotRodAuthorizationTest {
 
    @Test
    public void testScriptUpload() {
-      SkipJunit.skipCondition(() -> ext.getServerDriver().getConfiguration().runMode() != ServerRunMode.CONTAINER);
+      assumeTrue(() -> ext.getServerDriver().getConfiguration().runMode() != ServerRunMode.CONTAINER);
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
          RemoteCacheManager remoteCacheManager = ext.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
          ext.addScript(remoteCacheManager, "scripts/test.js");
@@ -194,7 +194,7 @@ abstract class HotRodAuthorizationTest {
 
    @Test
    public void testExecScripts() {
-      SkipJunit.skipCondition(() -> ext.getServerDriver().getConfiguration().runMode() != ServerRunMode.CONTAINER);
+      assumeTrue(() -> ext.getServerDriver().getConfiguration().runMode() != ServerRunMode.CONTAINER);
       RemoteCache<String, String> cache = ext.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).create();
       String scriptName = ext.addScript(cache.getRemoteCacheContainer(), "scripts/test.js");
       Map<String, String> params = new HashMap<>();

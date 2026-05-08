@@ -1,9 +1,11 @@
 package org.infinispan.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TimedThreadDumpTest {
 
@@ -13,7 +15,7 @@ public class TimedThreadDumpTest {
 
    @Test
    public void dumpThreadsOnlyOnce() {
-      Assert.assertTrue(TimedThreadDump.generateThreadDump());
-      Assert.assertFalse(TimedThreadDump.generateThreadDump());
+      assertTrue(TimedThreadDump.generateThreadDump());
+      assertFalse(TimedThreadDump.generateThreadDump());
    }
 }

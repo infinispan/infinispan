@@ -292,11 +292,6 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-testdriver-junit5</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring-common</artifactId>
             <version>${project.version}</version>
          </dependency>

@@ -1,10 +1,11 @@
 package org.infinispan.server.test.core;
 
-import org.junit.AssumptionViolatedException;
+import org.opentest4j.TestAbortedException;
 
 public class TestSetupUtil {
 
-   private TestSetupUtil() { }
+   private TestSetupUtil() {
+   }
 
    /**
     * Determines whether an exception represents a violated test assumption.
@@ -15,15 +16,14 @@ public class TestSetupUtil {
     * </p>
     *
     * @param t the throwable to examine, typically caught during test setup
-    * @return {@code true} if the exception chain contains an {@link AssumptionViolatedException},
-    *         indicating the test should be skipped rather than failed
+    * @return {@code true} if the exception chain contains an {@link       return cause instanceof TestAbortedException;},
+    * indicating the test should be skipped rather than failed
     */
 
    public static boolean isAssumptionViolated(Throwable t) {
       Throwable cause = t;
-      while (!(cause instanceof AssumptionViolatedException) && cause.getCause() != null)
-         cause = cause.getCause();
+      while (!(cause instanceof TestAbortedException) && cause.getCause() != null) cause = cause.getCause();
 
-      return cause instanceof AssumptionViolatedException;
+      return cause instanceof TestAbortedException;
    }
 }

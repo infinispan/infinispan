@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.hash.CRC16;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class UtilTest {
 

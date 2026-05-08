@@ -29,9 +29,9 @@ public class InfinispanRemoteCacheManagerAutoConfiguration {
    @ConditionalOnMissingBean(type = {"org.infinispan.spring.remote.provider.SpringRemoteCacheManager", "org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean"})
    public SpringRemoteCacheManager springRemoteCacheManager(RemoteCacheManager remoteCacheManager) {
       InfinispanRemoteConfigurationProperties infinispanProperties = context.getBean(InfinispanRemoteConfigurationProperties.class);
-      long readTimeout =  infinispanProperties == null ? 0L : infinispanProperties.getReadTimeout();
-      long writeTimeout = infinispanProperties == null ? 0L : infinispanProperties.getWriteTimeout();
-      boolean reactive = infinispanProperties == null ? false : infinispanProperties.isReactive();
+      long readTimeout = infinispanProperties.getReadTimeout();
+      long writeTimeout = infinispanProperties.getWriteTimeout();
+      boolean reactive = infinispanProperties.isReactive();
       return new SpringRemoteCacheManager(remoteCacheManager, reactive, readTimeout, writeTimeout);
    }
 }

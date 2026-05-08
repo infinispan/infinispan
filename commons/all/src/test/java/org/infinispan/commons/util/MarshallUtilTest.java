@@ -1,17 +1,19 @@
 package org.infinispan.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 import java.util.UUID;
 
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link org.infinispan.commons.marshall.MarshallUtil}
@@ -32,17 +34,17 @@ public class MarshallUtilTest {
    private static void checkIntAndByteArray(int i, int bytesExpected, ObjectInputOutput io) throws IOException {
       io.reset();
       MarshallUtil.marshallSize(io, i);
-      Assert.assertEquals("Error for i=" + i, bytesExpected, io.buffer.size());
-      Assert.assertEquals("Error for i=" + i, i, MarshallUtil.unmarshallSize(io));
-      Assert.assertEquals("Error for i=" + i, 0, io.buffer.size());
+      assertEquals(bytesExpected, io.buffer.size(), "Error for i=" + i);
+      assertEquals(i, MarshallUtil.unmarshallSize(io), "Error for i=" + i);
+      assertEquals(0, io.buffer.size(), "Error for i=" + i);
    }
 
    private static void checkNegativeInt(int i, ObjectInputOutput io) throws IOException {
       io.reset();
       MarshallUtil.marshallSize(io, i);
-      Assert.assertEquals("Error for i=" + i, 1, io.buffer.size());
-      Assert.assertEquals("Error for i=" + i, -1, MarshallUtil.unmarshallSize(io));
-      Assert.assertEquals("Error for i=" + i, 0, io.buffer.size());
+      assertEquals(1, io.buffer.size(), "Error for i=" + i);
+      assertEquals(-1, MarshallUtil.unmarshallSize(io), "Error for i=" + i);
+      assertEquals(0, io.buffer.size(), "Error for i=" + i);
    }
 
    @Test
@@ -81,7 +83,7 @@ public class MarshallUtilTest {
          }
          io.reset();
          MarshallUtil.marshallSize(io, v);
-         Assert.assertEquals("Error for v=" + v, v, MarshallUtil.unmarshallSize(io));
+         assertEquals(v, MarshallUtil.unmarshallSize(io), "Error for v=" + v);
       }
    }
 
@@ -99,7 +101,7 @@ public class MarshallUtilTest {
          }
          io.reset();
          MarshallUtil.marshallSize(io, v);
-         Assert.assertEquals("Error for v=" + v, -1, MarshallUtil.unmarshallSize(io));
+         assertEquals(-1, MarshallUtil.unmarshallSize(io), "Error for v=" + v);
       }
    }
 
@@ -107,14 +109,14 @@ public class MarshallUtilTest {
    public void testEnum() throws IOException {
       ObjectInputOutput io = new ObjectInputOutput();
       MarshallUtil.marshallEnum(null, io);
-      Assert.assertNull(MarshallUtil.unmarshallEnum(io, ordinal -> TestEnum.values()[ordinal]));
-      Assert.assertEquals(0, io.buffer.size());
+      assertNull(MarshallUtil.unmarshallEnum(io, ordinal -> TestEnum.values()[ordinal]));
+      assertEquals(0, io.buffer.size());
 
       for (TestEnum e : TestEnum.values()) {
          io.reset();
          MarshallUtil.marshallEnum(e, io);
-         Assert.assertEquals(e, MarshallUtil.unmarshallEnum(io, ordinal -> TestEnum.values()[ordinal]));
-         Assert.assertEquals(0, io.buffer.size());
+         assertEquals(e, MarshallUtil.unmarshallEnum(io, ordinal -> TestEnum.values()[ordinal]));
+         assertEquals(0, io.buffer.size());
       }
    }
 
@@ -122,23 +124,23 @@ public class MarshallUtilTest {
    public void testUUID() throws IOException {
       ObjectInputOutput io = new ObjectInputOutput();
       MarshallUtil.marshallUUID(null, io, true);
-      Assert.assertNull(MarshallUtil.unmarshallUUID(io, true));
-      Assert.assertEquals(0, io.buffer.size());
+      assertNull(MarshallUtil.unmarshallUUID(io, true));
+      assertEquals(0, io.buffer.size());
 
       for (int i = 0; i < NR_RANDOM; ++i) {
          io.reset();
          UUID uuid = Util.threadLocalRandomUUID();
          MarshallUtil.marshallUUID(uuid, io, false);
-         Assert.assertEquals(uuid, MarshallUtil.unmarshallUUID(io, false));
-         Assert.assertEquals(0, io.buffer.size());
+         assertEquals(uuid, MarshallUtil.unmarshallUUID(io, false));
+         assertEquals(0, io.buffer.size());
       }
 
       for (int i = 0; i < NR_RANDOM; ++i) {
          io.reset();
          UUID uuid = Util.threadLocalRandomUUID();
          MarshallUtil.marshallUUID(uuid, io, true);
-         Assert.assertEquals(uuid, MarshallUtil.unmarshallUUID(io, true));
-         Assert.assertEquals(0, io.buffer.size());
+         assertEquals(uuid, MarshallUtil.unmarshallUUID(io, true));
+         assertEquals(0, io.buffer.size());
       }
    }
 
@@ -146,20 +148,20 @@ public class MarshallUtilTest {
    public void testArray() throws IOException, ClassNotFoundException {
       ObjectInputOutput io = new ObjectInputOutput();
       MarshallUtil.marshallArray(null, io);
-      Assert.assertNull(MarshallUtil.unmarshallArray(io, null));
-      Assert.assertEquals(0, io.buffer.size());
+      assertNull(MarshallUtil.unmarshallArray(io, null));
+      assertEquals(0, io.buffer.size());
       io.reset();
 
       String[] array = new String[0];
       MarshallUtil.marshallArray(array, io);
-      Assert.assertTrue(Arrays.equals(array, MarshallUtil.unmarshallArray(io, Util::stringArray)));
-      Assert.assertEquals(0, io.buffer.size());
+      assertArrayEquals(array, MarshallUtil.unmarshallArray(io, Util::stringArray));
+      assertEquals(0, io.buffer.size());
       io.reset();
 
       array = new String[] {"a", "b", "c"};
       MarshallUtil.marshallArray(array, io);
-      Assert.assertTrue(Arrays.equals(array, MarshallUtil.unmarshallArray(io, Util::stringArray)));
-      Assert.assertEquals(0, io.buffer.size());
+      assertArrayEquals(array, MarshallUtil.unmarshallArray(io, Util::stringArray));
+      assertEquals(0, io.buffer.size());
       io.reset();
    }
 
@@ -167,20 +169,20 @@ public class MarshallUtilTest {
    public void testByteArray() throws IOException, ClassNotFoundException {
       ObjectInputOutput io = new ObjectInputOutput();
       MarshallUtil.marshallByteArray(null, io);
-      Assert.assertNull(MarshallUtil.unmarshallByteArray(io));
-      Assert.assertEquals(0, io.buffer.size());
+      assertNull(MarshallUtil.unmarshallByteArray(io));
+      assertEquals(0, io.buffer.size());
       io.reset();
 
       byte[] array = Util.EMPTY_BYTE_ARRAY;
       MarshallUtil.marshallByteArray(array, io);
-      Assert.assertTrue(Arrays.equals(array, MarshallUtil.unmarshallByteArray(io)));
-      Assert.assertEquals(0, io.buffer.size());
+      assertArrayEquals(array, MarshallUtil.unmarshallByteArray(io));
+      assertEquals(0, io.buffer.size());
       io.reset();
 
       array = new byte[] {1, 2, 3};
       MarshallUtil.marshallByteArray(array, io);
-      Assert.assertTrue(Arrays.equals(array, MarshallUtil.unmarshallByteArray(io)));
-      Assert.assertEquals(0, io.buffer.size());
+      assertArrayEquals(array, MarshallUtil.unmarshallByteArray(io));
+      assertEquals(0, io.buffer.size());
       io.reset();
 
    }
@@ -280,7 +282,7 @@ public class MarshallUtilTest {
       @Override
       public void readFully(byte[] b) throws IOException {
          byte[] array = (byte[]) buffer.poll();
-         Assert.assertEquals(array.length, b.length);
+         assertEquals(array.length, b.length);
          System.arraycopy(array, 0, b, 0, b.length);
       }
 

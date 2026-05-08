@@ -1,8 +1,8 @@
 package org.infinispan.server.loader;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,8 +17,8 @@ import java.util.Properties;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -29,7 +29,7 @@ public class LoaderTest {
    private static Path lib2;
    private static Path lib3;
 
-   @BeforeClass
+   @BeforeAll
    public static void prepareLibs() throws IOException {
       Path path = Paths.get(System.getProperty("build.directory"), "test-classes", "server");
       lib1 = path.resolve("lib1");
@@ -62,9 +62,9 @@ public class LoaderTest {
       Loader.run(new String[]{LoaderTest.class.getName(), "-P", propertyFile.toAbsolutePath().toString()}, properties);
    }
 
-   public static void main(String[] args) {
+   static void main(String[] args) {
       ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-      assertTrue(contextClassLoader instanceof URLClassLoader);
+      assertInstanceOf(URLClassLoader.class, contextClassLoader);
       try (InputStream is = contextClassLoader.getResourceAsStream("test.properties")) {
          Properties properties = new Properties();
          properties.load(is);

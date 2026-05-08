@@ -1,19 +1,21 @@
 package org.infinispan.server.router.routes.hotrod;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import javax.net.ssl.SSLContext;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SniNettyRouteSourceTest {
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldValidateSniHostName() throws Exception {
-        new SniNettyRouteSource(null, SSLContext.getDefault()).validate();
+       assertThrows(IllegalArgumentException.class, () -> new SniNettyRouteSource(null, SSLContext.getDefault()).validate());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldValidateSSLContext() throws Exception {
-        new SniNettyRouteSource("test", null).validate();
+       assertThrows(IllegalArgumentException.class, () -> new SniNettyRouteSource("test", null).validate());
     }
 
 }

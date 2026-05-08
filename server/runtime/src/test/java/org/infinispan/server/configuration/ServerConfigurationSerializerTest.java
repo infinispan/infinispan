@@ -4,7 +4,7 @@ import static org.infinispan.server.configuration.ServerConfigurationParserTest.
 import static org.infinispan.server.configuration.ServerConfigurationParserTest.SECRET;
 import static org.infinispan.server.configuration.ServerConfigurationParserTest.createCredentialStore;
 import static org.infinispan.server.configuration.ServerConfigurationParserTest.getConfigPath;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -21,7 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -39,21 +39,23 @@ import org.infinispan.server.configuration.endpoint.EndpointConfiguration;
 import org.infinispan.server.security.KeyStoreUtils;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * @since 14.0
  **/
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("data")
 public class ServerConfigurationSerializerTest {
    static final List<MediaType> types = Arrays.asList(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, MediaType.APPLICATION_YAML);
    static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final Path config;
    private final MediaType type;
-   @BeforeClass
+
+   @BeforeAll
    public static void setup() throws GeneralSecurityException, IOException {
       KeyStoreUtils.generateSelfSignedCertificate(getConfigPath().resolve("ServerConfigurationSerializerTest-keystore.pfx").toString(), null, PASSWORD,
             PASSWORD, "server", "localhost");
@@ -61,16 +63,17 @@ public class ServerConfigurationSerializerTest {
       createCredentialStore(getConfigPath().resolve("ServerConfigurationSerializerTest-credentials.pfx"), SECRET);
    }
 
-   @Parameterized.Parameters(name = "{0} > [{2}]")
-   public static Iterable<Object[]> data() throws IOException {
+   public record Params(Path name, Path config, MediaType type) {}
+
+   public static Stream<Params> data() throws IOException {
       Path configDir = Paths.get(System.getProperty("build.directory"), "test-classes", "configuration", "versions");
       createCredentialStore(configDir.getParent().resolve("ServerConfigurationSerializerTest-credentials.pfx"), SECRET);
-      return Files.list(configDir).flatMap(p -> types.stream().map(t -> new Object[]{p.getFileName(), p, t})).collect(Collectors.toList());
+      return Files.list(configDir).flatMap(p -> types.stream().map(t -> new Params(p.getFileName(), p, t)));
    }
 
-   public ServerConfigurationSerializerTest(Path name, Path config, MediaType type) {
-      this.config = config;
-      this.type = type;
+   public ServerConfigurationSerializerTest(Params params) {
+      this.config = params.config;
+      this.type = params.type;
    }
 
    @Test
@@ -142,7 +145,7 @@ public class ServerConfigurationSerializerTest {
          List<String> exclusions = exclude != null ? Arrays.asList(exclude) : Collections.emptyList();
          for (Attribute<?> attribute : before.attributes()) {
             if (!exclusions.contains(attribute.name())) {
-               assertEquals("Configuration " + name, attribute, after.attribute(attribute.name()));
+               assertEquals(attribute, after.attribute(attribute.name()), "Configuration " + name);
             }
          }
       }

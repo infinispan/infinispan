@@ -78,7 +78,7 @@
                <disableXmlReport>false</disableXmlReport>
                <properties combine.self="override">
                   <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${junitListener}</listener>
+                  <listener>${jupiterListener}</listener>
                </properties>
             </configuration>
          </plugin>

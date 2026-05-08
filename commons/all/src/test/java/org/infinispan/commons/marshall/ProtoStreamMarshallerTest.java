@@ -1,15 +1,15 @@
 package org.infinispan.commons.marshall;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.Date;
 
 import org.infinispan.commons.util.Util;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * A simple smoke test to ensure BaseProtoStreamMarshaller is able to handle primitive types besides actual protobuf

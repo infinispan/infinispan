@@ -39,10 +39,10 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.TestResourceTracker;
 import org.infinispan.testing.security.TestCertificates;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import io.netty.util.CharsetUtil;
 
@@ -55,17 +55,17 @@ public class SinglePortTest {
     private RestClient httpClient;
     private RemoteCacheManager hotRodClient;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         TestResourceTracker.testStarted(MethodHandles.lookup().lookupClass().toString());
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         TestResourceTracker.testFinished(MethodHandles.lookup().lookupClass().toString());
     }
 
-    @After
+    @AfterEach
     public void afterMethod() throws Exception {
         if (httpClient != null) {
             httpClient.close();

@@ -5,10 +5,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookup;
@@ -20,9 +20,10 @@ import org.infinispan.server.Server;
 import org.infinispan.server.security.ElytronPasswordProviderSupplier;
 import org.infinispan.server.security.KeyStoreUtils;
 import org.infinispan.testing.Exceptions;
-import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.CredentialStore;
@@ -30,10 +31,13 @@ import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("mediaTypes")
 public abstract class AbstractConfigurationParserTest {
 
-   protected final MediaType type;
+   @Parameter
+   protected MediaType type;
+
    public static final char[] PASSWORD = "password".toCharArray();
    public static final char[] SECRET = "secret".toCharArray();
 
@@ -41,20 +45,15 @@ public abstract class AbstractConfigurationParserTest {
    protected static final String TRUSTSTORE_FILE_NAME = "ServerConfigurationParserTest-truststore.pfx";
    protected static final String CREDENTIALS_FILE_NAME = "ServerConfigurationParserTest-credentials.pfx";
 
-   protected AbstractConfigurationParserTest(MediaType type) {
-      this.type = type;
-   }
-
-   @BeforeClass
+   @BeforeAll
    public static void setup() throws Exception {
       KeyStoreUtils.generateSelfSignedCertificate(pathToKeystore(), null, PASSWORD, PASSWORD, "server", "localhost");
       KeyStoreUtils.generateEmptyKeyStore(getConfigPath().resolve(TRUSTSTORE_FILE_NAME).toString(), SECRET);
       createCredentialStore(getConfigPath().resolve(CREDENTIALS_FILE_NAME), SECRET);
    }
 
-   @Parameterized.Parameters(name = "{0}")
-   public static Iterable<MediaType> mediaTypes() {
-      return Arrays.asList(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, MediaType.APPLICATION_YAML);
+   public static Stream<MediaType> mediaTypes() {
+      return Stream.of(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, MediaType.APPLICATION_YAML);
    }
 
    protected ServerConfiguration loadAndParseConfiguration() throws IOException {

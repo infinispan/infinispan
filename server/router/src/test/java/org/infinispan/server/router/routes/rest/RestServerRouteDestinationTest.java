@@ -1,18 +1,20 @@
 package org.infinispan.server.router.routes.rest;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.infinispan.rest.RestServer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RestServerRouteDestinationTest {
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void shouldValidateName() {
-        new RestServerRouteDestination(null, new RestServer());
+       assertThrows(NullPointerException.class, () -> new RestServerRouteDestination(null, new RestServer()));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void shouldValidateRestResource() {
-        new RestServerRouteDestination("test", null);
+       assertThrows(NullPointerException.class, () -> new RestServerRouteDestination("test", null));
     }
 
 }

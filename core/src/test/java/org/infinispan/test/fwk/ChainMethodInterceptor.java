@@ -6,10 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.IMethodInstance;
 import org.testng.IMethodInterceptor;
 import org.testng.ITestContext;
@@ -31,7 +28,6 @@ import org.testng.internal.MethodInstance;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class ChainMethodInterceptor implements IMethodInterceptor {
-   private static final Log log = LogFactory.getLog(ChainMethodInterceptor.class);
 
    @Override
    public List<IMethodInstance> intercept(List<IMethodInstance> methods, ITestContext context) {
@@ -49,7 +45,7 @@ public class ChainMethodInterceptor implements IMethodInterceptor {
                } catch (Exception e) {
                   throw new IllegalStateException("Cannot construct filter", e);
                }
-            }).collect(Collectors.toList());
+            }).toList();
             ArrayList<IMethodInstance> filteredMethods = new ArrayList<>(methods.size());
 METHODS:
             for (IMethodInstance m : methods) {

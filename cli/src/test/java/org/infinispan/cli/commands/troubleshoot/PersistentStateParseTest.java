@@ -1,9 +1,9 @@
 package org.infinispan.cli.commands.troubleshoot;
 
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -19,26 +19,22 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.FileSystemLock;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.testing.Testing;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class PersistentStateParseTest {
 
    private static final String SAMPLE_STATE_CONTENT = "key=content";
 
-   @Rule
-   public TestName name = new TestName();
-
    @Test
-   public void testListAllStates() throws IOException {
+   public void testListAllStates(TestInfo testInfo) throws IOException {
       File workingDir = new File(Testing.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
       properties.put("cli.dir", workingDir.getAbsolutePath());
       String persistentStateName = UUID.randomUUID().toString();
-      Path p = createPersistentState(name.getMethodName(), persistentStateName);
+      Path p = createPersistentState(testInfo.getTestMethod().get().getName(), persistentStateName);
 
       AeshTestShell shell = new AeshTestShell();
       int exit = CLI.main(shell, properties, "troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString());
@@ -47,14 +43,14 @@ public class PersistentStateParseTest {
    }
 
    @Test
-   public void showStateContents() throws IOException {
+   public void showStateContents(TestInfo testInfo) throws IOException {
       File workingDir = new File(Testing.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
       properties.put("cli.dir", workingDir.getAbsolutePath());
       String persistentStateName = UUID.randomUUID().toString();
-      Path p = createPersistentState(name.getMethodName(), persistentStateName);
+      Path p = createPersistentState(testInfo.getTestMethod().get().getName(), persistentStateName);
 
       AeshTestShell shell = new AeshTestShell();
       int exit = CLI.main(shell, properties, "troubleshoot", "persistent-state", p.toAbsolutePath().getParent().toString(), "--show", persistentStateName);
@@ -63,14 +59,14 @@ public class PersistentStateParseTest {
    }
 
    @Test
-   public void testSuccessfulDeleteScope() throws IOException {
+   public void testSuccessfulDeleteScope(TestInfo testInfo) throws IOException {
       File workingDir = new File(Testing.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
       properties.put("cli.dir", workingDir.getAbsolutePath());
       String persistentStateName = UUID.randomUUID().toString();
-      Path p = createPersistentState(name.getMethodName(), persistentStateName);
+      Path p = createPersistentState(testInfo.getTestMethod().get().getName(), persistentStateName);
 
       // Assert the file exists before submitting command.
       assertTrue(p.toFile().exists());
@@ -85,14 +81,14 @@ public class PersistentStateParseTest {
    }
 
    @Test
-   public void testFailedDeleteOnGlobalLock() throws IOException {
+   public void testFailedDeleteOnGlobalLock(TestInfo testInfo) throws IOException {
       File workingDir = new File(Testing.tmpDirectory(PersistentStateParseTest.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
       Properties properties = new Properties(System.getProperties());
       properties.put("cli.dir", workingDir.getAbsolutePath());
       String persistentStateName = UUID.randomUUID().toString();
-      Path p = createPersistentState(name.getMethodName(), persistentStateName);
+      Path p = createPersistentState(testInfo.getTestMethod().get().getName(), persistentStateName);
 
       // Assert the file exists before submitting command.
       assertTrue(p.toFile().exists());

@@ -17,10 +17,10 @@ import org.infinispan.server.router.routes.hotrod.SniNettyRouteSource;
 import org.infinispan.server.router.utils.HotRodClientTestingUtil;
 import org.infinispan.testing.TestResourceTracker;
 import org.infinispan.testing.security.TestCertificates;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class ProtocolServerEndpointRouterTest {
     private HotRodServer hotrodServer1;
@@ -29,17 +29,17 @@ public class ProtocolServerEndpointRouterTest {
     private RemoteCacheManager hotrod1Client;
     private RemoteCacheManager hotrod2Client;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         TestResourceTracker.testStarted(ProtocolServerEndpointRouterTest.class.getName());
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         TestResourceTracker.testFinished(ProtocolServerEndpointRouterTest.class.getName());
     }
 
-    @After
+    @AfterEach
     public void afterMethod() {
         if (router != null) {
             router.stop();

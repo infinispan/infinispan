@@ -2,10 +2,10 @@ package org.infinispan.query.distributed;
 
 
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;

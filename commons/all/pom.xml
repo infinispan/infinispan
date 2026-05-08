@@ -83,8 +83,13 @@
 
       <!-- Test dependencies -->
       <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-api</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-params</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -186,10 +191,6 @@
                <groups combine.self="override">${defaultJUnitGroups}</groups>
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <disableXmlReport>false</disableXmlReport>
-               <properties combine.self="override">
-                  <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${junitListener}</listener>
-               </properties>
                <excludes>
                   <exclude>**/MemoryMonitorLowMemoryTest.java</exclude>
                </excludes>
@@ -211,13 +212,6 @@
                   </configuration>
                </execution>
             </executions>
-            <dependencies>
-               <dependency>
-                  <groupId>org.apache.maven.surefire</groupId>
-                  <artifactId>surefire-junit47</artifactId>
-                  <version>${version.maven.surefire}</version>
-               </dependency>
-            </dependencies>
          </plugin>
          <plugin>
             <groupId>org.infinispan.protostream</groupId>

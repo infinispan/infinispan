@@ -1,14 +1,14 @@
 package org.infinispan.commons.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class HashMapTest {
    @Test
@@ -31,7 +31,7 @@ public class HashMapTest {
          } while (map.containsKey(key));
          Integer value = random.nextInt();
          testedMap.put(key, value);
-         assertEquals("Contents differs with " + (i + 1) + " entries", value, testedMap.get(key));
+         assertEquals(value, testedMap.get(key), "Contents differs with " + (i + 1) + " entries");
          assertEquals(i + 1, testedMap.size());
          map.put(key, value);
          for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
@@ -73,7 +73,7 @@ public class HashMapTest {
             Integer value = random.nextInt();
             keys[i] = key;
             testedMap.put(key, value);
-            assertEquals("Contents differs with " + (i + 1) + " entries", value, testedMap.get(key));
+            assertEquals(value, testedMap.get(key), "Contents differs with " + (i + 1) + " entries");
             map.put(key, value);
             assertEquals(map.size(), testedMap.size());
          }
