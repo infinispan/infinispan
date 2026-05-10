@@ -1,7 +1,7 @@
 package org.infinispan.configuration;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
@@ -29,7 +29,7 @@ public class XSiteFileParsing3Test extends SingleCacheManagerTest {
 
    public void testDefaultCache() {
       Configuration dcc = cacheManager.getDefaultCacheConfiguration();
-      assertEquals(dcc.sites().allBackups().size(), 1);
+      assertEquals(1, dcc.sites().allBackups().size());
       testDefault(dcc);
    }
 

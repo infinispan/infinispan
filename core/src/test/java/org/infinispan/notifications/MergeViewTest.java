@@ -1,6 +1,7 @@
 package org.infinispan.notifications;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
@@ -46,8 +47,8 @@ public class MergeViewTest extends MultipleCacheManagersTest {
       Thread.sleep(2000);
 
 
-      assert advancedCache(0).getRpcManager().getTransport().getMembers().size() == 1;
-      assert advancedCache(1).getRpcManager().getTransport().getMembers().size() == 1;
+      assertTrue(advancedCache(0).getRpcManager().getTransport().getMembers().size() == 1);
+      assertTrue(advancedCache(1).getRpcManager().getTransport().getMembers().size() == 1);
    }
 
    public void testMergeViewHappens() {
@@ -55,11 +56,11 @@ public class MergeViewTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
       TestingUtil.waitForNoRebalance(cache(0), cache(1));
 
-      assert ml0.isMerged && ml1.isMerged;
+      assertTrue(ml0.isMerged && ml1.isMerged);
 
       cache(0).put("k", "v2");
-      assertEquals(cache(0).get("k"), "v2");
-      assertEquals(cache(1).get("k"), "v2");
+      assertEquals("v2", cache(0).get("k"));
+      assertEquals("v2", cache(1).get("k"));
    }
 
    @Listener

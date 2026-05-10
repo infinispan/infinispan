@@ -1,8 +1,8 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
 import static org.infinispan.test.TestingUtil.getListeners;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -127,7 +127,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       cache0.put(keyToFilterOut, FIRST_VALUE);
 
       // We should not have gotten the message since it was filtered
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       verifySimpleInsertion(cache0, keyToUse, FIRST_VALUE, lifespan, clusterListener, FIRST_VALUE);
    }
@@ -261,7 +261,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       cache3.put(key, FIRST_VALUE);
 
       // Should be filtered
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       verifySimpleInsertion(cache3, keyToFilter, FIRST_VALUE, null, clusterListener, FIRST_VALUE.substring(0, 3));
    }
@@ -327,8 +327,8 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       cache1.put(key, FIRST_VALUE);
 
       // Both listeners should have been notified
-      assertEquals(clusterListener.events.size(), 1);
-      assertEquals(clusterListener2.events.size(), 1);
+      assertEquals(1, clusterListener.events.size());
+      assertEquals(1, clusterListener2.events.size());
 
       verifySimpleInsertionEvents(clusterListener, key, FIRST_VALUE);
       verifySimpleInsertionEvents(clusterListener2, key, FIRST_VALUE);
@@ -344,7 +344,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       // Change the value again to make sure other listener is still working properly
       cache2.put(key, SECOND_VALUE);
 
-      assertEquals(clusterListener2.events.size(), 2);
+      assertEquals(2, clusterListener2.events.size());
 
       CacheEntryEvent event = clusterListener2.events.get(1);
 
@@ -738,7 +738,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
 
       assertNull(cache0.get(keyToFilterOut));
        // We should not have gotten the message since it was filtered
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       String expectedValue = keyToUse + "-expiring";
       cache0.put(keyToUse, keyToUse + "-expiring", keyToUselifespan, TimeUnit.MILLISECONDS);

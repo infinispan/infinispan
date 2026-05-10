@@ -1,8 +1,8 @@
 package org.infinispan.spring.embedded.support;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "spring.embedded.support.InfinispanNamedEmbeddedCacheFactoryBeanTest", groups = "unit")
 @ContextConfiguration(classes = BasicConfiguration.class)
-@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode =  TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractTestNGSpringContextTests {
 
    private static final String CACHE_NAME_FROM_CONFIGURATION_FILE = "asyncCache";
@@ -101,9 +101,9 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractTestNGS
 
       final Cache<Object, Object> cache = objectUnderTest.getObject();
 
-      assertEquals("InfinispanNamedEmbeddedCacheFactoryBean should have used its bean name ["
-                         + beanName + "] as the name of the created cache. However, it didn't.", beanName,
-                   cache.getName());
+      assertEquals(beanName, cache.getName(),
+            "InfinispanNamedEmbeddedCacheFactoryBean should have used its bean name ["
+                  + beanName + "] as the name of the created cache. However, it didn't.");
       objectUnderTest.destroy();
    }
 
@@ -128,9 +128,9 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractTestNGS
 
       final Cache<Object, Object> cache = objectUnderTest.getObject();
 
-      assertEquals("InfinispanNamedEmbeddedCacheFactoryBean should have preferred its cache name ["
-                         + cacheName + "] as the name of the created cache. However, it didn't.", cacheName,
-                   cache.getName());
+      assertEquals(cacheName, cache.getName(),
+            "InfinispanNamedEmbeddedCacheFactoryBean should have preferred its cache name ["
+                  + cacheName + "] as the name of the created cache. However, it didn't.");
       objectUnderTest.destroy();
    }
 
@@ -150,9 +150,9 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractTestNGS
       objectUnderTest.afterPropertiesSet();
 
       assertEquals(
+            objectUnderTest.getObject().getClass(), objectUnderTest.getObjectType(),
             "getObjectType() should have returned the most derived class of the actual Cache "
-                  + "implementation returned from getObject(). However, it didn't.",
-            objectUnderTest.getObject().getClass(), objectUnderTest.getObjectType());
+                  + "implementation returned from getObject(). However, it didn't.");
       objectUnderTest.destroy();
    }
 
@@ -177,9 +177,8 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractTestNGS
 
       final Cache<Object, Object> cache = objectUnderTest.getObject();
 
-      assertNotNull(
-            "InfinispanNamedEmbeddedCacheFactoryBean should have produced a proper Infinispan cache. "
-                  + "However, it produced a null Infinispan cache.", cache);
+      assertNotNull(cache, "InfinispanNamedEmbeddedCacheFactoryBean should have produced a proper Infinispan cache. "
+            + "However, it produced a null Infinispan cache.");
       objectUnderTest.destroy();
    }
 
@@ -190,11 +189,10 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractTestNGS
     */
    @Test
    public final void infinispanNamedEmbeddedCacheFactoryBeanShouldDeclareItselfToBeSingleton() {
-      final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
+      final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanNamedEmbeddedCacheFactoryBean<>();
 
       assertTrue(
-            "InfinispanNamedEmbeddedCacheFactoryBean should declare itself to produce a singleton. However, it didn't.",
-            objectUnderTest.isSingleton());
+            objectUnderTest.isSingleton(), "InfinispanNamedEmbeddedCacheFactoryBean should declare itself to produce a singleton. However, it didn't.");
    }
 
    /**
@@ -210,7 +208,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractTestNGS
       final String cacheName = "test.cache.Name";
       final String beanName = "test.bean.Name";
 
-      final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
+      final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanNamedEmbeddedCacheFactoryBean<>();
       objectUnderTest.setInfinispanEmbeddedCacheManager(DEFAULT_CACHE_MANAGER);
       objectUnderTest.setCacheName(cacheName);
       objectUnderTest.setBeanName(beanName);
@@ -220,9 +218,9 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractTestNGS
       objectUnderTest.destroy();
 
       assertEquals(
+            ComponentStatus.TERMINATED, cache.getStatus(),
             "InfinispanNamedEmbeddedCacheFactoryBean should have stopped the created Infinispan cache when being destroyed. "
-                  + "However, the created Infinispan is not yet terminated.",
-            ComponentStatus.TERMINATED, cache.getStatus());
+                  + "However, the created Infinispan is not yet terminated.");
    }
 
    /**
@@ -268,7 +266,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractTestNGS
     */
    @Test(expectedExceptions = IllegalStateException.class)
    public final void infinispanNamedEmbeddedCacheFactoryShouldRejectConfigurationTemplateModeCUSTOM() throws
-                                                                                                      Exception {
+         Exception {
       final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> objectUnderTest = new
             InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
       objectUnderTest.setInfinispanEmbeddedCacheManager(DEFAULT_CACHE_MANAGER);
@@ -279,7 +277,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractTestNGS
 
    @Test
    public final void infinispanNamedEmbeddedCacheFactoryShouldAcceptConfigurationTemplateModeCUSTOM() throws
-                                                                                                      Exception {
+         Exception {
       final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> objectUnderTest = new
             InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
       objectUnderTest.setInfinispanEmbeddedCacheManager(DEFAULT_CACHE_MANAGER);

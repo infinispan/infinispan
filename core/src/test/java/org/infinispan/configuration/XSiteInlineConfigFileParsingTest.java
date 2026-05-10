@@ -1,8 +1,8 @@
 package org.infinispan.configuration;
 
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
@@ -41,7 +41,7 @@ public class XSiteInlineConfigFileParsingTest extends SingleCacheManagerTest {
       assertTrue(relay2.getSites().contains("NYC"));
 
       Configuration dcc = cacheManager.getDefaultCacheConfiguration();
-      assertEquals(dcc.sites().allBackups().size(), 2);
+      assertEquals(2, dcc.sites().allBackups().size());
       BackupConfigurationBuilder nyc = new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.IGNORE).failurePolicyClass(null).replicationTimeout(12003)
             .useTwoPhaseCommit(false);

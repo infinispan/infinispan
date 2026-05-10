@@ -1,5 +1,7 @@
 package org.infinispan.expiration.impl;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -53,8 +55,7 @@ public class ExpirationThreadCountTest extends SingleCacheManagerTest {
             evictionThreadCount++;
       }
 
-      assert evictionThreadCount == 1 : "Thread should only be one expiration thread with pattern '"
-            + pattern + "', instead there were " + evictionThreadCount;
+      assertTrue(evictionThreadCount == 1, "Thread should only be one expiration thread with pattern '" + pattern + "', instead there were " + evictionThreadCount);
    }
 
 }

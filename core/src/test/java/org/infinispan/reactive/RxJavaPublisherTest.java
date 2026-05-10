@@ -1,6 +1,6 @@
 package org.infinispan.reactive;
 
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.test.AbstractInfinispanTest;

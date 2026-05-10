@@ -1,7 +1,7 @@
 package org.infinispan.distribution;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,7 +9,6 @@ import java.util.Collection;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.test.ReplListener;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.UnicastInvalidationFuncTest")
@@ -33,11 +32,11 @@ public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest<Object, 
 
       nonOwner.put(KEY1, "foo");
       assertNull(nonOwner.getAdvancedCache().getDataContainer().peek(KEY1));
-      assertEquals(owner.getAdvancedCache().getDataContainer().peek(KEY1).getValue(), "foo");
+      assertEquals("foo", owner.getAdvancedCache().getDataContainer().peek(KEY1).getValue());
 
       // Request from another non-owner so that we can get an invalidation command there
-      assertEquals(secondNonOwner.get(KEY1), "foo");
-      assertEquals(secondNonOwner.getAdvancedCache().getDataContainer().peek(KEY1).getValue(), "foo");
+      assertEquals("foo", secondNonOwner.get(KEY1));
+      assertEquals("foo", secondNonOwner.getAdvancedCache().getDataContainer().peek(KEY1).getValue());
 
       // Check that the non owners are notified
       ReplListener rl = new ReplListener(nonOwner);
@@ -54,8 +53,8 @@ public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest<Object, 
          r.waitForRpc();
       }
 
-      Assert.assertNull(secondNonOwner.getAdvancedCache().getDataContainer().peek(KEY1));
-      Assert.assertNull(nonOwner.getAdvancedCache().getDataContainer().peek(KEY1));
+      assertNull(secondNonOwner.getAdvancedCache().getDataContainer().peek(KEY1));
+      assertNull(nonOwner.getAdvancedCache().getDataContainer().peek(KEY1));
 
 
    }

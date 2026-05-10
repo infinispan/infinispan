@@ -1,5 +1,9 @@
 package org.infinispan.distribution;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
@@ -31,8 +35,8 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
       waitForClusterToForm(cacheName, "second");
       cache(0).put("k","v");
       cache(0,"second").put("k","v");
-      assert cache(1).get("k").equals("v");
-      assert cache(1, "second").get("k").equals("v");
+      assertEquals("v", cache(1).get("k"));
+      assertEquals("v", cache(1, "second").get("k"));
 
       k0 = new MagicKey(cache(0));
    }
@@ -41,8 +45,8 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
       tm(1).begin();
       cache(1).put(k0,"v");
       cache(1, "second").put(k0,"v");
-      assert !lockManager(1).isLocked(k0);
-      assert !lockManager(1,"second").isLocked(k0);
+      assertFalse(lockManager(1).isLocked(k0));
+      assertFalse(lockManager(1,"second").isLocked(k0));
       Transaction transaction = tm(1).suspend();
 
       tm(0).begin();
@@ -54,14 +58,14 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
          log.info("After the Commit");
       } catch (Exception e) {
          log.error("Error during commit", e);
-         assert false : "this should not fail even if the invalidation does";
+         fail("this should not fail even if the invalidation does");
       } finally {
          tm(1).resume(transaction);
          tm(1).rollback();
-         assert !lockManager(0).isLocked(k0);
-         assert !lockManager(0, "second").isLocked(k0);
-         assert !lockManager(1).isLocked(k0);
-         assert !lockManager(1, "second").isLocked(k0);
+         assertFalse(lockManager(0).isLocked(k0));
+         assertFalse(lockManager(0, "second").isLocked(k0));
+         assertFalse(lockManager(1).isLocked(k0));
+         assertFalse(lockManager(1, "second").isLocked(k0));
       }
    }
 }

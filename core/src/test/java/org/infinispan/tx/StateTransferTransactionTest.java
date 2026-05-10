@@ -1,8 +1,8 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -94,12 +94,12 @@ public class StateTransferTransactionTest extends MultipleCacheManagersTest {
       TransactionImpl stateTransferTx = interceptor.stateTransferTransactions.iterator().next();
 
       //useSync=false will fail here because Infinispan invokes ApplyStateTransaction.enlistResource() directly
-      assertTrue("Found XaResource", stateTransferTx.getEnlistedResources().isEmpty());
+      assertTrue(stateTransferTx.getEnlistedResources().isEmpty(), "Found XaResource");
       //useSync=true & useRegistry=false fails here because Infinispan invokes ApplyStateTransaction.registerSynchronization() directly
-      assertTrue("Found Synchronization", stateTransferTx.getEnlistedSynchronization().isEmpty());
+      assertTrue(stateTransferTx.getEnlistedSynchronization().isEmpty(), "Found Synchronization");
       //useSync=true & useRegistry=false fails here. DummyTransactionManager.resume() throws an exception which fails the state transfer
       //it simulates the WF environment.
-      assertEquals("Wrong value in cache1", "value", cache1.get(key));
+      assertEquals("value", cache1.get(key), "Wrong value in cache1");
    }
 
    private static String suffix(boolean useSync, boolean useRegistry) {

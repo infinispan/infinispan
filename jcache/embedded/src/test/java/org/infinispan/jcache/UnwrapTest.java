@@ -1,7 +1,7 @@
 package org.infinispan.jcache;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.net.URI;
 
@@ -28,10 +28,10 @@ public class UnwrapTest extends AbstractInfinispanTest {
             cm.defineConfiguration("UnwrapCache", new ConfigurationBuilder().build());
             CacheManager jCacheManager = new JCacheManager(URI.create("UnwrapCacheManager"), cm, null);
             Cache<Object, Object> jcache = jCacheManager.getCache("UnwrapCache");
-            assertTrue(jCacheManager.unwrap(JCacheManager.class) != null);
-            assertTrue(jcache.unwrap(JCache.class) != null);
-            assertTrue(jCacheManager.unwrap(EmbeddedCacheManager.class) != null);
-            assertTrue(jcache.unwrap(org.infinispan.Cache.class) != null);
+            assertNotNull(jCacheManager.unwrap(JCacheManager.class));
+            assertNotNull(jcache.unwrap(JCache.class));
+            assertNotNull(jCacheManager.unwrap(EmbeddedCacheManager.class));
+            assertNotNull(jcache.unwrap(org.infinispan.Cache.class));
          }
       });
    }

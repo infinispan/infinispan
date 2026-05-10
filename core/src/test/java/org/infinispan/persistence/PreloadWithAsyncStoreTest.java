@@ -3,10 +3,10 @@ package org.infinispan.persistence;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -78,10 +78,10 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       final Cache<Object, Object> cache = cacheManager.getCache(cacheType.cacheName);
       ExceptionTrackerInterceptor interceptor = getInterceptor(cache);
 
-      assertTrue("Preload should be enabled.", cache.getCacheConfiguration().persistence().preload());
-      assertTrue("Async Store should be enabled.", cache.getCacheConfiguration().persistence().usingAsyncStore());
+      assertTrue(cache.getCacheConfiguration().persistence().preload(), "Preload should be enabled.");
+      assertTrue(cache.getCacheConfiguration().persistence().usingAsyncStore(), "Async Store should be enabled.");
 
-      WaitNonBlockingStore<Object, Object> store =  TestingUtil.getFirstStoreWait(cache);
+      WaitNonBlockingStore<Object, Object> store = TestingUtil.getFirstStoreWait(cache);
 
       assertNotInCacheAndStore(cache, store, KEYS);
 
@@ -95,19 +95,19 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
 
       DataContainer<Object, Object> dataContainer = cache.getAdvancedCache().getDataContainer();
 
-      assertEquals("Wrong number of keys in data container after puts.", KEYS.length, dataContainer.size());
-      assertEquals("Some exceptions has been caught during the puts.", 0, interceptor.exceptionsCaught.get());
+      assertEquals(KEYS.length, dataContainer.size(), "Wrong number of keys in data container after puts.");
+      assertEquals(0, interceptor.exceptionsCaught.get(), "Some exceptions has been caught during the puts.");
       cache.stop();
-      assertEquals("Expected empty data container after stop.", 0, dataContainer.size());
-      assertEquals("Some exceptions has been caught during the stop.", 0, interceptor.exceptionsCaught.get());
+      assertEquals(0, dataContainer.size(), "Expected empty data container after stop.");
+      assertEquals(0, interceptor.exceptionsCaught.get(), "Some exceptions has been caught during the stop.");
 
       cache.start();
-      assertTrue("Preload should be enabled after restart.", cache.getCacheConfiguration().persistence().preload());
-      assertTrue("Async Store should be enabled after restart.", cache.getCacheConfiguration().persistence().usingAsyncStore());
+      assertTrue(cache.getCacheConfiguration().persistence().preload(), "Preload should be enabled after restart.");
+      assertTrue(cache.getCacheConfiguration().persistence().usingAsyncStore(), "Async Store should be enabled after restart.");
 
       dataContainer = cache.getAdvancedCache().getDataContainer();
-      assertEquals("Wrong number of keys in data container after preload.", KEYS.length, dataContainer.size());
-      assertEquals("Some exceptions has been caught during the preload.", 0, interceptor.exceptionsCaught.get());
+      assertEquals(KEYS.length, dataContainer.size(), "Wrong number of keys in data container after preload.");
+      assertEquals(0, interceptor.exceptionsCaught.get(), "Some exceptions has been caught during the preload.");
 
       // Re-retrieve since the old reference might not be usable
       store = TestingUtil.getStoreWait(cache, 0, false);
@@ -124,14 +124,14 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
    }
 
    private void assertStoredEntry(Object value, Object expectedValue, String src, Object key) {
-      assertNotNull(src + " entry for key " + key + " should NOT be null", value);
-      assertEquals(src + " should contain value " + expectedValue + " under key " + key + " but was " + value, expectedValue, value);
+      assertNotNull(value, src + " entry for key " + key + " should NOT be null");
+      assertEquals(expectedValue, value, src + " should contain value " + expectedValue + " under key " + key + " but was " + value);
    }
 
    private <T> void assertNotInCacheAndStore(Cache<Object, Object> cache, WaitNonBlockingStore<Object, Object> store, T... keys) throws PersistenceException {
       for (Object key : keys) {
-         assertFalse("Cache should not contain key " + key, cache.getAdvancedCache().getDataContainer().containsKey(key));
-         assertFalse("Store should not contain key " + key, store.contains(key));
+         assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), "Cache should not contain key " + key);
+         assertFalse(store.contains(key), "Store should not contain key " + key);
       }
    }
 
@@ -151,7 +151,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       final boolean useRecovery;
 
       CacheType(TransactionMode transactionMode, String cacheName, boolean useSynchronization,
-            boolean useRecovery) {
+                boolean useRecovery) {
          this.transactionMode = transactionMode;
          this.cacheName = cacheName;
          this.useSynchronization = useSynchronization;

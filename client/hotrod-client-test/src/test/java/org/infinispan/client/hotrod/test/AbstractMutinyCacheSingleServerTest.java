@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.test;
 
 import static org.infinispan.client.hotrod.AwaitAssertions.await;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import org.infinispan.api.Infinispan;
 import org.infinispan.api.mutiny.MutinyCache;
@@ -15,7 +16,7 @@ public abstract class AbstractMutinyCacheSingleServerTest<K, V> extends Abstract
 
    @Override
    protected void teardown() {
-      assert container instanceof MutinyContainer : "Could not destroy MutinyCache";
+      assertInstanceOf(MutinyContainer.class, container, "Could not destroy MutinyCache");
       await(((MutinyContainer) container).caches().remove(cacheName).convert().toCompletionStage());
    }
 
@@ -32,7 +33,7 @@ public abstract class AbstractMutinyCacheSingleServerTest<K, V> extends Abstract
          return cache;
       }
 
-      assert container instanceof MutinyContainer : "Could not create MutinyCache";
+      assertInstanceOf(MutinyContainer.class, container, "Could not create MutinyCache");
       return await(((MutinyContainer) container).caches().get(cacheName));
    }
 }

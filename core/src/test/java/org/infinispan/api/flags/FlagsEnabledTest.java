@@ -5,8 +5,8 @@ import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.test.TestingUtil.withTx;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
@@ -61,7 +61,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    public void testWithFlagsSemantics() {
       final AdvancedCache<MagicKey, String> cache1 = advancedCache(0, cacheName);
       final AdvancedCache<MagicKey, String> cache2 = advancedCache(1, cacheName);
-      assertNotSame("CacheStores", getCacheStore(cache1), getCacheStore(cache2));
+      assertNotSame(getCacheStore(cache1), getCacheStore(cache2), "CacheStores");
       assertLoadsAndReset(cache1, 0, cache2, 0);
 
       final AdvancedCache<MagicKey, String> cache1LocalOnly = cache1.withFlags(CACHE_MODE_LOCAL);
@@ -210,7 +210,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    }
 
    protected final void assertCacheValue(Cache<?, ?> cache, Object key, Object value) {
-      assertEquals("Wrong value for key '" + key + "' in cache '" + cache + "'.", value, cache.get(key));
+      assertEquals(value, cache.get(key), "Wrong value for key '" + key + "' in cache '" + cache + "'.");
    }
 
    private boolean isPrimaryOwner(Cache<?, ?> cache, Object key) {

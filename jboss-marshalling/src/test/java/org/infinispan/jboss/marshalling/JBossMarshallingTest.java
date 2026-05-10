@@ -1,5 +1,7 @@
 package org.infinispan.jboss.marshalling;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -61,7 +63,7 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
       ByteInput byteInput = Marshalling.createByteInput(new ByteArrayInputStream(bytes));
       unmarshaller.start(byteInput);
       try {
-         assert obj.equals(unmarshaller.readObject());
+         assertEquals(obj, unmarshaller.readObject());
       } finally {
          unmarshaller.finish();
       }
@@ -85,11 +87,9 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
       @Override
       public boolean equals(Object obj) {
          if (obj == this) return true;
-         if (!(obj instanceof CustomReadObjectMethod)) return false;
-         CustomReadObjectMethod pk = (CustomReadObjectMethod) obj;
+         if (!(obj instanceof CustomReadObjectMethod pk)) return false;
          if (!lastName.equals(pk.lastName)) return false;
-         if (!ssn.equals(pk.ssn)) return false;
-         return true;
+         return ssn.equals(pk.ssn);
       }
 
       @Override

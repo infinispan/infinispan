@@ -1,8 +1,8 @@
 package org.infinispan.spring.embedded.provider;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
 
@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBeanTest", groups = "unit")
 @ContextConfiguration(classes = BasicConfiguration.class)
-@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode =  TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpringContextTests {
 
    private static final String CACHE_NAME_FROM_CONFIGURATION_FILE = "asyncCache";
@@ -43,7 +43,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpr
 
    @AfterMethod(alwaysRun = true)
    public void closeCacheManager() throws Exception {
-      if(objectUnderTest != null) {
+      if (objectUnderTest != null) {
          objectUnderTest.destroy();
       }
    }
@@ -57,9 +57,8 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpr
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
       assertNotNull(
-            "getObject() should have returned a valid SpringEmbeddedCacheManager, even if no defaulConfigurationLocation "
-                  + "has been specified. However, it returned null.",
-            springEmbeddedCacheManager);
+            springEmbeddedCacheManager, "getObject() should have returned a valid SpringEmbeddedCacheManager, even if no defaulConfigurationLocation "
+                  + "has been specified. However, it returned null.");
    }
 
    @Test
@@ -69,23 +68,21 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpr
             .defaultBuilder().fromFile(NAMED_ASYNC_CACHE_CONFIG_LOCATION, getClass()).build();
 
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
-      assertNotNull(
-            "getObject() should have returned a valid SpringEmbeddedCacheManager, configured using the configuration file "
-                  + "set on SpringEmbeddedCacheManagerFactoryBean. However, it returned null.",
-            springEmbeddedCacheManager);
+      assertNotNull(springEmbeddedCacheManager, "getObject() should have returned a valid SpringEmbeddedCacheManager, configured using the configuration file "
+            + "set on SpringEmbeddedCacheManagerFactoryBean. However, it returned null.");
       final SpringCache cacheDefinedInCustomConfiguration = springEmbeddedCacheManager
             .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
       final org.infinispan.configuration.cache.Configuration configuration = ((Cache) cacheDefinedInCustomConfiguration.getNativeCache())
             .getCacheConfiguration();
       assertEquals(
+            org.infinispan.configuration.cache.CacheMode.REPL_ASYNC,
+            configuration.clustering().cacheMode(),
             "The cache named ["
                   + CACHE_NAME_FROM_CONFIGURATION_FILE
                   + "] is configured to have asynchonous replication cache mode. Yet, the cache returned from getCache("
                   + CACHE_NAME_FROM_CONFIGURATION_FILE
                   + ") has a different cache mode. Obviously, SpringEmbeddedCacheManagerFactoryBean did not use "
-                  + "the configuration file when instantiating SpringEmbeddedCacheManager.",
-            org.infinispan.configuration.cache.CacheMode.REPL_ASYNC,
-            configuration.clustering().cacheMode());
+                  + "the configuration file when instantiating SpringEmbeddedCacheManager.");
    }
 
    @Test
@@ -96,18 +93,17 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpr
 
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
-      assertEquals(
+      assertEquals(springEmbeddedCacheManager.getClass(), objectUnderTest.getObjectType(),
             "getObjectType() should return the most derived class of the actual SpringEmbeddedCacheManager "
-                  + "implementation returned from getObject(). However, it didn't.",
-            springEmbeddedCacheManager.getClass(), objectUnderTest.getObjectType());
+                  + "implementation returned from getObject(). However, it didn't.");
    }
 
    @Test
    public void testIfSpringEmbeddedCacheManagerFactoryBeanDeclaresItselfToOnlyProduceSingletons() {
       objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
 
-      assertTrue("isSingleton() should always return true. However, it returned false",
-                 objectUnderTest.isSingleton());
+      assertTrue(objectUnderTest.isSingleton(),
+            "isSingleton() should always return true. However, it returned false");
    }
 
    @Test
@@ -123,11 +119,9 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpr
       // SpringEmbeddedCacheManager
       objectUnderTest.destroy();
 
-      assertEquals(
+      assertEquals(ComponentStatus.TERMINATED, springEmbeddedCacheManager.getNativeCacheManager().getStatus(),
             "SpringEmbeddedCacheManagerFactoryBean should stop the created SpringEmbeddedCacheManager when being destroyed. "
-                  + "However, the created SpringEmbeddedCacheManager is still not terminated.",
-            ComponentStatus.TERMINATED, springEmbeddedCacheManager.getNativeCacheManager()
-                  .getStatus());
+                  + "However, the created SpringEmbeddedCacheManager is still not terminated.");
    }
 
    @Test
@@ -141,13 +135,12 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpr
 
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
-      assertEquals(
+      assertEquals("r2",
+            springEmbeddedCacheManager.getNativeCacheManager().getCacheManagerConfiguration().transport().rackId(),
             "Transport for cache configured in"
-            + CACHE_NAME_FROM_CONFIGURATION_FILE + "is assigned to r1 rack. But later Global Configuration overrides "
-            + "this setting to r2. Obviously created SpringEmbeddedCacheManagerFactoryBean does not support this kind "
-            + "of overriding.",
-            "r2",
-            springEmbeddedCacheManager.getNativeCacheManager().getCacheManagerConfiguration().transport().rackId());
+                  + CACHE_NAME_FROM_CONFIGURATION_FILE + "is assigned to r1 rack. But later Global Configuration overrides "
+                  + "this setting to r2. Obviously created SpringEmbeddedCacheManagerFactoryBean does not support this kind "
+                  + "of overriding.");
    }
 
    @Test
@@ -162,13 +155,13 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpr
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
       assertEquals(
+            100,
+            springEmbeddedCacheManager.getNativeCacheManager().getDefaultCacheConfiguration().locking()
+                  .concurrencyLevel(),
             "Concurrency value of LockingLocking for cache configured in"
                   + CACHE_NAME_FROM_CONFIGURATION_FILE + "is equal to 5000. But later Configuration Builder overrides "
                   + "this setting to 100. Obviously created SpringEmbeddedCacheManagerFactoryBean does not support "
-                  + "this kind of overriding.",
-            100,
-            springEmbeddedCacheManager.getNativeCacheManager().getDefaultCacheConfiguration().locking()
-                  .concurrencyLevel());
+                  + "this kind of overriding.");
    }
 
    @Test
@@ -190,8 +183,8 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpr
       // Get the cache manager and make assertions.
       final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject().getNativeCacheManager();
       assertEquals(Optional.of("default"),
-                   infinispanEmbeddedCacheManager.getCacheManagerConfiguration().defaultCacheName());
+            infinispanEmbeddedCacheManager.getCacheManagerConfiguration().defaultCacheName());
       assertEquals(TransactionMode.NON_TRANSACTIONAL,
-                   infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction().transactionMode());
+            infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction().transactionMode());
    }
 }

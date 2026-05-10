@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -159,7 +159,7 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
 
    public void testGetStreamWithMetadata() throws Exception {
       InputStream k1is = streamingRemoteCache.get("k1");
-      assertNull("expected null but received a stream", k1is);
+      assertNull(k1is, "expected null but received a stream");
       consumeAndCloseStream(k1is);
 
       OutputStream k1os = streamingRemoteCache.put("k1");
@@ -167,7 +167,7 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
       k1os.close();
 
       k1is = streamingRemoteCache.get("k1");
-      assertNotNull("expected a stream but received null", k1is);
+      assertNotNull(k1is, "expected a stream but received null");
       VersionedMetadata k1metadata = (VersionedMetadata) k1is;
       assertEquals(-1, k1metadata.getLifespan());
       assertEquals(-1, k1metadata.getMaxIdle());
@@ -177,7 +177,7 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
       writeDataToStream(k1os, V1_SIZE);
       k1os.close();
       k1is = streamingRemoteCache.get("k1");
-      assertNotNull("expected a stream but received null", k1is);
+      assertNotNull(k1is, "expected a stream but received null");
       k1metadata = (VersionedMetadata) k1is;
       assertEquals(TimeUnit.MINUTES.toSeconds(5), k1metadata.getLifespan());
       assertEquals(-1, k1metadata.getMaxIdle());
@@ -187,7 +187,7 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
       writeDataToStream(k1os, V1_SIZE);
       k1os.close();
       k1is = streamingRemoteCache.get("k1");
-      assertNotNull("expected a stream but received null", k1is);
+      assertNotNull(k1is, "expected a stream but received null");
       k1metadata = (VersionedMetadata) k1is;
       assertEquals(TimeUnit.MINUTES.toSeconds(5), k1metadata.getLifespan());
       assertEquals(TimeUnit.MINUTES.toSeconds(3), k1metadata.getMaxIdle());
@@ -196,7 +196,7 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
 
    public void testPutIfAbsentStream() throws Exception {
       InputStream k1is = streamingRemoteCache.get("k1");
-      assertNull("expected null but received a stream", k1is);
+      assertNull(k1is, "expected null but received a stream");
       consumeAndCloseStream(k1is);
 
       // Write a V1 value
@@ -226,7 +226,7 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
       InputStream k1is = streamingRemoteCache.get("k1");
       assertEquals(V1_SIZE, readAndCheckDataFromStream(k1is));
       long version = ((VersionedMetadata)k1is).getVersion();
-      assertTrue("Expected a non-zero version: " + version, version > 0);
+      assertTrue(version > 0, "Expected a non-zero version: " + version);
 
       // Attempt to overwrite it by using a wrong version
       k1os = streamingRemoteCache.replaceWithVersion("k1", version + 1);

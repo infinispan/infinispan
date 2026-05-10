@@ -1,6 +1,7 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.sleepThread;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -53,7 +54,7 @@ public class RemoteLockCleanupStressTest extends MultipleCacheManagersTest {
       t1.interrupt();
       LockManager lm = TestingUtil.extractComponent(cm1.getCache(), LockManager.class);
       Object owner = lm.getOwner(key);
-      assert ownerIsLocalOrUnlocked(owner, cm1.getAddress()) : "Bad lock owner " + owner;
+      assertTrue(ownerIsLocalOrUnlocked(owner, cm1.getAddress()), "Bad lock owner " + owner);
    }
 
    private boolean ownerIsLocalOrUnlocked(Object owner, Address self) {

@@ -1,7 +1,7 @@
 package org.infinispan.globalstate;
 
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.util.Arrays;
@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 
 /**
  * ISPN-13740 A test to ensure that a NPE is not thrown when a cache is deleted after a graceful shutdown and restart.
- *
+ * <p>
  * The {@link org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl} uses events and the {@link org.infinispan.globalstate.impl.GlobalConfigurationStateListener}
  * to create Caches and templates cluster-wide after a local caches.xml and templates.xml have been loaded. Consequently,
  * there is a small window on a cluster restart where attempts to remove a cache/template will result in an event being
@@ -76,7 +76,7 @@ public class GlobalStateRestartWithCacheTest extends MultipleCacheManagersTest {
       for (int i = 0; i < 2; i++) {
          String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
          File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
-         assertEquals(Arrays.toString(listFiles), 1, listFiles.length);
+         assertEquals(1, listFiles.length, Arrays.toString(listFiles));
       }
       this.cacheManagers.clear();
 

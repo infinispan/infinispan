@@ -5,8 +5,8 @@ import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
 import static org.infinispan.util.BlockingLocalTopologyManager.finishRebalance;
 import static org.infinispan.util.BlockingLocalTopologyManager.replaceTopologyManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;

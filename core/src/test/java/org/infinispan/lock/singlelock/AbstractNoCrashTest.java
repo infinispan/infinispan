@@ -1,6 +1,8 @@
 package org.infinispan.lock.singlelock;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 
@@ -34,7 +36,7 @@ public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
 
    @Override
    protected final void createCacheManagers() {
-      assert cacheMode != null && lockingMode != null && useSynchronization != null;
+      assertTrue(cacheMode != null && lockingMode != null && useSynchronization != null);
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(cacheMode, true);
       config.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
@@ -76,9 +78,9 @@ public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
 
       dtm.runPrepare();
 
-      assert lockManager(0).isLocked(k);
-      assert !lockManager(1).isLocked(k);
-      assert !lockManager(2).isLocked(k);
+      assertTrue(lockManager(0).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
+      assertFalse(lockManager(2).isLocked(k));
 
       dtm.runCommit(false);
 

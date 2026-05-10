@@ -1,6 +1,7 @@
 package org.infinispan.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Properties;
 
@@ -43,10 +44,10 @@ public class TypedPropertiesTest {
    @Test
    public void testBooleanProperty() {
       TypedProperties p = createProperties();
-      assertEquals(true, p.getBooleanProperty("boolean", false));
-      assertEquals(true, p.getBooleanProperty("boolean_put_str", false));
-      assertEquals(true, p.getBooleanProperty("boolean_invalid", true));
-      assertEquals(true, p.getBooleanProperty("boolean_null", true));
+      assertTrue(p.getBooleanProperty("boolean", false));
+      assertTrue(p.getBooleanProperty("boolean_put_str", false));
+      assertTrue(p.getBooleanProperty("boolean_invalid", true));
+      assertTrue(p.getBooleanProperty("boolean_null", true));
    }
 
    @Test

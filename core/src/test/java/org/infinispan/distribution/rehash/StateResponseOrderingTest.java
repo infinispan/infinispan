@@ -3,12 +3,12 @@ package org.infinispan.distribution.rehash;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnOutboundRpc;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
-import re
 import os
+import re
 from urllib.request import Request, urlopen
 
 """

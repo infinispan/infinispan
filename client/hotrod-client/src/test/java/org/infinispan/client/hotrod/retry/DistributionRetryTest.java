@@ -1,7 +1,10 @@
 package org.infinispan.client.hotrod.retry;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Random;
@@ -70,14 +73,14 @@ public class DistributionRetryTest extends AbstractRetryTest {
       if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       //now make sure that next call won't fail
       resetStats();
-      assertEquals(remoteCache.get(key), "v");
+      assertEquals("v", remoteCache.get(key));
    }
 
    public void testPut() throws Exception {
       Object key = generateKeyAndShutdownServer();
       log.info("Here it starts");
       if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
-      assertEquals(remoteCache.put(key, "v0"), "v");
+      assertEquals("v", remoteCache.put(key, "v0"));
    }
 
    public void testRemove() throws Exception {
@@ -90,7 +93,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
       Object key = generateKeyAndShutdownServer();
       if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       resetStats();
-      assertEquals(true, remoteCache.containsKey(key));
+      assertTrue(remoteCache.containsKey(key));
    }
 
    public void testGetWithMetadata() throws Exception {
@@ -104,7 +107,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
    public void testPutIfAbsent() throws Exception {
       Object key = generateKeyAndShutdownServer();
       if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
-      assertEquals(null, remoteCache.putIfAbsent("noSuchKey", "someValue"));
+      assertNull(remoteCache.putIfAbsent("noSuchKey", "someValue"));
       assertEquals("someValue", remoteCache.get("noSuchKey"));
    }
 
@@ -117,14 +120,14 @@ public class DistributionRetryTest extends AbstractRetryTest {
    public void testReplaceIfUnmodified() throws Exception {
       Object key = generateKeyAndShutdownServer();
       if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
-      assertEquals(false, remoteCache.replaceWithVersion(key, "v2", 12));
+      assertFalse(remoteCache.replaceWithVersion(key, "v2", 12));
    }
 
    public void testRemoveIfUnmodified() throws Exception {
       Object key = generateKeyAndShutdownServer();
       if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       resetStats();
-      assertEquals(false, remoteCache.removeWithVersion(key, 12));
+      assertFalse(remoteCache.removeWithVersion(key, 12));
    }
 
    public void testClear() throws Exception {
@@ -132,7 +135,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
       if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       resetStats();
       remoteCache.clear();
-      assertEquals(false, remoteCache.containsKey(key));
+      assertFalse(remoteCache.containsKey(key));
    }
 
    private Object generateKeyAndShutdownServer() throws IOException, ClassNotFoundException, InterruptedException {

@@ -1,9 +1,9 @@
 package org.infinispan.context;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -30,7 +30,7 @@ public class FlagBitsetTest extends AbstractInfinispanTest {
 
       for (Flag flag : FLAGS_CACHED) {
          Flag existing = bits.putIfAbsent(EnumUtil.bitSetOf(flag), flag);
-         assertNull("Conflict flags: " + existing + " and " + flag, existing);
+         assertNull(existing, "Conflict flags: " + existing + " and " + flag);
       }
    }
 
@@ -119,11 +119,11 @@ public class FlagBitsetTest extends AbstractInfinispanTest {
    }
 
    private static void assertFlag(long bitset, Flag flag) {
-      assertTrue("Flag " + flag + " should be in bitset!", EnumUtil.hasEnum(bitset, flag));
+      assertTrue(EnumUtil.hasEnum(bitset, flag), "Flag " + flag + " should be in bitset!");
    }
 
    private static void assertNotFlag(long bitset, Flag flag) {
-      assertFalse("Flag " + flag + " should not be in bitset!", EnumUtil.hasEnum(bitset, flag));
+      assertFalse(EnumUtil.hasEnum(bitset, flag), "Flag " + flag + " should not be in bitset!");
    }
 
 }

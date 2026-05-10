@@ -3,8 +3,8 @@ package org.infinispan.xsite.statetransfer.failures;
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferManager.STATUS_ERROR;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;

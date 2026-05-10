@@ -1,10 +1,11 @@
 package org.infinispan.query.remote.impl;
 
 import static org.infinispan.test.fwk.TestCacheManagerFactory.DEFAULT_CACHE_NAME;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -281,7 +282,7 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       try {
          cache0.compute("test.proto", (k, v) -> "import \"missing.proto\";");
       } catch (Exception e) {
-         assertTrue(e instanceof CacheException);
+         assertInstanceOf(CacheException.class, e);
          assertTrue(e.getMessage().contains("ISPN028014"));
       }
 
@@ -296,7 +297,7 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
          }).join();
 
       } catch (CompletionException e) {
-         assertTrue(e.getCause() instanceof CacheException);
+         assertInstanceOf(CacheException.class, e.getCause());
          assertTrue(e.getCause().getMessage().contains("ISPN028014"));
       }
 

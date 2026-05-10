@@ -8,7 +8,7 @@ import static org.infinispan.client.hotrod.impl.iteration.Util.extractValues;
 import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
 import static org.infinispan.client.hotrod.impl.iteration.Util.rangeAsSet;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.Serializable;
 import java.util.ArrayList;

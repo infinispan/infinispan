@@ -1,9 +1,10 @@
 package org.infinispan.container;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.util.IntSet;
@@ -302,20 +303,19 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
       for (int i = 0; i < 10; i++) {
          second.put("key-" + i, "value-" + i, null);
       }
-      assertTrue("Inserts into second should have evicted from first, but first has " + first.size(),
-            first.size() < 10);
+      assertTrue(first.size() < 10, "Inserts into second should have evicted from first, but first has " + first.size());
       int totalSize = first.size() + second.size();
-      assertTrue("Total size should be at most 10 but was " + totalSize, totalSize <= 10);
+      assertTrue(totalSize <= 10, "Total size should be at most 10 but was " + totalSize);
 
       // Now insert more into first with new keys to cause evictions from second
       int secondBefore = second.size();
       for (int i = 10; i < 20; i++) {
          first.put("key-" + i, "value-" + i, null);
       }
-      assertTrue("Inserts into first should have evicted from second, but second has " + second.size()
-            + " (was " + secondBefore + ")", second.size() < secondBefore);
+      assertThat(second.size()).as("Inserts into first should have evicted from second, but second has " + second.size()
+            + " (was " + secondBefore + ")").isLessThan(secondBefore);
       totalSize = first.size() + second.size();
-      assertTrue("Total size should be at most 10 but was " + totalSize, totalSize <= 10);
+      assertThat(totalSize).as("Total size should be at most 10 but was " + totalSize).isLessThanOrEqualTo(10);
    }
 
    @Test

@@ -3,7 +3,9 @@ package org.infinispan.jmx;
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -46,35 +48,35 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName rpcManager1 = getCacheObjectName(jmxDomain1, getDefaultCacheName() + "(repl_sync)", "RpcManager");
       ObjectName rpcManager2 = getCacheObjectName(jmxDomain2, getDefaultCacheName() + "(repl_sync)", "RpcManager");
-      assert mBeanServer.isRegistered(rpcManager1);
-      assert mBeanServer.isRegistered(rpcManager2);
+      assertTrue(mBeanServer.isRegistered(rpcManager1));
+      assertTrue(mBeanServer.isRegistered(rpcManager2));
 
       Object statsEnabled = mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled");
-      assert statsEnabled != null;
-      assertEquals(statsEnabled, Boolean.TRUE);
+      assertNotNull(statsEnabled);
+      assertEquals(Boolean.TRUE, statsEnabled);
 
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled"), Boolean.TRUE);
-      assertEquals(mBeanServer.getAttribute(rpcManager2, "StatisticsEnabled"), Boolean.TRUE);
+      assertEquals(Boolean.TRUE, mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled"));
+      assertEquals(Boolean.TRUE, mBeanServer.getAttribute(rpcManager2, "StatisticsEnabled"));
 
       // The initial state transfer uses cache commands, so it also increases the ReplicationCount value
       long initialReplicationCount1 = (Long) mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
 
       cache1.put("key", "value2");
-      assertEquals(cache2.get("key"), "value2");
+      assertEquals("value2", cache2.get("key"));
       assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), initialReplicationCount1 + 1);
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) 0);
+      assertEquals((long) 0, mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"));
 
       // now reset statistics
       mBeanServer.invoke(rpcManager1, "resetStatistics", new Object[0], new String[0]);
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 0);
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) 0);
+      assertEquals((long) 0, mBeanServer.getAttribute(rpcManager1, "ReplicationCount"));
+      assertEquals((long) 0, mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"));
 
       mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
 
       cache1.put("key", "value");
-      assertEquals(cache2.get("key"), "value");
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) -1);
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) -1);
+      assertEquals("value", cache2.get("key"));
+      assertEquals((long) -1, mBeanServer.getAttribute(rpcManager1, "ReplicationCount"));
+      assertEquals((long) -1, mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"));
 
       // reset stats enabled parameter
       mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
@@ -88,9 +90,9 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       ObjectName rpcManager1 = getCacheObjectName(jmxDomain1, getDefaultCacheName() + "(repl_sync)", "RpcManager");
 
       // the previous test has reset the statistics
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 0);
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) 0);
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "N/A");
+      assertEquals((long) 0, mBeanServer.getAttribute(rpcManager1, "ReplicationCount"));
+      assertEquals((long) 0, mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"));
+      assertEquals("N/A", mBeanServer.getAttribute(rpcManager1, "SuccessRatio"));
 
       RpcManagerImpl rpcManager = (RpcManagerImpl) extractComponent(cache1, RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();
@@ -111,10 +113,10 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
                   .singleResponse(address(2), SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
          put2.get(10, TimeUnit.SECONDS);
 
-         assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 2);
-         assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "100%");
+         assertEquals((long) 2, mBeanServer.getAttribute(rpcManager1, "ReplicationCount"));
+         assertEquals("100%", mBeanServer.getAttribute(rpcManager1, "SuccessRatio"));
          long avgReplTime = (long) mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime");
-         assertEquals(avgReplTime, 30);
+         assertEquals(30, avgReplTime);
 
          // If cache1 is the primary owner it will be a broadcast, otherwise a unicast
          CompletableFuture<Object> put3 = cache1.putAsync(new MagicKey("a3", cache1), "b3");
@@ -127,7 +129,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
                   .throwException(new RuntimeException());
          Exceptions.expectCompletionException(CacheException.class, put4);
 
-         assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), ("50%"));
+         assertEquals(("50%"), mBeanServer.getAttribute(rpcManager1, "SuccessRatio"));
       } finally {
          rpcManager.setTransport(originalTransport);
       }

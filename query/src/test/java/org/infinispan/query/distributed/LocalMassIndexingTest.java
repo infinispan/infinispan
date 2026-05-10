@@ -1,8 +1,8 @@
 package org.infinispan.query.distributed;
 
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -94,7 +94,7 @@ public class LocalMassIndexingTest extends MultipleCacheManagersTest {
          if (i == id) {
             assertTrue(count > 0);
          } else {
-            assertEquals(count, 0);
+            assertEquals(0, count);
          }
       });
    }

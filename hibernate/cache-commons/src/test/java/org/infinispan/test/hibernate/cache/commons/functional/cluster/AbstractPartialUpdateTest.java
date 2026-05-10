@@ -2,8 +2,8 @@ package org.infinispan.test.hibernate.cache.commons.functional.cluster;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.hibernate.cache.commons.util.TxUtil.withSession;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.List;

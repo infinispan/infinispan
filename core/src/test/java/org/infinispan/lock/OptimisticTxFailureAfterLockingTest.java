@@ -1,5 +1,8 @@
 package org.infinispan.lock;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
@@ -8,7 +11,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import jakarta.transaction.RollbackException;
@@ -55,16 +57,16 @@ public class OptimisticTxFailureAfterLockingTest extends MultipleCacheManagersTe
       cache(primaryOwnerIndex).put(key, "v1");
 
       tm(execIndex).begin();
-      AssertJUnit.assertEquals("v1", cache(execIndex).get(key));
+      assertEquals("v1", cache(execIndex).get(key));
       final Transaction transaction = tm(execIndex).suspend();
 
       cache(primaryOwnerIndex).put(key, "v2");
 
       tm(execIndex).resume(transaction);
-      AssertJUnit.assertEquals("v1", cache(execIndex).put(key, "v3"));
+      assertEquals("v1", cache(execIndex).put(key, "v3"));
       try {
          tm(execIndex).commit();
-         AssertJUnit.fail("Exception expected!");
+         fail("Exception expected!");
       } catch (RollbackException e) {
          //expected
       }

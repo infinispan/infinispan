@@ -4,7 +4,7 @@ import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMe
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemcachedClient;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CancellationException;

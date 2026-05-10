@@ -1,5 +1,7 @@
 package org.infinispan.distribution;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -125,7 +127,7 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
 
    @Override
    protected void asyncWaitOnPrimary(Object key, Class<? extends VisitableCommand> command) {
-      assert key != null;
+      assertNotNull(key);
       Cache<?, ?> primary = getFirstOwner(key);
       listenerLookup.get(address(primary)).expect(command);
       listenerLookup.get(address(primary)).waitForRpc();

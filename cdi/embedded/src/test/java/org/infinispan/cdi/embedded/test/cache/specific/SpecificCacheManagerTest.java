@@ -1,8 +1,8 @@
 package org.infinispan.cdi.embedded.test.cache.specific;
 
 import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.InfinispanExtensionEmbedded;

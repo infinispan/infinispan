@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
@@ -22,7 +22,7 @@ public class NativeTransportTest extends AbstractInfinispanTest {
       StringLogAppender logAppender = new StringLogAppender("org.infinispan.HOTROD",
             Level.TRACE,
             t -> t == testThread,
-            PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
+            PatternLayout.newBuilder().setPattern(LOG_FORMAT).build());
       logAppender.install();
       try {
          CherryPickClassLoader classLoader = new CherryPickClassLoader(
@@ -32,7 +32,7 @@ public class NativeTransportTest extends AbstractInfinispanTest {
          );
          Class.forName(NATIVE_TRANSPORT_CLASS, true, classLoader);
          String firstLine = logAppender.get(0);
-         assertTrue(firstLine, firstLine.contains("io.netty.channel.epoll.Epoll"));
+         assertTrue(firstLine.contains("io.netty.channel.epoll.Epoll"), firstLine);
       } finally {
          logAppender.uninstall();
       }

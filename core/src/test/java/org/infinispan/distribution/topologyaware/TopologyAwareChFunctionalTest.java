@@ -1,5 +1,7 @@
 package org.infinispan.distribution.topologyaware;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistSyncFuncTest;
@@ -62,9 +64,9 @@ public class TopologyAwareChFunctionalTest extends DistSyncFuncTest {
    }
 
    private void containsAllHashes(ConsistentHash ch) {
-      assert ch.getMembers().contains(address(0));
-      assert ch.getMembers().contains(address(1));
-      assert ch.getMembers().contains(address(2));
-      assert ch.getMembers().contains(address(3));
+      assertTrue(ch.getMembers().contains(address(0)));
+      assertTrue(ch.getMembers().contains(address(1)));
+      assertTrue(ch.getMembers().contains(address(2)));
+      assertTrue(ch.getMembers().contains(address(3)));
    }
 }

@@ -1,8 +1,9 @@
 package org.infinispan.lock;
 
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -19,7 +20,6 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -119,7 +119,7 @@ public class ConfigurationTest extends AbstractCacheTest {
    private void assertClusteredLockConfigurationException(GlobalConfigurationBuilder builder) {
       try {
          builder.build();
-         AssertJUnit.fail("CacheConfigurationExpected");
+         fail("CacheConfigurationExpected");
       } catch (ClusteredLockException | CacheConfigurationException expected) {
          log.trace("Expected", expected);
       }

@@ -1,15 +1,14 @@
 package org.infinispan.container.versioning;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import jakarta.transaction.RollbackException;
@@ -75,8 +74,8 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
 
       MagicKey hello = new MagicKey("hello", cache(0)); // Owned by cache0 and cache1
 
-      int owners[] = {0, 0};
-      int nonOwners[] = {0, 0};
+      int[] owners = {0, 0};
+      int[] nonOwners = {0, 0};
       int j=0, k = 0;
       for (int i=0; i<4; i++) {
          if (DistributionTestHelper.isOwner(cache(i), hello))
@@ -89,7 +88,7 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
       cache(owners[1]).put(hello, "world 1");
 
       tm(nonOwners[0]).begin();
-      assert "world 1".equals(cache(nonOwners[0]).get(hello));
+      assertEquals(cache(nonOwners[0]).get(hello), "world 1");
       Transaction t = tm(nonOwners[0]).suspend();
 
       // Induce a write skew
@@ -254,50 +253,50 @@ public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
 
    public void testSameNodeKeyCreation() throws Exception {
       tm(0).begin();
-      Assert.assertEquals(cache(0).get("NewKey"), null);
+      assertNull(cache(0).get("NewKey"));
       cache(0).put("NewKey", "v1");
       Transaction tx0 = tm(0).suspend();
 
       //other transaction do the same thing
       tm(0).begin();
-      Assert.assertEquals(cache(0).get("NewKey"), null);
+      assertNull(cache(0).get("NewKey"));
       cache(0).put("NewKey", "v2");
       tm(0).commit();
 
       tm(0).resume(tx0);
       try {
          tm(0).commit();
-         Assert.fail("The transaction should rollback");
+         fail("The transaction should rollback");
       } catch (RollbackException expected) {
          //expected
       }
 
-      Assert.assertEquals(cache(0).get("NewKey"), "v2");
-      Assert.assertEquals(cache(1).get("NewKey"), "v2");
+      assertEquals("v2", cache(0).get("NewKey"));
+      assertEquals("v2", cache(1).get("NewKey"));
    }
 
    public void testDifferentNodeKeyCreation() throws Exception {
       tm(0).begin();
-      Assert.assertEquals(cache(0).get("NewKey"), null);
+      assertNull(cache(0).get("NewKey"));
       cache(0).put("NewKey", "v1");
       Transaction tx0 = tm(0).suspend();
 
       //other transaction, in other node,  do the same thing
       tm(1).begin();
-      Assert.assertEquals(cache(1).get("NewKey"), null);
+      assertNull(cache(1).get("NewKey"));
       cache(1).put("NewKey", "v2");
       tm(1).commit();
 
       tm(0).resume(tx0);
       try {
          tm(0).commit();
-         Assert.fail("The transaction should rollback");
+         fail("The transaction should rollback");
       } catch (RollbackException expected) {
          //expected
       }
 
-      Assert.assertEquals(cache(0).get("NewKey"), "v2");
-      Assert.assertEquals(cache(1).get("NewKey"), "v2");
+      assertEquals("v2", cache(0).get("NewKey"));
+      assertEquals("v2", cache(1).get("NewKey"));
    }
 
    private void localOnlyPut(Cache<Integer, String> cache, Integer k, String v) {

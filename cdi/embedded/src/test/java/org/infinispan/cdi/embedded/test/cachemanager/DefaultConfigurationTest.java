@@ -1,7 +1,7 @@
 package org.infinispan.cdi.embedded.test.cachemanager;
 
 import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
@@ -36,8 +36,8 @@ public class DefaultConfigurationTest extends Arquillian {
    private Cache<?, ?> cache;
 
    public void testDefaultConfiguration() {
-      assertEquals(cache.getCacheConfiguration().memory().maxCount(), 16);
-      assertEquals(cache.getName(), TestCacheManagerFactory.DEFAULT_CACHE_NAME);
+      assertEquals(16, cache.getCacheConfiguration().memory().maxCount());
+      assertEquals(TestCacheManagerFactory.DEFAULT_CACHE_NAME, cache.getName());
    }
 
    /**

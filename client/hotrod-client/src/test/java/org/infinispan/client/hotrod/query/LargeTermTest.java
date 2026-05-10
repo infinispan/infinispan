@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.query;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;

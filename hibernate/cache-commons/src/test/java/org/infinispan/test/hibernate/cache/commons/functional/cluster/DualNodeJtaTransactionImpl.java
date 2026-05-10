@@ -33,7 +33,7 @@ public class DualNodeJtaTransactionImpl implements Transaction {
    private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(DualNodeJtaTransactionImpl.class);
 
    private int status;
-   private LinkedList synchronizations;
+   private LinkedList<Synchronization> synchronizations;
    private Connection connection; // the only resource we care about is jdbc connection
    private final DualNodeJtaTransactionManagerImpl jtaTransactionManager;
    private final List<XAResource> enlistedResources = new ArrayList<XAResource>();
@@ -58,8 +58,7 @@ public class DualNodeJtaTransactionImpl implements Transaction {
          status = Status.STATUS_PREPARING;
 
          if (synchronizations != null) {
-            for (int i = 0; i < synchronizations.size(); i++) {
-               Synchronization s = (Synchronization) synchronizations.get(i);
+            for (Synchronization s : synchronizations) {
                s.beforeCompletion();
             }
          }
@@ -87,9 +86,8 @@ public class DualNodeJtaTransactionImpl implements Transaction {
          status = Status.STATUS_COMMITTED;
 
          if (synchronizations != null) {
-            for (int i = 0; i < synchronizations.size(); i++) {
-               Synchronization s = (Synchronization) synchronizations.get(i);
-               s.afterCompletion(status);
+            for (Synchronization synchronization : synchronizations) {
+               synchronization.afterCompletion(status);
             }
          }
 
@@ -114,9 +112,8 @@ public class DualNodeJtaTransactionImpl implements Transaction {
       }
 
       if (synchronizations != null) {
-         for (int i = 0; i < synchronizations.size(); i++) {
-            Synchronization s = (Synchronization) synchronizations.get(i);
-            s.afterCompletion(status);
+         for (Synchronization synchronization : synchronizations) {
+            synchronization.afterCompletion(status);
          }
       }
 
@@ -132,7 +129,7 @@ public class DualNodeJtaTransactionImpl implements Transaction {
          IllegalStateException, SystemException {
       // todo : find the spec-allowable statuses during which synch can be registered...
       if (synchronizations == null) {
-         synchronizations = new LinkedList();
+         synchronizations = new LinkedList<Synchronization>();
       }
       synchronizations.add(synchronization);
    }

@@ -1,6 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,7 +92,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
 
       TestingUtil.waitForNoRebalance(cache0, cache1, cache2);
 
-      assertEquals(listener.events.size(), 0);
+      assertEquals(0, listener.events.size());
    }
 
    @InCacheMode(CacheMode.DIST_SYNC)
@@ -119,7 +119,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
 
       TestingUtil.waitForNoRebalance(cache0, cache1, cache2);
 
-      assertEquals(listener.events.size(), 0);
+      assertEquals(0, listener.events.size());
    }
 
    public void testOtherNodeBecomingBackupFromNotAnOwner() throws Exception {
@@ -149,7 +149,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
 
       TestingUtil.waitForNoRebalance(cache0, cache1, cache2);
 
-      assertEquals(listener.events.size(), 0);
+      assertEquals(0, listener.events.size());
    }
 
    public void testOtherNodeBecomingPrimaryFromNotAnOwner() throws Exception {
@@ -175,7 +175,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
 
       TestingUtil.waitForNoRebalance(cache0, cache1, cache2);
 
-      assertEquals(listener.events.size(), 0);
+      assertEquals(0, listener.events.size());
    }
 
    @Listener(clustered = true)

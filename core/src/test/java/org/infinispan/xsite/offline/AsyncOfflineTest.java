@@ -2,9 +2,9 @@ package org.infinispan.xsite.offline;
 
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -209,7 +209,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
    private void assertOnline(String cacheName, int index, String targetSiteName) {
       OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(targetSiteName);
       assertTrue(status.isEnabled());
-      assertFalse("Site " + targetSiteName + " is offline. status=" + status, status.isOffline());
+      assertFalse(status.isOffline(), "Site " + targetSiteName + " is offline. status=" + status);
    }
 
    private void assertEventuallyOffline(String cacheName, int index) {
@@ -226,7 +226,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
    private void assertBringSiteOnline(String cacheName, int index) {
       OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
-      assertTrue("Unable to bring " + SFO + " online. status=" + status, CompletionStages.join(status.bringOnline()));
+      assertTrue(CompletionStages.join(status.bringOnline()), "Unable to bring " + SFO + " online. status=" + status);
       // Wait for any pending IRAC runs to process the offline to cleanup transition
       eventually(() -> iracManager(LON, cacheName, index).isEmpty(), 30, TimeUnit.SECONDS);
    }

@@ -1,5 +1,7 @@
 package org.infinispan.rest.resources;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -41,7 +43,7 @@ public class WeakSSEListener extends SSEListener {
          while (pair.get() == null) {
             try {
                KeyValuePair<String, String> event = events.poll(10, TimeUnit.SECONDS);
-               assert event != null : "No event received";
+               assertNotNull(event, "No event received");
 
                if (type.equals(event.getKey()) && event.getValue().contains(subString)) {
                   pair.set(event);
@@ -60,7 +62,7 @@ public class WeakSSEListener extends SSEListener {
             }
          }
 
-         assert pair.get() != null : "Should contain event with: " + subString;
+         assertNotNull(pair.get(), "Should contain event with: " + subString);
          return pair.get();
       });
 

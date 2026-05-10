@@ -1,7 +1,7 @@
 package org.infinispan.marshall;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.WrappedBytes;
@@ -51,10 +51,10 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
       Object key = entry.getKey();
       Object value = entry.getValue();
 
-      assertTrue(key instanceof WrappedBytes);
+      assertInstanceOf(WrappedBytes.class, key);
       assertEquals(keyDataConversion.fromStorage(key), this.key);
 
-      assertTrue(value instanceof WrappedBytes);
+      assertInstanceOf(WrappedBytes.class, value);
       assertEquals(valueDataConversion.fromStorage(value), this.value);
    }
 }

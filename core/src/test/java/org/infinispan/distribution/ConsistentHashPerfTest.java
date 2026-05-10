@@ -3,7 +3,8 @@ package org.infinispan.distribution;
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
 import static java.lang.Math.sqrt;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -125,7 +126,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
       double mean = 0;
       int sum = 0;
       for (Integer count : counts) sum += count;
-      assert sum == numKeys;
+      assertTrue(sum == numKeys);
       mean = sum / numNodes;
 
       double variance = 0;

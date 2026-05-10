@@ -1,12 +1,12 @@
 package org.infinispan.statetransfer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -248,7 +248,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
             if (dc2.peek(i) != null) {
                owners++;
             }
-            assertEquals("Wrong number of owners", cacheTopology.getDistribution(i).readOwners().size(), owners);
+            assertEquals(cacheTopology.getDistribution(i).readOwners().size(), owners, "Wrong number of owners");
 
             // check values were not overwritten with old values carried by state transfer
             String expected = "after_st_" + i;
@@ -266,7 +266,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
             if (dc2.peek(i) != null) {
                owners++;
             }
-            assertEquals("Wrong number of owners", cacheTopology.getDistribution(i).readOwners().size(), owners);
+            assertEquals(cacheTopology.getDistribution(i).readOwners().size(), owners, "Wrong number of owners");
 
             String expected = "before_st_" + i;
             assertEquals(expected, cache(0).get(i));

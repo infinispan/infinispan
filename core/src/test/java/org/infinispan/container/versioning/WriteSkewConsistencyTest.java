@@ -8,8 +8,8 @@ import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -70,7 +70,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       injectReorderResponseRpcManager(cache(3), cache(0));
       cache(1).put(key, 1);
       for (Cache<?, ?> cache : caches()) {
-         assertEquals("Wrong initial value for cache " + address(cache), 1, cache.get(key));
+         assertEquals(1, cache.get(key), "Wrong initial value for cache " + address(cache));
       }
 
       InternalCacheEntry<?, ?> ice0 = primaryOwnerDataContainer.peek(key);
@@ -90,7 +90,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
       Future<Boolean> tx1 = fork(() -> {
          tm(2).begin();
-         assertEquals("Wrong value for tx1.", 1, cache(2).get(key));
+         assertEquals(1, cache(2).get(key), "Wrong value for tx1.");
          cache(2).put(key, 2);
          tm(2).commit();
          return Boolean.TRUE;
@@ -111,7 +111,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       //tx2 will read from the primary owner (i.e., the most recent value) and will commit.
       Future<Boolean> tx2 = fork(() -> {
          tm(3).begin();
-         assertEquals("Wrong value for tx2.", 2, cache(3).get(key));
+         assertEquals(2, cache(3).get(key), "Wrong value for tx2.");
          cache(3).put(key, 3);
          tm(3).commit();
          return Boolean.TRUE;
@@ -119,14 +119,14 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
       //if everything works fine, it should ignore the value from the backup owner and only use the version returned by
       //the primary owner.
-      assertTrue("Prepare of tx2 was never received.", backupOwnerInterceptor.awaitPrepare());
+      assertTrue(backupOwnerInterceptor.awaitPrepare(), "Prepare of tx2 was never received.");
 
       backupOwnerInterceptor.unblockCommit();
       handler.discardRemoteGet = false;
 
       //both transaction should commit
-      assertTrue("Error in tx1.", tx1.get(15, SECONDS));
-      assertTrue("Error in tx2.", tx2.get(15, SECONDS));
+      assertTrue(tx1.get(15, SECONDS), "Error in tx1.");
+      assertTrue(tx2.get(15, SECONDS), "Error in tx2.");
 
       //both txs has committed
       assertSameVersion("Wrong version in the primary owner", versionFromEntry(primaryOwnerDataContainer.peek(key)),
@@ -165,7 +165,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
    }
 
    private static void assertSameVersion(String message, EntryVersion v0, EntryVersion v1) {
-      assertEquals(message, InequalVersionComparisonResult.EQUAL, v0.compareTo(v1));
+      assertEquals(InequalVersionComparisonResult.EQUAL, v0.compareTo(v1), message);
    }
 
    @SuppressWarnings("rawtypes")

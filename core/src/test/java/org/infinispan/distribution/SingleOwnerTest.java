@@ -1,8 +1,9 @@
 package org.infinispan.distribution;
 
 
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -56,14 +57,14 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
 
    public void testPutOnKeyOwner() {
       Cache[] caches = getOwners("mykey", 1);
-      assert caches.length == 1;
+      assertTrue(caches.length == 1);
       Cache ownerCache = caches[0];
       ownerCache.put("mykey", new Object());
    }
 
    public void testClearOnKeyOwner() {
       Cache[] caches = getOwners("mykey", 1);
-      assert caches.length == 1;
+      assertTrue(caches.length == 1);
       Cache ownerCache = caches[0];
       ownerCache.clear();
    }
@@ -71,8 +72,8 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
    public void testRetrieveNonSerializableValueFromNonOwner() {
       Cache[] owners = getOwners("yourkey", 1);
       Cache[] nonOwners = getNonOwners("yourkey", 1);
-      assert owners.length == 1;
-      assert nonOwners.length == 1;
+      assertTrue(owners.length == 1);
+      assertTrue(nonOwners.length == 1);
       Cache ownerCache = owners[0];
       Cache nonOwnerCache = nonOwners[0];
       ownerCache.put("yourkey", new Object());
@@ -80,7 +81,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
          nonOwnerCache.get("yourkey");
          fail("Should have failed with a org.infinispan.commons.marshall.MarshallingException");
       } catch (RemoteException e) {
-         assertTrue(e.getCause() instanceof MarshallingException);
+         assertInstanceOf(MarshallingException.class, e.getCause());
       }
    }
 
@@ -88,8 +89,8 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
       log.trace("Before test");
       Cache[] owners = getOwners("diffkey", 1);
       Cache[] nonOwners = getNonOwners("diffkey", 1);
-      assert owners.length == 1;
-      assert nonOwners.length == 1;
+      assertTrue(owners.length == 1);
+      assertTrue(nonOwners.length == 1);
       Cache ownerCache = owners[0];
       Cache nonOwnerCache = nonOwners[0];
       ownerCache.put("diffkey", new BrokenMarshallingPojo());

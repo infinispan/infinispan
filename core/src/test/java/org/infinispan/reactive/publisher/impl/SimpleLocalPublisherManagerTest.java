@@ -1,8 +1,8 @@
 package org.infinispan.reactive.publisher.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -157,7 +157,7 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
             if (notification.isSegmentComplete()) {
                segment = notification.completedSegment();
                if (!localSegments.contains(segment)) {
-                  assertEquals("Only at most once can say the segment is complete without having it", deliveryGuarantee, DeliveryGuarantee.AT_MOST_ONCE);
+                  assertEquals(DeliveryGuarantee.AT_MOST_ONCE, deliveryGuarantee, "Only at most once can say the segment is complete without having it");
                }
             } else {
                segment = notification.lostSegment();

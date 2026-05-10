@@ -1,10 +1,12 @@
 package org.infinispan.gridfs;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -56,25 +58,25 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    public void testGridFS() throws IOException {
       File gridDir = fs.getFile("/test");
-      assert gridDir.mkdirs();
+      assertTrue(gridDir.mkdirs());
       File gridFile = fs.getFile("/test/myfile.txt");
-      assert gridFile.createNewFile();
+      assertTrue(gridFile.createNewFile());
    }
 
    public void testGetFile() {
-      assertEquals(fs.getFile("file.txt").getPath(), "file.txt");
-      assertEquals(fs.getFile("/file.txt").getPath(), "/file.txt");
-      assertEquals(fs.getFile("myDir/file.txt").getPath(), "myDir/file.txt");
-      assertEquals(fs.getFile("/myDir/file.txt").getPath(), "/myDir/file.txt");
+      assertEquals("file.txt", fs.getFile("file.txt").getPath());
+      assertEquals("/file.txt", fs.getFile("/file.txt").getPath());
+      assertEquals("myDir/file.txt", fs.getFile("myDir/file.txt").getPath());
+      assertEquals("/myDir/file.txt", fs.getFile("/myDir/file.txt").getPath());
 
-      assertEquals(fs.getFile("myDir", "file.txt").getPath(), "myDir/file.txt");
-      assertEquals(fs.getFile("/myDir", "file.txt").getPath(), "/myDir/file.txt");
+      assertEquals("myDir/file.txt", fs.getFile("myDir", "file.txt").getPath());
+      assertEquals("/myDir/file.txt", fs.getFile("/myDir", "file.txt").getPath());
 
       File dir = fs.getFile("/myDir");
-      assertEquals(fs.getFile(dir, "file.txt").getPath(), "/myDir/file.txt");
+      assertEquals("/myDir/file.txt", fs.getFile(dir, "file.txt").getPath());
 
       dir = fs.getFile("myDir");
-      assertEquals(fs.getFile(dir, "file.txt").getPath(), "myDir/file.txt");
+      assertEquals("myDir/file.txt", fs.getFile(dir, "file.txt").getPath());
    }
 
    public void testCreateNewFile() throws IOException {
@@ -132,13 +134,13 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    public void testGetParent() {
       File file = fs.getFile("file.txt");
-      assertEquals(file.getParent(), null);
+      assertNull(file.getParent());
 
       file = fs.getFile("/parentdir/file.txt");
-      assertEquals(file.getParent(), "/parentdir");
+      assertEquals("/parentdir", file.getParent());
 
       file = fs.getFile("/parentdir/subdir/file.txt");
-      assertEquals(file.getParent(), "/parentdir/subdir");
+      assertEquals("/parentdir/subdir", file.getParent());
    }
 
    public void testGetParentFile() {
@@ -147,8 +149,8 @@ public class GridFileTest extends SingleCacheManagerTest {
 
       file = fs.getFile("/parentdir/file.txt");
       File parentDir = file.getParentFile();
-      assertTrue(parentDir instanceof GridFile);
-      assertEquals(parentDir.getPath(), "/parentdir");
+      assertInstanceOf(GridFile.class, parentDir);
+      assertEquals("/parentdir", parentDir.getPath());
    }
 
    @Test(expectedExceptions = FileNotFoundException.class)
@@ -182,7 +184,7 @@ public class GridFileTest extends SingleCacheManagerTest {
    private File createDir(String pathname) {
       File dir = fs.getFile(pathname);
       boolean created = dir.mkdir();
-      assert created;
+      assertTrue(created);
       return dir;
    }
 
@@ -192,7 +194,7 @@ public class GridFileTest extends SingleCacheManagerTest {
                   10);  // chunkSize = 10
 
       String text = getContents("multipleChunks.txt");
-      assertEquals(text, "This text spans multiple chunks, because each chunk is only 10 bytes long.");
+      assertEquals("This text spans multiple chunks, because each chunk is only 10 bytes long.", text);
    }
 
    public void testWriteAcrossMultipleChunksWithNonDefaultChunkSizeAfterFileIsExplicitlyCreated() throws Exception {
@@ -204,35 +206,35 @@ public class GridFileTest extends SingleCacheManagerTest {
                   10);  // chunkSize = 10 (but it is ignored, because the file was already created with chunkSize = 20
 
       String text = getContents("multipleChunks.txt");
-      assertEquals(text, "This text spans multiple chunks, because each chunk is only 20 bytes long.");
+      assertEquals("This text spans multiple chunks, because each chunk is only 20 bytes long.", text);
    }
 
    public void testAppendToFileThatEndsWithFullChunk() throws Exception {
       writeToFile("endsWithFullChunk.txt", "1234" + "5678", 4);  // chunkSize = 4; two chunks will be written; both chunks will be full
       appendToFile("endsWithFullChunk.txt", "", 4);
-      assertEquals(getContents("endsWithFullChunk.txt"), "12345678");
+      assertEquals("12345678", getContents("endsWithFullChunk.txt"));
    }
 
    public void testAppend() throws Exception {
       writeToFile("append.txt", "Hello");
       appendToFile("append.txt", "World");
-      assertEquals(getContents("append.txt"), "HelloWorld");
+      assertEquals("HelloWorld", getContents("append.txt"));
    }
 
    public void testAppendWithDifferentChunkSize() throws Exception {
       writeToFile("append.txt", "Hello", 2);   // chunkSize = 2
       appendToFile("append.txt", "World", 5);        // chunkSize = 5
-      assertEquals(getContents("append.txt"), "HelloWorld");
+      assertEquals("HelloWorld", getContents("append.txt"));
    }
 
    public void testAppendToEmptyFile() throws Exception {
       appendToFile("empty.txt", "Hello");
-      assertEquals(getContents("empty.txt"), "Hello");
+      assertEquals("Hello", getContents("empty.txt"));
    }
 
    public void testDeleteRemovesAllChunks() throws Exception {
-      assertEquals(numberOfChunksInCache(), 0);
-      assertEquals(numberOfMetadataEntries(), 0);
+      assertEquals(0, numberOfChunksInCache());
+      assertEquals(0, numberOfMetadataEntries());
 
       writeToFile("delete.txt", "delete me", 100);
 
@@ -240,8 +242,8 @@ public class GridFileTest extends SingleCacheManagerTest {
       boolean deleted = file.delete();
       assertTrue(deleted);
       assertFalse(file.exists());
-      assertEquals(numberOfChunksInCache(), 0);
-      assertEquals(numberOfMetadataEntries(), 0);
+      assertEquals(0, numberOfChunksInCache());
+      assertEquals(0, numberOfMetadataEntries());
    }
 
    @Test(expectedExceptions = UnsupportedOperationException.class)
@@ -250,13 +252,13 @@ public class GridFileTest extends SingleCacheManagerTest {
    }
 
    public void testOverwritingFileDoesNotLeaveExcessChunksInCache() throws Exception {
-      assertEquals(numberOfChunksInCache(), 0);
+      assertEquals(0, numberOfChunksInCache());
 
       writeToFile("leak.txt", "12345abcde12345", 5); // file length = 15, chunkSize = 5.  Chunk size should "upgrade" to 8
-      assertEquals(numberOfChunksInCache(), 2);
+      assertEquals(2, numberOfChunksInCache());
 
       writeToFile("leak.txt", "12345678", 5);           // file length = 5, chunkSize = 5.  Chunk size should "upgrade" to 8
-      assertEquals(numberOfChunksInCache(), 1);
+      assertEquals(1, numberOfChunksInCache());
    }
 
     //ISPN-2157
@@ -270,7 +272,7 @@ public class GridFileTest extends SingleCacheManagerTest {
         }
         InputStream in = fs.getInput(filePath);
         try{
-            assertEquals(in.read(), 255);
+            assertEquals(255, in.read());
         }finally{
             in.close();
         }
@@ -293,7 +295,7 @@ public class GridFileTest extends SingleCacheManagerTest {
         }
         assertNotNull(e);
         File f = fs.getFile(filePath);
-        assertEquals(f.length(), 1);
+        assertEquals(1, f.length());
     }
 
     public void testMultiClose() throws Exception {
@@ -306,7 +308,7 @@ public class GridFileTest extends SingleCacheManagerTest {
             out.close();
         }
         File f = fs.getFile(filePath);
-        assertEquals(f.length(), 1);
+        assertEquals(1, f.length());
     }
 
     public void testCanReadClosed() throws Exception {
@@ -338,28 +340,28 @@ public class GridFileTest extends SingleCacheManagerTest {
       InputStream in = fs.getInput(filePath);
       try {
          long skipped = in.skip(2); // skip inside current chunk
-         assertEquals(skipped, 2);
-         assertEquals((char)in.read(), 'c');
+         assertEquals(2, skipped);
+         assertEquals('c', (char)in.read());
 
          skipped = in.skip(2);  // skip to end of chunk
-         assertEquals(skipped, 2);
-         assertEquals((char)in.read(), 'f');
+         assertEquals(2, skipped);
+         assertEquals('f', (char)in.read());
 
          skipped = in.skip(6); // skip into next chunk
-         assertEquals(skipped, 6);
-         assertEquals((char)in.read(), 'm');
+         assertEquals(6, skipped);
+         assertEquals('m', (char)in.read());
 
          skipped = in.skip(9);      // skip _over_ next chunk
-         assertEquals(skipped, 9);
-         assertEquals((char)in.read(), 'w');
+         assertEquals(9, skipped);
+         assertEquals('w', (char)in.read());
 
          skipped = in.skip(-1);  // negative skip
-         assertEquals(skipped, 0);
-         assertEquals((char)in.read(), 'x');
+         assertEquals(0, skipped);
+         assertEquals('x', (char)in.read());
 
          skipped = in.skip(10);  // skip beyond EOF
-         assertEquals(skipped, 2);
-         assertEquals(in.read(), -1);
+         assertEquals(2, skipped);
+         assertEquals(-1, in.read());
       } finally {
          in.close();
       }
@@ -372,22 +374,22 @@ public class GridFileTest extends SingleCacheManagerTest {
 
       InputStream in = fs.getInput(filePath);
       try {
-         assertEquals(in.available(), 0); // since first chunk hasn't been fetched yet
+         assertEquals(0, in.available()); // since first chunk hasn't been fetched yet
          in.read();
-         assertEquals(in.available(), 7);
+         assertEquals(7, in.available());
          in.skip(3);
-         assertEquals(in.available(), 4);
+         assertEquals(4, in.available());
          in.read();
-         assertEquals(in.available(), 3);
+         assertEquals(3, in.available());
          in.read();
-         assertEquals(in.available(), 2);
+         assertEquals(2, in.available());
       } finally {
          in.close();
       }
    }
 
    public void testLastModified() throws Exception {
-      assertEquals(fs.getFile("nonExistentFile.txt").lastModified(), 0);
+      assertEquals(0, fs.getFile("nonExistentFile.txt").lastModified());
 
       long time1 = System.currentTimeMillis();
       File file = createFile("file.txt");
@@ -410,12 +412,12 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertFalse(fs.getFile("nonsuch").setLastModified(23));
       File file = createFile("file.txt");
       assertTrue(file.setLastModified(42));
-      assertEquals(fs.getFile("file.txt").lastModified(), 42);
+      assertEquals(42, fs.getFile("file.txt").lastModified());
    }
 
    public void testList() throws Exception {
       assertNull(fs.getFile("nonExistentDir").list());
-      assertEquals(createDir("/emptyDir").list().length, 0);
+      assertEquals(0, createDir("/emptyDir").list().length);
 
       File dir = createDirWithFiles();
       String[] filenames = dir.list();
@@ -434,7 +436,7 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    public void testListFiles() throws Exception {
       assertNull(fs.getFile("nonExistentDir").listFiles());
-      assertEquals(createDir("/emptyDir").listFiles().length, 0);
+      assertEquals(0, createDir("/emptyDir").listFiles().length);
 
       File dir = createDirWithFiles();
       File[] files = dir.listFiles();
@@ -446,9 +448,9 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    public void testListFilesWhereNonChildPathStartsWithParent() throws Exception {
       File parentDir = createDir("/parentDir");
-      assertEquals(parentDir.listFiles().length, 0);
-      assertEquals(createDir("/parentDir-NOT-CHILD").listFiles().length, 0);
-      assertEquals(parentDir.listFiles().length, 0);
+      assertEquals(0, parentDir.listFiles().length);
+      assertEquals(0, createDir("/parentDir-NOT-CHILD").listFiles().length);
+      assertEquals(0, parentDir.listFiles().length);
    }
 
    public void testListFilesWithFilenameFilter() throws Exception {
@@ -477,8 +479,8 @@ public class GridFileTest extends SingleCacheManagerTest {
       createFile("/foo.txt");
       String[] filenames = rootDir.list();
       assertNotNull(filenames);
-      assertEquals(filenames.length, 1);
-      assertEquals(filenames[0], "foo.txt");
+      assertEquals(1, filenames.length);
+      assertEquals("foo.txt", filenames[0]);
    }
 
    public void testReadableChannel() throws Exception {
@@ -490,7 +492,7 @@ public class GridFileTest extends SingleCacheManagerTest {
          assertTrue(channel.isOpen());
          ByteBuffer buffer = ByteBuffer.allocate(1000);
          channel.read(buffer);
-         assertEquals(getStringFrom(buffer), content);
+         assertEquals(content, getStringFrom(buffer));
       } finally {
          channel.close();
       }
@@ -503,17 +505,17 @@ public class GridFileTest extends SingleCacheManagerTest {
 
       ReadableGridFileChannel channel = fs.getReadableChannel("/position.txt");
       try {
-         assertEquals(channel.position(), 0);
+         assertEquals(0, channel.position());
 
          channel.position(5);
-         assertEquals(channel.position(), 5);
-         assertEquals(getStringFromChannel(channel, 3), "567");
-         assertEquals(channel.position(), 8);
+         assertEquals(5, channel.position());
+         assertEquals("567", getStringFromChannel(channel, 3));
+         assertEquals(8, channel.position());
 
          channel.position(2);
-         assertEquals(channel.position(), 2);
-         assertEquals(getStringFromChannel(channel, 5), "23456");
-         assertEquals(channel.position(), 7);
+         assertEquals(2, channel.position());
+         assertEquals("23456", getStringFromChannel(channel, 5));
+         assertEquals(7, channel.position());
       } finally {
          channel.close();
       }
@@ -528,7 +530,7 @@ public class GridFileTest extends SingleCacheManagerTest {
          channel.close();
       }
       assertFalse(channel.isOpen());
-      assertEquals(getContents("/channelTest.txt"), "This file spans multiple chunks.");
+      assertEquals("This file spans multiple chunks.", getContents("/channelTest.txt"));
    }
 
    public void testWritableChannelAppend() throws Exception {
@@ -540,36 +542,30 @@ public class GridFileTest extends SingleCacheManagerTest {
       } finally {
          channel.close();
       }
-      assertEquals(getContents("/append.txt"), "Initial text.Appended text.");
+      assertEquals("Initial text.Appended text.", getContents("/append.txt"));
    }
 
    public void testReadLoop() throws Exception {
-      WritableGridFileChannel wgfc = fs.getWritableChannel("/readTest.txt", false, 100);
-      try {
+      try (WritableGridFileChannel wgfc = fs.getWritableChannel("/readTest.txt", false, 100)) {
          assertTrue(wgfc.isOpen());
          wgfc.write(ByteBuffer.wrap("This tests read loop.".getBytes()));
-      } finally {
-         wgfc.close();
       }
-      ReadableGridFileChannel rgfc = fs.getReadableChannel("/readTest.txt");
-      try {
-         assertTrue("This tests read loop.".equals(new String(toBytes(Channels.newInputStream(rgfc)))));
-      } finally {
-         rgfc.close();
+      try (ReadableGridFileChannel rgfc = fs.getReadableChannel("/readTest.txt")) {
+         assertEquals("This tests read loop.", new String(toBytes(Channels.newInputStream(rgfc))));
       }
    }
 
    public void testGetAbsolutePath() throws IOException {
-      assertEquals(fs.getFile("/file.txt").getAbsolutePath(), "/file.txt");
-      assertEquals(fs.getFile("file.txt").getAbsolutePath(), "/file.txt");
-      assertEquals(fs.getFile("dir/file.txt").getAbsolutePath(), "/dir/file.txt");
+      assertEquals("/file.txt", fs.getFile("/file.txt").getAbsolutePath());
+      assertEquals("/file.txt", fs.getFile("file.txt").getAbsolutePath());
+      assertEquals("/dir/file.txt", fs.getFile("dir/file.txt").getAbsolutePath());
    }
 
    public void testGetAbsoluteFile() throws IOException {
-      assertTrue(fs.getFile("file.txt").getAbsoluteFile() instanceof GridFile);
-      assertEquals(fs.getFile("/file.txt").getAbsoluteFile().getPath(), "/file.txt");
-      assertEquals(fs.getFile("file.txt").getAbsoluteFile().getPath(), "/file.txt");
-      assertEquals(fs.getFile("dir/file.txt").getAbsoluteFile().getPath(), "/dir/file.txt");
+      assertInstanceOf(GridFile.class, fs.getFile("file.txt").getAbsoluteFile());
+      assertEquals("/file.txt", fs.getFile("/file.txt").getAbsoluteFile().getPath());
+      assertEquals("/file.txt", fs.getFile("file.txt").getAbsoluteFile().getPath());
+      assertEquals("/dir/file.txt", fs.getFile("dir/file.txt").getAbsoluteFile().getPath());
    }
 
    public void testIsAbsolute() throws IOException {
@@ -584,7 +580,7 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    public void testLeadingSeparatorIsOptional() throws IOException {
       File gridFile = fs.getFile("file.txt");
-      assert gridFile.createNewFile();
+      assertTrue(gridFile.createNewFile());
 
       assertTrue(fs.getFile("file.txt").exists());
       assertTrue(fs.getFile("/file.txt").exists());
@@ -598,35 +594,35 @@ public class GridFileTest extends SingleCacheManagerTest {
    }
 
    public void testGetName() throws IOException {
-      assertEquals(fs.getFile("").getName(), "");
-      assertEquals(fs.getFile("/").getName(), "");
-      assertEquals(fs.getFile("file.txt").getName(), "file.txt");
-      assertEquals(fs.getFile("/file.txt").getName(), "file.txt");
-      assertEquals(fs.getFile("/dir/file.txt").getName(), "file.txt");
-      assertEquals(fs.getFile("/dir/subdir/file.txt").getName(), "file.txt");
-      assertEquals(fs.getFile("dir/subdir/file.txt").getName(), "file.txt");
+      assertEquals("", fs.getFile("").getName());
+      assertEquals("", fs.getFile("/").getName());
+      assertEquals("file.txt", fs.getFile("file.txt").getName());
+      assertEquals("file.txt", fs.getFile("/file.txt").getName());
+      assertEquals("file.txt", fs.getFile("/dir/file.txt").getName());
+      assertEquals("file.txt", fs.getFile("/dir/subdir/file.txt").getName());
+      assertEquals("file.txt", fs.getFile("dir/subdir/file.txt").getName());
    }
 
    public void testEquals() throws Exception {
-      assertFalse(fs.getFile("").equals(null));
-      assertTrue(fs.getFile("").equals(fs.getFile("")));
-      assertTrue(fs.getFile("").equals(fs.getFile("/")));
-      assertTrue(fs.getFile("foo.txt").equals(fs.getFile("foo.txt")));
-      assertTrue(fs.getFile("foo.txt").equals(fs.getFile("/foo.txt")));
-      assertFalse(fs.getFile("foo.txt").equals(fs.getFile("FOO.TXT")));
-      assertFalse(fs.getFile("/foo.txt").equals(new File("/foo.txt")));
+      assertNotEquals(null, fs.getFile(""));
+      assertEquals(fs.getFile(""), fs.getFile(""));
+      assertEquals(fs.getFile(""), fs.getFile("/"));
+      assertEquals(fs.getFile("foo.txt"), fs.getFile("foo.txt"));
+      assertEquals(fs.getFile("foo.txt"), fs.getFile("/foo.txt"));
+      assertNotEquals(fs.getFile("foo.txt"), fs.getFile("FOO.TXT"));
+      assertNotEquals(fs.getFile("/foo.txt"), new File("/foo.txt"));
    }
 
    public void testCanRead() throws Exception {
       File gridFile = fs.getFile("file.txt");
-      assert gridFile.createNewFile();
+      assertTrue(gridFile.createNewFile());
       assertTrue(gridFile.canRead());
       assertFalse(fs.getFile("nonsuch.txt").canRead());
    }
 
    public void testCanWrite() throws Exception {
       File gridFile = fs.getFile("file.txt");
-      assert gridFile.createNewFile();
+      assertTrue(gridFile.createNewFile());
       assertTrue(gridFile.canWrite());
       assertFalse(fs.getFile("nonsuch.txt").canWrite());
    }
@@ -750,7 +746,7 @@ public class GridFileTest extends SingleCacheManagerTest {
 
    private File createFile(String pathname) throws IOException {
       File file = fs.getFile(pathname);
-      assert file.createNewFile();
+      assertTrue(file.createNewFile());
       return file;
    }
 
@@ -779,13 +775,10 @@ public class GridFileTest extends SingleCacheManagerTest {
    }
 
    private void writeToFile(String filePath, String text, boolean append, Integer chunkSize) throws IOException {
-      OutputStream out = chunkSize == null
-         ? fs.getOutput(filePath, append)
-         : fs.getOutput(filePath, append, chunkSize);
-      try {
+      try (OutputStream out = chunkSize == null
+            ? fs.getOutput(filePath, append)
+            : fs.getOutput(filePath, append, chunkSize)) {
          out.write(text.getBytes());
-      } finally {
-         out.close();
       }
    }
 
@@ -795,12 +788,10 @@ public class GridFileTest extends SingleCacheManagerTest {
    }
 
    private String getString(InputStream in) throws IOException {
-      try {
+      try (in) {
          byte[] buf = new byte[1000];
          int bytesRead = in.read(buf);
          return new String(buf, 0, bytesRead);
-      } finally {
-         in.close();
       }
    }
 

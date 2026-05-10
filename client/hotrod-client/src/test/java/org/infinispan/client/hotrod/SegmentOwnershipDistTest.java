@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.SocketAddress;
 import java.util.Map;
@@ -22,7 +22,7 @@ public class SegmentOwnershipDistTest extends BaseSegmentOwnershipTest {
       Map<SocketAddress, Set<Integer>> segmentsByServer = remoteCache.getCacheTopologyInfo().getSegmentsPerServer();
       Map<Integer, Set<SocketAddress>> serversBySegment = invertMap(segmentsByServer);
 
-      assertEquals(segmentsByServer.keySet().size(), NUM_SERVERS);
+      assertEquals(NUM_SERVERS, segmentsByServer.keySet().size());
       assertTrue(serversBySegment.entrySet().stream().allMatch(e -> e.getValue().size() == NUM_OWNERS));
    }
 

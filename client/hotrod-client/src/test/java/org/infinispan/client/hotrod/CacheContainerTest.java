@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -50,12 +51,12 @@ public class CacheContainerTest extends SingleCacheManagerTest {
    public void testObtainingSameInstanceMultipleTimes() {
       RemoteCache<Object, Object> objectCache = remoteCacheManager.getCache();
       RemoteCache<Object, Object> objectCache2 = remoteCacheManager.getCache();
-      assert objectCache == objectCache2;
+      assertSame(objectCache, objectCache2);
    }
 
    public void testObtainingSameInstanceMultipleTimes2() {
       RemoteCache<Object, Object> objectCache = remoteCacheManager.getCache(CACHE_NAME);
       RemoteCache<Object, Object> objectCache2 = remoteCacheManager.getCache(CACHE_NAME);
-      assert objectCache == objectCache2;
+      assertSame(objectCache, objectCache2);
    }
 }

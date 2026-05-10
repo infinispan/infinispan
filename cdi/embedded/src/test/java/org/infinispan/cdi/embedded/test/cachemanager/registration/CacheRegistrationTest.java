@@ -1,7 +1,7 @@
 package org.infinispan.cdi.embedded.test.cachemanager.registration;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -52,7 +52,7 @@ public class CacheRegistrationTest extends Arquillian {
 
       final Set<String> cacheNames = defaultCacheManager.getCacheNames();
 
-      assertEquals(cacheNames.size(), 3);
+      assertEquals(3, cacheNames.size());
       assertTrue(cacheNames.containsAll(Arrays.asList("small", "large", TestCacheManagerFactory.DEFAULT_CACHE_NAME)));
    }
 
@@ -61,7 +61,7 @@ public class CacheRegistrationTest extends Arquillian {
       cache.put("foo", "bar");
       final Set<String> cacheNames = specificCacheManager.getCacheConfigurationNames();
 
-      assertEquals(cacheNames.size(), 1);
-      assertTrue(cacheNames.containsAll(Arrays.asList("very-large")));
+      assertEquals(1, cacheNames.size());
+      assertTrue(cacheNames.contains("very-large"));
    }
 }

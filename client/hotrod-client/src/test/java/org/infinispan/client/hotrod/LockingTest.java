@@ -3,6 +3,8 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +23,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -90,7 +91,7 @@ public class LockingTest extends SingleCacheManagerTest {
          for (int i = 0; i < 5; ++i) {
             try {
                remoteCache.put("key", "value" + i);
-               AssertJUnit.fail("It should have fail with lock timeout!");
+               fail("It should have fail with lock timeout!");
             } catch (Exception e) {
                log.trace("Exception caught", e);
                if (!e.getLocalizedMessage().contains("Unable to acquire lock after")) {
@@ -105,7 +106,7 @@ public class LockingTest extends SingleCacheManagerTest {
 
       op.get();
 
-      AssertJUnit.assertEquals("value1", remoteCache.get("key"));
+      assertEquals("value1", remoteCache.get("key"));
    }
 
    private CheckPoint injectBlockingCommandInterceptor(String cacheName) {

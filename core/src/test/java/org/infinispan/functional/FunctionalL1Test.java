@@ -1,8 +1,8 @@
 package org.infinispan.functional;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.function.Function;
 
@@ -60,6 +60,6 @@ public class FunctionalL1Test extends AbstractFunctionalOpTest {
       InternalCacheEntry<Object, String> ice = cache.getAdvancedCache().getDataContainer().peek(KEY);
       assertNotNull(ice);
       assertEquals(expectedValue, ice.getValue());
-      assertEquals(ice.toString(), isL1, ice.isL1Entry());
+      assertEquals(isL1, ice.isL1Entry(), ice.toString());
    }
 }

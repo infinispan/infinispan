@@ -1,8 +1,8 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -105,7 +105,7 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
       Item item = new Item("my item", "Original item");
       withTxSession(s -> s.persist(item));
       entityCache.clear();
-      assertEquals("Cache is not empty", Collections.EMPTY_SET, entityCache.keySet());
+      assertEquals(Collections.EMPTY_SET, entityCache.keySet(), "Cache is not empty");
       itemId = item.getId();
       log.info("Insert and clear finished");
    }
@@ -213,9 +213,9 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
 
    protected <T> T assertCacheContains(Class<T> expected) {
       Map contents = Caches.entrySet(entityCache).toMap();
-      assertEquals("Cache does not have single element", 1, contents.size());
+      assertEquals(1, contents.size(), "Cache does not have single element");
       Object value = contents.get(itemId);
-      assertTrue(String.valueOf(value), expected.isInstance(value));
+      assertTrue(expected.isInstance(value), String.valueOf(value));
       return (T) value;
    }
 

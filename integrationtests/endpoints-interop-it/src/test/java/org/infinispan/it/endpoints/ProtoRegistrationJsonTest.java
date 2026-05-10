@@ -1,7 +1,7 @@
 package org.infinispan.it.endpoints;
 
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.rest.RestResponse;
@@ -29,7 +29,7 @@ public class ProtoRegistrationJsonTest extends JsonIndexingProtobufStoreTest {
       //initialize server-side serialization context via rest endpoint
       GeneratedSchema generatedSchema = (GeneratedSchema) sci;
       RestResponse response = join(restClient.schemas().put(generatedSchema.getName(), generatedSchema.getContent()));
-      assertEquals(response.status(), 200);
+      assertEquals(200, response.status());
 
       return remoteCacheManager;
    }

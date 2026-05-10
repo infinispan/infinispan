@@ -4,11 +4,12 @@ import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.wrapComponent;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -286,7 +287,7 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
 
    private static DefaultIracTombstoneManager tombstoneManager(Cache<?, ?> cache) {
       IracTombstoneManager tombstoneManager = extractComponent(cache, IracTombstoneManager.class);
-      assert tombstoneManager instanceof DefaultIracTombstoneManager;
+      assertInstanceOf(DefaultIracTombstoneManager.class, tombstoneManager);
       return (DefaultIracTombstoneManager) tombstoneManager;
    }
 

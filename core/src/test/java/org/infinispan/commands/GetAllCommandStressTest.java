@@ -1,6 +1,6 @@
 package org.infinispan.commands;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -86,7 +86,7 @@ public class GetAllCommandStressTest extends StressTest {
 
    protected void workerLogic(Cache<Integer, Integer> cache, Set<Integer> threadKeys, int iteration) {
       Map<Integer, Integer> results = cache.getAdvancedCache().getAll(threadKeys);
-      assertEquals("Missing: " + diff(threadKeys, results.keySet()), threadKeys.size(), results.size());
+      assertEquals(threadKeys.size(), results.size(), "Missing: " + diff(threadKeys, results.keySet()));
       for (Integer key : threadKeys) {
          assertEquals(key, results.get(key));
       }

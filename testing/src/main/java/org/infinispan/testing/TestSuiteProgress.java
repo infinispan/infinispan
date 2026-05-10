@@ -31,9 +31,7 @@ public class TestSuiteProgress {
    }
 
    public void testStarted(String name) {
-      String message = "Test starting: " + name;
-      progress(message);
-      log.info(message);
+      // Don't log
    }
 
    public void testSucceeded(String name) {

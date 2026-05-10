@@ -1,6 +1,6 @@
 package org.infinispan.api.mvcc.read_committed;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
@@ -31,14 +31,14 @@ public class ReadCommittedLockTest extends LockTestBase {
       Transaction writer = lockTestData.tm.suspend();
 
       lockTestData.tm.resume(reader);
-      assertEquals("Should not read uncommitted data", "v", c.get("k"));
+      assertEquals("v", c.get("k"), "Should not read uncommitted data");
       reader = lockTestData.tm.suspend();
 
       lockTestData.tm.resume(writer);
       lockTestData.tm.commit();
 
       lockTestData.tm.resume(reader);
-      assertEquals("Should read committed data", "v2", c.get("k"));
+      assertEquals("v2", c.get("k"), "Should read committed data");
       lockTestData.tm.commit();
    }
 
@@ -59,14 +59,14 @@ public class ReadCommittedLockTest extends LockTestBase {
       Transaction writer = lockTestData.tm.suspend();
 
       lockTestData.tm.resume(reader);
-      assertEquals("Should not read uncommitted data", "v", c.get("k"));
+      assertEquals("v", c.get("k"), "Should not read uncommitted data");
       reader = lockTestData.tm.suspend();
 
       lockTestData.tm.resume(writer);
       lockTestData.tm.commit();
 
       lockTestData.tm.resume(reader);
-      assertEquals("Should read committed data", "v2", c.get("k"));
+      assertEquals("v2", c.get("k"), "Should read committed data");
       lockTestData.tm.commit();
    }
 

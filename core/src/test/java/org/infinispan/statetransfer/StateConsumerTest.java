@@ -2,6 +2,9 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -9,9 +12,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -295,7 +295,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
          });
       }
       unicastProcessor.onComplete();
-      assertEquals(stateConsumer.inflightRequestCount(), 0);
+      assertEquals(0, stateConsumer.inflightRequestCount());
       eventually(() -> !stateConsumer.hasActiveTransfers());
    }
 
@@ -555,7 +555,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       // With the bug: error handler at StateConsumerImpl:979 only logs.
       // Dummy InboundTransferTasks are never cleaned from tracking maps.
       eventually(() -> !stateConsumer.hasActiveTransfers());
-      assertEquals(stateConsumer.inflightRequestCount(), 0);
+      assertEquals(0, stateConsumer.inflightRequestCount());
 
       stateConsumer.stop();
    }
@@ -590,7 +590,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       // The RPC runs asynchronously via stateRequestExecutor.
       // It should complete even with failed transfers.
       eventually(() -> !stateConsumer.hasActiveTransfers());
-      assertEquals(stateConsumer.inflightRequestCount(), 0);
+      assertEquals(0, stateConsumer.inflightRequestCount());
 
       stateConsumer.stop();
    }
@@ -628,7 +628,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       // restartBrokenTransfers() cleans transfersBySource/transfersBySegment directly, but does NOT call progressTracker.removeTasks()
       assertFalse(stateConsumer.hasActiveTransfers());
       ProgressTracker progressTracker = TestingUtil.extractField(stateConsumer, "progressTracker");
-      assertEquals(progressTracker.pendingTasks(), 0);
+      assertEquals(0, progressTracker.pendingTasks());
 
       stateConsumer.stop();
    }
@@ -766,9 +766,9 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       // key3 failed and marked rollback; key1/key2 were rolled back with it
       // but key4/key5 should be applied in the new transaction
-      assertTrue("key4 should have been applied after failed key3", appliedKeys.contains("key4"));
-      assertTrue("key5 should have been applied after failed key3", appliedKeys.contains("key5"));
-      assertFalse("key3 should not have been applied", appliedKeys.contains("key3"));
+      assertTrue(appliedKeys.contains("key4"), "key4 should have been applied after failed key3");
+      assertTrue(appliedKeys.contains("key5"), "key5 should have been applied after failed key3");
+      assertFalse(appliedKeys.contains("key3"), "key3 should not have been applied");
 
       stateConsumer.stop();
    }
@@ -812,11 +812,11 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       stage.toCompletableFuture().get(10, TimeUnit.SECONDS);
 
       // key3 failed but transaction stayed active, all other keys should be applied
-      assertTrue("key1 should have been applied", appliedKeys.contains("key1"));
-      assertTrue("key2 should have been applied", appliedKeys.contains("key2"));
-      assertTrue("key4 should have been applied", appliedKeys.contains("key4"));
-      assertTrue("key5 should have been applied", appliedKeys.contains("key5"));
-      assertFalse("key3 should not have been applied", appliedKeys.contains("key3"));
+      assertTrue(appliedKeys.contains("key1"), "key1 should have been applied");
+      assertTrue(appliedKeys.contains("key2"), "key2 should have been applied");
+      assertTrue(appliedKeys.contains("key4"), "key4 should have been applied");
+      assertTrue(appliedKeys.contains("key5"), "key5 should have been applied");
+      assertFalse(appliedKeys.contains("key3"), "key3 should not have been applied");
 
       stateConsumer.stop();
    }

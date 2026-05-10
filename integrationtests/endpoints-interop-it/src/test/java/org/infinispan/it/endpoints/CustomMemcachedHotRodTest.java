@@ -1,7 +1,8 @@
 package org.infinispan.it.endpoints;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,7 +57,7 @@ public class CustomMemcachedHotRodTest extends AbstractInfinispanTest {
       MemcachedClient memcached =
             new MemcachedClient("localhost", cacheFactory.getMemcachedPort());
       try {
-         assertEquals("v1".getBytes(), memcached.getBytes(key));
+         assertArrayEquals("v1".getBytes(), memcached.getBytes(key));
       } finally {
          memcached.close();
       }

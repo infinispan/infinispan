@@ -1,6 +1,6 @@
 package org.infinispan.statetransfer;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +84,7 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
       blockedReplace.send().receiveAll();
 
       // Since the non owner didn't have the value before the split it can't do the replace correctly
-      assertEquals(future.get(10, TimeUnit.SECONDS), Boolean.FALSE);
+      assertEquals(Boolean.FALSE, future.get(10, TimeUnit.SECONDS));
 
       controlledRpcManager.stopBlocking();
    }

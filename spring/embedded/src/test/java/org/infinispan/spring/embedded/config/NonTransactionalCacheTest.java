@@ -1,6 +1,6 @@
 package org.infinispan.spring.embedded.config;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.springframework.cache.annotation.Cacheable;

@@ -1,7 +1,7 @@
 package org.infinispan.jboss.marshalling;
 
 import static org.infinispan.test.TestingUtil.k;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
 

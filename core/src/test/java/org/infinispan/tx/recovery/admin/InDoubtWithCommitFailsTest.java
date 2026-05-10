@@ -5,7 +5,9 @@ import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.rollbackTransaction;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -55,12 +57,12 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
    }
 
    private void test(boolean commit) {
-      assert recoveryOps(0).showInDoubtTransactions().isEmpty();
+      assertTrue(recoveryOps(0).showInDoubtTransactions().isEmpty());
       TransactionTable tt0 = ComponentRegistry.componentOf(cache(0), TransactionTable.class);
 
       EmbeddedTransaction dummyTransaction = beginAndSuspendTx(cache(0));
       prepareTransaction(dummyTransaction);
-      assert tt0.getLocalTxCount() == 1;
+      assertTrue(tt0.getLocalTxCount() == 1);
 
       try {
          if (commit) {
@@ -68,15 +70,15 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
          } else {
             rollbackTransaction(dummyTransaction);
          }
-         assert false : "exception expected";
+         fail("exception expected");
       } catch (Exception e) {
          //expected
       }
-      assertEquals(tt0.getLocalTxCount(), 1);
+      assertEquals(1, tt0.getLocalTxCount());
 
 
-      assertEquals(countInDoubtTx(recoveryOps(0).showInDoubtTransactions()), 1);
-      assertEquals(countInDoubtTx(recoveryOps(1).showInDoubtTransactions()), 1);
+      assertEquals(1, countInDoubtTx(recoveryOps(0).showInDoubtTransactions()));
+      assertEquals(1, countInDoubtTx(recoveryOps(1).showInDoubtTransactions()));
    }
 
    public static class ForceFailureInterceptor extends DDAsyncInterceptor {

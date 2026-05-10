@@ -1,6 +1,6 @@
 package org.infinispan.query.helper;
 
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.List;

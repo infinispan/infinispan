@@ -1,6 +1,6 @@
 package org.infinispan.cdi.embedded.test;
 
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ServiceLoader;
 

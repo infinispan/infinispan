@@ -1,5 +1,7 @@
 package org.infinispan.remoting.rpc;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +18,6 @@ import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.ByteString;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -90,6 +91,6 @@ public class RpcManagerTimeoutTest extends MultipleCacheManagersTest {
          recipients.add(members.get(3));
          rpcManager.blocking(rpcManager.invokeCommand(recipients, command, collector, rpcOptions));
       }
-      Assert.fail("Timeout exception wasn't thrown");
+      fail("Timeout exception wasn't thrown");
    }
 }

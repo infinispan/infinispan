@@ -3,8 +3,8 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
@@ -90,7 +90,6 @@ public class ProtocolNegotiationTest extends SingleCacheManagerTest {
 
       // Verify the HeaderDecoder codec was updated to Codec41
       Object codec = TestingUtil.extractField(headerDecoder, "codec");
-      assertTrue("Expected Codec41 after setCodec but got " + codec.getClass().getSimpleName(),
-            codec instanceof Codec41);
+      assertInstanceOf(Codec41.class, codec, "Expected Codec41 after setCodec but got " + codec.getClass().getSimpleName());
    }
 }

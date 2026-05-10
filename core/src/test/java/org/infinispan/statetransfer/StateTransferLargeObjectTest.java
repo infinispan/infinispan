@@ -1,8 +1,8 @@
 package org.infinispan.statetransfer;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -90,7 +90,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
 
    private void assertValue(int i, Object o) {
       assertNotNull(o);
-      assertTrue(o instanceof Value);
+      assertInstanceOf(Value.class, o);
       assertEquals(o, expected.get(i));
    }
 

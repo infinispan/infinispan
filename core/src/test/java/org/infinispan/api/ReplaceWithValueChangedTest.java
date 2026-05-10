@@ -1,8 +1,8 @@
 package org.infinispan.api;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -55,8 +55,8 @@ public class ReplaceWithValueChangedTest extends MultipleCacheManagersTest {
       Transaction suspendedTx = tm(0).suspend();
 
       cache(0).put(k1, "v3");
-      assertEquals(cache(0).get(k1), "v3");
-      assertEquals(cache(1).get(k1), "v3");
+      assertEquals("v3", cache(0).get(k1));
+      assertEquals("v3", cache(1).get(k1));
 
       suspendedTx.commit();
 
@@ -72,8 +72,8 @@ public class ReplaceWithValueChangedTest extends MultipleCacheManagersTest {
       Transaction suspendedTx = tm(0).suspend();
 
       cache(0).put(k1, "v2");
-      assertEquals(cache(0).get(k1), "v2");
-      assertEquals(cache(1).get(k1), "v2");
+      assertEquals("v2", cache(0).get(k1));
+      assertEquals("v2", cache(1).get(k1));
 
       suspendedTx.commit();
 
@@ -89,8 +89,8 @@ public class ReplaceWithValueChangedTest extends MultipleCacheManagersTest {
       Transaction suspendedTx = tm(0).suspend();
 
       cache(0).put(k1, "v2");
-      assertEquals(cache(0).get(k1), "v2");
-      assertEquals(cache(1).get(k1), "v2");
+      assertEquals("v2", cache(0).get(k1));
+      assertEquals("v2", cache(1).get(k1));
 
       log.trace("here it is");
       suspendedTx.commit();

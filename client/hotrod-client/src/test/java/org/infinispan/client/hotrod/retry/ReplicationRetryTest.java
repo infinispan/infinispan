@@ -1,6 +1,9 @@
 package org.infinispan.client.hotrod.retry;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.SocketAddress;
 import java.util.Iterator;
@@ -28,7 +31,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
       //now make sure that next call won't fail
       resetStats();
       for (int i = 0; i < 100; i++) {
-         assert remoteCache.get("k").equals("v");
+         assertEquals("v", remoteCache.get("k"));
       }
    }
 
@@ -37,7 +40,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
       validateSequenceAndStopServer();
       resetStats();
 
-      assertEquals(remoteCache.put("k", "v0"), "v");
+      assertEquals("v", remoteCache.put("k", "v0"));
       for (int i = 1; i < 100; i++) {
          assertEquals("v" + (i-1), remoteCache.put("k", "v"+i));
       }
@@ -53,7 +56,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
    public void testContains() {
       validateSequenceAndStopServer();
       resetStats();
-      assertEquals(true, remoteCache.containsKey("k"));
+      assertTrue(remoteCache.containsKey("k"));
    }
 
    public void testGetWithMetadata() {
@@ -66,7 +69,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
    public void testPutIfAbsent() {
       validateSequenceAndStopServer();
       resetStats();
-      assertEquals(null, remoteCache.putIfAbsent("noSuchKey", "someValue"));
+      assertNull(remoteCache.putIfAbsent("noSuchKey", "someValue"));
       assertEquals("someValue", remoteCache.get("noSuchKey"));
    }
 
@@ -79,20 +82,20 @@ public class ReplicationRetryTest extends AbstractRetryTest {
    public void testReplaceIfUnmodified() {
       validateSequenceAndStopServer();
       resetStats();
-      assertEquals(false, remoteCache.replaceWithVersion("k", "v2", 12));
+      assertFalse(remoteCache.replaceWithVersion("k", "v2", 12));
    }
 
    public void testRemoveIfUnmodified() {
       validateSequenceAndStopServer();
       resetStats();
-      assertEquals(false, remoteCache.removeWithVersion("k", 12));
+      assertFalse(remoteCache.removeWithVersion("k", 12));
    }
 
    public void testClear() {
       validateSequenceAndStopServer();
       resetStats();
       remoteCache.clear();
-      assertEquals(false, remoteCache.containsKey("k"));
+      assertFalse(remoteCache.containsKey("k"));
    }
 
    private void validateSequenceAndStopServer() {
@@ -105,7 +108,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
       assertNoHits();
       remoteCache.put("k","v");
 
-      assert strategy.getServers().length == 3;
+      assertTrue(strategy.getServers().length == 3);
       assertOnlyServerHit(expectedServer);
 
       resetStats();

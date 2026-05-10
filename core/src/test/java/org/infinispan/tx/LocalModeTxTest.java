@@ -1,9 +1,9 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.getTransactionTable;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -127,7 +127,7 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
       cache.put("k1", "v3");
       assertEquals(2, cache.keySet().size());
       assertEquals(2, cache.values().size());
-      assert cache.values().contains("v3");
+      assertTrue(cache.values().contains("v3"));
       tm().rollback();
       assertEquals(2, cache.keySet().size());
       assertEquals(2, cache.values().size());

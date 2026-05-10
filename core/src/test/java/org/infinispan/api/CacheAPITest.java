@@ -2,11 +2,11 @@ package org.infinispan.api;
 
 import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.test.TestingUtil.withTx;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ public abstract class CacheAPITest extends APINonTxTest {
    }
 
    public void testGetMembersInLocalMode() {
-      assertNull("Cache members should be null if running in LOCAL mode", manager(cache).getAddress());
+      assertNull(manager(cache).getAddress(), "Cache members should be null if running in LOCAL mode");
    }
 
    public void testRollbackAfterOverwrite() throws Exception {
@@ -127,7 +127,7 @@ public abstract class CacheAPITest extends APINonTxTest {
       TransactionManager tm = TestingUtil.getTransactionManager(cache);
       withTx(tm, () -> {
          assertEquals(value, cache.remove(key));
-         assertNull(value, cache.get(key));
+         assertNull(cache.get(key), value);
 
          int tmSize = 0;
          assertEquals(tmSize, cache.size());
@@ -320,7 +320,7 @@ public abstract class CacheAPITest extends APINonTxTest {
       withTx(tm, () -> {
          assertEquals(old_value, cache.remove(key));
          assertNull(cache.get(key));
-         assertEquals(cache.putIfAbsent(key, "new_value"), null);
+         assertNull(cache.putIfAbsent(key, "new_value"));
          tm.setRollbackOnly();
          return null;
       });

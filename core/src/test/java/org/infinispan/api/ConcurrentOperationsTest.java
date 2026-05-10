@@ -1,7 +1,8 @@
 package org.infinispan.api;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -161,7 +162,7 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
    }
 
    protected boolean checkOwners(List<Address> owners) {
-      assert owners.size() == 2;
+      assertTrue(owners.size() == 2);
 
       InternalCacheEntry entry0 = advancedCache(owners.get(0)).getDataContainer().peek("k");
       InternalCacheEntry entry1 = advancedCache(owners.get(1)).getDataContainer().peek("k");
@@ -207,8 +208,8 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
       for (int i = 0; i < nodes; i++) {
          assertEquals("v1", cache(i).get("k"));
       }
-      assert cache(0).replace("k", "v2") != null;
-      assert cache(0).replace("k", "v2", "v3");
-      assertEquals(cache(0).get("k"), "v3");
+      assertNotNull(cache(0).replace("k", "v2"));
+      assertTrue(cache(0).replace("k", "v2", "v3"));
+      assertEquals("v3", cache(0).get("k"));
    }
 }

@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.counter;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -102,11 +102,11 @@ public class StrongCounterHitsAwareTest extends HitsAwareCacheManagersTest {
          Cache<?, ?> cache = cache(i, CounterModuleLifecycle.COUNTER_CACHE_NAME);
          HitCountInterceptor interceptor = getHitCountInterceptor(cache);
          if (i == primaryOwnerIndex) {
-            assertEquals("Wrong number of hits on primary owner", NUM_SERVERS, interceptor.getHits());
+            assertEquals(NUM_SERVERS, interceptor.getHits(), "Wrong number of hits on primary owner");
          } else {
-            assertEquals(
-                  "Wrong number of hits on " + address(i) + ". Primary owner is " + address(primaryOwnerIndex), 0,
-                  interceptor.getHits());
+            assertEquals(0,
+                  interceptor.getHits(),
+                  "Wrong number of hits on " + address(i) + ". Primary owner is " + address(primaryOwnerIndex));
          }
       }
    }

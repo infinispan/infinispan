@@ -1,6 +1,6 @@
 package org.infinispan.test.hibernate.cache.commons.entity;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.hibernate.cache.spi.access.AccessType;
 import org.infinispan.test.hibernate.cache.commons.AbstractExtraAPITest;

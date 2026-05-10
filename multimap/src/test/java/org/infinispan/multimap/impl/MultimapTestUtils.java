@@ -2,8 +2,8 @@ package org.infinispan.multimap.impl;
 
 import static java.lang.String.format;
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 
@@ -36,8 +36,8 @@ public class MultimapTestUtils {
    }
 
    public static void putValuesOnMultimapCache(MultimapCache<String, Person> multimapCache, String key, Person... values) {
-      for (int i = 0; i < values.length; i++) {
-         await(multimapCache.put(key, values[i]));
+      for (Person value : values) {
+         await(multimapCache.put(key, value));
       }
    }
 
@@ -60,10 +60,10 @@ public class MultimapTestUtils {
    public static void assertContaisKeyValue(MultimapCache<String, Person> multimapCache, String key, Person value) {
       Address address = ((EmbeddedMultimapCache) multimapCache).getCache().getCacheManager().getAddress();
       await(multimapCache.get(key).thenAccept(v -> {
-         assertTrue(format("get method call : multimap '%s' must contain key '%s' value '%s' pair", address, key, value), v.contains(value));
+         assertTrue(v.contains(value), format("get method call : multimap '%s' must contain key '%s' value '%s' pair", address, key, value));
       }));
       await(multimapCache.containsEntry(key, value).thenAccept(v -> {
-         assertTrue(format("containsEntry method call : multimap '%s' must contain key '%s' value '%s' pair", address, key, value), v);
+         assertTrue(v, format("containsEntry method call : multimap '%s' must contain key '%s' value '%s' pair", address, key, value));
       }));
    }
 

@@ -1,6 +1,8 @@
 package org.infinispan.query.tx;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -20,7 +22,6 @@ import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.tx.TwoPhaseCommitIndexingTest")
@@ -70,7 +71,7 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
       String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
       Query<?> cacheQuery = cache.query(q);
       int resultSize = cacheQuery.execute().count().value();
-      Assert.assertEquals(resultSize, expectedCount);
+      assertEquals(resultSize, expectedCount);
    }
 
    private void store(final String key, final Object value, boolean failTheOperation) {
@@ -78,7 +79,7 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
          injectFailures.set(true);
          try {
             cache.put(key, value);
-            Assert.fail("Should have failed the implicit transaction");
+            fail("Should have failed the implicit transaction");
          } catch (Exception e) {
             //Expected
          } finally {

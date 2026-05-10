@@ -7,7 +7,7 @@ import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -98,7 +98,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       RestEntity value = RestEntity.create(MediaType.APPLICATION_JSON, currency.toString());
       RestResponse response = join(restCacheClient.put(key, value));
 
-      assertEquals(response.status(), 204);
+      assertEquals(204, response.status());
    }
 
    private CryptoCurrency readCurrencyViaJson(String key) {
@@ -119,7 +119,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       CryptoCurrency xmr = readCurrencyViaJson("XMR");
 
       assertEquals(xmr.getRank(), Integer.valueOf(9));
-      assertEquals(xmr.getDescription(), "Monero");
+      assertEquals("Monero", xmr.getDescription());
    }
 
    @Test
@@ -131,16 +131,16 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       remoteCache.put("XRP", new CryptoCurrency("Ripple", 3));
       remoteCache.put("CAT", new CryptoCurrency("Catcoin", 618));
 
-      assertEquals(remoteCache.get("CAT").getDescription(), "Catcoin");
-      assertEquals(remoteCache.size(), 4);
+      assertEquals("Catcoin", remoteCache.get("CAT").getDescription());
+      assertEquals(4, remoteCache.size());
 
       Query<CryptoCurrency> query = remoteCache.query("FROM " + getEntityName() + " c where c.rank < 10");
       List<CryptoCurrency> highRankCoins = query.execute().list();
-      assertEquals(highRankCoins.size(), 3);
+      assertEquals(3, highRankCoins.size());
 
       // Read as Json
       CryptoCurrency btc = readCurrencyViaJson("BTC");
-      assertEquals(btc.getDescription(), "Bitcoin");
+      assertEquals("Bitcoin", btc.getDescription());
       assertEquals(btc.getRank(), Integer.valueOf(1));
 
       // Write as Json
@@ -150,14 +150,14 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       query = remoteCache.query("FROM " + getEntityName() + " c  where c.description = 'Litecoin'");
 
       CryptoCurrency litecoin = query.execute().list().iterator().next();
-      assertEquals(litecoin.getDescription(), "Litecoin");
+      assertEquals("Litecoin", litecoin.getDescription());
       assertEquals(litecoin.getRank(), Integer.valueOf(4));
 
       // Read as JSON from the Hot Rod client
       Object jsonResult = remoteCache.withDataFormat(DataFormat.builder().valueType(MediaType.APPLICATION_JSON).build()).get("LTC");
 
       Json jsonNode = Json.read(new String((byte[]) jsonResult, StandardCharsets.UTF_8));
-      assertEquals(jsonNode.at("description").asString(), "Litecoin");
+      assertEquals("Litecoin", jsonNode.at("description").asString());
    }
 
    @AfterClass

@@ -1,5 +1,8 @@
 package org.infinispan.stress;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -160,11 +163,11 @@ public class PutIfAbsentStressTest extends AbstractInfinispanTest {
       executor.shutdownNow();
       System.out.println("\nFinal situation:");
       System.out.println(stats.toString());
-      assert !stats.seenFailures : "at least one thread has seen unexpected state";
-      assert stats.succesfullPutsCounter.get() > 0 : "the lock should have been taken at least once";
-      assert stats.succesfullPutsCounter.get() > putsAfter5Seconds : "the lock count didn't improve since the first 5 seconds. Deadlock?";
-      assert stats.succesfullPutsCounter.get() == stats.lockReleasedCounter.get() : "there's a mismatch in acquires and releases count";
-      assert stats.lockOwnersCounter.get() == 0 : "the lock is still held at test finish";
+      assertFalse(stats.seenFailures, "at least one thread has seen unexpected state");
+      assertTrue(stats.succesfullPutsCounter.get() > 0, "the lock should have been taken at least once");
+      assertTrue(stats.succesfullPutsCounter.get() > putsAfter5Seconds, "the lock count didn't improve since the first 5 seconds. Deadlock?");
+      assertTrue(stats.succesfullPutsCounter.get() == stats.lockReleasedCounter.get(), "there's a mismatch in acquires and releases count");
+      assertTrue(stats.lockOwnersCounter.get() == 0, "the lock is still held at test finish");
    }
 
    private static class StressingThread implements Runnable {

@@ -1,7 +1,10 @@
 package org.infinispan.affinity.impl;
 
 import static org.infinispan.test.TestingUtil.getListeners;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.ListenerRegistration;
@@ -28,28 +31,28 @@ public class KeyAffinityServiceShutdownTest extends BaseKeyAffinityServiceTest {
    public void testSimpleShutdown() throws Exception {
       assertListenerRegistered(true);
       assertEventualFullCapacity();
-      assert keyAffinityService.isKeyGeneratorThreadAlive();
+      assertTrue(keyAffinityService.isKeyGeneratorThreadAlive());
       keyAffinityService.stop();
       for (int i = 0; i < 10; i++) {
          if (!keyAffinityService.isKeyGeneratorThreadAlive())
             break;
          Thread.sleep(1000);
       }
-      assert !keyAffinityService.isKeyGeneratorThreadAlive();
-      assert !executor.isShutdown();
+      assertFalse(keyAffinityService.isKeyGeneratorThreadAlive());
+      assertFalse(executor.isShutdown());
    }
 
    @Test(dependsOnMethods = "testSimpleShutdown")
    public void testServiceCannotBeUsedAfterShutdown() {
       try {
          keyAffinityService.getKeyForAddress(topology().get(0));
-         assert false : "Exception expected!";
+         fail("Exception expected!");
       } catch (IllegalStateException e) {
          //expected
       }
       try {
          keyAffinityService.getCollocatedKey("a");
-         assert false : "Exception expected!";
+         fail("Exception expected!");
       } catch (IllegalStateException e) {
          //expected
       }

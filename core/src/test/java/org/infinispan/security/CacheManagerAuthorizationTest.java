@@ -1,6 +1,6 @@
 package org.infinispan.security;
 
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.util.function.Supplier;

@@ -1,6 +1,6 @@
 package org.infinispan.query.remote.impl;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.Util;

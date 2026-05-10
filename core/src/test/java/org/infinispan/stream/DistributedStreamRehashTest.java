@@ -1,11 +1,11 @@
 package org.infinispan.stream;
 
 import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
-import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 import java.util.Map;

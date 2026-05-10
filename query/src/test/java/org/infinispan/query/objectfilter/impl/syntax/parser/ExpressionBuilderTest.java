@@ -1,6 +1,6 @@
 package org.infinispan.query.objectfilter.impl.syntax.parser;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

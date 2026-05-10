@@ -1,6 +1,6 @@
 package org.infinispan.configuration.module;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.Configuration;
@@ -15,11 +15,11 @@ public class ModuleConfigurationTest {
       builder.addModule(MyModuleConfigurationBuilder.class).attribute("testValue");
 
       Configuration configuration = builder.build();
-      assertEquals(configuration.module(MyModuleConfiguration.class).attribute(), "testValue");
+      assertEquals("testValue", configuration.module(MyModuleConfiguration.class).attribute());
 
       ConfigurationBuilder secondBuilder = new ConfigurationBuilder();
       secondBuilder.read(configuration, Combine.DEFAULT);
       Configuration secondConfiguration = secondBuilder.build();
-      assertEquals(secondConfiguration.module(MyModuleConfiguration.class).attribute(), "testValue");
+      assertEquals("testValue", secondConfiguration.module(MyModuleConfiguration.class).attribute());
    }
 }

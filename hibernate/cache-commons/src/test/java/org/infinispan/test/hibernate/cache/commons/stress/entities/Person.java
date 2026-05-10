@@ -67,7 +67,7 @@ public class Person {
 
    public void setAddress(Address address) {
       // To skip Hibernate BUG with access.PROPERTY : the rest should be done in DAO
-      //		this.address = address;
+      // this.address = address;
       // Hibernate BUG : if we update the relation on 2 sides
       if (this.address != address) {
          if (this.address != null) this.address.remInhabitant(this);
@@ -118,14 +118,10 @@ public class Person {
       if (checked != person.checked) return false;
       if (id != person.id) return false;
       if (version != person.version) return false;
-      if (address != null ? !address.equals(person.address) : person.address != null)
-         return false;
-      if (birthDate != null ? !birthDate.equals(person.birthDate) : person.birthDate != null)
-         return false;
-      if (family != null ? !family.equals(person.family) : person.family != null)
-         return false;
-      if (firstName != null ? !firstName.equals(person.firstName) : person.firstName != null)
-         return false;
+      if (address != null ? !address.equals(person.address) : person.address != null) return false;
+      if (birthDate != null ? !birthDate.equals(person.birthDate) : person.birthDate != null) return false;
+      if (family != null ? !family.equals(person.family) : person.family != null) return false;
+      if (firstName != null ? !firstName.equals(person.firstName) : person.firstName != null) return false;
 
       return true;
    }
@@ -144,15 +140,7 @@ public class Person {
 
    @Override
    public String toString() {
-      return "Person{" +
-            "address=" + address +
-            ", firstName='" + firstName + '\'' +
-            ", family=" + family +
-            ", birthDate=" + birthDate +
-            ", checked=" + checked +
-            ", id=" + id +
-            ", version=" + version +
-            '}';
+      return "Person{" + "address=" + address + ", firstName='" + firstName + '\'' + ", family=" + family + ", birthDate=" + birthDate + ", checked=" + checked + ", id=" + id + ", version=" + version + '}';
    }
 
 }

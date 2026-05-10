@@ -9,7 +9,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOW
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.StandardConversions.convertCharset;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import java.nio.charset.Charset;
@@ -75,7 +75,7 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
       assertArrayEquals(result, contentUTF);
 
       String strResult = (String) transcoder.transcode(contentKorean, jsonKorean, textPlainAsString);
-      assertEquals(strResult, content);
+      assertEquals(content, strResult);
 
       result = (byte[]) transcoder.transcode(contentKorean, jsonKorean, textPlainKorean);
       assertArrayEquals(result, contentKorean);
@@ -84,7 +84,7 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
       assertArrayEquals(result, contentUTF);
 
       strResult = (String) transcoder.transcode(contentKorean, jsonKorean, jsonAsString);
-      assertEquals(strResult, content);
+      assertEquals(content, strResult);
 
       result = (byte[]) transcoder.transcode(contentKorean, textPlainKorean, jsonKorean);
       assertArrayEquals(result, contentKorean);

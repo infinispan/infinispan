@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod.configuration;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.testng.annotations.Test;
 
@@ -22,10 +23,10 @@ public class BuilderMutationTest {
 
    private void assertHostPort(HotRodServerConfiguration configuration, String host, int port) {
       assertEquals(configuration.host(), host);
-      assertEquals(configuration.proxyHost(), null);
+      assertNull(configuration.proxyHost());
       assertEquals(configuration.publicHost(), host);
       assertEquals(configuration.port(), port);
-      assertEquals(configuration.proxyPort(), -1);
+      assertEquals(-1, configuration.proxyPort());
       assertEquals(configuration.publicPort(), port);
 
    }

@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.retry;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getLoadBalancer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.marshall;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.SocketAddress;
 
@@ -48,7 +49,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      assert nbrOfServers > 0 && nbrOfServers <= 3 : "nbrOfServers must be between 1 and 3";
+      assertTrue(nbrOfServers > 0 && nbrOfServers <= 3, "nbrOfServers must be between 1 and 3");
       config = hotRodCacheConfiguration(getCacheConfig());
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(ControlledConsistentHashFactory.SCI.INSTANCE, config);
       registerCacheManager(cm1);
@@ -78,7 +79,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       strategy = getLoadBalancer(remoteCacheManager);
       addInterceptors();
 
-      assert super.cacheManagers.size() == nbrOfServers;
+      assertTrue(super.cacheManagers.size() == nbrOfServers);
    }
 
    protected RemoteCacheManager createRemoteCacheManager(int port) {

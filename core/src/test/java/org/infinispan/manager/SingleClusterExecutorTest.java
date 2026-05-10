@@ -1,7 +1,7 @@
 package org.infinispan.manager;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,6 +65,6 @@ public class SingleClusterExecutorTest extends AllClusterExecutorTest {
             break;
          }
       }
-      assertTrue("At least 1 manager from " + Arrays.toString(managers) + " should be in " + results, contains);
+      assertTrue(contains, "At least 1 manager from " + Arrays.toString(managers) + " should be in " + results);
    }
 }

@@ -1,9 +1,9 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -340,6 +340,6 @@ public class TombstoneTest extends AbstractNonInvalidationTest {
 
    private void assertTombstone(int expectedSize) {
       Tombstone tombstone = assertCacheContains(Tombstone.class);
-      assertEquals("Tombstone is " + tombstone, expectedSize, tombstone.size());
+      assertEquals(expectedSize, tombstone.size(), "Tombstone is " + tombstone);
    }
 }

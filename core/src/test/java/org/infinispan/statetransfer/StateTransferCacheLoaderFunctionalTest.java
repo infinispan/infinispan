@@ -1,6 +1,8 @@
 package org.infinispan.statetransfer;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -55,28 +57,28 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
 
    protected void verifyInitialDataOnLoader(Cache<Object, Object> c) throws Exception {
       DummyInMemoryStore l = TestingUtil.getFirstStore(c);
-      assert l.contains(A_B_AGE);
-      assert l.contains(A_B_NAME);
-      assert l.contains(A_C_AGE);
-      assert l.contains(A_C_NAME);
-      assert l.loadEntry(A_B_AGE).getValue().equals(TWENTY);
-      assert l.loadEntry(A_B_NAME).getValue().equals(JOE);
-      assert l.loadEntry(A_C_AGE).getValue().equals(FORTY);
-      assert l.loadEntry(A_C_NAME).getValue().equals(BOB);
+      assertTrue(l.contains(A_B_AGE));
+      assertTrue(l.contains(A_B_NAME));
+      assertTrue(l.contains(A_C_AGE));
+      assertTrue(l.contains(A_C_NAME));
+      assertEquals(TWENTY, l.loadEntry(A_B_AGE).getValue());
+      assertEquals(JOE, l.loadEntry(A_B_NAME).getValue());
+      assertEquals(FORTY, l.loadEntry(A_C_AGE).getValue());
+      assertEquals(BOB, l.loadEntry(A_C_NAME).getValue());
    }
 
    protected void verifyNoData(Cache<Object, Object> c) {
-      assert c.isEmpty() : "Cache should be empty!";
+      assertTrue(c.isEmpty(), "Cache should be empty!");
    }
 
    protected void verifyNoDataOnLoader(Cache<Object, Object> c) throws Exception {
       DummyInMemoryStore l = TestingUtil.getFirstStore(c);
-      assert !l.contains(A_B_AGE);
-      assert !l.contains(A_B_NAME);
-      assert !l.contains(A_C_AGE);
-      assert !l.contains(A_C_NAME);
-      assert !l.contains(A_D_AGE);
-      assert !l.contains(A_D_NAME);
+      assertFalse(l.contains(A_B_AGE));
+      assertFalse(l.contains(A_B_NAME));
+      assertFalse(l.contains(A_C_AGE));
+      assertFalse(l.contains(A_C_NAME));
+      assertFalse(l.contains(A_D_AGE));
+      assertFalse(l.contains(A_D_NAME));
    }
 
    public void testSharedLoader() throws Exception {
@@ -118,7 +120,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
          cache1.put("A", new DelayedMarshallingPojo(0, 2000));
          cache1.put("B", new DelayedMarshallingPojo(0, 2000));
          cache1.put("C", new DelayedMarshallingPojo(0, 2000));
-         assertEquals(cache1.size(), 3);
+         assertEquals(3, cache1.size());
          cm1.stop();
 
          // this cache is only used to start networking
@@ -150,7 +152,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
          // at this point node is not alone, so preload is not used
          // the start of the cache must be blocked until state transfer is finished
          cm3.startCaches(cacheName);
-         assertEquals(cm3.getCache(cacheName).size(), 3);
+         assertEquals(3, cm3.getCache(cacheName).size());
       } finally {
          sharedCacheLoader.set(false);
       }

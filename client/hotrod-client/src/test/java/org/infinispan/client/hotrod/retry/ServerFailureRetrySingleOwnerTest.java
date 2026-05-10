@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.retry;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -53,7 +53,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       assertEquals(1, versioned.getValue());
       withListener(listener, () -> {
          assertFalse(listener.errorInduced);
-         assertEquals(true, remoteCache.replaceWithVersion(key, 2, versioned.getVersion()));
+         assertTrue(remoteCache.replaceWithVersion(key, 2, versioned.getVersion()));
          assertTrue(listener.errorInduced);
          assertEquals(2, remoteCache.get(key));
       });
@@ -67,7 +67,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       assertEquals(1, versioned.getValue());
       withListener(listener, () -> {
          assertFalse(listener.errorInduced);
-         assertEquals(true, remoteCache.removeWithVersion(key, versioned.getVersion()));
+         assertTrue(remoteCache.removeWithVersion(key, versioned.getVersion()));
          assertTrue(listener.errorInduced);
          assertNull(remoteCache.get(key));
       });

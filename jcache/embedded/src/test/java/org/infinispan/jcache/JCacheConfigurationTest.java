@@ -2,8 +2,8 @@ package org.infinispan.jcache;
 
 import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.BufferedInputStream;
 import java.io.File;

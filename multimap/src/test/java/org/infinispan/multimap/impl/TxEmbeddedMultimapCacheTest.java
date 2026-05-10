@@ -9,8 +9,8 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.infinispan.multimap.impl.MultimapTestUtils.assertMultimapCacheSize;
 import static org.infinispan.multimap.impl.MultimapTestUtils.getTransactionManager;
 import static org.infinispan.multimap.impl.MultimapTestUtils.putValuesOnMultimapCache;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;

@@ -1,11 +1,11 @@
 package org.infinispan.spring.common.session;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNotSame;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -157,8 +157,8 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
 
       //then
       InfinispanSession savedSession = sessionRepository.findById(session.getId());
-      assertEquals(savedSession.getAttribute("added"), "addedValue");
-      assertEquals(savedSession.getAttribute("changed"), "newValue");
+      assertEquals("addedValue", savedSession.getAttribute("added"));
+      assertEquals("newValue", savedSession.getAttribute("changed"));
       assertNull(savedSession.getAttribute("removed"));
    }
 

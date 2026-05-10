@@ -1,8 +1,8 @@
 package org.infinispan.api;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -70,8 +70,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
 
    private void doSimpleConcurrentTest(final Operation operation) throws Exception {
       //default owners are 2
-      assertEquals("Wrong number of owner. Please change the configuration", 2,
-                   cache(0).getCacheConfiguration().clustering().hash().numOwners());
+      assertEquals(2, cache(0).getCacheConfiguration().clustering().hash().numOwners(), "Wrong number of owner. Please change the configuration");
       final Object key = new MagicKey(cache(0), cache(1));
 
       try {
@@ -115,19 +114,19 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
          });
 
          //tx2 will not prepare the transaction remotely since the operation should fail.
-         assertTrue("Tx2 has not finished", tx2.get(20, TimeUnit.SECONDS));
+         assertTrue(tx2.get(20, TimeUnit.SECONDS), "Tx2 has not finished");
 
          //let everything run normally
          controller.reset();
 
-         assertTrue("Tx1 has not finished", tx1.get(20, TimeUnit.SECONDS));
+         assertTrue(tx1.get(20, TimeUnit.SECONDS), "Tx1 has not finished");
 
 
          //check if no transactions are active
          assertNoTransactions();
 
          for (Cache cache : caches()) {
-            assertEquals("Wrong value for cache " + address(cache), "tx1", cache.get(key));
+            assertEquals("tx1", cache.get(key), "Wrong value for cache " + address(cache));
          }
       } finally {
          removeController(cache(1));

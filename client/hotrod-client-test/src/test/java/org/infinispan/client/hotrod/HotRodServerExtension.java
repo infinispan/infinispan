@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.function.Consumer;
@@ -116,7 +118,7 @@ public class HotRodServerExtension implements BeforeAllCallback, AfterAllCallbac
 
          @Override
          public Infinispan create(Configuration configuration) {
-            assert configuration instanceof org.infinispan.client.hotrod.configuration.Configuration;
+            assertInstanceOf(org.infinispan.client.hotrod.configuration.Configuration.class, configuration);
             var hrc = (org.infinispan.client.hotrod.configuration.Configuration) configuration;
             return new HotRod(hrc, rcm);
          }

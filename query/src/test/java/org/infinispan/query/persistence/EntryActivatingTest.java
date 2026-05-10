@@ -1,7 +1,11 @@
 package org.infinispan.query.persistence;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -60,26 +64,26 @@ public class EntryActivatingTest extends SingleCacheManagerTest {
       italy.cities.add(rome);
 
       cache.put("IT", italy);
-      assert !store.contains("IT");
+      assertFalse(store.contains("IT"));
 
       verifyFullTextHasMatches(1);
 
       cache.evict("IT");
-      assert store.contains("IT");
+      assertTrue(store.contains("IT"));
 
       InternalCacheEntry internalCacheEntry = cache.getAdvancedCache().getDataContainer().peek("IT");
-      assert internalCacheEntry == null;
+      assertNull(internalCacheEntry);
 
       verifyFullTextHasMatches(1);
 
       Country country = (Country) cache.get("IT");
-      assert country != null;
-      assert "Italy".equals(country.countryName);
+      assertNotNull(country);
+      assertEquals("Italy", country.countryName);
 
       verifyFullTextHasMatches(1);
 
       cache.stop();
-      assert searchMapping.isClose();
+      assertTrue(searchMapping.isClose());
       teardown();
 
       // Now let's check the entry is not re-indexed during data preloading:

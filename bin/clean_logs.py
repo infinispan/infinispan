@@ -1,9 +1,9 @@
 #!/usr/bin/python
 from __future__ import with_statement
 
+import os
 import re
 import subprocess
-import os
 import sys
 
 VIEW_TO_USE = '3'

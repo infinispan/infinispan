@@ -3,6 +3,8 @@ package org.infinispan.distribution;
 import static java.lang.String.format;
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
 import static org.infinispan.distribution.DistributionTestHelper.isOwner;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -53,10 +55,10 @@ public class DistStoreTxDisjointSetTest extends MultipleCacheManagersTest {
          if (isOwner(cache, k2)) k2Owners.add(addressOf(cache));
       }
 
-      assert k1Owners.size() == 2: "Expected 2 owners for k1; was " + k1Owners;
-      assert k2Owners.size() == 2: "Expected 2 owners for k1; was " + k2Owners;
+      assertTrue(k1Owners.size() == 2, "Expected 2 owners for k1; was " + k1Owners);
+      assertTrue(k2Owners.size() == 2, "Expected 2 owners for k1; was " + k2Owners);
 
-      assert !k1Owners.equals(k2Owners) : format("k1 and k2 should have different ownership set.  Was %s and %s", k1Owners, k2Owners);
+      assertNotEquals(k2Owners, k1Owners, format("k1 and k2 should have different ownership set.  Was %s and %s", k1Owners, k2Owners));
 
       tm(0).begin();
       cache(0).put(k1, "v1");

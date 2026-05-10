@@ -3,8 +3,8 @@ package org.infinispan.rest.resources;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
@@ -54,9 +54,9 @@ public class CounterResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(counterClient.configuration(APPLICATION_JSON_TYPE));
       Json jsonNode = Json.read(response.body());
       Json config = jsonNode.at("weak-counter");
-      assertEquals(config.at("initial-value").asInteger(), 5);
-      assertEquals(config.at("storage").asString(), "VOLATILE");
-      assertEquals(config.at("concurrency-level").asInteger(), 6);
+      assertEquals(5, config.at("initial-value").asInteger());
+      assertEquals("VOLATILE", config.at("storage").asString());
+      assertEquals(6, config.at("concurrency-level").asInteger());
 
       response = join(counterClient.delete());
       assertThat(response).isOk();

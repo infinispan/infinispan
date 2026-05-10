@@ -1,5 +1,7 @@
 package org.infinispan.distribution;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -45,6 +47,6 @@ public class MultipleNodesLeavingTest extends MultipleCacheManagersTest {
       List<Address> caches = advancedCache(0).getDistributionManager().getCacheTopology().getWriteConsistentHash().getMembers();
       log.tracef("caches = %s", caches);
       int size = caches.size();
-      assert size == 1;
+      assertTrue(size == 1);
    }
 }

@@ -1,8 +1,9 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.Configuration;
@@ -25,7 +26,7 @@ public class ConfigurationTest {
          .connectionPool().connectionUrl(JDBC_URL);
       Configuration configuration = b.build();
       JdbcStringBasedStoreConfiguration store = (JdbcStringBasedStoreConfiguration) configuration.persistence().stores().get(0);
-      assert store.connectionFactory() instanceof PooledConnectionFactoryConfiguration;
+      assertInstanceOf(PooledConnectionFactoryConfiguration.class, store.connectionFactory());
    }
 
    public void testImplicitManagedConnectionFactory() {
@@ -35,7 +36,7 @@ public class ConfigurationTest {
       jdbc.dataSource().jndiUrl("java:jboss/datasources/ExampleDS");
       Configuration configuration = b.build();
       JdbcStringBasedStoreConfiguration store = (JdbcStringBasedStoreConfiguration) configuration.persistence().stores().get(0);
-      assert store.connectionFactory() instanceof ManagedConnectionFactoryConfiguration;
+      assertInstanceOf(ManagedConnectionFactoryConfiguration.class, store.connectionFactory());
    }
 
    public void testJdbcStringCacheStoreConfigurationAdaptor() {
@@ -53,7 +54,7 @@ public class ConfigurationTest {
          .async().enable();
       Configuration configuration = b.build();
       JdbcStringBasedStoreConfiguration store = (JdbcStringBasedStoreConfiguration) configuration.persistence().stores().get(0);
-      assertTrue(store.connectionFactory() instanceof PooledConnectionFactoryConfiguration);
+      assertInstanceOf(PooledConnectionFactoryConfiguration.class, store.connectionFactory());
       assertEquals(JDBC_URL, ((PooledConnectionFactoryConfiguration) store.connectionFactory()).connectionUrl());
       assertEquals("STRINGS_", store.table().tableNamePrefix());
       assertEquals("id", store.table().idColumnName());
@@ -70,7 +71,7 @@ public class ConfigurationTest {
       b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class).read(store, Combine.DEFAULT);
       Configuration configuration2 = b.build();
       JdbcStringBasedStoreConfiguration store2 = (JdbcStringBasedStoreConfiguration) configuration2.persistence().stores().get(0);
-      assertTrue(store2.connectionFactory() instanceof PooledConnectionFactoryConfiguration);
+      assertInstanceOf(PooledConnectionFactoryConfiguration.class, store2.connectionFactory());
       assertEquals(JDBC_URL, ((PooledConnectionFactoryConfiguration) store2.connectionFactory()).connectionUrl());
       assertEquals("STRINGS_", store2.table().tableNamePrefix());
       assertEquals("id", store2.table().idColumnName());

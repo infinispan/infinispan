@@ -2,7 +2,7 @@ package org.infinispan.persistence.remote.upgrade;
 
 import static java.util.stream.IntStream.range;
 import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -103,7 +103,7 @@ public class HotRodUpgradeEncodingsTest extends AbstractInfinispanTest {
       rum.synchronizeData("hotrod", 10, 2);
       targetCluster.disconnectSource(CACHE_NAME);
 
-      assertEquals(targetCluster.getRemoteCache(CACHE_NAME).size(), entries);
+      assertEquals(entries, targetCluster.getRemoteCache(CACHE_NAME).size());
    }
 
 }

@@ -1,10 +1,10 @@
 package org.infinispan.spring.embedded.provider;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertSame;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -125,7 +125,7 @@ public class SpringCacheTest extends SingleCacheManagerTest {
 
       this.cache.put(key, value);
 
-      assertTrue(this.cache.get(key) != null);
+      assertNotNull(this.cache.get(key));
    }
 
    @Test
@@ -135,7 +135,7 @@ public class SpringCacheTest extends SingleCacheManagerTest {
 
       this.cache.put(key, value);
 
-      assertTrue(this.cache.get(key) != null);
+      assertNotNull(this.cache.get(key));
    }
 
    @Test(expectedExceptions = NullPointerException.class)
@@ -159,7 +159,7 @@ public class SpringCacheTest extends SingleCacheManagerTest {
       Object value = cache.get("test", (Class<?>) null);
 
       //then
-      assertTrue(value instanceof String);
+      assertInstanceOf(String.class, value);
    }
 
    @Test

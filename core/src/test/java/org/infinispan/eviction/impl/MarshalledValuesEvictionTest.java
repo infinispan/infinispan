@@ -1,7 +1,7 @@
 package org.infinispan.eviction.impl;
 
 import static org.infinispan.protostream.FileDescriptorSource.fromString;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;

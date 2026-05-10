@@ -1,7 +1,9 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -50,16 +52,16 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
          Cache<Person, String> c1 = cm1.getCache();
 
          for (int i = 0; i < 100; i++) {
-            Person mircea = new Person("mircea"+i);
-            c1.put(mircea, "mircea"+i);
+            Person mircea = new Person("mircea" + i);
+            c1.put(mircea, "mircea" + i);
          }
 
          cm2 = createCacheManager(false, CacheMode.DIST_SYNC);
          Cache<Person, String> c2 = cm2.getCache();
-         assert !c2.isEmpty();
+         assertFalse(c2.isEmpty());
          for (InternalCacheEntry entry : c2.getAdvancedCache().getDataContainer()) {
             Object key = entry.getKey();
-            assert key instanceof Person: "expected key to be person but obtained " + key;
+            assertInstanceOf(Person.class, key, "expected key to be person but obtained " + key);
          }
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);

@@ -2,11 +2,11 @@ package org.infinispan.eviction.impl;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotSame;
-import static org.testng.AssertJUnit.assertSame;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -21,7 +21,7 @@ import org.infinispan.persistence.manager.PassivationPersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.DataOperationOrderer;
-import org.testng.AssertJUnit;
+import org.junit.jupiter.api.Assertions;
 import org.testng.annotations.Test;
 
 /**
@@ -57,7 +57,7 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       cache.put(key, "loaded");
       // Ensures the key is in the store - note this is one passivation
       cache.evict(key);
-      testEvictionDuring(key, () -> cache.get(key), AssertJUnit::assertNotNull, AssertJUnit::assertNotNull, true);
+      testEvictionDuring(key, () -> cache.get(key), Assertions::assertNotNull, Assertions::assertNotNull, true);
 
       // #1 evict above
       // #2 evicted-key evicted from write of other-key

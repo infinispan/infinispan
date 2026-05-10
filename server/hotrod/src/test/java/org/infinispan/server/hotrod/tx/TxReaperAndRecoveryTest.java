@@ -5,8 +5,9 @@ import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.infinispan.util.ByteString.fromString;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -301,7 +302,7 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
       assertEquals(Status.PREPARED, getState(xid3).getStatus());
 
       TestResponse response = clients().getFirst().recovery();
-      assertTrue(response instanceof RecoveryTestResponse);
+      assertInstanceOf(RecoveryTestResponse.class, response);
       actual = new HashSet<>(((RecoveryTestResponse) response).getXids());
       assertEquals(expected, actual);
 

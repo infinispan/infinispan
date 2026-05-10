@@ -1,9 +1,10 @@
 package org.infinispan.anchored;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -193,17 +194,17 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
          assertEquals(value2, originator.remove(key));
 
          CacheEntryEvent<Object, Object> createEvent = listener.pollEvent();
-         assertTrue(createEvent instanceof CacheEntryCreatedEvent);
+         assertInstanceOf(CacheEntryCreatedEvent.class, createEvent);
          assertEquals(key, createEvent.getKey());
          assertEquals(value1, createEvent.getValue());
 
          CacheEntryEvent<Object, Object> replaceEvent = listener.pollEvent();
-         assertTrue(replaceEvent instanceof CacheEntryModifiedEvent);
+         assertInstanceOf(CacheEntryModifiedEvent.class, replaceEvent);
          assertEquals(key, replaceEvent.getKey());
          assertEquals(value2, replaceEvent.getValue());
 
          CacheEntryEvent<Object, Object> removeEvent = listener.pollEvent();
-         assertTrue(removeEvent instanceof CacheEntryRemovedEvent);
+         assertInstanceOf(CacheEntryRemovedEvent.class, removeEvent);
          assertEquals(key, removeEvent.getKey());
          assertNull(removeEvent.getValue());
          // TODO The previous value is not always populated, because it's not stored in the context (see ISPN-5665)

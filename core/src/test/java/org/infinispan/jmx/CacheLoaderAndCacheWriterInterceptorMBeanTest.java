@@ -2,6 +2,8 @@ package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -83,7 +85,7 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       store.write(MarshalledEntryUtil.create("a", "b", cache));
       cache.put("a", "c");
       assertStoreAccess(1, 1, 3);
-      assert store.loadEntry("a").getValue().equals("c");
+      assertEquals("c", store.loadEntry("a").getValue());
    }
 
    public void testGetValue() throws Exception {
@@ -91,14 +93,14 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       cache.put("key", "value");
       assertStoreAccess(0, 1, 1);
 
-      assert cache.get("key").equals("value");
+      assertEquals("value", cache.get("key"));
       assertStoreAccess(0, 1, 1);
 
       store.write(MarshalledEntryUtil.create("a", "b", cache));
-      assert cache.get("a").equals("b");
+      assertEquals("b", cache.get("a"));
       assertStoreAccess(1, 1, 1);
 
-      assert cache.get("no_such_key") == null;
+      assertNull(cache.get("no_such_key"));
       assertStoreAccess(1, 2, 1);
    }
 
@@ -107,17 +109,17 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       cache.put("key", "value");
       assertStoreAccess(0, 1, 1);
 
-      assert cache.get("key").equals("value");
+      assertEquals("value", cache.get("key"));
       assertStoreAccess(0, 1, 1);
 
-      assert cache.remove("key").equals("value");
+      assertEquals("value", cache.remove("key"));
       assertStoreAccess(0, 1, 1);
 
       cache.remove("no_such_key");
       assertStoreAccess(0, 2, 1);
 
       store.write(MarshalledEntryUtil.create("a", "b", cache));
-      assert cache.remove("a").equals("b");
+      assertEquals("b", cache.remove("a"));
       assertStoreAccess(1, 2, 1);
    }
 
@@ -126,14 +128,14 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       cache.put("key", "value");
       assertStoreAccess(0, 1, 1);
 
-      assert cache.replace("key", "value2").equals("value");
+      assertEquals("value", cache.replace("key", "value2"));
       assertStoreAccess(0, 1, 2);
 
       store.write(MarshalledEntryUtil.create("a", "b", cache));
-      assert cache.replace("a", "c").equals("b");
+      assertEquals("b", cache.replace("a", "c"));
       assertStoreAccess(1, 1, 3);
 
-      assert cache.replace("no_such_key", "c") == null;
+      assertNull(cache.replace("no_such_key", "c"));
       assertStoreAccess(1, 2, 3);
    }
 
@@ -153,13 +155,13 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
    private void assertLoadCount(int loadsCount, int missesCount) throws Exception {
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       String actualLoadCount = mBeanServer.getAttribute(loaderInterceptorObjName, "CacheLoaderLoads").toString();
-      assert Integer.valueOf(actualLoadCount).equals(loadsCount) : "expected " + loadsCount + " loads count and received " + actualLoadCount;
+      assertEquals(loadsCount, Integer.valueOf(actualLoadCount), "expected " + loadsCount + " loads count and received " + actualLoadCount);
       String actualMissesCount = mBeanServer.getAttribute(loaderInterceptorObjName, "CacheLoaderMisses").toString();
-      assert Integer.valueOf(actualMissesCount).equals(missesCount) : "expected " + missesCount + " misses count, and received " + actualMissesCount;
+      assertEquals(missesCount, Integer.valueOf(actualMissesCount), "expected " + missesCount + " misses count, and received " + actualMissesCount);
    }
 
    private void assertStoreCount(int count) throws Exception {
       String actualStoreCount = mBeanServerLookup.getMBeanServer().getAttribute(storeInterceptorObjName, "WritesToTheStores").toString();
-      assert Integer.valueOf(actualStoreCount).equals(count) : "expected " + count + " store counts, but received " + actualStoreCount;
+      assertEquals(count, Integer.valueOf(actualStoreCount), "expected " + count + " store counts, but received " + actualStoreCount);
    }
 }

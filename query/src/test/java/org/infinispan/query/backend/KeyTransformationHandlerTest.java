@@ -1,7 +1,8 @@
 package org.infinispan.query.backend;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Base64;
 import java.util.UUID;
@@ -114,7 +115,7 @@ public class KeyTransformationHandlerTest {
 
       byte[] arr = new byte[]{1, 2, 3, 4, 5, 6};
       key = keyTransformationHandler.stringToKey("A:" + Base64.getEncoder().encodeToString(arr));
-      assertEquals(arr, (byte[]) key);
+      assertArrayEquals(arr, (byte[]) key);
    }
 
    @Test(expectedExceptions = CacheException.class)

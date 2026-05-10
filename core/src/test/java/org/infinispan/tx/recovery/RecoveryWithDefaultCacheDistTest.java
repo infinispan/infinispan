@@ -5,8 +5,9 @@ import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.rm;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Set;
@@ -58,7 +59,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       tm(0).begin();
       cache(0).put("k","v");
       tm(0).commit();
-      assert cache(1).get("k").equals("v");
+      assertEquals("v", cache(1).get("k"));
    }
 
    public void testLocalAndRemoteTransaction() throws Exception {
@@ -112,9 +113,9 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
 
       List<XidImpl> inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(3, inDoubtTransactions.size());
-      assert inDoubtTransactions.contains(t1_1.getXid());
-      assert inDoubtTransactions.contains(t1_2.getXid());
-      assert inDoubtTransactions.contains(t1_3.getXid());
+      assertTrue(inDoubtTransactions.contains(t1_1.getXid()));
+      assertTrue(inDoubtTransactions.contains(t1_2.getXid()));
+      assertTrue(inDoubtTransactions.contains(t1_3.getXid()));
 
       configuration.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       startCacheManager();
@@ -132,9 +133,9 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
 
       inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(3, inDoubtTransactions.size());
-      assert inDoubtTransactions.contains(t1_1.getXid());
-      assert inDoubtTransactions.contains(t1_2.getXid());
-      assert inDoubtTransactions.contains(t1_3.getXid());
+      assertTrue(inDoubtTransactions.contains(t1_1.getXid()));
+      assertTrue(inDoubtTransactions.contains(t1_2.getXid()));
+      assertTrue(inDoubtTransactions.contains(t1_3.getXid()));
 
 
       //now let's start to forget transactions
@@ -143,8 +144,8 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       eventually(() -> rm(cache(0)).getInDoubtTransactionInfo().size() == 2);
       inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(2, inDoubtTransactions.size());
-      assert inDoubtTransactions.contains(t1_2.getXid());
-      assert inDoubtTransactions.contains(t1_3.getXid());
+      assertTrue(inDoubtTransactions.contains(t1_2.getXid()));
+      assertTrue(inDoubtTransactions.contains(t1_3.getXid()));
 
       t1_4.firstEnlistedResource().forget(t1_2.getXid());
       t1_4.firstEnlistedResource().forget(t1_3.getXid());

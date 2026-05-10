@@ -1,8 +1,8 @@
 package org.infinispan.persistence;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -108,7 +108,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       for (int i = 0; i < numKeys; i++) {
          cache.put(i, i);
       }
-      assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
+      assertNotEquals(numKeys, cache.getAdvancedCache().getDataContainer().size(), "Data Container should not have all keys");
       assertEquals(numKeys, cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
    }
 
@@ -117,7 +117,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       for (int i = 0; i < numKeys; i++) {
          cache.put(i, i);
       }
-      assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
+      assertNotEquals(numKeys, cache.getAdvancedCache().getDataContainer().size(), "Data Container should not have all keys");
       assertEquals(cache.getAdvancedCache().getDataContainer().size(), cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size());
       // Skip cache store only prevents writes not reads
       assertEquals(300, cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size());
@@ -129,10 +129,10 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
          cache.put(i, i);
       }
 
-      assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
+      assertNotEquals(numKeys, cache.getAdvancedCache().getDataContainer().size(), "Data Container should not have all keys");
       Set<Object> keySet = cache.keySet();
       for (int i = 0; i < numKeys; i++) {
-         assertTrue("Key: " + i + " was not found!", keySet.contains(i));
+         assertTrue(keySet.contains(i), "Key: " + i + " was not found!");
       }
    }
 
@@ -144,13 +144,13 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
 
       AdvancedCache<Object, Object> flagCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
       DataContainer<Object, Object> dc = flagCache.getDataContainer();
-      assertFalse("Data Container should not have all keys", numKeys == dc.size());
+      assertNotEquals(numKeys, dc.size(), "Data Container should not have all keys");
       Set<Object> keySet = flagCache.keySet();
       assertEquals(dc.size(), keySet.size());
       DataConversion conversion = flagCache.getValueDataConversion();
       for (InternalCacheEntry<Object, Object> entry : dc) {
          Object key = entry.getKey();
-         assertTrue("Key: " + key + " was not found!", keySet.contains(conversion.fromStorage(key)));
+         assertTrue(keySet.contains(conversion.fromStorage(key)), "Key: " + key + " was not found!");
       }
    }
 
@@ -160,7 +160,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
          cache.put(i, i);
       }
 
-      assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
+      assertNotEquals(numKeys, cache.getAdvancedCache().getDataContainer().size(), "Data Container should not have all keys");
       Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
       assertEquals(numKeys, entrySet.size());
 
@@ -170,7 +170,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       }
 
       for (int i = 0; i < numKeys; i++) {
-         assertEquals("Key/Value mismatch!", i, map.get(i));
+         assertEquals(i, map.get(i), "Key/Value mismatch!");
       }
    }
 
@@ -182,7 +182,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
 
       AdvancedCache<Object, Object> flagCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
       DataContainer<Object, Object> dc = flagCache.getDataContainer();
-      assertFalse("Data Container should not have all keys", numKeys == dc.size());
+      assertNotEquals(numKeys, dc.size(), "Data Container should not have all keys");
       Set<Map.Entry<Object, Object>> entrySet = flagCache.entrySet();
       assertEquals(dc.size(), entrySet.size());
 
@@ -196,7 +196,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       }
 
       for (InternalCacheEntry entry : dc) {
-         assertEquals("Key/Value mismatch!", entry.getValue(), map.get(entry.getKey()));
+         assertEquals(entry.getValue(), map.get(entry.getKey()), "Key/Value mismatch!");
       }
    }
 
@@ -206,10 +206,10 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
          cache.put(i, i);
       }
 
-      assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
+      assertNotEquals(numKeys, cache.getAdvancedCache().getDataContainer().size(), "Data Container should not have all keys");
       Collection<Object> values = cache.values();
       for (int i = 0; i < numKeys; i++) {
-         assertTrue("Value: " + i + " was not found!", values.contains(i));
+         assertTrue(values.contains(i), "Value: " + i + " was not found!");
       }
    }
 
@@ -221,14 +221,14 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
 
       AdvancedCache<Object, Object> flagCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
       DataContainer<Object, Object> dc = flagCache.getDataContainer();
-      assertFalse("Data Container should not have all keys", numKeys == dc.size());
+      assertNotEquals(numKeys, dc.size(), "Data Container should not have all keys");
       Collection<Object> values = flagCache.values();
       assertEquals(dc.size(), values.size());
 
       for (InternalCacheEntry<Object, Object> entry : dc) {
          Object dcValue = entry.getValue();
          DataConversion valueDataConversion = flagCache.getValueDataConversion();
-         assertTrue("Value: " + dcValue + " was not found!", values.contains(valueDataConversion.fromStorage(dcValue)));
+         assertTrue(values.contains(valueDataConversion.fromStorage(dcValue)), "Value: " + dcValue + " was not found!");
       }
    }
 

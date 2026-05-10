@@ -1,7 +1,7 @@
 package org.infinispan.distribution.rehash;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 
@@ -54,8 +54,8 @@ public class RehashWithSharedStoreTest extends BaseDistStoreTest<Object, String,
 
       // Ensure the loader is shared!
       for (Cache<Object, String> c: Arrays.asList(c1, c2, c3)) {
-         DummyInMemoryStore dims = TestingUtil.getFirstStore(c);
-         assertTrue("CacheStore on " + c + " should contain key " + k, dims.contains(k));
+         DummyInMemoryStore<Object, String> dims = TestingUtil.getFirstStore(c);
+         assertTrue(dims.contains(k), "CacheStore on " + c + " should contain key " + k);
       }
 
       Cache<Object, String> primaryOwner = owners[0];

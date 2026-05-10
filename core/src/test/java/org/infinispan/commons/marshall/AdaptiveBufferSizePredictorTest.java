@@ -1,5 +1,7 @@
 package org.infinispan.commons.marshall;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.testng.annotations.Test;
 
 /**
@@ -24,7 +26,7 @@ public class AdaptiveBufferSizePredictorTest {
             if ((nextSize * 0.88) < size)
                break;
             else {
-               assert nextSize < prevNextSize;
+               assertTrue(nextSize < prevNextSize);
                prevNextSize = nextSize;
             }
          }
@@ -38,7 +40,7 @@ public class AdaptiveBufferSizePredictorTest {
          if ((nextSize * 0.89) > size) {
             break;
          } else {
-            assert nextSize > prevNextSize;
+            assertTrue(nextSize > prevNextSize);
             prevNextSize = nextSize;
          }
       }

@@ -1,6 +1,9 @@
 package org.infinispan.client.hotrod.xsite;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.newRemoteConfigurationBuilder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +22,6 @@ import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -52,17 +54,17 @@ public class ClientIntelligenceClusterTest extends AbstractMultipleSitesTest {
          RemoteCache<String, String> cache0 = irc.getCache();
          String cacheName = cache0.getName();
          cache0.put("key", "value");
-         AssertJUnit.assertEquals("value", cache0.get("key"));
+         assertEquals("value", cache0.get("key"));
          assertBasicIntelligence(irc, cacheName);
 
          irc.switchToCluster("backup");
          cache0.put("key1", "value1");
-         AssertJUnit.assertEquals("value1", cache0.get("key1"));
+         assertEquals("value1", cache0.get("key1"));
          assertBasicIntelligence(irc, cacheName);
 
          irc.switchToDefaultCluster();
          cache0.put("key2", "value2");
-         AssertJUnit.assertEquals("value2", cache0.get("key2"));
+         assertEquals("value2", cache0.get("key2"));
          assertBasicIntelligence(irc, cacheName);
       }
    }
@@ -72,17 +74,17 @@ public class ClientIntelligenceClusterTest extends AbstractMultipleSitesTest {
          RemoteCache<String, String> cache0 = irc.getCache();
          String cacheName = cache0.getName();
          cache0.put("key", "value");
-         AssertJUnit.assertEquals("value", cache0.get("key"));
+         assertEquals("value", cache0.get("key"));
          assertHashAwareIntelligence(irc, cacheName);
 
          irc.switchToCluster("backup");
          cache0.put("key1", "value1");
-         AssertJUnit.assertEquals("value1", cache0.get("key1"));
+         assertEquals("value1", cache0.get("key1"));
          assertBasicIntelligence(irc, cacheName);
 
          irc.switchToDefaultCluster();
          cache0.put("key2", "value2");
-         AssertJUnit.assertEquals("value2", cache0.get("key2"));
+         assertEquals("value2", cache0.get("key2"));
          assertHashAwareIntelligence(irc, cacheName);
       }
    }
@@ -92,17 +94,17 @@ public class ClientIntelligenceClusterTest extends AbstractMultipleSitesTest {
          RemoteCache<String, String> cache0 = irc.getCache();
          String cacheName = cache0.getName();
          cache0.put("key", "value");
-         AssertJUnit.assertEquals("value", cache0.get("key"));
+         assertEquals("value", cache0.get("key"));
          assertBasicIntelligence(irc, cacheName);
 
          irc.switchToCluster("backup");
          cache0.put("key1", "value1");
-         AssertJUnit.assertEquals("value1", cache0.get("key1"));
+         assertEquals("value1", cache0.get("key1"));
          assertTopologyAwareIntelligence(irc, cacheName);
 
          irc.switchToDefaultCluster();
          cache0.put("key2", "value2");
-         AssertJUnit.assertEquals("value2", cache0.get("key2"));
+         assertEquals("value2", cache0.get("key2"));
          assertBasicIntelligence(irc, cacheName);
       }
    }
@@ -142,12 +144,12 @@ public class ClientIntelligenceClusterTest extends AbstractMultipleSitesTest {
       log.debugf("Topology Info: %s", dispatcher.getCacheTopologyInfo(cacheName));
       log.debugf("Consistent Hash: %s", dispatcher.getConsistentHash(cacheName));
 
-      AssertJUnit.assertEquals(2, dispatcher.getServers(cacheName).size());
+      assertEquals(2, dispatcher.getServers(cacheName).size());
       CacheTopologyInfo topologyInfo = dispatcher.getCacheTopologyInfo(cacheName);
-      AssertJUnit.assertNotNull(topologyInfo);
-      AssertJUnit.assertEquals(2, topologyInfo.getSegmentsPerServer().size());
-      AssertJUnit.assertNotNull(topologyInfo.getNumSegments());
-      AssertJUnit.assertNotNull(dispatcher.getConsistentHash(cacheName));
+      assertNotNull(topologyInfo);
+      assertEquals(2, topologyInfo.getSegmentsPerServer().size());
+      assertNotNull(topologyInfo.getNumSegments());
+      assertNotNull(dispatcher.getConsistentHash(cacheName));
    }
 
    private static void assertTopologyAwareIntelligence(RemoteCacheManager ircm, String cacheName) {
@@ -157,12 +159,12 @@ public class ClientIntelligenceClusterTest extends AbstractMultipleSitesTest {
       log.debugf("Topology Info: %s", dispatcher.getCacheTopologyInfo(cacheName));
       log.debugf("Consistent Hash: %s", dispatcher.getConsistentHash(cacheName));
 
-      AssertJUnit.assertEquals(2, dispatcher.getServers(cacheName).size());
+      assertEquals(2, dispatcher.getServers(cacheName).size());
       CacheTopologyInfo topologyInfo = dispatcher.getCacheTopologyInfo(cacheName);
-      AssertJUnit.assertNotNull(topologyInfo);
-      AssertJUnit.assertEquals(2, topologyInfo.getSegmentsPerServer().size());
-      AssertJUnit.assertNull(topologyInfo.getNumSegments());
-      AssertJUnit.assertNull(dispatcher.getConsistentHash(cacheName));
+      assertNotNull(topologyInfo);
+      assertEquals(2, topologyInfo.getSegmentsPerServer().size());
+      assertNull(topologyInfo.getNumSegments());
+      assertNull(dispatcher.getConsistentHash(cacheName));
    }
 
    private static void assertBasicIntelligence(RemoteCacheManager ircm, String cacheName) {
@@ -172,11 +174,11 @@ public class ClientIntelligenceClusterTest extends AbstractMultipleSitesTest {
       log.debugf("Topology Info: %s", dispatcher.getCacheTopologyInfo(cacheName));
       log.debugf("Consistent Hash: %s", dispatcher.getConsistentHash(cacheName));
 
-      AssertJUnit.assertEquals(1, dispatcher.getServers(cacheName).size());
+      assertEquals(1, dispatcher.getServers(cacheName).size());
       CacheTopologyInfo topologyInfo = dispatcher.getCacheTopologyInfo(cacheName);
-      AssertJUnit.assertNotNull(topologyInfo);
-      AssertJUnit.assertEquals(1, topologyInfo.getSegmentsPerServer().size());
-      AssertJUnit.assertNull(topologyInfo.getNumSegments());
-      AssertJUnit.assertNull(dispatcher.getConsistentHash(cacheName));
+      assertNotNull(topologyInfo);
+      assertEquals(1, topologyInfo.getSegmentsPerServer().size());
+      assertNull(topologyInfo.getNumSegments());
+      assertNull(dispatcher.getConsistentHash(cacheName));
    }
 }

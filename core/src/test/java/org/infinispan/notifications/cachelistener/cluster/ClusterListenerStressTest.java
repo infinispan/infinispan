@@ -1,6 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;

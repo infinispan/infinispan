@@ -2,8 +2,8 @@ package org.infinispan.client.hotrod.event;
 
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -91,7 +91,7 @@ public class ClientListenerWithFilterAndProtobufTest extends MultiHotRodServersT
       assertEquals("user_1", e.getKey());
 
       e = listener.createEvents.poll(5, TimeUnit.SECONDS);
-      assertNull("No more elements expected in queue!", e);
+      assertNull(e, "No more elements expected in queue!");
    }
 
    @ClientListener(filterFactoryName = "custom-filter-factory")

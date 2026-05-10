@@ -1,9 +1,9 @@
 package org.infinispan.test.hibernate.cache.commons.functional.cluster;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -65,10 +65,9 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
    private static final Integer CUSTOMER_ID = 1;
    private static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
-   private EmbeddedCacheManager localManager, remoteManager;
    private AdvancedCache localCustomerCache, remoteCustomerCache;
-   private AdvancedCache localContactCache, remoteContactCache;
-   private AdvancedCache localCollectionCache, remoteCollectionCache;
+   private AdvancedCache remoteContactCache;
+   private AdvancedCache remoteCollectionCache;
    private MyListener localListener, remoteListener;
    private SessionFactoryImplementor localFactory, remoteFactory;
    private final ControlledTimeService timeService = new ControlledTimeService();
@@ -90,18 +89,18 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
       super.startUp();
       // Bind a listener to the "local" cache
       // Our region factory makes its CacheManager available to us
-      localManager = ClusterAware.getCacheManager(DualNodeTest.LOCAL);
+      EmbeddedCacheManager localManager = ClusterAware.getCacheManager(DualNodeTest.LOCAL);
       // Cache localCache = localManager.getCache("entity");
       localCustomerCache = localManager.getCache(Customer.class.getName()).getAdvancedCache();
-      localContactCache = localManager.getCache(Contact.class.getName()).getAdvancedCache();
-      localCollectionCache = localManager.getCache(Customer.class.getName() + ".contacts").getAdvancedCache();
+      AdvancedCache localContactCache = localManager.getCache(Contact.class.getName()).getAdvancedCache();
+      AdvancedCache localCollectionCache = localManager.getCache(Customer.class.getName() + ".contacts").getAdvancedCache();
       localListener = new MyListener("local");
       localCustomerCache.addListener(localListener);
       localContactCache.addListener(localListener);
       localCollectionCache.addListener(localListener);
 
       // Bind a listener to the "remote" cache
-      remoteManager = ClusterAware.getCacheManager(DualNodeTest.REMOTE);
+      EmbeddedCacheManager remoteManager = ClusterAware.getCacheManager(DualNodeTest.REMOTE);
       remoteCustomerCache = remoteManager.getCache(Customer.class.getName()).getAdvancedCache();
       remoteContactCache = remoteManager.getCache(Contact.class.getName()).getAdvancedCache();
       remoteCollectionCache = remoteManager.getCache(Customer.class.getName() + ".contacts").getAdvancedCache();
@@ -314,7 +313,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 
       Customer customer = new Customer();
       customer.setName("JBoss");
-      Set<Contact> contacts = new HashSet<Contact>();
+      Set<Contact> contacts = new HashSet<>();
 
       Contact kabir = new Contact();
       kabir.setCustomer(customer);
@@ -341,7 +340,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
          cleanup.add(mockValidator(remoteContactCache, contactsLatch));
       } else if (accessType == AccessType.NONSTRICT_READ_WRITE) {
          // ATM nonstrict mode has sync after-invalidation update
-         Stream.of(customerLatch, collectionLatch, contactsLatch, contactsLatch).forEach(l -> l.countDown());
+         Stream.of(customerLatch, collectionLatch, contactsLatch, contactsLatch).forEach(CountDownLatch::countDown);
       } else {
          ExpectingInterceptor.get(remoteCustomerCache).when(this::isFutureUpdate).countDown(collectionLatch);
          ExpectingInterceptor.get(remoteCollectionCache).when(this::isFutureUpdate).countDown(customerLatch);
@@ -358,7 +357,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 
       IdContainer ids = new IdContainer();
       ids.customerId = customer.getId();
-      Set contactIds = new HashSet();
+      Set<Integer> contactIds = new HashSet<>();
       contactIds.add(kabir.getId());
       contactIds.add(bill.getId());
       ids.contactIds = contactIds;
@@ -401,8 +400,8 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
       // Access all the contacts
       Set<Contact> contacts = customer.getContacts();
       if (contacts != null) {
-         for (Iterator it = contacts.iterator(); it.hasNext(); ) {
-            ((Contact) it.next()).getName();
+         for (Contact contact : contacts) {
+            contact.getName();
          }
       }
       return customer;
@@ -413,7 +412,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
       log.debug("Modify customer with id=" + id);
       return withTxSessionApply(sessionFactory, session -> {
          IdContainer ids = new IdContainer();
-         Set contactIds = new HashSet();
+         Set<Integer> contactIds = new HashSet<>();
          Customer customer = doGetCustomer(id, session);
          customer.setName("NewJBoss");
          ids.customerId = customer.getId();
@@ -434,11 +433,11 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 
    private void cleanup(SessionFactory sessionFactory) throws Exception {
       withTxSession(sessionFactory, session -> {
-         Customer c = (Customer) session.get(Customer.class, CUSTOMER_ID);
+         Customer c = session.get(Customer.class, CUSTOMER_ID);
          if (c != null) {
-            Set contacts = c.getContacts();
-            for (Iterator it = contacts.iterator(); it.hasNext(); ) {
-               session.remove(it.next());
+            Set<Contact> contacts = c.getContacts();
+            for (Contact contact : contacts) {
+               session.remove(contact);
             }
             c.setContacts(null);
             session.remove(c);
@@ -451,12 +450,12 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
    }
 
    private void assertLoadedFromCache(MyListener listener, Integer custId, Set contactIds) {
-      assertTrue("Customer#" + custId + " was in cache", listener.visited.contains("Customer#" + custId));
+      assertTrue(listener.visited.contains("Customer#" + custId), "Customer#" + custId + " was in cache");
       for (Iterator it = contactIds.iterator(); it.hasNext(); ) {
          Integer contactId = (Integer) it.next();
-         assertTrue("Contact#" + contactId + " was in cache", listener.visited.contains("Contact#" + contactId));
+         assertTrue(listener.visited.contains("Contact#" + contactId), "Contact#" + contactId + " was in cache");
       }
-      assertTrue("Customer.contacts" + custId + " was in cache", listener.visited.contains("Customer.contacts#" + custId));
+      assertTrue(listener.visited.contains("Customer.contacts#" + custId), "Customer.contacts" + custId + " was in cache");
    }
 
    protected static void arriveAndAwait(Phaser phaser) throws TimeoutException, InterruptedException {

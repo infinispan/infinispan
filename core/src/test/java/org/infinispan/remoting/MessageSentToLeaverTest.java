@@ -1,5 +1,8 @@
 package org.infinispan.remoting;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -60,14 +63,14 @@ public class MessageSentToLeaverTest extends AbstractInfinispanTest {
          RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
          cmd.setTopologyId(rpcManager.getTopologyId());
          Map<Address,Response> responseMap = rpcManager.blocking(rpcManager.invokeCommand(addresses, cmd, MapResponseCollector.validOnly(), rpcOptions));
-         assert responseMap.size() == 2;
+         assertTrue(responseMap.size() == 2);
 
          TestingUtil.killCacheManagers(cm2);
          TestingUtil.blockUntilViewsReceived(30000, false, c1, c3);
 
          try {
             rpcManager.blocking(rpcManager.invokeCommand(addresses, cmd, MapResponseCollector.validOnly(), rpcOptions));
-            assert false: "invokeRemotely should have thrown an exception";
+            fail("invokeRemotely should have thrown an exception");
          } catch (SuspectException e) {
             // expected
          }

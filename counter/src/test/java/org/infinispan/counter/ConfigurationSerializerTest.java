@@ -1,8 +1,8 @@
 package org.infinispan.counter;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -75,8 +75,8 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    }
 
    private void assertSameStrongCounterConfiguration(AbstractCounterConfiguration c1, AbstractCounterConfiguration c2) {
-      assertTrue(c1 instanceof StrongCounterConfiguration);
-      assertTrue(c2 instanceof StrongCounterConfiguration);
+      assertInstanceOf(StrongCounterConfiguration.class, c1);
+      assertInstanceOf(StrongCounterConfiguration.class, c2);
       assertEquals(c1.name(), c2.name());
       assertEquals(c1.initialValue(), c2.initialValue());
       assertEquals(c1.storage(), c2.storage());
@@ -86,8 +86,8 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    }
 
    private void assertSameWeakCounterConfiguration(AbstractCounterConfiguration c1, AbstractCounterConfiguration c2) {
-      assertTrue(c1 instanceof WeakCounterConfiguration);
-      assertTrue(c2 instanceof WeakCounterConfiguration);
+      assertInstanceOf(WeakCounterConfiguration.class, c1);
+      assertInstanceOf(WeakCounterConfiguration.class, c2);
       assertEquals(c1.name(), c2.name());
       assertEquals(c1.initialValue(), c2.initialValue());
       assertEquals(c1.storage(), c2.storage());
@@ -96,7 +96,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    }
 
    private void assertWeakCounter(AbstractCounterConfiguration configuration) {
-      assertTrue(configuration instanceof WeakCounterConfiguration);
+      assertInstanceOf(WeakCounterConfiguration.class, configuration);
       assertEquals("c5", configuration.name());
       assertEquals(5, configuration.initialValue());
       assertEquals(Storage.PERSISTENT, configuration.storage());
@@ -105,7 +105,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
 
    private void assertStrongCounter(String name, AbstractCounterConfiguration configuration, long initialValue,
                                     Storage storage, boolean bound, long lowerBound, long upperBound, long lifespan) {
-      assertTrue(configuration instanceof StrongCounterConfiguration);
+      assertInstanceOf(StrongCounterConfiguration.class, configuration);
       assertEquals(name, configuration.name());
       assertEquals(initialValue, configuration.initialValue());
       assertEquals(storage, configuration.storage());

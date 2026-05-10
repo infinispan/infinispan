@@ -1,6 +1,6 @@
 package org.infinispan.marshall.protostream.impl.adapters;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.security.Principal;
 import java.util.Set;

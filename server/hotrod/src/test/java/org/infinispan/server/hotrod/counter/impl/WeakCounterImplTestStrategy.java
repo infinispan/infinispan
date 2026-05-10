@@ -4,8 +4,8 @@ import static java.util.Collections.singletonList;
 import static org.infinispan.counter.api.CounterConfiguration.builder;
 import static org.infinispan.counter.api.CounterType.WEAK;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.List;

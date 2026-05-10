@@ -1,12 +1,12 @@
 package org.infinispan.topology;
 
 import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,7 +45,6 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    private ClusterTopologyManagerImpl topologyManager;
    private MockitoSession mockitoSession;
    private Transport transport;
-   private StateTransferTracker stateTransferTracker;
 
    @BeforeMethod(alwaysRun = true)
    public void setup() {
@@ -56,7 +55,7 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
       topologyManager = mock(ClusterTopologyManagerImpl.class);
       transport = mock(Transport.class);
-      stateTransferTracker = mock(StateTransferTracker.class);
+      StateTransferTracker stateTransferTracker = mock(StateTransferTracker.class);
       when(stateTransferTracker.forCache(any())).thenReturn(mock(StateTransferTracker.CacheStateTransferTracker.class));
       PreferAvailabilityStrategy availabilityStrategy =
          new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager);

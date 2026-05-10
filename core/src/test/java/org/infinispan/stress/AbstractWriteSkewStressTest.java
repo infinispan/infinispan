@@ -1,8 +1,8 @@
 package org.infinispan.stress;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -64,8 +64,8 @@ public abstract class AbstractWriteSkewStressTest extends MultipleCacheManagersT
       c1.put(SHARED_COUNTER_TEST_KEY, 0);
 
       //check if the counter is initialized in all caches
-      assertEquals("Initial value is different from zero in cache 1", 0, (int) c1.get(SHARED_COUNTER_TEST_KEY));
-      assertEquals("Initial value is different from zero in cache 2", 0, (int) c2.get(SHARED_COUNTER_TEST_KEY));
+      assertEquals(0, (int) c1.get(SHARED_COUNTER_TEST_KEY), "Initial value is different from zero in cache 1");
+      assertEquals(0, (int) c2.get(SHARED_COUNTER_TEST_KEY), "Initial value is different from zero in cache 2");
 
       //this will keep the values put by both threads. any duplicate value will be detected because of the
       //return value of add() method
@@ -77,8 +77,8 @@ public abstract class AbstractWriteSkewStressTest extends MultipleCacheManagersT
 
       try {
          // wait to finish and check is any duplicate value has been detected
-         assertTrue("Cache 1 [" + address(c1) + "] has put a duplicate value", f1.get(5, TimeUnit.MINUTES));
-         assertTrue("Cache 2 [" + address(c2) + "] has put a duplicate value", f2.get(5, TimeUnit.MINUTES));
+         assertTrue(f1.get(5, TimeUnit.MINUTES), "Cache 1 [" + address(c1) + "] has put a duplicate value");
+         assertTrue(f2.get(5, TimeUnit.MINUTES), "Cache 2 [" + address(c2) + "] has put a duplicate value");
       } catch (InterruptedException e) {
          fail("Interrupted exception while running the test");
       } catch (ExecutionException e) {
@@ -92,10 +92,8 @@ public abstract class AbstractWriteSkewStressTest extends MultipleCacheManagersT
       }
 
       //check if all caches obtains the counter_max_values
-      assertTrue("Cache 1 [" + address(c1) + "] fina value is less than " + SHARED_COUNTER_TEST_MAX_COUNTER_VALUE,
-                 c1.get(SHARED_COUNTER_TEST_KEY) >= SHARED_COUNTER_TEST_MAX_COUNTER_VALUE);
-      assertTrue("Cache 2 [" + address(c2) + "] fina value is less than " + SHARED_COUNTER_TEST_MAX_COUNTER_VALUE,
-                 c2.get(SHARED_COUNTER_TEST_KEY) >= SHARED_COUNTER_TEST_MAX_COUNTER_VALUE);
+      assertTrue(c1.get(SHARED_COUNTER_TEST_KEY) >= SHARED_COUNTER_TEST_MAX_COUNTER_VALUE, "Cache 1 [" + address(c1) + "] fina value is less than " + SHARED_COUNTER_TEST_MAX_COUNTER_VALUE);
+      assertTrue(c2.get(SHARED_COUNTER_TEST_KEY) >= SHARED_COUNTER_TEST_MAX_COUNTER_VALUE, "Cache 2 [" + address(c2) + "] fina value is less than " + SHARED_COUNTER_TEST_MAX_COUNTER_VALUE);
    }
 
    private class IncrementCounterTask implements Callable<Boolean> {
@@ -145,7 +143,7 @@ public abstract class AbstractWriteSkewStressTest extends MultipleCacheManagersT
                      log.trace("Exception during rollback", t);
                   }
                }
-               assertTrue("Duplicate value found in " + address(cache) + " (value=" + lastValue + ")", unique);
+               assertTrue(unique, "Duplicate value found in " + address(cache) + " (value=" + lastValue + ")");
             }
          }
          return unique;

@@ -1,6 +1,8 @@
 package org.infinispan.expiry;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -27,9 +29,9 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
       c1.put("k", "v", lifespan, MILLISECONDS);
       InternalCacheEntry ice = c2.getAdvancedCache().getDataContainer().peek("k");
 
-      assert ice instanceof MortalCacheEntry;
-      assert ice.getLifespan() == lifespan;
-      assert ice.getMaxIdle() == -1;
+      assertInstanceOf(MortalCacheEntry.class, ice);
+      assertTrue(ice.getLifespan() == lifespan);
+      assertTrue(ice.getMaxIdle() == -1);
    }
 
    public void testIdleExpiryReplicates() {
@@ -39,9 +41,9 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
       c1.put("k", "v", -1, MILLISECONDS, idle, MILLISECONDS);
       InternalCacheEntry ice = c2.getAdvancedCache().getDataContainer().peek("k");
 
-      assert ice instanceof TransientCacheEntry;
-      assert ice.getMaxIdle() == idle;
-      assert ice.getLifespan() == -1;
+      assertInstanceOf(TransientCacheEntry.class, ice);
+      assertTrue(ice.getMaxIdle() == idle);
+      assertTrue(ice.getLifespan() == -1);
    }
 
    public void testBothExpiryReplicates() {
@@ -51,8 +53,8 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
       long idle = 3000;
       c1.put("k", "v", lifespan, MILLISECONDS, idle, MILLISECONDS);
       InternalCacheEntry ice = c2.getAdvancedCache().getDataContainer().peek("k");
-      assert ice instanceof TransientMortalCacheEntry;
-      assert ice.getLifespan() == lifespan : "Expected " + lifespan + " but was " + ice.getLifespan();
-      assert ice.getMaxIdle() == idle : "Expected " + idle + " but was " + ice.getMaxIdle();
+      assertInstanceOf(TransientMortalCacheEntry.class, ice);
+      assertTrue(ice.getLifespan() == lifespan, "Expected " + lifespan + " but was " + ice.getLifespan());
+      assertTrue(ice.getMaxIdle() == idle, "Expected " + idle + " but was " + ice.getMaxIdle());
    }
 }

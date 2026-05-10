@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -83,9 +83,9 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       User result = cache.execute(SCRIPT_NAME, Collections.emptyMap());
 
       // Read the user as pojo
-      assertEquals(result.getId(), 3);
-      assertEquals(result.getName(), "Rex");
-      assertEquals((int) result.getAge(), 67);
+      assertEquals(3, result.getId());
+      assertEquals("Rex", result.getName());
+      assertEquals(67, (int) result.getAge());
    }
 
    private void registerScript(RemoteCacheManager remoteCacheManager, String script) throws IOException {

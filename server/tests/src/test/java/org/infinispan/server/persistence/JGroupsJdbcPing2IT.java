@@ -178,7 +178,7 @@ public class JGroupsJdbcPing2IT {
             reqLatch.countDown();
             Consumer<PingData> callbackWrapper = p -> {
                // The reqLatch should have been satisfied before the DB was restarted and PingData responses received
-               assert reqLatch.getCount() == 0;
+               assertEquals(0, reqLatch.getCount());
                successLatch.countDown();
                Consumer<PingData> discovery_rsp_callback = evt.getArg();
                discovery_rsp_callback.accept(p);

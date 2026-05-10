@@ -1,7 +1,7 @@
 package org.infinispan.container.versioning;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Future;
@@ -108,11 +108,11 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
                success = true;
 
                boolean unique = uniqueValuesSet.add(value);
-               assertTrue("Duplicate value found (value=" + lastValue + ")", unique);
+               assertTrue(unique, "Duplicate value found (value=" + lastValue + ")");
             } catch (Exception e) {
                // expected exception
                failuresCounter++;
-               assertTrue("Too many failures incrementing the counter", failuresCounter < 10 * counterMaxValue);
+               assertTrue(failuresCounter < 10 * counterMaxValue, "Too many failures incrementing the counter");
             } finally {
                if (!success) {
                   try {

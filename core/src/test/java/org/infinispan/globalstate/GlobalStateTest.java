@@ -3,13 +3,13 @@ package org.infinispan.globalstate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.testing.Exceptions.expectException;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,7 +42,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.testing.Exceptions;
-import org.testng.Assert;
+import org.infinispan.testing.ThrowingRunnable;
 import org.testng.annotations.Test;
 
 /**
@@ -487,11 +487,11 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          try (FileReader reader = new FileReader(globalScopeFile)) {
             properties.load(reader);
          }
-         assertEquals("uuids should be the same", uuid.get(), properties.getProperty("uuid"));
+         assertEquals(uuid.get(), properties.getProperty("uuid"), "uuids should be the same");
       });
    }
 
-   private void runHoldingFileLock(String state, Assert.ThrowingRunnable runnable) throws Throwable {
+   private void runHoldingFileLock(String state, ThrowingRunnable runnable) throws Throwable {
       File globalLockFile = new File(state, ScopedPersistentState.GLOBAL_SCOPE + ".lck");
       globalLockFile.getParentFile().mkdirs();
       globalLockFile.createNewFile();

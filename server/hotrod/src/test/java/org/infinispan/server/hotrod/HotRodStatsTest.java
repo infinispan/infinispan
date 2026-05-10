@@ -4,13 +4,12 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.Objects;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
@@ -46,45 +45,45 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
       int bytesWritten = 0;
 
       Map<String, String> s = client().stats();
-      assertEquals(s.get("currentNumberOfEntries"), "0");
-      assertEquals(s.get("stores"), "0");
-      assertEquals(s.get("retrievals"), "0");
-      assertEquals(s.get("hits"), "0");
-      assertEquals(s.get("misses"), "0");
-      assertEquals(s.get("removeHits"), "0");
-      assertEquals(s.get("removeMisses"), "0");
+      assertEquals("0", s.get("currentNumberOfEntries"));
+      assertEquals("0", s.get("stores"));
+      assertEquals("0", s.get("retrievals"));
+      assertEquals("0", s.get("hits"));
+      assertEquals("0", s.get("misses"));
+      assertEquals("0", s.get("removeHits"));
+      assertEquals("0", s.get("removeMisses"));
       bytesRead = assertHigherBytes(bytesRead, s.get("totalBytesRead"));
       // At time of request, we have only done ping
-      bytesWritten = Integer.valueOf(s.get("totalBytesWritten"));
-      assertTrue(String.format("Expecting %d in [5,6]", bytesWritten), bytesWritten == 5 || bytesWritten == 6);
+      bytesWritten = Integer.parseInt(s.get("totalBytesWritten"));
+      assertTrue(bytesWritten == 5 || bytesWritten == 6, String.format("Expecting %d in [5,6]", bytesWritten));
 
       client().assertPut(m);
       s = client().stats();
-      assertEquals(s.get("currentNumberOfEntries"), "1");
-      assertEquals(s.get("stores"), "1");
+      assertEquals("1", s.get("currentNumberOfEntries"));
+      assertEquals("1", s.get("stores"));
       bytesRead = assertHigherBytes(bytesRead, s.get("totalBytesRead"));
       bytesWritten = assertHigherBytes(bytesWritten, s.get("totalBytesWritten"));
 
-      assertFalse(Objects.equals(s.get("totalBytesRead"), "0"));
-      assertFalse(Objects.equals(s.get("totalBytesWritten"), "0"));
+      assertNotEquals("0", s.get("totalBytesRead"));
+      assertNotEquals("0", s.get("totalBytesWritten"));
 
       assertSuccess(client().assertGet(m), v(m));
       s = client().stats();
-      assertEquals(s.get("hits"), "1");
-      assertEquals(s.get("misses"), "0");
-      assertEquals(s.get("retrievals"), "1");
+      assertEquals("1", s.get("hits"));
+      assertEquals("0", s.get("misses"));
+      assertEquals("1", s.get("retrievals"));
       assertHigherBytes(bytesRead, s.get("totalBytesRead"));
       assertHigherBytes(bytesWritten, s.get("totalBytesWritten"));
 
       client().clear();
 
       s = client().stats();
-      assertEquals(s.get("currentNumberOfEntries"), "0");
+      assertEquals("0", s.get("currentNumberOfEntries"));
    }
 
    private int assertHigherBytes(int currentBytesRead, String bytesStr) {
-      int bytesRead = Integer.valueOf(bytesStr);
-      assertTrue(String.format("Expecting %d > %d", bytesRead, currentBytesRead), bytesRead > currentBytesRead);
+      int bytesRead = Integer.parseInt(bytesStr);
+      assertTrue(bytesRead > currentBytesRead, String.format("Expecting %d > %d", bytesRead, currentBytesRead));
       return bytesRead;
    }
 }

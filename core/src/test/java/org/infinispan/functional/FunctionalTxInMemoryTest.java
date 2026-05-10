@@ -1,9 +1,9 @@
 package org.infinispan.functional;
 
 import static org.infinispan.testing.Exceptions.expectExceptionNonStrict;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.NoSuchElementException;
@@ -17,7 +17,6 @@ import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.function.SerializableFunction;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import jakarta.transaction.Status;
@@ -52,11 +51,11 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
       }
       tm.begin();
       for (Object key : keys) {
-         assertEquals(method.eval(key, ro, e -> {
+         assertEquals("OK", method.eval(key, ro, e -> {
             assertTrue(e.find().isPresent());
             assertEquals(e.get(), e.key());
             return "OK";
-         }), "OK");
+         }));
       }
       tm.commit();
    }
@@ -65,15 +64,15 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
    public void testReadLoadsLocal(ReadMethod method) throws Exception {
       Integer[] keys = INT_KEYS;
       for (Integer key : keys) {
-         cache(0).put(key, key);
+         cache(0).put(key, key.toString());
       }
       tm.begin();
       for (Integer key : keys) {
-         assertEquals(method.eval(key, lro, e -> {
+         assertEquals("OK", method.eval(key, lro, e -> {
             assertTrue(e.find().isPresent());
-            assertEquals(e.get(), e.key());
+            assertEquals(e.get(), e.key().toString());
             return "OK";
-         }), "OK");
+         }));
       }
       tm.commit();
    }
@@ -86,7 +85,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
       tm.begin();
       assertEquals("a", rw.eval(KEY, append("b")).join());
       assertEquals("ab", rw.evalMany(Collections.singleton(KEY), append("c")).findAny().get());
-      assertEquals(null, rw.eval("otherKey", append("d")).join());
+      assertNull(rw.eval("otherKey", append("d")).join());
       assertEquals("abc", method.eval(KEY, ro, MarshallableFunctions.returnReadOnlyFindOrNull()));
       tm.commit();
    }
@@ -99,7 +98,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
       tm.begin();
       assertEquals("a", rw.eval(KEY, append("b")).join());
       assertEquals("ab", rw.evalMany(Collections.singleton(KEY), append("c")).findAny().get());
-      assertEquals(null, rw.eval("otherKey", append("d")).join());
+      assertNull(rw.eval("otherKey", append("d")).join());
       assertEquals("abc", method.eval(KEY, wo, rw,
             MarshallableFunctions.returnReadOnlyFindOrNull(),
             (e, prev) -> {}, getClass()));
@@ -190,7 +189,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
    private <K> void testReadOnMissingValues(K[] keys, FunctionalMap.ReadOnlyMap<K, String> ro, ReadMethod method) throws Exception {
       tm.begin();
       for (K key : keys) {
-         Assert.assertEquals(ro.eval(key, view -> view.find().isPresent()).join(), Boolean.FALSE);
+         assertEquals(Boolean.FALSE, ro.eval(key, view -> view.find().isPresent()).join());
       }
       tm.commit();
 

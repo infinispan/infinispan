@@ -6,10 +6,10 @@ import static org.infinispan.counter.api.CounterType.BOUNDED_STRONG;
 import static org.infinispan.counter.api.CounterType.UNBOUNDED_STRONG;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Collection;

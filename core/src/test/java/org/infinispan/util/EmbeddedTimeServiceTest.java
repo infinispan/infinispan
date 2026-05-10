@@ -1,9 +1,9 @@
 package org.infinispan.util;
 
 import static org.infinispan.test.AbstractInfinispanTest.TIME_SERVICE;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,22 +37,22 @@ public class EmbeddedTimeServiceTest {
             return 10;
          }
       };
-      assertEquals(timeService.timeDuration(0, TimeUnit.NANOSECONDS), 10);
-      assertEquals(timeService.timeDuration(-1, TimeUnit.NANOSECONDS), 11);
-      assertEquals(timeService.timeDuration(10, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.timeDuration(11, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.timeDuration(9, TimeUnit.NANOSECONDS), 1);
-      assertEquals(timeService.timeDuration(9, TimeUnit.MICROSECONDS), 0);
-      assertEquals(timeService.timeDuration(9, TimeUnit.MILLISECONDS), 0);
+      assertEquals(10, timeService.timeDuration(0, TimeUnit.NANOSECONDS));
+      assertEquals(11, timeService.timeDuration(-1, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.timeDuration(10, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.timeDuration(11, TimeUnit.NANOSECONDS));
+      assertEquals(1, timeService.timeDuration(9, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.timeDuration(9, TimeUnit.MICROSECONDS));
+      assertEquals(0, timeService.timeDuration(9, TimeUnit.MILLISECONDS));
 
-      assertEquals(timeService.timeDuration(0, 1, TimeUnit.NANOSECONDS), 1);
-      assertEquals(timeService.timeDuration(0, -1, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.timeDuration(1, 0, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.timeDuration(1, -1, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.timeDuration(-1, -1, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.timeDuration(0, 0, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.timeDuration(0, 1000, TimeUnit.MICROSECONDS), 1);
-      assertEquals(timeService.timeDuration(0, 1000000, TimeUnit.MILLISECONDS), 1);
+      assertEquals(1, timeService.timeDuration(0, 1, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.timeDuration(0, -1, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.timeDuration(1, 0, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.timeDuration(1, -1, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.timeDuration(-1, -1, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.timeDuration(0, 0, TimeUnit.NANOSECONDS));
+      assertEquals(1, timeService.timeDuration(0, 1000, TimeUnit.MICROSECONDS));
+      assertEquals(1, timeService.timeDuration(0, 1000000, TimeUnit.MILLISECONDS));
    }
 
    public void testExpired() {
@@ -78,13 +78,13 @@ public class EmbeddedTimeServiceTest {
          }
       };
 
-      assertEquals(timeService.remainingTime(-1, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.remainingTime(0, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.remainingTime(9, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.remainingTime(10, TimeUnit.NANOSECONDS), 0);
-      assertEquals(timeService.remainingTime(11, TimeUnit.NANOSECONDS), 1);
-      assertEquals(timeService.remainingTime(11, TimeUnit.MICROSECONDS), 0);
-      assertEquals(timeService.remainingTime(11, TimeUnit.MILLISECONDS), 0);
+      assertEquals(0, timeService.remainingTime(-1, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.remainingTime(0, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.remainingTime(9, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.remainingTime(10, TimeUnit.NANOSECONDS));
+      assertEquals(1, timeService.remainingTime(11, TimeUnit.NANOSECONDS));
+      assertEquals(0, timeService.remainingTime(11, TimeUnit.MICROSECONDS));
+      assertEquals(0, timeService.remainingTime(11, TimeUnit.MILLISECONDS));
    }
 
    public void testExpectedTime() {
@@ -100,14 +100,14 @@ public class EmbeddedTimeServiceTest {
          }
       };
 
-      assertEquals(timeService.expectedEndTime(-1, TimeUnit.NANOSECONDS), 10);
-      assertEquals(timeService.expectedEndTime(0, TimeUnit.NANOSECONDS), 10);
-      assertEquals(timeService.expectedEndTime(1, TimeUnit.NANOSECONDS), 11);
-      assertEquals(timeService.expectedEndTime(9, TimeUnit.NANOSECONDS), 19);
-      assertEquals(timeService.expectedEndTime(10, TimeUnit.NANOSECONDS), 20);
-      assertEquals(timeService.expectedEndTime(11, TimeUnit.NANOSECONDS), 21);
-      assertEquals(timeService.expectedEndTime(11, TimeUnit.MICROSECONDS), 11010);
-      assertEquals(timeService.expectedEndTime(11, TimeUnit.MILLISECONDS), 11000010);
+      assertEquals(10, timeService.expectedEndTime(-1, TimeUnit.NANOSECONDS));
+      assertEquals(10, timeService.expectedEndTime(0, TimeUnit.NANOSECONDS));
+      assertEquals(11, timeService.expectedEndTime(1, TimeUnit.NANOSECONDS));
+      assertEquals(19, timeService.expectedEndTime(9, TimeUnit.NANOSECONDS));
+      assertEquals(20, timeService.expectedEndTime(10, TimeUnit.NANOSECONDS));
+      assertEquals(21, timeService.expectedEndTime(11, TimeUnit.NANOSECONDS));
+      assertEquals(11010, timeService.expectedEndTime(11, TimeUnit.MICROSECONDS));
+      assertEquals(11000010, timeService.expectedEndTime(11, TimeUnit.MILLISECONDS));
    }
 
 }

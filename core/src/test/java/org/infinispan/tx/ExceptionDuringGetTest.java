@@ -1,6 +1,8 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
@@ -27,14 +29,14 @@ public class ExceptionDuringGetTest extends MultipleCacheManagersTest {
       createCluster(dcc, 2);
       waitForClusterToForm();
       cache(0).put("k", "v");
-      assert cache(1).get("k").equals("v");
+      assertEquals("v", cache(1).get("k"));
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "Induced!")
    public void testExceptionDuringGet() {
       extractInterceptorChain(advancedCache(0)).addInterceptorAfter(new ExceptionInterceptor(), PessimisticLockingInterceptor.class);
       cache(0).get("k");
-      assert false;
+      fail();
    }
 
    static class ExceptionInterceptor extends BaseAsyncInterceptor {

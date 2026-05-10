@@ -3,9 +3,9 @@ package org.infinispan.configuration;
 import static org.infinispan.configuration.cache.StorageType.HEAP;
 import static org.infinispan.configuration.cache.StorageType.OFF_HEAP;
 import static org.infinispan.eviction.EvictionStrategy.REMOVE;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -1,8 +1,8 @@
 package org.infinispan.api;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -40,8 +40,8 @@ public class IgnoreReturnValueForConditionalOperationsTest extends MultipleCache
       Object put = cache.put("kx", "vx");
       put = cache.put("kx", "vx");
       assertTrue(advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES).replace(k, "v0", "v1"));
-      assertEquals(cache(0).get(k), "v1");
-      assertEquals(cache(1).get(k), "v1");
+      assertEquals("v1", cache(0).get(k));
+      assertEquals("v1", cache(1).get(k));
    }
 
    public void testConditionalRemove() {
@@ -54,8 +54,8 @@ public class IgnoreReturnValueForConditionalOperationsTest extends MultipleCache
    private Object init() {
       Object k = getKeyForCache(1);
       cache(0).put(k, "v0");
-      assertEquals(cache(0).get(k), "v0");
-      assertEquals(cache(1).get(k), "v0");
+      assertEquals("v0", cache(0).get(k));
+      assertEquals("v0", cache(1).get(k));
       return k;
    }
 }

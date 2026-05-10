@@ -4,11 +4,11 @@ import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CyclicBarrier;
@@ -133,8 +133,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       // now this pfer should be a no-op
       cache1.putForExternalRead(key, value2);
 
-      assertEquals("PFER should have been a no-op", value, cache1.get(key));
-      assertEquals("PFER should have been a no-op", value, cache2.get(key));
+      assertEquals(value, cache1.get(key), "PFER should have been a no-op");
+      assertEquals(value, cache2.get(key), "PFER should have been a no-op");
    }
 
    @InTransactionMode(TransactionMode.TRANSACTIONAL)
@@ -192,17 +192,17 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       } catch (RuntimeException ignore) {
       }
 
-      assertNull("Should have cleaned up", cache1.get(key));
-      assertNull("Should have cleaned up", cache1.getAdvancedCache().getDataContainer().peek(key));
-      assertNull("Should have cleaned up", cache2.get(key));
+      assertNull(cache1.get(key), "Should have cleaned up");
+      assertNull(cache1.getAdvancedCache().getDataContainer().peek(key), "Should have cleaned up");
+      assertNull(cache2.get(key), "Should have cleaned up");
       InternalCacheEntry<Object, String> cache2Entry = cache2.getAdvancedCache().getDataContainer().peek(key);
-      assertNull("Should have cleaned up", cache2Entry);
+      assertNull(cache2Entry, "Should have cleaned up");
 
       // should not barf
       cache1.putForExternalRead(key, value);
    }
 
-   public void testBasicPropagation() throws Exception {
+   public void testBasicPropagation() {
       final Cache<String, String> cache1 = cache(0, CACHE_NAME);
       final Cache<String, String> cache2 = cache(1, CACHE_NAME);
 
@@ -217,14 +217,14 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       // wait for command the finish executing asynchronously
       eventually(() -> cache1.containsKey(key) && cache2.containsKey(key));
 
-      assertEquals("PFER updated cache1", value, cache1.get(key));
-      assertEquals("PFER propagated to cache2 as expected", value, cache2.get(key));
+      assertEquals(value, cache1.get(key), "PFER updated cache1");
+      assertEquals(value, cache2.get(key), "PFER propagated to cache2 as expected");
 
       // replication to cache 1 should NOT happen.
       cache2.putForExternalRead(key, value + "0");
 
-      assertEquals("PFER updated cache2", value, cache2.get(key));
-      assertEquals("Cache1 should be unaffected", value, cache1.get(key));
+      assertEquals(value, cache2.get(key), "PFER updated cache2");
+      assertEquals(value, cache1.get(key), "Cache1 should be unaffected");
    }
 
    /**

@@ -2,7 +2,7 @@ package org.infinispan.scripting;
 
 import static org.infinispan.scripting.utils.ScriptingUtils.getScriptingManager;
 import static org.infinispan.scripting.utils.ScriptingUtils.loadScript;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.List;

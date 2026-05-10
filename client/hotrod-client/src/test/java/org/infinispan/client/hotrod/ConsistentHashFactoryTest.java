@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.consistenthash.CRC16ConsistentHashV2;
@@ -28,7 +28,7 @@ public class ConsistentHashFactoryTest extends AbstractInfinispanTest {
       chf.init(builder.build());
       ConsistentHash hash = chf.newConsistentHash(2);
       assertNotNull(hash);
-      assertEquals(hash.getClass(), SomeCustomConsistentHashV2.class);
+      assertEquals(SomeCustomConsistentHashV2.class, hash.getClass());
    }
 
    public void testNoChDefined() {
@@ -37,7 +37,7 @@ public class ConsistentHashFactoryTest extends AbstractInfinispanTest {
       chf.init(builder.build());
       ConsistentHash hash = chf.newConsistentHash(2);
       assertNotNull(hash);
-      assertEquals(hash.getClass(), ConsistentHashV2.class);
+      assertEquals(ConsistentHashV2.class, hash.getClass());
    }
 
    public void testCRC16HashDefined() {
@@ -47,6 +47,6 @@ public class ConsistentHashFactoryTest extends AbstractInfinispanTest {
       chf.init(builder.build());
       ConsistentHash hash = chf.newConsistentHash(2);
       assertNotNull(hash);
-      assertEquals(hash.getClass(), CRC16ConsistentHashV2.class);
+      assertEquals(CRC16ConsistentHashV2.class, hash.getClass());
    }
 }

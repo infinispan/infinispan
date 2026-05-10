@@ -1,8 +1,8 @@
 package org.infinispan.distribution.rehash;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "distribution.rehash.SharedStoreInvalidationDuringRehashTest", groups = "functional")
 @CleanupAfterMethod
-@InCacheMode({CacheMode.DIST_SYNC })
+@InCacheMode({CacheMode.DIST_SYNC})
 public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(SharedStoreInvalidationDuringRehashTest.class);
@@ -159,13 +159,11 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
          for (int j = 0; j < NUM_KEYS; j++) {
             String key = "key" + j;
             if (!dm.getCacheTopology().isReadOwner(key)) {
-               assertFalse("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
-                     dataContainer.containsKey(key));
+               assertFalse(dataContainer.containsKey(key), "Key '" + key + "' is not owned by node " + address(i) + " but it still appears there");
             } else {
                currentOwners.put(key, i);
                if (preload) {
-                  assertTrue("Key '" + key + "' is owned by node " + address(i) + " but it does not appear there",
-                        dataContainer.containsKey(key));
+                  assertTrue(dataContainer.containsKey(key), "Key '" + key + "' is owned by node " + address(i) + " but it does not appear there");
                }
             }
          }
@@ -174,7 +172,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
       DummyInMemoryStore store = TestingUtil.getFirstStore(cache(0, TEST_CACHE_NAME));
       for (int i = 0; i < NUM_KEYS; i++) {
          String key = "key" + i;
-         assertTrue("Key " + key + " is missing from the shared store", store.keySet().contains(key));
+         assertTrue(store.keySet().contains(key), "Key " + key + " is missing from the shared store");
       }
 
       // Reset stats for the next check
@@ -203,7 +201,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
    }
 
    private void printStoreContents() {
-      DummyInMemoryStore store = TestingUtil.getFirstStore(cache(0, TEST_CACHE_NAME));
+      DummyInMemoryStore<Object, String> store = TestingUtil.getFirstStore(cache(0, TEST_CACHE_NAME));
       Set<Object> keySet = store.keySet();
       log.debugf("Shared store has %d keys: %s", keySet.size(), keySet);
    }

@@ -5,6 +5,7 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -111,13 +112,13 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
          Object key = "OLD" + i;
          Object value = joiner.get(key);
          log.infof(" TEST: Key %s is %s", key, value);
-         assert "value".equals(value) : "Couldn't see key " + key + " on joiner!";
+         assertEquals(value, "value", "Couldn't see key " + key + " on joiner!");
       }
 
       for (Object key: Arrays.asList(ut.key(), pt.key(), ct.key())) {
          Object value = joiner.get(key);
          log.infof(" TEST: Key %s is %s", key, value);
-         assert "value".equals(value) : "Couldn't see key " + key + " on joiner!";
+         assertEquals(value, "value", "Couldn't see key " + key + " on joiner!");
       }
    }
 

@@ -4,10 +4,11 @@ import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterMana
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.testing.Exceptions.expectException;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.file.Paths;
 
@@ -306,7 +307,7 @@ public class ConfigurationTest extends AbstractCacheTest {
    private void assertUnboundedStrongCounter(CounterManagerConfiguration config) {
       for (AbstractCounterConfiguration counterConfig : config.counters().values()) {
          if (counterConfig.name().equals("unbounded-strong-1")) {
-            assertTrue(counterConfig instanceof StrongCounterConfiguration);
+            assertInstanceOf(StrongCounterConfiguration.class, counterConfig);
             assertEquals(1, counterConfig.initialValue());
             assertEquals(-1, ((StrongCounterConfiguration) counterConfig).lifespan());
             assertEquals(Storage.VOLATILE, counterConfig.storage());
@@ -319,7 +320,7 @@ public class ConfigurationTest extends AbstractCacheTest {
    private void assertWeakCounter(CounterManagerConfiguration config) {
       for (AbstractCounterConfiguration counterConfig : config.counters().values()) {
          if (counterConfig.name().equals("weak-5")) {
-            assertTrue(counterConfig instanceof WeakCounterConfiguration);
+            assertInstanceOf(WeakCounterConfiguration.class, counterConfig);
             assertEquals(5, counterConfig.initialValue());
             assertEquals(Storage.VOLATILE, counterConfig.storage());
             assertEquals(10, ((WeakCounterConfiguration) counterConfig).concurrencyLevel());
@@ -333,7 +334,7 @@ public class ConfigurationTest extends AbstractCacheTest {
          long max, long lifespan, Storage storage) {
       for (AbstractCounterConfiguration counterConfig : config.counters().values()) {
          if (counterConfig.name().equals(name)) {
-            assertTrue(counterConfig instanceof StrongCounterConfiguration);
+            assertInstanceOf(StrongCounterConfiguration.class, counterConfig);
             assertEquals(initialValue, counterConfig.initialValue());
             assertEquals(storage, counterConfig.storage());
             assertTrue(((StrongCounterConfiguration) counterConfig).isBound());

@@ -1,5 +1,7 @@
 package org.infinispan.server.functional;
 
+import static io.smallrye.common.constraint.Assert.assertNotNull;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +38,7 @@ public class ClusterMigrationDynamicStoreCliIT extends ClusterMigrationDynamicSt
       properties = new Properties(System.getProperties());
       properties.put("cli.dir", workingDir.toAbsolutePath());
       try (InputStream is = ClusterMigrationDynamicStoreCliIT.class.getResourceAsStream("/cli/" + REMOTE_STORE_CFG_FILE)) {
-         assert is != null;
+         assertNotNull(is);
          try (InputStreamReader isr = new InputStreamReader(is)) {
             BufferedReader reader = new BufferedReader(isr);
             configTemplateJson = reader.lines().collect(Collectors.joining(System.lineSeparator()));

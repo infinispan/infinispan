@@ -1,7 +1,7 @@
 package org.infinispan.stress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;

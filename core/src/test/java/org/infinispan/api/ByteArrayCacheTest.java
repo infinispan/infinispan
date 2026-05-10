@@ -1,9 +1,9 @@
 package org.infinispan.api;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Arrays;
 import java.util.Map;
 
 import org.infinispan.Cache;
@@ -61,8 +61,7 @@ public class ByteArrayCacheTest extends SingleCacheManagerTest {
       byte[] value = {4, 5, 6};
       map.put(key, value);
       byte[] lookupKey = {1, 2, 3}; // on purpose, different instance required
-      assertTrue(String.format("Expected key=%s to return value=%s",
-            Util.toStr(lookupKey), Util.toStr(value)),
-            Arrays.equals(value, map.get(lookupKey)));
+      assertArrayEquals(value, map.get(lookupKey), String.format("Expected key=%s to return value=%s",
+            Util.toStr(lookupKey), Util.toStr(value)));
    }
 }

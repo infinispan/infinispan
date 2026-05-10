@@ -4,7 +4,7 @@ import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getFirstStore;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -191,7 +191,7 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
 
    private void assertStopWaitsForCompletion(ControllableStore store) throws Exception {
       PersistenceManagerImpl pm = (PersistenceManagerImpl) persistenceManager();
-      assertTrue("Read lock should be held while stage is pending", pm.anyLocksHeld());
+      assertTrue(pm.anyLocksHeld(), "Read lock should be held while stage is pending");
 
       Future<Void> stopFuture = fork(pm::stop);
       store.endDelay();
@@ -199,7 +199,7 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
    }
 
    private void assertStopForcesCompletion(PersistenceManagerImpl pm) throws Exception {
-      assertTrue("Read lock should be held while stage is pending", pm.anyLocksHeld());
+      assertTrue(pm.anyLocksHeld(), "Read lock should be held while stage is pending");
 
       Future<Void> stopFuture = fork(pm::stop);
       stopFuture.get(STOP_TIMEOUT_SECONDS, TimeUnit.SECONDS);

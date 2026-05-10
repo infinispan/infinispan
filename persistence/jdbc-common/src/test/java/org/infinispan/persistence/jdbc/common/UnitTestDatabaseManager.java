@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc.common;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -100,13 +100,13 @@ public class UnitTestDatabaseManager {
          PooledConnectionFactory pcf = (PooledConnectionFactory) connectionFactory;
          try {
             Thread.sleep(500); // C3P0 needs a little delay before reporting the correct number of connections. Bah!
-            assertEquals(pcf.getActiveConnections(), 0);
+            assertEquals(0, pcf.getActiveConnections());
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
       } else if (connectionFactory instanceof SimpleConnectionFactory) {
          SimpleConnectionFactory scf = (SimpleConnectionFactory) connectionFactory;
-         assertEquals(scf.getConnectionCount(), 0);
+         assertEquals(0, scf.getConnectionCount());
       }
    }
 

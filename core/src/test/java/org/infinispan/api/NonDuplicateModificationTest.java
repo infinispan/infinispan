@@ -1,5 +1,7 @@
 package org.infinispan.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
@@ -12,7 +14,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.util.ControlledRpcManager;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -96,7 +97,7 @@ public class NonDuplicateModificationTest extends MultipleCacheManagersTest {
 
    private void assertKeyValue(Object key, Object expected) {
       for (Cache cache : caches()) {
-         AssertJUnit.assertEquals("Wrong value for key " + key + " on " + address(cache), expected, cache.get(key));
+         assertEquals(expected, cache.get(key), "Wrong value for key " + key + " on " + address(cache));
       }
    }
 

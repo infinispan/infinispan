@@ -1,5 +1,7 @@
 package org.infinispan.query.performance;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.concurrent.TimeUnit;
@@ -11,7 +13,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -70,7 +71,7 @@ public class LoopingWriterTest extends AbstractInfinispanTest {
 
    private void countElementsViaQuery(Cache<Object, Object> cache, int expectedElements) {
       long resultSize = cache.query("FROM " + Person.class.getName()).execute().count().value();
-      Assert.assertEquals(resultSize, expectedElements);
+      assertEquals(resultSize, expectedElements);
       System.out.println("Query OK! found (as expected) " + resultSize + " elements");
    }
 

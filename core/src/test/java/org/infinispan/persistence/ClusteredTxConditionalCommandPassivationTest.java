@@ -1,7 +1,7 @@
 package org.infinispan.persistence;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.Ownership;
@@ -44,11 +44,11 @@ public class ClusteredTxConditionalCommandPassivationTest extends ClusteredCondi
                // It is also possible that the primary does not get the request while backup handles the read
                // - then we won't see any load on primary owner.
                long primaryLoads = cacheHelper.loads(Ownership.PRIMARY);
-               assertTrue("primary owner load: " + primaryLoads, primaryLoads <= 1);
+               assertTrue(primaryLoads <= 1, "primary owner load: " + primaryLoads);
                long backupLoads = cacheHelper.loads(Ownership.BACKUP);
-               assertTrue("backup owner load: " + backupLoads, backupLoads <= 1);
-               assertTrue("loads: primary=" + primaryLoads + ", backup=" + backupLoads, primaryLoads + backupLoads >= 1);
-               assertEquals("non owner load", 0, cacheHelper.loads(Ownership.NON_OWNER));
+               assertTrue(backupLoads <= 1, "backup owner load: " + backupLoads);
+               assertTrue(primaryLoads + backupLoads >= 1, "loads: primary=" + primaryLoads + ", backup=" + backupLoads);
+               assertEquals(0, cacheHelper.loads(Ownership.NON_OWNER), "non owner load");
             }
             break;
       }

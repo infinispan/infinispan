@@ -1,7 +1,7 @@
 package org.infinispan.factories.impl;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorCompletionService;

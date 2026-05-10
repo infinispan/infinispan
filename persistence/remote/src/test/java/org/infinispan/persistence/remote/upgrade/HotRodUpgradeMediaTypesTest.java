@@ -2,7 +2,7 @@ package org.infinispan.persistence.remote.upgrade;
 
 import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_31;
 import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_40;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;

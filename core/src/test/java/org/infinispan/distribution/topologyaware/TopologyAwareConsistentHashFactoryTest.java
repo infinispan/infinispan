@@ -1,7 +1,7 @@
 package org.infinispan.distribution.topologyaware;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -86,7 +86,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    private void assertOwners(int segment, int expected) {
-      assertEquals(ch.locateOwnersForSegment(segment).size(), expected);
+      assertEquals(expected, ch.locateOwnersForSegment(segment).size());
    }
 
    public void testDifferentMachines() {
@@ -435,9 +435,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
          for (int segment = 0; segment < numSegments; segment++) {
             checkConsistency(segment, numOwners, addr, newCH, movedSegmentsCount);
          }
-         assert movedSegmentsCount.get() <= numSegments * numOwners * 0.1 :
-               String.format("Too many moved segments after leave: %d. CH after leave is: %s\nPrevious: %s",
-                     movedSegmentsCount.get(), newCH, ch);
+         assertTrue(movedSegmentsCount.get() <= numSegments * numOwners * 0.1, String.format("Too many moved segments after leave: %d. CH after leave is: %s\nPrevious: %s", movedSegmentsCount.get(), newCH, ch));
       }
    }
 

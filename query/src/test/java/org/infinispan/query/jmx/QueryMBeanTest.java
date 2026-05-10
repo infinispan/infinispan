@@ -1,8 +1,8 @@
 package org.infinispan.query.jmx;
 
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Set;
@@ -121,12 +121,12 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
       Set<String> classNames = (Set<String>) mBeanServer.getAttribute(name, "IndexedClassNames");
       assertEquals(2, classNames.size());
-      assertTrue("The set should contain the Person class name.", classNames.contains(Person.class.getName()));
-      assertTrue("The set should contain the AnotherGrassEater class name.", classNames.contains(AnotherGrassEater.class.getName()));
+      assertTrue(classNames.contains(Person.class.getName()), "The set should contain the Person class name.");
+      assertTrue(classNames.contains(AnotherGrassEater.class.getName()), "The set should contain the AnotherGrassEater class name.");
       assertEquals(2, CompletionStages.join(searchStatistics.getIndexStatistics().computeIndexInfos()).size());
 
       // check the statistics and see they have reasonable values
-      assertTrue("The query execution total time should be > 0.", (Long) mBeanServer.getAttribute(name, "SearchQueryTotalTime") > 0);
+      assertTrue((Long) mBeanServer.getAttribute(name, "SearchQueryTotalTime") > 0, "The query execution total time should be > 0.");
       assertEquals(2L, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));
       assertEquals(q, mBeanServer.getAttribute(name, "SearchQueryExecutionMaxTimeQueryString"));
       assertTrue((Long) mBeanServer.getAttribute(name, "SearchQueryExecutionMaxTime") > 0);

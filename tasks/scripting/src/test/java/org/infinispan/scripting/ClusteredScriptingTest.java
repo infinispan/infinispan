@@ -6,7 +6,7 @@ import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
 import static org.infinispan.scripting.utils.ScriptingUtils.loadScript;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.ArrayList;

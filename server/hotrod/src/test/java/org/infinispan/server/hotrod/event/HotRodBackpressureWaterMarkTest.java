@@ -5,9 +5,9 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.withClientListener;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Optional;
@@ -77,7 +77,7 @@ public class HotRodBackpressureWaterMarkTest extends HotRodSingleNodeTest {
          // Make the channel non-writable so events won't be written and futures stay incomplete
          ch.config().setWriteBufferWaterMark(new WriteBufferWaterMark(1, 2));
          ch.eventLoop().submit(() -> ch.write(ch.alloc().buffer(64).writeZero(64))).get(5, TimeUnit.SECONDS);
-         assertFalse("Channel should be non-writable", ch.isWritable());
+         assertFalse(ch.isWritable(), "Channel should be non-writable");
 
          // Pre-set event size so the next event triggers backpressure
          eventSizeRef.set(HIGH_WATER_MARK - 1);
@@ -90,7 +90,7 @@ public class HotRodBackpressureWaterMarkTest extends HotRodSingleNodeTest {
          eventually(() -> eventSizeRef.get() >= HIGH_WATER_MARK, 10, TimeUnit.SECONDS);
 
          // Verify the put is actually blocked
-         assertFalse("Put should be blocked by backpressure", putFuture.isDone());
+         assertFalse(putFuture.isDone(), "Put should be blocked by backpressure");
 
          // Unblock all commands to release the per-event future
          Method unblock = sender.getClass().getSuperclass().getDeclaredMethod("unblockCommands");
@@ -135,7 +135,7 @@ public class HotRodBackpressureWaterMarkTest extends HotRodSingleNodeTest {
          Channel ch = TestingUtil.extractField(sender, "ch");
          AtomicInteger eventSizeRef = TestingUtil.extractField(sender, "eventSize");
 
-         assertTrue("Channel should be open", ch.isOpen());
+         assertTrue(ch.isOpen(), "Channel should be open");
          eventSizeRef.set(MAX_SIZE - 1);
 
          advancedCache.put("trigger-hard-cap".getBytes(), "value".getBytes());
@@ -150,7 +150,7 @@ public class HotRodBackpressureWaterMarkTest extends HotRodSingleNodeTest {
       Object registry = hotRodServer.getClientListenerRegistry();
       ConcurrentMap<WrappedByteArray, Object> senders = TestingUtil.extractField(registry, "eventSenders");
       Object sender = senders.get(new WrappedByteArray(listenerId));
-      assertNotNull("Event sender should exist for listener", sender);
+      assertNotNull(sender, "Event sender should exist for listener");
       return sender;
    }
 }

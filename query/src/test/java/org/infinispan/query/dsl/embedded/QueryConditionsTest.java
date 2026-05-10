@@ -1,12 +1,12 @@
 package org.infinispan.query.dsl.embedded;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -443,7 +443,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
       List<User> list = q.list();
       assertEquals(2, list.size());
       for (User u : list) {
-         assertNotEquals(u.getSurname(), "Woman");
+         assertNotEquals("Woman", u.getSurname());
       }
    }
 
@@ -482,14 +482,14 @@ public class QueryConditionsTest extends AbstractQueryTest {
       Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE name = 'John' OR surname = 'Man'");
       List<User> list = q.list();
       assertEquals(2, list.size());
-      assertNotEquals(list.get(0).getSurname(), "Woman");
+      assertNotEquals("Woman", list.get(0).getSurname());
    }
 
    public void testNot11() {
       Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE NOT NOT (name = 'John' OR surname = 'Man')");
       List<User> list = q.list();
       assertEquals(2, list.size());
-      assertNotEquals(list.get(0).getSurname(), "Woman");
+      assertNotEquals("Woman", list.get(0).getSurname());
    }
 
    public void testEmptyQuery() {

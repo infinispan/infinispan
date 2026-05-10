@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
@@ -99,7 +100,7 @@ public class CrashMidOperationTest extends AbstractRetryTest {
             } catch (InterruptedException e) {
                completeExceptionally(e);
             }
-            assert isDone() : "Should be done";
+            assertTrue(isDone(), "Should be done");
          }
          super.writeOperationRequest(channel, buf, codec);
       }

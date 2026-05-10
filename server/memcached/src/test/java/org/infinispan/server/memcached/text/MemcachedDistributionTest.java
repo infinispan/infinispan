@@ -1,7 +1,7 @@
 package org.infinispan.server.memcached.text;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -44,7 +44,7 @@ public class MemcachedDistributionTest extends MemcachedMultiNodeTest {
       OperationFuture<Boolean> f = owner.set("1", 0, "v1");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       MemcachedClient nonOwner = getFirstNonOwner("1");
-      assertEquals(nonOwner.get("1"), "v1");
+      assertEquals("v1", nonOwner.get("1"));
    }
 
    private MemcachedClient getFirstNonOwner(String k) {

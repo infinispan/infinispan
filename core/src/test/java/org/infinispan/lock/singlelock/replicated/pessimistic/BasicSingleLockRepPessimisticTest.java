@@ -1,5 +1,9 @@
 package org.infinispan.lock.singlelock.replicated.pessimistic;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
@@ -26,9 +30,9 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
       tm(0).begin();
       operation.perform(k, 0);
 
-      assert lockManager(0).isLocked(k);
-      assert !lockManager(1).isLocked(k);
-      assert !lockManager(2).isLocked(k);
+      assertTrue(lockManager(0).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
+      assertFalse(lockManager(2).isLocked(k));
 
       tm(0).commit();
 
@@ -44,12 +48,12 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
       cache(0).put(k1, "v");
       cache(0).put(k2, "v");
 
-      assert lockManager(0).isLocked(k1);
-      assert lockManager(0).isLocked(k2);
-      assert !lockManager(1).isLocked(k1);
-      assert !lockManager(1).isLocked(k2);
-      assert !lockManager(1).isLocked(k2);
-      assert !lockManager(2).isLocked(k2);
+      assertTrue(lockManager(0).isLocked(k1));
+      assertTrue(lockManager(0).isLocked(k2));
+      assertFalse(lockManager(1).isLocked(k1));
+      assertFalse(lockManager(1).isLocked(k2));
+      assertFalse(lockManager(1).isLocked(k2));
+      assertFalse(lockManager(2).isLocked(k2));
 
       tm(0).commit();
 
@@ -64,9 +68,9 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
       tm(0).begin();
       cache(0).put(k0, "v");
 
-      assert lockManager(0).isLocked(k0);
-      assert !lockManager(1).isLocked(k0);
-      assert !lockManager(2).isLocked(k0);
+      assertTrue(lockManager(0).isLocked(k0));
+      assertFalse(lockManager(1).isLocked(k0));
+      assertFalse(lockManager(2).isLocked(k0));
 
       tm(0).commit();
 
@@ -80,14 +84,14 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
       cache(0).put(k0, "v");
       EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).suspend();
 
-      assert checkTxCount(0, 1, 0);
-      assert checkTxCount(1, 0, 0);
-      assert checkTxCount(2, 0, 0);
+      assertTrue(checkTxCount(0, 1, 0));
+      assertTrue(checkTxCount(1, 0, 0));
+      assertTrue(checkTxCount(2, 0, 0));
 
       tm(0).begin();
       try {
          cache(0).put(k0, "other");
-         assert false;
+         fail();
       } catch (Throwable e) {
          tm(0).rollback();
       }
@@ -98,7 +102,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
       tm(1).begin();
       try {
          cache(1).put(k0, "other");
-         assert false;
+         fail();
       } catch (Throwable e) {
          tm(0).rollback();
       }
@@ -120,14 +124,14 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
       cache(1).put(k0, "v");
       EmbeddedTransaction dtm = (EmbeddedTransaction) tm(1).suspend();
 
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 1, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue(checkTxCount(0, 0, 1));
+      assertTrue(checkTxCount(1, 1, 0));
+      assertTrue(checkTxCount(2, 0, 1));
 
       tm(0).begin();
       try {
          cache(0).put(k0, "other");
-         assert false;
+         fail();
       } catch (Throwable e) {
          tm(0).rollback();
       }
@@ -138,7 +142,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
       tm(1).begin();
       try {
          cache(1).put(k0, "other");
-         assert false;
+         fail();
       } catch (Throwable e) {
          tm(0).rollback();
       }

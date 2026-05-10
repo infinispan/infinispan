@@ -1,10 +1,10 @@
 package org.infinispan.api.mvcc.repeatable_read;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,9 +62,9 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    protected ConfigurationBuilder createConfigurationBuilder() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder
-         .transaction()
+            .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-         .locking()
+            .locking()
             .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .isolationLevel(IsolationLevel.REPEATABLE_READ);
       return configurationBuilder;
@@ -74,7 +74,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    public void tearDown() {
       TestingUtil.killCacheManagers(cacheManager);
       cacheManager = null;
-      cache =null;
+      cache = null;
       lockManager = null;
       tm = null;
    }
@@ -173,11 +173,13 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       t1.get(10, SECONDS);
       t2.get(10, SECONDS);
 
-      assertTrue("k1 is expected to be in cache.", cache.containsKey("k1"));
-      assertEquals("Wrong value for key k1.", "v2", cache.get("k1"));
+      assertTrue(cache.containsKey("k1"), "k1 is expected to be in cache.");
+      assertEquals("v2", cache.get("k1"), "Wrong value for key k1.");
    }
 
-   /** Checks that multiple modifications compare the initial value and the write skew does not fire */
+   /**
+    * Checks that multiple modifications compare the initial value and the write skew does not fire
+    */
    public void testNoWriteSkewWithMultipleModifications() throws Exception {
       cache.put("k1", "init");
       tm.begin();
@@ -196,11 +198,11 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
       tm.begin();
       cache.put(key, "testDontOnImmediateRemoval-Value");
-      assertEquals("Wrong value for key " + key, "testDontOnImmediateRemoval-Value", cache.get(key));
+      assertEquals("testDontOnImmediateRemoval-Value", cache.get(key), "Wrong value for key " + key);
       cache.put(key, "testDontOnImmediateRemoval-Value-Second");
       cache.remove(key);
       commit();
-      assertFalse("Key " + key + " was not removed as expected.", cache.containsKey(key));
+      assertFalse(cache.containsKey(key), "Key " + key + " was not removed as expected.");
    }
 
    public void testNoWriteSkew() throws Exception {
@@ -350,7 +352,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
       Future<Void> w1 = fork(() -> {
          tm.begin();
-         assertEquals("Wrong value in Writer-1 for key " + key + ".", "v", cache.get(key));
+         assertEquals("v", cache.get(key), "Wrong value in Writer-1 for key " + key + ".");
          threadSignal.countDown();
          w1Signal.await();
          cache.put(key, "v2");
@@ -360,7 +362,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
       Future<Void> w2 = fork(() -> {
          tm.begin();
-         assertEquals("Wrong value in Writer-2 for key " + key + ".", "v", cache.get(key));
+         assertEquals("v", cache.get(key), "Wrong value in Writer-2 for key " + key + ".");
          threadSignal.countDown();
          w2Signal.await();
          cache.put(key, "v3");
@@ -382,10 +384,10 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       w2.get(10, SECONDS);
 
       if (disabledWriteSkewCheck) {
-         assertEquals("W2 should have overwritten W1's work!", "v3", cache.get(key));
+         assertEquals("v3", cache.get(key), "W2 should have overwritten W1's work!");
          assertNoLocks();
       } else {
-         assertEquals("W2 should *not* have overwritten W1's work!", "v2", cache.get(key));
+         assertEquals("v2", cache.get(key), "W2 should *not* have overwritten W1's work!");
          assertNoLocks();
       }
    }

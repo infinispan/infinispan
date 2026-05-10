@@ -1,5 +1,7 @@
 package org.infinispan.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -29,7 +31,7 @@ public class AsyncWithTxTest extends MultipleCacheManagersTest {
       cache(0).put("k","v1");
       transactionManager.begin();
       CompletableFuture<Object> future = cache(0).putAsync("k", "v2");
-      "v1".equals(future.get(2000, TimeUnit.MILLISECONDS));
+      assertEquals("v1", future.get(2000, TimeUnit.MILLISECONDS));
       transactionManager.commit();
    }
 }

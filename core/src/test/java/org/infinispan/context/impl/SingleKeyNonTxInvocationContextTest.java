@@ -1,6 +1,8 @@
 package org.infinispan.context.impl;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -39,43 +41,43 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
 
 
    public void testPut() {
-      assert !ci0.putOkay && !ci1.putOkay;
+      assertFalse(ci0.putOkay && !ci1.putOkay);
 
       cache(0).put(getKeyForCache(0), "v");
-      assert ci0.putOkay && !ci1.putOkay;
+      assertTrue(ci0.putOkay && !ci1.putOkay);
 
       cache(1).put(getKeyForCache(1), "v");
-      assert ci0.putOkay && ci1.putOkay;
+      assertTrue(ci0.putOkay && ci1.putOkay);
    }
 
    public void testRemove() {
-      assert !ci0.removeOkay && !ci1.removeOkay;
+      assertFalse(ci0.removeOkay && !ci1.removeOkay);
 
       cache(0).remove(getKeyForCache(0));
-      assert ci0.removeOkay && !ci1.removeOkay;
+      assertTrue(ci0.removeOkay && !ci1.removeOkay);
 
       cache(1).remove(getKeyForCache(1));
-      assert ci0.removeOkay && ci1.removeOkay;
+      assertTrue(ci0.removeOkay && ci1.removeOkay);
    }
 
    public void testGet() {
-      assert !ci0.getOkay && !ci1.getOkay;
+      assertFalse(ci0.getOkay && !ci1.getOkay);
 
       cache(0).get(getKeyForCache(0));
-      assert ci0.getOkay && !ci1.getOkay;
+      assertTrue(ci0.getOkay && !ci1.getOkay);
 
       cache(1).get(getKeyForCache(1));
-      assert ci0.getOkay && ci1.getOkay;
+      assertTrue(ci0.getOkay && ci1.getOkay);
    }
 
    public void testReplace() {
-      assert !ci0.replaceOkay && !ci1.replaceOkay;
+      assertFalse(ci0.replaceOkay && !ci1.replaceOkay);
 
       cache(0).replace(getKeyForCache(0), "v");
-      assert ci0.replaceOkay && !ci1.replaceOkay;
+      assertTrue(ci0.replaceOkay && !ci1.replaceOkay);
 
       cache(1).replace(getKeyForCache(1), "v");
-      assert ci0.replaceOkay && ci1.replaceOkay;
+      assertTrue(ci0.replaceOkay && ci1.replaceOkay);
    }
 
 

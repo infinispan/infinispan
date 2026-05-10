@@ -8,8 +8,9 @@ import static org.infinispan.notifications.Listener.Observation.POST;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.DEFAULT_CACHE_NAME;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,7 +83,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
             // Read unencoded
             Cache<?, ?> unencodedCache = cache.getAdvancedCache().withStorageMediaType();
-            assertEquals(unencodedCache.get(asStored("1")), asStored(value));
+            assertArrayEquals((byte[]) unencodedCache.get(asStored("1")), (byte[]) asStored(value));
          }
       });
    }
@@ -149,7 +150,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
             // Obtain the value with a different MediaType
             AdvancedCache<String, String> xmlCache = cache.getAdvancedCache().withMediaType(APPLICATION_OBJECT, APPLICATION_XML);
 
-            assertEquals(xmlCache.get("CoinMap"), "<root><BTC>Bitcoin</BTC><ETH>Ethereum</ETH><LTC>Litecoin</LTC></root>");
+            assertEquals("<root><BTC>Bitcoin</BTC><ETH>Ethereum</ETH><LTC>Litecoin</LTC></root>", xmlCache.get("CoinMap"));
 
             // Reading with same configured MediaType should not change content
             assertEquals(xmlCache.withMediaType(APPLICATION_OBJECT, APPLICATION_OBJECT).get("CoinMap"), valueMap);
@@ -160,8 +161,8 @@ public class DataConversionTest extends AbstractInfinispanTest {
             // Read using object from undecorated cache
             Map<String, String> map = cache.get("AltCoinMap");
 
-            assertEquals(map.get("CAT"), "Catcoin");
-            assertEquals(map.get("DOGE"), "Dogecoin");
+            assertEquals("Catcoin", map.get("CAT"));
+            assertEquals("Dogecoin", map.get("DOGE"));
          }
       });
    }
@@ -182,18 +183,18 @@ public class DataConversionTest extends AbstractInfinispanTest {
             Cache<String, String> cache = cm.getCache("foobar");
 
             cache.put("foo-key", "bar-value");
-            assertEquals(cache.get("foo-key"), "bar-value");
+            assertEquals("bar-value", cache.get("foo-key"));
 
             MediaType appFoo = MediaType.fromString("application/foo");
             MediaType appBar = MediaType.fromString("application/bar");
             Cache<String, String> fooCache = cache.getAdvancedCache().withMediaType(appFoo, appFoo);
-            assertEquals(fooCache.get("foo-key"), "foo-value");
+            assertEquals("foo-value", fooCache.get("foo-key"));
 
             Cache<String, String> barCache = cache.getAdvancedCache().withMediaType(appBar, appBar);
-            assertEquals(barCache.get("bar-key"), "bar-value");
+            assertEquals("bar-value", barCache.get("bar-key"));
 
             Cache<String, String> barFooCache = cache.getAdvancedCache().withMediaType(appBar, appFoo);
-            assertEquals(barFooCache.get("bar-key"), "foo-value");
+            assertEquals("foo-value", barFooCache.get("bar-key"));
          }
       });
    }
@@ -222,7 +223,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
             // Value as UTF-16
             Cache<byte[], byte[]> utf16ValueCache = cache.getAdvancedCache().withMediaType(MediaType.fromString("text/plain; charset=ISO-8859-1"), MediaType.fromString("text/plain; charset=UTF-16"));
 
-            assertEquals(utf16ValueCache.get(key), new byte[]{-2, -1, 0, 97, 0, 118, 0, 105, 0, -29, 0, 111});
+            assertArrayEquals(new byte[]{-2, -1, 0, 97, 0, 118, 0, 105, 0, -29, 0, 111}, utf16ValueCache.get(key));
          }
       });
    }
@@ -269,7 +270,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
          // The value should be stored as SerializedObjectWrapper
          Object storedValue = cacheEntry.getValue();
-         assertEquals(storedValue.getClass(), org.infinispan.commons.marshall.SerializedObjectWrapper.class);
+         assertEquals(org.infinispan.commons.marshall.SerializedObjectWrapper.class, storedValue.getClass());
 
          // Verify we can retrieve and deserialize the object correctly
          Person retrieved = cache.get("key1");
@@ -280,7 +281,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
          Cache<String, String> cacheStringValue = manager.getCache("octet-stream-cache");
          cacheStringValue.put("key-string", "value");
 
-         assertEquals(cacheStringValue.get("key-string"), "value");
+         assertEquals("value", cacheStringValue.get("key-string"));
       }
    }
 
@@ -300,7 +301,8 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
       private final int i;
 
-      @Inject ComponentRef<AdvancedCache<?, ?>> cache;
+      @Inject
+      ComponentRef<AdvancedCache<?, ?>> cache;
 
       TestInterceptor(int i) {
          this.i = i;

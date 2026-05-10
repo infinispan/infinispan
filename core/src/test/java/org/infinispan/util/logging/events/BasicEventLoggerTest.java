@@ -1,9 +1,9 @@
 package org.infinispan.util.logging.events;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +52,6 @@ public class BasicEventLoggerTest extends AbstractInfinispanTest {
       assertNotNull(actual);
       assertEquals(actual.getLevel(), level);
       assertEquals(actual.getCategory(), category);
-      assertEquals(actual.getMessage(), "Lorem");
+      assertEquals("Lorem", actual.getMessage());
    }
 }

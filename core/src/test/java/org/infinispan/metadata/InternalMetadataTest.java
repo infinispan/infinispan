@@ -1,7 +1,7 @@
 package org.infinispan.metadata;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.concurrent.TimeUnit;
 
@@ -52,15 +52,15 @@ public class InternalMetadataTest {
    }
 
    private void assertInternalMetadataActual(InternalMetadataImpl metadata) {
-      assertFalse("'actual' field must not be an InternalMetadataImpl", metadata.actual() instanceof InternalMetadataImpl);
+      assertFalse(metadata.actual() instanceof InternalMetadataImpl, "'actual' field must not be an InternalMetadataImpl");
    }
 
    private void assertInternalMetadataValues(InternalMetadata metadata, long lifespan, long maxIdle, long created,
                                              long lastUsed) {
-      assertEquals("Wrong lifespan value.", lifespan, metadata.lifespan());
-      assertEquals("Wrong maxIdle value.", maxIdle, metadata.maxIdle());
-      assertEquals("Wrong created value.", created, metadata.created());
-      assertEquals("Wrong lastUsed value.", lastUsed, metadata.lastUsed());
+      assertEquals(lifespan, metadata.lifespan(), "Wrong lifespan value.");
+      assertEquals(maxIdle, metadata.maxIdle(), "Wrong maxIdle value.");
+      assertEquals(created, metadata.created(), "Wrong created value.");
+      assertEquals(lastUsed, metadata.lastUsed(), "Wrong lastUsed value.");
    }
 
    private static class TestMetadata implements Metadata, Metadata.Builder {
@@ -141,8 +141,8 @@ public class InternalMetadataTest {
 
       @Override
       public int hashCode() {
-         int result = (int) (lifespan ^ (lifespan >>> 32));
-         result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
+         int result = Long.hashCode(lifespan);
+         result = 31 * result + Long.hashCode(maxIdle);
          return result;
       }
 

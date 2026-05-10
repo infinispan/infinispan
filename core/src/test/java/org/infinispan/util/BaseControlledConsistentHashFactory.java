@@ -1,6 +1,6 @@
 package org.infinispan.util;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,7 +101,7 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
    protected abstract int[][] assignOwners(int numSegments, List<Address> members);
 
    private void assertNumberOfSegments(int numSegments) {
-      assertEquals("Wrong number of segments.", this.numSegments, numSegments);
+      assertEquals(this.numSegments, numSegments, "Wrong number of segments.");
    }
 
    protected interface Trait<CH extends ConsistentHash> {

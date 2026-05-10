@@ -1,7 +1,7 @@
 package org.infinispan.globalstate;
 
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.util.Arrays;
@@ -60,7 +60,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
       for (int i = 0; i < getClusterSize(); i++) {
          String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
          File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
-         assertEquals(Arrays.toString(listFiles), 1, listFiles.length);
+         assertEquals(1, listFiles.length, Arrays.toString(listFiles));
       }
       this.cacheManagers.clear();
 
@@ -101,7 +101,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
       for (int i = 0; i < getClusterSize(); i++) {
          String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
          File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
-         assertEquals(Arrays.toString(listFiles), 1, listFiles.length);
+         assertEquals(1, listFiles.length, Arrays.toString(listFiles));
       }
       this.cacheManagers.clear();
 
@@ -118,7 +118,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
       TestingUtil.killCacheManagers(left);
       String persistentLocation = left.getCacheManagerConfiguration().globalState().persistentLocation();
       File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
-      assertEquals(Arrays.toString(listFiles), 1, listFiles.length);
+      assertEquals(1, listFiles.length, Arrays.toString(listFiles));
 
       // Assert we are still unable to execute operations.
       assertOperationsFail();
@@ -158,7 +158,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
       for (int i = 0; i < getClusterSize(); i++) {
          String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
          File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
-         assertEquals(Arrays.toString(listFiles), 1, listFiles.length);
+         assertEquals(1, listFiles.length, Arrays.toString(listFiles));
       }
       this.cacheManagers.clear();
 
@@ -180,7 +180,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
       for (int i = 0; i < getClusterSize() - 1; i++) {
          String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
          File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
-         assertEquals("Node " + i + " wrong files: " + Arrays.toString(listFiles), 1, listFiles.length);
+         assertEquals(1, listFiles.length, "Node " + i + " wrong files: " + Arrays.toString(listFiles));
       }
       this.cacheManagers.clear();
 

@@ -2,8 +2,8 @@ package org.infinispan.lock.impl.lock;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.testing.Exceptions.assertException;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;

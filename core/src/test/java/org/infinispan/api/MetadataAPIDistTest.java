@@ -2,7 +2,7 @@ package org.infinispan.api;
 
 import static org.infinispan.distribution.DistributionTestHelper.getFirstNonOwner;
 import static org.infinispan.distribution.DistributionTestHelper.getFirstOwner;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import org.infinispan.Cache;

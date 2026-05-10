@@ -1,8 +1,8 @@
 package org.infinispan.xsite.backupfailure.tx;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,10 +36,10 @@ public class BackupCustomFailurePolicyTxFailureTest extends BackupTxFailureTest 
    protected void assertAfterTest(Cache<String, String> cache) {
       super.assertAfterTest(cache);
       var sender = TestingUtil.extractComponent(cache, BackupSender.class);
-      assertTrue(sender instanceof BackupSenderImpl);
+      assertInstanceOf(BackupSenderImpl.class, sender);
       var policy = ((BackupSenderImpl) sender).getCustomFailurePolicy(siteName(1));
       assertNotNull(policy);
-      assertTrue(policy instanceof CountingFailurePolicy<Object, Object>);
+      assertInstanceOf(CountingFailurePolicy.class, policy);
       if (isTwoPhaseCommit(cache) || isPessimisticLocking(cache)) {
          // if 2PC cross-site or pessimistic locking, the failure will happen in prepare
          assertEquals(1, ((CountingFailurePolicy<Object, Object>) policy).prepareFailCount.getAndSet(0));

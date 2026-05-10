@@ -1,6 +1,6 @@
 package org.infinispan.integrationtests.cdi.weld;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
@@ -26,7 +26,7 @@ public class WeldStandaloneTest {
          String retrievedValue = testedBean.getValueFromCache("test");
 
          //then
-         assertEquals(retrievedValue, "abcd");
+         assertEquals("abcd", retrievedValue);
       } finally {
          if(weld != null) {
             //cleanup

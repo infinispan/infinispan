@@ -6,8 +6,9 @@ import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +32,6 @@ import org.infinispan.security.impl.Authorizer;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.testing.Exceptions;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -199,7 +199,9 @@ public class RestDispatcherTest {
    private void assertNoResource(RestDispatcher dispatcher, RestRequest restRequest) {
       try {
          CompletionStage<RestResponse> response = dispatcher.dispatch(restRequest);
-         if (join(response) != null) Assert.fail();
+         if (join(response) != null) {
+            fail();
+         }
       } catch (Exception ignored) {
       }
    }

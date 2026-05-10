@@ -3,10 +3,10 @@ package org.infinispan.rest.resources;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,8 +89,8 @@ public class McpTest extends AbstractRestResourceTest {
       assertThat(restResponse).isOk();
       Json response = Json.read(body);
       Json result = response.at("result");
-      assertNotNull("No result in response: " + body, result);
-      assertFalse("Tool " + toolName + " returned error: " + body, result.at("isError").asBoolean());
+      assertNotNull(result, "No result in response: " + body);
+      assertFalse(result.at("isError").asBoolean(), "Tool " + toolName + " returned error: " + body);
       return result.at("content");
    }
 

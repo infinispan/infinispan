@@ -1,5 +1,10 @@
 package org.infinispan.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -30,7 +35,7 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
    public void testGetMembers() throws Exception {
       cm1.getCache("cache"); // this will make sure any lazy components are started.
       List memb1 = cm1.getMembers();
-      assert 1 == memb1.size() : "Expected 1 member; was " + memb1;
+      assertTrue(1 == memb1.size(), "Expected 1 member; was " + memb1);
 
       Object coord = memb1.get(0);
 
@@ -40,28 +45,28 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewsReceived(50000, true, cm1, cm2);
       memb1 = cm1.getMembers();
       List memb2 = cm2.getMembers();
-      assert 2 == memb1.size();
-      assert memb1.equals(memb2);
+      assertTrue(2 == memb1.size());
+      assertEquals(memb2, memb1);
 
       TestingUtil.killCacheManagers(cm1);
       TestingUtil.blockUntilViewsReceived(50000, false, cm2);
       memb2 = cm2.getMembers();
-      assert 1 == memb2.size();
-      assert !coord.equals(memb2.get(0));
+      assertTrue(1 == memb2.size());
+      assertNotEquals(memb2.get(0), coord);
    }
 
    public void testIsCoordinator() throws Exception {
       cm1.getCache("cache"); // this will make sure any lazy components are started.
-      assert cm1.isCoordinator() : "Should be coordinator!";
+      assertTrue(cm1.isCoordinator(), "Should be coordinator!");
 
       cm2 = addClusterEnabledCacheManager();
       cm2.defineConfiguration("cache", cfg.build());
       cm2.getCache("cache"); // this will make sure any lazy components are started.
-      assert cm1.isCoordinator();
-      assert !cm2.isCoordinator();
+      assertTrue(cm1.isCoordinator());
+      assertFalse(cm2.isCoordinator());
       TestingUtil.killCacheManagers(cm1);
       // wait till cache2 gets the view change notification
       TestingUtil.blockUntilViewsReceived(50000, false, cm2);
-      assert cm2.isCoordinator();
+      assertTrue(cm2.isCoordinator());
    }
 }

@@ -5,6 +5,7 @@ import static org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest.asse
 import static org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest.assertValidEvent;
 import static org.infinispan.test.TestingUtil.extractField;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -121,7 +122,7 @@ public abstract class BaseCounterAPITest<T> extends AbstractCounterTest {
          }
       }
 
-      assert killIndex != -1;
+      assertTrue(killIndex != -1);
 
       try {
          killServer(killIndex);

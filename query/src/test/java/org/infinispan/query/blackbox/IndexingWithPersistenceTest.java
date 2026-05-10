@@ -2,10 +2,10 @@ package org.infinispan.query.blackbox;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.helper.TestQueryHelperFactory.queryAll;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,7 +71,8 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    }
 
    public void testRemove() {
-      test(c -> c.remove(KEY), sm -> {}, true);
+      test(c -> c.remove(KEY), sm -> {
+      }, true);
    }
 
    public void testCompute() {
@@ -79,7 +80,8 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    }
 
    public void testComputeRemove() {
-      test(c -> c.compute(KEY, (k, old) -> null), sm -> {}, true);
+      test(c -> c.compute(KEY, (k, old) -> null), sm -> {
+      }, true);
    }
 
    public void testMerge() {
@@ -87,7 +89,8 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    }
 
    public void testMergeRemove() {
-      test(c -> c.merge(KEY, FLUFFY, (o, n) -> null), sm -> {}, true);
+      test(c -> c.merge(KEY, FLUFFY, (o, n) -> null), sm -> {
+      }, true);
    }
 
    private void test(Consumer<Cache<Object, Object>> op, Consumer<Cache<?, ?>> check, boolean remove) {
@@ -107,7 +110,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
       // check the entry is in the store
       MarshallableEntry<?, ?> inStore = store.loadEntry(KEY);
       assertNotNull(inStore);
-      assertTrue("In store: " + inStore, inStore.getValue() instanceof Person);
+      assertInstanceOf(Person.class, inStore.getValue(), "In store: " + inStore);
       // ...and not in the container
       assertNull(cache.getAdvancedCache().getDataContainer().peek(KEY));
 
@@ -126,9 +129,9 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
          assertNull(inStore);
       } else {
          assertNotNull(ice);
-         assertTrue("In DC: " + ice, ice.getValue() instanceof AnotherGrassEater);
+         assertInstanceOf(AnotherGrassEater.class, ice.getValue(), "In DC: " + ice);
          assertNotNull(inStore);
-         assertTrue("In store: " + inStore, inStore.getValue() instanceof AnotherGrassEater);
+         assertInstanceOf(AnotherGrassEater.class, inStore.getValue(), "In store: " + inStore);
       }
    }
 

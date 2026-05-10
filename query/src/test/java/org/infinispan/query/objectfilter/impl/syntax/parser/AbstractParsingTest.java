@@ -1,7 +1,7 @@
 package org.infinispan.query.objectfilter.impl.syntax.parser;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.query.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.testng.annotations.Test;

@@ -16,9 +16,9 @@ import static org.infinispan.marshall.core.MarshallableFunctions.returnReadWrite
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueConsumer;
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueReturnPrevOrNull;
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueReturnView;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;

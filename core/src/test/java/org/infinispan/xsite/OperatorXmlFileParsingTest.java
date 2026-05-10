@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -9,7 +11,6 @@ import org.infinispan.configuration.global.JGroupsConfiguration;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.conf.ProtocolConfiguration;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "xsite.OperatorXmlFileParsingTest")
@@ -85,7 +86,7 @@ public class OperatorXmlFileParsingTest extends AbstractInfinispanTest {
             .stream()
             .map(ProtocolConfiguration::getProtocolName)
             .collect(Collectors.toList());
-      AssertJUnit.assertEquals("Incorrect stack: " + stack, expected, parsed);
+      assertEquals(expected, parsed, "Incorrect stack: " + stack);
    }
 
 }

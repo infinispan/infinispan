@@ -1,8 +1,8 @@
 package org.infinispan.container.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -102,8 +102,7 @@ public class DynamicMemoryResizerIntegrationTest extends AbstractInfinispanTest 
       } while (sharedMap.capacity() < prevCapacity);
 
       // Floor is 10% of 100 = 10
-      assertTrue("Capacity should be at floor (10), was: " + sharedMap.capacity(),
-            sharedMap.capacity() >= 10);
+      assertTrue(sharedMap.capacity() >= 10, "Capacity should be at floor (10), was: " + sharedMap.capacity());
    }
 
    @Test
@@ -170,7 +169,7 @@ public class DynamicMemoryResizerIntegrationTest extends AbstractInfinispanTest 
    }
 
    private DynamicMemoryResizer createResizer(SharedCaffeineMap<?, ?> map, String name,
-         MemoryMonitor monitor, ScheduledExecutorService executor) {
+                                              MemoryMonitor monitor, ScheduledExecutorService executor) {
       ContainerMemoryConfiguration containerConfig = Mockito.mock(ContainerMemoryConfiguration.class);
       Mockito.when(containerConfig.dynamicResize()).thenReturn(true);
 

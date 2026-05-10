@@ -1,9 +1,10 @@
 package org.infinispan.functional;
 
 import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -79,8 +80,8 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, readMap.get(key));
-      assertEquals(null, writeMap.put(key, "one"));
+      assertNull(readMap.get(key));
+      assertNull(writeMap.put(key, "one"));
       assertEquals("one", readMap.get(key));
    }
 
@@ -112,7 +113,7 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, writeMap.put(key, "one"));
+      assertNull(writeMap.put(key, "one"));
       assertEquals("one", readMap.get(key));
    }
 
@@ -144,7 +145,7 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, writeMap.put(key, "one"));
+      assertNull(writeMap.put(key, "one"));
       assertEquals("one", writeMap.put(key, "uno"));
       assertEquals("uno", readMap.get(key));
    }
@@ -177,10 +178,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, writeMap.put(key, "one"));
+      assertNull(writeMap.put(key, "one"));
       assertEquals("one", readMap.get(key));
       assertEquals("one", writeMap.remove(key));
-      assertEquals(null, readMap.get(key));
+      assertNull(readMap.get(key));
    }
 
    public void testLocalContainsKey() {
@@ -211,9 +212,9 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> map1,
          ConcurrentMap<K, String> map2) {
       K key = keySupplier.get();
-      assertEquals(false, map1.containsKey(key));
-      assertEquals(null, map2.put(key, "one"));
-      assertEquals(true, map1.containsKey(key));
+      assertFalse(map1.containsKey(key));
+      assertNull(map2.put(key, "one"));
+      assertTrue(map1.containsKey(key));
    }
 
    public void testLocalContainsValue() {
@@ -244,10 +245,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> map1,
          ConcurrentMap<K, String> map2) {
       K key = keySupplier.get();
-      assertEquals(false, map1.containsValue(value));
-      assertEquals(null, map2.put(key, value));
-      assertEquals(true, map1.containsValue(value));
-      assertEquals(false, map1.containsValue("xxx"));
+      assertFalse(map1.containsValue(value));
+      assertNull(map2.put(key, value));
+      assertTrue(map1.containsValue(value));
+      assertFalse(map1.containsValue("xxx"));
    }
 
    public void testLocalSize() {
@@ -279,9 +280,9 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> writeMap) {
       K key1 = keySupplier.get(), key2 = keySupplier.get();
       assertEquals(0, readMap.size());
-      assertEquals(null, writeMap.put(key1, "one"));
+      assertNull(writeMap.put(key1, "one"));
       assertEquals(1, readMap.size());
-      assertEquals(null, writeMap.put(key2, "two"));
+      assertNull(writeMap.put(key2, "two"));
       assertEquals(2, readMap.size());
       assertEquals("one", writeMap.remove(key1));
       assertEquals(1, writeMap.size());
@@ -317,12 +318,12 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(true, readMap.isEmpty());
-      assertEquals(null, writeMap.put(key, "one"));
+      assertTrue(readMap.isEmpty());
+      assertNull(writeMap.put(key, "one"));
       assertEquals("one", readMap.get(key));
-      assertEquals(false, readMap.isEmpty());
+      assertFalse(readMap.isEmpty());
       assertEquals("one", writeMap.remove(key));
-      assertEquals(true, readMap.isEmpty());
+      assertTrue(readMap.isEmpty());
    }
 
    public void testLocalPutAll() {
@@ -353,7 +354,7 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
-      assertEquals(true, readMap.isEmpty());
+      assertTrue(readMap.isEmpty());
       Map<K, String> data = new HashMap<>();
       data.put(key1, "one");
       data.put(key2, "two");
@@ -395,7 +396,7 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
-      assertEquals(true, readMap.isEmpty());
+      assertTrue(readMap.isEmpty());
       Map<K, String> data = new HashMap<>();
       data.put(key1, "one");
       data.put(key2, "two");
@@ -405,9 +406,9 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
       assertEquals("two", readMap.get(key2));
       assertEquals("two", readMap.get(key3));
       writeMap.clear();
-      assertEquals(null, readMap.get(key1));
-      assertEquals(null, readMap.get(key2));
-      assertEquals(null, readMap.get(key3));
+      assertNull(readMap.get(key1));
+      assertNull(readMap.get(key2));
+      assertNull(readMap.get(key3));
    }
 
    public void testLocalKeyValueAndEntrySets() {
@@ -438,7 +439,7 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
-      assertEquals(true, readMap.isEmpty());
+      assertTrue(readMap.isEmpty());
       writeMap.put(key1, "one");
       writeMap.put(key2, "two");
       writeMap.put(key3, "two");
@@ -447,14 +448,14 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
       assertEquals(3, keys.size());
       Set<K> expectedKeys = new HashSet<>(Arrays.asList(key1, key2, key3));
       keys.forEach(expectedKeys::remove);
-      assertEquals(true, expectedKeys.isEmpty());
+      assertTrue(expectedKeys.isEmpty());
 
-      assertEquals(false, readMap.isEmpty());
+      assertFalse(readMap.isEmpty());
       Collection<String> values = readMap.values();
       assertEquals(3, values.size());
       Set<String> expectedValues = new HashSet<>(Arrays.asList("one", "two"));
       values.forEach(expectedValues::remove);
-      assertEquals(true, expectedValues.isEmpty());
+      assertTrue(expectedValues.isEmpty());
 
       Set<Map.Entry<K, String>> entries = readMap.entrySet();
       assertEquals(3, entries.size());
@@ -497,13 +498,13 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, readMap.get(key));
-      assertEquals(null, writeMap.putIfAbsent(key, "one"));
+      assertNull(readMap.get(key));
+      assertNull(writeMap.putIfAbsent(key, "one"));
       assertEquals("one", readMap.get(key));
       assertEquals("one", writeMap.putIfAbsent(key, "uno"));
       assertEquals("one", readMap.get(key));
       assertEquals("one", writeMap.remove(key));
-      assertEquals(null, readMap.get(key));
+      assertNull(readMap.get(key));
    }
 
    public void testLocalConditionalRemove() {
@@ -534,14 +535,14 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, readMap.get(key));
+      assertNull(readMap.get(key));
       assertFalse(writeMap.remove(key, "xxx"));
-      assertEquals(null, writeMap.put(key, "one"));
+      assertNull(writeMap.put(key, "one"));
       assertEquals("one", readMap.get(key));
       assertFalse(writeMap.remove(key, "xxx"));
       assertEquals("one", readMap.get(key));
       assertTrue(writeMap.remove(key, "one"));
-      assertEquals(null, readMap.get(key));
+      assertNull(readMap.get(key));
    }
 
    public void testLocalReplace() {
@@ -572,14 +573,14 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, readMap.get(key));
-      assertEquals(null, writeMap.replace(key, "xxx"));
-      assertEquals(null, writeMap.put(key, "one"));
+      assertNull(readMap.get(key));
+      assertNull(writeMap.replace(key, "xxx"));
+      assertNull(writeMap.put(key, "one"));
       assertEquals("one", readMap.get(key));
       assertEquals("one", writeMap.replace(key, "uno"));
       assertEquals("uno", readMap.get(key));
       assertEquals("uno", writeMap.remove(key));
-      assertEquals(null, readMap.get(key));
+      assertNull(readMap.get(key));
    }
 
    public void testLocalReplaceWithValue() {
@@ -610,16 +611,16 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
          ConcurrentMap<K, String> readMap,
          ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, readMap.get(key));
+      assertNull(readMap.get(key));
       assertFalse(writeMap.replace(key, "xxx", "uno"));
-      assertEquals(null, writeMap.put(key, "one"));
+      assertNull(writeMap.put(key, "one"));
       assertEquals("one", readMap.get(key));
       assertFalse(writeMap.replace(key, "xxx", "uno"));
       assertEquals("one", readMap.get(key));
       assertTrue(writeMap.replace(key, "one", "uno"));
       assertEquals("uno", readMap.get(key));
       assertEquals("uno", writeMap.remove(key));
-      assertEquals(null, readMap.get(key));
+      assertNull(readMap.get(key));
    }
 
 }

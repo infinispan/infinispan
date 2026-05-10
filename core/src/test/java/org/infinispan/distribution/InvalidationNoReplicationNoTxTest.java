@@ -1,6 +1,9 @@
 package org.infinispan.distribution;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.testng.annotations.Test;
 
@@ -17,20 +20,20 @@ public class InvalidationNoReplicationNoTxTest extends InvalidationNoReplication
 
    public void testInvalidation() throws Exception {
       cache(1).put(k0, "v0");
-      assert advancedCache(0).getDataContainer().containsKey(k0);
-      assert !advancedCache(1).getDataContainer().containsKey(k0);
+      assertTrue(advancedCache(0).getDataContainer().containsKey(k0));
+      assertFalse(advancedCache(1).getDataContainer().containsKey(k0));
 
-      assertEquals(cache(1).get(k0), "v0");
-      assert advancedCache(0).getDataContainer().containsKey(k0);
-      assert advancedCache(1).getDataContainer().containsKey(k0);
+      assertEquals("v0", cache(1).get(k0));
+      assertTrue(advancedCache(0).getDataContainer().containsKey(k0));
+      assertTrue(advancedCache(1).getDataContainer().containsKey(k0));
 
       log.info("Here is the put!");
       log.infof("Cache 0=%s cache 1=%s", address(0), address(1));
       cache(0).put(k0, "v1");
 
       log.info("before assertions!");
-      assertEquals(advancedCache(1).getDataContainer().peek(k0), null);
-      assertEquals(advancedCache(0).getDataContainer().peek(k0).getValue(), "v1");
+      assertNull(advancedCache(1).getDataContainer().peek(k0));
+      assertEquals("v1", advancedCache(0).getDataContainer().peek(k0).getValue());
    }
 
 }

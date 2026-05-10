@@ -1,5 +1,9 @@
 package org.infinispan.lock.singlelock.replicated.optimistic;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
@@ -30,9 +34,9 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
       EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).getTransaction();
       dtm.runPrepare();
 
-      assert lockManager(0).isLocked(k);
-      assert !lockManager(1).isLocked(k);
-      assert !lockManager(2).isLocked(k);
+      assertTrue(lockManager(0).isLocked(k));
+      assertFalse(lockManager(1).isLocked(k));
+      assertFalse(lockManager(2).isLocked(k));
 
       dtm.runCommit(false);
 
@@ -51,12 +55,12 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
       EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).getTransaction();
       dtm.runPrepare();
 
-      assert lockManager(0).isLocked(k1);
-      assert lockManager(0).isLocked(k2);
-      assert !lockManager(1).isLocked(k1);
-      assert !lockManager(1).isLocked(k2);
-      assert !lockManager(1).isLocked(k2);
-      assert !lockManager(2).isLocked(k2);
+      assertTrue(lockManager(0).isLocked(k1));
+      assertTrue(lockManager(0).isLocked(k2));
+      assertFalse(lockManager(1).isLocked(k1));
+      assertFalse(lockManager(1).isLocked(k2));
+      assertFalse(lockManager(1).isLocked(k2));
+      assertFalse(lockManager(2).isLocked(k2));
 
       dtm.runCommit(false);
 
@@ -75,9 +79,9 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
 
       dtm.runPrepare();
 
-      assert lockManager(0).isLocked(k0);
-      assert !lockManager(1).isLocked(k0);
-      assert !lockManager(2).isLocked(k0);
+      assertTrue(lockManager(0).isLocked(k0));
+      assertFalse(lockManager(1).isLocked(k0));
+      assertFalse(lockManager(2).isLocked(k0));
 
       dtm.runCommit(false);
 
@@ -94,15 +98,15 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
       dtm.runPrepare();
       tm(0).suspend();
 
-      assert checkTxCount(0, 1, 0);
-      assert checkTxCount(1, 0, 1);
-      assert checkTxCount(2, 0, 1);
+      assertTrue(checkTxCount(0, 1, 0));
+      assertTrue(checkTxCount(1, 0, 1));
+      assertTrue(checkTxCount(2, 0, 1));
 
       tm(0).begin();
       cache(0).put(k0, "other");
       try {
          tm(0).commit();
-         assert false;
+         fail();
       } catch (Throwable e) {
          //ignore
       }
@@ -114,7 +118,7 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
       cache(1).put(k0, "other");
       try {
          tm(1).commit();
-         assert false;
+         fail();
       } catch (Throwable e) {
          //expected
       }

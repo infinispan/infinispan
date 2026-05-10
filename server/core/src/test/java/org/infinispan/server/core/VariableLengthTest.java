@@ -4,7 +4,8 @@ import static org.infinispan.server.core.transport.ExtendedByteBuf.readUnsignedI
 import static org.infinispan.server.core.transport.ExtendedByteBuf.readUnsignedLong;
 import static org.infinispan.server.core.transport.ExtendedByteBuf.writeUnsignedInt;
 import static org.infinispan.server.core.transport.ExtendedByteBuf.writeUnsignedLong;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.commons.util.Util;
 import org.testng.annotations.Test;
@@ -92,7 +93,7 @@ public class VariableLengthTest {
    @Test(expectedExceptions = IllegalStateException.class)
    public void testTooLongInt() {
       ByteBuf buffer = Unpooled.directBuffer(1024);
-      assert(buffer.writerIndex() == 0);
+      assertTrue(buffer.writerIndex() == 0);
       writeUnsignedLong(9223372036854775807L, buffer);
       readUnsignedInt(buffer);
       buffer.release();
@@ -101,7 +102,7 @@ public class VariableLengthTest {
    @Test(groups = "unstable")
    public void testPrintHexadecimalVint() {
       ByteBuf buffer = Unpooled.directBuffer(1024);
-      assert(buffer.writerIndex() == 0);
+      assertTrue(buffer.writerIndex() == 0);
       writeUnsignedLong(512, buffer);
       System.out.println(Util.hexDump(buffer.nioBuffer()));
       System.out.println();
@@ -114,18 +115,18 @@ public class VariableLengthTest {
 
    private void writeReadInt(int num, int expected) {
       ByteBuf buffer = Unpooled.directBuffer(1024);
-      assert(buffer.writerIndex() == 0);
+      assertTrue(buffer.writerIndex() == 0);
       writeUnsignedInt(num, buffer);
-      assertEquals(buffer.writerIndex(), expected);
+      assertEquals(expected, buffer.writerIndex());
       assertEquals(readUnsignedInt(buffer), num);
       buffer.release();
    }
 
    private void writeReadLong(long num, int expected) {
       ByteBuf buffer = Unpooled.directBuffer(1024);
-      assert(buffer.writerIndex() == 0);
+      assertTrue(buffer.writerIndex() == 0);
       writeUnsignedLong(num, buffer);
-      assertEquals(buffer.writerIndex(), expected);
+      assertEquals(expected, buffer.writerIndex());
       assertEquals(readUnsignedLong(buffer), num);
       buffer.release();
    }

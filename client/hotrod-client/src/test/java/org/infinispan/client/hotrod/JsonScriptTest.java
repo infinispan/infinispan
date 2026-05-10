@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -49,7 +49,7 @@ public class JsonScriptTest extends MultiHotRodServersTest {
 
       String result = cache.execute(SCRIPT_NAME, Collections.emptyMap());
 
-      assertEquals(result, "{\"v\":\"value2\"}");
+      assertEquals("{\"v\":\"value2\"}", result);
    }
 
    private void registerScript(RemoteCacheManager remoteCacheManager, String script) throws IOException {

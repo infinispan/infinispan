@@ -1,7 +1,7 @@
 package org.infinispan.globalstate;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
 import org.testng.annotations.Test;
@@ -26,6 +26,6 @@ public class ScopedPersistentStateTest {
       state3.setProperty("b", 1);
       state3.setProperty("c", 2.0f);
       state3.setProperty("@local", "state1");
-      assertFalse(state1.getChecksum() == state3.getChecksum());
+      assertNotEquals(state1.getChecksum(), state3.getChecksum());
    }
 }

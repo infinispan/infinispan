@@ -1,12 +1,12 @@
 package org.infinispan.stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -111,7 +111,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
             results.put(entry.getKey(), entry.getValue());
             count++;
          }
-         assertEquals(count, 4);
+         assertEquals(4, count);
          assertEquals(originalValues, results);
 
          future.get(10, TimeUnit.SECONDS);
@@ -176,7 +176,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
             count++;
          }
          // We shouldn't have found the value in the loader
-         assertEquals(count, 3);
+         assertEquals(3, count);
          assertEquals(originalValues, results);
 
          future.get(10, TimeUnit.SECONDS);
@@ -241,7 +241,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
             count++;
          }
          // We shouldn't have found the value in the loader
-         assertEquals(count, 4);
+         assertEquals(4, count);
          for (Map.Entry<MagicKey, String> entry : originalValues.entrySet()) {
             assertEquals(entry.getValue().substring(1, 4), results.get(entry.getKey()));
          }
@@ -317,7 +317,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
          while (iterator.hasNext()) {
             Map.Entry<MagicKey, String> entry = iterator.next();
             String prev = results.put(entry.getKey(), entry.getValue());
-            assertNull("Entry " + entry + " replaced an existing value of " + prev, prev);
+            assertNull(prev, "Entry " + entry + " replaced an existing value of " + prev);
          }
          assertEquals(originalValues, results);
 

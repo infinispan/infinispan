@@ -1,6 +1,9 @@
 package org.infinispan.distribution;
 
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.testng.annotations.Test;
@@ -28,7 +31,7 @@ public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest<Object, St
 
       Object retval = nonOwner.replace("k1", "value2");
 
-      assert "value".equals(retval);
+      assertEquals(retval, "value");
       assertOnAllCachesAndOwnership("k1", "value2");
    }
 
@@ -37,12 +40,12 @@ public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest<Object, St
       Cache<Object, String> nonOwner = getFirstNonOwner("k1");
 
       boolean success = nonOwner.replace("k1", "blah", "value2");
-      assert !success;
+      assertFalse(success);
 
       assertOnAllCachesAndOwnership("k1", "value");
 
       success = nonOwner.replace("k1", "value", "value2");
-      assert success;
+      assertTrue(success);
 
       assertOnAllCachesAndOwnership("k1", "value2");
    }
@@ -53,7 +56,7 @@ public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest<Object, St
 
       Object retval = nonOwner.put("k1", "value2");
 
-      assert "value".equals(retval);
+      assertEquals(retval, "value");
       assertOnAllCachesAndOwnership("k1", "value2");
    }
 
@@ -63,7 +66,7 @@ public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest<Object, St
 
       Object retval = nonOwner.remove("k1");
 
-      assert "value".equals(retval);
+      assertEquals(retval, "value");
       assertRemovedOnAllCaches("k1");
    }
 
@@ -72,12 +75,12 @@ public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest<Object, St
       Cache<Object, String> nonOwner = getFirstNonOwner("k1");
 
       boolean removed = nonOwner.remove("k1", "blah");
-      assert !removed;
+      assertFalse(removed);
 
       assertOnAllCachesAndOwnership("k1", "value");
 
       removed = nonOwner.remove("k1", "value");
-      assert removed;
+      assertTrue(removed);
 
       assertRemovedOnAllCaches("k1");
    }
@@ -86,7 +89,7 @@ public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest<Object, St
       initAndTest();
       Object retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
 
-      assert "value".equals(retval);
+      assertEquals(retval, "value");
 
       assertOnAllCachesAndOwnership("k1", "value");
 
@@ -96,7 +99,7 @@ public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest<Object, St
       assertFalse(c2.getAdvancedCache().getLockManager().isLocked("k1"));
 
       retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
-      assert null == retval;
+      assertNull(retval);
 
       assertOnAllCachesAndOwnership("k1", "value2");
    }

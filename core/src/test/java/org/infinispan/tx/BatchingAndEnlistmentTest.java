@@ -1,6 +1,9 @@
 package org.infinispan.tx;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -32,17 +35,17 @@ public class BatchingAndEnlistmentTest extends SingleCacheManagerTest {
 
    public void testExpectedEnlistmentMode() {
       TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
-      assert tm instanceof BatchModeTransactionManager;
+      assertInstanceOf(BatchModeTransactionManager.class, tm);
       TransactionTable tt = TestingUtil.getTransactionTable(cache);
-      assertEquals(tt.getClass(), TransactionTable.class);
+      assertSame(TransactionTable.class, tt.getClass());
       BatchContainer bc = TestingUtil.extractComponent(cache, BatchContainer.class);
 
       cache.startBatch();
       cache.put("k", "v");
-      assert getBatchTx(bc).getEnlistedSynchronization().size() == 1;
-      assert getBatchTx(bc).getEnlistedResources().isEmpty();
+      assertTrue(getBatchTx(bc).getEnlistedSynchronization().size() == 1);
+      assertTrue(getBatchTx(bc).getEnlistedResources().isEmpty());
       cache.endBatch(true);
-      assert getBatchTx(bc) == null;
+      assertNull(getBatchTx(bc));
    }
 
    private EmbeddedTransaction getBatchTx(BatchContainer bc) {

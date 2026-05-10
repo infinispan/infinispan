@@ -1,5 +1,8 @@
 package org.infinispan.tx.synchronisation;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.test.TestingUtil;
@@ -28,8 +31,8 @@ public class TransactionsSpanningCachesSyncTest extends TransactionsSpanningCach
    }
 
    public void testSyncIsUsed() {
-      assert cacheManagers.get(0).getCache().getCacheConfiguration().transaction().useSynchronization();
+      assertTrue(cacheManagers.get(0).getCache().getCacheConfiguration().transaction().useSynchronization());
       TransactionTable transactionTable = TestingUtil.extractComponent(cacheManagers.get(0).getCache(), TransactionTable.class);
-      assert !(transactionTable instanceof XaTransactionTable);
+      assertFalse(transactionTable instanceof XaTransactionTable);
    }
 }

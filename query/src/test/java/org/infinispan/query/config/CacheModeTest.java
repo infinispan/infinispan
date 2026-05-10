@@ -1,6 +1,6 @@
 package org.infinispan.query.config;
 
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +65,7 @@ public class CacheModeTest extends AbstractInfinispanTest {
          cc = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder);
          QueryInterceptor queryInterceptor =
                TestingUtil.findInterceptor(cc.getCache(), QueryInterceptor.class);
-         assertNotNull("Didn't find a query interceptor in the chain!!", queryInterceptor);
+         assertNotNull(queryInterceptor, "Didn't find a query interceptor in the chain!!");
       } finally {
          TestingUtil.killCacheManagers(cc);
       }

@@ -1,10 +1,10 @@
 package org.infinispan.server.security.http.localuser;
 
 import static org.infinispan.server.security.http.localuser.LocalUserAuthenticationMechanism.SILENT;
-import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.security.Provider;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -36,9 +36,9 @@ public class LocalUserMechanismFactory implements HttpServerAuthenticationMechan
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName,
             Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
-        checkNotNullParam("mechanismName", mechanismName);
-        checkNotNullParam("properties", properties);
-        checkNotNullParam("callbackHandler", callbackHandler);
+        Objects.requireNonNull(mechanismName, "Mechanism name cannot be null");
+        Objects.requireNonNull(properties, "Properties cannot be null");
+        Objects.requireNonNull(callbackHandler, "Callback handler cannot be null");
 
         if (LocalUserAuthenticationMechanism.LOCALUSER_NAME.equals(mechanismName)) {
             return new LocalUserAuthenticationMechanism(callbackHandler,

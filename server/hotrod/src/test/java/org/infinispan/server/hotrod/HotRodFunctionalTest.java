@@ -16,8 +16,10 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
 import static org.infinispan.test.TestingUtil.assertBetween;
 import static org.infinispan.test.TestingUtil.generateRandomString;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -51,13 +53,13 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
    public void testUnknownCommand(Method m) {
       OperationStatus status = client().execute(0xA0, (byte)255, cacheName, k(m), 0, 0, v(m), 0, (byte) 1, 0).status;
-      assertEquals("Status should have been 'UnknownOperation' but instead was: " + status, status, UnknownOperation);
+      assertEquals(UnknownOperation, status, "Status should have been 'UnknownOperation' but instead was: " + status);
    }
 
    public void testUnknownMagic(Method m) {
       client().assertPut(m); // Do a put to make sure decoder gets back to reading properly
       OperationStatus status = client().executeExpectBadMagic(0x66, (byte) 0x01, cacheName, k(m), 0, 0, v(m), 0).status;
-      assertEquals("Status should have been 'InvalidMagicOrMsgId' but instead was: " + status, status, InvalidMagicOrMsgId);
+      assertEquals(InvalidMagicOrMsgId, status, "Status should have been 'InvalidMagicOrMsgId' but instead was: " + status);
    }
 
    // todo: test other error conditions such as invalid version...etc
@@ -79,7 +81,7 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       TestErrorResponse resp =
             ((TestErrorResponse) client().execute(0xA0, (byte) 0x01, "boomooo", k(m), 0, 0, v(m), 0, (byte) 1, 0));
       assertTrue(resp.msg.contains("CacheNotFoundException"));
-      assertEquals("Status should have been 'ParseError' but instead was: " + resp.status, resp.status, ParseError);
+      assertEquals(ParseError, resp.status, "Status should have been 'ParseError' but instead was: " + resp.status);
       client().assertPut(m);
    }
 
@@ -88,7 +90,7 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
             .execute(0xA0, (byte) 0x01, HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX, k(m), 0, 0, v(m), 0,
                      (byte) 1, 0));
       assertTrue(resp.msg.contains("CacheNotFoundException"));
-      assertEquals("Status should have been 'ParseError' but instead was: " + resp.status, resp.status, ParseError);
+      assertEquals(ParseError, resp.status, "Status should have been 'ParseError' but instead was: " + resp.status);
       client().assertPut(m);
    }
 
@@ -191,7 +193,7 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
    public void testGetWithVersionDoesNotExist(Method m) {
       TestGetWithVersionResponse resp = client().getWithVersion(k(m), 0);
       assertKeyDoesNotExist(resp);
-      assertTrue(resp.dataVersion == 0);
+      assertEquals(0, resp.dataVersion);
    }
 
    public void testGetWithMetadata(Method m) {
@@ -362,14 +364,14 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
    public void testStatsDisabled(Method m) {
       Map<String, String> s = client().stats();
-      assertEquals(s.get("timeSinceStart"), "-1");
-      assertEquals(s.get("currentNumberOfEntries"), "-1");
-      assertEquals(s.get("stores"), "-1");
-      assertEquals(s.get("retrievals"), "-1");
-      assertEquals(s.get("hits"), "-1");
-      assertEquals(s.get("misses"), "-1");
-      assertEquals(s.get("removeHits"), "-1");
-      assertEquals(s.get("removeMisses"), "-1");
+      assertEquals("-1", s.get("timeSinceStart"));
+      assertEquals("-1", s.get("currentNumberOfEntries"));
+      assertEquals("-1", s.get("stores"));
+      assertEquals("-1", s.get("retrievals"));
+      assertEquals("-1", s.get("hits"));
+      assertEquals("-1", s.get("misses"));
+      assertEquals("-1", s.get("removeHits"));
+      assertEquals("-1", s.get("removeMisses"));
    }
 
    public void testPing(Method m) {
@@ -379,16 +381,16 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
    public void testPingWithTopologyAwareClient(Method m) {
       TestResponse resp = client().ping();
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+      assertNull(resp.topologyResponse);
       resp = client().ping((byte) 1, 0);
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+      assertNull(resp.topologyResponse);
       resp = client().ping((byte) 2, 0);
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+      assertNull(resp.topologyResponse);
       resp = client().ping((byte) 3, 0);
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+      assertNull(resp.topologyResponse);
    }
 
    public void testBulkGet(Method m) {
@@ -422,7 +424,7 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
                                                             .filter(entry -> Arrays.equals(entry.getKey(), key))
                                                             .collect(Collectors.toList());
          if (!filtered.isEmpty()) {
-            assertEquals(filtered.get(0).getValue(), v(m, i + "v-"));
+            assertArrayEquals(filtered.get(0).getValue(), v(m, i + "v-"));
          }
       }
    }
@@ -496,20 +498,20 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       assertEquals(20, sizeEnd.size);
    }
 
-   protected boolean assertSuccessPrevious(TestResponseWithPrevious resp, byte[] expected) {
+   protected void assertSuccessPrevious(TestResponseWithPrevious resp, byte[] expected) {
       if (expected == null)
          assertEquals(Optional.empty(), resp.previous);
       else
-         assertTrue(java.util.Arrays.equals(expected, resp.previous.get()));
-      return assertStatus(resp, SuccessWithPrevious);
+         assertArrayEquals(expected, resp.previous.get());
+      assertStatus(resp, SuccessWithPrevious);
    }
 
-   protected boolean assertNotExecutedPrevious(TestResponseWithPrevious resp, byte[] expected) {
+   protected void assertNotExecutedPrevious(TestResponseWithPrevious resp, byte[] expected) {
       if (expected == null)
          assertEquals(Optional.empty(), resp.previous);
       else
-         assertTrue(java.util.Arrays.equals(expected, resp.previous.get()));
-      return assertStatus(resp, NotExecutedWithPrevious);
+         assertArrayEquals(expected, resp.previous.get());
+      assertStatus(resp, NotExecutedWithPrevious);
    }
 
    public void testLifespan2x(Method m) {

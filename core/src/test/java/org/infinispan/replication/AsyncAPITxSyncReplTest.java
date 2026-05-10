@@ -1,6 +1,10 @@
 package org.infinispan.replication;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.concurrent.Future;
@@ -31,8 +35,8 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
    }
 
    protected void assertOnAllCaches(Key k, String v, Cache c1, Cache c2) {
-      assertEquals("Error in cache 1.", v, c1.get(k));
-      assertEquals("Error in cache 2,", v, c2.get(k));
+      assertEquals(v, c1.get(k), "Error in cache 1.");
+      assertEquals(v, c2.get(k), "Error in cache 2.");
    }
 
    public void testAsyncTxMethods() throws Exception {
@@ -52,108 +56,108 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
       // put
       tm.begin();
       Future<String> f = c1.putAsync(key, v);
-      assert f != null;
+      assertNotNull(f);
       Transaction t = tm.suspend();
-      assert c2.get(key) == null;
+      assertNull(c2.get(key));
       tm.resume(t);
-      assert f.get() == null;
+      assertNull(f.get());
       tm.commit();
       assertOnAllCaches(key, v, c1, c2);
 
       tm.begin();
       f = c1.putAsync(key, v2);
-      assert f != null;
+      assertNotNull(f);
       t = tm.suspend();
-      assert c2.get(key).equals(v);
+      assertEquals(v, c2.get(key));
       tm.resume(t);
-      assert !f.isCancelled();
-      assert f.get().equals(v);
+      assertFalse(f.isCancelled());
+      assertEquals(v, f.get());
       tm.commit();
       assertOnAllCaches(key, v2, c1, c2);
 
       // putAll
       tm.begin();
       final Future<Void> f2 = c1.putAllAsync(Collections.singletonMap(key, v3));
-      assert f2 != null;
+      assertNotNull(f2);
       eventually(f2::isDone);
       t = tm.suspend();
-      assert c2.get(key).equals(v2);
+      assertEquals(v2, c2.get(key));
       tm.resume(t);
-      assert !f2.isCancelled();
-      assert f2.get() == null;
+      assertFalse(f2.isCancelled());
+      assertNull(f2.get());
       tm.commit();
       assertOnAllCaches(key, v3, c1, c2);
 
       // putIfAbsent
       tm.begin();
       final Future f1 = c1.putIfAbsentAsync(key, v4);
-      assert f1 != null;
+      assertNotNull(f1);
       eventually(f1::isDone);
       t = tm.suspend();
-      assert c2.get(key).equals(v3);
+      assertEquals(v3, c2.get(key));
       tm.resume(t);
-      assert !f1.isCancelled();
-      assert f1.get().equals(v3);
+      assertFalse(f1.isCancelled());
+      assertEquals(v3, f1.get());
       tm.commit();
       assertOnAllCaches(key, v3, c1, c2);
 
       // remove
       tm.begin();
       final Future f3 = c1.removeAsync(key);
-      assert f3 != null;
+      assertNotNull(f3);
       eventually(f3::isDone);
       t = tm.suspend();
-      assert c2.get(key).equals(v3);
+      assertEquals(v3, c2.get(key));
       tm.resume(t);
-      assert !f3.isCancelled();
-      assert f3.get().equals(v3);
+      assertFalse(f3.isCancelled());
+      assertEquals(v3, f3.get());
       tm.commit();
       assertOnAllCaches(key, null, c1, c2);
 
       // putIfAbsent again
       tm.begin();
       final Future f4 = c1.putIfAbsentAsync(key, v4);
-      assert f4 != null;
+      assertNotNull(f4);
       eventually(f4::isDone);
-      assert f4.isDone();
+      assertTrue(f4.isDone());
       t = tm.suspend();
-      assert c2.get(key) == null;
+      assertNull(c2.get(key));
       tm.resume(t);
-      assert !f4.isCancelled();
-      assert f4.get() == null;
+      assertFalse(f4.isCancelled());
+      assertNull(f4.get());
       tm.commit();
       assertOnAllCaches(key, v4, c1, c2);
 
       // removecond
       tm.begin();
       Future<Boolean> f5 = c1.removeAsync(key, v_null);
-      assert f5 != null;
-      assert !f5.isCancelled();
-      assert f5.get().equals(false);
-      assert f5.isDone();
+      assertNotNull(f5);
+      assertFalse(f5.isCancelled());
+      assertEquals(false, f5.get());
+      assertTrue(f5.isDone());
       tm.commit();
       assertOnAllCaches(key, v4, c1, c2);
 
       tm.begin();
       final Future f6 = c1.removeAsync(key, v4);
-      assert f6 != null;
+      assertNotNull(f6);
       eventually(f6::isDone);
-      assert f6.isDone();
+      assertTrue(f6.isDone());
       t = tm.suspend();
-      assert c2.get(key).equals(v4);
+      assertEquals(v4, c2.get(key));
       tm.resume(t);
-      assert !f6.isCancelled();
-      assert f6.get().equals(true);
+      assertFalse(f6.isCancelled());
+      assertEquals(true, f6.get());
       tm.commit();
       assertOnAllCaches(key, null, c1, c2);
 
       // replace
       tm.begin();
       final Future f7 = c1.replaceAsync(key, v5);
-      assert f7 != null;
-      assert !f7.isCancelled();
-      assert f7.get() == null;
-      assert f7.isDone();
+      assertNotNull(f7);
+      assertFalse(f7.isCancelled());
+      assertNull(f7.get());
+      assertTrue(f7.isDone());
       tm.commit();
       assertOnAllCaches(key, null, c1, c2);
 
@@ -164,35 +168,35 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
 
       tm.begin();
       final Future f8 = c1.replaceAsync(key, v5);
-      assert f8 != null;
+      assertNotNull(f8);
       eventually(f8::isDone);
       t = tm.suspend();
-      assert c2.get(key).equals(v);
+      assertEquals(v, c2.get(key));
       tm.resume(t);
-      assert !f8.isCancelled();
-      assert f8.get().equals(v);
+      assertFalse(f8.isCancelled());
+      assertEquals(v, f8.get());
       tm.commit();
       assertOnAllCaches(key, v5, c1, c2);
 
       //replace2
       tm.begin();
       final Future f9 = c1.replaceAsync(key, v_null, v6);
-      assert f9 != null;
-      assert !f9.isCancelled();
-      assert f9.get().equals(false);
-      assert f9.isDone();
+      assertNotNull(f9);
+      assertFalse(f9.isCancelled());
+      assertEquals(false, f9.get());
+      assertTrue(f9.isDone());
       tm.commit();
       assertOnAllCaches(key, v5, c1, c2);
 
       tm.begin();
       final Future f10 = c1.replaceAsync(key, v5, v6);
-      assert f10 != null;
+      assertNotNull(f10);
       eventually(f10::isDone);
       t = tm.suspend();
-      assert c2.get(key).equals(v5);
+      assertEquals(v5, c2.get(key));
       tm.resume(t);
-      assert !f10.isCancelled();
-      assert f10.get().equals(true);
+      assertFalse(f10.isCancelled());
+      assertEquals(true, f10.get());
       tm.commit();
       assertOnAllCaches(key, v6, c1, c2);
    }

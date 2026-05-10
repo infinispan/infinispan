@@ -1,5 +1,8 @@
 package org.infinispan.persistence.jdbc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -111,27 +114,27 @@ public class TableManagerTest extends AbstractInfinispanTest {
    }
 
    public void testCreateTable() throws Exception {
-      assert !existsTable(connection, tableManager.getDataTableName());
-      assert !existsTable(connection, tableManager.getMetaTableName());
+      assertFalse(existsTable(connection, tableManager.getDataTableName()));
+      assertFalse(existsTable(connection, tableManager.getMetaTableName()));
       tableManager.createDataTable(connection);
       tableManager.createMetaTable(connection);
-      assert existsTable(connection, tableManager.getDataTableName());
-      assert existsTable(connection, tableManager.getMetaTableName());
+      assertTrue(existsTable(connection, tableManager.getDataTableName()));
+      assertTrue(existsTable(connection, tableManager.getMetaTableName()));
    }
 
    @Test(dependsOnMethods = "testCreateTable")
    public void testExists() throws PersistenceException {
-      assert tableManager.tableExists(connection, tableManager.getDataTableName());
-      assert tableManager.tableExists(connection, tableManager.getMetaTableName());
-      assert !tableManager.tableExists(connection, new TableName("\"", "", "does_not_exist"));
+      assertTrue(tableManager.tableExists(connection, tableManager.getDataTableName()));
+      assertTrue(tableManager.tableExists(connection, tableManager.getMetaTableName()));
+      assertFalse(tableManager.tableExists(connection, new TableName("\"", "", "does_not_exist")));
    }
 
    @Test(dependsOnMethods = "testExists")
    public void testDrop() throws Exception {
       TableName dataTableName = tableManager.getDataTableName();
       TableName metaTableName = tableManager.getMetaTableName();
-      assert tableManager.tableExists(connection, dataTableName);
-      assert tableManager.tableExists(connection, metaTableName);
+      assertTrue(tableManager.tableExists(connection, dataTableName));
+      assertTrue(tableManager.tableExists(connection, metaTableName));
       byte[] data = new byte[64];
       new Random().nextBytes(data);
       PreparedStatement ps = null;
@@ -141,21 +144,21 @@ public class TableManagerTest extends AbstractInfinispanTest {
          ps.setBytes(2, data);
          ps.setLong(3, System.currentTimeMillis());
          ps.setLong(4, 1);
-         assert 1 == ps.executeUpdate();
+         assertEquals(1, ps.executeUpdate());
       } finally {
          org.infinispan.persistence.jdbc.common.JdbcUtil.safeClose(ps);
       }
       tableManager.dropTables(connection);
-      assert !tableManager.tableExists(connection, dataTableName);
-      assert !tableManager.tableExists(connection, metaTableName);
+      assertFalse(tableManager.tableExists(connection, dataTableName));
+      assertFalse(tableManager.tableExists(connection, metaTableName));
    }
 
    public void testTableQuoting() throws Exception {
       TableName dataTableName = tableManager.getDataTableName();
       tableManager.dropDataTable(connection);
-      assert !existsTable(connection, dataTableName);
+      assertFalse(existsTable(connection, dataTableName));
       tableManager.createDataTable(connection);
-      assert existsTable(connection, tableManager.getDataTableName());
+      assertTrue(existsTable(connection, tableManager.getDataTableName()));
    }
 
    static boolean existsTable(Connection connection, TableName tableName) throws Exception {

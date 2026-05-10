@@ -4,9 +4,9 @@ import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -90,14 +90,14 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       cache.put(k(m, "1"), v(m, 1));
       //test explicit evict command
       cache.evict(k(m, "1"));
-      assertTrue("the entry should have been evicted", loader.contains(k(m, "1")));
+      assertTrue(loader.contains(k(m, "1")), "the entry should have been evicted");
       assertEvictions(1);
       assertEquals(v(m, 1), cache.get(k(m, "1")));
       //test implicit eviction
       cache.put(k(m, "2"), v(m, 2));
-      // Evictions of unrelated keys are non blocking now so it may not be updated immediately
+      // Evictions of unrelated keys are non-blocking now so it may not be updated immediately
       eventuallyAssertEvictions(2);
-      assertTrue("the entry should have been evicted", loader.contains(k(m, "1")));
+      assertTrue(loader.contains(k(m, "1")), "the entry should have been evicted");
    }
 
    public void testGetKeyValue() throws Exception {
@@ -244,7 +244,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
 
    private void assertAttributeValue(String attrName, float expectedValue) throws Exception {
       String receivedVal = mBeanServerLookup.getMBeanServer().getAttribute(mgmtInterceptor, attrName).toString();
-      assertEquals("expecting " + expectedValue + " for " + attrName + ", but received " + receivedVal, expectedValue, Float.parseFloat(receivedVal));
+      assertEquals(expectedValue, Float.parseFloat(receivedVal), "expecting " + expectedValue + " for " + attrName + ", but received " + receivedVal);
    }
 
    private void eventuallyAssertEvictions(long expectedValue) {

@@ -1,6 +1,6 @@
 package org.infinispan.marshall.exts;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.marshall.Marshaller;

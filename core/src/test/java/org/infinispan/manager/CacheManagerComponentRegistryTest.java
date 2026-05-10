@@ -1,6 +1,11 @@
 package org.infinispan.manager;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -55,13 +60,13 @@ public class CacheManagerComponentRegistryTest extends AbstractCacheTest {
       Cache transactional = cm.getCache("transactional");
 
       // assert components.
-      assert TestingUtil.extractComponent(c, TransactionManager.class) == null;
-      assert TestingUtil.extractComponent(transactional, TransactionManager.class) instanceof EmbeddedTransactionManager;
+      assertNull(TestingUtil.extractComponent(c, TransactionManager.class));
+      assertInstanceOf(EmbeddedTransactionManager.class, TestingUtil.extractComponent(transactional, TransactionManager.class));
 
       // assert force-shared components
-      assert TestingUtil.extractComponent(c, Transport.class) != null;
-      assert TestingUtil.extractComponent(transactional, Transport.class) != null;
-      assert TestingUtil.extractComponent(c, Transport.class) == TestingUtil.extractComponent(transactional, Transport.class);
+      assertNotNull(TestingUtil.extractComponent(c, Transport.class));
+      assertNotNull(TestingUtil.extractComponent(transactional, Transport.class));
+      assertTrue(TestingUtil.extractComponent(c, Transport.class) == TestingUtil.extractComponent(transactional, Transport.class));
    }
 
    public void testForceUnsharedComponents() {
@@ -82,9 +87,9 @@ public class CacheManagerComponentRegistryTest extends AbstractCacheTest {
       Cache transactional = cm.getCache("transactional");
 
       // assert components.
-      assert TestingUtil.extractComponent(c, EvictionManager.class) != null;
-      assert TestingUtil.extractComponent(transactional, EvictionManager.class) != null;
-      assert TestingUtil.extractComponent(c, EvictionManager.class) != TestingUtil.extractComponent(transactional, EvictionManager.class);
+      assertNotNull(TestingUtil.extractComponent(c, EvictionManager.class));
+      assertNotNull(TestingUtil.extractComponent(transactional, EvictionManager.class));
+      assertTrue(TestingUtil.extractComponent(c, EvictionManager.class) != TestingUtil.extractComponent(transactional, EvictionManager.class));
    }
 
    public void testOverridingComponents() {
@@ -100,8 +105,8 @@ public class CacheManagerComponentRegistryTest extends AbstractCacheTest {
 
       // assert components.
       AsyncInterceptorChain initialChain = extractInterceptorChain(c);
-      assert !initialChain.containsInterceptorType(BatchingInterceptor.class);
+      assertFalse(initialChain.containsInterceptorType(BatchingInterceptor.class));
       AsyncInterceptorChain overriddenChain = extractInterceptorChain(overridden);
-      assert overriddenChain.containsInterceptorType(BatchingInterceptor.class);
+      assertTrue(overriddenChain.containsInterceptorType(BatchingInterceptor.class));
    }
 }

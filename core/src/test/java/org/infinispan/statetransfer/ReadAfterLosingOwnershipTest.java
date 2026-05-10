@@ -1,5 +1,7 @@
 package org.infinispan.statetransfer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -23,7 +25,6 @@ import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -133,7 +134,7 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
 
    private void assertCachesKeyValue(Object key, Object value, Collection<Cache<Object, Object>> caches) {
       for (Cache<Object, Object> cache : caches) {
-         AssertJUnit.assertEquals("Wrong key value for " + address(cache), value, cache.get(key));
+         assertEquals(value, cache.get(key), "Wrong key value for " + address(cache));
       }
    }
 

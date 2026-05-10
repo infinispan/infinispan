@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractLockManager;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,7 +26,6 @@ import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.AssertJUnit;
 
 /**
  * It tests multiple scenarios where a split can happen during a transaction.
@@ -122,7 +122,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
 
    protected void assertValue(Object key, String value, Collection<Cache<Object, String>> caches) {
       for (Cache<Object, String> cache : caches) {
-         AssertJUnit.assertEquals("Wrong value in cache " + address(cache), value, cache.get(key));
+         assertEquals(value, cache.get(key), "Wrong value in cache " + address(cache));
       }
    }
 

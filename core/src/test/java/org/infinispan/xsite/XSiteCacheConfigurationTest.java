@@ -1,6 +1,6 @@
 package org.infinispan.xsite;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -33,32 +33,32 @@ public class XSiteCacheConfigurationTest {
             .site(SFO)
          .sites().addBackup()
             .site(NYC);
-      assertEquals(cb.sites().backups().size(), 3);
+      assertEquals(3, cb.sites().backups().size());
       BackupConfigurationBuilder backup0 = cb.sites().backups().get(0);
-      assertEquals(backup0.site(), LON);
-      assertEquals(backup0.strategy(), BackupConfiguration.BackupStrategy.SYNC);
+      assertEquals(LON, backup0.site());
+      assertEquals(BackupConfiguration.BackupStrategy.SYNC, backup0.strategy());
 
       BackupConfigurationBuilder backup1 = cb.sites().backups().get(1);
-      assertEquals(backup1.site(), SFO);
-      assertEquals(backup1.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
+      assertEquals(SFO, backup1.site());
+      assertEquals(BackupConfiguration.BackupStrategy.ASYNC, backup1.strategy());
 
       BackupConfigurationBuilder backup2 = cb.sites().backups().get(2);
-      assertEquals(backup2.site(), NYC);
-      assertEquals(backup2.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
+      assertEquals(NYC, backup2.site());
+      assertEquals(BackupConfiguration.BackupStrategy.ASYNC, backup2.strategy());
 
       Configuration b = cb.build();
-      assertEquals(b.sites().allBackups().size(), 3);
+      assertEquals(3, b.sites().allBackups().size());
       BackupConfiguration b0 = b.sites().allBackups().get(0);
-      assertEquals(b0.site(), LON);
-      assertEquals(b0.strategy(), BackupConfiguration.BackupStrategy.SYNC);
+      assertEquals(LON, b0.site());
+      assertEquals(BackupConfiguration.BackupStrategy.SYNC, b0.strategy());
 
       BackupConfiguration b1 = b.sites().allBackups().get(1);
-      assertEquals(b1.site(), SFO);
-      assertEquals(b1.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
+      assertEquals(SFO, b1.site());
+      assertEquals(BackupConfiguration.BackupStrategy.ASYNC, b1.strategy());
 
       BackupConfigurationBuilder b2 = cb.sites().backups().get(2);
-      assertEquals(b2.site(), NYC);
-      assertEquals(b2.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
+      assertEquals(NYC, b2.site());
+      assertEquals(BackupConfiguration.BackupStrategy.ASYNC, b2.strategy());
    }
 
    @Test (expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Multiple sites have the same name 'LON-1'. This configuration is not valid.")

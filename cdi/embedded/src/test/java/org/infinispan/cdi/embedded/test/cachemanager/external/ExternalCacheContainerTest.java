@@ -1,7 +1,7 @@
 package org.infinispan.cdi.embedded.test.cachemanager.external;
 
 import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.testing.TestResourceTrackingListener;
@@ -39,10 +39,10 @@ public class ExternalCacheContainerTest extends Arquillian {
    private AdvancedCache<?, ?> quickCache;
 
    public void testLargeCache() {
-      assertEquals(largeCache.getCacheConfiguration().memory().maxCount(), 100);
+      assertEquals(100, largeCache.getCacheConfiguration().memory().maxCount());
    }
 
    public void testQuickCache() {
-      assertEquals(quickCache.getCacheConfiguration().expiration().wakeUpInterval(), 1);
+      assertEquals(1, quickCache.getCacheConfiguration().expiration().wakeUpInterval());
    }
 }

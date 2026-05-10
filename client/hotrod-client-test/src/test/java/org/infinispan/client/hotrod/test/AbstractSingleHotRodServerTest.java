@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.test;
 
 import static org.infinispan.client.hotrod.HotRodServerExtension.builder;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.api.Infinispan;
 import org.infinispan.client.hotrod.HotRodServerExtension;
@@ -29,7 +30,7 @@ public abstract class AbstractSingleHotRodServerTest<C> {
 
    @AfterEach
    public void internalTeardown() {
-      assert container != null : "Container is null";
+      assertNotNull(container, "Container is null");
       teardown();
       container.close();
       container = null;

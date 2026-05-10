@@ -1,9 +1,9 @@
 package org.infinispan.interceptors.impl;
 
 import static org.infinispan.interceptors.BaseAsyncInterceptor.makeStage;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;

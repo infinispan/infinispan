@@ -4,8 +4,8 @@ import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;

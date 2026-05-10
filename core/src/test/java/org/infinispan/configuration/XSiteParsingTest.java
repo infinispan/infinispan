@@ -3,7 +3,7 @@ package org.infinispan.configuration;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.wrapXMLWithSchema;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

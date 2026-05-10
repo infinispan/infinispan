@@ -2,9 +2,9 @@ package org.infinispan.client.hotrod.near;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -221,10 +221,10 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
       RemoteCacheManager manager = new RemoteCacheManager(builder.build());
       try {
          RemoteCache<?, ?> nearcache = manager.getCache("nearcachepattern");
-         assertTrue(nearcache instanceof InvalidatedNearRemoteCache);
+         assertInstanceOf(InvalidatedNearRemoteCache.class, nearcache);
          assertEquals(maxEntries, ((InvalidatedNearRemoteCache) nearcache).getNearCacheConfiguration().maxEntries());
          RemoteCache<?, ?> cache = manager.getCache();
-         assertTrue(cache instanceof InvalidatedNearRemoteCache);
+         assertInstanceOf(InvalidatedNearRemoteCache.class, cache);
          assertEquals(-1, ((InvalidatedNearRemoteCache) cache).getNearCacheConfiguration().maxEntries());
       } finally {
          HotRodClientTestingUtil.killRemoteCacheManager(manager);
@@ -239,7 +239,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
       RemoteCacheManager manager = new RemoteCacheManager(builder.build());
       try {
          RemoteCache<?, ?> nearcache = manager.getCache("ncpc");
-         assertTrue(nearcache instanceof InvalidatedNearRemoteCache);
+         assertInstanceOf(InvalidatedNearRemoteCache.class, nearcache);
          RemoteCache<?, ?> cache = manager.getCache();
          assertFalse(cache instanceof InvalidatedNearRemoteCache);
       } finally {
@@ -256,7 +256,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
       RemoteCacheManager manager = new RemoteCacheManager(builder.build());
       try {
          RemoteCache<String, String> nearcache = manager.getCache("ncf");
-         assertTrue(nearcache instanceof InvalidatedNearRemoteCache);
+         assertInstanceOf(InvalidatedNearRemoteCache.class, nearcache);
          assertEquals(0, testNearCacheFactory.cache.size());
          nearcache.put("k1", "v1");
          nearcache.get("k1");
@@ -275,7 +275,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
       RemoteCacheManager manager = new RemoteCacheManager(builder.build());
       try {
          RemoteCache<String, String> nearcache = manager.getCache("ncfpc");
-         assertTrue(nearcache instanceof InvalidatedNearRemoteCache);
+         assertInstanceOf(InvalidatedNearRemoteCache.class, nearcache);
          assertEquals(0, testNearCacheFactory.cache.size());
          nearcache.put("k1", "v1");
          nearcache.get("k1");

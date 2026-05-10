@@ -2,7 +2,7 @@ package org.infinispan.cdi.embedded.test.cache.remote;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.cdi.embedded.test.Deployments;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -75,9 +75,9 @@ public class SpecificCacheManagerTest extends Arquillian {
       cache.put("pete", "British");
       cache.put("manik", "Sri Lankan");
 
-      assertEquals(cache.getName(), "small");
-      assertEquals(cache.get("pete"), "British");
-      assertEquals(cache.get("manik"), "Sri Lankan");
+      assertEquals("small", cache.getName());
+      assertEquals("British", cache.get("pete"));
+      assertEquals("Sri Lankan", cache.get("manik"));
    }
 
    /**

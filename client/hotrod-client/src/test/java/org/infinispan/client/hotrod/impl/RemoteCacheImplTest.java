@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 

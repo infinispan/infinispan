@@ -15,8 +15,8 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.infinispan.multimap.impl.ScoredValue.of;
 import static org.infinispan.multimap.impl.SortedSetBucket.AggregateFunction.SUM;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 
@@ -203,9 +203,8 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistributedMultim
    protected void assertOnAllCaches(Object key, ScoredValue<Person> value) {
       for (Map.Entry<Address, EmbeddedMultimapSortedSetCache<String, Person>> entry : cluster.entrySet()) {
          FunctionalTestUtils.await(entry.getValue().get((String) key).thenAccept(v -> {
-                  assertNotNull(format("values on the key %s must be not null", key), v);
-                  assertTrue(format("values on the key '%s' must contain '%s' on node '%s'", key, value, entry.getKey()),
-                        v.contains(value));
+                  assertNotNull(v, format("values on the key %s must be not null", key));
+                  assertTrue(v.contains(value), format("values on the key '%s' must contain '%s' on node '%s'", key, value, entry.getKey()));
                })
          );
       }

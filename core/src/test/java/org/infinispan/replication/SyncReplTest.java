@@ -1,12 +1,13 @@
 package org.infinispan.replication;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -44,17 +45,17 @@ public class SyncReplTest extends MultipleCacheManagersTest {
 
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
-      assertNull("Should be null", cache1.get(k));
-      assertNull("Should be null", cache2.get(k));
+      assertNull(cache1.get(k), "Should be null");
+      assertNull(cache2.get(k), "Should be null");
 
       cache1.put(k, v);
 
       assertEquals(v, cache1.get(k));
-      assertEquals("Should have replicated", v, cache2.get(k));
+      assertEquals(v, cache2.get(k), "Should have replicated");
 
       cache2.remove(k);
-      assert cache1.isEmpty();
-      assert cache2.isEmpty();
+      assertTrue(cache1.isEmpty());
+      assertTrue(cache2.isEmpty());
    }
 
    public void testMultpleCachesOnSharedTransport() {
@@ -62,8 +63,8 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       Cache cache2 = cache(1, "replSync");
 
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
-      assert cache1.isEmpty();
-      assert cache2.isEmpty();
+      assertTrue(cache1.isEmpty());
+      assertTrue(cache2.isEmpty());
 
       ConfigurationBuilder newConf = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       defineConfigurationOnAllManagers("newCache", newConf);
@@ -71,20 +72,20 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       Cache altCache2 = manager(1).getCache("newCache");
 
       try {
-         assert altCache1.isEmpty();
-         assert altCache2.isEmpty();
+         assertTrue(altCache1.isEmpty());
+         assertTrue(altCache2.isEmpty());
 
          cache1.put(k, v);
-         assert cache1.get(k).equals(v);
-         assert cache2.get(k).equals(v);
-         assert altCache1.isEmpty();
-         assert altCache2.isEmpty();
+         assertEquals(v, cache1.get(k));
+         assertEquals(v, cache2.get(k));
+         assertTrue(altCache1.isEmpty());
+         assertTrue(altCache2.isEmpty());
 
          altCache1.put(k, "value2");
-         assert altCache1.get(k).equals("value2");
-         assert altCache2.get(k).equals("value2");
-         assert cache1.get(k).equals(v);
-         assert cache2.get(k).equals(v);
+         assertEquals("value2", altCache1.get(k));
+         assertEquals("value2", altCache2.get(k));
+         assertEquals(v, cache1.get(k));
+         assertEquals(v, cache2.get(k));
       } finally {
          removeCacheFromCluster("newCache");
       }
@@ -97,8 +98,8 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       Cache<String, String> cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
-      assert cache1.isEmpty();
-      assert cache2.isEmpty();
+      assertTrue(cache1.isEmpty());
+      assertTrue(cache2.isEmpty());
 
       ConfigurationBuilder newConf = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
 
@@ -106,20 +107,20 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       Cache<String, String> altCache1 = manager(0).getCache("newCache2");
 
       try {
-         assert altCache1.isEmpty();
+         assertTrue(altCache1.isEmpty());
 
          cache1.put(k, v);
-         assert cache1.get(k).equals(v);
-         assert cache2.get(k).equals(v);
-         assert altCache1.isEmpty();
+         assertEquals(v, cache1.get(k));
+         assertEquals(v, cache2.get(k));
+         assertTrue(altCache1.isEmpty());
 
          altCache1.put(k, "value2");
 
-         assert altCache1.get(k).equals("value2");
-         assert cache1.get(k).equals(v);
-         assert cache2.get(k).equals(v);
+         assertEquals("value2", altCache1.get(k));
+         assertEquals(v, cache1.get(k));
+         assertEquals(v, cache2.get(k));
 
-         assert manager(0).getCache("newCache2").get(k).equals("value2");
+         assertEquals("value2", manager(0).getCache("newCache2").get(k));
       } finally {
          removeCacheFromCluster("newCache2");
       }

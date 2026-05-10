@@ -1,5 +1,8 @@
 package org.infinispan.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
@@ -25,14 +28,14 @@ public class TxCacheAndAsyncOpsTest extends SingleCacheManagerTest {
    public void testAsyncOps() throws Exception {
 
       CompletableFuture<Object> result = cache.putAsync("k", "v");
-      assert result.get() == null;
+      assertNull(result.get());
 
       result = cache.removeAsync("k");
-      assert result.get().equals("v");
+      assertEquals("v", result.get());
 
       final CompletableFuture<Void> voidNotifyingFuture = cache.putAllAsync(Collections.singletonMap("k", "v"));
       voidNotifyingFuture.get();
 
-      assert cache.get("k").equals("v");
+      assertEquals("v", cache.get("k"));
    }
 }

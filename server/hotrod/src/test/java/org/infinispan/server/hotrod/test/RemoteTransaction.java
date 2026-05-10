@@ -2,8 +2,9 @@ package org.infinispan.server.hotrod.test;
 
 import static java.lang.String.format;
 import static org.infinispan.commons.util.Util.printArray;
-import static org.testng.AssertJUnit.assertArrayEquals;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 import java.util.Map;
@@ -79,9 +80,9 @@ public class RemoteTransaction {
    public void getAndAssert(byte[] key, byte[] expectedValue) {
       final String message = format("[XID=%s] Wrong value for key %s", xid, printArray(key, true));
       if (expectedValue == null) {
-         assertEquals(message, null, get(key));
+         assertNull(get(key), message);
       } else {
-         assertArrayEquals(message, expectedValue, get(key));
+         assertArrayEquals(expectedValue, get(key), message);
       }
    }
 
@@ -102,35 +103,35 @@ public class RemoteTransaction {
 
    public void prepareAndAssert(int expectedXaCode) {
       final String message = format("[XID=%s] Wrong XA return code for prepare", xid);
-      assertEquals(message, expectedXaCode, ((TxResponse) prepare()).xaCode);
+      assertEquals(expectedXaCode, ((TxResponse) prepare()).xaCode, message);
    }
 
    public void prepareAndAssert(HotRodClient another, int expectedXaCode) {
       final String message = format("[XID=%s] Wrong XA return code for prepare", xid);
       log.debugf("PREPARE[%s]", xid);
-      assertEquals(message, expectedXaCode, ((TxResponse) another.prepareTx(xid, false, modifications())).xaCode);
+      assertEquals(expectedXaCode, ((TxResponse) another.prepareTx(xid, false, modifications())).xaCode, message);
    }
 
    public void commitAndAssert(int expectedXaCode) {
       final String message = format("[XID=%s] Wrong XA return code for commit", xid);
-      assertEquals(message, expectedXaCode, ((TxResponse) commit()).xaCode);
+      assertEquals(expectedXaCode, ((TxResponse) commit()).xaCode, message);
    }
 
    public void commitAndAssert(HotRodClient another, int expectedXaCode) {
       final String message = format("[XID=%s] Wrong XA return code for commit", xid);
       log.debugf("COMMIT[%s]", xid);
-      assertEquals(message, expectedXaCode, ((TxResponse) another.commitTx(xid)).xaCode);
+      assertEquals(expectedXaCode, ((TxResponse) another.commitTx(xid)).xaCode, message);
    }
 
    public void rollbackAndAssert(int expectedXaCode) {
       final String message = format("[XID=%s] Wrong XA return code for rollback", xid);
-      assertEquals(message, expectedXaCode, rollback().xaCode);
+      assertEquals(expectedXaCode, rollback().xaCode, message);
    }
 
    public void rollbackAndAssert(HotRodClient another, int expectedXaCode) {
       final String message = format("[XID=%s] Wrong XA return code for rollback", xid);
       log.debugf("ROLLBACK[%s]", xid);
-      assertEquals(message, expectedXaCode, ((TxResponse) another.rollbackTx(xid)).xaCode);
+      assertEquals(expectedXaCode, ((TxResponse) another.rollbackTx(xid)).xaCode, message);
    }
 
    public void forget() {

@@ -2,8 +2,8 @@ package org.infinispan.lock.jmx;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
 
@@ -46,7 +46,7 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
       assertTrue(await(lock.tryLock()));
       assertTrue(await(lock.isLocked()));
 
-      assertTrue(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.FORCE_RELEASE, LOCK_NAME));
+      assertTrue((Boolean) executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.FORCE_RELEASE, LOCK_NAME));
       assertFalse(await(lock.isLocked()));
    }
 
@@ -56,33 +56,33 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
       assertFalse(clm.defineLock(LOCK_NAME));
 
       // first call remove result should be true because the lock exists
-      assertTrue(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.REMOVE, LOCK_NAME));
+      assertTrue((Boolean) executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.REMOVE, LOCK_NAME));
       // second call remove result should be false
-      assertFalse(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.REMOVE, LOCK_NAME));
+      assertFalse((Boolean) executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.REMOVE, LOCK_NAME));
 
       assertTrue(clm.defineLock(LOCK_NAME));
    }
 
    public void testIsDefined() {
-      assertFalse(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_DEFINED, LOCK_NAME));
+      assertFalse((Boolean) executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_DEFINED, LOCK_NAME));
 
       assertTrue(clusteredLockManager(0).defineLock(LOCK_NAME));
 
-      assertTrue(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_DEFINED, LOCK_NAME));
+      assertTrue((Boolean) executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_DEFINED, LOCK_NAME));
    }
 
    public void testIsLocked() {
-      assertFalse(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_LOCKED, LOCK_NAME));
+      assertFalse((Boolean) executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_LOCKED, LOCK_NAME));
 
       ClusteredLockManager clm = clusteredLockManager(0);
       assertTrue(clm.defineLock(LOCK_NAME));
-      assertFalse(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_LOCKED, LOCK_NAME));
+      assertFalse((Boolean) executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_LOCKED, LOCK_NAME));
 
       ClusteredLock lock = clm.get(LOCK_NAME);
       assertTrue(await(lock.tryLock()));
       assertTrue(await(lock.isLocked()));
 
-      assertTrue(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_LOCKED, LOCK_NAME));
+      assertTrue((Boolean) executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_LOCKED, LOCK_NAME));
    }
 
    @AfterMethod(alwaysRun = true)

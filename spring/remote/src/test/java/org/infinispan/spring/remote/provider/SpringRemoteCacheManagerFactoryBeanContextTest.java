@@ -1,7 +1,7 @@
 package org.infinispan.spring.remote.provider;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.springframework.test.annotation.DirtiesContext;
@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 @Test(testName = "spring.provider.SpringRemoteCacheManagerFactoryBeanContextTest", groups = "unit")
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @ContextConfiguration("classpath:/org/infinispan/spring/remote/provider/SpringRemoteCacheManagerFactoryBeanContextTest.xml")
-@TestExecutionListeners(value = InfinispanTestExecutionListener.class,  mergeMode =  TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class SpringRemoteCacheManagerFactoryBeanContextTest extends AbstractTestNGSpringContextTests {
 
    private static final String SPRING_REMOTE_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME = "springRemoteCacheManagerWithDefaultConfiguration";
@@ -37,39 +37,39 @@ public class SpringRemoteCacheManagerFactoryBeanContextTest extends AbstractTest
    public final void shouldCreateARemoteCacheManagerWithDefaultSettingsIfNoFurtherConfigurationGiven() {
       final SpringRemoteCacheManager springRemoteCacheManagerWithDefaultConfiguration = this.applicationContext
             .getBean(SPRING_REMOTE_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME,
-                     SpringRemoteCacheManager.class);
+                  SpringRemoteCacheManager.class);
 
       assertNotNull(
+            springRemoteCacheManagerWithDefaultConfiguration,
             "Spring application context should contain a SpringRemoteCacheManager with default settings having bean name = \""
                   + SPRING_REMOTE_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME
-                  + "\". However, it doesn't.",
-            springRemoteCacheManagerWithDefaultConfiguration);
+                  + "\". However, it doesn't.");
    }
 
    @Test
    public final void shouldCreateARemoteCacheManagerConfiguredFromConfigurationFileIfConfigurationFileLocationGiven() {
       final SpringRemoteCacheManager springRemoteCacheManagerConfiguredFromConfigurationFile = this.applicationContext
             .getBean(SPRING_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_FILE_BEAN_NAME,
-                     SpringRemoteCacheManager.class);
+                  SpringRemoteCacheManager.class);
 
       assertNotNull(
+            springRemoteCacheManagerConfiguredFromConfigurationFile,
             "Spring application context should contain a SpringRemoteCacheManager configured from configuration file having bean name = \""
                   + SPRING_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_FILE_BEAN_NAME
-                  + "\". However, it doesn't.",
-            springRemoteCacheManagerConfiguredFromConfigurationFile);
+                  + "\". However, it doesn't.");
    }
 
    @Test
    public final void shouldCreateARemoteCacheManagerConfiguredUsingConfigurationPropertiesSetInApplicationContext() {
       final SpringRemoteCacheManager springRemoteCacheManagerConfiguredUsingConfigurationProperties = this.applicationContext
             .getBean(SPRING_REMOTE_CACHE_MANAGER_CONFIGURED_USING_CONFIGURATION_PROPERTIES_BEAN_NAME,
-                     SpringRemoteCacheManager.class);
+                  SpringRemoteCacheManager.class);
 
       assertNotNull(
+            springRemoteCacheManagerConfiguredUsingConfigurationProperties,
             "Spring application context should contain a SpringRemoteCacheManager configured using configuration properties set in application context having bean name = \""
                   + SPRING_REMOTE_CACHE_MANAGER_CONFIGURED_USING_CONFIGURATION_PROPERTIES_BEAN_NAME
-                  + "\". However, it doesn't.",
-            springRemoteCacheManagerConfiguredUsingConfigurationProperties);
+                  + "\". However, it doesn't.");
       assertEquals(500, springRemoteCacheManagerConfiguredUsingConfigurationProperties.getReadTimeout());
       assertEquals(700, springRemoteCacheManagerConfiguredUsingConfigurationProperties.getWriteTimeout());
    }
@@ -78,12 +78,12 @@ public class SpringRemoteCacheManagerFactoryBeanContextTest extends AbstractTest
    public final void shouldCreateARemoteCacheManagerConfiguredUsingSettersIfPropertiesAreDefined() {
       final SpringRemoteCacheManager springRemoteCacheManagerConfiguredUsingSetters = this.applicationContext
             .getBean(SPRING_REMOTE_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME,
-                     SpringRemoteCacheManager.class);
+                  SpringRemoteCacheManager.class);
 
       assertNotNull(
+            springRemoteCacheManagerConfiguredUsingSetters,
             "Spring application context should contain a SpringRemoteCacheManager configured using properties having bean name = \""
                   + SPRING_REMOTE_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME
-                  + "\". However, it doesn't.",
-            springRemoteCacheManagerConfiguredUsingSetters);
+                  + "\". However, it doesn't.");
    }
 }

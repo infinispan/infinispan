@@ -1,9 +1,9 @@
 package org.infinispan.test.hibernate.cache.commons.stress;
 
 import static org.infinispan.test.hibernate.cache.commons.util.TestingUtil.withTx;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -348,8 +348,7 @@ public class SecondLevelCacheStressTestCase {
                   Family family = (Family) s.getReference(Family.class, id);
                   String secondName = family.getSecondName();
                   assertNotNull(secondName);
-                  assertTrue("Second name not expected: " + secondName,
-                        secondName.startsWith("Arrizabalaga"));
+                  assertTrue(secondName.startsWith("Arrizabalaga"), "Second name not expected: " + secondName);
 
                   s.close();
                   return true;
@@ -396,8 +395,7 @@ public class SecondLevelCacheStressTestCase {
                   Family family = (Family) s.getReference(Family.class, id);
                   String familyName = family.getName();
                   // Skip ñ check in order to avoid issues...
-                  assertTrue("Unexpected family: " + familyName,
-                        familyName.startsWith("Zamarre"));
+                  assertTrue(familyName.startsWith("Zamarre"), "Unexpected family: " + familyName);
 
                   s.close();
                   return true;
@@ -425,8 +423,7 @@ public class SecondLevelCacheStressTestCase {
                         Family family = (Family) s.getReference(Family.class, id);
                         String familyName = family.getName();
                         // Skip ñ check in order to avoid issues...
-                        assertTrue("Unexpected family: " + familyName,
-                              familyName.startsWith("Zamarre"));
+                        assertTrue(familyName.startsWith("Zamarre"), "Unexpected family: " + familyName);
                         s.remove(family);
 
                         s.getTransaction().commit();

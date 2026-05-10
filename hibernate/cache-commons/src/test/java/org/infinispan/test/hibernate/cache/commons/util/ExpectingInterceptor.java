@@ -1,7 +1,9 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -73,7 +75,7 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
             Condition condition = iterator.next();
             log.tracef("Testing condition %s", condition);
             if ((condition.success == null || condition.success == succeeded) && condition.predicate.test(rCtx, rCommand)) {
-               assert condition.action != null;
+               assertNotNull(condition.action);
                log.trace("Condition succeeded");
                toExecute.add(condition.action);
                if (condition.removeCheck == null || condition.removeCheck.getAsBoolean()) {
@@ -105,7 +107,7 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
       }
 
       public Condition run(Runnable action) {
-         assert this.action == null;
+         assertNull(this.action);
          this.action = action;
          return this;
       }
@@ -118,7 +120,7 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
       }
 
       public Condition removeWhen(BooleanSupplier check) {
-         assert this.removeCheck == null;
+         assertNull(this.removeCheck);
          this.removeCheck = check;
          return this;
       }
@@ -131,13 +133,11 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
 
       @Override
       public String toString() {
-         final StringBuilder sb = new StringBuilder("Condition{");
-         sb.append("source=").append(source);
-         sb.append(", predicate=").append(predicate);
-         sb.append(", success=").append(success);
-         sb.append(", action=").append(action);
-         sb.append('}');
-         return sb.toString();
+         return "Condition{" + "source=" + source +
+               ", predicate=" + predicate +
+               ", success=" + success +
+               ", action=" + action +
+               '}';
       }
    }
 }

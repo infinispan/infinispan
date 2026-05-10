@@ -1,6 +1,7 @@
 package org.infinispan.lock;
 
 import static org.infinispan.test.TestingUtil.withTx;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.Callable;
 
@@ -34,7 +35,7 @@ public class ExplicitLockingAndOptimisticCachesTest extends SingleCacheManagerTe
          public Object call() throws Exception {
             try {
                cache.getAdvancedCache().lock("a");
-               assert false;
+               fail();
             } catch (CacheException e) {
                // expected
             }
@@ -50,7 +51,7 @@ public class ExplicitLockingAndOptimisticCachesTest extends SingleCacheManagerTe
          public Object call() throws Exception {
             try {
                cache.getAdvancedCache().withFlags(Flag.FAIL_SILENTLY).lock("a");
-               assert false : "Should be throwing an exception in spite of fail silent";
+               fail("Should be throwing an exception in spite of fail silent");
             } catch (CacheException e) {
                // expected
             }

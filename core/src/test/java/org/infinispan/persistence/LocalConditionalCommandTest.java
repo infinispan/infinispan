@@ -1,7 +1,7 @@
 package org.infinispan.persistence;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -97,11 +97,11 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
    }
 
    private void assertLoadAfterOperation(Cache<?, ?> cache, boolean skipLoad) {
-      assertEquals("cache load", skipLoad ? 0 : 1, cacheLoaderInterceptor(cache).getCacheLoaderLoads());
+      assertEquals(skipLoad ? 0 : 1, cacheLoaderInterceptor(cache).getCacheLoaderLoads(), "cache load");
    }
 
    private void assertEmpty(Cache<?, ?> cache) {
-      assertTrue(cache + ".isEmpty()", cache.isEmpty());
+      assertTrue(cache.isEmpty(), cache + ".isEmpty()");
    }
 
    private void initStore(Cache<String, String> cache) {

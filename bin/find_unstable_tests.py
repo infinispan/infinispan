@@ -1,11 +1,11 @@
 #!/usr/bin/python
-import re
-import time
-import sys
-import csv
 import argparse
-import os.path
+import csv
 import fnmatch
+import os.path
+import re
+import sys
+import time
 
 
 def main(args):

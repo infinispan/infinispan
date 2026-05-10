@@ -1,8 +1,8 @@
 package org.infinispan.util;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +40,7 @@ public class DependencyGraphTest extends AbstractInfinispanTest {
       }
       List<Integer> sort = graph.topologicalSort();
 
-      assertEquals(sort.size(), size + 1);
+      assertEquals(size + 1, sort.size());
       assertEquals(sort.get(0), Integer.valueOf(100));
       assertEquals(sort.get(100), Integer.valueOf(0));
    }
@@ -69,7 +69,7 @@ public class DependencyGraphTest extends AbstractInfinispanTest {
       g.addDependency("N1", "N2");
       g.addDependency("N2", "N3");
 
-      assertEquals(g.topologicalSort().size(), 3);
+      assertEquals(3, g.topologicalSort().size());
       assertEquals(g.topologicalSort(), Arrays.asList("N1", "N2", "N3"));
    }
 
@@ -87,10 +87,10 @@ public class DependencyGraphTest extends AbstractInfinispanTest {
       assertTrue(graph.hasDependent("F"));
       assertFalse(graph.hasDependent("A"));
       assertTrue(graph.getDependents("A").isEmpty());
-      assertEquals(graph.getDependents("B").iterator().next(), "A");
-      assertEquals(graph.getDependents("C").iterator().next(), "A");
-      assertEquals(graph.getDependents("D").iterator().next(), "A");
-      assertEquals(graph.getDependents("F").iterator().next(), "D");
+      assertEquals("A", graph.getDependents("B").iterator().next());
+      assertEquals("A", graph.getDependents("C").iterator().next());
+      assertEquals("A", graph.getDependents("D").iterator().next());
+      assertEquals("D", graph.getDependents("F").iterator().next());
    }
 
    @Test

@@ -1,5 +1,7 @@
 package org.infinispan.commands.module;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,7 +61,7 @@ public final class TestModuleLifecycle implements ModuleLifecycle, DynamicModule
 
       Set<String> componentNames = testGlobalConfiguration.globalTestComponents().keySet();
       for (String componentName : componentNames) {
-         assert testGlobalConfiguration.globalTestComponents().get(componentName) == gcr.getComponent(componentName);
+         assertTrue(testGlobalConfiguration.globalTestComponents().get(componentName) == gcr.getComponent(componentName));
       }
    }
 
@@ -87,7 +89,7 @@ public final class TestModuleLifecycle implements ModuleLifecycle, DynamicModule
 
       Set<String> componentNames = testCacheComponents.keySet();
       for (String componentName : componentNames) {
-         assert testCacheComponents.get(componentName) == cr.getComponent(componentName);
+         assertTrue(testCacheComponents.get(componentName) == cr.getComponent(componentName));
       }
    }
 

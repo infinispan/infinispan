@@ -4,8 +4,8 @@ import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.server.core.test.ServerTestingUtil.killServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.getDefaultHotRodConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;

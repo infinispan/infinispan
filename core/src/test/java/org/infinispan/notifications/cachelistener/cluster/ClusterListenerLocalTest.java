@@ -1,6 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,7 +39,7 @@ public class ClusterListenerLocalTest extends SingleCacheManagerTest {
    }
 
    protected void verifySimpleInsertionEvents(ClusterListener listener, Object key, Object expectedValue) {
-      assertEquals(listener.events.size(), 1);
+      assertEquals(1, listener.events.size());
       CacheEntryEvent event = listener.events.get(0);
 
       assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());

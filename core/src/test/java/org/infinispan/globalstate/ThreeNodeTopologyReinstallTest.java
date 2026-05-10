@@ -1,9 +1,9 @@
 package org.infinispan.globalstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
@@ -61,7 +61,7 @@ public class ThreeNodeTopologyReinstallTest extends AbstractGlobalStateRestartTe
       for (int i = 0; i < getClusterSize(); i++) {
          String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
          File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
-         assertEquals(Arrays.toString(listFiles), 1, listFiles.length);
+         assertEquals(1, listFiles.length, Arrays.toString(listFiles));
       }
       this.cacheManagers.clear();
 

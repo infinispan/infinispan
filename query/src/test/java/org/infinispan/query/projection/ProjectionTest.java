@@ -2,8 +2,12 @@ package org.infinispan.query.projection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.infinispan.Cache;
@@ -72,16 +76,16 @@ public class ProjectionTest extends SingleCacheManagerTest {
    }
 
    private void assertQueryListContains(List<?> list, Object expected) {
-      assert list.size() == 1;
+      assertEquals(1, list.size());
       Object value = list.get(0);
       assertThat(value).isEqualTo(expected);
    }
 
    private void assertQueryIteratorContains(CloseableIterator<?> iterator, Object expected) {
-      assert iterator.hasNext();
+      assertTrue(iterator.hasNext());
       Object value = iterator.next();
       assertThat(value).isEqualTo(expected);
-      assert !iterator.hasNext();
+      assertFalse(iterator.hasNext());
    }
 
    private static EntityReferenceImpl entityReference(Class<?> type, String key) {
@@ -116,9 +120,9 @@ public class ProjectionTest extends SingleCacheManagerTest {
             return false;
 
          Foo foo = (Foo) o;
-         if (bar != null ? !bar.equals(foo.bar) : foo.bar != null)
+         if (!Objects.equals(bar, foo.bar))
             return false;
-         return baz != null ? baz.equals(foo.baz) : foo.baz == null;
+         return Objects.equals(baz, foo.baz);
       }
 
       @Override

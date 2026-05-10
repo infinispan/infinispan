@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
 import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map.Entry;
 import java.util.Set;

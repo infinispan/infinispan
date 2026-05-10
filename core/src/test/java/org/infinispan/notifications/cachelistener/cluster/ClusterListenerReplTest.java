@@ -1,8 +1,9 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -63,7 +64,7 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       assertTrue(returnValue == null || returnValue.equals(FIRST_VALUE));
 
       // We should have received an event that was marked as retried
-      assertTrue(!clusterListener.events.isEmpty());
+      assertFalse(clusterListener.events.isEmpty());
       // Because a rebalance has 4 phases, the command may be retried 4 times
       assertTrue(clusterListener.events.size() <= 4);
       CacheEntryEvent firstEvent = clusterListener.events.remove(0);

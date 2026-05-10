@@ -1,11 +1,11 @@
 package org.infinispan.statetransfer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,9 +88,9 @@ public class OutboundTransferTaskTest {
       // We have 30 segments, the flowable contains 1 notification for data and another for segment complete.
       // Since the chunk size is 30, we will issue 2 requests containing 15 chunks each.
       IntSet transferred = IntSets.mutableEmptySet(numSegments);
-      assertEquals(cmdCaptor.getAllValues().size(), 2);
+      assertEquals(2, cmdCaptor.getAllValues().size());
       for (Collection<StateChunk> chunks : cmdCaptor.getAllValues()) {
-         assertEquals(chunks.size(), 15);
+         assertEquals(15, chunks.size());
          transferred.addAll(chunks.stream().map(StateChunk::getSegmentId).collect(Collectors.toList()));
       }
 

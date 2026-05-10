@@ -1,13 +1,13 @@
 package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -117,7 +117,7 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
 
       // State transfer ended on cache 1 and request for transactional segments were received
       assertFalse(stateConsumer.isStateTransferInProgress());
-      assertEquals(stateConsumer.inflightTransactionSegmentCount(), 0);
+      assertEquals(0, stateConsumer.inflightTransactionSegmentCount());
 
       // Wait for the txs to finish and check the results
       DataContainer dataContainer0 = TestingUtil.extractComponent(cache0, InternalDataContainer.class);

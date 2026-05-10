@@ -11,7 +11,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
 import java.net.NetworkInterface;
@@ -91,7 +91,7 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
       assertStatus(hotRodClient.ping("MyInternalCache"), Success);
       TestResponse resp = hotRodClient
             .execute(0xA0, (byte) 0x01, "MyInternalCache", k(m), 0, 0, v(m), 0, (byte) 1, 0);
-      assertEquals(resp.status, Success, "Status should have been 'Success' but instead was: " + resp.status);
+      assertEquals(Success, resp.status, "Status should have been 'Success' but instead was: " + resp.status);
       hotRodClient.assertPut(m);
    }
 

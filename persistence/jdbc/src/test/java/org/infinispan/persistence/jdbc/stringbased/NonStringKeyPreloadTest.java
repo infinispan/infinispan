@@ -2,7 +2,9 @@ package org.infinispan.persistence.jdbc.stringbased;
 
 import static org.infinispan.test.TestingUtil.clearCacheLoader;
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.function.Consumer;
 
@@ -35,7 +37,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       withCacheManager(() -> TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE), cm -> {
          try {
             cm.createCache("invalidCache", config.build());
-            assert false : " Preload with Key2StringMapper is not supported. Specify an TwoWayKey2StringMapper if you want to support it (or disable preload).";
+            fail(" Preload with Key2StringMapper is not supported. Specify an TwoWayKey2StringMapper if you want to support it (or disable preload).");
          } catch (CacheException e) {
             log.debugf("Ignoring expected exception", e);
          }
@@ -58,8 +60,8 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
          Cache<Object, Object> cache = null;
          try {
             cache = cm.getCache();
-            assert cache.containsKey(mircea);
-            assert cache.containsKey(dan);
+            assertTrue(cache.containsKey(mircea));
+            assertTrue(cache.containsKey(dan));
          } finally {
             clearCacheLoader(cache);
          }
@@ -94,12 +96,12 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
 
       JdbcStringBasedStoreConfigurationBuilder store = cfg
-         .persistence()
+            .persistence()
             .connectionAttempts(1)
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-               .fetchPersistentState(true)
-               .preload(preload)
-               .key2StringMapper(mapperName);
+            .fetchPersistentState(true)
+            .preload(preload)
+            .key2StringMapper(mapperName);
       UnitTestDatabaseManager.buildTableManipulation(store.table());
       UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
 

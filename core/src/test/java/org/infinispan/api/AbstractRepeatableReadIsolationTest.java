@@ -1,7 +1,9 @@
 package org.infinispan.api;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -204,7 +206,7 @@ public abstract class AbstractRepeatableReadIsolationTest extends MultipleCacheM
       }
 
       tm.begin();
-      assertEquals("Wrong first get.", initValue, cache.get(key));
+      assertEquals(initValue, cache.get(key), "Wrong first get.");
       Transaction tx = tm.suspend();
 
       ownerCache.put(key, OTHER_VALUE);
@@ -214,43 +216,43 @@ public abstract class AbstractRepeatableReadIsolationTest extends MultipleCacheM
       boolean commitFails = false;
 
       tm.resume(tx);
-      assertEquals("Wrong second get.", initValue, cache.get(key));
+      assertEquals(initValue, cache.get(key), "Wrong second get.");
       switch (operation) {
          case PUT:
             finalValueExpected = FINAL_VALUE;
             commitFails = lockingMode == LockingMode.OPTIMISTIC;
-            assertEquals("Wrong put return value.", initValue, cache.put(key, FINAL_VALUE));
-            assertEquals("Wrong final get.", FINAL_VALUE, cache.get(key));
+            assertEquals(initValue, cache.put(key, FINAL_VALUE), "Wrong put return value.");
+            assertEquals(FINAL_VALUE, cache.get(key), "Wrong final get.");
             break;
          case REMOVE:
             finalValueExpected = null;
             commitFails = lockingMode == LockingMode.OPTIMISTIC;
-            assertEquals("Wrong remove return value.", initValue, cache.remove(key));
-            assertEquals("Wrong final get.", null, cache.get(key));
+            assertEquals(initValue, cache.remove(key), "Wrong remove return value.");
+            assertNull(cache.get(key), "Wrong final get.");
             break;
          case REPLACE:
             finalValueExpected = initialized ? FINAL_VALUE : OTHER_VALUE;
             commitFails = lockingMode == LockingMode.OPTIMISTIC && initialized;
-            assertEquals("Wrong replace return value.", initValue, cache.replace(key, FINAL_VALUE));
-            assertEquals("Wrong final get.", initialized ? FINAL_VALUE : null, cache.get(key));
+            assertEquals(initValue, cache.replace(key, FINAL_VALUE), "Wrong replace return value.");
+            assertEquals(initialized ? FINAL_VALUE : null, cache.get(key), "Wrong final get.");
             break;
          case CONDITIONAL_PUT:
             finalValueExpected = initialized ? OTHER_VALUE : FINAL_VALUE;
             commitFails = lockingMode == LockingMode.OPTIMISTIC && !initialized;
-            assertEquals("Wrong put return value.", initialized ? initValue : null, cache.putIfAbsent(key, FINAL_VALUE));
-            assertEquals("Wrong final get.", initialized ? initValue : FINAL_VALUE, cache.get(key));
+            assertEquals(initialized ? initValue : null, cache.putIfAbsent(key, FINAL_VALUE), "Wrong put return value.");
+            assertEquals(initialized ? initValue : FINAL_VALUE, cache.get(key), "Wrong final get.");
             break;
          case CONDITIONAL_REMOVE:
             finalValueExpected = initialized ? null : OTHER_VALUE;
             commitFails = lockingMode == LockingMode.OPTIMISTIC && initialized;
-            assertEquals("Wrong remove return value.", initialized, cache.remove(key, INITIAL_VALUE));
-            assertEquals("Wrong final get.", null, cache.get(key));
+            assertEquals(initialized, cache.remove(key, INITIAL_VALUE), "Wrong remove return value.");
+            assertNull(cache.get(key), "Wrong final get.");
             break;
          case CONDITIONAL_REPLACE:
             finalValueExpected = initialized ? FINAL_VALUE : OTHER_VALUE;
             commitFails = lockingMode == LockingMode.OPTIMISTIC && initialized;
-            assertEquals("Wrong replace return value.", initialized, cache.replace(key, INITIAL_VALUE, FINAL_VALUE));
-            assertEquals("Wrong final get.", initialized ? FINAL_VALUE : null, cache.get(key));
+            assertEquals(initialized, cache.replace(key, INITIAL_VALUE, FINAL_VALUE), "Wrong replace return value.");
+            assertEquals(initialized ? FINAL_VALUE : null, cache.get(key), "Wrong final get.");
             break;
          default:
             fail("Unknown operation " + operation);
@@ -280,7 +282,7 @@ public abstract class AbstractRepeatableReadIsolationTest extends MultipleCacheM
 
 
       tm.begin();
-      assertEquals("Wrong first get.", initValue, cache.get(key));
+      assertEquals(initValue, cache.get(key), "Wrong first get.");
       Transaction tx = tm.suspend();
 
       ownerCache.put(key, OTHER_VALUE);
@@ -290,38 +292,39 @@ public abstract class AbstractRepeatableReadIsolationTest extends MultipleCacheM
       boolean commitFails = lockingMode == LockingMode.OPTIMISTIC;
 
       tm.resume(tx);
-      assertEquals("Wrong second get.", initValue, cache.get(key));
-      assertEquals("Wrong value after remove.", initValue, cache.remove(key));
+      assertEquals(initValue, cache.get(key), "Wrong second get.");
+      assertEquals(initValue, cache.remove(key), "Wrong value after remove.");
+
       switch (operation) {
          case PUT:
             finalValueExpected = FINAL_VALUE;
-            assertEquals("Wrong put return value.", null, cache.put(key, FINAL_VALUE));
-            assertEquals("Wrong final get.", FINAL_VALUE, cache.get(key));
+            assertNull(cache.put(key, FINAL_VALUE), "Wrong put return value.");
+            assertEquals(FINAL_VALUE, cache.get(key), "Wrong final get.");
             break;
          case REMOVE:
             finalValueExpected = null;
-            assertEquals("Wrong remove return value.", null, cache.remove(key));
-            assertEquals("Wrong final get.", null, cache.get(key));
+            assertNull(cache.remove(key), "Wrong remove return value.");
+            assertNull(cache.get(key), "Wrong final get.");
             break;
          case REPLACE:
             finalValueExpected = null;
-            assertEquals("Wrong replace return value.", null, cache.replace(key, FINAL_VALUE));
-            assertEquals("Wrong final get.", null, cache.get(key));
+            assertNull(cache.replace(key, FINAL_VALUE), "Wrong replace return value.");
+            assertNull(cache.get(key), "Wrong final get.");
             break;
          case CONDITIONAL_PUT:
             finalValueExpected = FINAL_VALUE;
-            assertEquals("Wrong put return value.", null, cache.putIfAbsent(key, FINAL_VALUE));
-            assertEquals("Wrong final get.", FINAL_VALUE, cache.get(key));
+            assertNull(cache.putIfAbsent(key, FINAL_VALUE), "Wrong put return value.");
+            assertEquals(FINAL_VALUE, cache.get(key), "Wrong final get.");
             break;
          case CONDITIONAL_REMOVE:
             finalValueExpected = null;
-            assertEquals("Wrong remove return value.", false, cache.remove(key, INITIAL_VALUE));
-            assertEquals("Wrong final get.", null, cache.get(key));
+            assertFalse(cache.remove(key, INITIAL_VALUE), "Wrong remove return value.");
+            assertNull(cache.get(key), "Wrong final get.");
             break;
          case CONDITIONAL_REPLACE:
             finalValueExpected = null;
-            assertEquals("Wrong replace return value.", false, cache.replace(key, INITIAL_VALUE, FINAL_VALUE));
-            assertEquals("Wrong final get.", null, cache.get(key));
+            assertFalse(cache.replace(key, INITIAL_VALUE, FINAL_VALUE), "Wrong replace return value.");
+            assertNull(cache.get(key), "Wrong final get.");
             break;
          default:
             fail("Unknown operation " + operation);
@@ -339,12 +342,11 @@ public abstract class AbstractRepeatableReadIsolationTest extends MultipleCacheM
 
    private void assertValueInAllCaches(final Object key, final Object value) {
       for (Cache<Object, Object> cache : caches()) {
-         assertEquals("Wrong value.", value, cache.get(key));
+         assertEquals(value, cache.get(key), "Wrong value.");
       }
    }
 
    private enum Operation {
-      PUT, REMOVE, REPLACE,
-      CONDITIONAL_PUT, CONDITIONAL_REMOVE, CONDITIONAL_REPLACE
+      PUT, REMOVE, REPLACE, CONDITIONAL_PUT, CONDITIONAL_REMOVE, CONDITIONAL_REPLACE
    }
 }

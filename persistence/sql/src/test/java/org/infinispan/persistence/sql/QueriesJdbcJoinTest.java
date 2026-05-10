@@ -1,7 +1,8 @@
 package org.infinispan.persistence.sql;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -290,7 +291,7 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
             Address address = person.getAddress();
             if (addressIntegerMap != null) {
                Integer id = addressIntegerMap.get(address);
-               assert id != null;
+               assertNotNull(id);
                ps.setInt(1, id);
             } else {
                ps.setString(1, person.getName());

@@ -2,10 +2,11 @@ package org.infinispan.expiry;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -61,15 +62,15 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry se = dc.peek("k");
-      assert se.getKey().equals("k");
-      assert se.getValue().equals("v");
-      assert se.getLifespan() == lifespan;
-      assert se.getMaxIdle() == -1;
-      assert !se.isExpired(timeService.wallClockTime());
-      assert cache.get("k").equals("v");
+      assertEquals("k", se.getKey());
+      assertEquals("v", se.getValue());
+      assertTrue(se.getLifespan() == lifespan);
+      assertTrue(se.getMaxIdle() == -1);
+      assertFalse(se.isExpired(timeService.wallClockTime()));
+      assertEquals("v", cache.get("k"));
       timeService.advance(lifespan + 100);
-      assert se.isExpired(timeService.wallClockTime());
-      assert cache.get("k") == null;
+      assertTrue(se.isExpired(timeService.wallClockTime()));
+      assertNull(cache.get("k"));
    }
 
    protected Cache<String, String> getCache() {
@@ -83,12 +84,12 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry se = dc.peek("k");
-      assert se.getKey().equals("k");
-      assert se.getValue().equals("v");
-      assert se.getLifespan() == -1;
-      assert se.getMaxIdle() == idleTime;
-      assert !se.isExpired(timeService.wallClockTime());
-      assert cache.get("k").equals("v");
+      assertEquals("k", se.getKey());
+      assertEquals("v", se.getValue());
+      assertTrue(se.getLifespan() == -1);
+      assertTrue(se.getMaxIdle() == idleTime);
+      assertFalse(se.isExpired(timeService.wallClockTime()));
+      assertEquals("v", cache.get("k"));
       timeService.advance(idleTime + 100);
       assertTrue(se.isExpired(timeService.wallClockTime()));
       assertNull(cache.get("k"));
@@ -130,7 +131,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    public void testLifespanExpiryInPutIfAbsent() throws InterruptedException {
       Cache<String, String> cache = getCache();
       final long lifespan = EXPIRATION_TIMEOUT;
-      assert cache.putIfAbsent("k", "v", lifespan, MILLISECONDS) == null;
+      assertNull(cache.putIfAbsent("k", "v", lifespan, MILLISECONDS));
       long partial = lifespan / 10;
       // Sleep some time within the lifespan boundaries
       timeService.advance(lifespan - partial);
@@ -140,7 +141,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assertNull(cache.get("k"));
 
       cache.put("k", "v");
-      assert cache.putIfAbsent("k", "v", lifespan, MILLISECONDS) != null;
+      assertNotNull(cache.putIfAbsent("k", "v", lifespan, MILLISECONDS));
    }
 
    public void testIdleExpiryInPutIfAbsent() throws InterruptedException {
@@ -178,7 +179,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
       timeService.advance(lifespan + 100);
 
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
    }
 
    public void testIdleExpiryInReplace() throws InterruptedException {

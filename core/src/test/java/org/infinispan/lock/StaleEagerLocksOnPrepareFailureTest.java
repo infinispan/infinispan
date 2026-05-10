@@ -1,7 +1,8 @@
 package org.infinispan.lock;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -78,7 +79,7 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
 
       try {
          tm(c1).commit();
-         assert false : "Commit should have failed";
+         fail("Commit should have failed");
       } catch (Exception e) {
          // expected
       }

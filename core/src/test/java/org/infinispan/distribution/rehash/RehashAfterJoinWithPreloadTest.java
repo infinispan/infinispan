@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
 
@@ -106,11 +107,9 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
             String key = "key" + j;
             // each key must only occur once (numOwners is one)
             if (dm.getCacheTopology().isReadOwner(key)) {
-               assertTrue("Key '" + key + "' is owned by node " + address(i) + " but it doesn't appear there",
-                     dataContainer.containsKey(key));
+               assertTrue(dataContainer.containsKey(key), "Key '" + key + "' is owned by node " + address(i) + " but it doesn't appear there");
             } else {
-               assertTrue("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
-                     !dataContainer.containsKey(key));
+               assertFalse(dataContainer.containsKey(key), "Key '" + key + "' is not owned by node " + address(i) + " but it still appears there");
             }
          }
       }

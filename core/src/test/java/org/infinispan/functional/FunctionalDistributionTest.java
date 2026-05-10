@@ -1,6 +1,7 @@
 package org.infinispan.functional;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
 import java.util.List;
@@ -14,7 +15,6 @@ import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -110,7 +110,7 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
       f.get(10, TimeUnit.SECONDS);
 
       // we want to ensure that each of the owners executes the function only once:
-      Assert.assertEquals(owners.stream()
+      assertEquals(owners.stream()
                   .map(cache -> cache.getDataContainer().peek(key).getValue())
                   .collect(Collectors.toList()),
             Collections.nCopies(numDistOwners, expectedValue));

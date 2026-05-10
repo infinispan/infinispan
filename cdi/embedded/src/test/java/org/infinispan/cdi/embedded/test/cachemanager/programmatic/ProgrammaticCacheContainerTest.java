@@ -1,6 +1,6 @@
 package org.infinispan.cdi.embedded.test.cachemanager.programmatic;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.testutil.Deployments;
@@ -47,15 +47,15 @@ public class ProgrammaticCacheContainerTest extends Arquillian {
    private SmallCacheObservers observers;
 
    public void testSmallCache() {
-      assertEquals(smallCache.getCacheConfiguration().memory().maxCount(), 7);
-      assertEquals(observers.getCacheStartedEventCount(), 1);
+      assertEquals(7, smallCache.getCacheConfiguration().memory().maxCount());
+      assertEquals(1, observers.getCacheStartedEventCount());
    }
 
    public void testLargeCache() {
-      assertEquals(largeCache.getCacheConfiguration().memory().maxCount(), 10);
+      assertEquals(10, largeCache.getCacheConfiguration().memory().maxCount());
    }
 
    public void testSuperLargeCache() {
-      assertEquals(superLargeCache.getCacheConfiguration().memory().maxCount(), 20);
+      assertEquals(20, superLargeCache.getCacheConfiguration().memory().maxCount());
    }
 }

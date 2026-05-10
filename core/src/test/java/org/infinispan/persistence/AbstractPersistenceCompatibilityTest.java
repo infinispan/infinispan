@@ -1,8 +1,8 @@
 package org.infinispan.persistence;
 
 import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,9 +91,9 @@ public abstract class AbstractPersistenceCompatibilityTest<T> extends SingleCach
       for (int i = 0; i < NUMBER_KEYS; ++i) {
          String key = key(i);
          if (i % 2 != 0) {
-            assertNull("Expected null value for key " + key, cache.get(key));
+            assertNull(cache.get(key), "Expected null value for key " + key);
          } else {
-            assertEquals("Wrong value read for key " + key, value(i), valueWrapper.unwrap(cache.get(key)));
+            assertEquals(value(i), valueWrapper.unwrap(cache.get(key)), "Wrong value read for key " + key);
          }
       }
 
@@ -106,7 +106,7 @@ public abstract class AbstractPersistenceCompatibilityTest<T> extends SingleCach
 
       for (int i = 0; i < NUMBER_KEYS; ++i) {
          String key = key(i);
-         assertEquals("Wrong value read for key " + key, value(i), valueWrapper.unwrap(cache.get(key)));
+         assertEquals(value(i), valueWrapper.unwrap(cache.get(key)), "Wrong value read for key " + key);
       }
 
       // Restart the CacheManager to ensure that the entries are still readable on restart
@@ -117,7 +117,7 @@ public abstract class AbstractPersistenceCompatibilityTest<T> extends SingleCach
          cache = cm.getCache(cacheName());
          for (int i = 0; i < NUMBER_KEYS; ++i) {
             String key = key(i);
-            assertEquals("Wrong value read for key " + key, value(i), valueWrapper.unwrap(cache.get(key)));
+            assertEquals(value(i), valueWrapper.unwrap(cache.get(key)), "Wrong value read for key " + key);
          }
       }
    }

@@ -3,8 +3,8 @@ package org.infinispan.distribution;
 import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;

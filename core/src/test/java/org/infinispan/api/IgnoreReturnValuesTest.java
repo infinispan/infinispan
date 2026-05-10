@@ -1,7 +1,7 @@
 package org.infinispan.api;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -19,11 +19,11 @@ public class IgnoreReturnValuesTest extends MultipleCacheManagersTest {
 
    @Override
    public Object[] factory() {
-      return new Object[] {
-         new IgnoreReturnValuesTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
-         new IgnoreReturnValuesTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
-         new IgnoreReturnValuesTest().cacheMode(CacheMode.LOCAL).transactional(false),
-         new IgnoreReturnValuesTest().cacheMode(CacheMode.LOCAL).transactional(true),
+      return new Object[]{
+            new IgnoreReturnValuesTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+            new IgnoreReturnValuesTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
+            new IgnoreReturnValuesTest().cacheMode(CacheMode.LOCAL).transactional(false),
+            new IgnoreReturnValuesTest().cacheMode(CacheMode.LOCAL).transactional(true),
       };
    }
 
@@ -47,7 +47,7 @@ public class IgnoreReturnValuesTest extends MultipleCacheManagersTest {
       // With IGNORE_RETURN_VALUES flag, put should return null
       AdvancedCache<Object, Object> cache = advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES);
       Object result = cache.put(k, "v2");
-      assertNull("put with IGNORE_RETURN_VALUES should return null", result);
+      assertNull(result, "put with IGNORE_RETURN_VALUES should return null");
       assertEquals("v2", cache(0).get(k));
    }
 
@@ -65,7 +65,7 @@ public class IgnoreReturnValuesTest extends MultipleCacheManagersTest {
       cache(0).put(k, "v1");
       AdvancedCache<Object, Object> cache = advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES);
       Object result = cache.remove(k);
-      assertNull("remove with IGNORE_RETURN_VALUES should return null", result);
+      assertNull(result, "remove with IGNORE_RETURN_VALUES should return null");
       assertNull(cache(0).get(k));
    }
 
@@ -82,7 +82,7 @@ public class IgnoreReturnValuesTest extends MultipleCacheManagersTest {
       // With IGNORE_RETURN_VALUES flag, replace should return null
       AdvancedCache<Object, Object> cache = advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES);
       Object result = cache.replace(k, "v2");
-      assertNull("replace with IGNORE_RETURN_VALUES should return null", result);
+      assertNull(result, "replace with IGNORE_RETURN_VALUES should return null");
       assertEquals("v2", cache(0).get(k));
    }
 
@@ -99,7 +99,7 @@ public class IgnoreReturnValuesTest extends MultipleCacheManagersTest {
       // With IGNORE_RETURN_VALUES flag, compute should return null
       AdvancedCache<Object, Object> cache = advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES);
       Object result = cache.compute(k, (key, value) -> value + "-again");
-      assertNull("compute with IGNORE_RETURN_VALUES should return null", result);
+      assertNull(result, "compute with IGNORE_RETURN_VALUES should return null");
       assertEquals("v0-modified-again", cache(0).get(k));
    }
 
@@ -116,7 +116,7 @@ public class IgnoreReturnValuesTest extends MultipleCacheManagersTest {
       // With IGNORE_RETURN_VALUES flag, computeIfPresent should return null
       AdvancedCache<Object, Object> cache = advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES);
       Object result = cache.computeIfPresent(k, (key, value) -> value + "-again");
-      assertNull("computeIfPresent with IGNORE_RETURN_VALUES should return null", result);
+      assertNull(result, "computeIfPresent with IGNORE_RETURN_VALUES should return null");
       assertEquals("v0-modified-again", cache(0).get(k));
    }
 
@@ -126,14 +126,14 @@ public class IgnoreReturnValuesTest extends MultipleCacheManagersTest {
       assertEquals("v0", cache(0).get(k));
 
       // Without flag, merge should return new value
-      Object newValue = cache(0).merge(k, "-added", (oldVal, newVal) -> String.valueOf(oldVal) + String.valueOf(newVal));
+      Object newValue = cache(0).merge(k, "-added", (oldVal, newVal) -> oldVal + String.valueOf(newVal));
       assertEquals("v0-added", newValue);
       assertEquals("v0-added", cache(0).get(k));
 
       // With IGNORE_RETURN_VALUES flag, merge should return null
       AdvancedCache<Object, Object> cache = advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES);
-      Object result = cache.merge(k, "-more", (oldVal, newVal) -> String.valueOf(oldVal) + String.valueOf(newVal));
-      assertNull("merge with IGNORE_RETURN_VALUES should return null", result);
+      Object result = cache.merge(k, "-more", (oldVal, newVal) -> oldVal + String.valueOf(newVal));
+      assertNull(result, "merge with IGNORE_RETURN_VALUES should return null");
       assertEquals("v0-added-more", cache(0).get(k));
    }
 
@@ -150,7 +150,7 @@ public class IgnoreReturnValuesTest extends MultipleCacheManagersTest {
       // With IGNORE_RETURN_VALUES flag, putIfAbsent should return null
       AdvancedCache<Object, Object> cache = advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES);
       Object result = cache.putIfAbsent(k, "v2");
-      assertNull("putIfAbsent with IGNORE_RETURN_VALUES should return null", result);
+      assertNull(result, "putIfAbsent with IGNORE_RETURN_VALUES should return null");
       // Value should not change since key already exists
       assertEquals("v0", cache(0).get(k));
    }
@@ -168,7 +168,7 @@ public class IgnoreReturnValuesTest extends MultipleCacheManagersTest {
       // With IGNORE_RETURN_VALUES flag, computeIfAbsent should return null
       AdvancedCache<Object, Object> cache = advancedCache(0).withFlags(Flag.IGNORE_RETURN_VALUES);
       Object result = cache.computeIfAbsent(k, key -> "v2");
-      assertNull("computeIfAbsent with IGNORE_RETURN_VALUES should return null", result);
+      assertNull(result, "computeIfAbsent with IGNORE_RETURN_VALUES should return null");
       // Value should not change since key already exists
       assertEquals("v0", cache(0).get(k));
    }

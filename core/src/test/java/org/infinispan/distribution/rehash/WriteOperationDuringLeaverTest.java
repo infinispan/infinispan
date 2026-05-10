@@ -1,9 +1,9 @@
 package org.infinispan.distribution.rehash;
 
 import static org.infinispan.util.BlockingLocalTopologyManager.replaceTopologyManagerDefaultCache;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -105,7 +105,7 @@ public class WriteOperationDuringLeaverTest extends MultipleCacheManagersTest {
 
    private <K, V> void assertInAllCache(K key, V value) {
       for (Cache<K, V> cache : this.<K, V>caches()) {
-         assertEquals("Wrong value in cache " + address(cache), value, cache.get(key));
+         assertEquals(value, cache.get(key), "Wrong value in cache " + address(cache));
       }
    }
 

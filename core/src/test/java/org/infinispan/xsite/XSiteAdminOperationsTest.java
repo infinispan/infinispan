@@ -3,9 +3,9 @@ package org.infinispan.xsite;
 import static java.lang.String.format;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -46,22 +46,22 @@ public class XSiteAdminOperationsTest extends AbstractTwoSitesTest {
    }
 
    public void testSiteStatus() {
-      assertEquals(admin(LON, 0).siteStatus(NYC), XSiteAdminOperations.ONLINE);
-      assertEquals(admin(LON, 1).siteStatus(NYC), XSiteAdminOperations.ONLINE);
+      assertEquals(XSiteAdminOperations.ONLINE, admin(LON, 0).siteStatus(NYC));
+      assertEquals(XSiteAdminOperations.ONLINE, admin(LON, 1).siteStatus(NYC));
 
       assertEquals(XSiteAdminOperations.SUCCESS, admin(LON, 1).takeSiteOffline(NYC));
 
-      assertEquals(admin(LON, 0).siteStatus(NYC), XSiteAdminOperations.OFFLINE);
-      assertEquals(admin(LON, 1).siteStatus(NYC), XSiteAdminOperations.OFFLINE);
+      assertEquals(XSiteAdminOperations.OFFLINE, admin(LON, 0).siteStatus(NYC));
+      assertEquals(XSiteAdminOperations.OFFLINE, admin(LON, 1).siteStatus(NYC));
 
       assertEquals(XSiteAdminOperations.SUCCESS, admin(LON, 1).bringSiteOnline(NYC));
-      assertEquals(admin(LON, 0).siteStatus(NYC), XSiteAdminOperations.ONLINE);
-      assertEquals(admin(LON, 1).siteStatus(NYC), XSiteAdminOperations.ONLINE);
+      assertEquals(XSiteAdminOperations.ONLINE, admin(LON, 0).siteStatus(NYC));
+      assertEquals(XSiteAdminOperations.ONLINE, admin(LON, 1).siteStatus(NYC));
    }
 
    public void amendTakeOffline() {
-      assertEquals(admin(LON, 0).siteStatus(NYC), XSiteAdminOperations.ONLINE);
-      assertEquals(admin(LON, 1).siteStatus(NYC), XSiteAdminOperations.ONLINE);
+      assertEquals(XSiteAdminOperations.ONLINE, admin(LON, 0).siteStatus(NYC));
+      assertEquals(XSiteAdminOperations.ONLINE, admin(LON, 1).siteStatus(NYC));
 
       TakeOfflineManager tom = takeOfflineManager(LON, 0);
       assertEquals(tom.getConfiguration(NYC), new TakeOfflineConfigurationBuilder(null, null).afterFailures(0).minTimeToWait(0).create());
@@ -75,10 +75,10 @@ public class XSiteAdminOperationsTest extends AbstractTwoSitesTest {
       assertEquals(XSiteAdminOperations.SUCCESS, admin(LON, 1).setTakeOfflineMinTimeToWait(NYC, 13));
       assertEquals(tom.getConfiguration(NYC), new TakeOfflineConfigurationBuilder(null, null).afterFailures(8).minTimeToWait(13).create());
 
-      assertEquals(admin(LON, 0).getTakeOfflineAfterFailures(NYC), "8");
-      assertEquals(admin(LON, 0).getTakeOfflineMinTimeToWait(NYC), "13");
-      assertEquals(admin(LON, 1).getTakeOfflineAfterFailures(NYC), "8");
-      assertEquals(admin(LON, 1).getTakeOfflineMinTimeToWait(NYC), "13");
+      assertEquals("8", admin(LON, 0).getTakeOfflineAfterFailures(NYC));
+      assertEquals("13", admin(LON, 0).getTakeOfflineMinTimeToWait(NYC));
+      assertEquals("8", admin(LON, 1).getTakeOfflineAfterFailures(NYC));
+      assertEquals("13", admin(LON, 1).getTakeOfflineMinTimeToWait(NYC));
    }
 
    public void testStatus() {

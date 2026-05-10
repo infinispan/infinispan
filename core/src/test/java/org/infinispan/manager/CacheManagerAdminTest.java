@@ -1,10 +1,10 @@
 package org.infinispan.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 
@@ -86,9 +86,9 @@ public class CacheManagerAdminTest extends MultipleCacheManagersTest {
    protected void checkCacheExistenceAcrossCluster(String cacheName, boolean exists) {
       for (EmbeddedCacheManager m : cacheManagers) {
          if (exists) {
-            assertTrue("Cache '" + cacheName + "' should be present on " + m, m.cacheExists(cacheName));
+            assertTrue(m.cacheExists(cacheName), "Cache '" + cacheName + "' should be present on " + m);
          } else {
-            assertFalse("Cache '" + cacheName + "' should NOT be present on " + m, m.cacheExists(cacheName));
+            assertFalse(m.cacheExists(cacheName), "Cache '" + cacheName + "' should NOT be present on " + m);
          }
       }
    }
@@ -96,7 +96,7 @@ public class CacheManagerAdminTest extends MultipleCacheManagersTest {
    protected void checkConsistencyAcrossCluster(String cacheName, Configuration configuration) {
       for (EmbeddedCacheManager m : cacheManagers) {
          Configuration actualConfiguration = m.getCacheConfiguration(cacheName);
-         assertNotNull("Cache " + cacheName + " missing from " + m, actualConfiguration);
+         assertNotNull(actualConfiguration, "Cache " + cacheName + " missing from " + m);
          assertEquals(configuration, actualConfiguration);
          Cache<Object, Object> cache = m.getCache(cacheName);
          assertEquals(cacheManagers.size(), cache.getAdvancedCache().getRpcManager().getMembers().size());

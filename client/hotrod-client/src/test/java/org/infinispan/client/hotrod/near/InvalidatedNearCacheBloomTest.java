@@ -1,9 +1,10 @@
 package org.infinispan.client.hotrod.near;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -154,7 +155,7 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
          // The cache will always preemptively invalidate the value if necessary
          MockNearCacheService.MockEvent event = assertClient.events.poll(10, TimeUnit.SECONDS);
          assertNotNull(event);
-         assertTrue(event instanceof MockNearCacheService.MockRemoveEvent);
+         assertInstanceOf(MockNearCacheService.MockRemoveEvent.class, event);
          assertEquals(nonConflictKey, ((MockNearCacheService.MockRemoveEvent<?>) event).key);
 
          // Eventually this be null - which means our cache has been updated on the server side
@@ -163,14 +164,13 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
             serverBloomFilterUpdated = true;
             break;
          }
-         assertTrue(event instanceof MockNearCacheService.MockRemoveEvent);
+         assertInstanceOf(MockNearCacheService.MockRemoveEvent.class, event);
          assertEquals(nonConflictKey, ((MockNearCacheService.MockRemoveEvent<?>) event).key);
 
          Thread.sleep(10);
       }
 
-      assertTrue("The server bloom filter was never updated and we got remove events every time",
-            serverBloomFilterUpdated);
+      assertTrue(serverBloomFilterUpdated, "The server bloom filter was never updated and we got remove events every time");
    }
 
    private void drainAsyncEvents() {

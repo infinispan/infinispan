@@ -1,8 +1,8 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -59,7 +59,7 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
 
       // This should return null normally, but since it was retried it returns it's own value :(
       // Maybe some day this can work properly
-      assertEquals(future.get(10, TimeUnit.SECONDS), FIRST_VALUE);
+      assertEquals(FIRST_VALUE, future.get(10, TimeUnit.SECONDS));
 
       TestingUtil.waitForNoRebalance(cache0, cache2);
 
@@ -69,8 +69,7 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
       // 3: top     READ_ALL_WRITE_ALL
       // 4: top     READ_NEW_WRITE_ALL
       // 5: top     NO_REBALANCE
-      assertTrue("Expected 1 - 5 events, but received " + clusterListener.events,
-            !clusterListener.events.isEmpty() && clusterListener.events.size() <= 5);
+      assertTrue(!clusterListener.events.isEmpty() && clusterListener.events.size() <= 5, "Expected 1 - 5 events, but received " + clusterListener.events);
 
       Address cache0primary = cache0.getAdvancedCache().getDistributionManager().getCacheTopology().getDistribution(key).primary();
       Address cache2primary = cache2.getAdvancedCache().getDistributionManager().getCacheTopology().getDistribution(key).primary();

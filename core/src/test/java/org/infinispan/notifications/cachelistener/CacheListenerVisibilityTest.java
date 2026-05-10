@@ -1,9 +1,9 @@
 package org.infinispan.notifications.cachelistener;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
@@ -85,8 +85,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
       // With removes, there's a before/after event acknowledgment, so verify it
       // Evicts on the other hand only emit a single event, after
       boolean signalled = before.await(30, TimeUnit.SECONDS);
-      assertTrue("Timed out while waiting for before listener notification",
-            signalled);
+      assertTrue(signalled, "Timed out while waiting for before listener notification");
 
       assertEquals("v1", cache.get(1));
 
@@ -94,10 +93,9 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
       afterContinue.countDown();
 
       signalled = after.await(30, TimeUnit.SECONDS);
-      assertTrue("Timed out while waiting for after listener notification",
-            signalled);
+      assertTrue(signalled, "Timed out while waiting for after listener notification");
 
-      assertEquals(null, cache.get(1));
+      assertNull(cache.get(1));
 
       ignore.get(5, TimeUnit.SECONDS);
    }
@@ -130,10 +128,9 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
       });
 
       boolean signalled = after.await(30, TimeUnit.SECONDS);
-      assertTrue("Timed out while waiting for after listener notification",
-            signalled);
+      assertTrue(signalled, "Timed out while waiting for after listener notification");
 
-      assertEquals(null, cache.get(1));
+      assertNull(cache.get(1));
 
       ignore.get(5, TimeUnit.SECONDS);
    }
@@ -161,8 +158,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
       });
 
       boolean signalled = before.await(30, TimeUnit.SECONDS);
-      assertTrue("Timed out while waiting for before listener notification",
-            signalled);
+      assertTrue(signalled, "Timed out while waiting for before listener notification");
 
       assertEquals("v1", cache.get(1));
       assertEquals("v1", cache.get(2));
@@ -173,15 +169,15 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
 
       // Wait for isPre=false remove notification for k=1
       after.await(30, TimeUnit.SECONDS);
-      assertEquals(null, cache.get(1));
+      assertNull(cache.get(1));
 
       // Wait for isPre=false remove notification for k=2
       after.await(30, TimeUnit.SECONDS);
-      assertEquals(null, cache.get(2));
+      assertNull(cache.get(2));
 
       // Wait for isPre=false remove notification for k=3
       after.await(30, TimeUnit.SECONDS);
-      assertEquals(null, cache.get(3));
+      assertNull(cache.get(3));
 
       assertTrue(cache.isEmpty());
       ignore.get(5, TimeUnit.SECONDS);
@@ -200,8 +196,8 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
       });
 
       listener.latch.await(30, TimeUnit.SECONDS);
-      assert listener.assertNotNull;
-      assert listener.assertValue;
+      assertTrue(listener.assertNotNull);
+      assertTrue(listener.assertValue);
       ignore.get(5, TimeUnit.SECONDS);
    }
 
@@ -231,8 +227,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
       });
 
       boolean signalled = before.await(30, TimeUnit.SECONDS);
-      assertTrue("Timed out while waiting for before listener notification",
-            signalled);
+      assertTrue(signalled, "Timed out while waiting for before listener notification");
 
       switch (visibility) {
          case SIZE:
@@ -247,8 +242,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
       afterContinue.countDown();
 
       signalled = after.await(30, TimeUnit.SECONDS);
-      assertTrue("Timed out while waiting for after listener notification",
-            signalled);
+      assertTrue(signalled, "Timed out while waiting for after listener notification");
 
       switch (visibility) {
          case SIZE:
@@ -297,7 +291,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
       final CountDownLatch afterContinue;
 
       public CacheClearListener(CountDownLatch before,
-            CountDownLatch afterContinue, CyclicBarrier after) {
+                                CountDownLatch afterContinue, CyclicBarrier after) {
          this.before = before;
          this.after = after;
          this.afterContinue = afterContinue;
@@ -324,8 +318,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
             before.countDown();
             try {
                boolean signalled = afterContinue.await(30, TimeUnit.SECONDS);
-               assertTrue("Timed out while waiting for post listener event to execute",
-                     signalled);
+               assertTrue(signalled, "Timed out while waiting for post listener event to execute");
             } catch (InterruptedException e1) {
                Thread.currentThread().interrupt();
             }
@@ -345,7 +338,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
       final CountDownLatch afterContinue;
 
       public EntryListener(CountDownLatch before,
-            CountDownLatch afterContinue, CountDownLatch after) {
+                           CountDownLatch afterContinue, CountDownLatch after) {
          this.before = before;
          this.after = after;
          this.afterContinue = afterContinue;
@@ -375,8 +368,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
             before.countDown();
             try {
                boolean signalled = afterContinue.await(30, TimeUnit.SECONDS);
-               assertTrue("Timed out while waiting for post listener event to execute",
-                     signalled);
+               assertTrue(signalled, "Timed out while waiting for post listener event to execute");
             } catch (InterruptedException e1) {
                Thread.currentThread().interrupt();
             }

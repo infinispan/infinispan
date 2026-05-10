@@ -1,13 +1,13 @@
 package org.infinispan.persistence;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.testng.AssertJUnit.assertArrayEquals;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Calendar;
@@ -82,7 +82,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    protected final ControlledTimeService timeService = new ControlledTimeService();
 
    protected abstract PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence,
-         String cacheName, boolean preload);
+                                                                             String cacheName, boolean preload);
 
 
    protected ConfigurationBuilder getDefaultCacheConfiguration() {
@@ -161,7 +161,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       Cache<String, Object> cache = cacheManager.getCache("testPreloadAndExpiry");
       cache.start();
 
-      assert cache.getCacheConfiguration().persistence().preload();
+      assertTrue(cache.getCacheConfiguration().persistence().preload());
 
       cache.put("k1", wrap("k1", "v"));
       cache.put("k2", wrap("k2", "v"), 111111, TimeUnit.MILLISECONDS);
@@ -326,7 +326,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertEquals(numberOfEntries, cache.size());
       WaitNonBlockingStore<String, Object> store = TestingUtil.getFirstStoreWait(cache);
       for (int i = 0; i < numberOfEntries; ++i) {
-         assertNotNull("Entry for key: " + i + " was null", store.loadEntry(toStorage(cache, Integer.toString(i))));
+         assertNotNull(store.loadEntry(toStorage(cache, Integer.toString(i))), "Entry for key: " + i + " was null");
       }
    }
 
@@ -438,7 +438,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    }
 
    protected ConfigurationBuilder configureCacheLoader(ConfigurationBuilder base, String cacheName,
-         boolean purge) {
+                                                       boolean purge) {
       ConfigurationBuilder cfg = base == null ? getDefaultCacheConfiguration() : base;
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       createCacheStoreConfig(cfg.persistence(), cacheName, false);
@@ -473,7 +473,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
       @Override
       public <K, V> CompletionStage<Void> writeEntries(Iterable<MarshallableEntry<K, V>> iterable,
-            Predicate<? super StoreConfiguration> predicate) {
+                                                       Predicate<? super StoreConfiguration> predicate) {
          passivate.set(true);
          return super.writeEntries(iterable, predicate);
       }

@@ -1,14 +1,13 @@
 package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.test.TestingUtil.assertAnyEquals;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -223,9 +222,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
 
          try {
             CustomEvent before = queue.poll(10, TimeUnit.SECONDS);
-            Iterator<CustomEvent> iter = queue.iterator();
-            while (iter.hasNext()) {
-               CustomEvent after = iter.next();
+            for (CustomEvent after : queue) {
                expectTimeOrdered(before, after);
                before = after;
             }
@@ -235,8 +232,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       }
 
       private void expectTimeOrdered(CustomEvent before, CustomEvent after) {
-         assertTrue("Before timestamp=" + before.timestamp + ", after timestamp=" + after.timestamp,
-               before.timestamp < after.timestamp);
+         assertTrue(before.timestamp < after.timestamp, "Before timestamp=" + before.timestamp + ", after timestamp=" + after.timestamp);
       }
    }
 

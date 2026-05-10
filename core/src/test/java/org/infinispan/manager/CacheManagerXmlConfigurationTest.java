@@ -1,9 +1,11 @@
 package org.infinispan.manager;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -60,7 +62,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       assertTrue(c.transaction().transactionMode().isTransactional());
       assertEquals(32, c.locking().concurrencyLevel());
       assertEquals(10000, c.locking().lockAcquisitionTimeout());
-      assertTrue(c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup);
+      assertInstanceOf(GenericTransactionManagerLookup.class, c.transaction().transactionManagerLookup());
 
       // test the "replicated" cache
       c = getCacheConfiguration(cm, "syncRepl");
@@ -72,7 +74,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       c = getCacheConfiguration(cm, "txSyncRepl");
       assertEquals(32, c.locking().concurrencyLevel());
       assertEquals(10000, c.locking().lockAcquisitionTimeout());
-      assertTrue(c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup);
+      assertInstanceOf(GenericTransactionManagerLookup.class, c.transaction().transactionManagerLookup());
    }
 
    private Configuration getCacheConfiguration(EmbeddedCacheManager cm, String cacheName) {
@@ -101,7 +103,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes());
       try {
          cm = TestCacheManagerFactory.fromStream(bais);
-         assert false : "Should fail";
+         fail("Should fail");
       } catch (Exception expected) {
       }
    }

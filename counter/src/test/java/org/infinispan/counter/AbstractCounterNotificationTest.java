@@ -1,9 +1,9 @@
 package org.infinispan.counter;
 
 import static java.lang.String.format;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -203,11 +203,11 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
       void assertEvent(long oldValue, CounterState oldState, long newValue, CounterState newState)
             throws InterruptedException {
          CounterEvent event = queue.poll(30, TimeUnit.SECONDS);
-         assertNotNull("[" + name + "] Event not found", event);
-         assertEquals(format("[%s] Wrong old value for event: %s.", name, event), oldValue, event.getOldValue());
-         assertEquals(format("[%s] Wrong old state for event: %s.", name, event), oldState, event.getOldState());
-         assertEquals(format("[%s] Wrong new value for event: %s.", name, event), newValue, event.getNewValue());
-         assertEquals(format("[%s] Wrong new state for event: %s.", name, event), newState, event.getNewState());
+         assertNotNull(event, "[" + name + "] Event not found");
+         assertEquals(oldValue, event.getOldValue(), format("[%s] Wrong old value for event: %s.", name, event));
+         assertEquals(oldState, event.getOldState(), format("[%s] Wrong old state for event: %s.", name, event));
+         assertEquals(newValue, event.getNewValue(), format("[%s] Wrong new value for event: %s.", name, event));
+         assertEquals(newState, event.getNewState(), format("[%s] Wrong new state for event: %s.", name, event));
       }
    }
 }

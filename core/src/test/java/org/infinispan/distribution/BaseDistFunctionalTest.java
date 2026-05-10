@@ -1,5 +1,10 @@
 package org.infinispan.distribution;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -188,11 +193,9 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       for (Cache<K, V> c : caches) {
          Object realVal = c.get(key);
          if (value == null) {
-            assert realVal == null : "Expecting [" + key + "] to equal [" + value + "] on cache ["
-                  + addressOf(c) + "] but was [" + realVal + "]. Owners are " + Arrays.toString(getOwners(key));
+            assertNull(realVal, "Expecting [" + key + "] to equal [" + value + "] on cache [" + addressOf(c) + "] but was [" + realVal + "]. Owners are " + Arrays.toString(getOwners(key)));
          } else {
-            assert value.equals(realVal) : "Expecting [" + key + "] to equal [" + value + "] on cache ["
-                  + addressOf(c) + "] but was [" + realVal + "]";
+            assertEquals(realVal, value, "Expecting [" + key + "] to equal [" + value + "] on cache [" + addressOf(c) + "] but was [" + realVal + "]");
          }
       }
       // Allow some time for all ClusteredGetCommands to finish executing
@@ -204,11 +207,11 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
          DataContainer<K, V> dc = c.getAdvancedCache().getDataContainer();
          InternalCacheEntry<K, V> ice = dc.peek(key);
          if (isOwner(c, key)) {
-            assert ice != null && ice.getValue() != null : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + ice;
-            assert ice instanceof ImmortalCacheEntry : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+            assertTrue(ice != null && ice.getValue() != null, "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + ice);
+            assertInstanceOf(ImmortalCacheEntry.class, ice, "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice));
          } else {
             if (allowL1) {
-               assert ice == null || ice.getValue() == null || ice.isL1Entry() : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+               assertTrue(ice == null || ice.getValue() == null || ice.isL1Entry(), "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice));
             } else {
                // Segments no longer owned are invalidated asynchronously
                eventually("Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ")", () -> {

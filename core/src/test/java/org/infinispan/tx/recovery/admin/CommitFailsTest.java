@@ -3,7 +3,8 @@ package org.infinispan.tx.recovery.admin;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 
@@ -60,15 +61,15 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       prepareTransaction(tx);
       try {
          commitTransaction(tx);
-         assert false;
+         fail();
       } catch (XAException e) {
          //expected
       }
 
-      assertEquals(countInDoubtTx(recoveryOps(2).showInDoubtTransactions()), 1);
+      assertEquals(1, countInDoubtTx(recoveryOps(2).showInDoubtTransactions()));
       log.trace("here is the remote get...");
-      assertEquals(countInDoubtTx(recoveryOps(0).showInDoubtTransactions()), 1);
-      assertEquals(countInDoubtTx(recoveryOps(1).showInDoubtTransactions()), 1);
+      assertEquals(1, countInDoubtTx(recoveryOps(0).showInDoubtTransactions()));
+      assertEquals(1, countInDoubtTx(recoveryOps(1).showInDoubtTransactions()));
 
       failureInterceptor0.fail = false;
       failureInterceptor1.fail = false;
@@ -99,7 +100,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
          TestingUtil.getTransactionManager(c).begin();
          actual = c.get(key);
          TestingUtil.getTransactionManager(c).commit();
-         assertEquals(actual, "newValue");
+         assertEquals("newValue", actual);
       }
    }
 

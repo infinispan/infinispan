@@ -1,8 +1,8 @@
 package org.infinispan.test.hibernate.cache.commons.entity;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +78,7 @@ public class EntityRegionAccessStrategyTest extends
          try {
             Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
             withTx(localEnvironment, session, () -> {
-               assertNull("Correct initial value", testLocalAccessStrategy.get(session, KEY));
+               assertNull(testLocalAccessStrategy.get(session, KEY), "Correct initial value");
 
                doInsert(testLocalAccessStrategy, session, KEY, VALUE1);
 
@@ -103,7 +103,7 @@ public class EntityRegionAccessStrategyTest extends
             withTx(localEnvironment, session, () -> {
                readLatch.await();
 
-               assertNull("Correct initial value", testLocalAccessStrategy.get(session, KEY));
+               assertNull(testLocalAccessStrategy.get(session, KEY), "Correct initial value");
                return null;
             });
          } catch (Exception e) {
@@ -122,17 +122,17 @@ public class EntityRegionAccessStrategyTest extends
       inserter.start();
       reader.start();
 
-      assertTrue("Threads completed", completionLatch.await(10, TimeUnit.SECONDS));
+      assertTrue(completionLatch.await(10, TimeUnit.SECONDS), "Threads completed");
 
       assertThreadsRanCleanly();
 
       Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
-      assertEquals("Correct node1 value", VALUE1, testLocalAccessStrategy.get(s1, KEY));
+      assertEquals(VALUE1, testLocalAccessStrategy.get(s1, KEY), "Correct node1 value");
 
       assertTrue(asyncInsertLatch.await(10, TimeUnit.SECONDS));
       Object expected = isUsingInvalidation() ? null : VALUE1;
       Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
-      assertEquals("Correct node2 value", expected, testRemoteAccessStrategy.get(s2, KEY));
+      assertEquals(expected, testRemoteAccessStrategy.get(s2, KEY), "Correct node2 value");
    }
 
    protected void doInsert(TestRegionAccessStrategy strategy, Object session, Object key, TestCacheEntry entry) {
@@ -198,7 +198,7 @@ public class EntityRegionAccessStrategyTest extends
             Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
             withTx(localEnvironment, session, () -> {
                log.debug("Transaction began, get initial value");
-               assertEquals("Correct initial value", VALUE1, testLocalAccessStrategy.get(session, KEY));
+               assertEquals(VALUE1, testLocalAccessStrategy.get(session, KEY), "Correct initial value");
                log.debug("Now update value");
                doUpdate(testLocalAccessStrategy, session, KEY, VALUE2);
                log.debug("Notify the read latch");
@@ -233,7 +233,7 @@ public class EntityRegionAccessStrategyTest extends
                // is not being committed yet, or if non-strict as we do the actual update only after transaction)
                // or null if non-transactional
                Object expected = isTransactional() || accessType == AccessType.NONSTRICT_READ_WRITE ? VALUE1 : null;
-               assertEquals("Correct value", expected, testLocalAccessStrategy.get(session, KEY));
+               assertEquals(expected, testLocalAccessStrategy.get(session, KEY), "Correct value");
                return null;
             });
          } catch (Exception e) {
@@ -258,11 +258,11 @@ public class EntityRegionAccessStrategyTest extends
       assertThreadsRanCleanly();
 
       Object s3 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
-      assertEquals("Correct node1 value", VALUE2, testLocalAccessStrategy.get(s3, KEY));
+      assertEquals(VALUE2, testLocalAccessStrategy.get(s3, KEY), "Correct node1 value");
       assertTrue(asyncUpdateLatch.await(10, TimeUnit.SECONDS));
       Object expected = isUsingInvalidation() ? null : VALUE2;
       Object s4 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
-      assertEquals("Correct node2 value", expected, testRemoteAccessStrategy.get(s4, KEY));
+      assertEquals(expected, testRemoteAccessStrategy.get(s4, KEY), "Correct node2 value");
    }
 
    @Override
@@ -303,7 +303,7 @@ public class EntityRegionAccessStrategyTest extends
             try {
                Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
                withTx(localEnvironment, session, () -> {
-                  assertEquals("Correct initial value", VALUE1, testLocalAccessStrategy.get(session, KEY));
+                  assertEquals(VALUE1, testLocalAccessStrategy.get(session, KEY), "Correct initial value");
 
                   doUpdate(testLocalAccessStrategy, session, KEY, VALUE2);
 
@@ -343,18 +343,18 @@ public class EntityRegionAccessStrategyTest extends
       };
 
       blocker.start();
-      assertTrue("Active tx has done an update", pferLatch.await(1, TimeUnit.SECONDS));
+      assertTrue(pferLatch.await(1, TimeUnit.SECONDS), "Active tx has done an update");
       putter.start();
-      assertTrue("putFromLoad returns promptly", pferCompletionLatch.await(10, TimeUnit.MILLISECONDS));
+      assertTrue(pferCompletionLatch.await(10, TimeUnit.MILLISECONDS), "putFromLoad returns promptly");
 
       commitLatch.countDown();
 
-      assertTrue("Threads completed", completionLatch.await(1, TimeUnit.SECONDS));
+      assertTrue(completionLatch.await(1, TimeUnit.SECONDS), "Threads completed");
 
       assertThreadsRanCleanly();
 
       Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
-      assertEquals("Correct node1 value", VALUE2, testLocalAccessStrategy.get(session, KEY));
+      assertEquals(VALUE2, testLocalAccessStrategy.get(session, KEY), "Correct node1 value");
    }
 
    @Test

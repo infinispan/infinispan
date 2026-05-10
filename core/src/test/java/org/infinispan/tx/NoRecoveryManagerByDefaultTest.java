@@ -1,8 +1,8 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.management.ObjectName;
 

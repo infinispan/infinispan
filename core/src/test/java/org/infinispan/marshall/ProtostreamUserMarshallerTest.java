@@ -1,7 +1,8 @@
 package org.infinispan.marshall;
 
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
       PersistenceMarshaller pm = TestingUtil.extractPersistenceMarshaller(manager(0));
       testIsMarshallableAndPut(pm, new ExampleUserPojo("A Pojo!"), new AnotherExampleUserPojo("And another one!"));
       DelegatingUserMarshaller userMarshaller = (DelegatingUserMarshaller) pm.getUserMarshaller();
-      assertTrue(userMarshaller.getDelegate() instanceof ImmutableProtoStreamMarshaller);
+      assertInstanceOf(ImmutableProtoStreamMarshaller.class, userMarshaller.getDelegate());
    }
 
    private void testIsMarshallableAndPut(PersistenceMarshaller pm, Object... pojos) {

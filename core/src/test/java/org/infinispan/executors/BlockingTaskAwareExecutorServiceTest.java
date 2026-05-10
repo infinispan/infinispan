@@ -1,5 +1,8 @@
 package org.infinispan.executors;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -34,13 +37,13 @@ public class BlockingTaskAwareExecutorServiceTest extends AbstractInfinispanTest
 
          Thread.sleep(100);
 
-         assert !doSomething.isReady();
-         assert !doSomething.isExecuted();
+         assertFalse(doSomething.isReady());
+         assertFalse(doSomething.isExecuted());
 
          doSomething.markReady();
          executorService.checkForReadyTasks();
 
-         assert doSomething.isReady();
+         assertTrue(doSomething.isReady());
 
          eventually(doSomething::isExecuted);
       } finally {
@@ -60,8 +63,8 @@ public class BlockingTaskAwareExecutorServiceTest extends AbstractInfinispanTest
          tasks.forEach(executorService::execute);
 
          for (DoSomething doSomething : tasks) {
-            assert !doSomething.isReady();
-            assert !doSomething.isExecuted();
+            assertFalse(doSomething.isReady());
+            assertFalse(doSomething.isExecuted());
          }
 
          tasks.forEach(BlockingTaskAwareExecutorServiceTest.DoSomething::markReady);

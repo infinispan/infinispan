@@ -3,10 +3,10 @@ package org.infinispan.distribution;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -215,7 +215,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       long requestCompleted = System.nanoTime();
       long requestSeconds = TimeUnit.NANOSECONDS.toSeconds(requestCompleted - requestAllowed);
 
-      assertTrue("Request took too long: " + requestSeconds, requestSeconds < timeout / 2);
+      assertTrue(requestSeconds < timeout / 2, "Request took too long: " + requestSeconds);
       assertEquals(SuccessfulResponse.create(new ImmortalCacheValue(m.getName())), responses.get(address1));
       assertEquals(CacheNotFoundResponse.INSTANCE, responses.get(address2));
       release2.countDown();
@@ -234,8 +234,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
          Exceptions.expectException(TimeoutException.class, () -> cache(0).get(key));
          long end = System.nanoTime();
          long duration = TimeUnit.NANOSECONDS.toMillis(end - start);
-         assertTrue("Request did not wait for long enough: " + duration,
-               duration >= cache(0).getCacheConfiguration().clustering().remoteTimeout());
+         assertTrue(duration >= cache(0).getCacheConfiguration().clustering().remoteTimeout(), "Request did not wait for long enough: " + duration);
       });
       assertTrue(arrival.await(10, TimeUnit.SECONDS));
 

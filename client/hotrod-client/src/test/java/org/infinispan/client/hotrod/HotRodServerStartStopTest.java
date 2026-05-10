@@ -3,9 +3,9 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
@@ -95,7 +95,7 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
       assertNull(remoteCache.get("k1"));
 
       if (prevTop != null) {
-         assertFalse("Topology is still the same: " + prevTop, prevTop.equals(remoteCache.getCacheTopologyInfo().getTopologyId()));
+         assertNotEquals(prevTop, remoteCache.getCacheTopologyInfo().getTopologyId(), "Topology is still the same: " + prevTop);
       }
 
       killRemoteCacheManager(remoteCacheManager);

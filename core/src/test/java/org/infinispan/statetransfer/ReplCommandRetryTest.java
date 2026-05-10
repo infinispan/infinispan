@@ -5,8 +5,8 @@ import static org.infinispan.test.TestingUtil.findInterceptor;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.DEFAULT_CACHE_NAME;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.addInterceptor;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Future;
@@ -251,21 +251,20 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       log.tracef("Transaction finished on %s", c2);
 
       // 1 for the initial call + 1 for each retry (2)
-      assertEquals(di1.getCounter(), 3);
+      assertEquals(3, di1.getCounter());
       // 1 for the last retry
-      assertEquals(di2.getCounter(), 1);
+      assertEquals(1, di2.getCounter());
       // 1 for each retry
-      assertEquals(di3.getCounter(), 2);
+      assertEquals(2, di3.getCounter());
       // 1 for the last retry
-      assertEquals(di4.getCounter(), 1);
+      assertEquals(1, di4.getCounter());
    }
 
    private void waitForStateTransfer(int expectedTopologyId, Cache... caches) {
       waitForNoRebalance(caches);
       for (Cache c : caches) {
          CacheTopology cacheTopology = c.getAdvancedCache().getDistributionManager().getCacheTopology();
-         assertEquals(String.format("Wrong topology on cache %s, expected %d and got %s", c, expectedTopologyId, cacheTopology),
-               expectedTopologyId, cacheTopology.getTopologyId());
+         assertEquals(expectedTopologyId, cacheTopology.getTopologyId(), String.format("Wrong topology on cache %s, expected %d and got %s", c, expectedTopologyId, cacheTopology));
       }
    }
 

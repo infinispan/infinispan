@@ -1,8 +1,8 @@
 package org.infinispan.api.mvcc.repeatable_read;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
@@ -94,7 +94,7 @@ public class RepeatableReadLockTest extends LockTestBase {
       assertEquals("v", cache.get("k"));
 
       tm.resume(reader);
-      assertEquals(null, cache.get("k"));
+      assertNull(cache.get("k"));
       tm.commit();
 
       assertNotNull(cache.get("k"));
@@ -113,14 +113,14 @@ public class RepeatableReadLockTest extends LockTestBase {
       Transaction tx = tm.suspend();
 
       cache.put("a", "v2");
-      assertEquals(cache.get("a"), "v2");
+      assertEquals("v2", cache.get("a"));
 
       tm.resume(tx);
-      assertEquals(null, cache.get("a"));
+      assertNull(cache.get("a"));
       cache.remove("a");
       Exceptions.expectException(RollbackException.class, tm::commit);
 
-      assertEquals(cache.get("a"), "v2");
+      assertEquals("v2", cache.get("a"));
    }
 
    @Override
@@ -138,7 +138,7 @@ public class RepeatableReadLockTest extends LockTestBase {
       assertNoLocks();
 
       tm.begin();
-      assertEquals(cache.get("k"), "v");
+      assertEquals("v", cache.get("k"));
 
 
       assertNotLocked("k");

@@ -1,14 +1,16 @@
 package org.infinispan.conflict.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,8 +81,8 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       initTransferTaskMock(new CompletableFuture<>());
 
       CompletableFuture<List<Map<Address, CacheEntry<Object, Object>>>> cf = stateReceiver.getAllReplicasForSegment(0, localizedCacheTopology, 10000);
-      assertTrue(!cf.isCancelled());
-      assertTrue(!cf.isCompletedExceptionally());
+      assertFalse(cf.isCancelled());
+      assertFalse(cf.isCompletedExceptionally());
 
       // Reduce #nodes to less than numowners to force hash change
       stateReceiver.onDataRehash(createEventImpl(4, 1, Event.Type.DATA_REHASHED));
@@ -89,8 +91,8 @@ public class StateReceiverTest extends AbstractInfinispanTest {
 
       stateReceiver.onDataRehash(createEventImpl(4, 4, Event.Type.DATA_REHASHED));
       cf = stateReceiver.getAllReplicasForSegment(1, localizedCacheTopology, 10000);
-      assertTrue(!cf.isCompletedExceptionally());
-      assertTrue(!cf.isCancelled());
+      assertFalse(cf.isCompletedExceptionally());
+      assertFalse(cf.isCancelled());
    }
 
    public void testOldAndInvalidStateIgnored() {
@@ -123,7 +125,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       future.whenComplete((result, throwable) -> {
          assertNull(result);
          assertNotNull(throwable);
-         assertTrue(throwable instanceof CancellationException);
+         assertInstanceOf(CancellationException.class, throwable);
       });
       stateReceiver.stop();
       future.get();

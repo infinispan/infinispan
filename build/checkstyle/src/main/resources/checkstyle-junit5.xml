@@ -79,6 +79,11 @@
             <property name="methodPattern" value="(completed|failed)Stage"/>
         </module>
 
+        <!-- Ban the assert keyword in test code; use JUnit Jupiter Assertions instead -->
+        <module name="IllegalToken">
+            <property name="tokens" value="LITERAL_ASSERT"/>
+        </module>
+
         <!-- Allow annotated code to disable checkstyle check -->
         <module name="SuppressWarningsHolder"/>
     </module>

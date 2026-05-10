@@ -1,7 +1,7 @@
 package org.infinispan.persistence.sifs;
 
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,11 +40,8 @@ public class FileProviderTest {
          // When isIndex is false, opening an existing empty file with "r" mode should succeed
          // (read-only mode can open existing empty files)
          FileProvider.Handle handle = fileProvider.getFile(1);
-         assertNotNull("Expected getFile to succeed for existing empty file when isIndex is false", handle);
-
-         if (handle != null) {
-            handle.close();
-         }
+         assertNotNull(handle, "Expected getFile to succeed for existing empty file when isIndex is false");
+         handle.close();
       } finally {
          fileProvider.stop();
       }
@@ -61,11 +58,9 @@ public class FileProviderTest {
 
          // When isIndex is true, opening with "rw" mode should succeed even for empty files
          FileProvider.Handle handle = fileProvider.getFile(1);
-         assertNotNull("Expected getFile to succeed for empty file when isIndex is true", handle);
+         assertNotNull(handle, "Expected getFile to succeed for empty file when isIndex is true");
 
-         if (handle != null) {
-            handle.close();
-         }
+         handle.close();
       } finally {
          fileProvider.stop();
       }
@@ -79,7 +74,7 @@ public class FileProviderTest {
          // When isIndex is false, opening a non-existent file with "r" mode should fail
          // getFile catches FileNotFoundException and returns null
          FileProvider.Handle handle = fileProvider.getFile(999);
-         assertNull("Expected getFile to return null for non-existent file when isIndex is false", handle);
+         assertNull(handle, "Expected getFile to return null for non-existent file when isIndex is false");
       } finally {
          fileProvider.stop();
       }
@@ -92,11 +87,8 @@ public class FileProviderTest {
       try {
          // When isIndex is true, opening with "rw" mode should create the file if it doesn't exist
          FileProvider.Handle handle = fileProvider.getFile(999);
-         assertNotNull("Expected getFile to create and open file when isIndex is true", handle);
-
-         if (handle != null) {
-            handle.close();
-         }
+         assertNotNull(handle, "Expected getFile to create and open file when isIndex is true");
+         handle.close();
       } finally {
          fileProvider.stop();
       }

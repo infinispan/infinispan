@@ -1,5 +1,7 @@
 package org.infinispan.distribution.rehash;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +36,7 @@ public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest<Object, St
       joinerManager.defineConfiguration(cacheName, configuration.build());
       Cache joiner = joinerManager.getCache(cacheName);
       DistributionManager dmi = joiner.getAdvancedCache().getDistributionManager();
-      assert dmi.isJoinComplete();
+      assertTrue(dmi.isJoinComplete());
    }
 
 }

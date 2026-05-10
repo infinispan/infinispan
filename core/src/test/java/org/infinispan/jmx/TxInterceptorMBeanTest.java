@@ -2,7 +2,7 @@ package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -119,9 +119,9 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       MBeanServer mBeanServer = TestingUtil.getMBeanServer(cache);
 
       Long commitCount = (Long) mBeanServer.getAttribute(objectName, "Commits");
-      assertEquals("expecting " + commit + " commits, received " + commitCount, commit, commitCount.intValue());
+      assertEquals(commit, commitCount.intValue(), "expecting " + commit + " commits, received " + commitCount);
 
       Long rollbackCount = (Long) mBeanServer.getAttribute(objectName, "Rollbacks");
-      assertEquals("expecting " + rollback + " rollbacks, received " + rollbackCount, rollback, rollbackCount.intValue());
+      assertEquals(rollback, rollbackCount.intValue(), "expecting " + rollback + " rollbacks, received " + rollbackCount);
    }
 }

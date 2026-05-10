@@ -1,8 +1,9 @@
 package org.infinispan.notifications.cachelistener;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -95,11 +96,11 @@ public class DuplicatedEventsTest extends MultipleCacheManagersTest {
    }
 
    private void checkEvents(MyCacheListener listener, String expectedKey) {
-      assertTrue(listener.events.get(0) instanceof CacheEntryCreatedEvent);
+      assertInstanceOf(CacheEntryCreatedEvent.class, listener.events.get(0));
       assertEquals(expectedKey, listener.events.get(0).getKey());
       assertTrue(listener.events.get(0).isPre());
 
-      assertTrue(listener.events.get(1) instanceof CacheEntryCreatedEvent);
+      assertInstanceOf(CacheEntryCreatedEvent.class, listener.events.get(1));
       assertEquals(expectedKey, listener.events.get(1).getKey());
       assertFalse(listener.events.get(1).isPre());
    }

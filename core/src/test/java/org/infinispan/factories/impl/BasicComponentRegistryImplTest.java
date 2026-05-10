@@ -1,7 +1,7 @@
 package org.infinispan.factories.impl;
 
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.ControlledTimeService;

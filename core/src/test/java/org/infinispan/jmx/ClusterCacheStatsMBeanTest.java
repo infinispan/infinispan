@@ -1,6 +1,8 @@
 package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Serializable;
 
@@ -24,9 +26,9 @@ public class ClusterCacheStatsMBeanTest extends AbstractClusterMBeanTest {
       ObjectName clusterStats = getCacheObjectName(jmxDomain1, getDefaultCacheName() + "(repl_sync)", "ClusterCacheStats");
 
       mBeanServer.setAttribute(clusterStats, new Attribute("StatisticsEnabled", false));
-      assert !(boolean) mBeanServer.getAttribute(clusterStats, "StatisticsEnabled");
+      assertFalse((boolean) mBeanServer.getAttribute(clusterStats, "StatisticsEnabled"));
       mBeanServer.setAttribute(clusterStats, new Attribute("StatisticsEnabled", true));
-      assert (boolean) mBeanServer.getAttribute(clusterStats, "StatisticsEnabled");
+      assertTrue((boolean) mBeanServer.getAttribute(clusterStats, "StatisticsEnabled"));
 
       long newStaleThreshold = 1000;
       mBeanServer.setAttribute(clusterStats, new Attribute("StaleStatsThreshold", newStaleThreshold));

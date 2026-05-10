@@ -1,6 +1,7 @@
 package org.infinispan.jcache;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.concurrent.TimeUnit;
 
@@ -19,27 +20,21 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "jcache.LimitExpiryFactoryTest")
 public class LimitExpiryFactoryTest {
 
-    @Test
-    public void getExpiryForAccess() {
+   @Test
+   public void getExpiryForAccess() {
+      ExpiryPolicy limitExpiryPolicy = new LimitExpiryFactory(EternalExpiryPolicy.factoryOf(), 0, 0).create();
+      assertNull(limitExpiryPolicy.getExpiryForAccess());
+   }
 
-        ExpiryPolicy limitExpiryPolicy = new LimitExpiryFactory(EternalExpiryPolicy.factoryOf(), 0, 0).create();
+   @Test
+   public void getExpiryForCreation() {
+      ExpiryPolicy limitExpiryPolicy = new LimitExpiryFactory(EternalExpiryPolicy.factoryOf(), 0, 0).create();
+      assertEquals(new Duration(TimeUnit.MILLISECONDS, 0), limitExpiryPolicy.getExpiryForCreation());
+   }
 
-        assertEquals(null, limitExpiryPolicy.getExpiryForAccess());
-    }
-
-    @Test
-    public void getExpiryForCreation() {
-
-        ExpiryPolicy limitExpiryPolicy = new LimitExpiryFactory(EternalExpiryPolicy.factoryOf(), 0, 0).create();
-
-        assertEquals(new Duration(TimeUnit.MILLISECONDS, 0), limitExpiryPolicy.getExpiryForCreation());
-    }
-
-    @Test
-    public void getExpiryForUpdate() {
-
-        ExpiryPolicy limitExpiryPolicy = new LimitExpiryFactory(EternalExpiryPolicy.factoryOf(), 0, 0).create();
-
-        assertEquals(null, limitExpiryPolicy.getExpiryForUpdate());
-    }
+   @Test
+   public void getExpiryForUpdate() {
+      ExpiryPolicy limitExpiryPolicy = new LimitExpiryFactory(EternalExpiryPolicy.factoryOf(), 0, 0).create();
+      assertNull(limitExpiryPolicy.getExpiryForUpdate());
+   }
 }

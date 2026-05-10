@@ -1,5 +1,9 @@
 package org.infinispan.tx;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -60,19 +64,19 @@ public class TransactionsSpanningCachesTest extends MultipleCacheManagersTest {
       Cache c1 = cacheManagers.get(0).getCache("c1");
       Cache c2 = cacheManagers.get(1).getCache("c2");
 
-      assert c1.isEmpty();
-      assert c2.isEmpty();
+      assertTrue(c1.isEmpty());
+      assertTrue(c2.isEmpty());
 
       c1.put("c1key", "c1value");
       c2.put("c2key", "c2value");
 
-      assert !c1.isEmpty();
-      assert c1.size() == 1;
-      assert c1.get("c1key").equals("c1value");
+      assertFalse(c1.isEmpty());
+      assertTrue(c1.size() == 1);
+      assertEquals("c1value", c1.get("c1key"));
 
-      assert !c2.isEmpty();
-      assert c2.size() == 1;
-      assert c2.get("c2key").equals("c2value");
+      assertFalse(c2.isEmpty());
+      assertTrue(c2.size() == 1);
+      assertEquals("c2value", c2.get("c2key"));
 
       TransactionManager tm = TestingUtil.getTransactionManager(c1);
 
@@ -80,38 +84,38 @@ public class TransactionsSpanningCachesTest extends MultipleCacheManagersTest {
       c1.put("c1key", "c1value_new");
       c2.put("c2key", "c2value_new");
 
-      assert c1.get("c1key").equals("c1value_new");
-      assert c2.get("c2key").equals("c2value_new");
+      assertEquals("c1value_new", c1.get("c1key"));
+      assertEquals("c2value_new", c2.get("c2key"));
 
       Transaction tx = tm.suspend();
 
-      assert c1.get("c1key").equals("c1value");
-      assert c2.get("c2key").equals("c2value");
+      assertEquals("c1value", c1.get("c1key"));
+      assertEquals("c2value", c2.get("c2key"));
 
       tm.resume(tx);
       tm.commit();
 
-      assert c1.get("c1key").equals("c1value_new");
-      assert c2.get("c2key").equals("c2value_new");
+      assertEquals("c1value_new", c1.get("c1key"));
+      assertEquals("c2value_new", c2.get("c2key"));
    }
 
    public void testRollbackSpanningCaches() throws Exception {
       Cache c1 = cacheManagers.get(0).getCache("c1");
       Cache c2 = cacheManagers.get(1).getCache("c2");
 
-      assert c1.isEmpty();
-      assert c2.isEmpty();
+      assertTrue(c1.isEmpty());
+      assertTrue(c2.isEmpty());
 
       c1.put("c1key", "c1value");
       c2.put("c2key", "c2value");
 
-      assert !c1.isEmpty();
-      assert c1.size() == 1;
-      assert c1.get("c1key").equals("c1value");
+      assertFalse(c1.isEmpty());
+      assertTrue(c1.size() == 1);
+      assertEquals("c1value", c1.get("c1key"));
 
-      assert !c2.isEmpty();
-      assert c2.size() == 1;
-      assert c2.get("c2key").equals("c2value");
+      assertFalse(c2.isEmpty());
+      assertTrue(c2.size() == 1);
+      assertEquals("c2value", c2.get("c2key"));
 
       TransactionManager tm = TestingUtil.getTransactionManager(c1);
 
@@ -119,18 +123,18 @@ public class TransactionsSpanningCachesTest extends MultipleCacheManagersTest {
       c1.put("c1key", "c1value_new");
       c2.put("c2key", "c2value_new");
 
-      assert c1.get("c1key").equals("c1value_new");
-      assert c2.get("c2key").equals("c2value_new");
+      assertEquals("c1value_new", c1.get("c1key"));
+      assertEquals("c2value_new", c2.get("c2key"));
 
       Transaction tx = tm.suspend();
 
-      assert c1.get("c1key").equals("c1value");
-      assert c2.get("c2key").equals("c2value");
+      assertEquals("c1value", c1.get("c1key"));
+      assertEquals("c2value", c2.get("c2key"));
 
       tm.resume(tx);
       tm.rollback();
 
-      assert c1.get("c1key").equals("c1value");
-      assert c2.get("c2key").equals("c2value");
+      assertEquals("c1value", c1.get("c1key"));
+      assertEquals("c2value", c2.get("c2key"));
    }
 }

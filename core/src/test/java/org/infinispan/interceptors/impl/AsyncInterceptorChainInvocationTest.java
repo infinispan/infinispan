@@ -2,8 +2,8 @@ package org.infinispan.interceptors.impl;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.testing.Exceptions.expectExecutionException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;

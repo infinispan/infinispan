@@ -1,9 +1,10 @@
 package org.infinispan.context;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -69,8 +70,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
          fail("Should have failed with an exception");
       } catch (CacheException ce) {
          Throwable cause = ce.getCause();
-         assertTrue("Unexpected exception cause " + cause,
-               cause instanceof RollbackException || cause instanceof HeuristicRollbackException);
+         assertTrue(cause instanceof RollbackException || cause instanceof HeuristicRollbackException, "Unexpected exception cause " + cause);
       }
    }
 
@@ -100,8 +100,8 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       tm.rollback();
 
       assertEquals(1, throwables.size());
-      assertTrue(throwables.get(0) instanceof CacheException);
-      assertTrue(throwables.get(0).getCause() instanceof InterruptedException);
+      assertInstanceOf(CacheException.class, throwables.get(0));
+      assertInstanceOf(InterruptedException.class, throwables.get(0).getCause());
    }
 
 
@@ -129,8 +129,8 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       dl.waitLatch.countDown();
       future.get(10, SECONDS);
 
-      assert throwables.size() == 1;
-      assert throwables.get(0) instanceof CacheException;
+      assertTrue(throwables.size() == 1);
+      assertInstanceOf(CacheException.class, throwables.get(0));
    }
 
    @Listener

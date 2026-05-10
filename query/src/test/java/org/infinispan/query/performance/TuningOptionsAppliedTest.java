@@ -1,6 +1,7 @@
 package org.infinispan.query.performance;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.io.IOException;
 
@@ -12,7 +13,6 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -41,6 +41,6 @@ public class TuningOptionsAppliedTest extends AbstractInfinispanTest {
 
    private void verifyUsesFSDirectory(IndexAccessor accessorForTests) {
       Directory directory = accessorForTests.getDirectory();
-      Assert.assertTrue(directory instanceof FSDirectory);
+      assertInstanceOf(FSDirectory.class, directory);
    }
 }

@@ -1,8 +1,11 @@
 package org.infinispan.persistence;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -98,27 +101,27 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    private void assertInStoreNotInCache(Object key, Object value, long lifespanMillis) throws PersistenceException {
       MarshallableEntry se = store.loadEntry(key);
       testStoredEntry(se, value, lifespanMillis, "Store", key);
-      assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Key " + key + " should not be in cache!";
+      assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), "Key " + key + " should not be in cache!");
    }
 
 
    private void testStoredEntry(InternalCacheValue entry, Object expectedValue, long expectedLifespan, String src, Object key) {
-      assert entry != null : src + " entry for key " + key + " should NOT be null";
-      assert entry.getValue().equals(expectedValue) : src + " should contain value " + expectedValue + " under key " + key + " but was " + entry.getValue() + ". Entry is " + entry;
-      assert entry.getLifespan() == expectedLifespan : src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + entry.getLifespan() + ". Entry is " + entry;
+      assertNotNull(entry, src + " entry for key " + key + " should NOT be null");
+      assertEquals(expectedValue, entry.getValue(), src + " should contain value " + expectedValue + " under key " + key + " but was " + entry.getValue() + ". Entry is " + entry);
+      assertEquals(entry.getLifespan(), expectedLifespan, src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + entry.getLifespan() + ". Entry is " + entry);
    }
 
    private void testStoredEntry(MarshallableEntry entry, Object expectedValue, long expectedLifespan, String src, Object key) {
-      assert entry != null : src + " entry for key " + key + " should NOT be null";
-      assert entry.getValue().equals(expectedValue) : src + " should contain value " + expectedValue + " under key " + key + " but was " + entry.getValue() + ". Entry is " + entry;
+      assertNotNull(entry, src + " entry for key " + key + " should NOT be null");
+      assertEquals(expectedValue, entry.getValue(), src + " should contain value " + expectedValue + " under key " + key + " but was " + entry.getValue() + ". Entry is " + entry);
       if (expectedLifespan > -1)
-      assert entry.getMetadata().lifespan() == expectedLifespan : src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + entry.getMetadata().lifespan() + ". Entry is " + entry;
+         assertEquals(entry.getMetadata().lifespan(), expectedLifespan, src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + entry.getMetadata().lifespan() + ". Entry is " + entry);
    }
 
    private void assertNotInCacheAndStore(Object... keys) throws PersistenceException {
       for (Object key : keys) {
-         assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
-         assert !store.contains(key) : "Store should not contain key " + key;
+         assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), "Cache should not contain key " + key);
+         assertFalse(store.contains(key), "Store should not contain key " + key);
       }
    }
 
@@ -139,8 +142,8 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
 
       // now activate
 
-      assert cache.get("k1").equals("v1");
-      assert cache.get("k2").equals("v2");
+      assertEquals("v1", cache.get("k1"));
+      assertEquals("v2", cache.get("k2"));
 
       assertInCacheAndInStore("k1", "v1", "v1");
       assertInCacheAndInStore("k2", "v2", lifespan);
@@ -167,36 +170,36 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assertInStoreNotInCache("k1", "v1");
       assertInStoreNotInCache("k2", "v2", lifespan);
 
-      assert cache.remove("k1").equals("v1");
+      assertEquals("v1", cache.remove("k1"));
       assertNotInCacheAndStore("k1");
 
-      assert cache.put("k2", "v2-NEW").equals("v2");
+      assertEquals("v2", cache.put("k2", "v2-NEW"));
       assertInCacheAndInStore("k2", "v2-NEW", "v2");
 
       cache.evict("k2");
       assertInStoreNotInCache("k2", "v2-NEW");
-      assert cache.replace("k2", "v2-REPLACED").equals("v2-NEW");
+      assertEquals("v2-NEW", cache.replace("k2", "v2-REPLACED"));
       assertInCacheAndInStore("k2", "v2-REPLACED", "v2-NEW");
 
       cache.evict("k2");
       assertInStoreNotInCache("k2", "v2-REPLACED");
 
-      assert !cache.replace("k2", "some-rubbish", "v2-SHOULDNT-STORE"); // but should activate
+      assertFalse(cache.replace("k2", "some-rubbish", "v2-SHOULDNT-STORE")); // but should activate
       assertInCacheAndInStore("k2", "v2-REPLACED", "v2-REPLACED");
 
       cache.evict("k2");
       assertInStoreNotInCache("k2", "v2-REPLACED");
 
-      assert cache.replace("k2", "v2-REPLACED", "v2-REPLACED-AGAIN");
+      assertTrue(cache.replace("k2", "v2-REPLACED", "v2-REPLACED-AGAIN"));
       assertInCacheAndInStore("k2", "v2-REPLACED-AGAIN", "v2-REPLACED");
 
       cache.evict("k2");
       assertInStoreNotInCache("k2", "v2-REPLACED-AGAIN");
 
-      assert cache.putIfAbsent("k2", "should-not-appear").equals("v2-REPLACED-AGAIN");
+      assertEquals("v2-REPLACED-AGAIN", cache.putIfAbsent("k2", "should-not-appear"));
       assertInCacheAndInStore("k2", "v2-REPLACED-AGAIN", "v2-REPLACED-AGAIN");
 
-      assert cache.putIfAbsent("k1", "v1-if-absent") == null;
+      assertNull(cache.putIfAbsent("k1", "v1-if-absent"));
       assertInCacheNotInStore("k1", "v1-if-absent");
    }
 

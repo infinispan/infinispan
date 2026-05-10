@@ -7,7 +7,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.unmarshall;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;

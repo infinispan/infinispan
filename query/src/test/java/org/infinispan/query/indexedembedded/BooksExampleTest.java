@@ -1,6 +1,7 @@
 package org.infinispan.query.indexedembedded;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class BooksExampleTest extends SingleCacheManagerTest {
       cfg
             .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-         .indexing()
+            .indexing()
             .enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Book.class);
@@ -47,6 +48,6 @@ public class BooksExampleTest extends SingleCacheManagerTest {
 
       String query = String.format("FROM %s WHERE title:'in action'", Book.class.getName());
       List<?> list = cache.query(query).list();
-      assert list.size() == 2;
+      assertEquals(2, list.size());
    }
 }

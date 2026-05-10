@@ -1,5 +1,7 @@
 package org.infinispan.lock.singlelock.pessimistic;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractInitiatorCrashTest;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -42,13 +44,13 @@ public class InitiatorCrashPessimisticTest extends AbstractInitiatorCrashTest {
       assertEventuallyNotLocked(cache(1), k2);
       assertLocked(cache(2), k2);
 
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 1, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue(checkTxCount(0, 0, 1));
+      assertTrue(checkTxCount(1, 1, 0));
+      assertTrue(checkTxCount(2, 0, 1));
 
       killMember(1);
 
-      assert caches().size() == 2;
+      assertTrue(caches().size() == 2);
 
       assertNotLocked(k0);
       assertNotLocked(k1);

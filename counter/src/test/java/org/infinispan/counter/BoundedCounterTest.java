@@ -1,9 +1,9 @@
 package org.infinispan.counter;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -122,7 +122,7 @@ public class BoundedCounterTest extends StrongCounterTest {
       } catch (CounterOutOfBoundsException e) {
          log.debug("Expected exception.", e);
       }
-      assertEquals("Wrong return value of counter.getNewValue()", expected, counter.getValue());
+      assertEquals(expected, counter.getValue(), "Wrong return value of counter.getNewValue()");
    }
 
    private void assertOutOfBoundCompareAndSet(SyncStrongCounter counter, long expect, long value) {
@@ -132,7 +132,7 @@ public class BoundedCounterTest extends StrongCounterTest {
       } catch (CounterOutOfBoundsException e) {
          log.debug("Expected exception", e);
       }
-      assertEquals("Wrong return value of counter.getNewValue()", expect, counter.getValue());
+      assertEquals(expect, counter.getValue(), "Wrong return value of counter.getNewValue()");
    }
 
    private void assertOutOfBoundCompareAndSwap(SyncStrongCounter counter, long expect, long value) {
@@ -142,6 +142,6 @@ public class BoundedCounterTest extends StrongCounterTest {
       } catch (CounterOutOfBoundsException e) {
          log.debug("Expected exception", e);
       }
-      assertEquals("Wrong return value of counter.getNewValue()", expect, counter.getValue());
+      assertEquals(expect, counter.getValue(), "Wrong return value of counter.getNewValue()");
    }
 }

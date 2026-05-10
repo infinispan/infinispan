@@ -2,8 +2,8 @@ package org.infinispan.server.memcached.text;
 
 import static org.infinispan.test.TestingUtil.generateRandomString;
 import static org.infinispan.test.TestingUtil.k;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -63,43 +63,43 @@ public class MemcachedTextFunctionalTest extends MemcachedFunctionalTest {
       String key = k(m);
       List<String> responses = sendMulti(String.format(
             "set %s 0 0 1\r\na\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\n", key, key, key, key, key), 5, true);
-      assertEquals(responses.size(), 5);
-      assertEquals(responses.get(0), "STORED");
-      assertEquals(responses.get(1), "DELETED");
-      assertEquals(responses.get(2), "NOT_FOUND");
-      assertEquals(responses.get(3), "NOT_FOUND");
-      assertEquals(responses.get(4), "NOT_FOUND");
+      assertEquals(5, responses.size());
+      assertEquals("STORED", responses.get(0));
+      assertEquals("DELETED", responses.get(1));
+      assertEquals("NOT_FOUND", responses.get(2));
+      assertEquals("NOT_FOUND", responses.get(3));
+      assertEquals("NOT_FOUND", responses.get(4));
    }
 
    public void testSetNoReplyMultiDelete(Method m) throws IOException {
       String key = k(m);
       List<String> responses = sendMulti(String.format(
             "set %s 0 0 1 noreply\r\na\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\n", key, key, key, key, key), 4, true);
-      assertEquals(responses.size(), 4);
-      assertEquals(responses.get(0), "DELETED");
-      assertEquals(responses.get(1), "NOT_FOUND");
-      assertEquals(responses.get(2), "NOT_FOUND");
-      assertEquals(responses.get(3), "NOT_FOUND");
+      assertEquals(4, responses.size());
+      assertEquals("DELETED", responses.get(0));
+      assertEquals("NOT_FOUND", responses.get(1));
+      assertEquals("NOT_FOUND", responses.get(2));
+      assertEquals("NOT_FOUND", responses.get(3));
    }
 
    public void testPipelinedDelete() throws IOException {
       List<String> responses = sendMulti("delete a\r\ndelete a\r\n", 2, true);
-      assertEquals(responses.size(), 2);
-      responses.forEach(r -> assertTrue(r.equals("NOT_FOUND")));
+      assertEquals(2, responses.size());
+      responses.forEach(r -> assertEquals("NOT_FOUND", r));
    }
 
    public void testPipelinedGetAfterInvalidCas() throws IOException {
       List<String> responses = sendMulti("cas bad 0 0 1 0 0\r\nget a\r\n", 2, true);
-      assertEquals(responses.size(), 2);
-      assertTrue(responses.get(0), responses.get(0).contains("CLIENT_ERROR"));
+      assertEquals(2, responses.size());
+      assertTrue(responses.get(0).contains("CLIENT_ERROR"), responses.get(0));
       assertEquals("END", responses.get(1));
    }
 
    public void testFlushAllPipeline() throws IOException {
       List<String> responses = sendMulti("flush_all\r\nget a\r\n", 2, true);
-      assertEquals(responses.size(), 2);
-      assertEquals(responses.get(0), "OK");
-      assertEquals(responses.get(1), "END");
+      assertEquals(2, responses.size());
+      assertEquals("OK", responses.get(0));
+      assertEquals("END", responses.get(1));
    }
 
    public void testGetKeyLengthLimit() throws IOException {
@@ -119,7 +119,7 @@ public class MemcachedTextFunctionalTest extends MemcachedFunctionalTest {
 
    public void testUnknownCommandPipelined() throws IOException {
       List<String> responses = sendMulti("bogus\r\ndelete a\r\n", 2, true);
-      assertEquals(responses.size(), 2);
+      assertEquals(2, responses.size());
       assertEquals("ERROR", responses.get(0));
       assertEquals("NOT_FOUND", responses.get(1));
    }
@@ -129,7 +129,7 @@ public class MemcachedTextFunctionalTest extends MemcachedFunctionalTest {
       String command = "add " + key + " 0 0 1\r\nget a\r\n";
       List<String> responses = sendMulti(command, 2, true);
       assertEquals(2, responses.size());
-      assertTrue(responses.get(0), responses.get(0).contains("CLIENT_ERROR"));
+      assertTrue(responses.get(0).contains("CLIENT_ERROR"), responses.get(0));
       assertEquals("END", responses.get(1));
    }
 
@@ -167,12 +167,12 @@ public class MemcachedTextFunctionalTest extends MemcachedFunctionalTest {
       String keyUnderLimit = generateRandomString(249);
       OperationFuture<Boolean> f = client.set(keyUnderLimit, 0, "78");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      assertEquals(client.get(keyUnderLimit), "78");
+      assertEquals("78", client.get(keyUnderLimit));
 
       String keyInLimit = generateRandomString(250);
       f = client.set(keyInLimit, 0, "89");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      assertEquals(client.get(keyInLimit), "89");
+      assertEquals("89", client.get(keyInLimit));
 
       String keyAboveLimit = generateRandomString(251);
       String resp = incr(keyAboveLimit, 1);
@@ -183,21 +183,21 @@ public class MemcachedTextFunctionalTest extends MemcachedFunctionalTest {
       OperationFuture<Boolean> f = client.set(k(m), 0, "9223372036854775808");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       String newValue = incr(m, 1);
-      assertEquals(new BigInteger(newValue), new BigInteger("9223372036854775809"));
+      assertEquals(new BigInteger("9223372036854775809"), new BigInteger(newValue));
    }
 
    public void testIncrementSurpassLongMax(Method m) throws InterruptedException, ExecutionException, TimeoutException, IOException {
       OperationFuture<Boolean> f = client.set(k(m), 0, "9223372036854775807");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       String newValue = incr(m, 1);
-      assertEquals(new BigInteger(newValue), new BigInteger("9223372036854775808"));
+      assertEquals(new BigInteger("9223372036854775808"), new BigInteger(newValue));
    }
 
    public void testIncrementSurpassBigIntMax(Method m) throws InterruptedException, ExecutionException, TimeoutException, IOException {
       OperationFuture<Boolean> f = client.set(k(m), 0, "18446744073709551615");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       String newValue = incr(m, 1);
-      assertEquals(newValue, "0");
+      assertEquals("0", newValue);
    }
 
    private String incr(Method m, int by) throws IOException {
@@ -241,7 +241,7 @@ public class MemcachedTextFunctionalTest extends MemcachedFunctionalTest {
          sendNoWait(op);
          log.debug("No reply delete sent, wait...");
          boolean completed = latch.await(10, TimeUnit.SECONDS);
-         assertTrue("Timed out waiting for remove to be executed", completed);
+         assertTrue(completed, "Timed out waiting for remove to be executed");
       } finally {
          cache.removeListener(listener);
       }

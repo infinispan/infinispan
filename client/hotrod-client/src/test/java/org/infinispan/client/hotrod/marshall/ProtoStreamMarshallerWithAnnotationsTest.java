@@ -4,9 +4,9 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.registerSCI;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -107,9 +107,9 @@ public class ProtoStreamMarshallerWithAnnotationsTest extends SingleCacheManager
       byte[] key = (byte[]) cache.keySet().iterator().next();
       Object localObject = cache.get(key);
       assertNotNull(localObject);
-      assertTrue(localObject instanceof byte[]);
+      assertInstanceOf(byte[].class, localObject);
       Object unmarshalledObject = ProtobufUtil.fromWrappedByteArray(MarshallerUtil.getSerializationContext(remoteCacheManager), (byte[]) localObject);
-      assertTrue(unmarshalledObject instanceof AnnotatedUser);
+      assertInstanceOf(AnnotatedUser.class, unmarshalledObject);
       assertUser((AnnotatedUser) unmarshalledObject);
 
       // get the object through the remote cache interface and check it's the same object we put

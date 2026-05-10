@@ -1,5 +1,8 @@
 package org.infinispan.xsite.irac;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -22,7 +25,6 @@ import org.infinispan.interceptors.impl.NonTxIracLocalSiteInterceptor;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
-import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -94,7 +96,7 @@ public class IracOwnershipChangeTest extends AbstractMultipleSitesTest {
 
       CompletableFuture<?> stage = cache(0, 0).putAsync(key, value);
 
-      AssertJUnit.assertTrue(blocker.blocked.await(10, TimeUnit.SECONDS));
+      assertTrue(blocker.blocked.await(10, TimeUnit.SECONDS));
 
       site0CHFactory.setOwnerIndexes(1, 2);
       site0CHFactory.triggerRebalance(cache(0, 0));
@@ -118,7 +120,7 @@ public class IracOwnershipChangeTest extends AbstractMultipleSitesTest {
 
       CompletableFuture<?> stage = cache(0, 1).putAsync(key, value);
 
-      AssertJUnit.assertTrue(blocker.blocked.await(10, TimeUnit.SECONDS));
+      assertTrue(blocker.blocked.await(10, TimeUnit.SECONDS));
 
       site0CHFactory.setOwnerIndexes(0, 2);
       site0CHFactory.triggerRebalance(cache(0, 0));
@@ -142,7 +144,7 @@ public class IracOwnershipChangeTest extends AbstractMultipleSitesTest {
 
       CompletableFuture<?> stage = cache(0, 0).putAsync(key, value);
 
-      AssertJUnit.assertTrue(blocker.blocked.await(10, TimeUnit.SECONDS));
+      assertTrue(blocker.blocked.await(10, TimeUnit.SECONDS));
 
       site0CHFactory.setOwnerIndexes(1, 0);
       site0CHFactory.triggerRebalance(cache(0, 0));
@@ -166,7 +168,7 @@ public class IracOwnershipChangeTest extends AbstractMultipleSitesTest {
 
       CompletableFuture<?> stage = cache(0, 2).putAsync(key, value);
 
-      AssertJUnit.assertTrue(blocker.blocked.await(10, TimeUnit.SECONDS));
+      assertTrue(blocker.blocked.await(10, TimeUnit.SECONDS));
 
       site0CHFactory.setOwnerIndexes(0, 2);
       site0CHFactory.triggerRebalance(cache(0, 0));
@@ -190,7 +192,7 @@ public class IracOwnershipChangeTest extends AbstractMultipleSitesTest {
 
       CompletableFuture<?> stage = cache(0, 2).putAsync(key, value);
 
-      AssertJUnit.assertTrue(blocker.blocked.await(10, TimeUnit.SECONDS));
+      assertTrue(blocker.blocked.await(10, TimeUnit.SECONDS));
 
       site0CHFactory.setOwnerIndexes(2, 1);
       site0CHFactory.triggerRebalance(cache(0, 0));
@@ -214,14 +216,14 @@ public class IracOwnershipChangeTest extends AbstractMultipleSitesTest {
          return interceptor;
       }
       interceptor = new BlockingInterceptor();
-      AssertJUnit.assertTrue(interceptorChain.addInterceptorAfter(interceptor, NonTxIracLocalSiteInterceptor.class));
+      assertTrue(interceptorChain.addInterceptorAfter(interceptor, NonTxIracLocalSiteInterceptor.class));
       return interceptor;
    }
 
    private void assertOwnership(String key, int primary, int backup, int nonOwner) {
-      AssertJUnit.assertTrue(cacheTopology(0, primary).getDistribution(key).isPrimary());
-      AssertJUnit.assertTrue(cacheTopology(0, backup).getDistribution(key).isWriteBackup());
-      AssertJUnit.assertFalse(cacheTopology(0, nonOwner).getDistribution(key).isWriteOwner());
+      assertTrue(cacheTopology(0, primary).getDistribution(key).isPrimary());
+      assertTrue(cacheTopology(0, backup).getDistribution(key).isWriteBackup());
+      assertFalse(cacheTopology(0, nonOwner).getDistribution(key).isWriteOwner());
    }
 
    public static class BlockingInterceptor extends DDAsyncInterceptor {

@@ -1,11 +1,11 @@
 package org.infinispan.api;
 
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -273,8 +273,8 @@ public class AsyncAPITest extends SingleCacheManagerTest {
             .build();
       CompletableFuture<CacheEntry<String, String>> f = c.getAdvancedCache().replaceAsyncEntry("k", "v2", updatedMetadata);
       assertFutureResultOn(f, previousEntry -> {
-         assertEquals(previousEntry.getKey(), "k");
-         assertEquals(previousEntry.getValue(), "v");
+         assertEquals("k", previousEntry.getKey());
+         assertEquals("v", previousEntry.getValue());
          assertMetadata(metadata, previousEntry.getMetadata());
       });
       assertFutureResultOn(c.getAdvancedCache().getCacheEntryAsync("k"), currentEntry -> {
@@ -311,8 +311,8 @@ public class AsyncAPITest extends SingleCacheManagerTest {
 
       int cacheSizeBeforeNullValueCompute = c.size();
       Function<Object, String> functionMapsToNull = k -> null;
-      assertNull("with function mapping to null returns null", c.computeIfAbsentAsync("kaixo", functionMapsToNull).get());
-      assertNull("the key does not exist", c.get("kaixo"));
+      assertNull(c.computeIfAbsentAsync("kaixo", functionMapsToNull).get(),  "with function mapping to null returns null");
+      assertNull(c.get("kaixo"), "the key does not exist");
       assertEquals(cacheSizeBeforeNullValueCompute, c.size());
 
       RuntimeException computeRaisedException = new RuntimeException("hi there");
@@ -336,12 +336,12 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       expectException(ExecutionException.class, RuntimeException.class, "hi there", () -> c.computeIfPresentAsync("es", mappingToException).get());
 
       BiFunction<Object, Object, String> mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
-      assertNull("unexisting key should return null", c.computeIfPresentAsync("fr", mappingForNotPresentKey).get());
-      assertNull("unexisting key should return null", c.get("fr"));
+      assertNull(c.computeIfPresentAsync("fr", mappingForNotPresentKey).get(), "unexisting key should return null");
+      assertNull(c.get("fr"), "unexisting key should return null");
 
       BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
-      assertNull("mapping to null returns null", c.computeIfPresentAsync("es", mappingToNull).get());
-      assertNull("the key is removed", c.get("es"));
+      assertNull(c.computeIfPresentAsync("es", mappingToNull).get(), "mapping to null returns null");
+      assertNull(c.get("es"), "the key is removed");
    }
 
    public void testComputeAsync() throws Exception {
@@ -356,12 +356,12 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assertEquals("absent_fr:null", c.get("fr"));
 
       BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
-      assertNull("mapping to null returns null", c.computeAsync("es", mappingToNull).get());
-      assertNull("the key is removed", c.get("es"));
+      assertNull(c.computeAsync("es", mappingToNull).get(), "mapping to null returns null");
+      assertNull(c.get("es"), "the key is removed");
 
       int cacheSizeBeforeNullValueCompute = c.size();
-      assertNull("mapping to null returns null", c.computeAsync("eus", mappingToNull).get());
-      assertNull("the key does not exist", c.get("eus"));
+      assertNull(c.computeAsync("eus", mappingToNull).get(), "mapping to null returns null");
+      assertNull(c.get("eus"), "the key does not exist");
       assertEquals(cacheSizeBeforeNullValueCompute, c.size());
 
       RuntimeException computeRaisedException = new RuntimeException("hi there");
@@ -380,7 +380,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
 
       // remove if null value after remapping
       c.mergeAsync("k", "v2", (oldValue, newValue) -> null).get();
-      assertEquals(null, c.get("k"));
+      assertNull(c.get("k"));
 
       // put if absent
       c.mergeAsync("k2", "42", (oldValue, newValue) -> "" + oldValue + newValue).get();
@@ -694,7 +694,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
          assertTrue(expectedValue.equals(c.get(key)) || timeService.wallClockTime() > expectedEndTime);
          // we need to loop to keep touching the entry and protect against idle expiration
          while (timeService.wallClockTime() <= expectedEndTime) {
-            assertFalse("Entry evicted too soon!", condition.isSatisfied());
+            assertFalse(condition.isSatisfied(), "Entry evicted too soon!");
             timeService.advance(checkPeriod);
          }
          assertTrue(timeService.wallClockTime() > expectedEndTime);

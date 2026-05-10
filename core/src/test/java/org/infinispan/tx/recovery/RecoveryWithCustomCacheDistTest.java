@@ -1,5 +1,7 @@
 package org.infinispan.tx.recovery;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -33,8 +35,8 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
       manager(1).startCaches(getDefaultCacheName(), CUSTOM_CACHE);
       waitForClusterToForm(CUSTOM_CACHE);
 
-      assert manager(0).getCacheNames().contains(CUSTOM_CACHE);
-      assert manager(1).getCacheNames().contains(CUSTOM_CACHE);
+      assertTrue(manager(0).getCacheNames().contains(CUSTOM_CACHE));
+      assertTrue(manager(1).getCacheNames().contains(CUSTOM_CACHE));
    }
 
    @Override

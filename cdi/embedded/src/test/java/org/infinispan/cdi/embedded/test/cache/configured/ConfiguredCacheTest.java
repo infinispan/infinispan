@@ -1,6 +1,6 @@
 package org.infinispan.cdi.embedded.test.cache.configured;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
@@ -39,11 +39,11 @@ public class ConfiguredCacheTest extends Arquillian {
 
    public void testTinyCache() {
       // Check that we have the correctly configured cache
-      assertEquals(tinyCache.getCacheConfiguration().memory().maxCount(), 1);
+      assertEquals(1, tinyCache.getCacheConfiguration().memory().maxCount());
    }
 
    public void testSmallCache() {
       // Check that we have the correctly configured cache
-      assertEquals(smallCache.getCacheConfiguration().memory().maxCount(), 10);
+      assertEquals(10, smallCache.getCacheConfiguration().memory().maxCount());
    }
 }

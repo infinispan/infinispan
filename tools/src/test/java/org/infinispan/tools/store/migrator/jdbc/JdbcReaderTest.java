@@ -22,7 +22,7 @@ import static org.infinispan.tools.store.migrator.Element.USERNAME;
 import static org.infinispan.tools.store.migrator.StoreType.JDBC_STRING;
 import static org.infinispan.tools.store.migrator.StoreType.SOFT_INDEX_FILE_STORE;
 import static org.infinispan.tools.store.migrator.TestUtil.propKey;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Properties;
 import java.util.stream.IntStream;

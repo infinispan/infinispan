@@ -4,8 +4,8 @@ import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CA
 import static org.infinispan.counter.api.CounterConfiguration.builder;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,7 +38,7 @@ import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.manager.PropertyFormatter;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
+import org.junit.jupiter.api.Assertions;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -140,7 +140,7 @@ public class CounterJmxTest extends BaseCounterTest {
       assertTrue(counterManager(0).defineCounter(name, config));
       assertJmxResult(props,
             i -> executeCounterNameArgOperation(i, "configuration", name),
-            AssertJUnit::assertEquals);
+            Assertions::assertEquals);
       assertEquals(props, PropertyFormatter.getInstance().format(config));
       assertEquals(config, fromProperties(props));
    }
@@ -170,12 +170,12 @@ public class CounterJmxTest extends BaseCounterTest {
          Consumer<String> reset) {
       assertTrue(counterManager(0).defineCounter(name, config));
       assertJmxResult(config.initialValue(), i -> executeCounterNameArgOperation(i, "value", name),
-            AssertJUnit::assertEquals);
+            Assertions::assertEquals);
       add.accept(name);
-      assertJmxResult(addResult, i -> executeCounterNameArgOperation(i, "value", name), AssertJUnit::assertEquals);
+      assertJmxResult(addResult, i -> executeCounterNameArgOperation(i, "value", name), Assertions::assertEquals);
       reset.accept(name);
       assertJmxResult(config.initialValue(), i -> executeCounterNameArgOperation(i, "value", name),
-            AssertJUnit::assertEquals);
+            Assertions::assertEquals);
    }
 
    private void checkRemove(String name, CounterConfiguration config, long add1Result, long add2Result,

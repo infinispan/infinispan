@@ -1,7 +1,7 @@
 package org.infinispan.test.hibernate.cache.commons;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,18 +113,18 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
          TestRegion testRemoteRegion = TEST_SESSION_ACCESS.fromRegion(remoteRegion);
          AdvancedCache localCache = localRegion.getCache();
          AdvancedCache remoteCache = remoteRegion.getCache();
-         Object localSession = sessionFactories.get(0).openSession();
-         Object remoteSession = sessionFactories.get(1).openSession();
+         Session localSession = sessionFactories.get(0).openSession();
+         Session remoteSession = sessionFactories.get(1).openSession();
 
          try {
             Set localKeys = localCache.keySet();
-            assertEquals("No valid children in " + localKeys, 0, localKeys.size());
+            assertEquals(0, localKeys.size(), "No valid children in " + localKeys);
 
             Set remoteKeys = remoteCache.keySet();
-            assertEquals("No valid children in " + remoteKeys, 0, remoteKeys.size());
+            assertEquals(0, remoteKeys.size(), "No valid children in " + remoteKeys);
 
-            assertNull("local is clean", testLocalRegion.get(null, KEY));
-            assertNull("remote is clean", testRemoteRegion.get(null, KEY));
+            assertNull(testLocalRegion.get(null, KEY), "local is clean");
+            assertNull(testRemoteRegion.get(null, KEY), "remote is clean");
 
             testLocalRegion.put(localSession, KEY, VALUE1);
             assertEquals(VALUE1, testLocalRegion.get(null, KEY));
@@ -137,20 +137,20 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
             // This should re-establish the region root node in the optimistic case
             assertNull(testLocalRegion.get(null, KEY));
             localKeys = localCache.keySet();
-            assertEquals("No valid children in " + localKeys, 0, localKeys.size());
+            assertEquals(0, localKeys.size(), "No valid children in " + localKeys);
 
             // Re-establishing the region root on the local node doesn't
             // propagate it to other nodes. Do a get on the remote node to re-establish
             // This only adds a node in the case of optimistic locking
-            assertEquals(null, testRemoteRegion.get(null, KEY));
+            assertNull(testRemoteRegion.get(null, KEY));
             remoteKeys = remoteCache.keySet();
-            assertEquals("No valid children in " + remoteKeys, 0, remoteKeys.size());
+            assertEquals(0, remoteKeys.size(), "No valid children in " + remoteKeys);
 
-            assertEquals("local is clean", null, testLocalRegion.get(null, KEY));
-            assertEquals("remote is clean", null, testRemoteRegion.get(null, KEY));
+            assertNull(testLocalRegion.get(null, KEY), "local is clean");
+            assertNull(testRemoteRegion.get(null, KEY), "remote is clean");
          } finally {
-            ((Session) localSession).close();
-            ((Session) remoteSession).close();
+            localSession.close();
+            remoteSession.close();
          }
 
       });

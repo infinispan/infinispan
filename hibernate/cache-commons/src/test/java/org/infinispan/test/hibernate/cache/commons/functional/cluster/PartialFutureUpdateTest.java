@@ -1,6 +1,6 @@
 package org.infinispan.test.hibernate.cache.commons.functional.cluster;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.context.InvocationContext;

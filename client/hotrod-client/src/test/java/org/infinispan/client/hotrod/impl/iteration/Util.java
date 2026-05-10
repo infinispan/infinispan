@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.Date;

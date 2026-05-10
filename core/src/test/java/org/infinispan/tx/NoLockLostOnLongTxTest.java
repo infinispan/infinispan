@@ -1,9 +1,9 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -84,26 +84,26 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
 
       //get the local gtx. should be the same as remote
       GlobalTransaction gtx = cacheTxTable.getGlobalTransaction(tm.getTransaction());
-      assertTrue("RemoteTransaction must exists after key is locked!", ownerTxTable.containRemoteTx(gtx));
+      assertTrue(ownerTxTable.containRemoteTx(gtx), "RemoteTransaction must exists after key is locked!");
 
       //completedTxTimeout is 10'000 ms. we advance 11'000
       timeService.advance(COMPLETED_TX_TIMEOUT + 1000);
 
       //check if the remote-tx is eligible for timeout
       RemoteTransaction rtx = ownerTxTable.getRemoteTransaction(gtx);
-      assertNotNull("RemoteTransaction must exists after key is locked!", rtx);
-      assertTrue("RemoteTransaction is not eligible for timeout.", rtx.getCreationTime() - getCreationTimeCutoff() < 0);
+      assertNotNull(rtx, "RemoteTransaction must exists after key is locked!");
+      assertTrue(rtx.getCreationTime() - getCreationTimeCutoff() < 0, "RemoteTransaction is not eligible for timeout.");
 
       //instead of waiting for the reaper, invoke the method directly
       cleanupMethod.invoke(ownerTxTable);
 
       //it should keep the tx
-      assertTrue("RemoteTransaction should be live after cleanup.", ownerTxTable.containRemoteTx(gtx));
+      assertTrue(ownerTxTable.containRemoteTx(gtx), "RemoteTransaction should be live after cleanup.");
 
       testParameter.afterAdvanceTime(tm);
 
-      assertEquals("Wrong value in originator", "a", cache.get(key));
-      assertEquals("Wrong value in owner", "a", owner.get(key));
+      assertEquals("a", cache.get(key), "Wrong value in originator");
+      assertEquals("a", owner.get(key), "Wrong value in owner");
    }
 
    public void testCheckTransactionRpcCommand() throws Exception {
@@ -126,7 +126,7 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
             .toCompletableFuture()
             .join();
 
-      assertTrue("Expected an empty collection but got: " + result, result.isEmpty());
+      assertTrue(result.isEmpty(), "Expected an empty collection but got: " + result);
 
       TransactionManager tm = cache1.getAdvancedCache().getTransactionManager();
       tm.begin();
@@ -137,7 +137,7 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
             .toCompletableFuture()
             .join();
 
-      assertTrue("Expected an empty collection but got: " + result, result.isEmpty());
+      assertTrue(result.isEmpty(), "Expected an empty collection but got: " + result);
 
       tm.commit();
 
@@ -149,7 +149,7 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
       result = rpcManager.invokeCommand(remoteAddress, rpcCommand, collector, rpcOptions)
             .toCompletableFuture()
             .join();
-      assertEquals("Wrong list returned.", list, result);
+      assertEquals(list, result, "Wrong list returned.");
    }
 
    @Override

@@ -1,5 +1,9 @@
 package org.infinispan.api.lazy;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.lang.reflect.Method;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -35,26 +39,26 @@ public class LazyCacheAPITest extends SingleCacheManagerTest {
    public void testReplace(Method m) {
       Person key = new Person(m.getName());
       cache.put(key, "1");
-      assert "1".equals(cache.get(new Person(m.getName())));
+      assertEquals(cache.get(new Person(m.getName())), "1");
       Object oldValue = cache.replace(new Person(m.getName()), "2");
-      assert "1".equals(oldValue);
-      assert "2".equals(cache.get(new Person(m.getName())));
+      assertEquals(oldValue, "1");
+      assertEquals(cache.get(new Person(m.getName())), "2");
    }
 
    public void testReplaceWithOld(Method m) {
       Person key = new Person(m.getName());
       cache.put(key, "1");
-      assert "1".equals(cache.get(new Person(m.getName())));
-      assert !cache.replace(new Person(m.getName()), "99", "2");
-      assert cache.replace(new Person(m.getName()), "1", "2");
+      assertEquals(cache.get(new Person(m.getName())), "1");
+      assertFalse(cache.replace(new Person(m.getName()), "99", "2"));
+      assertTrue(cache.replace(new Person(m.getName()), "1", "2"));
 
       key = new Person(m.getName() + "-withCustomValue");
       Person v1 = new Person("value1");
       cache.put(key, v1);
-      assert v1.equals(cache.get(key));
+      assertEquals(cache.get(key), v1);
       Person v99 = new Person("value99");
       Person v2 = new Person("value2");
-      assert !cache.replace(key, v99, v2);
-      assert cache.replace(key, v1, v2);
+      assertFalse(cache.replace(key, v99, v2));
+      assertTrue(cache.replace(key, v1, v2));
    }
 }

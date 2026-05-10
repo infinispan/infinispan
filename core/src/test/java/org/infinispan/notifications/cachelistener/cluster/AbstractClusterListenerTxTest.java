@@ -1,7 +1,7 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 
@@ -64,14 +64,14 @@ public abstract class AbstractClusterListenerTxTest extends AbstractClusterListe
       tm.begin();
 
       cache2.put(key1, FIRST_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       cache2.put(key2, SECOND_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       tm.commit();
 
-      assertEquals(clusterListener.events.size(), 2);
+      assertEquals(2, clusterListener.events.size());
       verifyCreation(clusterListener.events, key1, FIRST_VALUE);
       verifyCreation(clusterListener.events, key2, SECOND_VALUE);
    }
@@ -93,14 +93,14 @@ public abstract class AbstractClusterListenerTxTest extends AbstractClusterListe
       tm.begin();
 
       cache0.put(key1, FIRST_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       cache0.put(key2, SECOND_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       tm.commit();
 
-      assertEquals(clusterListener.events.size(), 2);
+      assertEquals(2, clusterListener.events.size());
       verifyCreation(clusterListener.events, key1, FIRST_VALUE);
       verifyCreation(clusterListener.events, key2, SECOND_VALUE);
    }
@@ -122,14 +122,14 @@ public abstract class AbstractClusterListenerTxTest extends AbstractClusterListe
       tm.begin();
 
       cache0.put(key1, FIRST_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       cache0.put(key2, SECOND_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       tm.commit();
 
-      assertEquals(clusterListener.events.size(), 2);
+      assertEquals(2, clusterListener.events.size());
       verifyCreation(clusterListener.events, key1, FIRST_VALUE);
       verifyCreation(clusterListener.events, key2, SECOND_VALUE);
    }
@@ -150,14 +150,14 @@ public abstract class AbstractClusterListenerTxTest extends AbstractClusterListe
       tm.begin();
 
       cache2.put(key1, FIRST_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       cache2.put(key2, SECOND_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       tm.rollback();
 
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
    }
 
    @Test
@@ -176,14 +176,14 @@ public abstract class AbstractClusterListenerTxTest extends AbstractClusterListe
       tm.begin();
 
       cache2.put(key1, FIRST_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       cache2.put(key2, SECOND_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       tm.rollback();
 
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
    }
 
    @Test
@@ -202,14 +202,14 @@ public abstract class AbstractClusterListenerTxTest extends AbstractClusterListe
       tm.begin();
 
       cache0.put(key1, FIRST_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       cache0.put(key2, SECOND_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       tm.rollback();
 
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
    }
 
    @Test
@@ -229,14 +229,14 @@ public abstract class AbstractClusterListenerTxTest extends AbstractClusterListe
       tm.begin();
 
       cache2.put(key1, FIRST_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       cache2.put(key2, SECOND_VALUE);
-      assertEquals(clusterListener.events.size(), 0);
+      assertEquals(0, clusterListener.events.size());
 
       tm.commit();
 
-      assertEquals(clusterListener.events.size(), 2);
+      assertEquals(2, clusterListener.events.size());
       verifyCreation(clusterListener.events, key1, FIRST_VALUE);
       verifyCreation(clusterListener.events, key2, SECOND_VALUE);
    }

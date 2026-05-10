@@ -1,12 +1,12 @@
 package org.infinispan.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
-import static org.testng.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -78,14 +78,14 @@ public class SizeOptimizationTests extends MultipleCacheManagersTest {
             neverCallDefault(cache);
             replaceDataContainerNotIterable(cache);
 
-            assertEquals(cache.size(), ENTRIES_SIZE);
+            assertEquals(ENTRIES_SIZE, cache.size());
             int halfEntries = ENTRIES_SIZE / 2;
 
             for (int i = 0; i < halfEntries; i++) {
                cache.remove("key-" + i);
             }
 
-            assertEquals(cache.size(), halfEntries);
+            assertEquals(halfEntries, cache.size());
          }
       },
 
@@ -170,7 +170,7 @@ public class SizeOptimizationTests extends MultipleCacheManagersTest {
                tm.begin();
                try {
                   cache.put("key-tx", "value-tx");
-                  assertEquals(cache.size(), ENTRIES_SIZE + 1);
+                  assertEquals(ENTRIES_SIZE + 1, cache.size());
                   cache.remove("key-tx");
                } finally {
                   tm.rollback();

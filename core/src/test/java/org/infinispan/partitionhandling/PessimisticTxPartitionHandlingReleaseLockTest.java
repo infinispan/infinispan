@@ -6,9 +6,9 @@ import static org.infinispan.test.TestingUtil.getDiscardForCache;
 import static org.infinispan.test.TestingUtil.getTransactionTable;
 import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;

@@ -2,10 +2,10 @@ package org.infinispan.functional;
 
 import static org.infinispan.testing.Exceptions.assertException;
 import static org.infinispan.testing.Exceptions.assertExceptionNonStrict;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletionException;
@@ -57,7 +57,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
       assertInvocations(Boolean.TRUE.equals(transactional) && !isOwner && !method.doesRead ? 3 : 2);
 
-      caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
+      caches(DIST).forEach(cache -> assertEquals("value", cache.get(key), getAddress(cache).toString()));
       caches(DIST).forEach(cache -> {
          if (cache.getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(key)) {
             assertTrue(cacheContainsKey(key, cache), getAddress(cache).toString());
@@ -72,7 +72,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       method.eval(key, wo, rw,
             view -> {
                assertTrue(view.find().isPresent());
-               assertEquals(view.get(), "value");
+               assertEquals("value", view.get());
                return null;
             },
             (view, nil) -> {
@@ -108,12 +108,12 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
       assertInvocations(1);
       Cache<K, String> c = name == null ? cacheManagers.get(0).getCache() : cacheManagers.get(0).getCache(name);
-      assertEquals(c.get(key), "value");
+      assertEquals("value", c.get(key));
 
       method.eval(key, wo, rw,
             view -> {
                assertTrue(view.find().isPresent());
-               assertEquals(view.get(), "value");
+               assertEquals("value", view.get());
                return null;
             },
             (view, nil) -> {
@@ -177,7 +177,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    public void testReadLoad(boolean isOwner, ReadMethod method) {
       Object key = getKey(isOwner, DIST);
 
-      assertTrue(method.eval(key, ro, view -> {
+      assertTrue(() -> method.eval(key, ro, view -> {
          assertFalse(view.find().isPresent());
          return true;
       }));
@@ -185,7 +185,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       // we can't add from read-only cache, so we put manually:
       cache(0, DIST).put(key, "value");
 
-      caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
+      caches(DIST).forEach(cache -> assertEquals("value", cache.get(key), getAddress(cache).toString()));
       caches(DIST).forEach(cache -> {
          if (cache.getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(key)) {
             assertTrue(cacheContainsKey(key, cache), getAddress(cache).toString());
@@ -194,19 +194,19 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
          }
       });
 
-      assertEquals(method.eval(key, ro,
+      assertEquals("OK", method.eval(key, ro,
             view -> {
                assertTrue(view.find().isPresent());
-               assertEquals(view.get(), "value");
+               assertEquals("value", view.get());
                return "OK";
-            }), "OK");
+            }));
    }
 
    @Test(dataProvider = "readMethods")
    public void testReadLoadLocal(ReadMethod method) {
       Integer key = 1;
 
-      assertTrue(method.eval(key, lro,
+      assertTrue(() -> method.eval(key, lro,
             view -> {
                assertFalse(view.find().isPresent());
                return true;
@@ -216,14 +216,14 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       Cache<Integer, String> cache = cacheManagers.get(0).getCache();
       cache.put(key, "value");
 
-      assertEquals(cache.get(key), "value");
+      assertEquals("value", cache.get(key));
 
-      assertEquals(method.eval(key, lro,
+      assertEquals("OK", method.eval(key, lro,
             view -> {
                assertTrue(view.find().isPresent());
-               assertEquals(view.get(), "value");
+               assertEquals("value", view.get());
                return "OK";
-            }), "OK");
+            }));
    }
 
    @Test(dataProvider = "owningModeAndReadMethod")

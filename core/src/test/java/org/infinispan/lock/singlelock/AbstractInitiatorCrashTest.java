@@ -1,5 +1,7 @@
 package org.infinispan.lock.singlelock;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -29,10 +31,10 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       Future<Void> future = beginAndCommitTx(k, 1);
       releaseLocksLatch.await(30, TimeUnit.SECONDS);
 
-      assert checkTxCount(0, 0, 1);
+      assertTrue(checkTxCount(0, 0, 1));
       eventuallyEquals(0, () -> getLocalTxCount(1));
-      assert checkTxCount(1, 0, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue(checkTxCount(1, 0, 0));
+      assertTrue(checkTxCount(2, 0, 1));
 
       assertEventuallyNotLocked(cache(0), k);
       assertEventuallyNotLocked(cache(1), k);

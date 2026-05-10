@@ -1,5 +1,7 @@
 package org.infinispan.notifications;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,62 +52,62 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
       TestListener l = new TestListener();
       c.addListener(l);
 
-      assert l.loaded.isEmpty();
-      assert l.activated.isEmpty();
-      assert l.passivated.isEmpty();
+      assertTrue(l.loaded.isEmpty());
+      assertTrue(l.activated.isEmpty());
+      assertTrue(l.passivated.isEmpty());
 
       c.put("k", "v");
 
-      assert l.loaded.isEmpty();
-      assert l.activated.isEmpty();
-      assert l.passivated.isEmpty();
+      assertTrue(l.loaded.isEmpty());
+      assertTrue(l.activated.isEmpty());
+      assertTrue(l.passivated.isEmpty());
 
       c.evict("k");
 
-      assert l.loaded.isEmpty();
-      assert l.activated.isEmpty();
-      assert l.passivated.isEmpty();
+      assertTrue(l.loaded.isEmpty());
+      assertTrue(l.activated.isEmpty());
+      assertTrue(l.passivated.isEmpty());
 
       c.remove("k");
 
-      assert l.loaded.contains("k");
-      assert l.loaded.size() == 1;
-      assert l.activated.isEmpty();
-      assert l.passivated.isEmpty();
+      assertTrue(l.loaded.contains("k"));
+      assertTrue(l.loaded.size() == 1);
+      assertTrue(l.activated.isEmpty());
+      assertTrue(l.passivated.isEmpty());
 
       c.put("k", "v");
       c.evict("k");
 
-      assert l.loaded.size() == 1;
-      assert l.activated.isEmpty();
-      assert l.passivated.isEmpty();
+      assertTrue(l.loaded.size() == 1);
+      assertTrue(l.activated.isEmpty());
+      assertTrue(l.passivated.isEmpty());
 
       c.putAll(Collections.singletonMap("k2", "v2"));
-      assert l.loaded.size() == 1;
-      assert l.activated.isEmpty();
-      assert l.passivated.isEmpty();
+      assertTrue(l.loaded.size() == 1);
+      assertTrue(l.activated.isEmpty());
+      assertTrue(l.passivated.isEmpty());
 
       c.putAll(Collections.singletonMap("k", "v-new"));
-      assert l.passivated.isEmpty();
-      assert l.loaded.size() == 1;
-      assert l.activated.isEmpty();
+      assertTrue(l.passivated.isEmpty());
+      assertTrue(l.loaded.size() == 1);
+      assertTrue(l.activated.isEmpty());
 
       c.clear();
-      assert l.passivated.isEmpty();
-      assert l.loaded.size() == 1;
-      assert l.activated.isEmpty();
+      assertTrue(l.passivated.isEmpty());
+      assertTrue(l.loaded.size() == 1);
+      assertTrue(l.activated.isEmpty());
 
       c.putAll(Collections.singletonMap("k2", "v-new"));
       c.evict("k2");
-      assert l.passivated.isEmpty();
-      assert l.loaded.size() == 1;
-      assert l.activated.isEmpty();
+      assertTrue(l.passivated.isEmpty());
+      assertTrue(l.loaded.size() == 1);
+      assertTrue(l.activated.isEmpty());
 
       c.replace("k2", "something");
-      assert l.passivated.isEmpty();
-      assert l.loaded.size() == 2;
-      assert l.loaded.contains("k2");
-      assert l.activated.isEmpty();
+      assertTrue(l.passivated.isEmpty());
+      assertTrue(l.loaded.size() == 2);
+      assertTrue(l.loaded.contains("k2"));
+      assertTrue(l.activated.isEmpty());
    }
 
    public void testActivatingAndPassivating() {
@@ -113,27 +115,27 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
       TestListener l = new TestListener();
       c.addListener(l);
 
-      assert l.loaded.isEmpty();
-      assert l.activated.isEmpty();
-      assert l.passivated.isEmpty();
+      assertTrue(l.loaded.isEmpty());
+      assertTrue(l.activated.isEmpty());
+      assertTrue(l.passivated.isEmpty());
 
       c.put("k", "v");
 
-      assert l.loaded.isEmpty();
-      assert l.activated.isEmpty();
-      assert l.passivated.isEmpty();
+      assertTrue(l.loaded.isEmpty());
+      assertTrue(l.activated.isEmpty());
+      assertTrue(l.passivated.isEmpty());
 
       c.evict("k");
 
-      assert l.loaded.isEmpty();
-      assert l.activated.isEmpty();
-      assert l.passivated.contains("k");
+      assertTrue(l.loaded.isEmpty());
+      assertTrue(l.activated.isEmpty());
+      assertTrue(l.passivated.contains("k"));
 
       c.remove("k");
 
-      assert l.loaded.contains("k");
-      assert l.activated.contains("k");
-      assert l.passivated.contains("k");
+      assertTrue(l.loaded.contains("k"));
+      assertTrue(l.activated.contains("k"));
+      assertTrue(l.passivated.contains("k"));
 
       // We should be fine if we evict a non existent key
       c.evict("k");

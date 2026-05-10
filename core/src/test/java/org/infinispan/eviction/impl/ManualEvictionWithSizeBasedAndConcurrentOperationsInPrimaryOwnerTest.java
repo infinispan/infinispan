@@ -1,7 +1,8 @@
 package org.infinispan.eviction.impl;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -27,7 +28,6 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -58,7 +58,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       if (otherCacheManager == null) {
          otherCacheManager = createCacheManager();
       } else {
-         AssertJUnit.fail("Other cache manager should not be set!");
+         fail("Other cache manager should not be set!");
       }
       Cache otherCache = otherCacheManager.getCache();
       TestingUtil.waitForNoRebalance(cache, otherCache);
@@ -79,7 +79,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       latch.waitToBlock(30, TimeUnit.SECONDS);
 
       //the eviction was trigger and it blocked before passivation
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+      assertEquals("v1", cache.get(key1), "Wrong value for key " + key1 + " in get operation.");
 
       //let the eviction continue and wait for put
       latch.disable();
@@ -102,7 +102,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       latch.waitToBlock(30, TimeUnit.SECONDS);
 
       //the eviction was trigger and it blocked before passivation
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+      assertEquals("v1", cache.get(key1), "Wrong value for key " + key1 + " in get operation.");
 
       //let the eviction continue and wait for put
       latch.disable();
@@ -148,7 +148,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
          assertInMemory(key1, "v1");
       } else {
          //the eviction was triggered and the key is no longer in the map
-         assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+         assertEquals("v1", cache.get(key1), "Wrong value for key " + key1 + " in get operation.");
 
          //let the eviction continue and wait for put
          latch.disable();
@@ -195,7 +195,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       //the first read is blocked. it has check the data container and it didn't found any value
       //this second get should not block anywhere and it should fetch the value from persistence
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+      assertEquals("v1", cache.get(key1), "Wrong value for key " + key1 + " in get operation.");
 
       //let the eviction continue and wait for put
       writeLatch.disable();
@@ -203,7 +203,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       //let the second get continue
       readLatch.disable();
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", get.get(30, TimeUnit.SECONDS));
+      assertEquals("v1", get.get(30, TimeUnit.SECONDS), "Wrong value for key " + key1 + " in get operation.");
 
       assertInMemory(key1, "v1");
    }
@@ -217,7 +217,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       final Latch writeLatch = new Latch();
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = () -> readLatch.blockIfNeeded();
+      afterEntryWrappingInterceptor.beforeGet = readLatch::blockIfNeeded;
       final SyncEvictionListener evictionListener = new SyncEvictionListener() {
                @CacheEntriesEvicted
                @Override
@@ -243,13 +243,13 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       //the first read is blocked. it has check the data container and it didn't found any value
       //this second get should not block anywhere and it should fetch the value from persistence
-      assertEquals("Wrong value for key " + key1 + " in put operation.", "v1", cache.put(key1, "v3"));
+      assertEquals("v1", cache.put(key1, "v3"), "Wrong value for key " + key1 + " in put operation.");
 
       evict.get(30, TimeUnit.SECONDS);
 
       //let the get continue
       readLatch.disable();
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v3", get.get(30, TimeUnit.SECONDS));
+      assertEquals("v3", get.get(30, TimeUnit.SECONDS), "Wrong value for key " + key1 + " in get operation.");
 
       assertInMemory(key1, "v3");
    }
@@ -264,8 +264,8 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       final Latch writeLatch2 = new Latch();
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = () -> readLatch.blockIfNeeded();
-      afterEntryWrappingInterceptor.afterPut = () -> writeLatch2.blockIfNeeded();
+      afterEntryWrappingInterceptor.beforeGet = readLatch::blockIfNeeded;
+      afterEntryWrappingInterceptor.afterPut = writeLatch2::blockIfNeeded;
       final SyncEvictionListener evictionListener = new SyncEvictionListener() {
                @CacheEntriesEvicted
                @Override
@@ -301,7 +301,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       assertPossibleValues(key1, get.get(30, TimeUnit.SECONDS), "v1", "v3");
 
       writeLatch2.disable();
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", put2.get(30, TimeUnit.SECONDS));
+      assertEquals("v1", put2.get(30, TimeUnit.SECONDS), "Wrong value for key " + key1 + " in get operation.");
 
       assertInMemory(key1, "v3");
    }

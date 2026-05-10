@@ -1,9 +1,8 @@
 package org.infinispan.security.mappers;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.wildfly.common.Assert;
 
 /**
  * A simple regular expression-based name rewriter.
@@ -21,7 +20,7 @@ public final class RegexNameRewriter implements NameRewriter {
      * @param replaceAll {@code true} to replace all occurrences of the pattern; {@code false} to replace only the first occurrence
      */
     public RegexNameRewriter(final Pattern pattern, final String replacement, final boolean replaceAll) {
-        this.pattern = Assert.checkNotNullParam("pattern", pattern);
+        this.pattern = Objects.requireNonNull(pattern, "pattern");
         this.replacement = replacement;
         this.replaceAll = replaceAll;
     }

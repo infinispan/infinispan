@@ -1,9 +1,10 @@
 package org.infinispan.server.resp;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
@@ -94,11 +95,11 @@ public class RespDecoderTest {
       List<byte[]> arguments = req.arguments;
       assertEquals(5, arguments.size());
 
-      assertEquals("key".getBytes(StandardCharsets.US_ASCII), arguments.get(0));
-      assertEquals("value".getBytes(StandardCharsets.US_ASCII), arguments.get(1));
-      assertEquals("23".getBytes(StandardCharsets.US_ASCII), arguments.get(2));
-      assertEquals("works".getBytes(StandardCharsets.US_ASCII), arguments.get(3));
-      assertEquals(minValueStr.getBytes(StandardCharsets.US_ASCII), arguments.get(4));
+      assertArrayEquals("key".getBytes(StandardCharsets.US_ASCII), arguments.get(0));
+      assertArrayEquals("value".getBytes(StandardCharsets.US_ASCII), arguments.get(1));
+      assertArrayEquals("23".getBytes(StandardCharsets.US_ASCII), arguments.get(2));
+      assertArrayEquals("works".getBytes(StandardCharsets.US_ASCII), arguments.get(3));
+      assertArrayEquals(minValueStr.getBytes(StandardCharsets.US_ASCII), arguments.get(4));
 
       assertEquals(0, queuedCommands.size());
 

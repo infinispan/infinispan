@@ -1,7 +1,7 @@
 package org.infinispan.partitionhandling;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,10 +45,10 @@ public class PartitionHappeningTest extends BasePartitionHandlingTest {
       cache(0).put("k", "v1");
       cache(2).put("k", "v2");
 
-      assertEquals(cache(0).get("k"), "v1");
-      assertEquals(cache(1).get("k"), "v1");
-      assertEquals(cache(2).get("k"), "v2");
-      assertEquals(cache(3).get("k"), "v2");
+      assertEquals("v1", cache(0).get("k"));
+      assertEquals("v1", cache(1).get("k"));
+      assertEquals("v2", cache(2).get("k"));
+      assertEquals("v2", cache(3).get("k"));
 
       partition(0).merge(partition(1));
       assertTrue(clusterAndChFormed(0, 4));

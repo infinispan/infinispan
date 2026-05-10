@@ -1,7 +1,8 @@
 package org.infinispan.lock.singlelock;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -115,13 +116,13 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       InternalCacheEntry d1 = advancedCache(1).getDataContainer().peek(key);
       InternalCacheEntry d2 = advancedCache(2).getDataContainer().peek(key);
       if (d0 == null) {
-         assert sameValue(d1, d2);
+         assertTrue(sameValue(d1, d2));
          return d1.getValue();
       } else if (d1 == null)  {
-         assert sameValue(d0, d2);
+         assertTrue(sameValue(d0, d2));
          return d0.getValue();
       } else  if (d2 == null) {
-         assert sameValue(d0, d1);
+         assertTrue(sameValue(d0, d1));
          return d0.getValue();
       }
       throw new RuntimeException();

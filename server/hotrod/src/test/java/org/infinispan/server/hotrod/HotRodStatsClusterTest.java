@@ -8,7 +8,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -69,28 +69,28 @@ public class HotRodStatsClusterTest extends HotRodMultiNodeTest {
       client1.remove(k(m));
 
       Map<String, String> stats1 = client1.stats();
-      assertEquals(stats1.get("currentNumberOfEntries"), "1");
-      assertEquals(stats1.get("stores"), "1");
-      assertEquals(stats1.get("hits"), "1");
-      assertEquals(stats1.get("retrievals"), "1");
-      assertEquals(stats1.get("removeMisses"), "1");
-      assertEquals(stats1.get("globalCurrentNumberOfEntries"), "1");
-      assertEquals(stats1.get("globalStores"), "1");
-      assertEquals(stats1.get("globalHits"), "1");
-      assertEquals(stats1.get("globalRetrievals"), "1");
-      assertEquals(stats1.get("globalRemoveMisses"), "1");
+      assertEquals("1", stats1.get("currentNumberOfEntries"));
+      assertEquals("1", stats1.get("stores"));
+      assertEquals("1", stats1.get("hits"));
+      assertEquals("1", stats1.get("retrievals"));
+      assertEquals("1", stats1.get("removeMisses"));
+      assertEquals("1", stats1.get("globalCurrentNumberOfEntries"));
+      assertEquals("1", stats1.get("globalStores"));
+      assertEquals("1", stats1.get("globalHits"));
+      assertEquals("1", stats1.get("globalRetrievals"));
+      assertEquals("1", stats1.get("globalRemoveMisses"));
 
       Map<String, String> stats2 = client2.stats();
-      assertEquals(stats2.get("currentNumberOfEntries"), "0");
-      assertEquals(stats2.get("stores"), "0");
-      assertEquals(stats2.get("hits"), "0");
-      assertEquals(stats2.get("retrievals"), "0");
-      assertEquals(stats2.get("removeMisses"), "0");
-      assertEquals(stats2.get("globalCurrentNumberOfEntries"), "1");
-      assertEquals(stats2.get("globalStores"), "1");
-      assertEquals(stats2.get("globalHits"), "1");
-      assertEquals(stats2.get("globalRetrievals"), "1");
-      assertEquals(stats2.get("globalRemoveMisses"), "1");
+      assertEquals("0", stats2.get("currentNumberOfEntries"));
+      assertEquals("0", stats2.get("stores"));
+      assertEquals("0", stats2.get("hits"));
+      assertEquals("0", stats2.get("retrievals"));
+      assertEquals("0", stats2.get("removeMisses"));
+      assertEquals("1", stats2.get("globalCurrentNumberOfEntries"));
+      assertEquals("1", stats2.get("globalStores"));
+      assertEquals("1", stats2.get("globalHits"));
+      assertEquals("1", stats2.get("globalRetrievals"));
+      assertEquals("1", stats2.get("globalRemoveMisses"));
 
       timeService.advance(AbstractClusterStats.DEFAULT_STALE_STATS_THRESHOLD + 1);
 
@@ -98,16 +98,16 @@ public class HotRodStatsClusterTest extends HotRodMultiNodeTest {
       assertKeyDoesNotExist(client1.get(key1, 0));
 
       stats1 = client1.stats();
-      assertEquals(stats1.get("misses"), "1");
-      assertEquals(stats1.get("removeHits"), "1");
-      assertEquals(stats1.get("globalMisses"), "1");
-      assertEquals(stats1.get("globalRemoveHits"), "1");
+      assertEquals("1", stats1.get("misses"));
+      assertEquals("1", stats1.get("removeHits"));
+      assertEquals("1", stats1.get("globalMisses"));
+      assertEquals("1", stats1.get("globalRemoveHits"));
 
       stats2 = client2.stats();
-      assertEquals(stats2.get("misses"), "0");
-      assertEquals(stats2.get("removeHits"), "0");
-      assertEquals(stats2.get("globalMisses"), "1");
-      assertEquals(stats2.get("globalRemoveHits"), "1");
+      assertEquals("0", stats2.get("misses"));
+      assertEquals("0", stats2.get("removeHits"));
+      assertEquals("1", stats2.get("globalMisses"));
+      assertEquals("1", stats2.get("globalRemoveHits"));
    }
 
 }

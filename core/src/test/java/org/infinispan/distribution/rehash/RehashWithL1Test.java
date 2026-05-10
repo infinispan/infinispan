@@ -1,8 +1,8 @@
 package org.infinispan.distribution.rehash;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +51,7 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
       for (int j = 0; j < caches().size(); j++) {
          log.debugf("Populating L1 on %s", address(j));
          for (int i = 0; i < opCount; i++) {
-            assertEquals("Wrong value for k" + i, "some data", cache(j).get("k" + i));
+            assertEquals(cache(j).get("k" + i), "Wrong value for k" + i, "some data");
          }
       }
 
@@ -64,7 +64,7 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
          log.debugf("Checking values on %s", address(j));
          for (int i = 0; i < opCount; i++) {
             String key = "k" + i;
-            assertEquals("Wrong value for key " + key, "some data", cache(j).get(key));
+            assertEquals("some data", cache(j).get(key), "Wrong value for key " + key);
          }
       }
 
@@ -77,7 +77,7 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
       for (int j = 0; j < caches().size() - 1; j++) {
          log.debugf("Checking values on %s", address(j));
          for (int i = 0; i < opCount; i++) {
-            assertNull("wrong value for k" + i, cache(j).get("k" + i));
+            assertNull(cache(j).get("k" + i), "wrong value for k" + i);
          }
       }
 
@@ -88,12 +88,9 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
       for (int i = 0; i < opCount; i++) {
          String key = "k" + i;
          assertFalse(cache(0).containsKey(key));
-         assertFalse("Key: " + key + " is present in cache at " + cache(0),
-                     cache(0).containsKey(key));
-         assertFalse("Key: " + key + " is present in cache at " + cache(1),
-               cache(1).containsKey(key));
-         assertFalse("Key: " + key + " is present in cache at " + cache(2),
-               cache(2).containsKey(key));
+         assertFalse(cache(0).containsKey(key), "Key: " + key + " is present in cache at " + cache(0));
+         assertFalse(cache(1).containsKey(key), "Key: " + key + " is present in cache at " + cache(1));
+         assertFalse(cache(2).containsKey(key), "Key: " + key + " is present in cache at " + cache(2));
       }
 
       assertEquals(0, cache(0).size());

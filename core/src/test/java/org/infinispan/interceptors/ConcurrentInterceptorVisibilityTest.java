@@ -1,6 +1,10 @@
 package org.infinispan.interceptors;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -56,10 +60,10 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
 
             switch (visibility) {
                case SIZE:
-                  assert cache.isEmpty();
+                  assertTrue(cache.isEmpty());
                   break;
                case GET:
-                  assert cache.get(key) == null;
+                  assertNull(cache.get(key));
                   break;
             }
 
@@ -77,14 +81,14 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
             switch (visibility) {
                case SIZE:
                   int size = cache.size();
-                  assert size == 1 : "size is: " + size;
-                  assert interceptor.assertKeySet;
+                  assertTrue(size == 1, "size is: " + size);
+                  assertTrue(interceptor.assertKeySet);
                   break;
                case GET:
                   Object retVal = cache.get(key);
-                  assert retVal != null;
-                  assert retVal.equals(value): "retVal is: " + retVal;
-                  assert interceptor.assertKeySet;
+                  assertNotNull(retVal);
+                  assertEquals(value, retVal, "retVal is: " + retVal);
+                  assertTrue(interceptor.assertKeySet);
                   break;
             }
 

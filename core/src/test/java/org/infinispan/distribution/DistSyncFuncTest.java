@@ -2,10 +2,10 @@ package org.infinispan.distribution;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,23 +52,23 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
             boolean isOwner = isOwner(c, key);
             if (isOwner) owners.add(addressOf(c));
             boolean secondCheck = getCacheTopology(c).getWriteOwners(key).contains(addressOf(c));
-            assertTrue("Second check failed for key " + key + " on cache " + addressOf(c) + " isO = " + isOwner + " sC = " + secondCheck, isOwner == secondCheck);
+            assertEquals(isOwner, secondCheck, "Second check failed for key " + key + " on cache " + addressOf(c) + " isO = " + isOwner + " sC = " + secondCheck);
          }
          // check consensus
          assertOwnershipConsensus(key);
-         assertEquals("Expected " + numOwners + " owners for key " + key + " but was " + owners, numOwners, owners.size());
+         assertEquals(numOwners, owners.size(), "Expected " + numOwners + " owners for key " + key + " but was " + owners);
       }
    }
 
    protected void assertOwnershipConsensus(String key) {
-      List l1 = getCacheTopology(c1).getDistribution(key).writeOwners();
-      List l2 = getCacheTopology(c2).getDistribution(key).writeOwners();
-      List l3 = getCacheTopology(c3).getDistribution(key).writeOwners();
-      List l4 = getCacheTopology(c4).getDistribution(key).writeOwners();
+      List<Address> l1 = getCacheTopology(c1).getDistribution(key).writeOwners();
+      List<Address> l2 = getCacheTopology(c2).getDistribution(key).writeOwners();
+      List<Address> l3 = getCacheTopology(c3).getDistribution(key).writeOwners();
+      List<Address> l4 = getCacheTopology(c4).getDistribution(key).writeOwners();
 
-      assertEquals("L1 "+l1+" and L2 "+l2+" don't agree.", l1, l2);
-      assertEquals("L2 "+l2+" and L3 "+l3+" don't agree.", l2, l3);
-      assertEquals("L3 "+l3+" and L4 "+l4+" don't agree.", l3, l4);
+      assertEquals(l1, l2, "L1 " + l1 + " and L2 " + l2 + " don't agree.");
+      assertEquals(l2, l3, "L2 " + l2 + " and L3 " + l3 + " don't agree.");
+      assertEquals(l3, l4, "L3 " + l3 + " and L4 " + l4 + " don't agree.");
 
    }
 
@@ -142,7 +142,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       initAndTest();
       log.trace("Here we start");
       boolean retval = getFirstNonOwner("k1").remove("k1", "value2");
-      if (testRetVals) assertFalse("Should not have removed entry", retval);
+      if (testRetVals) assertFalse(retval, "Should not have removed entry");
       asyncWaitOnPrimary("k1", RemoveCommand.class);
 
       assertOnAllCachesAndOwnership("k1", "value");
@@ -151,9 +151,9 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       retval = getFirstNonOwner("k1").remove("k1", "value");
       asyncWait("k1", RemoveCommand.class);
-      if (testRetVals) assertTrue("Should have removed entry", retval);
+      if (testRetVals) assertTrue(retval, "Should have removed entry");
 
-      assertNull("expected null but received " + caches.get(1).get("k1"), caches.get(1).get("k1"));
+      assertNull(caches.get(1).get("k1"), "expected null but received " + caches.get(1).get("k1"));
       assertRemovedOnAllCaches("k1");
    }
 
@@ -181,7 +181,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       initAndTest();
       Cache<Object, String> nonOwner = getFirstNonOwner("k1");
       boolean retval = nonOwner.replace("k1", "valueX", "value2");
-      if (testRetVals) assertFalse("Should not have replaced", retval);
+      if (testRetVals) assertFalse(retval, "Should not have replaced");
       asyncWaitOnPrimary("k1", ReplaceCommand.class);
 
       assertOnAllCachesAndOwnership("k1", "value");
@@ -190,7 +190,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       retval = nonOwner.replace("k1", "value", "value2");
       asyncWait("k1", cmd -> Stream.of(ReplaceCommand.class, PutKeyValueCommand.class)
             .anyMatch(clazz -> clazz.isInstance(cmd)));
-      if (testRetVals) assertTrue("Should have replaced", retval);
+      if (testRetVals) assertTrue(retval, "Should have replaced");
 
       assertOnAllCachesAndOwnership("k1", "value2");
    }
@@ -238,32 +238,32 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
          asyncWait("4", PutKeyValueCommand.class);
       }
 
-      for (Cache c : caches) {
-         Set expKeys = TestingUtil.getInternalKeys(c);
-         Collection expValues = TestingUtil.getInternalValues(c);
+      for (Cache<Object, String> c : caches) {
+         Set<Object> expKeys = TestingUtil.getInternalKeys(c);
+         Collection<String> expValues = TestingUtil.getInternalValues(c);
 
-         Set expKeyEntries = new HashSet(expKeys);
-         Collection expValueEntries = new ArrayList(expValues);
+         Set<Object> expKeyEntries = new HashSet<>(expKeys);
+         Collection<Object> expValueEntries = new ArrayList<>(expValues);
 
          // CACHE_MODE_LOCAL prohibits RPCs and SKIP_OWNERSHIP_CHECKS forces that all entries from DC are read
-         AdvancedCache cacheWithIgnoredOwnership = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK);
-         Set keys = cacheWithIgnoredOwnership.keySet();
+         AdvancedCache<Object, String> cacheWithIgnoredOwnership = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK);
+         Set<Object> keys = cacheWithIgnoredOwnership.keySet();
          for (Object key : keys)
             assertTrue(expKeys.remove(key));
-         assertTrue("Did not see keys " + expKeys + " in iterator!", expKeys.isEmpty());
+         assertTrue(expKeys.isEmpty(), "Did not see keys " + expKeys + " in iterator!");
 
-         Collection values = cacheWithIgnoredOwnership.values();
+         Collection<String> values = cacheWithIgnoredOwnership.values();
          for (Object value : values)
             assertTrue(expValues.remove(value));
-         assertTrue("Did not see keys " + expValues + " in iterator!", expValues.isEmpty());
+         assertTrue(expValues.isEmpty(), "Did not see keys " + expValues + " in iterator!");
 
-         Set<Map.Entry> entries = cacheWithIgnoredOwnership.entrySet();
-         for (Map.Entry entry : entries) {
+         Set<Map.Entry<Object, String>> entries = cacheWithIgnoredOwnership.entrySet();
+         for (Map.Entry<Object, String> entry : entries) {
             assertTrue(expKeyEntries.remove(entry.getKey()));
             assertTrue(expValueEntries.remove(entry.getValue()));
          }
-         assertTrue("Did not see keys " + expKeyEntries + " in iterator!", expKeyEntries.isEmpty());
-         assertTrue("Did not see keys " + expValueEntries + " in iterator!", expValueEntries.isEmpty());
+         assertTrue(expKeyEntries.isEmpty(), "Did not see keys " + expKeyEntries + " in iterator!");
+         assertTrue(expValueEntries.isEmpty(), "Did not see keys " + expValueEntries + " in iterator!");
       }
    }
 
@@ -284,7 +284,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
          Cache<Object, String>[] caches = getOwners(key);
          for (Cache<Object, String> cache : caches) {
             assertEquals("value" + i + "-changed",
-                         cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get(key));
+                  cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get(key));
          }
       }
    }
@@ -315,7 +315,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       return c instanceof PutKeyValueCommand && key.equals(((PutKeyValueCommand) c).getKey());
    }
 
-   public void testComputeFromNonOwner() throws InterruptedException {
+   public void testComputeFromNonOwner() {
       // compute function applied
       initAndTest();
       Object retval = getFirstNonOwner("k1").compute("k1", (k, v) -> "computed_" + k + "_" + v);
@@ -342,7 +342,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       expectException(RemoteException.class, () -> getFirstNonOwner("k1").compute("k1", mappingToException));
    }
 
-   public void testComputeIfPresentFromNonOwner() throws InterruptedException {
+   public void testComputeIfPresentFromNonOwner() {
       // compute function applied
       initAndTest();
       Object retval = getFirstNonOwner("k1").computeIfPresent("k1", (k, v) -> "computed_" + k + "_" + v);
@@ -369,7 +369,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       assertRemovedOnAllCaches("notThere");
    }
 
-   public void testComputeIfAbsentFromNonOwner() throws InterruptedException {
+   public void testComputeIfAbsentFromNonOwner() {
       // do nothing if value exists
       initAndTest();
       Object retval = getFirstNonOwner("k1").computeIfAbsent("k1", (k) -> "computed_" + k);

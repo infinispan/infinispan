@@ -5,7 +5,7 @@ import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalC
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;

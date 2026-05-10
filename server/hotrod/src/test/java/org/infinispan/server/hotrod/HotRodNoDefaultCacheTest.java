@@ -3,8 +3,8 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.server.core.test.ServerTestingUtil.killServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -51,7 +51,7 @@ public class HotRodNoDefaultCacheTest extends SingleCacheManagerTest {
 
    public void testNoDefault() {
       TestResponse response = client.get("k1");
-      assertTrue(response instanceof TestErrorResponse);
+      assertInstanceOf(TestErrorResponse.class, response);
       TestErrorResponse error = (TestErrorResponse)response;
       assertEquals("org.infinispan.server.hotrod.CacheNotFoundException: Default cache requested but not configured", error.msg);
    }

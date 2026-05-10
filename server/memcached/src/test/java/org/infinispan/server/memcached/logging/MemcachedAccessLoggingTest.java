@@ -1,6 +1,6 @@
 package org.infinispan.server.memcached.logging;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.ExecutionException;
 
@@ -25,7 +25,7 @@ public class MemcachedAccessLoggingTest extends MemcachedSingleNodeTest {
       logAppender = new StringLogAppender(MemcachedAccessLogging.log.getName(),
             Level.TRACE,
             t -> t.getName().startsWith("non-blocking-thread-" + testShortName),
-            PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
+            PatternLayout.newBuilder().setPattern(LOG_FORMAT).build());
       logAppender.install();
       assertTrue(MemcachedAccessLogging.isEnabled());
       super.setup();
@@ -48,8 +48,8 @@ public class MemcachedAccessLoggingTest extends MemcachedSingleNodeTest {
             () -> logAppender.size() >= 1);
 
       String logline = logAppender.get(0);
-      assertTrue(logline, logline.matches(
-            "^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"set /key MCTXT\" OK \\d+ \\d+ \\d+$"));
+      assertTrue(logline.matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"set /key MCTXT\" OK \\d+ \\d+ \\d+$"),
+            logline);
    }
 
    @Override

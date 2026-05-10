@@ -2,8 +2,9 @@ package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -135,7 +136,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
 
       // check that second node state is inconsistent, second result should be FALSE in read committed pessimistic cache
       // uncomment when this bug is fixed
-      assertEquals(false, secondResult);
+      assertFalse(secondResult);
    }
 
    @Override

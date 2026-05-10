@@ -2,8 +2,8 @@ package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.nio.ByteBuffer;
 import java.util.Queue;
@@ -64,8 +64,8 @@ public class JsonKeyValueRawEventsTest extends SingleHotRodServerTest {
       KeyValuePair<String, String> event = eventsQueue.poll(5, TimeUnit.SECONDS);
 
       assertNotNull(event);
-      assertEquals(event.getKey(), "1");
-      assertEquals(event.getValue(), "{\"_type\":\"org.infinispan.test.core.Person\",\"name\":\"John\",\"accepted_tos\":false,\"moneyOwned\":1.1,\"moneyOwed\":0.4,\"decimalField\":10.3,\"realField\":4.7}");
+      assertEquals("1", event.getKey());
+      assertEquals("{\"_type\":\"org.infinispan.test.core.Person\",\"name\":\"John\",\"accepted_tos\":false,\"moneyOwned\":1.1,\"moneyOwed\":0.4,\"decimalField\":10.3,\"realField\":4.7}", event.getValue());
    }
 
    @ClientListener(converterFactoryName = "___eager-key-value-version-converter", useRawData = true)

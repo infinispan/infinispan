@@ -1,8 +1,8 @@
 package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getListeners;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
 

@@ -7,8 +7,9 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.marshall;
 import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -72,9 +73,9 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       hotRodServer3 = HotRodClientTestingUtil.startHotRodServer(manager(2));
       addr2hrServer.put(InetSocketAddress.createUnresolved(hotRodServer3.getHost(), hotRodServer3.getPort()), hotRodServer3);
 
-      assert manager(0).getCache() != null;
-      assert manager(1).getCache() != null;
-      assert manager(2).getCache() != null;
+      assertNotNull(manager(0).getCache());
+      assertNotNull(manager(1).getCache());
+      assertNotNull(manager(2).getCache());
 
       blockUntilViewReceived(manager(0).getCache(), 3);
       blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
@@ -119,7 +120,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    @Test(dependsOnMethods = "testHashInfoRetrieved")
    public void testCorrectSetup() {
       remoteCache.put("k", "v");
-      assert remoteCache.get("k").equals("v");
+      assertEquals("v", remoteCache.get("k"));
    }
 
    @Test(dependsOnMethods = "testCorrectSetup")
@@ -129,7 +130,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          SocketAddress serverAddress = dispatcher.getCacheInfo(HotRodConstants.DEFAULT_CACHE_NAME).getConsistentHash().getServer(key);
          // TODO: this probably will fail since the address is resolved but addr2hrServer wants unresolved
          CacheContainer cacheContainer = addr2hrServer.get(serverAddress).getCacheManager();
-         assertNotNull("For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + addr2hrServer, cacheContainer);
+         assertNotNull(cacheContainer, "For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + addr2hrServer);
          DistributionManager distributionManager = cacheContainer.getCache().getAdvancedCache().getDistributionManager();
          Address clusterAddress = cacheContainer.getCache().getAdvancedCache().getRpcManager().getAddress();
 
@@ -138,14 +139,14 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          int keySegment = distributionManager.getCacheTopology().getSegment(key);
          Address serverOwner = serverCh.locatePrimaryOwnerForSegment(keySegment);
          Address serverPreviousOwner = serverCh.locatePrimaryOwnerForSegment((keySegment - 1 + numSegments) % numSegments);
-         assert clusterAddress.equals(serverOwner) || clusterAddress.equals(serverPreviousOwner);
+         assertTrue(clusterAddress.equals(serverOwner) || clusterAddress.equals(serverPreviousOwner));
       }
    }
 
    @Test(dependsOnMethods = "testHashFunctionReturnsSameValues")
-   public void testRequestsGoToExpectedServer() throws Exception {
+   public void testRequestsGoToExpectedServer() {
       addInterceptors();
-      List<byte[]> keys = new ArrayList<byte[]>();
+      List<byte[]> keys = new ArrayList<>();
       for (int i = 0; i < 500; i++) {
          byte[] key = generateKey(i);
          keys.add(key);
@@ -161,7 +162,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       for (byte[] key : keys) {
          resetStats();
          String keyStr = new String(key);
-         assert remoteCache.get(keyStr).equals("value");
+         assertEquals("value", remoteCache.get(keyStr));
          SocketAddress serverAddress = dispatcher.getCacheInfo(HotRodConstants.DEFAULT_CACHE_NAME)
                .getConsistentHash().getServer(marshall(keyStr));
          assertOnlyServerHit(serverAddress);

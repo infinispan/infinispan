@@ -1,5 +1,7 @@
 package org.infinispan.stress;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -41,7 +43,7 @@ public class MemoryCleanupTest {
          }
       }
       System.out.println("Free memory at the end:" + freeMemKb());
-      assert isOkay(freeMemBefore);
+      assertTrue(isOkay(freeMemBefore));
    }
 
    private boolean isOkay(long freeMemBefore) {

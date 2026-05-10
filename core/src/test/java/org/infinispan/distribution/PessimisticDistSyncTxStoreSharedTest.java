@@ -1,5 +1,7 @@
 package org.infinispan.distribution;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,7 +17,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -74,7 +75,7 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
       DummyInMemoryStore<String, String> cs1 = TestingUtil.getFirstStore(cache);
       Set<String> keys = PersistenceUtil.toKeySet(cs1, allSegments, null);
 
-      Assert.assertEquals(keys.size(), 4);
+      assertEquals(4, keys.size());
 
       // now start 2nd node
       addClusterEnabledCacheManager(getCB()).defineConfiguration("P006", getCB().build());
@@ -93,6 +94,6 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
       Set<String> mergedKeys = new HashSet<>(PersistenceUtil.toKeySet(cs1, allSegments, null));
       log.debugf("Load from cache store via cache 2");
       mergedKeys.addAll(PersistenceUtil.toKeySet(cs2, allSegments, null));
-      Assert.assertEquals(mergedKeys.size(), 8);
+      assertEquals(8, mergedKeys.size());
    }
 }

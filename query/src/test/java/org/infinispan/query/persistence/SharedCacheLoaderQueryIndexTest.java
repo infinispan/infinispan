@@ -1,7 +1,7 @@
 package org.infinispan.query.persistence;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
       // To force a shared cache store, make sure storeName property
       // for dummy store is the same for all nodes
       builder.clustering().stateTransfer().fetchInMemoryState(false)
-         .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).preload(true).
+            .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).preload(true).
             storeName(getClass().getName());
    }
 
@@ -37,14 +37,14 @@ public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
       loadCacheEntries(this.<String, Person>caches().get(0));
 
       List<DummyInMemoryStore<String, Person>> cacheStores = TestingUtil.cachestores(caches());
-      for (DummyInMemoryStore<String, Person> dimcs: cacheStores) {
-         assertTrue("Cache misconfigured, maybe cache store not pointing to same place, maybe passivation on...etc", dimcs.contains(persons[0].getName()));
+      for (DummyInMemoryStore<String, Person> dimcs : cacheStores) {
+         assertTrue(dimcs.contains(persons[0].getName()), "Cache misconfigured, maybe cache store not pointing to same place, maybe passivation on...etc");
 
          int clear = dimcs.stats().get("clear");
-         assertEquals("Cache store should not be cleared, purgeOnStartup is false", clear, 0);
+         assertEquals(0, clear, "Cache store should not be cleared, purgeOnStartup is false");
 
          int write = dimcs.stats().get("write");
-         assertEquals("Cache store should have been written to 4 times, but was written to " + write + " times", write, 4);
+         assertEquals(4, write, "Cache store should have been written to 4 times, but was written to " + write + " times");
       }
 
       // Before adding a node, verify that the query resolves properly

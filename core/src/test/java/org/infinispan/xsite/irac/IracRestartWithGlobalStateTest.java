@@ -9,9 +9,9 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -34,7 +34,6 @@ import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
-import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -179,7 +178,7 @@ public class IracRestartWithGlobalStateTest extends AbstractMultipleSitesTest {
             if (distributionInfo.isPrimary()) {
                IracEntryVersion version = dataContainer.peek(distributionInfo.segmentId(), key).getInternalMetadata()
                      .iracMetadata().getVersion();
-               AssertJUnit.assertNotNull(version);
+               assertNotNull(version);
                versions.put(key, version);
             }
          }
@@ -201,10 +200,10 @@ public class IracRestartWithGlobalStateTest extends AbstractMultipleSitesTest {
          K key = iterator.next();
          IracEntryVersion version1 = v1.get(key);
          IracEntryVersion version2 = v2.get(key);
-         assertNotNull(format("'%s' version is null for Map 1", key), version1);
-         assertNotNull(format("'%s' version is null for Map 2", key), version2);
+         assertNotNull(version1, format("'%s' version is null for Map 1", key));
+         assertNotNull(version2, format("'%s' version is null for Map 2", key));
          InequalVersionComparisonResult result = version1.compareTo(version2);
-         assertEquals(format("'%s' version mismatch: %s and %s", key, version1, version2), expected, result);
+         assertEquals(expected, result, format("'%s' version mismatch: %s and %s", key, version1, version2));
       }
 
    }

@@ -1,13 +1,14 @@
 package org.infinispan.conflict.impl;
 
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotSame;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -108,10 +109,10 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
 
       // Check the results
       Map<Address, InternalCacheValue<Object>> versionMap = versionFuture.get(60, TimeUnit.SECONDS);
-      assertTrue(versionMap != null);
-      assertTrue(!versionMap.isEmpty());
+      assertNotNull(versionMap);
+      assertFalse(versionMap.isEmpty());
       // mergepolicy == null, so no conflict resolution occurs therefore it's possible that versionMap may contain null entries
-      assertEquals(String.format("Returned versionMap %s", versionMap),2, versionMap.size());
+      assertEquals(2, versionMap.size(), String.format("Returned versionMap %s", versionMap));
    }
 
    public void testGetAllVersionsTimeout() throws Throwable {
@@ -188,7 +189,7 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
          } else {
             List<Object> icvs = map.values().stream().map(CacheEntry::getValue).distinct().collect(Collectors.toList());
             assertEquals(NUMBER_OF_OWNERS, icvs.size());
-            assertTrue("Expected one of the conflicting string values to be 'INCONSISTENT'", icvs.contains("INCONSISTENT"));
+            assertTrue(icvs.contains("INCONSISTENT"), "Expected one of the conflicting string values to be 'INCONSISTENT'");
          }
       }
    }
@@ -245,21 +246,21 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       boolean allowNullValues = key % NULL_VALUE_FREQUENCY == 0;
       int expectedValues = allowNullValues ? NUMBER_OF_OWNERS - 1 : NUMBER_OF_OWNERS;
       for (Map<Address, InternalCacheValue<Object>> map : cacheVersions) {
-         assertEquals(map.toString(), NUMBER_OF_OWNERS, map.keySet().size());
+         assertEquals(NUMBER_OF_OWNERS, map.keySet().size(), map.toString());
 
          if (!allowNullValues)
-            assertTrue("Version map contains null entries.", !map.values().contains(null));
+            assertFalse(map.values().contains(null), "Version map contains null entries.");
 
          List<Object> values = map.values().stream()
                .filter(Objects::nonNull)
                .map(InternalCacheValue::getValue)
                .collect(Collectors.toList());
-         assertEquals(values.toString(), expectedValues, values.size());
+         assertEquals(expectedValues, values.size(), values.toString());
 
          if (expectEquality) {
-            assertTrue("Inconsistent values returned, they should be the same", values.stream().allMatch(v -> v.equals(values.get(0))));
+            assertTrue(values.stream().allMatch(v -> v.equals(values.get(0))), "Inconsistent values returned, they should be the same");
          } else {
-            assertTrue("Expected inconsistent values, but all values were equal", map.values().stream().distinct().count() > 1);
+            assertTrue(map.values().stream().distinct().count() > 1, "Expected inconsistent values, but all values were equal");
          }
       }
    }
@@ -269,7 +270,7 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       List<Address> members = getCache(0).getRpcManager().getMembers();
 
       TestingUtil.waitForNoRebalance(caches());
-      assertTrue(members.size() == 4);
+      assertEquals(4, members.size());
    }
 
    private void splitCluster() {

@@ -1,8 +1,9 @@
 package org.infinispan.jcache;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -154,8 +155,8 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
 
             DataContainer<Integer, String> dc = cache.unwrap(AdvancedCache.class).getDataContainer();
 
-            assertEquals(null, dc.peek(2));
-            assertEquals(null, dc.peek(1));
+            assertNull(dc.peek(2));
+            assertNull(dc.peek(1));
          }
       });
    }
@@ -184,7 +185,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
             assertEquals(v1, cache.get(1));
 
 
-            DataContainer<Integer, String> dc = cache.unwrap(AdvancedCache.class).getDataContainer();
+            DataContainer<Integer, NonMarshallablePojo> dc = cache.unwrap(AdvancedCache.class).getDataContainer();
 
             assertEquals(v2, dc.peek(2).getValue());
             assertEquals(v1, dc.peek(1).getValue());

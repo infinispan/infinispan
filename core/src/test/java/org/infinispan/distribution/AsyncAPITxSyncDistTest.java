@@ -1,7 +1,7 @@
 package org.infinispan.distribution;
 
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -20,7 +20,7 @@ public class AsyncAPITxSyncDistTest extends AsyncAPITxSyncReplTest {
 
    @Override
    protected void assertOnAllCaches(Key k, String v, Cache c1, Cache c2) {
-      assertEquals("Error in cache 1.", v, c1.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k));
-      assertEquals("Error in cache 2,", v, c2.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k));
+      assertEquals(v, c1.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k), "Error in cache 1.");
+      assertEquals(v, c2.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k), "Error in cache 2,");
    }
 }

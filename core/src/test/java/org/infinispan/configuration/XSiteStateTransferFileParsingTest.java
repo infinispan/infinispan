@@ -2,8 +2,8 @@ package org.infinispan.configuration;
 
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.DEFAULT_TIMEOUT;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.DEFAULT_WAIT_TIME;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 
@@ -28,16 +28,21 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "xsite.XSiteStateTransferFileParsingTest")
 public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
    private static final String FILE_NAME = "configs/xsite/xsite-state-transfer-test.xml";
-   private static final String XML_FORMAT = "<infinispan>\n"
-         + "<cache-container default-cache=\"default\">\n"
-         + "  <transport cluster=\"infinispan-cluster\" lock-timeout=\"50000\" stack=\"udp\" node-name=\"Jalapeno\" machine=\"m1\"\n"
-         + "                   rack=\"r1\" site=\"LON\"/>\n" + "  <replicated-cache name=\"default\">\n"
-         + "     <backups>\n"
-         + "        <backup site=\"NYC\" strategy=\"SYNC\" failure-policy=\"WARN\" timeout=\"12003\">\n"
-         + "           <state-transfer chunk-size=\"10\" timeout=\"%s\" max-retries=\"30\" wait-time=\"%s\" mode=\"%s\"/>\n"
-         + "        </backup>\n" + "     </backups>\n"
-         + "     <backup-for remote-cache=\"someCache\" remote-site=\"SFO\"/>\n" + "  </replicated-cache>\n"
-         + "</cache-container>\n</infinispan>";
+   private static final String XML_FORMAT = """
+         <infinispan>
+         <cache-container default-cache="default">
+           <transport cluster="infinispan-cluster" lock-timeout="50000" stack="udp" node-name="Jalapeno" machine="m1"
+                            rack="r1" site="LON"/>
+           <replicated-cache name="default">
+              <backups>
+                 <backup site="NYC" strategy="SYNC" failure-policy="WARN" timeout="12003">
+                    <state-transfer chunk-size="10" timeout="%s" max-retries="30" wait-time="%s" mode="%s"/>
+                 </backup>
+              </backups>
+              <backup-for remote-cache="someCache" remote-site="SFO"/>
+           </replicated-cache>
+         </cache-container>
+         </infinispan>""";
 
    public void testDefaultCache() {
       Configuration dcc = cacheManager.getDefaultCacheConfiguration();

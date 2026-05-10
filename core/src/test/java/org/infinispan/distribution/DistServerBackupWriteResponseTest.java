@@ -1,8 +1,8 @@
 package org.infinispan.distribution;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -57,7 +57,7 @@ public class DistServerBackupWriteResponseTest extends BaseDistFunctionalTest<Ob
       Mockito.verify(spy).addResponse(Mockito.anyLong(), Mockito.any(), responseCaptor.capture());
 
       Response response = responseCaptor.getValue();
-      assertTrue(response instanceof SuccessfulResponse);
+      assertInstanceOf(SuccessfulResponse.class, response);
 
       assertNull(((SuccessfulResponse<?>) response).getResponseValue());
    }

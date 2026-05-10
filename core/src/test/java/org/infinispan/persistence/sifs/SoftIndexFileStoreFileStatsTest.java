@@ -1,11 +1,11 @@
 package org.infinispan.persistence.sifs;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -218,7 +218,7 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
             Compactor.Stats stat = statsMap.values().iterator().next();
             int freeAmount = stat.getFree();
 
-            assertTrue("Something should have been freed", freeAmount != 0);
+            assertTrue(freeAmount != 0, "Something should have been freed");
          }
 
          controlledTimeService.advance(4);
@@ -236,7 +236,7 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
          Compactor.Stats stat = statsMap.values().iterator().next();
          int freeAmount = stat.getFree();
 
-         assertTrue("Something should have been freed", freeAmount != 0);
+         assertTrue(freeAmount != 0, "Something should have been freed");
 
          int i = 1;
          // Fill it up until we have 1 complete logFile, 1 compacted file and 1 logFile
@@ -251,7 +251,7 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
 
          Compactor.Stats completedStats = entry.getValue();
 
-         assertTrue("Stats were: " + completedStats, completedStats.getFree() > 0);
+         assertTrue(completedStats.getFree() > 0, "Stats were: " + completedStats);
          assertEquals(expectedExpirationTime, completedStats.getNextExpirationTime());
          assertFalse(completedStats.isScheduled());
 
@@ -264,7 +264,7 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
             }
          }
 
-         assertNull("File " + entry.getKey() + " was still not removed... stats were: " + statsMap, completedStats);
+         assertNull(completedStats, "File " + entry.getKey() + " was still not removed... stats were: " + statsMap);
       } finally {
          TestingUtil.replaceComponent(cacheManager, TimeService.class, controlledTimeService.getActualTimeService(), true);
       }

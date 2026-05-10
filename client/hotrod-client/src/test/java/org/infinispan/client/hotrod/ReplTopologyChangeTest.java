@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -141,7 +141,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
          if (added == dispatcher.getServers().contains(server1Address)) break;
       }
       Collection<InetSocketAddress> addresses = dispatcher.getServers();
-      assertEquals(server1Address + " not found in " + addresses, added, addresses.contains(server1Address));
+      assertEquals(added, addresses.contains(server1Address), server1Address + " not found in " + addresses);
    }
 
    protected void waitForServerToDie(int memberCount) {

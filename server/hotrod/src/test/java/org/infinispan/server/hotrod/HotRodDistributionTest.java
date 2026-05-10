@@ -12,7 +12,8 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -61,7 +62,7 @@ public class HotRodDistributionTest extends HotRodMultiNodeTest {
 
       resp = client1.put(k(m), 0, 0, v(m), INTELLIGENCE_BASIC, 0);
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+      assertNull(resp.topologyResponse);
       assertSuccess(client2.get(k(m), 0), v(m));
 
       resp = client1.put(k(m), 0, 0, v(m, "v1-"), INTELLIGENCE_TOPOLOGY_AWARE, 0);
@@ -76,7 +77,7 @@ public class HotRodDistributionTest extends HotRodMultiNodeTest {
       resp = client1.put(k(m), 0, 0, v(m, "v3-"), INTELLIGENCE_TOPOLOGY_AWARE,
             serverClientTopologyId);
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+      assertNull(resp.topologyResponse);
       assertSuccess(client2.get(k(m), 0), v(m, "v3-"));
 
       resp = client1.put(k(m), 0, 0, v(m, "v4-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0);

@@ -1,6 +1,7 @@
 package org.infinispan.container.versioning;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
@@ -40,7 +41,7 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
       cache.put("hello", "world 1");
 
       tm().begin();
-      assertEquals("Wrong value read by transaction for key hello", "world 1", cache.get("hello"));
+      assertEquals("world 1", cache.get("hello"), "Wrong value read by transaction for key hello");
       Transaction t = tm().suspend();
 
       // Create a write skew
@@ -50,7 +51,7 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
       cache.put("hello", "world 2");
 
       Exceptions.expectException(RollbackException.class, tm()::commit);
-      assertEquals("Wrong final value for key hello", "world 3", cache.get("hello"));
+      assertEquals("world 3", cache.get("hello"), "Wrong final value for key hello");
    }
 
    public void testWriteSkewMultiEntries() throws Exception {
@@ -61,8 +62,8 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
 
       tm().begin();
       cache.put("k2", "v2000");
-      assertEquals("Wrong value read by transaction for key k1", "v1", cache.get("k1"));
-      assertEquals("Wrong value read by transaction for key k2", "v2000", cache.get("k2"));
+      assertEquals("v1", cache.get("k1"), "Wrong value read by transaction for key k1");
+      assertEquals("v2000", cache.get("k2"), "Wrong value read by transaction for key k2");
       Transaction t = tm().suspend();
 
       // Create a write skew
@@ -74,8 +75,8 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
 
       Exceptions.expectException(RollbackException.class, tm()::commit);
 
-      assertEquals("Wrong final value for key k1", "v3", cache.get("k1"));
-      assertEquals("Wrong final value for key k2", "v2", cache.get("k2"));
+      assertEquals("v3", cache.get("k1"), "Wrong final value for key k1");
+      assertEquals("v2", cache.get("k2"), "Wrong final value for key k2");
    }
 
    public void testNullEntries() throws Exception {
@@ -83,35 +84,35 @@ public class LocalWriteSkewTest extends SingleCacheManagerTest {
       cache.put("hello", "world");
 
       tm().begin();
-      assertEquals("Wrong value read by transaction for key hello", "world", cache.get("hello"));
+      assertEquals("world", cache.get("hello"), "Wrong value read by transaction for key hello");
       Transaction t = tm().suspend();
 
       cache.remove("hello");
 
-      assertEquals("Wrong value after remove for key hello", null, cache.get("hello"));
+      assertNull(cache.get("hello"), "Wrong value after remove for key hello");
 
       tm().resume(t);
       cache.put("hello", "world2");
 
       Exceptions.expectException(RollbackException.class, tm()::commit);
-      assertEquals("Wrong final value for key hello", null, cache.get("hello"));
+      assertNull(cache.get("hello"), "Wrong final value for key hello");
    }
 
    public void testSameNodeKeyCreation() throws Exception {
       tm().begin();
-      assertEquals("Wrong value read by transaction 1 for key NewKey", null, cache.get("NewKey"));
+      assertNull(cache.get("NewKey"), "Wrong value read by transaction 1 for key NewKey");
       cache.put("NewKey", "v1");
       Transaction tx0 = tm().suspend();
 
       //other transaction do the same thing
       tm().begin();
-      assertEquals("Wrong value read by transaction 2 for key NewKey", null, cache.get("NewKey"));
+      assertNull(cache.get("NewKey"), "Wrong value read by transaction 2 for key NewKey");
       cache.put("NewKey", "v2");
       tm().commit();
 
       tm().resume(tx0);
       Exceptions.expectException(RollbackException.class, tm()::commit);
 
-      assertEquals("Wrong final value for key NewKey", "v2", cache.get("NewKey"));
+      assertEquals("v2", cache.get("NewKey"), "Wrong final value for key NewKey");
    }
 }

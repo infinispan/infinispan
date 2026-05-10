@@ -1,8 +1,9 @@
 package org.infinispan.eviction.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSets;
@@ -63,8 +64,7 @@ public class SharedContainerSimpleCacheTest extends SingleCacheManagerTest {
    public void testSimpleCacheUsesNonSegmentedContainer() {
       Cache<String, String> cache = cacheManager.getCache(SIMPLE_CACHE_NAME);
       InternalDataContainer<?, ?> dc = TestingUtil.extractComponent(cache, InternalDataContainer.class);
-      assertTrue("Expected SharedBoundedLocalContainer but got " + dc.getClass().getName(),
-            dc instanceof SharedBoundedLocalContainer);
+      assertInstanceOf(SharedBoundedLocalContainer.class, dc, "Expected SharedBoundedLocalContainer but got " + dc.getClass().getName());
    }
 
    public void testSizeIncludingExpiredWithLargeSegmentSet() {
@@ -98,10 +98,8 @@ public class SharedContainerSimpleCacheTest extends SingleCacheManagerTest {
       InternalDataContainer<?, ?> simpleDc = TestingUtil.extractComponent(simpleCache, InternalDataContainer.class);
       InternalDataContainer<?, ?> localDc = TestingUtil.extractComponent(localCache, InternalDataContainer.class);
 
-      assertTrue("Simple cache should use SharedBoundedLocalContainer",
-            simpleDc instanceof SharedBoundedLocalContainer);
-      assertTrue("Local cache should use SharedBoundedLocalContainer",
-            localDc instanceof SharedBoundedLocalContainer);
+      assertInstanceOf(SharedBoundedLocalContainer.class, simpleDc, "Simple cache should use SharedBoundedLocalContainer");
+      assertInstanceOf(SharedBoundedLocalContainer.class, localDc, "Local cache should use SharedBoundedLocalContainer");
 
       for (int i = 0; i < 10; i++) {
          simpleCache.put("simple-" + i, "value-" + i);
@@ -131,19 +129,18 @@ public class SharedContainerSimpleCacheTest extends SingleCacheManagerTest {
       for (int i = 0; i < 10; i++) {
          cache2.put("key-" + i, "value-" + i);
       }
-      assertTrue("Inserts into cache2 should have evicted entries from cache1, but cache1 size is " + cache1.size(),
-            cache1.size() < 10);
+      assertTrue(cache1.size() < 10, "Inserts into cache2 should have evicted entries from cache1, but cache1 size is " + cache1.size());
       int totalSize = cache1.size() + cache2.size();
-      assertTrue("Total size across both caches should be at most 10 but was " + totalSize, totalSize <= 10);
+      assertTrue(totalSize <= 10, "Total size across both caches should be at most 10 but was " + totalSize);
 
       // Now insert more into cache1 with new keys to cause evictions from cache2
       int cache2SizeBefore = cache2.size();
       for (int i = 10; i < 20; i++) {
          cache1.put("key-" + i, "value-" + i);
       }
-      assertTrue("Inserts into cache1 should have evicted entries from cache2, but cache2 size is " + cache2.size()
-            + " (was " + cache2SizeBefore + ")", cache2.size() < cache2SizeBefore);
+      assertTrue(cache2.size() < cache2SizeBefore, "Inserts into cache1 should have evicted entries from cache2, but cache2 size is " + cache2.size()
+            + " (was " + cache2SizeBefore + ")");
       totalSize = cache1.size() + cache2.size();
-      assertTrue("Total size across both caches should be at most 10 but was " + totalSize, totalSize <= 10);
+      assertTrue(totalSize <= 10, "Total size across both caches should be at most 10 but was " + totalSize);
    }
 }

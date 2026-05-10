@@ -1,7 +1,7 @@
 package org.infinispan.functional;
 
 import static org.infinispan.testing.Exceptions.expectExceptionNonStrict;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
 import java.util.List;
@@ -171,7 +171,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
 
    protected void assertInvocations(int expected) {
       AtomicInteger counter = invocationCounts.get(getClass());
-      assertEquals(counter == null ? 0 : counter.get(), expected);
+      assertEquals(expected, counter == null ? 0 : counter.get());
    }
 
    // we don't want to increment the invocation count if it's the non-modifying invocation during transactional read-writes
@@ -185,7 +185,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    }
 
    protected <K> void testReadOnMissingValue(K key, FunctionalMap.ReadOnlyMap<K, String> ro, ReadMethod method) {
-      assertEquals(ro.eval(key, view -> view.find().isPresent()).join(), Boolean.FALSE);
+      assertEquals(Boolean.FALSE, ro.eval(key, view -> view.find().isPresent()).join());
       expectExceptionNonStrict(CompletionException.class, CacheException.class, NoSuchElementException.class, () ->
             method.eval(key, ro, view -> view.get())
       );

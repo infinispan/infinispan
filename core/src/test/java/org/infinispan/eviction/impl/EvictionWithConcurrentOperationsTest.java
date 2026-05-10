@@ -1,15 +1,16 @@
 package org.infinispan.eviction.impl;
 
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -55,7 +56,7 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.Testing;
 import org.infinispan.util.concurrent.DataOperationOrderer;
-import org.testng.AssertJUnit;
+import org.junit.jupiter.api.Assertions;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -96,7 +97,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          latch.waitToBlock(30, TimeUnit.SECONDS);
 
          //the eviction was trigger and it blocked before passivation
-         assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+         assertEquals("v1", cache.get(key1), "Wrong value for key " + key1 + " in get operation.");
       } finally {
          //let the eviction continue and wait for put
          latch.disable();
@@ -128,7 +129,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          latch.waitToBlock(30, TimeUnit.SECONDS);
 
          //the eviction was trigger and it blocked before passivation
-         assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+         assertEquals("v1", cache.get(key1), "Wrong value for key " + key1 + " in get operation.");
       } finally {
          //let the eviction continue and wait for put
          latch.disable();
@@ -177,7 +178,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       // This should be after the async put is known to finish.  It is undefined which would
       // win in the case of an entry being activated while it is also being passivated
       // This way it is clear which should be there
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+      assertEquals("v1", cache.get(key1), "Wrong value for key " + key1 + " in get operation.");
 
       assertInMemory(key1, "v1");
       assertNotInMemory(key2, "v2");
@@ -228,11 +229,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
       //the first read is blocked. it has check the data container and it didn't found any value
       //this second get should not block anywhere and it should fetch the value from persistence
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+      assertEquals("v1", cache.get(key1), "Wrong value for key " + key1 + " in get operation.");
 
       //let the second get continue
       readLatch.disable();
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", get.get());
+      assertEquals("v1", get.get(), "Wrong value for key " + key1 + " in get operation.");
 
       assertInMemory(key1, "v1");
       assertNotInMemory(key2, "v2");
@@ -278,13 +279,13 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
          //the first read is blocked. it has check the data container and it didn't found any value
          //this second get should not block anywhere and it should fetch the value from persistence
-         assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.put(key1, "v3"));
+         assertEquals("v1", cache.put(key1, "v3"), "Wrong value for key " + key1 + " in get operation.");
       } finally {
 
          //let the get continue
          readLatch.disable();
       }
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v3", get.get(30, TimeUnit.SECONDS));
+      assertEquals("v3", get.get(30, TimeUnit.SECONDS), "Wrong value for key " + key1 + " in get operation.");
 
       assertInMemory(key1, "v3");
       assertNotInMemory(key2, "v2");
@@ -307,7 +308,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       final AtomicBoolean firstWriter = new AtomicBoolean(false);
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = () -> readLatch.blockIfNeeded();
+      afterEntryWrappingInterceptor.beforeGet = readLatch::blockIfNeeded;
       afterEntryWrappingInterceptor.afterPut = () -> {
          if (!firstWriter.compareAndSet(false, true)) {
             writeLatch2.blockIfNeeded();
@@ -349,7 +350,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       }
       assertPossibleValues(key1, get.get(30, TimeUnit.SECONDS), "v1", "v3");
 
-      assertEquals("Wrong value for key " + key1 + " in put operation.", "v1", put2.get(30, TimeUnit.SECONDS));
+      assertEquals("v1", put2.get(30, TimeUnit.SECONDS), "Wrong value for key " + key1 + " in put operation.");
 
       assertInMemory(key1, "v3");
       assertNotInMemory(key2, "v2");
@@ -367,7 +368,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       final Latch readLatch = new Latch();
       final AfterActivationOrCacheLoader commandController = new AfterActivationOrCacheLoader()
             .injectThis(cache);
-      commandController.afterGet = () -> readLatch.blockIfNeeded();
+      commandController.afterGet = readLatch::blockIfNeeded;
 
       cache.evict(key1);
 
@@ -381,7 +382,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          readLatch.waitToBlock(30, TimeUnit.SECONDS);
 
          //now, we perform a put.
-         assertEquals("Wrong value for key " + key1 + " in put operation.", "v1", cache.put(key1, "v2"));
+         assertEquals("v1", cache.put(key1, "v2"), "Wrong value for key " + key1 + " in put operation.");
       } finally {
          //we let the get go...
          readLatch.disable();
@@ -397,7 +398,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       String key = "evicted-key";
       // We use skip cache load to prevent the additional loading of the entry in the initial write
       testEvictionDuring(key, () -> cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put(key, "value"),
-            AssertJUnit::assertNull, AssertJUnit::assertNotNull, true);
+            Assertions::assertNull, Assertions::assertNotNull, true);
    }
 
    // This case the removal acquires the orderer lock, but doesn't yet remove the value. Then the eviction occurs
@@ -406,7 +407,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    public void testEvictionDuringRemove() throws InterruptedException, ExecutionException, TimeoutException {
       String key = "evicted-key";
       cache.put(key, "removed");
-      testEvictionDuring(key, () -> cache.remove(key), AssertJUnit::assertNotNull, AssertJUnit::assertNull, false);
+      testEvictionDuring(key, () -> cache.remove(key), Assertions::assertNotNull, Assertions::assertNull, false);
    }
 
    /**
@@ -473,53 +474,53 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    }
 
    protected void initializeKeyAndCheckData(Object key, Object value) {
-      assertTrue("A cache store should be configured!", cache.getCacheConfiguration().persistence().usingStores());
+      assertTrue(cache.getCacheConfiguration().persistence().usingStores(), "A cache store should be configured!");
       cache.put(key, value);
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.peek(key);
-      assertNotNull("Key " + key + " does not exist in data container.", entry);
-      assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
+      assertNotNull(entry, "Key " + key + " does not exist in data container.");
+      assertEquals(value, entry.getValue(), "Wrong value for key " + key + " in data container.");
 
       WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
       MarshallableEntry<?, ?> entryLoaded = loader.loadEntry(key);
       if (passivation) {
          assertNull(entryLoaded);
       } else {
-         assertEquals("Wrong value for key " + key + " in cache loader", value, extractValue(entryLoaded));
+         assertEquals(value, extractValue(entryLoaded), "Wrong value for key " + key + " in cache loader");
       }
    }
 
    protected void assertInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.peek(key);
-      assertNotNull("Key " + key + " does not exist in data container", entry);
-      assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
+      assertNotNull(entry, "Key " + key + " does not exist in data container");
+      assertEquals(value, entry.getValue(), "Wrong value for key " + key + " in data container");
 
       WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
       // The entry may or may not be on disk with passivation
       if (!passivation) {
          MarshallableEntry<?, ?> entryLoaded = loader.loadEntry(key);
-         assertEquals("Wrong value for key " + key + " in cache loader", value, extractValue(entryLoaded));
+         assertEquals(value, extractValue(entryLoaded), "Wrong value for key " + key + " in cache loader");
       }
    }
 
    protected void assertNotInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> memoryEntry = container.peek(key);
-      assertNull("Key " + key + " exists in data container", memoryEntry);
+      assertNull(memoryEntry, "Key " + key + " exists in data container");
 
       WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
       if (passivation) {
          // With passivation the store write is sometimes delayed
          PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
          MarshallableEntry<?, ?> entryLoaded = join(pm.loadFromAllStores(key, true, true));
-         assertEquals("Wrong value for key " + key + " in cache loader", value, extractValue(entryLoaded));
+         assertEquals(value, extractValue(entryLoaded), "Wrong value for key " + key + " in cache loader");
 
          eventuallyEquals("Wrong value for key " + key + " in cache loader",
                           value, () -> extractValue(loader.loadEntry(key)));
       } else {
          MarshallableEntry<?, ?> entryLoaded = loader.loadEntry(key);
-         assertEquals("Wrong value for key " + key + " in cache loader", value, extractValue(entryLoaded));
+         assertEquals(value, extractValue(entryLoaded), "Wrong value for key " + key + " in cache loader");
       }
    }
 
@@ -564,7 +565,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
    protected void assertPossibleValues(Object key, Object value, Object... expectedValues) {
       for (Object expectedValue : expectedValues) {
-         if (value == null ? expectedValue == null : value.equals(expectedValue)) {
+         if (Objects.equals(value, expectedValue)) {
             return;
          }
       }

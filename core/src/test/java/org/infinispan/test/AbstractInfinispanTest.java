@@ -1,6 +1,7 @@
 package org.infinispan.test;
 
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -146,7 +147,7 @@ public abstract class AbstractInfinispanTest {
       if (names == null || params == null) {
          return null;
       }
-      assert names.length == params.length;
+      assertTrue(names.length == params.length);
 
       boolean[] last = new boolean[params.length];
       boolean none = true;

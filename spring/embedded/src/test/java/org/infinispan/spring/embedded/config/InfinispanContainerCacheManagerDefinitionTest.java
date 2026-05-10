@@ -1,6 +1,8 @@
 package org.infinispan.spring.embedded.config;
 
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -9,7 +11,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -30,7 +31,7 @@ public class InfinispanContainerCacheManagerDefinitionTest extends AbstractTestN
    private CacheManager containerCacheManager2;
 
    public void testContainerCacheManagerExists() {
-      Assert.assertNotNull(containerCacheManager);
-      Assert.assertNotNull(containerCacheManager2);
+      assertNotNull(containerCacheManager);
+      assertNotNull(containerCacheManager2);
    }
 }

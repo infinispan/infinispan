@@ -2,7 +2,7 @@ package org.infinispan.container.versioning;
 
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;

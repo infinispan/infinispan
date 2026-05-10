@@ -14,6 +14,7 @@ public class DeploymentHelper {
 
    public static WebArchive createDeployment() {
       WebArchive war = ShrinkWrap.create(WebArchive.class, "infinispan-server-integration.war");
+      addLibrary(war, "org.junit.jupiter:junit-jupiter-api");
       if (isTomcat()) {
          tomcat(war);
       } else if (isWildfly()) {

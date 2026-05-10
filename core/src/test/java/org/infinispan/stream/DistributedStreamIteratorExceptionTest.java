@@ -1,11 +1,11 @@
 package org.infinispan.stream;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.fail;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -58,7 +58,7 @@ public class DistributedStreamIteratorExceptionTest extends BaseSetupStreamItera
                   break;
                }
             }
-            assertNotNull("We should have found the throwable as a cause", cause);
+            assertNotNull(cause, "We should have found the throwable as a cause");
          }
       } finally {
          TestingUtil.replaceComponent(cache1, InternalDataContainer.class, dataContainer, true);

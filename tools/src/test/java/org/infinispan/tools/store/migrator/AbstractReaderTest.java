@@ -9,8 +9,8 @@ import static org.infinispan.tools.store.migrator.Element.SOURCE;
 import static org.infinispan.tools.store.migrator.Element.TARGET;
 import static org.infinispan.tools.store.migrator.Element.VERSION;
 import static org.infinispan.tools.store.migrator.TestUtil.propKey;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Properties;
 
@@ -21,7 +21,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
+import org.junit.jupiter.api.Assertions;
 import org.testng.annotations.Test;
 
 @Test(testName = "org.infinispan.tools.store.migrator.AbstractReaderTest", groups = "functional")
@@ -56,6 +56,7 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
    /**
     * Method meant to be overriden to add store configuration. The default implementation already handles configuring
     * the segments for the hash and thus the store only needs to enable segmenting on the store if applicable.
+    *
     * @return builder that should make the target config
     */
    protected ConfigurationBuilder getTargetCacheConfig() {
@@ -80,7 +81,7 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
       } else {
          properties.put(propKey(type, MARSHALLER, CONTEXT_INITIALIZERS), TestUtil.SCI.INSTANCE.getClass().getName());
       }
-      properties.put(propKey(type, VERSION), type == SOURCE ? String.valueOf(majorVersion): Version.getMajor());
+      properties.put(propKey(type, VERSION), type == SOURCE ? String.valueOf(majorVersion) : Version.getMajor());
 
       if (type == TARGET && targetSegments > 0) {
          properties.put(propKey(type, SEGMENT_COUNT), String.valueOf(targetSegments));
@@ -110,16 +111,16 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
          Cache<String, Object> cache = manager.getCache(TEST_CACHE_NAME);
          for (String key : TestUtil.TEST_MAP.keySet()) {
             Object stored = cache.get(key);
-            assertNotNull(String.format("Key=%s", key), stored);
+            assertNotNull(stored, String.format("Key=%s", key));
             Object expected = TestUtil.TEST_MAP.get(key);
-            assertNotNull(String.format("Key=%s", key), stored);
+            assertNotNull(stored, String.format("Key=%s", key));
             assertEquals(expected, stored);
          }
 
          // Ensure that all of the unsupported classes are not written to the target store
          TestUtil.TEST_MAP_UNSUPPORTED.keySet().stream()
                .map(cache::get)
-               .forEach(AssertJUnit::assertNull);
+               .forEach(Assertions::assertNull);
       } finally {
          manager.stop();
       }

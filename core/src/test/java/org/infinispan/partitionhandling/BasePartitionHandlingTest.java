@@ -5,7 +5,7 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractJChannel;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;

@@ -4,8 +4,8 @@ import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
 import static org.infinispan.partitionhandling.AvailabilityMode.AVAILABLE;
 import static org.infinispan.partitionhandling.AvailabilityMode.DEGRADED_MODE;
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.HashSet;
 import java.util.List;

@@ -1,7 +1,7 @@
 package org.infinispan.xsite;
 
-import static org.testng.Assert.assertNull;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Collections;
 
@@ -21,16 +21,16 @@ public class NoFailureAsyncReplWarnFailurePolicyTest extends BaseSiteUnreachable
 
    public void testNoFailures() {
       cache(LON, 0).put("k", "v");
-      assertEquals(cache(LON, 0).get("k"), "v");
-      assertEquals(cache(LON, 1).get("k"), "v");
+      assertEquals("v", cache(LON, 0).get("k"));
+      assertEquals("v", cache(LON, 1).get("k"));
 
       cache(LON, 1).remove("k");
       assertNull(cache(LON, 0).get("k"));
       assertNull(cache(LON, 1).get("k"));
 
       cache(LON, 0).putAll(Collections.singletonMap("k", "v"));
-      assertEquals(cache(LON, 0).get("k"), "v");
-      assertEquals(cache(LON, 1).get("k"), "v");
+      assertEquals("v", cache(LON, 0).get("k"));
+      assertEquals("v", cache(LON, 1).get("k"));
    }
 
    protected ConfigurationBuilder getLonActiveConfig() {

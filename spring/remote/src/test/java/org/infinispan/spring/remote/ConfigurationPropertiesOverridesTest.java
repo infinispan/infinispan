@@ -7,9 +7,9 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -38,8 +38,8 @@ public class ConfigurationPropertiesOverridesTest {
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
       assertTrue(
-            "isEmpty() should have noticed that the ConfigurationPropertiesOverrides instance is indeed empty. However, it didn't.",
-            objectUnderTest.isEmpty());
+            objectUnderTest.isEmpty(),
+            "isEmpty() should have noticed that the ConfigurationPropertiesOverrides instance is indeed empty. However, it didn't.");
    }
 
    @Test
@@ -48,8 +48,8 @@ public class ConfigurationPropertiesOverridesTest {
       objectUnderTest.setMarshaller("test.Marshaller");
 
       assertFalse(
-            "isEmpty() should have noticed that the ConfigurationPropertiesOverrides instance is not empty. However, it didn't.",
-            objectUnderTest.isEmpty());
+            objectUnderTest.isEmpty(),
+            "isEmpty() should have noticed that the ConfigurationPropertiesOverrides instance is not empty. However, it didn't.");
    }
 
    @Test
@@ -61,9 +61,8 @@ public class ConfigurationPropertiesOverridesTest {
       final Properties overriddenConfigurationProperties = objectUnderTest
             .override(this.defaultConfigurationProperties);
 
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   expectedMarshaller, overriddenConfigurationProperties.getProperty(MARSHALLER));
+      assertEquals(expectedMarshaller, overriddenConfigurationProperties.getProperty(MARSHALLER), "override(" + this.defaultConfigurationProperties
+            + ") should have overridden property 'transportFactory'. However, it didn't." );
    }
 
    @Test
@@ -77,9 +76,9 @@ public class ConfigurationPropertiesOverridesTest {
       final Properties overriddenConfigurationProperties = objectUnderTest
             .override(this.defaultConfigurationProperties);
 
-      assertEquals("override(" + this.defaultConfigurationProperties
-                  + ") should have overridden property 'transportFactory'. However, it didn't.",
-            expectedServerListString, overriddenConfigurationProperties.getProperty(SERVER_LIST));
+      assertEquals(expectedServerListString, overriddenConfigurationProperties.getProperty(SERVER_LIST),
+            "override(" + this.defaultConfigurationProperties
+                        + ") should have overridden property 'transportFactory'. However, it didn't.");
    }
 
    @Test
@@ -91,10 +90,9 @@ public class ConfigurationPropertiesOverridesTest {
       final Properties overriddenConfigurationProperties = objectUnderTest
             .override(this.defaultConfigurationProperties);
 
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   expectedAsyncExecutorFactory,
-                   overriddenConfigurationProperties.getProperty(ASYNC_EXECUTOR_FACTORY));
+      assertEquals(expectedAsyncExecutorFactory, overriddenConfigurationProperties.getProperty(ASYNC_EXECUTOR_FACTORY),
+            "override(" + this.defaultConfigurationProperties
+                        + ") should have overridden property 'transportFactory'. However, it didn't.");
    }
 
    @Test
@@ -106,10 +104,9 @@ public class ConfigurationPropertiesOverridesTest {
       final Properties overriddenConfigurationProperties = objectUnderTest
             .override(this.defaultConfigurationProperties);
 
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   String.valueOf(expectedTcpNoDelay),
-                   overriddenConfigurationProperties.getProperty(TCP_NO_DELAY));
+      assertEquals(String.valueOf(expectedTcpNoDelay), overriddenConfigurationProperties.getProperty(TCP_NO_DELAY),
+            "override(" + this.defaultConfigurationProperties
+                  + ") should have overridden property 'transportFactory'. However, it didn't.");
    }
 
    @Test
@@ -121,10 +118,9 @@ public class ConfigurationPropertiesOverridesTest {
       final Properties overriddenConfigurationProperties = objectUnderTest
             .override(this.defaultConfigurationProperties);
 
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   String.valueOf(expectedTcpKeepAlive),
-                   overriddenConfigurationProperties.getProperty(TCP_KEEP_ALIVE));
+      assertEquals(String.valueOf(expectedTcpKeepAlive), overriddenConfigurationProperties.getProperty(TCP_KEEP_ALIVE),
+            "override(" + this.defaultConfigurationProperties
+                  + ") should have overridden property 'transportFactory'. However, it didn't.");
    }
 
    @Test
@@ -136,10 +132,9 @@ public class ConfigurationPropertiesOverridesTest {
       final Properties overriddenConfigurationProperties = objectUnderTest
             .override(this.defaultConfigurationProperties);
 
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   expectedRequestBalancingStrategy,
-                   overriddenConfigurationProperties.getProperty(REQUEST_BALANCING_STRATEGY));
+      assertEquals(expectedRequestBalancingStrategy, overriddenConfigurationProperties.getProperty(REQUEST_BALANCING_STRATEGY),
+            "override(" + this.defaultConfigurationProperties
+                  + ") should have overridden property 'transportFactory'. However, it didn't.");
    }
 
    @Test
@@ -151,9 +146,8 @@ public class ConfigurationPropertiesOverridesTest {
       final Properties overriddenConfigurationProperties = objectUnderTest
             .override(this.defaultConfigurationProperties);
 
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   String.valueOf(expectedForceReturnValues),
-                   overriddenConfigurationProperties.getProperty(FORCE_RETURN_VALUES));
+      assertEquals(String.valueOf(expectedForceReturnValues), overriddenConfigurationProperties.getProperty(FORCE_RETURN_VALUES),
+            "override(" + this.defaultConfigurationProperties
+                  + ") should have overridden property 'transportFactory'. However, it didn't.");
    }
 }

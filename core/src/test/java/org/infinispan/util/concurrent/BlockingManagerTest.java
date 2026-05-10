@@ -1,7 +1,7 @@
 package org.infinispan.util.concurrent;
 
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;

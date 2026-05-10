@@ -1,5 +1,11 @@
 package org.infinispan.persistence;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +21,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -86,30 +91,30 @@ public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
       byte[] storedBytes = dummyInMemoryStore.valueToStoredBytes("v1");
       storeMap.put("k1", storedBytes);
 
-      AssertJUnit.assertEquals("v1", cache.get("k1"));
+      assertEquals("v1", cache.get("k1"));
 
       TestingUtil.writeToAllStores("k2", "v2", cache);
 
-      AssertJUnit.assertTrue(store.contains("k1"));
-      AssertJUnit.assertFalse(store.contains("k2"));
+      assertTrue(store.contains("k1"));
+      assertFalse(store.contains("k2"));
 
       // put into cache but not into read only store
       cache.put("k2", "v2");
-      AssertJUnit.assertEquals("v2", cache.get("k2"));
+      assertEquals("v2", cache.get("k2"));
 
-      AssertJUnit.assertTrue(store.contains("k1"));
-      AssertJUnit.assertFalse(store.contains("k2"));
+      assertTrue(store.contains("k1"));
+      assertFalse(store.contains("k2"));
 
-      AssertJUnit.assertFalse(TestingUtil.deleteFromAllStores("k1", cache));
-      AssertJUnit.assertFalse(TestingUtil.deleteFromAllStores("k2", cache));
-      AssertJUnit.assertFalse(TestingUtil.deleteFromAllStores("k3", cache));
+      assertFalse(TestingUtil.deleteFromAllStores("k1", cache));
+      assertFalse(TestingUtil.deleteFromAllStores("k2", cache));
+      assertFalse(TestingUtil.deleteFromAllStores("k3", cache));
 
-      AssertJUnit.assertEquals("v1", cache.get("k1"));
-      AssertJUnit.assertEquals("v2", cache.get("k2"));
+      assertEquals("v1", cache.get("k1"));
+      assertEquals("v2", cache.get("k2"));
       cache.remove("k1");
       cache.remove("k2");
-      AssertJUnit.assertNotNull(cache.get("k1"));
-      AssertJUnit.assertNull(cache.get("k2"));
+      assertNotNull(cache.get("k1"));
+      assertNull(cache.get("k2"));
 
       // lastly check what happens if entry is expired but load is called
       if (expiration) {
@@ -117,11 +122,11 @@ public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
          storedBytes = dummyInMemoryStore.valueToStoredBytes("v1-new");
          storeMap.put("k1", storedBytes);
 
-         AssertJUnit.assertEquals("v1", cache.get("k1"));
+         assertEquals("v1", cache.get("k1"));
 
          timeService.advance(EXPIRATION_TIME + 1);
 
-         AssertJUnit.assertEquals("v1-new", cache.get("k1"));
+         assertEquals("v1-new", cache.get("k1"));
       }
    }
 }

@@ -8,11 +8,11 @@ import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.infinispan.xsite.XSiteAdminOperations.SUCCESS;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferManager.STATUS_CANCELED;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferManager.STATUS_SENDING;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;

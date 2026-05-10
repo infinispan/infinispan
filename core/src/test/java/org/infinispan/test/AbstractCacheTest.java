@@ -1,8 +1,8 @@
 package org.infinispan.test;
 
 import static java.lang.String.format;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -75,11 +75,11 @@ public abstract class AbstractCacheTest extends AbstractInfinispanTest {
    }
 
    protected void assertLocked(Cache<?, ?> cache, Object key) {
-      assertTrue(format("Expected key '%s' to be locked on cache '%s'", key, cache), checkLocked(cache, key));
+      assertTrue(checkLocked(cache, key), format("Expected key '%s' to be locked on cache '%s'", key, cache));
    }
 
    protected void assertNotLocked(Cache<?, ?> cache, Object key) {
-      assertFalse(format("Expected key '%s' to not be locked on cache '%s'", key, cache), checkLocked(cache, key));
+      assertFalse(checkLocked(cache, key), format("Expected key '%s' to not be locked on cache '%s'", key, cache));
    }
 
    protected boolean checkLocked(Cache<?, ?> cache, Object key) {

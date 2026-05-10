@@ -2,7 +2,7 @@ package org.infinispan.server.memcached.text;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,8 +61,8 @@ public class MemcachedServerTest extends AbstractInfinispanTest {
                ms.start(new MemcachedServerConfigurationBuilder().build(), cm);
                ms.postStart();
                await(ms.initializeDefaultCache());
-               assertEquals(ms.getHost(), "127.0.0.1");
-               assertEquals((int) ms.getPort(), 11211);
+               assertEquals("127.0.0.1", ms.getHost());
+               assertEquals(11211, (int) ms.getPort());
             }));
    }
 

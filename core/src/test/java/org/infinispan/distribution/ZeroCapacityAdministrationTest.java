@@ -5,7 +5,7 @@ import static org.assertj.core.api.Fail.fail;
 import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
 import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.CACHE_SCOPE;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.nio.file.Paths;
 

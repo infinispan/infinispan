@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.near;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -45,7 +45,7 @@ public class InvalidatedFailoverNearCacheBloomTest extends InvalidatedFailoverNe
             break;
          }
       }
-      assertTrue("Could not find a server that mapped to " + socketAddress, stoppedAServer);
+      assertTrue(stoppedAServer, "Could not find a server that mapped to " + socketAddress);
    }
 
    @Override

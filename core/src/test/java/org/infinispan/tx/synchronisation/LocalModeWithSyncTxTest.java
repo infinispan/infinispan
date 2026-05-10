@@ -1,6 +1,7 @@
 package org.infinispan.tx.synchronisation;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -48,7 +49,7 @@ public class LocalModeWithSyncTxTest extends LocalModeTxTest {
    public void testSyncRegisteredWithRollback() throws Exception {
       EmbeddedTransaction dt = startTx();
       tm().rollback();
-      assertEquals(null, cache.get("k"));
+      assertNull(cache.get("k"));
       assertEquals(0, dt.getEnlistedResources().size());
       assertEquals(0, dt.getEnlistedSynchronization().size());
    }

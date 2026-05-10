@@ -1,8 +1,8 @@
 package org.infinispan.partitionhandling;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -114,9 +114,9 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
 
 
       log.tracef("Before the 1st merge P0 = %s, P1 = %s, P2 = %s", partition(0), partition(1), partition(2));
-      assertEquals(partitions.length, 3);
+      assertEquals(3, partitions.length);
       partition(0).merge(partition(1));
-      assertEquals(partitions.length, 2);
+      assertEquals(2, partitions.length);
       log.tracef("After the 1st merge P0 = %s, P1 = %s", partition(0), partition(1));
 
       partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
@@ -152,7 +152,7 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
       log.tracef("After 2nd merge P0=%s", partition(0));
 
 
-      assertEquals(partitions.length, 1);
+      assertEquals(1, partitions.length);
       partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
 
       partition(0).assertKeyAvailableForRead(k0, 10);

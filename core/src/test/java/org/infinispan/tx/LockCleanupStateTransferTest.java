@@ -1,9 +1,9 @@
 package org.infinispan.tx;
 
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -85,7 +85,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
 
       if (toBlock == TxCompletionNotificationCommand.class) {
          //at this stage everything should be committed locally
-         DataContainer dc = advancedCache(1).getDataContainer();
+         DataContainer<?, ?> dc = advancedCache(1).getDataContainer();
          for (Object k : keys) {
             assertEquals(k, dc.peek(k).getValue());
          }
@@ -119,7 +119,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
 
       for (int i = 0; i < 3; i++) {
          TransactionTable tt = TestingUtil.getTransactionTable(cache(i));
-         assertEquals("For cache " + i, 0, tt.getLocalTxCount());
+         assertEquals(0, tt.getLocalTxCount(), "For cache " + i);
       }
 
       // the tx completion is async, so we need to wait a little more

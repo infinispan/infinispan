@@ -2,9 +2,9 @@ package org.infinispan.conflict.impl;
 
 import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -55,7 +55,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
    private static final String RESOLVED_VALUE = "RESOLVED";
    private static final String[] ALL_KEYS = new String[] {BEFORE_CR_CRASH_KEY, DURING_CR_CRASH_KEY, AFTER_CR_RESTART_KEY};
    private static final EntryMergePolicy POLICY = (preferredEntry, otherEntries) -> {
-      Object key = preferredEntry != null ? preferredEntry.getKey() : ((CacheEntry)otherEntries.get(0)).getKey();
+      Object key = preferredEntry != null ? preferredEntry.getKey() : ((CacheEntry<?, ?>)otherEntries.get(0)).getKey();
       return new ImmortalCacheEntry(key, RESOLVED_VALUE);
    };
    private static final KeyPartitioner PARTITIONER = new TestKeyPartioner();
@@ -120,12 +120,12 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
       for (String key : ALL_KEYS) {
          Map<Address, InternalCacheValue> versionMap = cm.getAllVersions(key);
          assertNotNull(versionMap);
-         assertEquals("Versions: " + versionMap, numberOfOwners, versionMap.size());
+         assertEquals(numberOfOwners, versionMap.size(), "Versions: " + versionMap);
          String message = String.format("Key=%s. VersionMap: %s", key, versionMap);
          for (InternalCacheValue icv : versionMap.values()) {
-            assertNotNull(message, icv);
-            assertNotNull(message, icv.getValue());
-            assertEquals(message, valueAfterMerge, icv.getValue());
+            assertNotNull(icv, message);
+            assertNotNull(icv.getValue(), message);
+            assertEquals(valueAfterMerge, icv.getValue(), message);
          }
       }
       assertEquals(0, cm.getConflicts().peek(m -> log.errorf("Conflict: " + m)).count());
@@ -153,8 +153,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
 
       @Override
       public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof ConflictResolutionStartCommand) {
-            ConflictResolutionStartCommand src = (ConflictResolutionStartCommand) command;
+         if (command instanceof ConflictResolutionStartCommand src) {
             if (src.getSegments().contains(segment)) {
                log.debugf("Completing future and ignoring state request %s", command);
                future.complete(src);
@@ -176,8 +175,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
 
       @Override
       public int getSegment(Object key) {
-         if (key instanceof String) {
-            String keyString = (String) key;
+         if (key instanceof String keyString) {
             switch (keyString) {
                case BEFORE_CR_CRASH_KEY:
                   return 10;

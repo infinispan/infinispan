@@ -2,11 +2,11 @@ package org.infinispan.tx.recovery;
 
 import static org.infinispan.configuration.cache.RecoveryConfiguration.DEFAULT_RECOVERY_INFO_CACHE;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.rm;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -48,27 +48,27 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
    public void testRecoveryWithCacheConfigured() {
       Configuration withRecoveryAndCache = cacheManager.getCache("withRecoveryAndCache").getCacheConfiguration();
       assertTrue(withRecoveryAndCache.transaction().recovery().enabled(), "Recovery is supposed to be enabled.");
-      assertEquals(withRecoveryAndCache.transaction().recovery().recoveryInfoCacheName(), "noRecovery", "Wrong recovery cache name.");
+      assertEquals("noRecovery", withRecoveryAndCache.transaction().recovery().recoveryInfoCacheName(), "Wrong recovery cache name.");
       RecoveryManagerImpl recoveryManager = rm(cacheManager.getCache("withRecoveryAndCache"));
       assertNotNull(recoveryManager, "RecoveryManager should be *not* null when recovery is enabled.");
       Cache<RecoveryInfoKey, RecoveryAwareRemoteTransaction> preparedTransactions = (Cache<RecoveryInfoKey, RecoveryAwareRemoteTransaction>) recoveryManager.getInDoubtTransactionsMap();
-      assertEquals(preparedTransactions.getName(), "noRecovery", "Wrong recovery cache name.");
+      assertEquals("noRecovery", preparedTransactions.getName(), "Wrong recovery cache name.");
    }
 
    public void testRecoveryWithDefaultCache() {
       Configuration recoveryDefaultCache = cacheManager.getCache("withRecoveryDefaultCache").getCacheConfiguration();
       assertTrue(recoveryDefaultCache.transaction().recovery().enabled(), "Recovery is supposed to be enabled.");
-      assertEquals(recoveryDefaultCache.transaction().recovery().recoveryInfoCacheName(), DEFAULT_RECOVERY_INFO_CACHE, "Wrong recovery cache name.");
+      assertEquals(DEFAULT_RECOVERY_INFO_CACHE, recoveryDefaultCache.transaction().recovery().recoveryInfoCacheName(), "Wrong recovery cache name.");
       RecoveryManagerImpl recoveryManager = rm(cacheManager.getCache("withRecoveryDefaultCache"));
       assertNotNull(recoveryManager, "RecoveryManager should be *not* null when recovery is enabled.");
       Cache<RecoveryInfoKey, RecoveryAwareRemoteTransaction> preparedTransactions = (Cache<RecoveryInfoKey, RecoveryAwareRemoteTransaction>) recoveryManager.getInDoubtTransactionsMap();
-      assertEquals(preparedTransactions.getName(), DEFAULT_RECOVERY_INFO_CACHE, "Wrong recovery cache name.");
+      assertEquals(DEFAULT_RECOVERY_INFO_CACHE, preparedTransactions.getName(), "Wrong recovery cache name.");
    }
 
    public void testNoRecovery() {
       Configuration noRecovery = cacheManager.getCache("noRecovery").getCacheConfiguration();
       assertFalse(noRecovery.transaction().recovery().enabled(), "Recovery is supposed to be disabled");
       assertNull(rm(cacheManager.getCache("noRecovery")), "RecoveryManager should be null when recovery is disabled");
-      assertEquals(noRecovery.transaction().recovery().recoveryInfoCacheName(), "someName", "Wrong recovery cache name.");
+      assertEquals("someName", noRecovery.transaction().recovery().recoveryInfoCacheName(), "Wrong recovery cache name.");
    }
 }

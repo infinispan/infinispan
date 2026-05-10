@@ -1,8 +1,9 @@
 package org.infinispan.query.remote.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 
@@ -183,7 +184,7 @@ public class ZeroCapacityNodeProtobufMetadataTest extends MultipleCacheManagersT
 
    private static SerializationContext serializationContext(EmbeddedCacheManager manager) {
       var protobufMetadataManager = TestingUtil.extractGlobalComponent(manager, ProtobufMetadataManager.class);
-      assert protobufMetadataManager instanceof ProtobufMetadataManagerImpl;
+      assertInstanceOf(ProtobufMetadataManagerImpl.class, protobufMetadataManager);
       return ((ProtobufMetadataManagerImpl) protobufMetadataManager).getSerializationContext();
    }
 

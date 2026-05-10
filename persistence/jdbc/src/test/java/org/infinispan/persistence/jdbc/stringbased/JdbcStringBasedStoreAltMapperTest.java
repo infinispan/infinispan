@@ -1,9 +1,9 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CompletionStage;
 
@@ -94,7 +94,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
 
    public void testStoreLoadRemove() throws Exception {
       assertRowCount(0);
-      assertNull("should not be present in the store", cacheStore.loadEntry(MIRCEA));
+      assertNull(cacheStore.loadEntry(MIRCEA), "should not be present in the store");
       String value = "adsdsadsa";
       cacheStore.write(MarshalledEntryUtil.create(MIRCEA, value, marshaller));
       assertRowCount(1);

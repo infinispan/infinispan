@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod.test;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.server.hotrod.HotRodSingleNodeTest;
 import org.infinispan.server.hotrod.OperationStatus;
@@ -34,7 +35,7 @@ public class HotRodStreamingTest extends HotRodSingleNodeTest {
       TestGetWithMetadataResponse getResponse = client().getStream(K1, 0);
       assertEquals(-1, getResponse.lifespan);
       assertEquals(-1, getResponse.maxIdle);
-      assertEquals(V1, getResponse.data.get());
+      assertArrayEquals(V1, getResponse.data.get());
    }
 
    public void testPutStreamIfAbsent() {
@@ -44,7 +45,7 @@ public class HotRodStreamingTest extends HotRodSingleNodeTest {
       TestGetWithMetadataResponse getResponse = client().getStream(K1, 0);
       assertEquals(-1, getResponse.lifespan);
       assertEquals(-1, getResponse.maxIdle);
-      assertEquals(V1, getResponse.data.get());
+      assertArrayEquals(V1, getResponse.data.get());
 
       putResponse = client().putStream(K1, V2, -1, -1, -1);
       assertEquals(OperationStatus.OperationNotExecuted, putResponse.getStatus());
@@ -52,7 +53,7 @@ public class HotRodStreamingTest extends HotRodSingleNodeTest {
       getResponse = client().getStream(K1, 0);
       assertEquals(-1, getResponse.lifespan);
       assertEquals(-1, getResponse.maxIdle);
-      assertEquals(V1, getResponse.data.get());
+      assertArrayEquals(V1, getResponse.data.get());
    }
 
    public void testReplaceStream() {
@@ -62,7 +63,7 @@ public class HotRodStreamingTest extends HotRodSingleNodeTest {
       TestGetWithMetadataResponse getResponse = client().getStream(K1, 0);
       assertEquals(-1, getResponse.lifespan);
       assertEquals(-1, getResponse.maxIdle);
-      assertEquals(V1, getResponse.data.get());
+      assertArrayEquals(V1, getResponse.data.get());
 
       long k1version = getResponse.dataVersion;
 
@@ -72,7 +73,7 @@ public class HotRodStreamingTest extends HotRodSingleNodeTest {
       getResponse = client().getStream(K1, 0);
       assertEquals(-1, getResponse.lifespan);
       assertEquals(-1, getResponse.maxIdle);
-      assertEquals(V1, getResponse.data.get());
+      assertArrayEquals(V1, getResponse.data.get());
 
       putResponse = client().putStream(K1, V2, k1version, -1, -1); // use the right version
       assertEquals(OperationStatus.Success, putResponse.getStatus());
@@ -80,9 +81,7 @@ public class HotRodStreamingTest extends HotRodSingleNodeTest {
       getResponse = client().getStream(K1, 0);
       assertEquals(-1, getResponse.lifespan);
       assertEquals(-1, getResponse.maxIdle);
-      assertEquals(V2, getResponse.data.get());
-
-
+      assertArrayEquals(V2, getResponse.data.get());
    }
 
 }

@@ -1,15 +1,15 @@
 package org.infinispan.invalidation;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,10 +85,10 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       assertEquals("value", cache1.remove("key"));
       replListener(cache2).waitForRpc();
 
-      assertEquals(false, cache2.containsKey("key"));
+      assertFalse(cache2.containsKey("key"));
    }
 
-   public void testResurrectEntry() throws Exception {
+   public void testResurrectEntry() {
       AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
       AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
       replListener(cache2).expect(InvalidateCommand.class);
@@ -96,20 +96,20 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       replListener(cache2).waitForRpc();
 
       assertEquals("value", cache1.get("key"));
-      assertEquals(null, cache2.get("key"));
+      assertNull(cache2.get("key"));
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "newValue");
       replListener(cache2).waitForRpc();
 
       assertEquals("newValue", cache1.get("key"));
-      assertEquals(null, cache2.get("key"));
+      assertNull(cache2.get("key"));
 
       replListener(cache2).expect(InvalidateCommand.class);
       assertEquals("newValue", cache1.remove("key"));
       replListener(cache2).waitForRpc();
 
-      assertEquals(null, cache1.get("key"));
-      assertEquals(null, cache2.get("key"));
+      assertNull(cache1.get("key"));
+      assertNull(cache2.get("key"));
 
       // Restore locally
       replListener(cache2).expect(InvalidateCommand.class);
@@ -117,14 +117,14 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       replListener(cache2).waitForRpc();
 
       assertEquals("value", cache1.get("key"));
-      assertEquals(null, cache2.get("key"));
+      assertNull(cache2.get("key"));
 
       replListener(cache1).expect(InvalidateCommand.class);
       cache2.put("key", "value2");
       replListener(cache1).waitForRpc();
 
       assertEquals("value2", cache2.get("key"));
-      assertEquals(null, cache1.get("key"));
+      assertNull(cache1.get("key"));
    }
 
    public void testDeleteNonExistentEntry() throws Exception {
@@ -134,15 +134,15 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       AdvancedCache<String, String> cache1 = advancedCache(0,"invalidationTx");
       AdvancedCache<String, String> cache2 = advancedCache(1,"invalidationTx");
 
-      assertNull("Should be null", cache1.get("key"));
-      assertNull("Should be null", cache2.get("key"));
+      assertNull(cache1.get("key"), "Should be null");
+      assertNull(cache2.get("key"), "Should be null");
 
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
       replListener(cache2).waitForRpc();
 
       assertEquals("value", cache1.get("key"));
-      assertNull("Should be null", cache2.get("key"));
+      assertNull(cache2.get("key"), "Should be null");
 
       // OK, here's the real test
       TransactionManager tm = TestingUtil.getTransactionManager(cache2);
@@ -271,8 +271,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
       assertFalse(cache1.remove("key", "value"));
 
-      assertEquals("Should not remove", "value1", cache1.get("key"));
-      assertEquals("Should not evict", "value2", cache2.get("key"));
+      assertEquals("value1", cache1.get("key"), "Should not remove");
+      assertEquals("value2", cache2.get("key"), "Should not evict");
 
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.remove("key", "value1");

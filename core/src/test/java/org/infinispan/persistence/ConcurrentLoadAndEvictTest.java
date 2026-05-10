@@ -1,6 +1,9 @@
 package org.infinispan.persistence;
 
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -60,18 +63,18 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
    public void testEvictBeforeRead() throws PersistenceException, ExecutionException, InterruptedException {
       cache = cacheManager.getCache();
       cache.put("a", "b");
-      assert cache.get("a").equals("b");
+      assertEquals("b", cache.get("a"));
       DummyInMemoryStore cl = TestingUtil.getFirstStore(cache);
       MarshallableEntry se = cl.loadEntry("a");
-      assert se != null;
-      assert se.getValue().equals("b");
+      assertNotNull(se);
+      assertEquals("b", se.getValue());
 
       // clear the cache
       cache.getAdvancedCache().withFlags(SKIP_CACHE_STORE).clear();
 
       se = cl.loadEntry("a");
-      assert se != null;
-      assert se.getValue().equals("b");
+      assertNotNull(se);
+      assertEquals("b", se.getValue());
 
       // now attempt a concurrent get and evict.
       sdi.enabled = true;
@@ -92,13 +95,13 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       log.info("test::after the evict");
 
       // make sure the get call, which would have gone past the cache loader interceptor first, gets the correct value.
-      assert future.get().equals("b");
+      assertEquals("b", future.get());
 
       // disable the SlowDownInterceptor
       sdi.enabled = false;
 
       // and check that the key actually has been evicted
-      assert !TestingUtil.extractComponent(cache, InternalDataContainer.class).containsKey("a");
+      assertFalse(TestingUtil.extractComponent(cache, InternalDataContainer.class).containsKey("a"));
    }
 
    public static class SlowDownInterceptor extends DDAsyncInterceptor {

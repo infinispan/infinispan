@@ -7,6 +7,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -26,7 +27,6 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.Op;
 import org.infinispan.testing.security.TestCertificates;
-import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -118,7 +118,7 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
       }
 
       //assert
-      Assert.assertFalse(success);
+      assertFalse(success);
    }
 
    //Server configuration needs to be performed per test

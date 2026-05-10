@@ -1,9 +1,9 @@
 package org.infinispan.functional;
 
 import static org.infinispan.testing.Exceptions.assertException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.concurrent.CompletionException;
@@ -65,7 +65,7 @@ public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {
          tm.rollback();
       } catch (WriteSkewException e) {
          // synchronous get is invoked using synchronous API, without wrapping into CompletionExceptions
-         assert op2 == ReadOp.GET;
+         assertTrue(op2 == ReadOp.GET);
       }
       if (tm.getStatus() == Status.STATUS_ACTIVE) {
          try {

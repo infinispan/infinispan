@@ -1,8 +1,8 @@
 package org.infinispan.jmx;
 
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -72,12 +72,12 @@ public class HealthJmxTest extends MultipleCacheManagersTest {
         assertTrue((long) freeMemoryKb > 0);
         assertEquals((String) clusterHealth, HealthStatus.HEALTHY.toString());
         assertEquals((String) clusterName, TestResourceTracker.getCurrentTestName());
-        assertEquals((int) numberOfNodes, 1);
+        assertEquals(1, (int) numberOfNodes);
 
         var health = (String[]) cacheHealth;
-        assertEquals(health[0], TestCacheManagerFactory.DEFAULT_CACHE_NAME);
+        assertEquals(TestCacheManagerFactory.DEFAULT_CACHE_NAME, health[0]);
         assertEquals(health[1], HealthStatus.HEALTHY.toString());
-        assertEquals(health[2], "test");
+        assertEquals("test", health[2]);
         assertEquals(health[3], HealthStatus.HEALTHY.toString());
     }
 }

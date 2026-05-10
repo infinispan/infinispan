@@ -1,9 +1,10 @@
 package org.infinispan.remoting.rpc;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Map;
 
@@ -55,7 +56,7 @@ public class RpcManagerCustomCacheRpcCommandTest extends MultipleCacheManagersTe
       assertNotNull(response);
       assertTrue(response.isValid());
       assertTrue(response.isSuccessful());
-      assertTrue(response instanceof SuccessfulResponse);
+      assertInstanceOf(SuccessfulResponse.class, response);
       Object value = ((SuccessfulResponse) response).getResponseValue();
       assertEquals(EXPECTED_RETURN_VALUE, value);
    }
@@ -71,7 +72,7 @@ public class RpcManagerCustomCacheRpcCommandTest extends MultipleCacheManagersTe
          invoke(rpcManager, command);
          fail("Expected RemoteException not thrown");
       } catch (RemoteException e) {
-         assertTrue(e.getCause() instanceof IllegalArgumentException);
+         assertInstanceOf(IllegalArgumentException.class, e.getCause());
          assertEquals("exception!", e.getCause().getMessage());
       } catch (Exception ex) {
          fail("Expected exception not thrown but instead we got : " + ex);
@@ -93,7 +94,7 @@ public class RpcManagerCustomCacheRpcCommandTest extends MultipleCacheManagersTe
       assertNotNull(response);
       assertTrue(response.isValid());
       assertTrue(response.isSuccessful());
-      assertTrue(response instanceof SuccessfulResponse);
+      assertInstanceOf(SuccessfulResponse.class, response);
       Object value = ((SuccessfulResponse) response).getResponseValue();
       assertEquals(EXPECTED_RETURN_VALUE, value);
    }
@@ -109,7 +110,7 @@ public class RpcManagerCustomCacheRpcCommandTest extends MultipleCacheManagersTe
          invoke(rpcManager, command);
          fail("Expected RemoteException not thrown");
       } catch (RemoteException e) {
-         assertTrue(e.getCause() instanceof IllegalArgumentException);
+         assertInstanceOf(IllegalArgumentException.class, e.getCause());
          assertEquals("exception!", e.getCause().getMessage());
       } catch (Exception ex) {
          fail("Expected exception not thrown but instead we got : " + ex);

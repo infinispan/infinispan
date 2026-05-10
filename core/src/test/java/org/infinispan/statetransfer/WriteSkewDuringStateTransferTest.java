@@ -8,10 +8,10 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCac
 import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
 import static org.infinispan.util.logging.Log.CLUSTER;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -139,7 +139,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       nodeARpcManager.expectCommand(PrepareCommand.class).send().receiveAll();
       nodeARpcManager.expectCommand(CommitCommand.class).send().receiveAll();
       nodeARpcManager.expectCommand(TxCompletionNotificationCommand.class).send();
-      assertNull("Wrong put() return value.", tx.get());
+      assertNull(tx.get(), "Wrong put() return value.");
 
       nodeAController.topologyManager.stopBlocking();
       nodeBController.topologyManager.stopBlocking();
@@ -167,8 +167,8 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       for (Cache<?, ?> cache : owners) {
          DataContainer<?, ?> dataContainer = extractComponent(cache, InternalDataContainer.class);
          InternalCacheEntry<?, ?> entry = dataContainer.peek(key);
-         assertNotNull("Entry cannot be null in " + address(cache) + ".", entry);
-         assertNotNull("Version cannot be null.", versionFromEntry(entry));
+         assertNotNull(entry, "Entry cannot be null in " + address(cache) + ".");
+         assertNotNull(versionFromEntry(entry), "Version cannot be null.");
       }
    }
 
@@ -248,7 +248,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    private void assertKeyOwnership(Object key, Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
-      assertTrue("Wrong ownership for " + key + ".", hasOwners(key, primaryOwner, backupOwners));
+      assertTrue(hasOwners(key, primaryOwner, backupOwners), "Wrong ownership for " + key + ".");
    }
 
    private BlockingLocalTopologyManager replaceTopologyManager(EmbeddedCacheManager cacheContainer) {

@@ -1,5 +1,7 @@
 package org.infinispan.profiling;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Arrays;
@@ -91,7 +93,7 @@ public class MemConsumptionTest extends AbstractInfinispanTest {
       for (int i = 0; i < stringSize; i++) {
          sb.append(r.nextInt(9)); // single digit
       }
-      assert sb.length() == stringSize;
+      assertTrue(sb.length() == stringSize);
       return sb.toString();
    }
 }

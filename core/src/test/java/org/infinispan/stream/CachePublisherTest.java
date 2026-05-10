@@ -1,7 +1,7 @@
 package org.infinispan.stream;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -176,6 +176,6 @@ public class CachePublisherTest extends MultipleCacheManagersTest {
 
    private <E> void assertContainsInAnyOrder(List<E> expected, List<E> actual) {
       assertEquals(expected.size(), actual.size());
-      assertTrue("expected: " + expected + " actual: " + actual, expected.containsAll(actual));
+      assertTrue(expected.containsAll(actual), "expected: " + expected + " actual: " + actual);
    }
 }

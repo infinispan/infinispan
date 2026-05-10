@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.event;
 
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;

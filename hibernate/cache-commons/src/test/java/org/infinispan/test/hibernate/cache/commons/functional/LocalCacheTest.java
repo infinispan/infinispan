@@ -2,7 +2,7 @@ package org.infinispan.test.hibernate.cache.commons.functional;
 
 import static org.infinispan.hibernate.cache.spi.InfinispanProperties.INFINISPAN_CONFIG_LOCAL_RESOURCE;
 import static org.infinispan.hibernate.cache.spi.InfinispanProperties.INFINISPAN_CONFIG_RESOURCE_PROP;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
 import java.util.List;

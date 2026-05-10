@@ -1,8 +1,8 @@
 package org.infinispan.lock.singlelock;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -174,7 +174,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       EmbeddedTransaction tx = tm.getTransaction();
 
       boolean prepareSuccess = tx.runPrepare();
-      assert prepareSuccess;
+      assertTrue(prepareSuccess);
 
       tm.suspend();
 
@@ -212,7 +212,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
          originatorCache.put(key, "value");
          final EmbeddedTransaction tx = tm.getTransaction();
          final boolean success = tx.runPrepare();
-         assert success;
+         assertTrue(success);
 
          log.trace("About to commit transaction.");
          tx.runCommit(false);

@@ -1,5 +1,7 @@
 package org.infinispan.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -38,7 +40,7 @@ public class CountingRpcManager extends AbstractDelegatingRpcManager {
       BasicComponentRegistry bcr = ComponentRegistry.componentOf(advancedCache, BasicComponentRegistry.class);
       bcr.replaceComponent(RpcManager.class.getName(), crm, false);
       bcr.rewire();
-      assert advancedCache.getRpcManager().equals(crm);
+      assertEquals(crm, advancedCache.getRpcManager());
       return crm;
    }
 

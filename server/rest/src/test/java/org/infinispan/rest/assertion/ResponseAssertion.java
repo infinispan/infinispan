@@ -26,7 +26,7 @@ import static org.infinispan.rest.ResponseHeader.EXPIRES_HEADER;
 import static org.infinispan.rest.ResponseHeader.LAST_MODIFIED_HEADER;
 import static org.infinispan.rest.ResponseHeader.TRANSFER_ENCODING;
 import static org.infinispan.rest.ResponseHeader.WWW_AUTHENTICATE_HEADER;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

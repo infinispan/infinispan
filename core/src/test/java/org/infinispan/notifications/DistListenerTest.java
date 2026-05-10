@@ -1,6 +1,8 @@
 package org.infinispan.notifications;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.stream.IntStream;
@@ -41,11 +43,11 @@ public class DistListenerTest extends MultipleCacheManagersTest {
 
       List<Address> owners = cacheTopology(0).getDistribution(key1).writeOwners();
 
-      assert owners.size() == 2: "Key should have 2 owners";
+      assertTrue(owners.size() == 2, "Key should have 2 owners");
 
       Cache<String, String> owner1 = getCacheForAddress(owners.get(0));
       Cache<String, String> owner2 = getCacheForAddress(owners.get(1));
-      assert owner1 != owner2;
+      assertTrue(owner1 != owner2);
       Cache<String, String> nonOwner = null;
       for (int i=0; i<3; i++) {
          if (this.<String, String>cache(i) != owner1
@@ -54,7 +56,7 @@ public class DistListenerTest extends MultipleCacheManagersTest {
             break;
          }
       }
-      assert nonOwner != null;
+      assertNotNull(nonOwner);
 
       listener = new TestListener();
 

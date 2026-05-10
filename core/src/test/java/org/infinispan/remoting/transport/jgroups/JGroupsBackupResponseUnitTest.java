@@ -2,11 +2,11 @@ package org.infinispan.remoting.transport.jgroups;
 
 import static org.infinispan.testing.Exceptions.assertException;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -184,7 +184,7 @@ public class JGroupsBackupResponseUnitTest extends AbstractInfinispanTest {
    private void assertListenerData(Listener listener, long sendTimestamp, String siteName, Throwable throwable) {
       try {
          ListenerData data = listener.queue.poll(10, TimeUnit.SECONDS);
-         assertNotNull("Failed to get event for site " + siteName, data);
+         assertNotNull(data, "Failed to get event for site " + siteName);
          assertEquals(siteName, data.siteName);
          assertEquals(sendTimestamp, data.time);
          assertEquals(throwable, data.throwable);

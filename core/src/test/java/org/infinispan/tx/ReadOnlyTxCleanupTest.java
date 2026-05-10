@@ -1,5 +1,7 @@
 package org.infinispan.tx;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -43,8 +45,8 @@ public class ReadOnlyTxCleanupTest extends SingleCacheManagerTest {
       TransactionTable tt1 = TestingUtil.extractComponent(c1, TransactionTable.class);
       TransactionTable tt2 = TestingUtil.extractComponent(c2, TransactionTable.class);
 
-      assert tt1.getLocalTxCount() == 0;
-      assert tt2.getLocalTxCount() == 0;
+      assertTrue(tt1.getLocalTxCount() == 0);
+      assertTrue(tt2.getLocalTxCount() == 0);
    }
 
 }

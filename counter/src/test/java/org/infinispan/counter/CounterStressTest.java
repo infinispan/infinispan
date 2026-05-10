@@ -1,6 +1,7 @@
 package org.infinispan.counter;
 
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +24,6 @@ import org.infinispan.counter.util.TestCounter;
 import org.infinispan.counter.util.WeakTestCounter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -123,7 +123,7 @@ public class CounterStressTest extends MultipleCacheManagersTest {
 
 
       for (int c = 1; c < CLUSTER_SIZE; ++c) {
-         AssertJUnit.assertEquals("StrongCounter mismatch for manager " + c, countersValues[0], countersValues[c]);
+         assertEquals(countersValues[0], countersValues[c], "StrongCounter mismatch for manager " + c);
       }
    }
 

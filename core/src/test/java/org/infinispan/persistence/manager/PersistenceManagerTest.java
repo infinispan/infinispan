@@ -6,10 +6,10 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getFirstStore;
 import static org.infinispan.test.TestingUtil.getStore;
 import static org.infinispan.testing.Exceptions.expectCompletionException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -204,7 +204,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
 
       // Now request — timer arms, but store is delayed so timeout fires
       subscriber.request(Long.MAX_VALUE);
-      assertTrue("Subscriber should have completed with error", subscriber.await(15, TimeUnit.SECONDS));
+      assertTrue(subscriber.await(15, TimeUnit.SECONDS), "Subscriber should have completed with error");
       subscriber.assertError(org.infinispan.commons.TimeoutException.class);
 
       store1.endDelay();
@@ -225,7 +225,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
             .subscribe(subscriber);
       subscriber.request(Long.MAX_VALUE);
       assertTrue(persistenceManager.anyLocksHeld());
-      assertTrue("Subscriber should have completed with error", subscriber.await(15, TimeUnit.SECONDS));
+      assertTrue(subscriber.await(15, TimeUnit.SECONDS), "Subscriber should have completed with error");
 
       subscriber.assertError(org.infinispan.commons.TimeoutException.class);
       assertFalse(persistenceManager.anyLocksHeld());

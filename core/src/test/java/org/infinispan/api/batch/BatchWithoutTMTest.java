@@ -1,7 +1,8 @@
 package org.infinispan.api.batch;
 
 import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.lang.reflect.Method;
 
@@ -11,7 +12,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.Exceptions;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 @Test(groups = {"functional", "smoke"}, testName = "api.batch.BatchWithoutTMTest")
@@ -46,19 +46,19 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
       cache.put("k2", "v2");
       cache.endBatch(true);
 
-      AssertJUnit.assertEquals("v", cache.get("k"));
-      AssertJUnit.assertEquals("v2", cache.get("k2"));
+      assertEquals("v", cache.get("k"));
+      assertEquals("v2", cache.get("k2"));
    }
 
    public void testBatchVisibility(Method method) throws Exception {
       Cache<String, String> cache = createCache(method.getName());
       cache.startBatch();
       cache.put("k", "v");
-      assertNull("Other thread should not see batch update till batch completes!", getOnDifferentThread(cache, "k"));
+      assertNull(getOnDifferentThread(cache, "k"), "Other thread should not see batch update till batch completes!");
 
       cache.endBatch(true);
 
-      AssertJUnit.assertEquals("v", getOnDifferentThread(cache, "k"));
+      assertEquals("v", getOnDifferentThread(cache, "k"));
    }
 
    public void testBatchRollback(Method method) throws Exception {

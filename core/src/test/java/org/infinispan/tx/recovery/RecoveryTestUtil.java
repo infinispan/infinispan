@@ -1,6 +1,6 @@
 package org.infinispan.tx.recovery;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;

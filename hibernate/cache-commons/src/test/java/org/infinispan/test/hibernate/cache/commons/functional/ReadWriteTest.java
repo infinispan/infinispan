@@ -1,11 +1,11 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -324,7 +324,6 @@ public class ReadWriteTest extends ReadOnlyTest {
          s.persist(item);
          s.flush();
          itemId.set(item.getId());
-//			assertNotNull( slcs.getEntries().get( item.getId() ) );
          markRollbackOnly(s);
       });
 
@@ -353,18 +352,14 @@ public class ReadWriteTest extends ReadOnlyTest {
          s.flush();
          itemId.set(item.getId());
          // item is cached on insert.
-//			assertNotNull( slcs.getEntries().get( item.getId() ) );
          s.evict(item);
-         assertEquals(slcs.getHitCount(), 0);
+         assertEquals(0, slcs.getHitCount());
          item = s.get(Item.class, item.getId());
          assertNotNull(item);
-//			assertEquals( slcs.getHitCount(), 1 );
-//			assertNotNull( slcs.getEntries().get( item.getId() ) );
          markRollbackOnly(s);
       });
 
       // item should not be in entity cache.
-      //slcs = stats.getSecondLevelCacheStatistics( Item.class.getName() );
       assertEquals(0, getNumberOfItems());
 
       withTxSession(s -> {
@@ -402,12 +397,12 @@ public class ReadWriteTest extends ReadOnlyTest {
 
       withTxSession(s -> {
          Item item = s.get(Item.class, idRef.get());
-         assertEquals(slcs.getHitCount(), 1);
-         assertEquals(slcs.getMissCount(), 0);
+         assertEquals(1, slcs.getHitCount());
+         assertEquals(0, slcs.getMissCount());
          item.setDescription("A bog standard item");
       });
 
-      assertEquals(slcs.getPutCount(), 2);
+      assertEquals(2, slcs.getPutCount());
 
       CacheEntry entry = getEntry(Item.class.getName(), idRef.get());
       Serializable[] ser = entry.getDisassembledState();
@@ -486,27 +481,28 @@ public class ReadWriteTest extends ReadOnlyTest {
          stats.setStatisticsEnabled(true);
          stats.clear();
          assertEquals(
-               "Cache hits should be empty", 0, stats
-                     .getNaturalIdCacheHitCount()
+               0, stats
+                     .getNaturalIdCacheHitCount(),
+               "Cache hits should be empty"
          );
          TypedQuery<Citizen> typedQuery = s.createQuery(criteria)
                .setHint(QueryHints.HINT_CACHEABLE, "true");
 
          // first query
-         List results = typedQuery
+         List<?> results = typedQuery
                .getResultList();
          assertEquals(1, results.size());
-         assertEquals("NaturalId Cache Hits", 0, stats.getNaturalIdCacheHitCount());
-         assertEquals("NaturalId Cache Misses", 0, stats.getNaturalIdCacheMissCount());
-         assertEquals("NaturalId Cache Puts", 1, stats.getNaturalIdCachePutCount());
-         assertEquals("NaturalId Cache Queries", 0, stats.getNaturalIdQueryExecutionCount());
+         assertEquals(0, stats.getNaturalIdCacheHitCount(), "NaturalId Cache Hits");
+         assertEquals(0, stats.getNaturalIdCacheMissCount(), "NaturalId Cache Misses");
+         assertEquals(1, stats.getNaturalIdCachePutCount(), "NaturalId Cache Puts");
+         assertEquals(0, stats.getNaturalIdQueryExecutionCount(), "NaturalId Cache Queries");
 
          // query a second time - result should be cached in session
          typedQuery.getResultList();
-         assertEquals("NaturalId Cache Hits", 0, stats.getNaturalIdCacheHitCount());
-         assertEquals("NaturalId Cache Misses", 0, stats.getNaturalIdCacheMissCount());
-         assertEquals("NaturalId Cache Puts", 1, stats.getNaturalIdCachePutCount());
-         assertEquals("NaturalId Cache Queries", 0, stats.getNaturalIdQueryExecutionCount());
+         assertEquals(0, stats.getNaturalIdCacheHitCount(), "NaturalId Cache Hits");
+         assertEquals(0, stats.getNaturalIdCacheMissCount(), "NaturalId Cache Misses");
+         assertEquals(1, stats.getNaturalIdCachePutCount(), "NaturalId Cache Puts");
+         assertEquals(0, stats.getNaturalIdQueryExecutionCount(), "NaturalId Cache Queries");
 
          // cleanup
          markRollbackOnly(s);
@@ -519,17 +515,17 @@ public class ReadWriteTest extends ReadOnlyTest {
       stats.setStatisticsEnabled(true);
       stats.clear();
 
-      assertEquals("NaturalId Cache Hits", 0, stats.getNaturalIdCacheHitCount());
-      assertEquals("NaturalId Cache Misses", 0, stats.getNaturalIdCacheMissCount());
-      assertEquals("NaturalId Cache Puts", 0, stats.getNaturalIdCachePutCount());
-      assertEquals("NaturalId Cache Queries", 0, stats.getNaturalIdQueryExecutionCount());
+      assertEquals(0, stats.getNaturalIdCacheHitCount(), "NaturalId Cache Hits");
+      assertEquals(0, stats.getNaturalIdCacheMissCount(), "NaturalId Cache Misses");
+      assertEquals(0, stats.getNaturalIdCachePutCount(), "NaturalId Cache Puts");
+      assertEquals(0, stats.getNaturalIdQueryExecutionCount(), "NaturalId Cache Queries");
 
       saveSomeCitizens();
 
-      assertEquals("NaturalId Cache Hits", 0, stats.getNaturalIdCacheHitCount());
-      assertEquals("NaturalId Cache Misses", 0, stats.getNaturalIdCacheMissCount());
-      assertEquals("NaturalId Cache Puts", 2, stats.getNaturalIdCachePutCount());
-      assertEquals("NaturalId Cache Queries", 0, stats.getNaturalIdQueryExecutionCount());
+      assertEquals(0, stats.getNaturalIdCacheHitCount(), "NaturalId Cache Hits");
+      assertEquals(0, stats.getNaturalIdCacheMissCount(), "NaturalId Cache Misses");
+      assertEquals(2, stats.getNaturalIdCachePutCount(), "NaturalId Cache Puts");
+      assertEquals(0, stats.getNaturalIdQueryExecutionCount(), "NaturalId Cache Queries");
 
       //Try NaturalIdLoadAccess after insert
       final Citizen citizen = withTxSessionApply(s -> {
@@ -543,10 +539,10 @@ public class ReadWriteTest extends ReadOnlyTest {
          // first query
          Citizen c = naturalIdLoader.load();
          assertNotNull(c);
-         assertEquals("NaturalId Cache Hits", 1, stats.getNaturalIdCacheHitCount());
-         assertEquals("NaturalId Cache Misses", 0, stats.getNaturalIdCacheMissCount());
-         assertEquals("NaturalId Cache Puts", 0, stats.getNaturalIdCachePutCount());
-         assertEquals("NaturalId Cache Queries", 0, stats.getNaturalIdQueryExecutionCount());
+         assertEquals(1, stats.getNaturalIdCacheHitCount(), "NaturalId Cache Hits");
+         assertEquals(0, stats.getNaturalIdCacheMissCount(), "NaturalId Cache Misses");
+         assertEquals(0, stats.getNaturalIdCachePutCount(), "NaturalId Cache Puts");
+         assertEquals(0, stats.getNaturalIdQueryExecutionCount(), "NaturalId Cache Queries");
 
          // cleanup
          markRollbackOnly(s);
@@ -562,12 +558,12 @@ public class ReadWriteTest extends ReadOnlyTest {
       //Try NaturalIdLoadAccess
       withTxSession(s -> {
          // first query
-         Citizen loadedCitizen = (Citizen) s.get(Citizen.class, citizen.getId());
+         Citizen loadedCitizen = s.get(Citizen.class, citizen.getId());
          assertNotNull(loadedCitizen);
-         assertEquals("NaturalId Cache Hits", 0, stats.getNaturalIdCacheHitCount());
-         assertEquals("NaturalId Cache Misses", 0, stats.getNaturalIdCacheMissCount());
-         assertEquals("NaturalId Cache Puts", 1, stats.getNaturalIdCachePutCount());
-         assertEquals("NaturalId Cache Queries", 0, stats.getNaturalIdQueryExecutionCount());
+         assertEquals(0, stats.getNaturalIdCacheHitCount(), "NaturalId Cache Hits");
+         assertEquals(0, stats.getNaturalIdCacheMissCount(), "NaturalId Cache Misses");
+         assertEquals(1, stats.getNaturalIdCachePutCount(), "NaturalId Cache Puts");
+         assertEquals(0, stats.getNaturalIdQueryExecutionCount(), "NaturalId Cache Queries");
 
          // cleanup
          markRollbackOnly(s);
@@ -586,10 +582,10 @@ public class ReadWriteTest extends ReadOnlyTest {
          // first query
          Citizen loadedCitizen = (Citizen) naturalIdLoader.load();
          assertNotNull(loadedCitizen);
-         assertEquals("NaturalId Cache Hits", 1, stats.getNaturalIdCacheHitCount());
-         assertEquals("NaturalId Cache Misses", 0, stats.getNaturalIdCacheMissCount());
-         assertEquals("NaturalId Cache Puts", 0, stats.getNaturalIdCachePutCount());
-         assertEquals("NaturalId Cache Queries", 0, stats.getNaturalIdQueryExecutionCount());
+         assertEquals(1, stats.getNaturalIdCacheHitCount(), "NaturalId Cache Hits");
+         assertEquals(0, stats.getNaturalIdCacheMissCount(), "NaturalId Cache Misses");
+         assertEquals(0, stats.getNaturalIdCachePutCount(), "NaturalId Cache Puts");
+         assertEquals(0, stats.getNaturalIdQueryExecutionCount(), "NaturalId Cache Queries");
 
          // cleanup
          markRollbackOnly(s);
@@ -607,20 +603,16 @@ public class ReadWriteTest extends ReadOnlyTest {
          Statistics stats = sessionFactory().getStatistics();
          CacheRegionStatistics slcStats = stats.getCacheRegionStatistics(Citizen.class.getName());
 
-         assertTrue("2lc entity cache is expected to contain Citizen id = " + citizens.get(0).getId(),
-               cache.containsEntity(Citizen.class, citizens.get(0).getId()));
-         assertTrue("2lc entity cache is expected to contain Citizen id = " + citizens.get(1).getId(),
-               cache.containsEntity(Citizen.class, citizens.get(1).getId()));
+         assertTrue(cache.containsEntity(Citizen.class, citizens.get(0).getId()), "2lc entity cache is expected to contain Citizen id = " + citizens.get(0).getId());
+         assertTrue(cache.containsEntity(Citizen.class, citizens.get(1).getId()), "2lc entity cache is expected to contain Citizen id = " + citizens.get(1).getId());
          assertEquals(2, slcStats.getPutCount());
 
          cache.evictAll();
          TIME_SERVICE.advance(1);
 
          assertEquals(0, slcStats.getElementCountInMemory());
-         assertFalse("2lc entity cache is expected to not contain Citizen id = " + citizens.get(0).getId(),
-               cache.containsEntity(Citizen.class, citizens.get(0).getId()));
-         assertFalse("2lc entity cache is expected to not contain Citizen id = " + citizens.get(1).getId(),
-               cache.containsEntity(Citizen.class, citizens.get(1).getId()));
+         assertFalse(cache.containsEntity(Citizen.class, citizens.get(0).getId()), "2lc entity cache is expected to not contain Citizen id = " + citizens.get(0).getId());
+         assertFalse(cache.containsEntity(Citizen.class, citizens.get(1).getId()), "2lc entity cache is expected to not contain Citizen id = " + citizens.get(1).getId());
 
          Citizen citizen = s.getReference(Citizen.class, citizens.get(0).getId());
          assertNotNull(citizen);

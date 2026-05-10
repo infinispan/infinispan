@@ -1,9 +1,9 @@
 package org.infinispan.persistence.sifs;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.file.Paths;
 import java.util.Map;
@@ -103,7 +103,7 @@ public class SoftIndexFileStoreSegmentRemovalTest extends SingleCacheManagerTest
 
       // Verify that multiple files were created
       int fileCount = compactor.getFiles().size();
-      assertTrue("Should have multiple files for compaction, but had " + fileCount, fileCount > 1);
+      assertTrue(fileCount > 1, "Should have multiple files for compaction, but had " + fileCount);
 
       CountDownLatch cleanupStarted = new CountDownLatch(1);
       CountDownLatch compactionComplete = new CountDownLatch(1);
@@ -125,7 +125,7 @@ public class SoftIndexFileStoreSegmentRemovalTest extends SingleCacheManagerTest
                   log.trace("Delaying executor: waiting for compaction to complete...");
                   boolean completed = compactionComplete.await(10, TimeUnit.SECONDS);
                   log.tracef("Delaying executor: compaction complete signal received: %s", completed);
-                  assertTrue("Compaction should complete before cleanup proceeds", completed);
+                  assertTrue(completed, "Compaction should complete before cleanup proceeds");
                } catch (InterruptedException e) {
                   throw new RuntimeException(e);
                }
@@ -146,7 +146,7 @@ public class SoftIndexFileStoreSegmentRemovalTest extends SingleCacheManagerTest
          store.removeSegments(IntSets.immutableSet(0)).toCompletableFuture().get(10, TimeUnit.SECONDS);
 
          // Wait for cleanup to start
-         assertTrue("Cleanup should have started", cleanupStarted.await(10, TimeUnit.SECONDS));
+         assertTrue(cleanupStarted.await(10, TimeUnit.SECONDS), "Cleanup should have started");
 
          // Now invoke compaction while the segment cleanup is blocked
          try {
@@ -183,7 +183,7 @@ public class SoftIndexFileStoreSegmentRemovalTest extends SingleCacheManagerTest
          Flowable.fromPublisher(
                store.publishEntries(IntSets.immutableSet(0), null, true))
                .blockingForEach(entry -> iterationCount.incrementAndGet(), 128);
-         assertEquals("Iteration should not return any entries after segment 0 removal", 0, iterationCount.get());
+         assertEquals(0, iterationCount.get(), "Iteration should not return any entries after segment 0 removal");
       } finally {
          // Restore the original executor
          TestingUtil.replaceField(originalExecutor, "executor", index, Index.class);

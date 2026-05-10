@@ -3,8 +3,8 @@ package org.infinispan.statetransfer;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.findInterceptor;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Future;
@@ -53,7 +53,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
    }
 
    private ConfigurationBuilder buildConfig() {
-      ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig( CacheMode.REPL_ASYNC, false);
+      ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
       configurationBuilder.clustering().remoteTimeout(15000);
       // The coordinator will always be the primary owner
       configurationBuilder.clustering().hash().numSegments(1);
@@ -83,7 +83,6 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       Cache<Object, Object> c2 = cm2.createCache(CACHE_NAME, buildConfig().build());
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 4, c1, c2);
-
 
 
       // Start a 3rd node, but start a different cache there so that the topology stays the same.
@@ -116,7 +115,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       di1.unblock(1);
 
       Thread.sleep(2000);
-      assertEquals("The command shouldn't have been forwarded to " + c3, 0, di3.getCounter());
+      assertEquals(0, di3.getCounter(), "The command shouldn't have been forwarded to " + c3);
 
       log.tracef("Waiting for the put command to finish on %s", c1);
       Object retval = f.get(10, SECONDS);
@@ -136,8 +135,8 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       waitForNoRebalance(caches);
       for (Cache c : caches) {
          CacheTopology cacheTopology = c.getAdvancedCache().getDistributionManager().getCacheTopology();
-         assertEquals(String.format("Wrong topology on cache %s, expected %d and got %s", c, expectedTopologyId,
-               cacheTopology), cacheTopology.getTopologyId(), expectedTopologyId);
+         assertEquals(cacheTopology.getTopologyId(), expectedTopologyId, String.format("Wrong topology on cache %s, expected %d and got %s", c, expectedTopologyId,
+               cacheTopology));
       }
    }
 

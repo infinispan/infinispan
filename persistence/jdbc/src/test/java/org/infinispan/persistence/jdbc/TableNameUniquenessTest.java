@@ -1,6 +1,9 @@
 package org.infinispan.persistence.jdbc;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Serializable;
 import java.sql.Connection;
@@ -68,9 +71,7 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
-         if (!(o instanceof Person)) return false;
-
-         Person person = (Person) o;
+         if (!(o instanceof Person person)) return false;
 
          if (age != person.age) return false;
          return Objects.equals(name, person.name);
@@ -85,9 +86,9 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
    }
 
    private void assertTableExistence(Connection connection, String identifierQuote, String secondTable, String firstTable, String tablePrefix) throws Exception {
-      assert !TableManagerTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, "")) : "this table should not exist!";
-      assert TableManagerTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, firstTable));
-      assert TableManagerTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, secondTable));
+      assertFalse(TableManagerTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, "")), "this table should not exist!");
+      assertTrue(TableManagerTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, firstTable)));
+      assertTrue(TableManagerTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, secondTable)));
       connection.close();
    }
 
@@ -95,13 +96,13 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
                                         WaitNonBlockingStore<String, String> firstCs,
                                         WaitNonBlockingStore<String, String> secondCs) throws PersistenceException {
       first.put("k", "v");
-      assert firstCs.contains("k");
-      assert !secondCs.contains("k");
-      assert first.get("k").equals("v");
-      assert second.get("k") == null;
+      assertTrue(firstCs.contains("k"));
+      assertFalse(secondCs.contains("k"));
+      assertEquals("v", first.get("k"));
+      assertNull(second.get("k"));
 
       second.put("k2", "v2");
-      assert second.get("k2").equals("v2");
-      assert first.get("k2") == null;
+      assertEquals("v2", second.get("k2"));
+      assertNull(first.get("k2"));
    }
 }

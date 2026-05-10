@@ -3,9 +3,9 @@ package org.infinispan.partitionhandling;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -151,8 +151,8 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
          LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(i), LocalTopologyManager.class);
          // Ensure that nodes have the old UUID
          var entry = addressIterator.next();
-         assertTrue(entry.getKey() + " is mapping to the wrong UUID: " +
-               "Expected: " + entry.getValue() + " not found in: " + uuids, uuids.contains(entry.getValue()));
+         assertTrue(uuids.contains(entry.getValue()), entry.getKey() + " is mapping to the wrong UUID: " +
+               "Expected: " + entry.getValue() + " not found in: " + uuids);
          // Ensure that rebalancing is enabled for the cache
          assertTrue(ltm.isCacheRebalancingEnabled(CACHE_NAME));
       }

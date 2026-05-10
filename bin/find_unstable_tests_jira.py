@@ -6,14 +6,14 @@
   JIRA REST API documentation: https://docs.atlassian.com/jira/REST/5.0-m5
 """
 
+import argparse
+import csv
 import json
 import re
-from restkit import Resource, BasicAuth, request
-from pprint import pprint
-import argparse
-from getpass import getpass
-import csv
 import sys
+from getpass import getpass
+from pprint import pprint
+from restkit import Resource, BasicAuth, request
 
 default_base_url = 'https://issues.jboss.org'
 jql_search = 'project = ISPN AND (component in ("Test Suite - Core", "Test Suite - Server", "Test Suite - Query") OR labels = testsuite_stability) AND status in (Open, "Coding In Progress", Reopened, "Pull Request Sent") ORDER BY priority DESC'

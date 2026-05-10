@@ -10,12 +10,12 @@ import static org.infinispan.test.TestingUtil.setOf;
 import static org.infinispan.topology.TestClusterCacheStatus.conflictResolutionConsistentHash;
 import static org.infinispan.topology.TestClusterCacheStatus.persistentUUID;
 import static org.infinispan.topology.TestClusterCacheStatus.start;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertSame;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;
 import java.util.Map;

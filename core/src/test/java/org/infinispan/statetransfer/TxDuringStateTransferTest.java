@@ -1,9 +1,9 @@
 package org.infinispan.statetransfer;
 
 import static java.lang.String.valueOf;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -82,14 +82,12 @@ public class TxDuringStateTransferTest extends MultipleCacheManagersTest {
       operation.perform(cache(0), key);
       final EmbeddedTransaction transaction = transactionManager.getTransaction();
       transaction.runPrepare();
-      assertEquals("Wrong transaction status before killing backup owner.",
-                   Status.STATUS_PREPARED, transaction.getStatus());
+      assertEquals(Status.STATUS_PREPARED, transaction.getStatus(), "Wrong transaction status before killing backup owner.");
 
       //now, we kill cache(1). the transaction is prepared in cache(1) and it should be forward to cache(3)
       killMember(1);
 
-      assertEquals("Wrong transaction status after killing backup owner.",
-                   Status.STATUS_PREPARED, transaction.getStatus());
+      assertEquals(Status.STATUS_PREPARED, transaction.getStatus(), "Wrong transaction status after killing backup owner.");
       transaction.runCommit(false);
 
       for (Cache<Object, Object> cache : caches()) {
@@ -139,11 +137,11 @@ public class TxDuringStateTransferTest extends MultipleCacheManagersTest {
          //all the caches are owner. So, check in data container.
          DataContainer dataContainer = cache.getAdvancedCache().getDataContainer();
          if (this == REMOVE || this == CONDITIONAL_REMOVE) {
-            assertFalse("Key was not removed in '" + cacheAddress + "'!", dataContainer.containsKey(key));
+            assertFalse( dataContainer.containsKey(key), "Key was not removed in '" + cacheAddress + "'!");
          } else {
             InternalCacheEntry entry = dataContainer.peek(key);
-            assertNotNull("Cache '" + cacheAddress + "' does not contains entry!", entry);
-            assertEquals("Cache '" + cacheAddress + "' has wrong value!", FINAL_VALUE, entry.getValue());
+            assertNotNull(entry, "Cache '" + cacheAddress + "' does not contains entry!");
+            assertEquals(FINAL_VALUE, entry.getValue(), "Cache '" + cacheAddress + "' has wrong value!");
          }
       }
    }

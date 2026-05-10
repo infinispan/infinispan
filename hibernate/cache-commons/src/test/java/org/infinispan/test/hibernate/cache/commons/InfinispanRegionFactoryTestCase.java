@@ -5,12 +5,12 @@ import static org.infinispan.hibernate.cache.spi.InfinispanProperties.DEF_PENDIN
 import static org.infinispan.hibernate.cache.spi.InfinispanProperties.DEF_TIMESTAMPS_RESOURCE;
 import static org.infinispan.hibernate.cache.spi.InfinispanProperties.INFINISPAN_CONFIG_RESOURCE_PROP;
 import static org.infinispan.hibernate.cache.spi.InfinispanProperties.TIMESTAMPS_CACHE_RESOURCE_PROP;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.net.URL;
@@ -278,7 +278,7 @@ public class InfinispanRegionFactoryTestCase {
          assertNull(factory.getBaseConfiguration("com.acme.Address"));
          cache = region.getCache();
          Configuration cacheCfg = cache.getCacheConfiguration();
-         assertEquals("Immutable entity should get non-transactional cache", TransactionMode.NON_TRANSACTIONAL, cacheCfg.transaction().transactionMode());
+         assertEquals(TransactionMode.NON_TRANSACTIONAL, cacheCfg.transaction().transactionMode(), "Immutable entity should get non-transactional cache");
       } finally {
          factory.stop();
       }

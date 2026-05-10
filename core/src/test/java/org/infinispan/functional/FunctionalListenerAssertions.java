@@ -4,8 +4,8 @@ import static org.infinispan.functional.FunctionalListenerAssertions.TestType.CR
 import static org.infinispan.functional.FunctionalListenerAssertions.TestType.MODIFY;
 import static org.infinispan.functional.FunctionalListenerAssertions.TestType.REMOVE;
 import static org.infinispan.functional.FunctionalListenerAssertions.TestType.WRITE;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -118,9 +118,8 @@ public class FunctionalListenerAssertions<K, V> implements AutoCloseable {
 
    public void assertUnorderedEvents(Collection<TestEvent<V>> expected) {
       runnable.run();
-      assertEquals(recorded.toString(), expected.size(), recorded.size());
-      expected.forEach(e -> assertTrue(String.format("Value %s not in %s", e, recorded),
-         recorded.remove(e)));
+      assertEquals(expected.size(), recorded.size(), recorded.toString());
+      expected.forEach(e -> assertTrue(recorded.remove(e), String.format("Value %s not in %s", e, recorded)));
       assertEquals(0, recorded.size());
    }
 

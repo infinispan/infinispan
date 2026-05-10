@@ -1,7 +1,7 @@
 package org.infinispan.rest.cachemanager;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.never;
-import static org.testng.Assert.assertEquals;
 
 import java.util.Map;
 
@@ -43,9 +43,9 @@ public class RestCacheManagerTest extends SingleCacheManagerTest {
       restCacheManager.getCache("cache2", request);
 
       // Verify they are stored internally
-      assertEquals(knownCaches.size(), 2);
-      assertEquals(cachesSize(knownCaches.get("cache1")), 1);
-      assertEquals(cachesSize(knownCaches.get("cache2")), 1);
+      assertEquals(2, knownCaches.size());
+      assertEquals(1, cachesSize(knownCaches.get("cache1")));
+      assertEquals(1, cachesSize(knownCaches.get("cache2")));
 
       // Requesting again should not cause interaction with the cache manager
       Mockito.reset(embeddedCacheManager);
@@ -54,26 +54,26 @@ public class RestCacheManagerTest extends SingleCacheManagerTest {
 
       Mockito.verify(embeddedCacheManager, never()).getCache("cache1");
       Mockito.verify(embeddedCacheManager, never()).getCache("cache2");
-      assertEquals(cachesSize(knownCaches.get("cache1")), 1);
-      assertEquals(cachesSize(knownCaches.get("cache2")), 1);
+      assertEquals(1, cachesSize(knownCaches.get("cache1")));
+      assertEquals(1, cachesSize(knownCaches.get("cache2")));
 
       // Request caches with a different media type
       restCacheManager.getCache("cache1", MediaType.MATCH_ALL, MediaType.APPLICATION_JSON, request);
       restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.TEXT_PLAIN, request);
 
       // Verify they are stored internally
-      assertEquals(knownCaches.size(), 2);
-      assertEquals(cachesSize(knownCaches.get("cache1")), 2);
-      assertEquals(cachesSize(knownCaches.get("cache2")), 2);
+      assertEquals(2, knownCaches.size());
+      assertEquals(2, cachesSize(knownCaches.get("cache1")));
+      assertEquals(2, cachesSize(knownCaches.get("cache2")));
 
       // Requesting again with same media type but different parameters should not reuse internal instance
       Mockito.reset(embeddedCacheManager);
       restCacheManager.getCache("cache1", MediaType.MATCH_ALL, MediaType.fromString("application/json; charset=UTF-8"), request);
       restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.fromString("text/plain; charset=SHIFT-JIS"), request);
 
-      assertEquals(knownCaches.size(), 2);
-      assertEquals(cachesSize(knownCaches.get("cache1")), 3);
-      assertEquals(cachesSize(knownCaches.get("cache2")), 3);
+      assertEquals(2, knownCaches.size());
+      assertEquals(3, cachesSize(knownCaches.get("cache1")));
+      assertEquals(3, cachesSize(knownCaches.get("cache2")));
       Mockito.verify(embeddedCacheManager, never()).getCache("cache1");
       Mockito.verify(embeddedCacheManager, never()).getCache("cache2");
 
@@ -81,8 +81,8 @@ public class RestCacheManagerTest extends SingleCacheManagerTest {
       restCacheManager.getCache("cache1", MediaType.MATCH_ALL, MediaType.fromString("application/json; charset=UTF-8"), request);
       restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.fromString("text/plain; charset=SHIFT-JIS"), request);
 
-      assertEquals(cachesSize(knownCaches.get("cache1")), 3);
-      assertEquals(cachesSize(knownCaches.get("cache2")), 3);
+      assertEquals(3, cachesSize(knownCaches.get("cache1")));
+      assertEquals(3, cachesSize(knownCaches.get("cache2")));
       Mockito.verify(embeddedCacheManager, never()).getCache("cache1");
       Mockito.verify(embeddedCacheManager, never()).getCache("cache2");
    }

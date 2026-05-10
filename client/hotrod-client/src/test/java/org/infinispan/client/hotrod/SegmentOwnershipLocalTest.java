@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.net.SocketAddress;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class SegmentOwnershipLocalTest extends SingleHotRodServerTest {
       Map<SocketAddress, Set<Integer>> segmentsByServer = cache.getCacheTopologyInfo().getSegmentsPerServer();
 
       assertNotNull(segmentsByServer);
-      assertEquals(segmentsByServer.keySet().size(), 1);
-      assertEquals(segmentsByServer.values().iterator().next().size(), 0);
+      assertEquals(1, segmentsByServer.keySet().size());
+      assertEquals(0, segmentsByServer.values().iterator().next().size());
    }
 }

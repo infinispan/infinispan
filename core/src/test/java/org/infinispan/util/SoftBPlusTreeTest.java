@@ -1,8 +1,10 @@
 package org.infinispan.util;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -24,7 +26,7 @@ public class SoftBPlusTreeTest {
 
    private final ConcurrentHashMap<Integer, byte[]> keysByValue = new ConcurrentHashMap<>();
 
-   private final SoftBPlusTree.KeyLoader<Integer> keyLoader = value -> keysByValue.get(value);
+   private final SoftBPlusTree.KeyLoader<Integer> keyLoader = keysByValue::get;
 
    @BeforeMethod
    public void clearKeyMap() {
@@ -111,8 +113,7 @@ public class SoftBPlusTreeTest {
       BPlusTree.Node<Integer> rootNode = tree.getRoot();
       if (rootNode instanceof BPlusTree.InnerNode<Integer> root) {
          for (BPlusTree.Node<Integer> child : root.children) {
-            assertTrue("Child should be SoftNode after puts",
-                  child instanceof SoftBPlusTree.SoftNode);
+            assertInstanceOf(SoftBPlusTree.SoftNode.class, child, "Child should be SoftNode after puts");
          }
       }
    }
@@ -126,18 +127,18 @@ public class SoftBPlusTreeTest {
       }
 
       BPlusTree.Node<Integer> root = tree.getRoot();
-      assertTrue("Root should be InnerNode for large tree", root instanceof BPlusTree.InnerNode);
+      assertInstanceOf(BPlusTree.InnerNode.class, root, "Root should be InnerNode for large tree");
 
       ByteBuffer serialized = SoftBPlusTree.serializeNode(root, INT_SERIALIZER);
       BPlusTree.Node<Integer> deserialized = tree.deserializeNode(serialized);
 
-      assertTrue("Deserialized root should be InnerNode", deserialized instanceof BPlusTree.InnerNode);
+      assertInstanceOf(BPlusTree.InnerNode.class, deserialized, "Deserialized root should be InnerNode");
       BPlusTree.InnerNode<Integer> innerDeserialized = (BPlusTree.InnerNode<Integer>) deserialized;
       BPlusTree.InnerNode<Integer> innerOriginal = (BPlusTree.InnerNode<Integer>) root;
       assertEquals(innerOriginal.children.length, innerDeserialized.children.length);
 
       for (BPlusTree.Node<Integer> child : innerDeserialized.children) {
-         assertTrue("Deserialized children should be SoftNodes", child instanceof SoftBPlusTree.SoftNode);
+         assertInstanceOf(SoftBPlusTree.SoftNode.class, child, "Deserialized children should be SoftNodes");
       }
    }
 
@@ -156,7 +157,7 @@ public class SoftBPlusTreeTest {
 
       BPlusTree.InnerNode<Integer> root = (BPlusTree.InnerNode<Integer>) loaded.getRoot();
       for (BPlusTree.Node<Integer> child : root.children) {
-         assertTrue("Child should be SoftNode after load", child instanceof SoftBPlusTree.SoftNode);
+         assertInstanceOf(SoftBPlusTree.SoftNode.class, child, "Child should be SoftNode after load");
       }
 
       for (int i = 0; i < count; i++) {
@@ -192,8 +193,7 @@ public class SoftBPlusTreeTest {
       loaded.clearSoftReferences();
 
       for (int i = 0; i < count; i++) {
-         assertEquals("Value for key-" + String.format("%05d", i) + " should reload from store",
-               Integer.valueOf(i), loaded.get(key(String.format("key-%05d", i))));
+         assertEquals(Integer.valueOf(i), loaded.get(key(String.format("key-%05d", i))), "Value for key-" + String.format("%05d", i) + " should reload from store");
       }
    }
 
@@ -208,8 +208,7 @@ public class SoftBPlusTreeTest {
       for (int cycle = 0; cycle < 3; cycle++) {
          tree.clearSoftReferences();
          for (int i = 0; i < count; i++) {
-            assertEquals("Cycle " + cycle + ": value mismatch",
-                  Integer.valueOf(i), tree.get(key(String.format("key-%05d", i))));
+            assertEquals(Integer.valueOf(i), tree.get(key(String.format("key-%05d", i))), "Cycle " + cycle + ": value mismatch");
          }
       }
 
@@ -250,7 +249,7 @@ public class SoftBPlusTreeTest {
       BPlusTree.Node<Integer> rootNode = tree.getRoot();
       if (rootNode instanceof BPlusTree.InnerNode<Integer> root) {
          for (BPlusTree.Node<Integer> child : root.children) {
-            assertTrue("All children should be SoftNodes", child instanceof SoftBPlusTree.SoftNode);
+            assertInstanceOf(SoftBPlusTree.SoftNode.class, child, "All children should be SoftNodes");
          }
       }
 
@@ -292,8 +291,7 @@ public class SoftBPlusTreeTest {
       BPlusTree.Node<Integer> rootNode = tree.getRoot();
       if (rootNode instanceof BPlusTree.InnerNode<Integer> root) {
          for (BPlusTree.Node<Integer> child : root.children) {
-            assertTrue("All children should be SoftNodes after auto re-softening",
-                  child instanceof SoftBPlusTree.SoftNode);
+            assertInstanceOf(SoftBPlusTree.SoftNode.class, child, "All children should be SoftNodes after auto re-softening");
          }
       }
 
@@ -307,8 +305,7 @@ public class SoftBPlusTreeTest {
       putTracked(tree, key("a"), 1);
       putTracked(tree, key("b"), 2);
 
-      assertTrue("Root should still be LeafNode for small tree",
-            tree.getRoot() instanceof BPlusTree.LeafNode);
+      assertInstanceOf(BPlusTree.LeafNode.class, tree.getRoot(), "Root should still be LeafNode for small tree");
 
       assertEquals(Integer.valueOf(1), tree.get(key("a")));
       assertEquals(Integer.valueOf(2), tree.get(key("b")));
@@ -329,13 +326,13 @@ public class SoftBPlusTreeTest {
 
       BPlusTree.InnerNode<Integer> root = (BPlusTree.InnerNode<Integer>) loaded.getRoot();
       for (BPlusTree.Node<Integer> child : root.children) {
-         assertTrue("Child should be SoftNode", child instanceof SoftBPlusTree.SoftNode);
+         assertInstanceOf(SoftBPlusTree.SoftNode.class, child, "Child should be SoftNode");
       }
 
       putTracked(loaded, key("key-00050"), 9999);
       root = (BPlusTree.InnerNode<Integer>) loaded.getRoot();
       for (BPlusTree.Node<Integer> child : root.children) {
-         assertTrue("Child should be SoftNode after modify", child instanceof SoftBPlusTree.SoftNode);
+         assertInstanceOf(SoftBPlusTree.SoftNode.class, child, "Child should be SoftNode after modify");
       }
 
       assertEquals(Integer.valueOf(9999), loaded.get(key("key-00050")));
@@ -361,7 +358,7 @@ public class SoftBPlusTreeTest {
             case 1: // get
                Integer refVal = reference.get(k);
                Integer treeVal = tree.get(key(k));
-               assertEquals("get(" + k + ") mismatch at op " + op, refVal, treeVal);
+               assertEquals(refVal, treeVal, "get(" + k + ") mismatch at op " + op);
                break;
             case 2: // remove
                reference.remove(k);
@@ -372,7 +369,7 @@ public class SoftBPlusTreeTest {
                tree.clear();
                break;
          }
-         assertEquals("size mismatch at op " + op, reference.size(), tree.size());
+         assertEquals(reference.size(), tree.size(), "size mismatch at op " + op);
       }
 
       for (Map.Entry<String, Integer> entry : reference.entrySet()) {
@@ -415,9 +412,9 @@ public class SoftBPlusTreeTest {
          } else {
             Integer refVal = reference.get(k);
             Integer treeVal = tree.get(key(k));
-            assertEquals("get(" + k + ") mismatch at op " + op, refVal, treeVal);
+            assertEquals(refVal, treeVal, "get(" + k + ") mismatch at op " + op);
          }
-         assertEquals("size mismatch at op " + op, reference.size(), tree.size());
+         assertEquals(reference.size(), tree.size(), "size mismatch at op " + op);
       }
 
       for (Map.Entry<String, Integer> entry : reference.entrySet()) {
@@ -446,10 +443,10 @@ public class SoftBPlusTreeTest {
       }
 
       BPlusTree.Node<Integer> root = loaded.getRoot();
-      assertTrue("Root should be InnerNode", root instanceof BPlusTree.InnerNode);
+      assertInstanceOf(BPlusTree.InnerNode.class, root, "Root should be InnerNode");
       BPlusTree.InnerNode<Integer> inner = (BPlusTree.InnerNode<Integer>) root;
       for (BPlusTree.Node<Integer> child : inner.children) {
-         assertTrue("Child should be SoftNode after loadTree", child instanceof SoftBPlusTree.SoftNode);
+         assertInstanceOf(SoftBPlusTree.SoftNode.class, child, "Child should be SoftNode after loadTree");
       }
    }
 
@@ -459,7 +456,7 @@ public class SoftBPlusTreeTest {
       putTracked(tree, key("a"), 1);
       putTracked(tree, key("b"), 2);
 
-      assertTrue("Root should be LeafNode for small tree", tree.getRoot() instanceof BPlusTree.LeafNode);
+      assertInstanceOf(BPlusTree.LeafNode.class, tree.getRoot(), "Root should be LeafNode for small tree");
 
       SoftBPlusTree.NodeSpace rootSpace = tree.saveTree();
 
@@ -476,7 +473,7 @@ public class SoftBPlusTreeTest {
       SoftBPlusTree<Integer> tree = new SoftBPlusTree<>(MIN_NODE_SIZE, MAX_NODE_SIZE, store, INT_SERIALIZER, keyLoader);
 
       SoftBPlusTree.NodeSpace rootSpace = tree.saveTree();
-      assertNull("Empty tree should return null space", rootSpace);
+      assertNull(rootSpace, "Empty tree should return null space");
 
       SoftBPlusTree<Integer> loaded = new SoftBPlusTree<>(MIN_NODE_SIZE, MAX_NODE_SIZE, store, INT_SERIALIZER, keyLoader);
       loaded.loadTree(rootSpace);
@@ -532,10 +529,8 @@ public class SoftBPlusTreeTest {
       tree.remove(key("key-00300"));
       int writesForRemove = store.writeCount;
 
-      assertTrue("Single put (" + writesForPut + ") should be much less than full build (" + totalWritesBuild + ")",
-            writesForPut < totalWritesBuild / 5);
-      assertTrue("Single remove (" + writesForRemove + ") should be much less than full build (" + totalWritesBuild + ")",
-            writesForRemove < totalWritesBuild / 5);
+      assertTrue(writesForPut < totalWritesBuild / 5, "Single put (" + writesForPut + ") should be much less than full build (" + totalWritesBuild + ")");
+      assertTrue(writesForRemove < totalWritesBuild / 5, "Single remove (" + writesForRemove + ") should be much less than full build (" + totalWritesBuild + ")");
    }
 
    public void testSoftNodeGetInsertionPoint() throws IOException {
@@ -555,7 +550,7 @@ public class SoftBPlusTreeTest {
       SoftBPlusTree.SoftNode<Integer> softChild = (SoftBPlusTree.SoftNode<Integer>) root.children[0];
 
       int point = softChild.getInsertionPoint(key("key-00000"));
-      assertTrue("Insertion point should be >= 0", point >= 0);
+      assertTrue(point >= 0, "Insertion point should be >= 0");
    }
 
    public void testSoftNodeRightmostKey() throws IOException {
@@ -576,8 +571,7 @@ public class SoftBPlusTreeTest {
       SoftBPlusTree.SoftNode<Integer> lastChild = (SoftBPlusTree.SoftNode<Integer>) root.children[lastIdx];
 
       byte[] rightmost = lastChild.rightmostKey();
-      assertEquals("Rightmost key of last child should be the last key in the tree",
-            "key-00199", new String(rightmost, StandardCharsets.UTF_8));
+      assertEquals("key-00199", new String(rightmost, StandardCharsets.UTF_8), "Rightmost key of last child should be the last key in the tree");
    }
 
    public void testSoftNodeSplit() throws IOException {
@@ -597,7 +591,7 @@ public class SoftBPlusTreeTest {
       SoftBPlusTree.SoftNode<Integer> softChild = (SoftBPlusTree.SoftNode<Integer>) root.children[0];
 
       List<BPlusTree.Node<Integer>> splitResult = softChild.split(MAX_NODE_SIZE);
-      assertTrue("Split should return at least one node", splitResult.size() >= 1);
+      assertFalse(splitResult.isEmpty(), "Split should return at least one node");
    }
 
    public void testLeafSerializedSize() throws IOException {
@@ -608,11 +602,11 @@ public class SoftBPlusTreeTest {
       putTracked(tree, key("c"), 3);
 
       BPlusTree.Node<Integer> root = tree.getRoot();
-      assertTrue("Root should be LeafNode for small tree", root instanceof BPlusTree.LeafNode);
+      assertInstanceOf(BPlusTree.LeafNode.class, root, "Root should be LeafNode for small tree");
 
       ByteBuffer serialized = SoftBPlusTree.serializeNode(root, INT_SERIALIZER);
       int expectedSize = BPlusTree.INNER_NODE_HEADER_SIZE + 3 * INT_SERIALIZER.serializedSize(1);
-      assertEquals("Leaf serialized size should be header + values", expectedSize, serialized.remaining());
+      assertEquals(expectedSize, serialized.remaining(), "Leaf serialized size should be header + values");
    }
 
    public void testFreeBlockReuse() throws IOException {
@@ -634,9 +628,8 @@ public class SoftBPlusTreeTest {
       long sizeAfterReinsert = tree.getStoreSize();
 
       long growth = sizeAfterReinsert - sizeAfterInsert;
-      assertTrue("Free block reuse should limit growth. Initial: " + sizeAfterInsert +
-            ", after reinsert: " + sizeAfterReinsert + ", growth: " + growth,
-            growth < sizeAfterInsert);
+      assertTrue(growth < sizeAfterInsert, "Free block reuse should limit growth. Initial: " + sizeAfterInsert +
+            ", after reinsert: " + sizeAfterReinsert + ", growth: " + growth);
    }
 
    // --- IndexNodeOutdatedException retry tests ---
@@ -660,7 +653,7 @@ public class SoftBPlusTreeTest {
       loaded.clearSoftReferences();
 
       assertEquals(Integer.valueOf(100), loaded.get(key("key-00100")));
-      assertTrue("Should have retried at least twice", failsRemaining.get() < 0);
+      assertTrue(failsRemaining.get() < 0, "Should have retried at least twice");
    }
 
    public void testGetExceedsMaxRetriesOnOutdatedNode() throws IOException {
@@ -703,7 +696,7 @@ public class SoftBPlusTreeTest {
       assertEquals(10, values.size());
       assertEquals(Integer.valueOf(0), values.get(0));
       assertEquals(Integer.valueOf(9), values.get(9));
-      assertTrue("Should have retried at least twice", attempts.get() >= 3);
+      assertTrue(attempts.get() >= 3, "Should have retried at least twice");
    }
 
    public void testPublishExceedsMaxRetries() throws IOException {
@@ -723,10 +716,8 @@ public class SoftBPlusTreeTest {
          while (cause != null && !(cause instanceof IllegalStateException)) {
             cause = cause.getCause();
          }
-         assertTrue("Should contain IllegalStateException in cause chain, got: " + e,
-               cause instanceof IllegalStateException);
-         assertTrue("Message should mention retry attempts",
-               cause.getMessage().contains("retry attempts"));
+         assertInstanceOf(IllegalStateException.class, cause, "Should contain IllegalStateException in cause chain, got: " + e);
+         assertTrue(cause.getMessage().contains("retry attempts"), "Message should mention retry attempts");
       }
    }
 
@@ -746,10 +737,10 @@ public class SoftBPlusTreeTest {
          return v;
       }, true).toList().blockingGet();
 
-      assertEquals("Should skip outdated entries", 8, values.size());
-      assertTrue("Should not contain skipped value 3", !values.contains(3));
-      assertTrue("Should not contain skipped value 7", !values.contains(7));
-      assertEquals("Each outdated entry should be encountered once", 2, outdatedCount.get());
+      assertEquals(8, values.size(), "Should skip outdated entries");
+      assertFalse(values.contains(3), "Should not contain skipped value 3");
+      assertFalse(values.contains(7), "Should not contain skipped value 7");
+      assertEquals(2, outdatedCount.get(), "Each outdated entry should be encountered once");
    }
 
    public void testPublishSkipOnOutdatedRetriesNodeResolution() throws IOException {
@@ -770,9 +761,9 @@ public class SoftBPlusTreeTest {
       loaded.loadTree(rootSpace);
       loaded.clearSoftReferences();
 
-      List<Integer> values = loaded.<Integer>publish((k, v) -> v, true).toList().blockingGet();
+      List<Integer> values = loaded.publish((k, v) -> v, true).toList().blockingGet();
       assertEquals(count, values.size());
-      assertTrue("Should have retried node resolution", failsRemaining.get() < 0);
+      assertTrue(failsRemaining.get() < 0, "Should have retried node resolution");
    }
 
    public void testPublishRetriesOnOutdatedNode() throws IOException {
@@ -793,9 +784,9 @@ public class SoftBPlusTreeTest {
       loaded.loadTree(rootSpace);
       loaded.clearSoftReferences();
 
-      List<Integer> values = loaded.<Integer>publish((k, v) -> v).toList().blockingGet();
+      List<Integer> values = loaded.publish((k, v) -> v).toList().blockingGet();
       assertEquals(count, values.size());
-      assertTrue("Should have retried", failsRemaining.get() < 0);
+      assertTrue(failsRemaining.get() < 0, "Should have retried");
    }
 
    /**
@@ -851,13 +842,13 @@ public class SoftBPlusTreeTest {
       for (int page = 0; page < 5; page++) {
          for (int e = entitiesPerPage; e < 80; e++) {
             String k = String.format("%s:%02d:entity:%04d", prefix, page, e);
-            assertEquals("get(" + k + ")", Integer.valueOf(page * 100 + e), tree.get(key(k)));
+            assertEquals(Integer.valueOf(page * 100 + e), tree.get(key(k)), "get(" + k + ")");
          }
       }
       for (int page = 25; page < 30; page++) {
          for (int e = 0; e < 80; e++) {
             String k = String.format("%s:%02d:entity:%04d", prefix, page, e);
-            assertEquals("get(" + k + ")", Integer.valueOf(page * 100 + e), tree.get(key(k)));
+            assertEquals(Integer.valueOf(page * 100 + e), tree.get(key(k)), "get(" + k + ")");
          }
       }
    }
@@ -876,7 +867,7 @@ public class SoftBPlusTreeTest {
       SoftBPlusTree.NodeSpace rootSpace = tree.saveTree();
       long storeSizeBefore = tree.getStoreSize();
       ByteBuffer freeBlocksBuf = tree.serializeFreeBlocks();
-      assertTrue("Free blocks buffer should contain data", freeBlocksBuf.remaining() > 4);
+      assertTrue(freeBlocksBuf.remaining() > 4, "Free blocks buffer should contain data");
 
       InMemoryNodeStore loadStore = store.snapshot();
       SoftBPlusTree<Integer> loaded = new SoftBPlusTree<>(MIN_NODE_SIZE, MAX_NODE_SIZE, loadStore, INT_SERIALIZER, keyLoader);
@@ -894,9 +885,8 @@ public class SoftBPlusTreeTest {
       }
       long sizeAfterReinsert = loaded.getStoreSize();
 
-      assertTrue("Restored free blocks should be reused, limiting growth. Before: " + sizeBeforeReinsert +
-            ", after: " + sizeAfterReinsert,
-            sizeAfterReinsert - sizeBeforeReinsert < sizeBeforeReinsert);
+      assertTrue(sizeAfterReinsert - sizeBeforeReinsert < sizeBeforeReinsert, "Restored free blocks should be reused, limiting growth. Before: " + sizeBeforeReinsert +
+            ", after: " + sizeAfterReinsert);
    }
 
    // --- Alignment padding coverage test ---
@@ -974,8 +964,7 @@ public class SoftBPlusTreeTest {
       tree.clearSoftReferences();
 
       for (int i = 0; i < count; i++) {
-         assertEquals("Value for key-" + String.format("%05d", i) + " should resolve from disk",
-               Integer.valueOf(i), tree.get(key(String.format("key-%05d", i))));
+         assertEquals(Integer.valueOf(i), tree.get(key(String.format("key-%05d", i))), "Value for key-" + String.format("%05d", i) + " should resolve from disk");
       }
    }
 }

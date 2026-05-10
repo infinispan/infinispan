@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jdbc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.sql.Connection;
 import java.util.HashSet;
 import java.util.Set;
@@ -66,13 +68,13 @@ public class PooledConnectionFactoryTest {
       factory.start(factoryConfiguration, Thread.currentThread().getContextClassLoader());
 
       int hardcodedMaxPoolSize = factory.getMaxPoolSize();
-      assert hardcodedMaxPoolSize == 20;
+      assertEquals(20, hardcodedMaxPoolSize);
       Set<Connection> connections = new HashSet<>();
       for (int i = 0; i < hardcodedMaxPoolSize; i++) {
          connections.add(factory.getConnection());
       }
-      assert connections.size() == hardcodedMaxPoolSize;
-      assert factory.getActiveConnections() == hardcodedMaxPoolSize;
+      assertEquals(hardcodedMaxPoolSize, connections.size());
+      assertEquals(hardcodedMaxPoolSize, factory.getActiveConnections());
       for (Connection conn : connections) {
          conn.close();
       }
@@ -82,7 +84,7 @@ public class PooledConnectionFactoryTest {
             break;
       }
       //this must happen eventually
-      assert factory.getActiveConnections() == 0;
+      assertEquals(0, factory.getActiveConnections());
    }
 
    @Test(expectedExceptions = PersistenceException.class)

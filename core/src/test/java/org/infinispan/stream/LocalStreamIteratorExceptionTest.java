@@ -1,10 +1,10 @@
 package org.infinispan.stream;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertSame;
-import static org.testng.AssertJUnit.fail;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -27,19 +27,19 @@ public class LocalStreamIteratorExceptionTest extends BaseSetupStreamIteratorTes
    }
 
    public void ensureDataContainerExceptionPropagated() {
-      Cache cache = cache(0, CACHE_NAME);
+      Cache<?, ?> cache = cache(0, CACHE_NAME);
       // Extract real one to replace after
-      InternalDataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
+      InternalDataContainer<?, ?> dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       try {
          Throwable t = new CacheException();
-         InternalDataContainer mockContainer = when(mock(InternalDataContainer.class).publisher(any(IntSet.class))).thenThrow(t).getMock();
+         InternalDataContainer<?, ?> mockContainer = when(mock(InternalDataContainer.class).publisher(any(IntSet.class))).thenThrow(t).getMock();
          TestingUtil.replaceComponent(cache, InternalDataContainer.class, mockContainer, true);
 
          try {
             cache.entrySet().stream().iterator().hasNext();
             fail("We should have gotten a CacheException");
          } catch (CacheException e) {
-            assertSame("We should have found the throwable as a cause", t, e);
+            assertSame(t, e, "We should have found the throwable as a cause");
          }
       } finally {
          TestingUtil.replaceComponent(cache, InternalDataContainer.class, dataContainer, true);

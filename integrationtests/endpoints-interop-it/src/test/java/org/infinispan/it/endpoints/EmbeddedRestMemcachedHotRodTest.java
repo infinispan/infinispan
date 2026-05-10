@@ -1,10 +1,11 @@
 package org.infinispan.it.endpoints;
 
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotSame;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -129,17 +130,17 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       // 1. Put with Memcached
       Future<Boolean> f = cacheFactory.getMemcachedClient().set(key1, 0, "v1");
       assertTrue(f.get(60, TimeUnit.SECONDS));
-      CASValue oldValue = cacheFactory.getMemcachedClient().gets(key1);
+      CASValue<Object> oldValue = cacheFactory.getMemcachedClient().gets(key1);
 
       // 2. Replace with Embedded
       assertTrue(cacheFactory.getEmbeddedCache().replace(key1, "v1", "v2"));
 
       // 4. Get with Memcached and verify value/CAS
-      CASValue newValue = cacheFactory.getMemcachedClient().gets(key1);
+      CASValue<Object> newValue = cacheFactory.getMemcachedClient().gets(key1);
       assertEquals("v2", newValue.getValue());
-      assertNotSame("The version (CAS) should have changed, " +
-                  "oldCase=" + oldValue.getCas() + ", newCas=" + newValue.getCas(),
-            oldValue.getCas(), newValue.getCas());
+      assertNotSame(oldValue.getCas(), newValue.getCas(),
+            "The version (CAS) should have changed, " +
+                  "oldCase=" + oldValue.getCas() + ", newCas=" + newValue.getCas());
    }
 
    public void testHotRodReplaceMemcachedCASTest() throws Exception {
@@ -148,16 +149,16 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       // 1. Put with Memcached
       Future<Boolean> f = cacheFactory.getMemcachedClient().set(key1, 0, "v1");
       assertTrue(f.get(60, TimeUnit.SECONDS));
-      CASValue oldValue = cacheFactory.getMemcachedClient().gets(key1);
+      CASValue<Object> oldValue = cacheFactory.getMemcachedClient().gets(key1);
 
       // 2. Replace with Hot Rod
-      VersionedValue versioned = cacheFactory.getHotRodCache().getWithMetadata(key1);
+      VersionedValue<Object> versioned = cacheFactory.getHotRodCache().getWithMetadata(key1);
       assertTrue(cacheFactory.getHotRodCache().replaceWithVersion(key1, "v2", versioned.getVersion()));
 
       // 4. Get with Memcached and verify value/CAS
-      CASValue newValue = cacheFactory.getMemcachedClient().gets(key1);
+      CASValue<Object> newValue = cacheFactory.getMemcachedClient().gets(key1);
       assertEquals("v2", newValue.getValue());
-      assertTrue("The version (CAS) should have changed", oldValue.getCas() != newValue.getCas());
+      assertNotEquals(oldValue.getCas(), newValue.getCas(), "The version (CAS) should have changed");
    }
 
    public void testEmbeddedHotRodReplaceMemcachedCASTest() throws Exception {
@@ -166,19 +167,19 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       // 1. Put with Memcached
       Future<Boolean> f = cacheFactory.getMemcachedClient().set(key1, 0, "v1");
       assertTrue(f.get(60, TimeUnit.SECONDS));
-      CASValue oldValue = cacheFactory.getMemcachedClient().gets(key1);
+      CASValue<Object> oldValue = cacheFactory.getMemcachedClient().gets(key1);
 
       // 2. Replace with Hot Rod
-      VersionedValue versioned = cacheFactory.getHotRodCache().getWithMetadata(key1);
+      VersionedValue<Object> versioned = cacheFactory.getHotRodCache().getWithMetadata(key1);
       assertTrue(cacheFactory.getHotRodCache().replaceWithVersion(key1, "v2", versioned.getVersion()));
 
       // 3. Replace with Embedded
       assertTrue(cacheFactory.getEmbeddedCache().replace(key1, "v2", "v3"));
 
       // 4. Get with Memcached and verify value/CAS
-      CASValue newValue = cacheFactory.getMemcachedClient().gets(key1);
+      CASValue<Object> newValue = cacheFactory.getMemcachedClient().gets(key1);
       assertEquals("v3", newValue.getValue());
-      assertTrue("The version (CAS) should have changed", oldValue.getCas() != newValue.getCas());
+      assertNotEquals(oldValue.getCas(), newValue.getCas(), "The version (CAS) should have changed");
    }
 
 }

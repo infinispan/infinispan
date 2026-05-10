@@ -1,5 +1,8 @@
 package org.infinispan.stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -8,9 +11,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.withSettings;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -116,7 +116,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       }
 
       for (Map.Entry<Object, String> entry : values.entrySet()) {
-         assertTrue("Entry wasn't found:" + entry, iteratorValues.contains(entry.getValue()));
+         assertTrue(iteratorValues.contains(entry.getValue()), "Entry wasn't found:" + entry);
       }
    }
 
@@ -152,7 +152,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       future.get(10, TimeUnit.SECONDS);
 
       for (Map.Entry<Object, String> entry : values.entrySet()) {
-         assertTrue("Entry wasn't found:" + entry, returnQueue.contains(entry.getValue()));
+         assertTrue(returnQueue.contains(entry.getValue()), "Entry wasn't found:" + entry);
       }
    }
 
@@ -201,7 +201,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       future.get(10, TimeUnit.SECONDS);
 
       for (Map.Entry<Object, String> entry : values.entrySet()) {
-         assertTrue("Entry wasn't found:" + entry, returnQueue.contains(entry) || entry.equals(value));
+         assertTrue(returnQueue.contains(entry) || entry.equals(value), "Entry wasn't found:" + entry);
       }
    }
 
@@ -269,7 +269,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
             }
             assertEquals(entry.getValue().size(), answerForSegment.size());
          }
-         assertEquals("Segment " + segment + " had a mismatch", entry.getValue(), answerForSegment);
+         assertEquals(entry.getValue(), answerForSegment, "Segment " + segment + " had a mismatch");
       }
    }
 
@@ -323,7 +323,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       for (Map.Entry<Integer, Set<Map.Entry<Object, String>>> entry : expected.entrySet()) {
          try {
-            assertEquals("Segment " + entry.getKey() + " had a mismatch", entry.getValue(), answer.get(entry.getKey()));
+            assertEquals(entry.getValue(), answer.get(entry.getKey()), "Segment " + entry.getKey() + " had a mismatch");
          } catch (AssertionError e) {
             log.fatal("TEST ENDED");
             throw e;

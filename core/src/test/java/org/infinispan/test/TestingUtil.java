@@ -1,8 +1,11 @@
 package org.infinispan.test;
 
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -150,7 +153,6 @@ import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.MutableDigest;
 import org.reactivestreams.Publisher;
-import org.testng.AssertJUnit;
 
 import io.reactivex.rxjava3.core.Flowable;
 import jakarta.transaction.Status;
@@ -476,7 +478,7 @@ public class TestingUtil {
 
    public static void waitForNoRebalanceAcrossManagers(EmbeddedCacheManager... managers) {
       int numberOfManagers = managers.length;
-      assert numberOfManagers > 0;
+      assertTrue(numberOfManagers > 0);
       Set<String> testCaches = getInternalAndUserCacheNames(managers[0]);
       log.debugf("waitForNoRebalance with managers %s, for caches %s", Arrays.toString(managers), testCaches);
 
@@ -1764,9 +1766,9 @@ public class TestingUtil {
 
    public static void assertAnyEquals(Object expected, Object actual) {
       if (expected instanceof byte[] && actual instanceof byte[])
-         AssertJUnit.assertArrayEquals((byte[]) expected, (byte[]) actual);
+         assertArrayEquals((byte[]) expected, (byte[]) actual);
       else
-         AssertJUnit.assertEquals(expected, actual);
+         assertEquals(expected, actual);
    }
 
    public static void assertBetween(double lowerBound, double upperBound, double actual) {
