@@ -1,5 +1,8 @@
 package org.infinispan.persistence.support;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import java.util.HashMap;
 
 import org.infinispan.AdvancedCache;
@@ -10,7 +13,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.Testing;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -76,7 +78,7 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
    @Test(dependsOnMethods = "sequentialOverwritingInBatches")
    public void indexWasStored() {
       cache = cacheManager.getCache();
-      Assert.assertEquals(0, cache.getAdvancedCache().getDataContainer().size());
+      assertEquals(0, cache.getAdvancedCache().getDataContainer().size());
       boolean failed = false;
       for (Object key : cacheCopy.keySet()) {
          Object expected = cacheCopy.get(key);
@@ -86,8 +88,8 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
             failed = true;
          }
       }
-      Assert.assertFalse(failed);
-      Assert.assertEquals(cacheCopy.keySet().size(), cache.keySet().size(), "have a different number of keys");
+      assertFalse(failed);
+      assertEquals(cacheCopy.keySet().size(), cache.keySet().size(), "have a different number of keys");
    }
 
    @BeforeClass(alwaysRun = true)

@@ -7,8 +7,8 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
@@ -107,9 +107,8 @@ public class DistributedSetTest extends BaseDistributedMultimapTest<EmbeddedSetC
    protected void assertOnAllCaches(Object key, Person value) {
       for (Map.Entry<Address, EmbeddedSetCache<String, Person>> entry : cluster.entrySet()) {
          var set = await(entry.getValue().get((String) key));
-         assertNotNull(format("values on the key %s must be not null", key), set);
-         assertTrue(format("values on the key '%s' must contain '%s' on node '%s'", key, value, entry.getKey()),
-                  set.contains(value));
+         assertNotNull(set, format("values on the key %s must be not null", key));
+         assertTrue(set.contains(value), format("values on the key '%s' must contain '%s' on node '%s'", key, value, entry.getKey()));
       }
    }
 }

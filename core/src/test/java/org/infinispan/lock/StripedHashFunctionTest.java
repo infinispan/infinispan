@@ -1,5 +1,7 @@
 package org.infinispan.lock;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,9 +41,9 @@ public class StripedHashFunctionTest extends AbstractInfinispanTest {
       // cannot be larger than the number of locks
       log.trace("dist size: " + distribution.size());
       log.trace("num shared locks: " + stripedHashFunction.getNumSegments());
-      assert distribution.size() <= stripedHashFunction.getNumSegments();
+      assertTrue(distribution.size() <= stripedHashFunction.getNumSegments());
       // assume at least a 2/3rd spread
-      assert distribution.size() * 1.5 >= stripedHashFunction.getNumSegments();
+      assertTrue(distribution.size() * 1.5 >= stripedHashFunction.getNumSegments());
    }
 
    private List<String> createRandomKeys(int number) {

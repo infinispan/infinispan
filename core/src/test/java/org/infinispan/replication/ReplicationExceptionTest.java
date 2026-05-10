@@ -1,9 +1,9 @@
 package org.infinispan.replication;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.Serializable;
 
@@ -85,7 +85,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
          tm.commit();
 
          // We should not come here.
-         assertNotNull("NonSerializableData should not be null on cache2", cache2.get("test"));
+         assertNotNull(cache2.get("test"), "NonSerializableData should not be null on cache2");
       } catch (RollbackException rollback) {
          log.trace("received RollbackException - as expected");
       } catch (Exception e) {

@@ -8,9 +8,9 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOS
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createServerModeCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import java.util.Collections;
@@ -191,7 +191,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
       Object asString = this.remoteCache
             .withDataFormat(DataFormat.builder().keyType(TEXT_PLAIN).valueType(TEXT_PLAIN).build())
             .get("1");
-      assertEquals(asString, "infinispan.org:8080");
+      assertEquals("infinispan.org:8080", asString);
 
       // Write using manually marshalled values
       remoteCache.withDataFormat(DataFormat.builder()
@@ -232,7 +232,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
             .keyType(APPLICATION_JSON).keyMarshaller(new UTF8StringMarshaller()).build());
 
       Set<String> jsonKeys = new HashSet<>(jsonCache.keySet());
-      jsonKeys.forEach(k -> assertTrue(k, k.contains("\"_type\":\"org.infinispan.test.client.DataFormatTest.ComplexKey\"")));
+      jsonKeys.forEach(k -> assertTrue(k.contains("\"_type\":\"org.infinispan.test.client.DataFormatTest.ComplexKey\""), k));
 
       Map<String, String> newEntries = new HashMap<>();
 

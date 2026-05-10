@@ -13,12 +13,13 @@ import static org.infinispan.server.core.backup.Constants.CONTAINERS_PROPERTIES_
 import static org.infinispan.server.core.backup.Constants.CONTAINER_KEY;
 import static org.infinispan.server.core.backup.Constants.GLOBAL_CONFIG_FILE;
 import static org.infinispan.server.core.backup.Constants.MANIFEST_PROPERTIES_FILE;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -120,12 +121,12 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
             fail();
          } catch (ExecutionException e) {
             Throwable t = e.getCause();
-            assertTrue(t instanceof CacheException);
+            assertInstanceOf(CacheException.class, t);
             assertTrue(t.getMessage().contains("Cannot create cluster backup"));
             t = t.getCause();
-            assertTrue(t instanceof CompletionException);
+            assertInstanceOf(CompletionException.class, t);
             t = t.getCause();
-            assertTrue(t instanceof CacheException);
+            assertInstanceOf(CacheException.class, t);
             assertTrue(t.getMessage().contains(msg));
          }
          return CompletableFutures.completedNull();
@@ -157,12 +158,12 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                } catch (ExecutionException e) {
                   assertTrue(stage.isCompletedExceptionally());
                   Throwable t = e.getCause();
-                  assertTrue(t instanceof CacheException);
+                  assertInstanceOf(CacheException.class, t);
                   assertTrue(t.getMessage().contains("Cannot restore cluster backup"));
                   t = t.getCause();
-                  assertTrue(t instanceof CompletionException);
+                  assertInstanceOf(CompletionException.class, t);
                   t = t.getCause();
-                  assertTrue(t instanceof CacheException);
+                  assertInstanceOf(CacheException.class, t);
                   assertTrue(t.getMessage().contains(String.format("'[%s]' not found in the backup archive", resourceName)));
                } catch (Exception e) {
                   fail();

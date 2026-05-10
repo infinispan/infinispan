@@ -5,7 +5,8 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScri
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +17,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.testng.AssertJUnit;
+import org.junit.jupiter.api.Assertions;
 import org.testng.annotations.Test;
 
 /**
@@ -82,7 +83,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
          params.put("k", "empty-key");
          params.put("v", "");
          String result = execClient.getCache(NAME).execute(scriptName, params);
-         assertEquals(null, result);
+         assertNull(result);
       });
    }
 
@@ -104,7 +105,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
    public void testLocalTypedExecNullReturn() {
       withScript(addScriptClient.getCache(SCRIPT_CACHE_NAME), "/typed-null-return.js", scriptName -> {
          String result = execClient.getCache(NAME).execute(scriptName, new HashMap<>());
-         assertEquals(null, result);
+         assertNull(result);
       });
    }
 
@@ -150,7 +151,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
    }
 
    enum ExecMode {
-      LOCAL(AssertJUnit::assertEquals),
+      LOCAL(Assertions::assertEquals),
       DIST((v, r) -> assertEquals(String.format("[\"%1$s\", \"%1$s\"]", v), r));
 
       final BiConsumer<String, String> assertResult;

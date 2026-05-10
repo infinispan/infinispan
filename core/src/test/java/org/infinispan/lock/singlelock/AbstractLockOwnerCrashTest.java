@@ -1,5 +1,7 @@
 package org.infinispan.lock.singlelock;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
@@ -47,7 +49,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
       eventually(() -> checkTxCount(0, 0, 1) &&  checkTxCount(1, 1, 0) &&  checkTxCount(2, 0, 1));
 
       killMember(2);
-      assert caches().size() == 2;
+      assertTrue(caches().size() == 2);
 
 
       tm(secondTxNode).begin();

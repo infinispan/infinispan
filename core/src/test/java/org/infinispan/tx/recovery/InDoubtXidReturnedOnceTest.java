@@ -2,7 +2,7 @@ package org.infinispan.tx.recovery;
 
 import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
@@ -53,7 +53,7 @@ public class InDoubtXidReturnedOnceTest extends MultipleCacheManagersTest {
 
       EmbeddedTransaction tx2 = beginAndSuspendTx(this.cache(0));
       Xid[] recover = tx2.firstEnlistedResource().recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN);
-      assertEquals(recover.length,1);
+      assertEquals(1, recover.length);
       assertEquals(tx.getXid(), recover[0]);
 
    }

@@ -2,10 +2,10 @@ package org.infinispan.test.hibernate.cache.commons.access;
 
 import static org.infinispan.test.hibernate.cache.commons.util.TestingUtil.withTx;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -322,7 +322,7 @@ public class PutFromLoadValidatorUnitTest {
 
       assertTrue(finishedLatch.await(5, TimeUnit.SECONDS));
 
-      assertEquals("All threads succeeded", 3, success.get());
+      assertEquals(3, success.get(), "All threads succeeded");
    }
 
    @Test

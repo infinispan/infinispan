@@ -4,7 +4,9 @@
    <xsl:output method="xml" indent="yes" version="1.0" encoding="UTF-8" omit-xml-declaration="no" standalone="yes" xslt:indent-amount="4"/>
 
    <xsl:template match="/plugin">
-      <plugin name="Infinispan" displayName="Infinispan Plugin" description="Supports management and monitoring of Infinispan" package="org.infinispan.rhq" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-plugin" xmlns:c="urn:xmlns:rhq-configuration">
+      <plugin name="Infinispan" displayName="Infinispan Plugin"
+              description="Supports management and monitoring of Infinispan" package="org.infinispan.rhq"
+              xmlns="urn:xmlns:rhq-plugin" xmlns:c="urn:xmlns:rhq-configuration">
          <depends plugin="JMX" useClasses="true" />
          <xsl:apply-templates select="cacheManager" />
       </plugin>

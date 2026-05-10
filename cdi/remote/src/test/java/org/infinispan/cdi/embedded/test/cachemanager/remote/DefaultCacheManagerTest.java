@@ -1,6 +1,6 @@
 package org.infinispan.cdi.embedded.test.cachemanager.remote;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Properties;
 
@@ -43,6 +43,6 @@ public class DefaultCacheManagerTest extends Arquillian {
 
       final Properties properties = remoteCacheManager.getConfiguration().properties();
 
-      assertEquals(properties.getProperty(SERVER_LIST_KEY), DEFAULT_SERVER_LIST_VALUE);
+      assertEquals(DEFAULT_SERVER_LIST_VALUE, properties.getProperty(SERVER_LIST_KEY));
    }
 }

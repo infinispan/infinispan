@@ -7,9 +7,10 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.test.TestingUtil.wrapComponent;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -46,7 +47,6 @@ import org.infinispan.xsite.spi.AlwaysRemoveXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.DefaultXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
-import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -89,13 +89,13 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       long val1 = invokeLongAttribute(mBeanServer, objectName, attribute);
       long val2 = invokeLongOperation(mBeanServer, objectName, attribute, site);
       log.debugf("%s op(%s) = %d", objectName, attribute, val2);
-      assertEquals("Wrong value for " + attribute, val1, val2);
+      assertEquals(val1, val2, "Wrong value for " + attribute);
    }
 
    private static void assertAttribute(MBeanServer mBeanServer, ObjectName objectName, Attribute attribute,
          long expected) throws Exception {
       long val = invokeLongAttribute(mBeanServer, objectName, attribute);
-      assertEquals("Wrong attribute value for " + attribute, expected, val);
+      assertEquals(expected, val, "Wrong attribute value for " + attribute);
    }
 
    private static void eventuallyAssertAttribute(MBeanServer mBeanServer, ObjectName objectName, Attribute attribute) {
@@ -123,7 +123,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
          long expected) throws Exception {
       long val = invokeLongOperation(mBeanServer, objectName, attribute, site);
       log.debugf("%s op(%s) = %d", objectName, attribute, val);
-      assertEquals("Wrong operation value for " + attribute, expected, val);
+      assertEquals(expected, val, "Wrong operation value for " + attribute);
    }
 
    private static long invokeLongOperation(MBeanServer mBeanServer, ObjectName rpcManager, Attribute attribute,
@@ -131,7 +131,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
          throws Exception {
       Object val = mBeanServer
             .invoke(rpcManager, attribute.operationName, new Object[]{siteName}, new String[]{String.class.getName()});
-      assertTrue(val instanceof Number);
+      assertInstanceOf(Number.class, val);
       return ((Number) val).longValue();
    }
 
@@ -139,13 +139,13 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
          throws Exception {
       Object val = mBeanServer.getAttribute(objectName, attribute.attributeName);
       log.debugf("%s attr(%s) = %d", objectName, attribute, val);
-      assertTrue(val instanceof Number);
+      assertInstanceOf(Number.class, val);
       return ((Number) val).longValue();
    }
 
    private static int invokeQueueSizeAttribute(MBeanServer mBeanServer, ObjectName objectName) throws Exception {
       Object val = mBeanServer.getAttribute(objectName, Attribute.QUEUE_SIZE.attributeName);
-      assertTrue(val instanceof Number);
+      assertInstanceOf(Number.class, val);
       return ((Number) val).intValue();
    }
 
@@ -575,7 +575,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       }
 
       void awaitRequest() throws InterruptedException {
-         AssertJUnit.assertTrue(latch.await(10, TimeUnit.SECONDS));
+         assertTrue(latch.await(10, TimeUnit.SECONDS));
       }
 
       void continueRequest() {

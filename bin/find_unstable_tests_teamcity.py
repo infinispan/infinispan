@@ -6,15 +6,15 @@
   Teamcity REST API documentation: http://confluence.jetbrains.com/display/TCD8/REST+API
 """
 
+import argparse
+import csv
+import datetime
 import json
 import re
-from restkit import Resource, BasicAuth, request
-from pprint import pprint
-import argparse
-import datetime
-from getpass import getpass
-import csv
 import sys
+from getpass import getpass
+from pprint import pprint
+from restkit import Resource, BasicAuth, request
 
 default_base_url = 'http://ci.infinispan.org'
 default_build_types = ['Master Hotspot JDK6', 'Master Hotspot JDK7', 'Master Unstable Tests JDK6']

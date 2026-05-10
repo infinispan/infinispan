@@ -1,5 +1,7 @@
 package org.infinispan.lock;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -23,11 +25,11 @@ public class SimpleLockContainerTest extends AbstractInfinispanTest {
       TestingUtil.inject(lc, AbstractCacheTest.TIME_SERVICE);
       final String k1 = ab();
       final String k2 = ab2();
-      assert k1 != k2 && k1.equals(k2);
+      assertTrue(k1 != k2 && k1.equals(k2));
 
       Object owner = new Object();
       lc.acquire(k1, owner, 0, TimeUnit.MILLISECONDS).lock();
-      assert lc.getLock(k1).isLocked();
+      assertTrue(lc.getLock(k1).isLocked());
 
 
       Future<Void> f = fork(new Callable<Void>() {

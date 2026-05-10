@@ -6,11 +6,11 @@ import static org.infinispan.test.TestingUtil.createMapEntry;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -726,8 +726,8 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       int cacheSizeBeforeNullValueCompute = cache.size();
       Function<Object, String> functionMapsToNull = k -> null;
-      assertNull("with function mapping to null returns null", cache.computeIfAbsent("kaixo", functionMapsToNull));
-      assertNull("the key does not exist", cache.get("kaixo"));
+      assertNull(cache.computeIfAbsent("kaixo", functionMapsToNull), "with function mapping to null returns null");
+      assertNull(cache.get("kaixo"), "the key does not exist");
       assertEquals(cacheSizeBeforeNullValueCompute, cache.size());
 
       RuntimeException computeRaisedException = new RuntimeException("hi there");
@@ -767,12 +767,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
       expectException(RuntimeException.class, "hi there", () -> cache.computeIfPresent("es", mappingToException));
 
       BiFunction<Object, Object, String> mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
-      assertNull("unexisting key should return null", cache.computeIfPresent("fr", mappingForNotPresentKey));
-      assertNull("unexisting key should return null", cache.get("fr"));
+      assertNull(cache.computeIfPresent("fr", mappingForNotPresentKey), "unexisting key should return null");
+      assertNull(cache.get("fr"), "unexisting key should return null");
 
       BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
-      assertNull("mapping to null returns null", cache.computeIfPresent("es", mappingToNull));
-      assertNull("the key is removed", cache.get("es"));
+      assertNull(cache.computeIfPresent("es", mappingToNull), "mapping to null returns null");
+      assertNull(cache.get("es"), "the key is removed");
    }
 
    public void testComputeIfPresentWithExpirationParameters() {
@@ -802,12 +802,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertEquals("absent_fr:null", cache.get("fr"));
 
       BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
-      assertNull("mapping to null returns null", cache.compute("es", mappingToNull));
-      assertNull("the key is removed", cache.get("es"));
+      assertNull(cache.compute("es", mappingToNull), "mapping to null returns null");
+      assertNull(cache.get("es"), "the key is removed");
 
       int cacheSizeBeforeNullValueCompute = cache.size();
-      assertNull("mapping to null returns null", cache.compute("eus", mappingToNull));
-      assertNull("the key does not exist", cache.get("eus"));
+      assertNull(cache.compute("eus", mappingToNull), "mapping to null returns null");
+      assertNull(cache.get("eus"), "the key does not exist");
       assertEquals(cacheSizeBeforeNullValueCompute, cache.size());
 
       RuntimeException computeRaisedException = new RuntimeException("hi there");

@@ -1,7 +1,7 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import static java.util.stream.IntStream.range;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

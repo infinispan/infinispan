@@ -1,12 +1,12 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -71,20 +71,13 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    private ConfigurationBuilder cb;
    private ControlledConsistentHashFactory.Default chFactory;
 
-   private static class Operation {
-      final String name;
-      final BiFunction<MagicKey, Integer, Object> f;
-
-      private Operation(String name, BiFunction<MagicKey, Integer, Object> f) {
-         this.name = name;
-         this.f = f;
-      }
+   private record Operation(String name, BiFunction<MagicKey, Integer, Object> f) {
 
       @Override
-      public String toString() {
-         return name;
+         public String toString() {
+            return name;
+         }
       }
-   }
 
    @DataProvider(name = "operations")
    public Object[][] operations() {
@@ -284,7 +277,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
          assertFalse(ctx.isOriginLocal());
          InvocationStage invocationStage = makeStage(invokeNext(ctx, command));
-         assertFalse(invocationStage.toString(), invocationStage.isDone());
+         assertFalse(invocationStage.isDone(), invocationStage.toString());
          log.debug("Received incomplete stage");
          latch.countDown();
          return invocationStage;

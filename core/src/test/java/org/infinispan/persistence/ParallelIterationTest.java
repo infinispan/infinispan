@@ -1,9 +1,9 @@
 package org.infinispan.persistence;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -89,7 +89,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       final ConcurrentMap<Integer, Metadata> metadata = new ConcurrentHashMap<>();
       final AtomicBoolean sameKeyMultipleTimes = new AtomicBoolean();
 
-      assertEquals(store.sizeWait(allSegments), 0);
+      assertEquals(0, store.sizeWait(allSegments));
       insertData();
 
       Flowable<MarshallableEntry<Object, Object>> flowable = Flowable.fromPublisher(
@@ -160,7 +160,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       for (int i = 0; i < NUM_ENTRIES; i++) {
          long now = System.currentTimeMillis();
          Metadata metadata = insertMetadata(i) ? TestingUtil.metadata(lifespan(i), maxIdle(i)) : null;
-         MarshallableEntry me = MarshalledEntryUtil.create(wrapKey(i), wrapValue(i, i), metadata, now, now, cache);
+         MarshallableEntry<Object, Object> me = MarshalledEntryUtil.create(wrapKey(i), wrapValue(i, i), metadata, now, now, cache);
          store.write(me);
       }
    }

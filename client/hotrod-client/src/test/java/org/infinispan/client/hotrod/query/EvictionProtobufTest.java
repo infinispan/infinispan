@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.query;
 
 import static org.infinispan.configuration.cache.StorageType.HEAP;
 import static org.infinispan.eviction.EvictionStrategy.REMOVE;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Text;
@@ -55,13 +55,13 @@ public class EvictionProtobufTest extends MultiHotRodServersTest {
       RemoteCache<String, Book> cache = client.getCache(CACHE_NAME);
 
       cache.put("100", new Book("Persepolis Rising", "James Corey", 2017));
-      assertEquals(cache.size(), 1);
+      assertEquals(1, cache.size());
 
       cache.put("100", new Book("Nemesis Games", "James Corey", 2015));
-      assertEquals(cache.size(), 1);
+      assertEquals(1, cache.size());
 
       cache.remove("100");
-      assertEquals(cache.size(), 0);
+      assertEquals(0, cache.size());
    }
 
    @ProtoSchema(

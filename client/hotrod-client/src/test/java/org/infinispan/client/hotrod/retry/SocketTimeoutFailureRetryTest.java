@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.retry;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;

@@ -1,7 +1,7 @@
 package org.infinispan.query.backend;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Date;
 
@@ -44,13 +44,13 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
 
       Query<?> query = cache.query("FROM " + Bond.class.getName());
       Query<?> query2 = cache.query("FROM " + Debenture.class.getName());
-      assertEquals(query.list().size() + query2.list().size(), 3);
+      assertEquals(3, query.list().size() + query2.list().size());
 
       Query<?> queryBond = cache.query("FROM " + Bond.class.getName());
-      assertEquals(queryBond.execute().count().value(), 2);
+      assertEquals(2, queryBond.execute().count().value());
 
       Query<?> queryDeb = cache.query("FROM " + Debenture.class.getName());
-      assertEquals(queryDeb.execute().count().value(), 1);
+      assertEquals(1, queryDeb.execute().count().value());
    }
 }
 

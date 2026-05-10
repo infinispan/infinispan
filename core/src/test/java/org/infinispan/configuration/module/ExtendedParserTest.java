@@ -1,6 +1,7 @@
 package org.infinispan.configuration.module;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 
@@ -11,7 +12,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -24,24 +24,23 @@ import org.testng.annotations.Test;
 public class ExtendedParserTest extends AbstractInfinispanTest {
 
    public void testExtendedParserBareExtension() throws IOException {
-      String config = TestingUtil.wrapXMLWithSchema(
-            "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
-            "   <local-cache name=\"extra-module\">\n" +
-            "       <sample-element xmlns=\"urn:infinispan:config:mymodule\" sample-attribute=\"test-value\" />\n" +
-            "   </local-cache>\n" +
-            "</cache-container>"
-      );
+      String config = TestingUtil.wrapXMLWithSchema("""
+            <cache-container name="container-extra-modules" default-cache="extra-module">
+               <local-cache name="extra-module">
+                   <sample-element xmlns="urn:infinispan:config:mymodule" sample-attribute="test-value" />
+               </local-cache>
+            </cache-container>""");
       assertCacheConfiguration(config);
    }
 
-   private void assertCacheConfiguration(String config) throws IOException {
+   private void assertCacheConfiguration(String config) {
       ConfigurationBuilderHolder holder = parseToHolder(config);
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(holder)) {
 
          @Override
          public void call() {
-            Assert.assertEquals(cm.getDefaultCacheConfiguration().module(MyModuleConfiguration.class).attribute(), "test-value");
+            assertEquals("test-value", cm.getDefaultCacheConfiguration().module(MyModuleConfiguration.class).attribute());
          }
 
       });
@@ -55,13 +54,12 @@ public class ExtendedParserTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "WRONG SCOPE")
    public void testExtendedParserWrongScope() {
-      String config = TestingUtil.wrapXMLWithSchema(
-            "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
-            "   <local-cache name=\"extra-module\">\n" +
-            "   </local-cache>\n" +
-            "   <sample-element xmlns=\"urn:infinispan:config:mymodule\" sample-attribute=\"test-value\" />\n" +
-            "</cache-container>"
-      );
+      String config = TestingUtil.wrapXMLWithSchema("""
+            <cache-container name="container-extra-modules" default-cache="extra-module">
+               <local-cache name="extra-module">
+               </local-cache>
+               <sample-element xmlns="urn:infinispan:config:mymodule" sample-attribute="test-value" />
+            </cache-container>""");
       parseToHolder(config);
    }
 }

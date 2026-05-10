@@ -1,8 +1,8 @@
 package org.infinispan.persistence.file;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -106,7 +106,7 @@ public class SingleFileMigrateCorruptTest extends AbstractInfinispanTest {
       IntStream.range(1000, 2000).forEach(i -> {
          CacheEntry<Object, Object> entry = cache.getCacheEntry(i);
          if (i % 8 == 0) {
-            assertNotNull("No entry found for key: " + i, entry);
+            assertNotNull(entry, "No entry found for key: " + i);
             // Ensure that we have the expected values from SFSCorruptedMigration12_1
             assertEquals(i + "-updated-12.1", entry.getValue());
 
@@ -114,9 +114,9 @@ public class SingleFileMigrateCorruptTest extends AbstractInfinispanTest {
             assertEquals(-1, entry.getLifespan());
          } else if (i % 4 == 0) {
             // These should have expired since they were inserted after the corruption occurred
-           assertNull("Entry was supposed to be expired for key: " + i, entry);
+           assertNull(entry, "Entry was supposed to be expired for key: " + i);
          } else {
-            assertNotNull("No entry found for key: " + i, entry);
+            assertNotNull(entry, "No entry found for key: " + i);
             // Ensure that we have the expected values from SFSCreator11_0
             assertEquals(i, entry.getValue());
 

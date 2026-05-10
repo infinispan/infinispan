@@ -1,6 +1,6 @@
 package org.infinispan.query.objectfilter.impl.syntax;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleQueryStringParser;

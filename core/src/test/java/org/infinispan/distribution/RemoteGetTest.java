@@ -1,6 +1,9 @@
 package org.infinispan.distribution;
 
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -45,27 +48,27 @@ public class RemoteGetTest extends MultipleCacheManagersTest {
 
       List<Address> owners = extractCacheTopology(c1).getDistribution(k).writeOwners();
 
-      assert owners.size() == 2: "Key should have 2 owners";
+      assertTrue(owners.size() == 2, "Key should have 2 owners");
 
       Cache<MagicKey, String> owner1 = getCacheForAddress(owners.get(0));
-      assert owner1 == c1;
+      assertTrue(owner1 == c1);
       Cache<MagicKey, String> owner2 = getCacheForAddress(owners.get(1));
-      assert owner2 == c2;
+      assertTrue(owner2 == c2);
       Cache<MagicKey, String> nonOwner = getNonOwner(owners);
-      assert nonOwner == c3;
+      assertTrue(nonOwner == c3);
 
       owner1.put(k, "value");
-      assert "value".equals(nonOwner.get(k));
+      assertEquals(nonOwner.get(k), "value");
    }
 
    public void testGetOfNonexistentKey() {
       Object v = cache(0).get("__ doesn't exist ___");
-      assert v == null : "Should get a null response";
+      assertNull(v, "Should get a null response");
    }
 
    public void testGetOfNonexistentKeyOnOwner() {
       MagicKey mk = new MagicKey("does not exist", cache(0));
       Object v = cache(0).get(mk);
-      assert v == null : "Should get a null response";
+      assertNull(v, "Should get a null response");
    }
 }

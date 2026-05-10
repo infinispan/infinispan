@@ -1,13 +1,14 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -115,7 +116,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             isPost = !isPost;
          }
 
-         assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
+         assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());
          assertTrue(expected.containsKey(event.getKey()));
          assertEquals(event.isPre(), !isPost);
          if (isPost) {
@@ -319,7 +320,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
             CacheEntryEvent event = listener.events.get(position);
 
-            assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
+            assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());
             assertTrue(expectedValues.containsKey(event.getKey()));
             assertEquals(event.isPre(), !isPost);
             if (isPost) {
@@ -334,19 +335,19 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
          if (isClustered) {
             CacheEntryEvent<String, String> event = listener.events.get(position);
             assertEquals(event.getType(), operation.getType());
-            assertEquals(event.isPre(), false);
+            assertFalse(event.isPre());
             assertEquals(event.getKey(), keyToChange);
             assertEquals(event.getValue(), value);
          } else {
             CacheEntryEvent<String, String> event = listener.events.get(position);
             assertEquals(event.getType(), operation.getType());
-            assertEquals(event.isPre(), true);
+            assertTrue(event.isPre());
             assertEquals(event.getKey(), keyToChange);
             assertEquals(event.getValue(), oldValue);
 
             event = listener.events.get(position + 1);
             assertEquals(event.getType(), operation.getType());
-            assertEquals(event.isPre(), false);
+            assertFalse(event.isPre());
             assertEquals(event.getKey(), keyToChange);
             assertEquals(event.getValue(), value);
          }
@@ -514,7 +515,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             assertTrue(foundEarlierCreate, "There was no matching create event for key " + event.getKey());
 
             assertEquals(event.getType(), operation.getType());
-            assertEquals(event.isPre(), false);
+            assertFalse(event.isPre());
             assertEquals(event.getValue(), value);
          }
 
@@ -530,7 +531,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
             CacheEntryEvent<String, String> event = listener.events.get(position);
 
-            assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
+            assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());
             assertTrue(expectedValues.containsKey(event.getKey()));
             assertEquals(event.isPre(), !isPost);
             if (isPost) {
@@ -545,13 +546,13 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
          if (!isClustered) {
             CacheEntryEvent<String, String> event = listener.events.get(position);
             assertEquals(event.getType(), operation.getType());
-            assertEquals(event.isPre(), true);
+            assertTrue(event.isPre());
             assertEquals(event.getKey(), keyToChange);
             assertEquals(event.getValue(), oldValue);
 
             event = listener.events.get(position + 1);
             assertEquals(event.getType(), operation.getType());
-            assertEquals(event.isPre(), false);
+            assertFalse(event.isPre());
             assertEquals(event.getKey(), keyToChange);
             assertEquals(event.getValue(), value);
          }

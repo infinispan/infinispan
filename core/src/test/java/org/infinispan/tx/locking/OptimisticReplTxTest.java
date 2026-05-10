@@ -1,7 +1,8 @@
 package org.infinispan.tx.locking;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -37,13 +38,13 @@ public class OptimisticReplTxTest extends AbstractClusteredTxTest {
       tm(0).begin();
       cache(0).put(k, "v2");
       tm(0).commit();
-      assert cache(0).get(k).equals("v2");
-      assert cache(1).get(k).equals("v2");
+      assertEquals("v2", cache(0).get(k));
+      assertEquals("v2", cache(1).get(k));
 
       tm(0).resume(tx1);
       tm(0).commit();
-      assert cache(0).get(k).equals("v1");
-      assert cache(1).get(k).equals("v1");
+      assertEquals("v1", cache(0).get(k));
+      assertEquals("v1", cache(1).get(k));
    }
 
    @Override

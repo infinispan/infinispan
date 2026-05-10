@@ -1,7 +1,7 @@
 package org.infinispan.notifications;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;

@@ -1,7 +1,7 @@
 package org.infinispan.cdi.embedded.test.cache;
 
 import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -40,17 +40,17 @@ public class DefaultCacheTest extends Arquillian {
       // Simple test to make sure the default cache works
       cache.put("pete", "British");
       cache.put("manik", "Sri Lankan");
-      assertEquals(cache.get("pete"), "British");
-      assertEquals(cache.get("manik"), "Sri Lankan");
-      assertEquals(cache.getName(), TestCacheManagerFactory.DEFAULT_CACHE_NAME);
+      assertEquals("British", cache.get("pete"));
+      assertEquals("Sri Lankan", cache.get("manik"));
+      assertEquals(TestCacheManagerFactory.DEFAULT_CACHE_NAME, cache.getName());
       /*
        * Check that the advanced cache contains the same data as the simple
        * cache. As we can inject either Cache or AdvancedCache, this is double
        * checking that they both refer to the same underlying impl and Seam
        * Clouds isn't returning the wrong thing.
        */
-      assertEquals(advancedCache.get("pete"), "British");
-      assertEquals(advancedCache.get("manik"), "Sri Lankan");
-      assertEquals(advancedCache.getName(), TestCacheManagerFactory.DEFAULT_CACHE_NAME);
+      assertEquals("British", advancedCache.get("pete"));
+      assertEquals("Sri Lankan", advancedCache.get("manik"));
+      assertEquals(TestCacheManagerFactory.DEFAULT_CACHE_NAME, advancedCache.getName());
    }
 }

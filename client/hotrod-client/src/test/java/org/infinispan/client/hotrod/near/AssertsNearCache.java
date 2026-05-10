@@ -7,10 +7,10 @@ import static org.infinispan.client.hotrod.near.MockNearCacheService.MockPutIfAb
 import static org.infinispan.client.hotrod.near.MockNearCacheService.MockRemoveEvent;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.entryVersion;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -117,13 +117,13 @@ public class AssertsNearCache<K, V> {
    }
 
    AssertsNearCache<K, V> expectNoNearEvents() {
-      assertEquals(events.toString(), 0, events.size());
+      assertEquals(0, events.size(), events.toString());
       return this;
    }
 
    AssertsNearCache<K, V> expectNoNearEvents(long time, TimeUnit timeUnit) throws InterruptedException {
       MockEvent event = events.poll(time, timeUnit);
-      assertNull("Event was: " + event, event);
+      assertNull(event, "Event was: " + event);
       return this;
    }
 
@@ -209,7 +209,7 @@ public class AssertsNearCache<K, V> {
 
    void expectNearClearInClient(AssertsNearCache<K, V> client) {
       MockEvent clear = pollEvent(client.events);
-      assertTrue("Unexpected event: " + clear, clear instanceof MockClearEvent);
+      assertInstanceOf(MockClearEvent.class, clear, "Unexpected event: " + clear);
    }
 
    void resetEvents() {

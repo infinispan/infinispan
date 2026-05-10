@@ -1,8 +1,8 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -62,8 +62,7 @@ public class MaxIdleExpirationTest extends SingleNodeTest {
          assertNotNull(loaded);
          assertEquals("Expiring item", loaded.getDescription());
       });
-      assertEquals("Expected L2 cache hit", 1,
-            sessionFactory().getStatistics().getSecondLevelCacheHitCount());
+      assertEquals(1, sessionFactory().getStatistics().getSecondLevelCacheHitCount(), "Expected L2 cache hit");
 
       TIME_SERVICE.advance(ENTITY_MAX_IDLE + 1);
 
@@ -73,10 +72,9 @@ public class MaxIdleExpirationTest extends SingleNodeTest {
          assertNotNull(loaded);
          assertEquals("Expiring item", loaded.getDescription());
       });
-      assertEquals("Expected L2 cache miss after max-idle expiration", 0,
-            sessionFactory().getStatistics().getSecondLevelCacheHitCount());
-      assertTrue("Expected at least one L2 cache miss",
-            sessionFactory().getStatistics().getSecondLevelCacheMissCount() > 0);
+      assertEquals(0,
+            sessionFactory().getStatistics().getSecondLevelCacheHitCount(), "Expected L2 cache miss after max-idle expiration");
+      assertTrue(sessionFactory().getStatistics().getSecondLevelCacheMissCount() > 0, "Expected at least one L2 cache miss");
    }
 
    @Test
@@ -93,7 +91,7 @@ public class MaxIdleExpirationTest extends SingleNodeTest {
       });
 
       Map contents = Caches.entrySet(entityCache).toMap();
-      assertTrue("Cache should not be empty", contents.size() > 0);
+      assertTrue(contents.size() > 0, "Cache should not be empty");
 
       TIME_SERVICE.advance(ENTITY_MAX_IDLE + 1);
 
@@ -102,6 +100,6 @@ public class MaxIdleExpirationTest extends SingleNodeTest {
       }
 
       Map afterExpiration = Caches.entrySet(entityCache).toMap();
-      assertEquals("Cache should be empty after max-idle expiration", 0, afterExpiration.size());
+      assertEquals(0, afterExpiration.size(), "Cache should be empty after max-idle expiration");
    }
 }

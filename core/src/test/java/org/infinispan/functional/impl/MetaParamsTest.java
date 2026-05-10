@@ -1,8 +1,9 @@
 package org.infinispan.functional.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
 
@@ -39,7 +40,7 @@ public class MetaParamsTest {
       Optional<MetaLifespan> lifespanFound = metas.find(MetaLifespan.class);
       assertEquals(new MetaLifespan(1000), lifespanFound.get());
       assertEquals(1000, metas.find(MetaLifespan.class).get().get().longValue());
-      assertFalse(new MetaLifespan(900).equals(lifespanFound.get()));
+      assertNotEquals(new MetaLifespan(900), lifespanFound.get());
       metas.add(new MetaLifespan(900));
       assertFalse(metas.isEmpty());
       assertEquals(1, metas.size());
@@ -55,9 +56,9 @@ public class MetaParamsTest {
       Optional<MetaMaxIdle> maxIdle = metas.find(MetaMaxIdle.class);
       Optional<MetaEntryVersion> entryVersion = metas.find(MetaEntryVersion.class);
       assertEquals(Optional.of(new MetaMaxIdle(1000)), maxIdle);
-      assertFalse(900 == maxIdle.get().get().longValue());
+      assertNotEquals(900, maxIdle.get().get().longValue());
       assertEquals(new MetaEntryVersion(new NumericVersion(12345)), entryVersion.get());
-      assertFalse(new MetaEntryVersion(new NumericVersion(23456)).equals(entryVersion.get()));
+      assertNotEquals(new MetaEntryVersion(new NumericVersion(23456)), entryVersion.get());
    }
 
    @Test

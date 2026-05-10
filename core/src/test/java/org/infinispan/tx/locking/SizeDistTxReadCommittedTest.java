@@ -1,7 +1,7 @@
 package org.infinispan.tx.locking;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;

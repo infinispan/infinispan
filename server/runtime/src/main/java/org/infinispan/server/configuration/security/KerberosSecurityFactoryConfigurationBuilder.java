@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Objects;
 import java.util.Properties;
 
 import org.ietf.jgss.Oid;
@@ -28,7 +29,6 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.wildfly.common.Assert;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.asn1.OidsUtil;
 import org.wildfly.security.auth.SupportLevel;
@@ -178,7 +178,7 @@ public class KerberosSecurityFactoryConfigurationBuilder implements Builder<Kerb
 
    // Copy of Elytron's CredentialSource.fromSecurityFactory() to workaround casting
    CredentialSource fromSecurityFactory(SecurityFactory<? extends Credential> credentialFactory) {
-      Assert.checkNotNullParam("credentialFactory", credentialFactory);
+      Objects.requireNonNull(credentialFactory, "credentialFactory");
       return new CredentialSource() {
          public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
             return SupportLevel.POSSIBLY_SUPPORTED;

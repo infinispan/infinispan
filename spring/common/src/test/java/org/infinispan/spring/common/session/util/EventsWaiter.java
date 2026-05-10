@@ -1,6 +1,6 @@
 package org.infinispan.spring.common.session.util;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

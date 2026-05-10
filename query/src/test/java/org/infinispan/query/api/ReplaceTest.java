@@ -1,8 +1,8 @@
 package org.infinispan.query.api;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

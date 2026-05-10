@@ -3,7 +3,7 @@ package org.infinispan.cdi.embedded.test.cache.remote;
 import static org.infinispan.cdi.embedded.test.Deployments.baseDeployment;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.cdi.remote.Remote;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -77,10 +77,10 @@ public class DefaultCacheTest extends Arquillian {
       cache.put("pete", "British");
       cache.put("manik", "Sri Lankan");
 
-      assertEquals(cache.get("pete"), "British");
-      assertEquals(cache.get("manik"), "Sri Lankan");
-      assertEquals(remoteCache.get("pete"), "British");
-      assertEquals(remoteCache.get("manik"), "Sri Lankan");
+      assertEquals("British", cache.get("pete"));
+      assertEquals("Sri Lankan", cache.get("manik"));
+      assertEquals("British", remoteCache.get("pete"));
+      assertEquals("Sri Lankan", remoteCache.get("manik"));
    }
 
    /**

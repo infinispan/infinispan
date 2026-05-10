@@ -1,6 +1,6 @@
 package org.infinispan.factories.threads;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.testng.annotations.Test;
 

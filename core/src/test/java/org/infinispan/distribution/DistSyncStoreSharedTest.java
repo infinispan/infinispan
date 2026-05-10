@@ -1,7 +1,8 @@
 package org.infinispan.distribution;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,24 +67,24 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest<D>> exten
       for (Cache<Object, String> c : caches) assert c.isEmpty();
       Cache<Object, String> nonOwner = getFirstNonOwner(key);
       DummyInMemoryStore nonOwnerStore = TestingUtil.getFirstStore(nonOwner);
-      assert !nonOwnerStore.contains(key);
+      assertFalse(nonOwnerStore.contains(key));
       Object retval = nonOwner.put(key, value);
       asyncWait(key, PutKeyValueCommand.class);
 
       Cache[] owners = getOwners(key);
       DummyInMemoryStore store = TestingUtil.<DummyInMemoryStore, Object, Object>getFirstStore(owners[0]);
       assertIsInContainerImmortal(owners[0], key);
-      assert store.contains(key);
+      assertTrue(store.contains(key));
 
       for (int i = 1; i < owners.length; i++) {
          store = TestingUtil.<DummyInMemoryStore, Object, Object>getFirstStore(owners[i]);
          assertIsInContainerImmortal(owners[i], key);
-         assert store.contains(key);
+         assertTrue(store.contains(key));
       }
 
       for (Cache<Object, String> c : caches) {
          store = TestingUtil.getFirstStore(c);
-         assert store.contains(key);
+         assertTrue(store.contains(key));
          assertNumberOfInvocations(store, "write", 1);
       }
 
@@ -99,12 +100,12 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest<D>> exten
       asyncWait(key, PutKeyValueCommand.class);
       DummyInMemoryStore store = TestingUtil.<DummyInMemoryStore, Object, Object>getFirstStore(owners[0]);
       assertIsInContainerImmortal(owners[0], key);
-      assert store.contains(key);
+      assertTrue(store.contains(key));
 
       for (int i = 1; i < owners.length; i++) {
          store = TestingUtil.<DummyInMemoryStore, Object, Object>getFirstStore(owners[i]);
          assertIsInContainerImmortal(owners[i], key);
-         assert store.contains(key);
+         assertTrue(store.contains(key));
       }
 
       for (Cache<Object, String> c : caches) {
@@ -112,7 +113,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest<D>> exten
          if (isOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
          }
-         assert store.contains(key);
+         assertTrue(store.contains(key));
          assertNumberOfInvocations(store, "write", 1);
       }
 
@@ -164,7 +165,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest<D>> exten
          DummyInMemoryStore store = TestingUtil.getFirstStore(c);
          if (isFirstOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
-            assert store.loadEntry(key).getValue().equals(value);
+            assertEquals(value, store.loadEntry(key).getValue());
          }
       }
 
@@ -191,7 +192,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest<D>> exten
          DummyInMemoryStore store = TestingUtil.getFirstStore(c);
          if (isFirstOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
-            assert store.loadEntry(key).getValue().equals(value);
+            assertEquals(value, store.loadEntry(key).getValue());
          }
       }
 
@@ -203,7 +204,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest<D>> exten
          if (isFirstOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
          }
-         assert store.loadEntry(key).getValue().equals(value2);
+         assertEquals(value2, store.loadEntry(key).getValue());
          assertNumberOfInvocations(store, "write", 2);
       }
    }
@@ -231,7 +232,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest<D>> exten
       assertNumberOfInvocations(store, "clear", 1);
       for (int i = 0; i < 5; i++) {
          String key = "k" + i;
-         assert !store.contains(key);
+         assertFalse(store.contains(key));
       }
    }
 

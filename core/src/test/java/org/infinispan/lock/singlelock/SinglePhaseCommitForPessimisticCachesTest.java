@@ -1,7 +1,8 @@
 package org.infinispan.lock.singlelock;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -45,8 +46,8 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
       final Object k0_2 = getKeyForCache(0);
 
       final List<Address> members = advancedCache(0).getRpcManager().getTransport().getMembers();
-      assert cacheTopology(0).getDistribution(k0_1).writeOwners().containsAll(members);
-      assert cacheTopology(0).getDistribution(k0_2).writeOwners().containsAll(members);
+      assertTrue(cacheTopology(0).getDistribution(k0_1).writeOwners().containsAll(members));
+      assertTrue(cacheTopology(0).getDistribution(k0_2).writeOwners().containsAll(members));
       TxCountInterceptor interceptor0 = new TxCountInterceptor();
       TxCountInterceptor interceptor1 = new TxCountInterceptor();
       extractInterceptorChain(advancedCache(0)).addInterceptor(interceptor0, 1);
@@ -58,12 +59,12 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
       tm(2).commit();
 
 
-      assertEquals(interceptor0.lockCount, 2);
-      assertEquals(interceptor1.lockCount, 2);
-      assertEquals(interceptor0.prepareCount, 1);
-      assertEquals(interceptor1.prepareCount, 1);
-      assertEquals(interceptor0.commitCount, 0);
-      assertEquals(interceptor1.commitCount, 0);
+      assertEquals(2, interceptor0.lockCount);
+      assertEquals(2, interceptor1.lockCount);
+      assertEquals(1, interceptor0.prepareCount);
+      assertEquals(1, interceptor1.prepareCount);
+      assertEquals(0, interceptor0.commitCount);
+      assertEquals(0, interceptor1.commitCount);
    }
 
 

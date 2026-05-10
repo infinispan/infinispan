@@ -37,7 +37,7 @@ public class JndiCacheManagerProvider implements EmbeddedCacheManagerProvider {
       if (factoryClass == null) {
          // Factory class might not be defined in WF
          return null;
-      } else if (factoryClass.endsWith("JndiInfinispanRegionFactory") || factoryClass.equals("infinispan-jndi")) {
+      } else if (factoryClass.endsWith("JndiInfinispanRegionFactory") || "infinispan-jndi".equals(factoryClass)) {
          throw log.propertyCacheManagerResourceNotSet();
       }
       return null;

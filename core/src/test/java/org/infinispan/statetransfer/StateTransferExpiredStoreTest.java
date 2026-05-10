@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.time.ControlledTimeService;

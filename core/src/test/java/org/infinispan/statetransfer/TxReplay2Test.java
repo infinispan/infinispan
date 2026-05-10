@@ -5,9 +5,9 @@ import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Arrays;
 import java.util.concurrent.Future;
@@ -91,8 +91,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       TransactionTable transactionTable0 = TestingUtil.getTransactionTable(primaryOwnerCache);
       final GlobalTransaction gtx = transactionTable0.getLocalTransaction(transaction).getGlobalTransaction();
       transaction.runPrepare();
-      assertEquals("Wrong transaction status before killing backup owner.",
-            Status.STATUS_PREPARED, transaction.getStatus());
+      assertEquals(Status.STATUS_PREPARED, transaction.getStatus(), "Wrong transaction status before killing backup owner.");
 
       // Now, we kill cache(1). the transaction is prepared in cache(1) and it should be transferred to cache(2)
       killMember(1);
@@ -117,26 +116,25 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       });
 
       checkIfTransactionExists(newBackupOwnerCache);
-      assertEquals("Wrong transaction status after killing backup owner.",
-            Status.STATUS_PREPARED, transaction.getStatus());
+      assertEquals(Status.STATUS_PREPARED, transaction.getStatus(), "Wrong transaction status after killing backup owner.");
       transaction.runCommit(false);
 
       secondCommitFuture.get(10, SECONDS);
 
       assertNoTransactions();
 
-      assertEquals("Wrong number of prepares!", 2, newBackupCounter.numberPrepares.get());
-      assertEquals("Wrong number of commits!", 2, newBackupCounter.numberCommits.get());
-      assertEquals("Wrong number of rollbacks!", 0, newBackupCounter.numberRollbacks.get());
+      assertEquals(2, newBackupCounter.numberPrepares.get(), "Wrong number of prepares!");
+      assertEquals(2, newBackupCounter.numberCommits.get(), "Wrong number of commits!");
+      assertEquals(0, newBackupCounter.numberRollbacks.get(), "Wrong number of rollbacks!");
 
-      assertEquals("Wrong number of prepares!", 2, oldBackup2Counter.numberPrepares.get());
-      assertEquals("Wrong number of commits!", 1, oldBackup2Counter.numberCommits.get());
-      assertEquals("Wrong number of rollbacks!", 0, oldBackup2Counter.numberRollbacks.get());
+      assertEquals(2, oldBackup2Counter.numberPrepares.get(), "Wrong number of prepares!");
+      assertEquals(1, oldBackup2Counter.numberCommits.get(), "Wrong number of commits!");
+      assertEquals(0, oldBackup2Counter.numberRollbacks.get(), "Wrong number of rollbacks!");
 
       // We only count remote commands, and there shouldn't be any on the primary/originator
-      assertEquals("Wrong number of prepares!", 0, primaryCounter.numberPrepares.get());
-      assertEquals("Wrong number of commits!", 0, primaryCounter.numberCommits.get());
-      assertEquals("Wrong number of rollbacks!", 0, primaryCounter.numberRollbacks.get());
+      assertEquals(0, primaryCounter.numberPrepares.get(), "Wrong number of prepares!");
+      assertEquals(0, primaryCounter.numberCommits.get(), "Wrong number of commits!");
+      assertEquals(0, primaryCounter.numberRollbacks.get(), "Wrong number of rollbacks!");
 
       checkKeyInDataContainer(key);
    }
@@ -160,14 +158,14 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       for (Cache<Object, Object> cache : caches()) {
          DataContainer container = cache.getAdvancedCache().getDataContainer();
          InternalCacheEntry entry = container.peek(key);
-         assertNotNull("Cache '" + address(cache) + "' does not contain key!", entry);
-         assertEquals("Cache '" + address(cache) + "' has wrong value!", VALUE, entry.getValue());
+         assertNotNull(entry, "Cache '" + address(cache) + "' does not contain key!");
+         assertEquals(VALUE, entry.getValue(), "Cache '" + address(cache) + "' has wrong value!");
       }
    }
 
    private void checkIfTransactionExists(Cache<Object, Object> cache) {
       TransactionTable table = TestingUtil.extractComponent(cache, TransactionTable.class);
-      assertFalse("Expected a remote transaction.", table.getRemoteTransactions().isEmpty());
+      assertFalse(table.getRemoteTransactions().isEmpty(), "Expected a remote transaction.");
    }
 
    static class CountingInterceptor extends DDAsyncInterceptor {

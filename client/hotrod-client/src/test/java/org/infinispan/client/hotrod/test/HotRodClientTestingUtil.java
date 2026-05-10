@@ -5,7 +5,8 @@ import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.extractField;
 import static org.infinispan.testing.Testing.loadFileAsString;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,7 +54,6 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.testing.TestResourceTracker;
-import org.testng.AssertJUnit;
 
 /**
  * Utility methods for the Hot Rod client
@@ -386,7 +386,7 @@ public class HotRodClientTestingUtil {
          TransactionTable table = TestingUtil.extractField(cacheManager, tableName);
          Map<?, ?> txs = TestingUtil.extractField(table, "registeredTransactions");
          log.tracef("Pending Transactions in %s: %s", cacheManager, txs.keySet());
-         AssertJUnit.assertEquals(0, txs.size());
+         assertEquals(0, txs.size());
       }
    }
 

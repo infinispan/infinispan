@@ -8,9 +8,9 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,9 +72,9 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
       objectUnderTest.afterPropertiesSet();
 
       assertEquals(
+            objectUnderTest.getObject().getClass(), objectUnderTest.getObjectType(),
             "getObjectType() should have returned the most derived class of the actual RemoteCache "
-                  + "implementation returned from getObject(). However, it didn't.",
-            objectUnderTest.getObject().getClass(), objectUnderTest.getObjectType());
+                  + "implementation returned from getObject(). However, it didn't.");
    }
 
    @Test
@@ -94,11 +94,10 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       try {
          AssertionUtils.assertPropertiesSubset(
-                 "The configuration properties used by the SpringRemoteCacheManager returned von getObject() should be equal "
-                         + "to SpringRemoteCacheManager's default settings since neither property 'configurationProperties' "
-                         + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
-                 clientDefaultProps,
-               remoteCacheManager.getNativeCacheManager().getConfiguration().properties());
+               clientDefaultProps, remoteCacheManager.getNativeCacheManager().getConfiguration().properties(), "The configuration properties used by the SpringRemoteCacheManager returned von getObject() should be equal "
+                     + "to SpringRemoteCacheManager's default settings since neither property 'configurationProperties' "
+                     + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal."
+         );
       } finally {
          defaultRemoteCacheManager.stop();
       }
@@ -109,9 +108,9 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
       objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
 
       assertTrue(
+            objectUnderTest.isSingleton(),
             "isSingleton() should always return true since each SpringRemoteCacheManagerFactoryBean will always produce "
-                  + "the same SpringRemoteCacheManager instance. However,it returned false.",
-            objectUnderTest.isSingleton());
+                  + "the same SpringRemoteCacheManager instance. However,it returned false.");
    }
 
    @Test
@@ -123,9 +122,9 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
       objectUnderTest.destroy();
 
       assertFalse(
+            remoteCacheManager.getNativeCacheManager().isStarted(),
             "destroy() should have stopped the SpringRemoteCacheManager instance previously produced by "
-                  + "SpringRemoteCacheManagerFactoryBean. However, the produced SpringRemoteCacheManager is still running. ",
-            remoteCacheManager.getNativeCacheManager().isStarted());
+                  + "SpringRemoteCacheManagerFactoryBean. However, the produced SpringRemoteCacheManager is still running. ");
    }
 
    @Test
@@ -138,10 +137,10 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
       AssertionUtils.assertPropertiesSubset(
-              "The configuration properties used by the SpringRemoteCacheManager returned von getObject() should be equal "
-                      + "to those passed into SpringRemoteCacheManagerFactoryBean via setConfigurationProperties(props). "
-                      + "However, those two are not equal.", configurationProperties,
-              remoteCacheManager.getNativeCacheManager().getConfiguration().properties());
+            configurationProperties, remoteCacheManager.getNativeCacheManager().getConfiguration().properties(), "The configuration properties used by the SpringRemoteCacheManager returned von getObject() should be equal "
+                  + "to those passed into SpringRemoteCacheManagerFactoryBean via setConfigurationProperties(props). "
+                  + "However, those two are not equal."
+      );
    }
 
    private Properties loadConfigurationProperties(final Resource configurationPropertiesLocation)
@@ -169,11 +168,11 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
       AssertionUtils.assertPropertiesSubset(
-              "The configuration properties used by the SpringRemoteCacheManager returned from getObject() should be equal "
-                      + "to those passed into SpringRemoteCacheManagerFactoryBean via setConfigurationPropertiesFileLocation(propsFileLocation). "
-                      + "However, those two are not equal.",
-              loadConfigurationProperties(HOTROD_CLIENT_PROPERTIES_LOCATION), remoteCacheManager
-                      .getNativeCacheManager().getConfiguration().properties());
+            loadConfigurationProperties(HOTROD_CLIENT_PROPERTIES_LOCATION), remoteCacheManager
+                  .getNativeCacheManager().getConfiguration().properties(), "The configuration properties used by the SpringRemoteCacheManager returned from getObject() should be equal "
+                  + "to those passed into SpringRemoteCacheManagerFactoryBean via setConfigurationPropertiesFileLocation(propsFileLocation). "
+                  + "However, those two are not equal."
+      );
    }
 
    @Test
@@ -186,9 +185,9 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
             .getObject();
 
       assertFalse(
+            remoteCacheManagerExpectedToBeInStateStopped.getNativeCacheManager().isStarted(),
             "SpringRemoteCacheManagerFactoryBean should have produced a SpringRemoteCacheManager that is initially in state stopped "
-                  + "since property 'startAutomatically' has been set to false. However, the produced SpringRemoteCacheManager is already started.",
-            remoteCacheManagerExpectedToBeInStateStopped.getNativeCacheManager().isStarted());
+                  + "since property 'startAutomatically' has been set to false. However, the produced SpringRemoteCacheManager is already started.");
    }
 
    @Test
@@ -202,10 +201,10 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
-      assertEquals("setServerList(" + expectedServerList
-                         + ") should have overridden property 'serverList'. However, it didn't.",
-                   expectedServerListString, remoteCacheManager.getNativeCacheManager().getConfiguration().properties()
-                  .get(SERVER_LIST));
+      assertEquals(expectedServerListString, remoteCacheManager.getNativeCacheManager().getConfiguration().properties()
+                  .get(SERVER_LIST),
+            "setServerList(" + expectedServerList
+                  + ") should have overridden property 'serverList'. However, it didn't.");
    }
 
    @Test
@@ -218,10 +217,10 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
-      assertEquals("setMarshaller(" + expectedMarshaller
-                         + ") should have overridden property 'marshaller'. However, it didn't.",
-                   expectedMarshaller,
-                   remoteCacheManager.getNativeCacheManager().getConfiguration().properties().get(MARSHALLER));
+      assertEquals(expectedMarshaller,
+            remoteCacheManager.getNativeCacheManager().getConfiguration().properties().get(MARSHALLER),
+            "setMarshaller(" + expectedMarshaller
+                  + ") should have overridden property 'marshaller'. However, it didn't.");
    }
 
    @Test
@@ -235,10 +234,10 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
-      assertEquals("setAsyncExecutorFactory(" + expectedAsyncExecutorFactory
-                         + ") should have overridden property 'asyncExecutorFactory'. However, it didn't.",
-                   expectedAsyncExecutorFactory, remoteCacheManager.getNativeCacheManager()
-                  .getConfiguration().properties().get(ASYNC_EXECUTOR_FACTORY));
+      assertEquals(expectedAsyncExecutorFactory, remoteCacheManager.getNativeCacheManager()
+                  .getConfiguration().properties().get(ASYNC_EXECUTOR_FACTORY),
+            "setAsyncExecutorFactory(" + expectedAsyncExecutorFactory
+                  + ") should have overridden property 'asyncExecutorFactory'. However, it didn't.");
    }
 
    @Test
@@ -250,10 +249,10 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
-      assertEquals("setTcpNoDelay(" + expectedTcpNoDelay
-                         + ") should have overridden property 'tcpNoDelay'. However, it didn't.",
-                   String.valueOf(expectedTcpNoDelay), remoteCacheManager.getNativeCacheManager()
-                  .getConfiguration().properties().get(TCP_NO_DELAY));
+      assertEquals(String.valueOf(expectedTcpNoDelay), remoteCacheManager.getNativeCacheManager()
+                  .getConfiguration().properties().get(TCP_NO_DELAY),
+            "setTcpNoDelay(" + expectedTcpNoDelay
+                  + ") should have overridden property 'tcpNoDelay'. However, it didn't.");
    }
 
    @Test
@@ -265,10 +264,10 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
-      assertEquals("setTcpKeepAlive(" + expectedTcpKeepAlive
-                         + ") should have overridden property 'tcpKeepAlive'. However, it didn't.",
-                   String.valueOf(expectedTcpKeepAlive), remoteCacheManager.getNativeCacheManager()
-                  .getConfiguration().properties().get(TCP_KEEP_ALIVE));
+      assertEquals(String.valueOf(expectedTcpKeepAlive), remoteCacheManager.getNativeCacheManager()
+                  .getConfiguration().properties().get(TCP_KEEP_ALIVE),
+            "setTcpKeepAlive(" + expectedTcpKeepAlive
+                  + ") should have overridden property 'tcpKeepAlive'. However, it didn't.");
    }
 
    @Test
@@ -282,12 +281,11 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
-      assertEquals(
+      assertEquals(expectedRequestBalancingStrategy, remoteCacheManager.getNativeCacheManager()
+                  .getConfiguration().properties().get(REQUEST_BALANCING_STRATEGY),
             "setRequestBalancingStrategy("
                   + expectedRequestBalancingStrategy
-                  + ") should have overridden property 'requestBalancingStrategy'. However, it didn't.",
-            expectedRequestBalancingStrategy, remoteCacheManager.getNativeCacheManager()
-                  .getConfiguration().properties().get(REQUEST_BALANCING_STRATEGY));
+                  + ") should have overridden property 'requestBalancingStrategy'. However, it didn't.");
    }
 
    @Test
@@ -299,10 +297,10 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
-      assertEquals("setForceReturnValue(" + expectedForceReturnValues
-                         + ") should have overridden property 'forceReturnValue'. However, it didn't.",
-                   String.valueOf(expectedForceReturnValues), remoteCacheManager
-                  .getNativeCacheManager().getConfiguration().properties().get(FORCE_RETURN_VALUES));
+      assertEquals(String.valueOf(expectedForceReturnValues), remoteCacheManager
+                  .getNativeCacheManager().getConfiguration().properties().get(FORCE_RETURN_VALUES),
+            "setForceReturnValue(" + expectedForceReturnValues
+                  + ") should have overridden property 'forceReturnValue'. However, it didn't.");
    }
 
    @Test
@@ -314,8 +312,8 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
-      assertEquals("setReadTimeout(" + expectedReadTimeout
-                  + ") should have overridden property 'readTimeout'. However, it didn't.",
-            expectedReadTimeout, remoteCacheManager.getReadTimeout());
+      assertEquals(expectedReadTimeout, remoteCacheManager.getReadTimeout(),
+            "setReadTimeout(" + expectedReadTimeout
+                  + ") should have overridden property 'readTimeout'. However, it didn't.");
    }
 }

@@ -3,7 +3,7 @@ package org.infinispan.test;
 import static java.util.Arrays.asList;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.infinispan.testing.TestResourceTracker.getCurrentTestShortName;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -80,13 +80,13 @@ import jakarta.transaction.TransactionManager;
  * you could set the <code>cleanup</code> field to {@link MultipleCacheManagersTest.CleanupPhase#AFTER_METHOD} in
  * your test's constructor.  E.g.:
  * <pre>
-  * public void MyTest extends MultipleCacheManagersTest {
+ * public void MyTest extends MultipleCacheManagersTest {
  *    public MyTest() {
  *       cleanup =  CleanupPhase.AFTER_METHOD;
  *    }
  * }
-  * </pre>
-  * Note that this will cause {@link #createCacheManagers()}  to be called before each method.
+ * </pre>
+ * Note that this will cause {@link #createCacheManagers()}  to be called before each method.
  *
  * @author Mircea.Markus@jboss.com
  */
@@ -149,8 +149,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       if (cacheManagers != null) {
          for (EmbeddedCacheManager cm : cacheManagers) {
             String nodeName = SecurityActions.getCacheManagerConfiguration(cm).transport().nodeName();
-            assertTrue("Invalid node name for test " + getCurrentTestShortName() + ": " + nodeName,
-                  nodeName != null && nodeName.contains(getCurrentTestShortName()));
+            assertTrue(nodeName != null && nodeName.contains(getCurrentTestShortName()), "Invalid node name for test " + getCurrentTestShortName() + ": " + nodeName);
          }
          cacheManagers.clear();
       }
@@ -203,7 +202,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
       flags.withZeroJoinTimeout(cacheManagers.isEmpty());
       EmbeddedCacheManager cm = createClusteredCacheManager(false, defaultGlobalConfigurationBuilder(),
-                                                            null, flags);
+            null, flags);
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
       cm.start();
@@ -310,8 +309,9 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * the mistake and instead will give you one instance per node.
     * <p>
     * This method will wait until all nodes are up before returning
+    *
     * @param consumer consumer to configure the caches
-    * @param count how many nodes to bring up
+    * @param count    how many nodes to bring up
     */
    protected void createCluster(Consumer<ConfigurationBuilderHolder> consumer, int count) {
       for (int i = 0; i < count; ++i) {
@@ -396,7 +396,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void createClusteredCaches(int numMembersInCluster, String cacheName, SerializationContextInitializer sci,
-                                                            ConfigurationBuilder builder) {
+                                        ConfigurationBuilder builder) {
       createClusteredCaches(numMembersInCluster, cacheName, sci, builder, new TransportFlags());
    }
 
@@ -410,8 +410,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void createClusteredCaches(int numMembersInCluster,
-                                                            SerializationContextInitializer sci,
-                                                            ConfigurationBuilder defaultConfigBuilder) {
+                                        SerializationContextInitializer sci,
+                                        ConfigurationBuilder defaultConfigBuilder) {
       createClusteredCaches(numMembersInCluster, sci, defaultConfigBuilder, new TransportFlags());
    }
 
@@ -423,9 +423,9 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void createClusteredCaches(int numMembersInCluster,
-                                                            SerializationContextInitializer sci,
-                                                            ConfigurationBuilder configBuilder,
-                                                            TransportFlags flags, String... cacheNames) {
+                                        SerializationContextInitializer sci,
+                                        ConfigurationBuilder configBuilder,
+                                        TransportFlags flags, String... cacheNames) {
       GlobalConfigurationBuilder globalBuilder = defaultGlobalConfigurationBuilder();
       if (sci != null) globalBuilder.serialization().addContextInitializer(sci);
       createClusteredCaches(numMembersInCluster, globalBuilder, configBuilder, false, flags, cacheNames);
@@ -438,18 +438,18 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void createClusteredCaches(int numMembersInCluster,
-                                                            GlobalConfigurationBuilder globalConfigurationBuilder,
-                                                            ConfigurationBuilder defaultConfigBuilder,
-                                                            boolean serverMode, String... cacheNames) {
+                                        GlobalConfigurationBuilder globalConfigurationBuilder,
+                                        ConfigurationBuilder defaultConfigBuilder,
+                                        boolean serverMode, String... cacheNames) {
       createClusteredCaches(numMembersInCluster, globalConfigurationBuilder, defaultConfigBuilder, serverMode,
-                            new TransportFlags(), cacheNames);
+            new TransportFlags(), cacheNames);
    }
 
    protected void createClusteredCaches(int numMembersInCluster,
-                                                            GlobalConfigurationBuilder globalConfigurationBuilder,
-                                                            ConfigurationBuilder configBuilder,
-                                                            boolean serverMode, TransportFlags flags,
-                                                            String... cacheNames) {
+                                        GlobalConfigurationBuilder globalConfigurationBuilder,
+                                        ConfigurationBuilder configBuilder,
+                                        boolean serverMode, TransportFlags flags,
+                                        String... cacheNames) {
       for (int i = 0; i < numMembersInCluster; i++) {
          EmbeddedCacheManager cm;
          GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
@@ -480,20 +480,20 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void createClusteredCaches(int numMembersInCluster,
-                                                            ConfigurationBuilder defaultConfigBuilder,
-                                                            boolean serverMode, String... cacheNames) {
+                                        ConfigurationBuilder defaultConfigBuilder,
+                                        boolean serverMode, String... cacheNames) {
       createClusteredCaches(numMembersInCluster, defaultGlobalConfigurationBuilder(),
-                            defaultConfigBuilder, serverMode, cacheNames);
+            defaultConfigBuilder, serverMode, cacheNames);
    }
 
    protected void createClusteredCaches(int numMembersInCluster,
-                                                            ConfigurationBuilder defaultConfigBuilder) {
+                                        ConfigurationBuilder defaultConfigBuilder) {
       createClusteredCaches(numMembersInCluster, defaultConfigBuilder, false);
    }
 
    protected void createClusteredCaches(int numMembersInCluster,
-                                                            ConfigurationBuilder defaultConfig,
-                                                            TransportFlags flags) {
+                                        ConfigurationBuilder defaultConfig,
+                                        TransportFlags flags) {
       for (int i = 0; i < numMembersInCluster; i++) {
          EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfig, flags);
          cm.getCache();
@@ -505,12 +505,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * Create cacheNames.length in each CacheManager (numMembersInCluster cacheManagers).
     */
    protected void createClusteredCaches(int numMembersInCluster,
-                                               ConfigurationBuilder defaultConfigBuilder, String... cacheNames) {
+                                        ConfigurationBuilder defaultConfigBuilder, String... cacheNames) {
       createClusteredCaches(numMembersInCluster, defaultConfigBuilder, new TransportFlags(), cacheNames);
    }
 
    protected void createClusteredCaches(int numMembersInCluster, ConfigurationBuilder configBuilder,
-                                               TransportFlags transportFlags, String... cacheNames) {
+                                        TransportFlags transportFlags, String... cacheNames) {
       for (int i = 0; i < numMembersInCluster; i++) {
          EmbeddedCacheManager cm = addClusterEnabledCacheManager(null, transportFlags);
 
@@ -559,7 +559,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected void assertClusterSize(String message, int size) {
       for (EmbeddedCacheManager cm : cacheManagers) {
-         assert cm.getMembers() != null && cm.getMembers().size() == size : message;
+         assertTrue(cm.getMembers() != null && cm.getMembers().size() == size, message);
       }
    }
 
@@ -594,16 +594,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          Method factory = getClass().getMethod("factory");
          if (factory.getDeclaringClass() == getClass()) {
             if (getClass().getAnnotation(InCacheMode.class) != null ||
-                getClass().getAnnotation(InTransactionMode.class) != null) {
+                  getClass().getAnnotation(InTransactionMode.class) != null) {
                return new Object[]{new TestFrameworkFailure<>(getClass(), new IllegalStateException(
-                           "Tests with factory() methods ignore @InCacheMode and @InTransactionMode annotations, " +
+                     "Tests with factory() methods ignore @InCacheMode and @InTransactionMode annotations, " +
                            "please remove them."))};
             }
             Object[] instances = factory();
             for (int i = 0; i < instances.length; i++) {
                if (instances[i].getClass() != getClass()) {
                   instances[i] = new TestFrameworkFailure<>(getClass(), "%s.factory() creates instances of %s",
-                                                          getClass().getName(), instances[i].getClass().getName());
+                        getClass().getName(), instances[i].getClass().getName());
                }
             }
             return instances;
@@ -833,6 +833,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    /**
     * Creates a {@link org.infinispan.affinity.KeyAffinityService} and uses it for generating a key that maps to the given address.
+    *
     * @param nodeIndex the index of tha cache where to be the main data owner of the returned key
     */
    protected Object getKeyForCache(int nodeIndex) {
@@ -882,7 +883,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void assertNotLocked(final Object key) {
-      assertNotLocked((String)null, key);
+      assertNotLocked((String) null, key);
    }
 
    protected boolean checkTxCount(int cacheIndex, int localTx, int remoteTx) {

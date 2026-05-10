@@ -1,7 +1,8 @@
 package org.infinispan.it.endpoints;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.concurrent.Future;
@@ -60,7 +61,7 @@ public class DistMemcachedEmbeddedTest extends AbstractInfinispanTest {
    public void testEmbeddedPutMemcachedGet() throws IOException {
       // 1. Put with Embedded
       for (int i = 0; i != numEntries; i++) {
-         assertEquals(null, cacheFactory2.getEmbeddedCache().put("k" + i, "v" + i));
+         assertNull(cacheFactory2.getEmbeddedCache().put("k" + i, "v" + i));
       }
 
       // 2. Get with Memcached from a different node

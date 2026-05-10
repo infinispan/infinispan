@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
 import java.util.Map;

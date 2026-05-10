@@ -1,6 +1,6 @@
 package org.infinispan.rest.framework.openapi;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.server.core.query.json.JsonQueryRequest;
 import org.infinispan.server.core.query.json.JsonQueryResponse;

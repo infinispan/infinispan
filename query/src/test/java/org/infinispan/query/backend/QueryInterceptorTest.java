@@ -1,9 +1,9 @@
 package org.infinispan.query.backend;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -84,14 +84,14 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
 
             // Notification is non blocking
             eventuallyEquals(1, cacheListener::numberOfPassivations);
-            assertEquals(cacheListener.numberOfActivations(), 0);
+            assertEquals(0, cacheListener.numberOfActivations());
             assertTrue(luceneIndexTracker.indexChanged());
 
             luceneIndexTracker.mark();
 
             cache.get("key1");
 
-            assertEquals(cacheListener.numberOfActivations(), 1);
+            assertEquals(1, cacheListener.numberOfActivations());
             assertFalse(luceneIndexTracker.indexChanged());
          }
       });
@@ -124,8 +124,8 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
 
             assertTrue(cache.containsKey("key1"));
             assertTrue(cache.containsKey("key2"));
-            assertEquals(cacheListener.numberOfPassivations(), 0);
-            assertEquals(cacheListener.numberOfActivations(), 0);
+            assertEquals(0, cacheListener.numberOfPassivations());
+            assertEquals(0, cacheListener.numberOfActivations());
             assertFalse(luceneIndexTracker.indexChanged());
          }
       });

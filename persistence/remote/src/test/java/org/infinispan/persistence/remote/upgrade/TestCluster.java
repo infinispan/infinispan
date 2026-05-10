@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.ProtocolVersion.DEFAULT_PROTOCOL_VERS
 import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
 import static org.infinispan.test.TestingUtil.waitForNoRebalanceAcrossManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,8 +43,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
-import org.testng.Assert;
-
 
 public class TestCluster {
 
@@ -137,7 +136,7 @@ public class TestCluster {
       try {
          rum.connectSource("hotrod", configuration);
       } catch (Exception e) {
-         Assert.fail("Failed to connect target!", e);
+         fail("Failed to connect target!", e);
       }
    }
 
@@ -147,7 +146,7 @@ public class TestCluster {
          try {
             rum.disconnectSource("hotrod");
          } catch (Exception e) {
-            Assert.fail("Failed to disconnect source!");
+            fail("Failed to disconnect source!");
          }
       });
    }

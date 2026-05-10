@@ -1,8 +1,8 @@
 package org.infinispan.xsite.offline;
 
 import static java.lang.String.format;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite", testName = "xsite.offline.OfflineStatusTest")
+@Test(groups = "xsite", testName = "xsite.offline.OfflineStatusTest")
 public class OfflineStatusTest extends AbstractInfinispanTest {
 
    public void timeBasedTakeOffline() {
@@ -52,18 +52,18 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
       context.offlineStatus.reset(); //reset everything
 
       //second part, we reached the min time, but not the failures-
-      for (int i = 0; i < minFailures -1; i++) {
+      for (int i = 0; i < minFailures - 1; i++) {
          assertOffline(context, false);
          addCommunicationFailure(context);
       }
 
-      assertMinFailureCount(context, minFailures -1);
+      assertMinFailureCount(context, minFailures - 1);
       assertMinTimeElapsed(context, false);
       assertOffline(context, false);
 
       context.timeService.advance(minTimeWait + 1);
 
-      assertMinFailureCount(context, minFailures -1);
+      assertMinFailureCount(context, minFailures - 1);
       assertMinTimeElapsed(context, true);
       assertOffline(context, false);
 
@@ -168,19 +168,17 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
    }
 
    private static void assertOffline(TestContext context, boolean expected) {
-      assertEquals("Checking offline.", expected, context.offlineStatus.isOffline());
+      assertEquals(expected, context.offlineStatus.isOffline(), "Checking offline.");
    }
 
    private static void assertMinFailureCount(TestContext context, int expected) {
-      assertEquals("Check failure count.", expected, context.offlineStatus.getFailureCount());
+      assertEquals(expected, context.offlineStatus.getFailureCount(), "Check failure count.");
    }
 
    private static void assertMinTimeElapsed(TestContext context, boolean expected) {
-      assertEquals(format("Check min time has elapsed. Current time=%d. Time elapsed=%d", context.timeService.time(),
-                                      context.offlineStatus.millisSinceFirstFailure()),
-                               expected,
-                               context.offlineStatus.minTimeHasElapsed());
-
+      assertEquals(expected,
+            context.offlineStatus.minTimeHasElapsed(),
+            format("Check min time has elapsed. Current time=%d. Time elapsed=%d", context.timeService.time(), context.offlineStatus.millisSinceFirstFailure()));
    }
 
    private static void addCommunicationFailure(TestContext context) {
@@ -232,18 +230,18 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
       }
 
       private void check(SiteStatus first) {
-         assertEquals("Check first site status.",  first, notifications.poll());
-         assertTrue("Check notifications is empty.", notifications.isEmpty());
+         assertEquals(first, notifications.poll(), "Check first site status.");
+         assertTrue(notifications.isEmpty(), "Check notifications is empty.");
       }
 
       private void check(SiteStatus first, SiteStatus... remaining) {
-         assertEquals("Check first site status.",  first, notifications.poll());
+         assertEquals(first, notifications.poll(), "Check first site status.");
          int i = 2;
          for (SiteStatus status : remaining) {
-            assertEquals(format("Check %d(\"th\") site status", i), status, notifications.poll());
+            assertEquals(status, notifications.poll(), format("Check %d(\"th\") site status", i));
             i++;
          }
-         assertTrue("Check notifications is empty.", notifications.isEmpty());
+         assertTrue(notifications.isEmpty(), "Check notifications is empty.");
       }
    }
 

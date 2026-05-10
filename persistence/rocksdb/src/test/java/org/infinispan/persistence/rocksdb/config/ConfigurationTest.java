@@ -1,8 +1,9 @@
 package org.infinispan.persistence.rocksdb.config;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.net.URL;
@@ -46,7 +47,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
             .expiredLocation(tmpExpiredDirectory).build();
 
       StoreConfiguration cacheLoaderConfig = cacheConfig.persistence().stores().get(0);
-      assertTrue(cacheLoaderConfig instanceof RocksDBStoreConfiguration);
+      assertInstanceOf(RocksDBStoreConfiguration.class, cacheLoaderConfig);
       RocksDBStoreConfiguration rocksdbConfig = (RocksDBStoreConfiguration) cacheLoaderConfig;
       assertEquals(tmpDataDirectory, rocksdbConfig.location());
       assertEquals(tmpExpiredDirectory, rocksdbConfig.expiredLocation());
@@ -70,13 +71,13 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       // check persistence attributes
       Configuration cacheConfig = configHolder.getNamedConfigurationBuilders().get("testCache").build();
       assertFalse(cacheConfig.persistence().passivation());
-      assertEquals(cacheConfig.persistence().stores().size(), 1);
+      assertEquals(1, cacheConfig.persistence().stores().size());
 
       // check generic store attributes
       StoreConfiguration cacheLoaderConfig = cacheConfig.persistence().stores().get(0);
       assertFalse(cacheLoaderConfig.shared());
       assertTrue(cacheLoaderConfig.preload());
-      assertTrue(cacheLoaderConfig instanceof RocksDBStoreConfiguration);
+      assertInstanceOf(RocksDBStoreConfiguration.class, cacheLoaderConfig);
 
       // check RocksDB store attributes
       RocksDBStoreConfiguration rocksdbConfig = (RocksDBStoreConfiguration) cacheLoaderConfig;

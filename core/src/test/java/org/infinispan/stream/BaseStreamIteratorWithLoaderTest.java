@@ -1,6 +1,6 @@
 package org.infinispan.stream;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -105,7 +105,7 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
          results.put(entry.getKey(), entry.getValue());
          count++;
       }
-      assertEquals(count, 4);
+      assertEquals(4, count);
       assertEquals(originalValues, results);
    }
 
@@ -125,7 +125,7 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
          results.put(entry.getKey(), entry.getValue());
          count++;
       }
-      assertEquals(count, 3);
+      assertEquals(3, count);
       assertEquals(originalValues, results);
    }
 }

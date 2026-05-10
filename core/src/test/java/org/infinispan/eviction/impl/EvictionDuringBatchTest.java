@@ -1,7 +1,8 @@
 package org.infinispan.eviction.impl;
 
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -44,8 +45,8 @@ public class EvictionDuringBatchTest extends SingleCacheManagerTest {
       Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
 
       int cacheSize = cache.size();
-      assertTrue("no data in cache! all state lost?", cacheSize != 0);
-      assertTrue("cache size too big: " + cacheSize, cacheSize < 512);
+      assertNotEquals(0, cacheSize, "no data in cache! all state lost?");
+      assertTrue(cacheSize < 512, "cache size too big: " + cacheSize);
    }
 
    public void testEvictInBatch() throws Exception {

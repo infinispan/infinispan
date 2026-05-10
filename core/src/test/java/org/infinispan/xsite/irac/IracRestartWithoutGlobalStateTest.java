@@ -9,8 +9,8 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.infinispan.xsite.XSiteAdminOperations.SUCCESS;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -32,7 +32,6 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.XSiteAdminOperations;
-import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -164,7 +163,7 @@ public class IracRestartWithoutGlobalStateTest extends AbstractMultipleSitesTest
             if (distributionInfo.isPrimary()) {
                IracEntryVersion version = dataContainer.peek(distributionInfo.segmentId(), key).getInternalMetadata()
                      .iracMetadata().getVersion();
-               AssertJUnit.assertNotNull(version);
+               assertNotNull(version);
                versions.put(key, version);
             }
          }
@@ -182,10 +181,10 @@ public class IracRestartWithoutGlobalStateTest extends AbstractMultipleSitesTest
          K key = iterator.next();
          IracEntryVersion version1 = v1.get(key);
          IracEntryVersion version2 = v2.get(key);
-         assertNotNull(format("'%s' version is null for Map 1", key), version1);
-         assertNotNull(format("'%s' version is null for Map 2", key), version2);
+         assertNotNull(version1, format("'%s' version is null for Map 1", key));
+         assertNotNull(version2, format("'%s' version is null for Map 2", key));
          InequalVersionComparisonResult result = version1.compareTo(version2);
-         assertEquals(format("'%s' version mismatch: %s and %s", key, version1, version2), expected, result);
+         assertEquals(expected, result, format("'%s' version mismatch: %s and %s", key, version1, version2));
       }
 
    }

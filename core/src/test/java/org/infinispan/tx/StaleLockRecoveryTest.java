@@ -1,5 +1,10 @@
 package org.infinispan.tx;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -37,8 +42,8 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
 
    public void testStaleLock() throws SystemException, NotSupportedException {
       c1.put("k", "v");
-      assert c1.get("k").equals("v");
-      assert c2.get("k").equals("v");
+      assertEquals("v", c1.get("k"));
+      assertEquals("v", c2.get("k"));
 
       TransactionManager tm = TestingUtil.getTransactionManager(c1);
       tm.begin();
@@ -53,7 +58,7 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewReceived(c2, 1);
 
       EmbeddedCacheManager cacheManager = c2.getCacheManager();
-      assert cacheManager.getMembers().size() == 1;
+      assertTrue(cacheManager.getMembers().size() == 1);
 
       // may take a while from when the view change is seen through to when the lock is cleared
       TestingUtil.sleepThread(1000);
@@ -66,11 +71,11 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
       tm.begin();
       try {
          c.put(key, "dummy"); // should time out
-         assert false : "Should have been locked!";
+         fail("Should have been locked!");
       } catch (TimeoutException e) {
          // ignoring timeout exception
       } catch (RemoteException e) {
-         assert e.getCause() instanceof TimeoutException;
+         assertInstanceOf(TimeoutException.class, e.getCause());
          // ignoring timeout exception
       } finally {
          tm.rollback();
@@ -83,7 +88,7 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
       try {
          c.put(key, "dummy"); // should time out
       } catch (TimeoutException e) {
-         assert false : "Should not have been locked!";
+         fail("Should not have been locked!");
       } finally {
          tm.rollback();
       }

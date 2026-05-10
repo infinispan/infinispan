@@ -1,9 +1,9 @@
 package org.infinispan.counter;
 
 import static java.lang.String.format;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -67,11 +67,11 @@ public class StrongCounterTest extends AbstractCounterTest<StrongTestCounter> {
       for (Future<List<Long>> w : workers) {
          List<Long> returnValues = w.get(1, TimeUnit.MINUTES);
          for (Long l : returnValues) {
-            assertTrue(format("Duplicated value %d", l), uniqueValuesCheck.add(l));
+            assertTrue(uniqueValuesCheck.add(l), format("Duplicated value %d", l));
          }
       }
       for (long l = 1; l < (counterLimit + 3); ++l) {
-         assertTrue(format("Value %d does not exists!", l), uniqueValuesCheck.contains(l));
+         assertTrue(uniqueValuesCheck.contains(l), format("Value %d does not exists!", l));
       }
    }
 
@@ -256,13 +256,13 @@ public class StrongCounterTest extends AbstractCounterTest<StrongTestCounter> {
 
    @Override
    protected void addAndAssertResult(StrongTestCounter counter, long delta, long expected) {
-      assertEquals(format("Wrong return value after adding %d", delta), expected, counter.addAndGet(delta));
-      assertEquals("Wrong return value of counter.getNewValue()", expected, counter.getValue());
+      assertEquals(expected, counter.addAndGet(delta), format("Wrong return value after adding %d", delta));
+      assertEquals(expected, counter.getValue(), "Wrong return value of counter.getNewValue()");
    }
 
    @Override
    protected StrongTestCounter createCounter(CounterManager counterManager, String counterName,
-         CounterConfiguration configuration) {
+                                             CounterConfiguration configuration) {
       counterManager.defineCounter(counterName, configuration);
       return new StrongTestCounter(counterManager.getStrongCounter(counterName));
    }
@@ -292,6 +292,6 @@ public class StrongCounterTest extends AbstractCounterTest<StrongTestCounter> {
       for (int ix = 0; ix != retValues.length(); ++ix) {
          successCount += retValues.get(ix);
       }
-      assertEquals("Multiple threads succeeded with update in iteration " + it, 1, successCount);
+      assertEquals(1, successCount, "Multiple threads succeeded with update in iteration " + it);
    }
 }

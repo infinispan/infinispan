@@ -1,15 +1,15 @@
 package org.infinispan.spring.remote;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Properties;
 
 public class AssertionUtils {
-   public static void assertPropertiesSubset(String message, Properties expected, Properties actual) {
+   public static void assertPropertiesSubset(Properties expected, Properties actual, String message) {
       for (String key : expected.stringPropertyNames()) {
-         assertTrue(String.format("%s Key %s missing from %s", message, key, actual), actual.containsKey(key));
-         assertEquals(String.format("%s Key %s's expected value was \"%s\" but actual was \"%s\"", message, key, expected.getProperty(key), actual.getProperty(key)), expected.getProperty(key), actual.getProperty(key));
+         assertTrue(actual.containsKey(key), String.format("%s Key %s missing from %s", message, key, actual));
+         assertEquals(expected.getProperty(key), actual.getProperty(key), String.format("%s Key %s's expected value was \"%s\" but actual was \"%s\"", message, key, expected.getProperty(key), actual.getProperty(key)));
       }
    }
 }

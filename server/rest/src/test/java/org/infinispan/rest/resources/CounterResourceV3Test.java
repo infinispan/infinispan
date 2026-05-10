@@ -4,8 +4,8 @@ import static io.netty.handler.codec.http.HttpHeaderNames.ACCEPT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.Map;
@@ -64,9 +64,9 @@ public class CounterResourceV3Test extends AbstractRestResourceTest {
       assertThat(response).isOk();
       Json jsonNode = Json.read(response.body());
       Json config = jsonNode.at("weak-counter");
-      assertEquals(config.at("initial-value").asInteger(), 5);
-      assertEquals(config.at("storage").asString(), "VOLATILE");
-      assertEquals(config.at("concurrency-level").asInteger(), 6);
+      assertEquals(5, config.at("initial-value").asInteger());
+      assertEquals("VOLATILE", config.at("storage").asString());
+      assertEquals(6, config.at("concurrency-level").asInteger());
 
       // Delete using v3 endpoint
       response = join(client.raw().delete("/rest/v3/counters/" + counterName));

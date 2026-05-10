@@ -1,6 +1,6 @@
 package org.infinispan.marshall;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -47,9 +47,9 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    private void assertSerializationCounts(int expectedSerializationCount, int expectedDeserializationCount) {
-      assertEquals("Wrong marshall count", expectedSerializationCount, CountMarshallingPojo.getMarshallCount(
-            POJO_NAME));
-      assertEquals("Wrong unmarshall count", expectedDeserializationCount, CountMarshallingPojo.getUnmarshallCount(
-            POJO_NAME));
+      assertEquals(expectedSerializationCount, CountMarshallingPojo.getMarshallCount(
+            POJO_NAME), "Wrong marshall count");
+      assertEquals(expectedDeserializationCount, CountMarshallingPojo.getUnmarshallCount(
+            POJO_NAME), "Wrong unmarshall count");
    }
 }

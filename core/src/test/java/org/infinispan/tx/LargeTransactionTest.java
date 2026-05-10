@@ -1,5 +1,7 @@
 package org.infinispan.tx;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -38,7 +40,7 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       container.defineConfiguration(TEST_CACHE, c.build());
       container.startCaches(TEST_CACHE);
       Cache cache1 = container.getCache(TEST_CACHE);
-      assert cache1.getCacheConfiguration().clustering().cacheMode().equals(CacheMode.REPL_SYNC);
+      assertEquals(CacheMode.REPL_SYNC, cache1.getCacheConfiguration().clustering().cacheMode());
       cache1.start();
 
       container = TestCacheManagerFactory.createClusteredCacheManager(c);
@@ -47,7 +49,7 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       container.defineConfiguration(TEST_CACHE, c.build());
       container.startCaches(TEST_CACHE);
       Cache cache2 = container.getCache(TEST_CACHE);
-      assert cache2.getCacheConfiguration().clustering().cacheMode().equals(CacheMode.REPL_SYNC);
+      assertEquals(CacheMode.REPL_SYNC, cache2.getCacheConfiguration().clustering().cacheMode());
    }
 
    public void testLargeTx() throws Exception {
@@ -61,7 +63,7 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       tm.commit();
 
       for (int i = 0; i < 200; i++) {
-         assert cache2.get("key" + i).equals("value"+i);
+         assertEquals("value"+i, cache2.get("key" + i));
       }
    }
 
@@ -75,13 +77,13 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       log.trace("___________ before commit");
       tm.commit();
 
-      assert cache2.get("key").equals("val");
+      assertEquals("val", cache2.get("key"));
    }
 
    public void testSimplePutNoTx() {
       Cache cache1 = cache(0, TEST_CACHE);
       Cache cache2 = cache(1, TEST_CACHE);
       cache1.put("key", "val");
-      assert cache2.get("key").equals("val");
+      assertEquals("val", cache2.get("key"));
    }
 }

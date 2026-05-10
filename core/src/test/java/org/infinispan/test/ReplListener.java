@@ -1,8 +1,8 @@
 package org.infinispan.test;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -67,11 +67,11 @@ public class ReplListener {
    /**
     * As {@link #ReplListener(org.infinispan.Cache)} except that you can optionally configure whether command recording
     * is eager (false by default).
-        * If <code>recordCommandsEagerly</code> is true, then commands are recorded from the moment the listener is attached to
+    * If <code>recordCommandsEagerly</code> is true, then commands are recorded from the moment the listener is attached to
     * the cache, even before {@link #expect(Class[])} is invoked.  As such, when {@link #expect(Class[])} is called, the
     * list of commands to wait for will take into account commands already seen thanks to eager recording.
     *
-    * @param cache                     cache on which to attach listener
+    * @param cache                 cache on which to attach listener
     * @param recordCommandsEagerly whether to record commands eagerly
     */
    public ReplListener(Cache<?, ?> cache, boolean recordCommandsEagerly) {
@@ -82,7 +82,7 @@ public class ReplListener {
     * Same as {@link #ReplListener(org.infinispan.Cache, boolean)} except that this constructor allows you to set the
     * watchLocal parameter.  If true, even local events are recorded (not just ones that originate remotely).
     *
-    * @param cache                     cache on which to attach listener
+    * @param cache                 cache on which to attach listener
     * @param recordCommandsEagerly whether to record commands eagerly
     * @param watchLocal            if true, local events are watched for as well
     */
@@ -179,8 +179,7 @@ public class ReplListener {
     * The same as {@link #waitForRpc()} except that you are allowed to specify the max wait time.
     */
    public void waitForRpc(long time, TimeUnit unit) {
-      assertFalse("there are no replication expectations; please use ReplListener.expect() before calling this method",
-                  expectedCommands.isEmpty());
+      assertFalse(expectedCommands.isEmpty(), "there are no replication expectations; please use ReplListener.expect() before calling this method");
       lock.lock();
       try {
          long remainingNanos = unit.toNanos(time);
@@ -207,9 +206,8 @@ public class ReplListener {
 
             remainingNanos = newCommandCondition.awaitNanos(remainingNanos);
             Address address = cache.getCacheManager().getAddress();
-            assertTrue("Waiting for more than " + time + " " + unit +
-                          " and some commands did not replicate on cache [" + address + "]",
-                       remainingNanos > 0);
+            assertTrue(remainingNanos > 0, "Waiting for more than " + time + " " + unit +
+                  " and some commands did not replicate on cache [" + address + "]");
          }
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
@@ -223,7 +221,7 @@ public class ReplListener {
       debugf("Expecting no commands");
       for (VisitableCommand command : loggedCommands) {
          for (Predicate<VisitableCommand> expectation : expectedCommands) {
-            assertFalse("Shouldn't have matched command " + command, expectation.test(command));
+            assertFalse(expectation.test(command), "Shouldn't have matched command " + command);
          }
       }
    }
@@ -255,7 +253,7 @@ public class ReplListener {
    private boolean isPrimaryOwner(VisitableCommand cmd) {
       if (cmd instanceof DataCommand) {
          return cache.getAdvancedCache().getDistributionManager().getCacheTopology()
-                     .getDistribution(((DataCommand) cmd).getKey()).isPrimary();
+               .getDistribution(((DataCommand) cmd).getKey()).isPrimary();
       } else {
          return true;
       }

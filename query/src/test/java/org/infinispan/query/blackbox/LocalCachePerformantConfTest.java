@@ -1,7 +1,7 @@
 package org.infinispan.query.blackbox;
 
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 

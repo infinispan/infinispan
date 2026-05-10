@@ -1,8 +1,8 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.HashSet;
 import java.util.List;
@@ -73,27 +73,27 @@ public class BulkOperationsTest extends SingleNodeTest {
          createContacts();
 
          List<Integer> rhContacts = getContactsByCustomer("Red Hat");
-         assertNotNull("Red Hat contacts exist", rhContacts);
-         assertEquals("Created expected number of Red Hat contacts", 10, rhContacts.size());
+         assertNotNull(rhContacts, "Red Hat contacts exist");
+         assertEquals(10, rhContacts.size(), "Created expected number of Red Hat contacts");
 
          CacheRegionStatistics contactSlcs = sessionFactory()
                .getStatistics()
                .getCacheRegionStatistics(Contact.class.getName());
          assertEquals(20, contactSlcs.getElementCountInMemory());
 
-         assertEquals("Deleted all Red Hat contacts", 10, deleteContacts());
+         assertEquals(10, deleteContacts(), "Deleted all Red Hat contacts");
          assertEquals(0, contactSlcs.getElementCountInMemory());
 
          List<Integer> jbContacts = getContactsByCustomer("JBoss");
-         assertNotNull("JBoss contacts exist", jbContacts);
-         assertEquals("JBoss contacts remain", 10, jbContacts.size());
+         assertNotNull(jbContacts, "JBoss contacts exist");
+         assertEquals(10, jbContacts.size(), "JBoss contacts remain");
 
          for (Integer id : rhContacts) {
-            assertNull("Red Hat contact " + id + " cannot be retrieved", getContact(id));
+            assertNull(getContact(id), "Red Hat contact " + id + " cannot be retrieved");
          }
          rhContacts = getContactsByCustomer("Red Hat");
          if (rhContacts != null) {
-            assertEquals("No Red Hat contacts remain", 0, rhContacts.size());
+            assertEquals(0, rhContacts.size(), "No Red Hat contacts remain");
          }
 
          updateContacts("Kabir", "Updated");
@@ -104,14 +104,14 @@ public class BulkOperationsTest extends SingleNodeTest {
 
          for (Integer id : jbContacts) {
             Contact contact = getContact(id);
-            assertNotNull("JBoss contact " + id + " exists", contact);
+            assertNotNull(contact, "JBoss contact " + id + " exists");
             String expected = ("Kabir".equals(contact.getName())) ? "Updated" : "2222";
-            assertEquals("JBoss contact " + id + " has correct TLF", expected, contact.getTlf());
+            assertEquals(expected, contact.getTlf(), "JBoss contact " + id + " has correct TLF");
          }
 
          List<Integer> updated = getContactsByTLF("Updated");
-         assertNotNull("Got updated contacts", updated);
-         assertEquals("Updated contacts", 5, updated.size());
+         assertNotNull(updated, "Got updated contacts");
+         assertEquals(5, updated.size(), "Updated contacts");
 
          assertEquals(10, contactSlcs.getElementCountInMemory());
          updateContactsWithOneManual("Kabir", "UpdatedAgain");
@@ -121,14 +121,14 @@ public class BulkOperationsTest extends SingleNodeTest {
                contactSlcs.getElementCountInMemory());
          for (Integer id : jbContacts) {
             Contact contact = getContact(id);
-            assertNotNull("JBoss contact " + id + " exists", contact);
+            assertNotNull(contact, "JBoss contact " + id + " exists");
             String expected = ("Kabir".equals(contact.getName())) ? "UpdatedAgain" : "2222";
-            assertEquals("JBoss contact " + id + " has correct TLF", expected, contact.getTlf());
+            assertEquals(expected, contact.getTlf(), "JBoss contact " + id + " has correct TLF");
          }
 
          updated = getContactsByTLF("UpdatedAgain");
-         assertNotNull("Got updated contacts", updated);
-         assertEquals("Updated contacts", 5, updated.size());
+         assertNotNull(updated, "Got updated contacts");
+         assertEquals(5, updated.size(), "Updated contacts");
       } catch (Throwable t) {
          cleanedUp = true;
          cleanup(true);

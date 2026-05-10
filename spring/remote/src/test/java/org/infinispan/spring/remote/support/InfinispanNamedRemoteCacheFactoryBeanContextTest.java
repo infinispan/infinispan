@@ -1,6 +1,6 @@
 package org.infinispan.spring.remote.support;
 
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.Cache;
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
@@ -21,21 +21,22 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @ContextConfiguration("classpath:/org/infinispan/spring/remote/support/InfinispanNamedRemoteCacheFactoryBeanContextTest.xml")
 //@Test(testName = "spring.support.remote.InfinispanNamedRemoteCacheFactoryBeanContextTest", groups = "functional")
-@TestExecutionListeners(value = InfinispanTestExecutionListener.class,  mergeMode =  TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class InfinispanNamedRemoteCacheFactoryBeanContextTest extends AbstractTestNGSpringContextTests {
 
    private static final String INFINISPAN_NAMED_REMOTE_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME = "infinispanNamedRemoteCacheWithoutFurtherConfiguration";
 
-//   @Test
+   //   @Test
    public final void shouldCreateARemoteCacheWithDefaultSettingsIfNoFurtherConfigurationGiven() {
       final Cache<Object, Object> infinispanNamedRemoteCacheWithoutFurtherConfiguration = this.applicationContext
             .getBean(INFINISPAN_NAMED_REMOTE_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME,
-                     Cache.class);
+                  Cache.class);
 
       assertNotNull(
+            infinispanNamedRemoteCacheWithoutFurtherConfiguration,
             "Spring application context should contain a named Infinispan cache having bean name = \""
                   + INFINISPAN_NAMED_REMOTE_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME
-                  + "\". However, it doesn't.",
-            infinispanNamedRemoteCacheWithoutFurtherConfiguration);
+                  + "\". However, it doesn't."
+      );
    }
 }

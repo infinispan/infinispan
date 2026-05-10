@@ -1,7 +1,7 @@
 package org.infinispan.distribution;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +80,6 @@ public class DistSyncL1PassivationFuncTest extends BaseDistFunctionalTest {
       }
 
       // L1 entries should not be passivated
-      assertEquals("Some L1 values were passivated", 0, nonOwnerCacheStore.size());
+      assertEquals(0, nonOwnerCacheStore.size(), "Some L1 values were passivated");
    }
 }

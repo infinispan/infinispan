@@ -1,7 +1,8 @@
 package org.infinispan.distribution;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -40,7 +41,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<D>> extends Bas
 
    @Override
    public Object[] factory() {
-      return new Object[] {
+      return new Object[]{
             new DistStorePreloadTest<D>().segmented(true).transactional(false),
             new DistStorePreloadTest<D>().segmented(true).transactional(true),
             new DistStorePreloadTest<D>().segmented(false).transactional(false),
@@ -50,8 +51,8 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<D>> extends Bas
 
    @AfterMethod
    public void clearStats() {
-      for (Cache<String, String> c: caches) {
-         log.trace("Clearing stats for cache store on cache "+ c);
+      for (Cache<String, String> c : caches) {
+         log.trace("Clearing stats for cache store on cache " + c);
          DummyInMemoryStore<String, String> store = TestingUtil.getFirstStore(c);
          store.clear();
       }
@@ -67,7 +68,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<D>> extends Bas
          c1.put("k" + i, "v" + i);
       }
       DataContainer<String, String> dc1 = c1.getAdvancedCache().getDataContainer();
-      assert dc1.size() == NUM_KEYS;
+      assertTrue(dc1.size() == NUM_KEYS);
 
       DummyInMemoryStore<String, String> store = TestingUtil.getFirstStore(c1);
       assertEquals(NUM_KEYS, store.size());
@@ -80,7 +81,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<D>> extends Bas
       waitForClusterToForm(cacheName);
 
       DataContainer<String, String> dc2 = c2.getAdvancedCache().getDataContainer();
-      assertEquals("Expected all the cache store entries to be preloaded on the second cache", NUM_KEYS, dc2.size());
+      assertEquals(NUM_KEYS, dc2.size(), "Expected all the cache store entries to be preloaded on the second cache");
 
       for (int i = 0; i < NUM_KEYS; i++) {
          assertOwnershipAndNonOwnership("k" + i, true);

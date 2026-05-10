@@ -2,8 +2,8 @@ package org.infinispan.lock;
 
 import static java.util.Arrays.asList;
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.api.ClusteredLock;

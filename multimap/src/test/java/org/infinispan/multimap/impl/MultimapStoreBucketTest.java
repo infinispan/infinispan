@@ -1,6 +1,7 @@
 package org.infinispan.multimap.impl;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,7 +38,7 @@ public class MultimapStoreBucketTest extends AbstractInfinispanTest {
       multimapCache.put("k1", new SuperPerson());
       PersistenceMarshallerImpl pm = TestingUtil.extractPersistenceMarshaller(cm);
       DelegatingUserMarshaller userMarshaller = (DelegatingUserMarshaller) pm.getUserMarshaller();
-      assertTrue(userMarshaller.getDelegate() instanceof JavaSerializationMarshaller);
+      assertInstanceOf(JavaSerializationMarshaller.class, userMarshaller.getDelegate());
       assertTrue(pm.getSerializationContext().canMarshall(Bucket.class));
       assertTrue(multimapCache.containsKey("k1").get(1, TimeUnit.SECONDS));
    }

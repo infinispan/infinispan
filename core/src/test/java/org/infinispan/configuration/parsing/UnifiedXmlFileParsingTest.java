@@ -1,10 +1,11 @@
 package org.infinispan.configuration.parsing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.net.URL;
@@ -90,7 +91,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          configurationFiles[i] = new Object[]{paths.get(i)};
       }
       // Ensure that we contain the current schema version at the very least
-      assertTrue("Could not find a '" + Version.getSchemaVersion() + ".xml' configuration file", hasCurrentSchema);
+      assertTrue(hasCurrentSchema, "Could not find a '" + Version.getSchemaVersion() + ".xml' configuration file");
 
       return configurationFiles;
    }
@@ -225,7 +226,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             TransportConfiguration tc = getGlobalConfiguration(holder).transport();
-            assertTrue(!tc.properties().isEmpty());
+            assertFalse(tc.properties().isEmpty());
             assertEquals("value", tc.properties().getProperty("key"));
          }
       },
@@ -291,12 +292,12 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
                ProtocolConfiguration proto2 = mytcpProtocolStack.get(i);
                assertEquals(proto1.getProtocolName(), proto2.getProtocolName());
                if (proto1.getProtocolName().equals("FD_ALL") || proto1.getProtocolName().equals("FD_ALL3")) {
-                  assertEquals("tcp>FD_ALL>timeout", "3000", proto1.getProperties().get("timeout"));
-                  assertEquals("tcp>FD_ALL>interval", "1000", proto1.getProperties().get("interval"));
-                  assertEquals("mytcp>FD_ALL>timeout", "3500", proto2.getProperties().get("timeout"));
-                  assertEquals("mytcp>FD_ALL>interval", "1000", proto2.getProperties().get("interval"));
+                  assertEquals("3000", proto1.getProperties().get("timeout"), "tcp>FD_ALL>timeout");
+                  assertEquals("1000", proto1.getProperties().get("interval"), "tcp>FD_ALL>interval");
+                  assertEquals("3500", proto2.getProperties().get("timeout"), "mytcp>FD_ALL>timeout");
+                  assertEquals("1000", proto2.getProperties().get("interval"), "mytcp>FD_ALL>interval");
                } else {
-                  assertEquals(proto1.getProtocolName(), proto1.getProperties(), proto2.getProperties());
+                  assertEquals(proto1.getProperties(), proto2.getProperties(), proto1.getProtocolName());
                }
             }
             // tcp and tcpgossip should differ only in the PING protocol
@@ -310,7 +311,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
                   assertEquals("TCPGOSSIP", proto2.getProtocolName());
                } else {
                   assertEquals(proto1.getProtocolName(), proto2.getProtocolName());
-                  assertEquals(proto1.getProtocolName(), proto1.getProperties(), proto2.getProperties());
+                  assertEquals(proto1.getProperties(), proto2.getProperties(), proto1.getProtocolName());
                }
             }
          }
@@ -498,7 +499,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(g.statistics());
             assertTrue(g.jmx().enabled());
             assertEquals("my-domain", g.jmx().domain());
-            assertTrue(g.jmx().mbeanServerLookup() instanceof CustomMBeanServerPropertiesTest.TestLookup);
+            assertInstanceOf(CustomMBeanServerPropertiesTest.TestLookup.class, g.jmx().mbeanServerLookup());
             assertEquals(1, g.jmx().properties().size());
             assertEquals("value", g.jmx().properties().getProperty("key"));
 
@@ -506,8 +507,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals("maximal-cluster", g.transport().clusterName());
             assertEquals(120000, g.transport().distributedSyncTimeout());
 
-            assertTrue("udp", holder.hasJGroupsStack("udp"));
-            assertTrue("tcp", holder.hasJGroupsStack("tcp"));
+            assertTrue(holder.hasJGroupsStack("udp"), "udp");
+            assertTrue(holder.hasJGroupsStack("tcp"), "tcp");
 
             DefaultThreadFactory threadFactory;
             EnhancedQueueExecutorFactory threadPool;
@@ -522,13 +523,13 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(0, threadPool.queueLength());
             assertEquals(0, threadPool.keepAlive());
 
-            assertTrue(getGlobalConfiguration(holder).expirationThreadPool().threadPoolFactory() instanceof ScheduledThreadPoolExecutorFactory);
+            assertInstanceOf(ScheduledThreadPoolExecutorFactory.class, getGlobalConfiguration(holder).expirationThreadPool().threadPoolFactory());
             threadFactory = getGlobalConfiguration(holder).expirationThreadPool().threadFactory();
             assertEquals("infinispan", threadFactory.threadGroup().getName());
             assertEquals("%G %i", threadFactory.threadNamePattern());
             assertEquals(5, threadFactory.initialPriority());
 
-            assertTrue(g.serialization().marshaller() instanceof TestObjectStreamMarshaller);
+            assertInstanceOf(TestObjectStreamMarshaller.class, g.serialization().marshaller());
 
             assertEquals(ShutdownHookBehavior.DONT_REGISTER, g.shutdown().hookBehavior());
 
@@ -545,7 +546,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(c.transaction().useSynchronization()); // Full XA
             assertTrue(c.transaction().recovery().enabled()); // Full XA
             assertEquals(LockingMode.OPTIMISTIC, c.transaction().lockingMode());
-            assertTrue(c.transaction().transactionManagerLookup() instanceof JBossStandaloneJTAManagerLookup);
+            assertInstanceOf(JBossStandaloneJTAManagerLookup.class, c.transaction().transactionManagerLookup());
             assertEquals(60000, c.transaction().cacheStopTimeout());
             assertEquals(20000, c.memory().maxCount());
             assertEquals(10000, c.expiration().wakeUpInterval());
@@ -772,14 +773,14 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    private static void assertTemplateConfiguration(ConfigurationBuilderHolder holder, String name) {
       Configuration configuration = getConfiguration(holder, name);
-      assertNotNull("Configuration " + name + " expected", configuration);
-      assertTrue("Configuration " + name + " should be a template", configuration.isTemplate());
+      assertNotNull(configuration, "Configuration " + name + " expected");
+      assertTrue(configuration.isTemplate(), "Configuration " + name + " should be a template");
    }
 
    private static void assertCacheConfiguration(ConfigurationBuilderHolder holder, String name) {
       Configuration configuration = getConfiguration(holder, name);
-      assertNotNull("Configuration " + name + " expected", configuration);
-      assertFalse("Configuration " + name + " should not be a template", configuration.isTemplate());
+      assertNotNull(configuration, "Configuration " + name + " expected");
+      assertFalse(configuration.isTemplate(), "Configuration " + name + " should not be a template");
    }
 
    private static <T> T getStoreConfiguration(Configuration c, Class<T> configurationClass) {

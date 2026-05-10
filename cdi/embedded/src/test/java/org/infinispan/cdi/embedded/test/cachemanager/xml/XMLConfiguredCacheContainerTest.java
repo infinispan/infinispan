@@ -1,7 +1,7 @@
 package org.infinispan.cdi.embedded.test.cachemanager.xml;
 
 import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.testing.TestResourceTrackingListener;

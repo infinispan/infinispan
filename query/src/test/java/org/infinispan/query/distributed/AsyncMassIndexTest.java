@@ -1,7 +1,7 @@
 package org.infinispan.query.distributed;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;

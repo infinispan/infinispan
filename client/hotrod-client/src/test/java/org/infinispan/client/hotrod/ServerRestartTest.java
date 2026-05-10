@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -58,7 +59,7 @@ public class ServerRestartTest extends SingleCacheManagerTest {
 
    public void testServerShutdown() throws Exception {
       defaultRemote.put("k","v");
-      assert defaultRemote.get("k").equals("v");
+      assertEquals("v", defaultRemote.get("k"));
 
       int port = hotrodServer.getPort();
       hotrodServer.stop();
@@ -68,7 +69,7 @@ public class ServerRestartTest extends SingleCacheManagerTest {
       builder.host("127.0.0.1").port(port).idleTimeout(20000).tcpNoDelay(true).sendBufSize(15000).recvBufSize(25000);
       hotrodServer.start(builder.build(), cacheManager);
 
-      assert defaultRemote.get("k").equals("v");
+      assertEquals("v", defaultRemote.get("k"));
       defaultRemote.put("k","v");
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.commands;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -93,7 +94,7 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
       topologyUpdateFuture.get(10, TimeUnit.SECONDS);
       Map<Object, Object> values = future.get(10, TimeUnit.SECONDS);
       // assertEquals is more verbose than assertNull in case of failure
-      assertEquals(null, values.get(key1));
+      assertNull(values.get(key1));
       assertEquals("value2", values.get(key2));
       assertEquals("value3", values.get(key3));
    }

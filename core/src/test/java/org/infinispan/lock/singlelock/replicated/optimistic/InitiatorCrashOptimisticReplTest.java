@@ -1,6 +1,8 @@
 package org.infinispan.lock.singlelock.replicated.optimistic;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -60,9 +62,9 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       Future<Void> future = beginAndCommitTx("k", 1);
       releaseLocksLatch.await();
 
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 0, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue(checkTxCount(0, 0, 1));
+      assertTrue(checkTxCount(1, 0, 0));
+      assertTrue(checkTxCount(2, 0, 1));
 
       assertLocked(cache(0), "k");
       assertEventuallyNotLocked(cache(1), "k");
@@ -72,8 +74,8 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
 
       eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
       assertNotLocked("k");
-      assert cache(0).get("k").equals("v");
-      assert cache(1).get("k").equals("v");
+      assertEquals("v", cache(0).get("k"));
+      assertEquals("v", cache(1).get("k"));
       future.get(30, TimeUnit.SECONDS);
    }
 
@@ -86,13 +88,13 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       Future<Void> future = beginAndPrepareTx("k", 1);
 
       txControlInterceptor.preparedReceived.await();
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 1, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue(checkTxCount(0, 0, 1));
+      assertTrue(checkTxCount(1, 1, 0));
+      assertTrue(checkTxCount(2, 0, 1));
 
       killMember(1);
 
-      assert caches().size() == 2;
+      assertTrue(caches().size() == 2);
       txControlInterceptor.prepareProgress.countDown();
 
       assertNotLocked("k");

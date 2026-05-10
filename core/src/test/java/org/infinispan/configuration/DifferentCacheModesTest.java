@@ -1,6 +1,10 @@
 package org.infinispan.configuration;
 
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,20 +42,20 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
          GlobalConfiguration gc = cm.getCacheManagerConfiguration();
          Configuration defaultCfg = cm.getCache().getCacheConfiguration();
 
-         assert gc.transport().transport() != null;
-         assert defaultCfg.clustering().cacheMode() == CacheMode.REPL_SYNC;
+         assertNotNull(gc.transport().transport());
+         assertTrue(defaultCfg.clustering().cacheMode() == CacheMode.REPL_SYNC);
 
          Configuration cfg = cm.getCache("local").getCacheConfiguration();
-         assert cfg.clustering().cacheMode() == CacheMode.LOCAL;
+         assertTrue(cfg.clustering().cacheMode() == CacheMode.LOCAL);
 
          cfg = cm.getCache("dist").getCacheConfiguration();
-         assert cfg.clustering().cacheMode() == CacheMode.DIST_SYNC;
+         assertTrue(cfg.clustering().cacheMode() == CacheMode.DIST_SYNC);
 
          cfg = cm.getCache("distasync").getCacheConfiguration();
-         assert cfg.clustering().cacheMode() == CacheMode.DIST_ASYNC;
+         assertTrue(cfg.clustering().cacheMode() == CacheMode.DIST_ASYNC);
 
          cfg = cm.getCache("replicationasync").getCacheConfiguration();
-         assert cfg.clustering().cacheMode() == CacheMode.REPL_ASYNC;
+         assertTrue(cfg.clustering().cacheMode() == CacheMode.REPL_ASYNC);
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
@@ -82,23 +86,23 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
          GlobalConfiguration gc = cm.getCacheManagerConfiguration();
          Configuration defaultCfg = cm.getCache().getCacheConfiguration();
 
-         assert defaultCfg.clustering().cacheMode() == CacheMode.REPL_SYNC;
-         assert defaultCfg.clustering().stateTransfer().fetchInMemoryState();
+         assertTrue(defaultCfg.clustering().cacheMode() == CacheMode.REPL_SYNC);
+         assertTrue(defaultCfg.clustering().stateTransfer().fetchInMemoryState());
 
          Configuration explicitDisable =
                cm.getCache("explicit-state-disable").getCacheConfiguration();
-         assert explicitDisable.clustering().cacheMode() == CacheMode.REPL_SYNC;
-         assert !explicitDisable.clustering().stateTransfer().fetchInMemoryState();
+         assertTrue(explicitDisable.clustering().cacheMode() == CacheMode.REPL_SYNC);
+         assertFalse(explicitDisable.clustering().stateTransfer().fetchInMemoryState());
 
          Configuration explicitEnable =
                cm.getCache("explicit-state-enable").getCacheConfiguration();
-         assert explicitEnable.clustering().cacheMode() == CacheMode.REPL_SYNC;
-         assert explicitEnable.clustering().stateTransfer().fetchInMemoryState();
+         assertTrue(explicitEnable.clustering().cacheMode() == CacheMode.REPL_SYNC);
+         assertTrue(explicitEnable.clustering().stateTransfer().fetchInMemoryState());
 
          Configuration explicitEnableAsync =
                cm.getCache("explicit-state-enable-async").getCacheConfiguration();
-         assert explicitEnableAsync.clustering().cacheMode() == CacheMode.REPL_ASYNC;
-         assert explicitEnableAsync.clustering().stateTransfer().fetchInMemoryState();
+         assertTrue(explicitEnableAsync.clustering().cacheMode() == CacheMode.REPL_ASYNC);
+         assertTrue(explicitEnableAsync.clustering().stateTransfer().fetchInMemoryState());
       } finally {
          TestingUtil.killCacheManagers(cm);
       }

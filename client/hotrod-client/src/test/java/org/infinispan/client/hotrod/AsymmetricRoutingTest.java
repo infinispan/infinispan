@@ -6,7 +6,7 @@ import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.InetSocketAddress;
 import java.util.Random;

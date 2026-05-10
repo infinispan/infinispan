@@ -1,7 +1,7 @@
 package org.infinispan.xsite;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +19,7 @@ import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.transaction.LockingMode;
-import org.testng.AssertJUnit;
+import org.junit.jupiter.api.Assertions;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -214,7 +214,7 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
       }
 
       rw.evalMany(Util.asSet(keys), view -> view.set(view.get() + "+3"))
-            .forEach(AssertJUnit::assertNull);
+            .forEach(Assertions::assertNull);
       for (Object key : keys) {
          assertEquals("v1+2+3", backup.get(key));
       }

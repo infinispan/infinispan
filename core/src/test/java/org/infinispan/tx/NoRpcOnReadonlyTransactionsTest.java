@@ -1,7 +1,7 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;

@@ -1,11 +1,11 @@
 package org.infinispan.server.security.realm;
 
 import static org.infinispan.server.Server.log;
-import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
+import java.util.Objects;
 
 import org.infinispan.server.security.ElytronPasswordProviderSupplier;
 import org.wildfly.security.auth.SupportLevel;
@@ -42,10 +42,9 @@ public class CachingSecurityRealm implements SecurityRealm {
     * @param cache the {@link RealmIdentityCache} instance
     */
    public CachingSecurityRealm(CacheableSecurityRealm realm, RealmIdentityCache cache) {
-      this.realm = checkNotNullParam("realm", realm);
-      this.cache = checkNotNullParam("cache", cache);
-      CacheableSecurityRealm cacheable = realm;
-      cacheable.registerIdentityChangeListener(this::removeFromCache);
+      this.realm = Objects.requireNonNull(realm, "realm");
+      this.cache = Objects.requireNonNull(cache, "cache");
+      realm.registerIdentityChangeListener(this::removeFromCache);
    }
 
    @Override
@@ -53,7 +52,7 @@ public class CachingSecurityRealm implements SecurityRealm {
       RealmIdentity cached = cache.get(principal);
 
       if (cached != null) {
-         if(log.isTraceEnabled()) {
+         if (log.isTraceEnabled()) {
             log.tracef("Returning cached RealmIdentity for '%s'", principal);
          }
          return cached;
@@ -62,7 +61,7 @@ public class CachingSecurityRealm implements SecurityRealm {
       RealmIdentity realmIdentity = getCacheableRealm().getRealmIdentity(principal);
 
       if (!realmIdentity.exists()) {
-         if(log.isTraceEnabled()) {
+         if (log.isTraceEnabled()) {
             log.tracef("RealmIdentity for '%s' does not exist, skipping cache.'", principal);
          }
          return realmIdentity;
@@ -156,7 +155,7 @@ public class CachingSecurityRealm implements SecurityRealm {
 
          @Override
          public void updateCredential(Credential credential) throws RealmUnavailableException {
-            if(log.isTraceEnabled()) {
+            if (log.isTraceEnabled()) {
                log.tracef("updateCredential For principal='%s'", principal);
             }
             try {
@@ -203,14 +202,14 @@ public class CachingSecurityRealm implements SecurityRealm {
                   return true;
                }
                if (credentials.canVerify(evidence)) {
-                  if(log.isTraceEnabled()) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("verifyEvidence For principal='%s' using cached credential", principal);
                   }
                   return credentials.verify(evidence);
                }
                Credential credential = identity.getCredential(PasswordCredential.class);
                if (credential != null) {
-                  if(log.isTraceEnabled()) {
+                  if (log.isTraceEnabled()) {
                      log.tracef("verifyEvidence Credential obtained from identity and cached for principal='%s'", principal);
                   }
                   credentials = credentials.withCredential(credential);
@@ -223,7 +222,7 @@ public class CachingSecurityRealm implements SecurityRealm {
                   }
                }
                Password password = ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, guess);
-               if(log.isTraceEnabled()) {
+               if (log.isTraceEnabled()) {
                   log.tracef("verifyEvidence Falling back to direct support of identity for principal='%s'", principal);
                }
                if (identity.verifyEvidence(evidence)) {
@@ -243,7 +242,7 @@ public class CachingSecurityRealm implements SecurityRealm {
          @Override
          public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
             if (authorizationIdentity == null) {
-               if(log.isTraceEnabled()) {
+               if (log.isTraceEnabled()) {
                   log.tracef("getAuthorizationIdentity Caching AuthorizationIdentity for principal='%s'", principal);
                }
                authorizationIdentity = identity.getAuthorizationIdentity();
@@ -254,7 +253,7 @@ public class CachingSecurityRealm implements SecurityRealm {
          @Override
          public Attributes getAttributes() throws RealmUnavailableException {
             if (attributes == null) {
-               if(log.isTraceEnabled()) {
+               if (log.isTraceEnabled()) {
                   log.tracef("getAttributes Caching Attributes for principal='%s'", principal);
                }
                attributes = identity.getAttributes();
@@ -268,7 +267,7 @@ public class CachingSecurityRealm implements SecurityRealm {
          }
       };
 
-      if(log.isTraceEnabled()) {
+      if (log.isTraceEnabled()) {
          log.tracef("Created wrapper RealmIdentity for '%s' and placing in cache.", principal);
       }
       cache.put(principal, cachedIdentity);

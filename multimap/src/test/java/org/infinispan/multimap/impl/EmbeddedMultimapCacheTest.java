@@ -12,9 +12,9 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.infinispan.multimap.impl.MultimapTestUtils.putValuesOnMultimapCache;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -362,7 +362,7 @@ public class EmbeddedMultimapCacheTest extends SingleCacheManagerTest {
       await(
             multimapCache.getEntry(NAMES_KEY)
                   .thenAccept(maybeEntry -> {
-                           assertFalse(NAMES_KEY, maybeEntry.isPresent());
+                           assertFalse(maybeEntry.isPresent(),NAMES_KEY);
                         }
                   )
       );
@@ -371,7 +371,7 @@ public class EmbeddedMultimapCacheTest extends SingleCacheManagerTest {
             multimapCache.put(NAMES_KEY, JULIEN)
                   .thenCompose(r3 -> multimapCache.getEntry(NAMES_KEY))
                   .thenAccept(maybeEntry -> {
-                           assertTrue(NAMES_KEY, maybeEntry.isPresent());
+                           assertTrue(maybeEntry.isPresent(), NAMES_KEY);
                            CacheEntry<String, Collection<Person>> entry = maybeEntry.get();
                            assertEquals(NAMES_KEY, entry.getKey());
                            assertTrue(entry.getValue().contains(JULIEN));

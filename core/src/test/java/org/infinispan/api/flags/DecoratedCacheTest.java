@@ -1,5 +1,9 @@
 package org.infinispan.api.flags;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.EnumSet;
 
 import org.infinispan.AdvancedCache;
@@ -16,19 +20,18 @@ import org.testng.annotations.Test;
 public class DecoratedCacheTest {
 
    public void testDecoratedCacheFlagsSet() {
-      CacheImpl impl = new CacheImpl("baseCache");
-      DecoratedCache decoratedCache = new DecoratedCache(impl, EnumUtil.EMPTY_BIT_SET);
-      DecoratedCache nofailCache = (DecoratedCache) decoratedCache.withFlags(Flag.FAIL_SILENTLY);
+      CacheImpl<String, String> impl = new CacheImpl<>("baseCache");
+      DecoratedCache<String, String> decoratedCache = new DecoratedCache<>(impl, EnumUtil.EMPTY_BIT_SET);
+      DecoratedCache<String, String> nofailCache = (DecoratedCache<String, String>) decoratedCache.withFlags(Flag.FAIL_SILENTLY);
       EnumSet<Flag> nofailCacheFlags = EnumUtil.enumSetOf(nofailCache.getFlagsBitSet(), Flag.class);
-      assert nofailCacheFlags.contains(Flag.FAIL_SILENTLY);
-      assert nofailCacheFlags.size() == 1;
-      DecoratedCache asyncNoFailCache = (DecoratedCache) nofailCache.withFlags(Flag.FORCE_ASYNCHRONOUS);
+      assertTrue(nofailCacheFlags.contains(Flag.FAIL_SILENTLY));
+      assertEquals(1, nofailCacheFlags.size());
+      DecoratedCache<String, String> asyncNoFailCache = (DecoratedCache<String, String>) nofailCache.withFlags(Flag.FORCE_ASYNCHRONOUS);
       EnumSet<Flag> asyncNofailCacheFlags = EnumUtil.enumSetOf(asyncNoFailCache.getFlagsBitSet(), Flag.class);
-      assert asyncNofailCacheFlags.size() == 2;
-      assert asyncNofailCacheFlags.contains(Flag.FAIL_SILENTLY);
-      assert asyncNofailCacheFlags.contains(Flag.FORCE_ASYNCHRONOUS);
-      AdvancedCache again = asyncNoFailCache.withFlags(Flag.FAIL_SILENTLY);
-      assert again == asyncNoFailCache; // as FAIL_SILENTLY was already specified
+      assertEquals(2, asyncNofailCacheFlags.size());
+      assertTrue(asyncNofailCacheFlags.contains(Flag.FAIL_SILENTLY));
+      assertTrue(asyncNofailCacheFlags.contains(Flag.FORCE_ASYNCHRONOUS));
+      AdvancedCache<String, String> again = asyncNoFailCache.withFlags(Flag.FAIL_SILENTLY);
+      assertSame(again, asyncNoFailCache); // as FAIL_SILENTLY was already specified
    }
-
 }

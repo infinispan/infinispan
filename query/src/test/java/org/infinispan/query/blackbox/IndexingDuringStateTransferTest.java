@@ -5,12 +5,12 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.helper.TestQueryHelperFactory.queryAll;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.orTimeout;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -210,7 +210,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       // The person should have been removed
       assertEquals(Collections.singletonList(DAN), queryAll(cache0, Person.class));
       Object value = cache(0).get(KEY);
-      assertFalse("Current value: " + value, value instanceof Person);
+      assertFalse(value instanceof Person, "Current value: " + value);
 
       // Check that the operation is reflected in index
       check.accept(cache0);

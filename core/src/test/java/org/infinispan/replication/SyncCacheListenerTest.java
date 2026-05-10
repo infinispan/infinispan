@@ -1,10 +1,10 @@
 package org.infinispan.replication;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Map;
 
@@ -66,14 +66,14 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       }
 
       tm.suspend();
-      assertNull("age on cache2 must be null as the TX has not yet been committed", cache2.get("age"));
+      assertNull(cache2.get("age"), "age on cache2 must be null as the TX has not yet been committed");
       tm.resume(tx);
       tm.commit();
 
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
-      assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-      assertEquals("\"age\" must be 38", (int) age, 38);
+      assertNotNull(age, "\"age\" obtained from cache2 must be non-null");
+      assertEquals(38, (int) age, "\"age\" must be 38");
    }
 
    public void testRemoteCacheListener() throws Exception {
@@ -85,8 +85,8 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
 
          // value on cache2 must be 38
          age = (Integer) cache2.get("age");
-         assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-         assertEquals("\"age\" must be 38", (int) age, 38);
+         assertNotNull(age, "\"age\" obtained from cache2 must be non-null");
+         assertEquals(38, (int) age, "\"age\" must be 38");
          cache1.remove("age");
       } finally {
          cache2.removeListener(lis);
@@ -105,8 +105,8 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
 
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
-      assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-      assertEquals("\"age\" must be 38", (int) age, 38);
+      assertNotNull(age, "\"age\" obtained from cache2 must be non-null ");
+      assertEquals(38, age, "\"age\" must be 38");
    }
 
 
@@ -135,25 +135,25 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
 
       assertEquals(38, cache1.get("age"));
       tm.suspend();
-      assertNull("age on cache2 must be null as the TX has not yet been committed", cache2.get("age"));
-      assertNull("age on cache1 must be null as the TX has been resumed", cache1.get("age"));
+      assertNull(cache2.get("age"), "age on cache2 must be null as the TX has not yet been committed");
+      assertNull(cache1.get("age"), "age on cache1 must be null as the TX has been resumed");
       tm.resume(tx);
-      assertNotNull("age on cache1 must be not be null", cache1.get("age"));
+      assertNotNull(cache1.get("age"), "age on cache1 must be not be null");
       tm.commit();
-      assertNotNull("age on cache1 must be not be null", cache1.get("age"));
+      assertNotNull(cache1.get("age"), "age on cache1 must be not be null");
 
       log.trace("  ********************** ");
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
-      assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-      assertEquals("\"age\" must be 38", (int) age, 38);
+      assertNotNull(age, "\"age\" obtained from cache2 must be non-null ");
+      assertEquals(38, (int) age, "\"age\" must be 38");
    }
 
    public void testSyncReplMap() throws Exception {
       Integer age;
       LockManager lm1 = TestingUtil.extractComponent(cache1, LockManager.class);
 
-      assertNull("lock info is " + lm1.printLockInfo(), lm1.getOwner("age"));
+      assertNull(lm1.getOwner("age"), "lock info is " + lm1.printLockInfo());
       LocalListener lis = new LocalListener();
       cache1.addListener(lis);
       try {
@@ -164,12 +164,12 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
          cache1.removeListener(lis);
       }
 
-      assertNull("lock info is " + lm1.printLockInfo(), lm1.getOwner("age"));
+      assertNull(lm1.getOwner("age"), "lock info is " + lm1.printLockInfo());
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
-      assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-      assertEquals("\"age\" must be 38", (int) age, 38);
-      assertNull("lock info is " + lm1.printLockInfo(), lm1.getOwner("age"));
+      assertNotNull(age, "\"age\" obtained from cache2 must be non-null");
+      assertEquals(38, (int) age, "\"age\" must be 38");
+      assertNull(lm1.getOwner("age"), "lock info is " + lm1.printLockInfo());
    }
 
    @Listener
@@ -210,7 +210,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       public void callback(TransactionalEvent e) {
          log.trace("Callback got event " + e);
          log.debug("Callback got event " + e);
-         assertFalse("entry was removed on remote cache so isLocal should be false", e.isOriginLocal());
+         assertFalse(e.isOriginLocal(), "entry was removed on remote cache so isLocal should be false");
       }
    }
 }

@@ -2,6 +2,7 @@ package org.infinispan.query.tx;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.test.TestingUtil.withTx;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.Callable;
 
@@ -13,7 +14,6 @@ import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -68,7 +68,7 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
       String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
       Query<Object> cacheQuery = cache.query(q);
       long resultSize = cacheQuery.execute().count().value();
-      Assert.assertEquals(resultSize, expectedCount);
+      assertEquals(resultSize, expectedCount);
    }
 
    private void store(final String key, final Object value, final Cache<Object, Object> cache) throws Exception {

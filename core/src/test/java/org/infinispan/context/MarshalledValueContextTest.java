@@ -1,8 +1,9 @@
 package org.infinispan.context;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
@@ -31,14 +32,14 @@ import jakarta.transaction.TransactionManager;
  * @author Manik Surtani
  * @version 4.1
  */
-@Test (testName = "context.MarshalledValueContextTest", groups = "functional")
+@Test(testName = "context.MarshalledValueContextTest", groups = "functional")
 public class MarshalledValueContextTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       c.memory().storage(StorageType.HEAP).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM)
-         .transaction().lockingMode(LockingMode.PESSIMISTIC);
+            .transaction().lockingMode(LockingMode.PESSIMISTIC);
       return TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, c);
    }
 
@@ -57,26 +58,27 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
 
       LockManager lockManager = TestingUtil.extractComponent(c, LockManager.class);
 
-      assertTrue(cex.ctx instanceof LocalTxInvocationContext);
+      assertInstanceOf(LocalTxInvocationContext.class, cex.ctx);
 
-      assertEquals("Looked up key should not be in transactional invocation context " +
-            "as we don't perform any changes", 0, cex.ctx.lookedUpEntriesCount());
-      assertEquals("Only one lock should be held", 1, lockManager.getNumberOfLocksHeld());
+      assertEquals(0, cex.ctx.lookedUpEntriesCount(), "Looked up key should not be in transactional invocation context " +
+            "as we don't perform any changes");
+      assertEquals(1, lockManager.getNumberOfLocksHeld(), "Only one lock should be held");
 
       c.put(new Key("k"), "v2");
 
-      assertEquals("Still should only be one entry in the context", 1, cex.ctx.lookedUpEntriesCount());
-      assertEquals("Only one lock should be held", 1, lockManager.getNumberOfLocksHeld());
+      assertEquals(1, cex.ctx.lookedUpEntriesCount(), "Still should only be one entry in the context");
+      assertEquals(1, lockManager.getNumberOfLocksHeld(), "Only one lock should be held");
 
       tm.commit();
 
-      assertEquals("No locks should be held anymore", 0, lockManager.getNumberOfLocksHeld());
+      assertEquals(0, lockManager.getNumberOfLocksHeld(), "No locks should be held anymore");
 
       assertEquals("v2", c.get(new Key("k")));
    }
 
    static class ContextExtractingInterceptor extends BaseAsyncInterceptor {
       InvocationContext ctx;
+
       @Override
       public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          this.ctx = ctx;

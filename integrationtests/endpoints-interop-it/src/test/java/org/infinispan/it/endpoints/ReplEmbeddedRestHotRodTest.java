@@ -2,8 +2,8 @@ package org.infinispan.it.endpoints;
 
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.Flag;
@@ -78,7 +78,7 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 1. Put with Hot Rod
       RemoteCache<Object, Object> remote = cacheFactory1.getHotRodCache();
-      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
+      assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
 
       // 2. Get with Embedded
       Cache embeddedCache = cacheFactory2.getEmbeddedCache().getAdvancedCache();

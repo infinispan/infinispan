@@ -182,6 +182,7 @@
                         <buildArg>-H:+ReportExceptionStackTraces</buildArg>
                         <buildArg>-H:ReflectionConfigurationResources=reflect-config.json</buildArg>
                         <buildArg>-H:ResourceConfigurationResources=resource-config.json</buildArg>
+                        <buildArg>-H:SerializationConfigurationResources=serialization-config.json</buildArg>
                         <buildArg>-H:+AllowDeprecatedBuilderClassesOnImageClasspath</buildArg>
                      </buildArgs>
                      <metadataRepository>

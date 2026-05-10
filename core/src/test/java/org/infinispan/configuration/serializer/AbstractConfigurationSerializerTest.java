@@ -1,7 +1,7 @@
 package org.infinispan.configuration.serializer;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -109,7 +109,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
 
       for (String name : holderBefore.getNamedConfigurationBuilders().keySet()) {
          Configuration configurationBefore = holderBefore.getNamedConfigurationBuilders().get(name).build();
-         assertTrue(name, holderAfter.getNamedConfigurationBuilders().containsKey(name));
+         assertTrue(holderAfter.getNamedConfigurationBuilders().containsKey(name), name);
          Configuration configurationAfter = holderAfter.getNamedConfigurationBuilders().get(name).build();
          compareConfigurations(name, configurationBefore, configurationAfter);
       }
@@ -120,7 +120,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       compareAttributeSets(name, configurationBefore.clustering().hash().attributes(), configurationAfter.clustering().hash().attributes());
       compareAttributeSets(name, configurationBefore.clustering().l1().attributes(), configurationAfter.clustering().l1().attributes());
       compareAttributeSets(name, configurationBefore.clustering().partitionHandling().attributes(), configurationAfter.clustering().partitionHandling().attributes());
-      assertEquals(name, configurationBefore.memory(), configurationAfter.memory());
+      assertEquals(configurationBefore.memory(), configurationAfter.memory(), name);
       compareAttributeSets(name, configurationBefore.expiration().attributes(), configurationAfter.expiration().attributes());
       compareIndexing(name, configurationBefore.indexing(), configurationAfter.indexing());
       compareQuery(name, configurationBefore.query(), configurationAfter.query());
@@ -140,17 +140,17 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
    }
 
    private void compareQuery(String name, QueryConfiguration before, QueryConfiguration after) {
-      assertEquals(String.format("Query attributes for %s mismatch", name), before.attributes(), after.attributes());
+      assertEquals(before.attributes(), after.attributes(), String.format("Query attributes for %s mismatch", name));
    }
 
    private void compareIndexing(String name, IndexingConfiguration before, IndexingConfiguration after) {
-      assertEquals(String.format("Indexing attributes for %s mismatch", name), before.attributes(), after.attributes());
-      assertEquals(String.format("Indexing reader for %s mismatch", name), before.reader(), after.reader());
-      assertEquals(String.format("Indexing writer for %s mismatch", name), before.writer(), after.writer());
+      assertEquals(before.attributes(), after.attributes(), String.format("Indexing attributes for %s mismatch", name));
+      assertEquals(before.reader(), after.reader(), String.format("Indexing reader for %s mismatch", name));
+      assertEquals(before.writer(), after.writer(), String.format("Indexing writer for %s mismatch", name));
    }
 
    private void compareTracing(String name, TracingConfiguration before, TracingConfiguration after) {
-      assertEquals(String.format("Tracing attributes for %s mismatch", name), before.attributes(), after.attributes());
+      assertEquals(before.attributes(), after.attributes(), String.format("Tracing attributes for %s mismatch", name));
    }
 
    protected void compareExtraConfiguration(String name, Configuration configurationBefore, Configuration configurationAfter) {
@@ -162,7 +162,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
    }
 
    private void compareStores(String name, List<StoreConfiguration> beforeStores, List<StoreConfiguration> afterStores) {
-      assertEquals("Configuration " + name + " stores count mismatch", beforeStores.size(), afterStores.size());
+      assertEquals(beforeStores.size(), afterStores.size(), "Configuration " + name + " stores count mismatch");
       for (int i = 0; i < beforeStores.size(); i++) {
          StoreConfiguration beforeStore = beforeStores.get(i);
          StoreConfiguration afterStore = afterStores.get(i);
@@ -187,18 +187,18 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
          List<String> exclusions = exclude != null ? Arrays.asList(exclude) : Collections.emptyList();
          for (Attribute<?> attribute : before.attributes()) {
             if (!exclusions.contains(attribute.name())) {
-               assertEquals("Configuration " + before.getName() + "." + name, attribute, after.attribute(attribute.name()));
+               assertEquals(attribute, after.attribute(attribute.name()), "Configuration " + before.getName() + "." + name);
             }
          }
       }
    }
 
    private void compareSites(String name, List<BackupConfiguration> sitesBefore, List<BackupConfiguration> sitesAfter) {
-      assertEquals("Configuration " + name + " sites count mismatch", sitesBefore.size(), sitesAfter.size());
+      assertEquals(sitesBefore.size(), sitesAfter.size(), "Configuration " + name + " sites count mismatch");
       for (int i = 0; i < sitesBefore.size(); i++) {
          BackupConfiguration before = sitesBefore.get(i);
          BackupConfiguration after = sitesAfter.get(i);
-         assertEquals("Configuration " + name + " stores class mismatch", before.getClass(), after.getClass());
+         assertEquals(before.getClass(), after.getClass(), "Configuration " + name + " stores class mismatch");
          compareAttributeSets(name, before.attributes(), after.attributes());
          compareAttributeSets(name, before.takeOffline().attributes(), after.takeOffline().attributes());
          compareAttributeSets(name, before.stateTransfer().attributes(), after.stateTransfer().attributes());

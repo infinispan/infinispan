@@ -1,9 +1,9 @@
 package org.infinispan.commands;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -86,7 +86,7 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
          assertEquals(map.size(), keys.size());
          for (int i = 0; i < numEntries; ++i) {
             CacheEntry<String, byte[]> entry = map.get("key" + i);
-            assertEquals(entry.getValue().length, 1);
+            assertEquals(1, entry.getValue().length);
             assertEquals(entry.getValue()[0], i);
          }
       }

@@ -1,17 +1,17 @@
 package org.infinispan.persistence.sifs;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -95,7 +95,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       startStore(store);
       // value1 has been overwritten and value2 has expired
       MarshallableEntry entry = store.loadEntry("key");
-      assertNull(entry != null ? entry.getKey() + "=" + entry.getValue() : null, entry);
+      assertNull(entry, entry != null ? entry.getKey() + "=" + entry.getValue() : null);
    }
 
    private void writeGibberish(long lifespan, boolean shouldDelete) {
@@ -140,13 +140,18 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       // We don't care about the actual expiration sub info
       Compactor.CompactionExpirationSubscriber expSub = new Compactor.CompactionExpirationSubscriber() {
          @Override
-         public void onEntryPosition(EntryPosition entryPosition) { }
+         public void onEntryPosition(EntryPosition entryPosition) {
+         }
+
          @Override
-         public void onEntryEntryRecord(EntryRecord entryRecord) { }
+         public void onEntryEntryRecord(EntryRecord entryRecord) {
+         }
+
          @Override
          public void onComplete() {
             latch.countDown();
          }
+
          @Override
          public void onError(Throwable t) {
          }
@@ -200,13 +205,18 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       // We don't care about the actual expiration sub info
       Compactor.CompactionExpirationSubscriber expSub = new Compactor.CompactionExpirationSubscriber() {
          @Override
-         public void onEntryPosition(EntryPosition entryPosition) { }
+         public void onEntryPosition(EntryPosition entryPosition) {
+         }
+
          @Override
-         public void onEntryEntryRecord(EntryRecord entryRecord) { }
+         public void onEntryEntryRecord(EntryRecord entryRecord) {
+         }
+
          @Override
          public void onComplete() {
             testSubscriber.onComplete();
          }
+
          @Override
          public void onError(Throwable t) {
             testSubscriber.onError(t);
@@ -238,15 +248,19 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       // We don't care about the actual expiration sub info
       Compactor.CompactionExpirationSubscriber sub = new Compactor.CompactionExpirationSubscriber() {
          @Override
-         public void onEntryPosition(EntryPosition entryPosition) { }
+         public void onEntryPosition(EntryPosition entryPosition) {
+         }
+
          @Override
          public void onEntryEntryRecord(EntryRecord entryRecord) {
             expired.incrementAndGet();
          }
+
          @Override
          public void onComplete() {
             testSubscriber.onComplete();
          }
+
          @Override
          public void onError(Throwable t) {
             testSubscriber.onError(t);
@@ -317,7 +331,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
 
       // When the store restarted it compacted the file away
       fileStats = compactor.getFileStats();
-      assertTrue("fileStats were: " + fileStats, fileStats.isEmpty());
+      assertTrue(fileStats.isEmpty(), "fileStats were: " + fileStats);
 
       assertEquals(0, SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, "mock-cache"));
    }
@@ -420,7 +434,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
 
       startStore(store);
 
-      assertNotNull("bar-231", TestingUtil.join(store.load(1, "foo-231")));
+      assertNotNull(TestingUtil.join(store.load(1, "foo-231")), "bar-231");
    }
 
    private <V> V performWhileStarting(Supplier<V> callable) throws InterruptedException, TimeoutException, ExecutionException {

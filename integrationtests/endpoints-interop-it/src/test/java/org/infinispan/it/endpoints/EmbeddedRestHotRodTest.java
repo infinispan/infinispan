@@ -10,10 +10,10 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.ResponseHeader.CONTENT_TYPE_HEADER;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -287,8 +287,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       String dateHeader = response.header(header);
       assertNotNull(dateHeader);
       Date parsedDate = dateFormat.parse(dateHeader);
-      assertTrue("Parsed date is before this code was written: " + parsedDate,
-            parsedDate.after(new GregorianCalendar(2013, Calendar.JANUARY, 1).getTime()));
+      assertTrue(parsedDate.after(new GregorianCalendar(2013, Calendar.JANUARY, 1).getTime()), "Parsed date is before this code was written: " + parsedDate);
    }
 
    public void testByteArrayHotRodEmbeddedPutRestGet() {

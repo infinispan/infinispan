@@ -2,8 +2,8 @@ package org.infinispan.distribution.rehash;
 
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;

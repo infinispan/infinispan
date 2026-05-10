@@ -2,10 +2,10 @@ package org.infinispan.persistence;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.test.TestingUtil.withTx;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,22 +66,22 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
    private void assertInCacheAndStore(Cache cache, DummyInMemoryStore store, Object key, Object value, long lifespanMillis) throws PersistenceException {
       InternalCacheValue icv = cache.getAdvancedCache().getDataContainer().peek(key).toInternalCacheValue();
       assertStoredEntry(icv.getValue(), value, icv.getLifespan(), lifespanMillis, "Cache", key);
-      assertNotNull("For :" + icv, icv.getInternalMetadata().entryVersion());
+      assertNotNull(icv.getInternalMetadata().entryVersion(), "For :" + icv);
       MarshallableEntry<?, ?> load = store.loadEntry(key);
       assertStoredEntry(load.getValue(), value, load.getMetadata() == null ? -1 : load.getMetadata().lifespan(), lifespanMillis, "Store", key);
-      assertNotNull("For :" + load, load.getInternalMetadata().entryVersion());
+      assertNotNull(load.getInternalMetadata().entryVersion(), "For :" + load);
    }
 
    private void assertStoredEntry(Object value, Object expectedValue, long lifespanMillis, long expectedLifespan, String src, Object key) {
-      assertNotNull(src + " entry for key " + key + " should NOT be null", value);
-      assertEquals(src + " should contain value " + expectedValue + " under key " + key + " but was " + value, expectedValue, value);
-      assertEquals(src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + lifespanMillis, expectedLifespan, lifespanMillis);
+      assertNotNull(value, src + " entry for key " + key + " should NOT be null");
+      assertEquals(expectedValue, value, src + " should contain value " + expectedValue + " under key " + key + " but was " + value);
+      assertEquals(expectedLifespan, lifespanMillis, src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + lifespanMillis);
    }
 
    private <T> void assertNotInCacheAndStore(Cache cache, DummyInMemoryStore store, Collection<T> keys) throws PersistenceException {
       for (Object key : keys) {
-         assertFalse("Cache should not contain key " + key, cache.getAdvancedCache().getDataContainer().containsKey(key));
-         assertFalse("Store should not contain key " + key, store.contains(key));
+         assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), "Cache should not contain key " + key);
+         assertFalse(store.contains(key), "Store should not contain key " + key);
       }
    }
 

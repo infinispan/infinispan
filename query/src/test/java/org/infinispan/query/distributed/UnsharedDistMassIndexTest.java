@@ -1,6 +1,6 @@
 package org.infinispan.query.distributed;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;

@@ -2,6 +2,7 @@ package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.sequence;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -111,7 +112,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       long endTime = System.currentTimeMillis();
       log.debugf("Recovery took %s", Util.prettyPrintTime(endTime - startTime));
-      assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
+      assertTrue(endTime - startTime < 30000, "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime));
 
       // Check that a new node can join
       EmbeddedCacheManager newCm = addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
@@ -150,7 +151,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       long endTime = System.currentTimeMillis();
       log.debugf("Recovery took %s", Util.prettyPrintTime(endTime - startTime));
-      assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
+      assertTrue(endTime - startTime < 30000, "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime));
 
       // Check that a new node can join
       addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
@@ -193,7 +194,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       long endTime = System.currentTimeMillis();
       log.debugf("Merge took %s", Util.prettyPrintTime(endTime - startTime));
-      assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
+      assertTrue(endTime - startTime < 30000, "Merge took too long: " + Util.prettyPrintTime(endTime - startTime));
 
       // Check that a new node can join
       addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
@@ -238,7 +239,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       long endTime = System.currentTimeMillis();
       log.debugf("Merge took %s", Util.prettyPrintTime(endTime - startTime));
-      assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
+      assertTrue(endTime - startTime < 30000, "Merge took too long: " + Util.prettyPrintTime(endTime - startTime));
 
       // Check that a new node can join
       addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
@@ -317,7 +318,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       long endTime = System.currentTimeMillis();
       log.debugf("Merge took %s", Util.prettyPrintTime(endTime - startTime));
-      assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
+      assertTrue(endTime - startTime < 30000, "Merge took too long: " + Util.prettyPrintTime(endTime - startTime));
 
       // Check that another node can join
       EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
@@ -440,6 +441,6 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       TestingUtil.waitForNoRebalance(c1);
       long endTime = System.currentTimeMillis();
       log.debugf("Recovery took %s", Util.prettyPrintTime(endTime - startTime));
-      assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
+      assertTrue(endTime - startTime < 30000, "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime));
    }
 }

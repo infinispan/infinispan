@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl;
 
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.Test;

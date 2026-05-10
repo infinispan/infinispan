@@ -1,6 +1,6 @@
 package org.infinispan.test.hibernate.cache.commons;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.testing.AfterClassOnce;

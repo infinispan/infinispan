@@ -1,8 +1,8 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -32,7 +32,7 @@ public class JdbcStringBasedStoreMetaTest extends AbstractInfinispanTest {
          assertNotNull(e);
          Throwable cause = e.getCause();
          assertNotNull(cause);
-         assertTrue(cause instanceof CacheConfigurationException);
+         assertInstanceOf(CacheConfigurationException.class, cause);
       }
    }
 

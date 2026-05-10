@@ -1,6 +1,6 @@
 package org.infinispan.configuration.cache;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.testng.annotations.Test;
 

@@ -1,11 +1,12 @@
-import os
 import fnmatch
+import os
+import random
 import re
-import subprocess
-import sys
 import readline
 import shutil
-import random
+import subprocess
+import sys
+
 settings_file = '%s/.infinispan_dev_settings' % os.getenv('HOME')
 upstream_url = 'git@github.com:infinispan/infinispan.git'
 ### Known config keys

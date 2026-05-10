@@ -1,9 +1,9 @@
 package org.infinispan.container.versioning;
 
 import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -60,7 +60,8 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       Transaction[] txs = new Transaction[NUM_KEYS];
       for (int i = 0; i < NUM_KEYS; i++) {
          int cacheIndex = i % 3;
-         tm(cacheIndex).begin(); {
+         tm(cacheIndex).begin();
+         {
             assertEquals(values[i], cache(cacheIndex).get(keys[i]));
          }
          txs[i] = tm(cacheIndex).suspend();
@@ -103,16 +104,15 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
 
       for (int cacheIndex = 0; cacheIndex < 4; cacheIndex++) {
          for (int i = 0; i < NUM_KEYS; i++) {
-            assertEquals("Wrong value found on cache " + cache(cacheIndex),
-                  "new " + values[i], cache(cacheIndex).get(keys[i]));
+            assertEquals("new " + values[i], cache(cacheIndex).get(keys[i]), "Wrong value found on cache " + cache(cacheIndex));
          }
       }
    }
 
    private void checkStateTransfer(MagicKey[] keys, String[] values) {
-      for (Cache<Object, Object> c: caches()) {
+      for (Cache<Object, Object> c : caches()) {
          for (int i = 0; i < keys.length; i++) {
-            assertEquals("Wrong value found on cache " + c, values[i], c.get(keys[i]));
+            assertEquals(values[i], c.get(keys[i]), "Wrong value found on cache " + c);
             checkVersion(c, keys[i]);
          }
       }
@@ -122,8 +122,8 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       LocalizedCacheTopology topology = c.getAdvancedCache().getDistributionManager().getCacheTopology();
       if (topology.isReadOwner(key)) {
          InternalCacheEntry<Object, Object> ice = c.getAdvancedCache().getDataContainer().peek(key);
-         assertNotNull("Entry not found on owner cache " + c, ice);
-         assertNotNull("Version is null on owner cache " + c, versionFromEntry(ice));
+         assertNotNull(ice, "Entry not found on owner cache " + c);
+         assertNotNull(versionFromEntry(ice), "Version is null on owner cache " + c);
       }
    }
 }

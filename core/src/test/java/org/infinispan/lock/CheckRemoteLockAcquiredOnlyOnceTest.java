@@ -1,7 +1,8 @@
 package org.infinispan.lock;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 
@@ -123,39 +124,39 @@ public class CheckRemoteLockAcquiredOnlyOnceTest extends MultipleCacheManagersTe
    }
 
    private void testLockThenOperation(CacheOperation o) throws Exception {
-      assert controlInterceptor.remoteInvocations == 0;
+      assertTrue(controlInterceptor.remoteInvocations == 0);
 
       tm(1).begin();
       advancedCache(1).lock(key);
-      assert lockManager(0).isLocked(key);
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertTrue(lockManager(0).isLocked(key));
+      assertEquals(1, controlInterceptor.remoteInvocations);
 
       for (int i = 0; i < 100; i++) {
          o.execute();
       }
 
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertEquals(1, controlInterceptor.remoteInvocations);
       tm(1).commit();
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertEquals(1, controlInterceptor.remoteInvocations);
 
       controlInterceptor.remoteInvocations = 0;
    }
 
    private void testOperationThenLock(CacheOperation o) throws Exception {
-      assert controlInterceptor.remoteInvocations == 0;
+      assertTrue(controlInterceptor.remoteInvocations == 0);
 
       tm(1).begin();
       for (int i = 0; i < 100; i++) {
          o.execute();
       }
-      assert lockManager(0).isLocked(key);
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertTrue(lockManager(0).isLocked(key));
+      assertEquals(1, controlInterceptor.remoteInvocations);
 
       advancedCache(1).lock(key);
 
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertEquals(1, controlInterceptor.remoteInvocations);
       tm(1).commit();
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertEquals(1, controlInterceptor.remoteInvocations);
 
       controlInterceptor.remoteInvocations = 0;
    }

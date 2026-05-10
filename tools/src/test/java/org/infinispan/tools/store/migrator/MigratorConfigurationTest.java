@@ -30,16 +30,18 @@ import static org.infinispan.tools.store.migrator.Element.TYPE;
 import static org.infinispan.tools.store.migrator.Element.VERSION;
 import static org.infinispan.tools.store.migrator.StoreType.JDBC_MIXED;
 import static org.infinispan.tools.store.migrator.TestUtil.propKey;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -107,7 +109,7 @@ public class MigratorConfigurationTest {
 
       AllowListConfiguration allowList = builder.build().serialization().allowList();
       assertEquals(allowList.getClasses(), Set.of("org.example.Person", "org.example.Animal"));
-      assertEquals(allowList.getRegexps(), Set.of("org.another.example.*"));
+      assertEquals(allowList.getRegexps(), List.of("org.another.example.*"));
    }
 
    public void testCustomMarshallerLoadedLegacy() {
@@ -120,7 +122,7 @@ public class MigratorConfigurationTest {
       StoreProperties props = new StoreProperties(SOURCE, properties);
       Marshaller jBossMarshaller = SerializationConfigUtil.getMarshaller(props);
       assertNotNull(jBossMarshaller);
-      assertTrue(jBossMarshaller instanceof GenericJBossMarshaller);
+      assertInstanceOf(GenericJBossMarshaller.class, jBossMarshaller);
       MarshallingConfiguration config = TestingUtil.extractField(jBossMarshaller, "baseCfg");
       CheckedClassResolver classResolver = (CheckedClassResolver) config.getClassResolver();
       ClassAllowList allowList = TestingUtil.extractField(classResolver, "classAllowList");
@@ -138,10 +140,10 @@ public class MigratorConfigurationTest {
       StoreProperties props = new StoreProperties(SOURCE, properties);
       Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assertNotNull(marshaller);
-      assertTrue(marshaller instanceof PersistenceMarshaller);
+      assertInstanceOf(PersistenceMarshaller.class, marshaller);
       PersistenceMarshaller pm = (PersistenceMarshaller) marshaller;
       DelegatingUserMarshaller userMarshaller = (DelegatingUserMarshaller) pm.getUserMarshaller();
-      assertTrue(userMarshaller.getDelegate() instanceof GenericJBossMarshaller);
+      assertInstanceOf(GenericJBossMarshaller.class, userMarshaller.getDelegate());
       GenericJBossMarshaller jBossMarshaller = (GenericJBossMarshaller) userMarshaller.getDelegate();
       MarshallingConfiguration config = TestingUtil.extractField(jBossMarshaller, "baseCfg");
       CheckedClassResolver classResolver = (CheckedClassResolver) config.getClassResolver();
@@ -160,12 +162,12 @@ public class MigratorConfigurationTest {
       StoreProperties props = new StoreProperties(SOURCE, properties);
       Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assertNotNull(marshaller);
-      assertTrue(marshaller instanceof Infinispan8Marshaller);
+      assertInstanceOf(Infinispan8Marshaller.class, marshaller);
 
       byte[] bytes = new byte[] {3, 1, -2, 3, -1, 1, 1};
       Object object = marshaller.objectFromByteBuffer(bytes);
       assertNotNull(object);
-      assertTrue(object instanceof Person);
+      assertInstanceOf(Person.class, object);
       assertEquals(1, externalizerReadCount.get());
    }
 
@@ -178,12 +180,12 @@ public class MigratorConfigurationTest {
       StoreProperties props = new StoreProperties(SOURCE, properties);
       Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assertNotNull(marshaller);
-      assertTrue(marshaller instanceof Infinispan9Marshaller);
+      assertInstanceOf(Infinispan9Marshaller.class, marshaller);
 
       byte[] bytes = new byte[] {3, 0, 0, 0, 1, 1};
       Object object = marshaller.objectFromByteBuffer(bytes);
       assertNotNull(object);
-      assertTrue(object instanceof Person);
+      assertInstanceOf(Person.class, object);
       assertEquals(1, externalizerReadCount.get());
    }
 
@@ -194,7 +196,7 @@ public class MigratorConfigurationTest {
       StoreProperties props = new StoreProperties(SOURCE, properties);
       Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assertNotNull(marshaller);
-      assertTrue(marshaller instanceof PersistenceMarshaller);
+      assertInstanceOf(PersistenceMarshaller.class, marshaller);
       byte[] bytes = marshaller.objectToByteBuffer(new Person(Person.class.getName()));
       Person person = (Person) marshaller.objectFromByteBuffer(bytes);
       assertNotNull(person);
@@ -208,12 +210,12 @@ public class MigratorConfigurationTest {
    }
 
    public void testCorrectMarshallerLoadedForVersion() {
-      assertTrue(getMarshallerForVersion(8, SOURCE) instanceof Infinispan8Marshaller);
-      assertTrue(getMarshallerForVersion(9, SOURCE) instanceof Infinispan9Marshaller);
-      assertTrue(getMarshallerForVersion(10, SOURCE) instanceof Infinispan10Marshaller);
-      assertTrue(getMarshallerForVersion(11, SOURCE) instanceof Infinispan10Marshaller);
-      assertTrue(getMarshallerForVersion(12, SOURCE) instanceof PersistenceMarshaller);
-      assertTrue(getMarshallerForVersion(13, SOURCE) instanceof PersistenceMarshaller);
+      assertInstanceOf(Infinispan8Marshaller.class, getMarshallerForVersion(8, SOURCE));
+      assertInstanceOf(Infinispan9Marshaller.class, getMarshallerForVersion(9, SOURCE));
+      assertInstanceOf(Infinispan10Marshaller.class, getMarshallerForVersion(10, SOURCE));
+      assertInstanceOf(Infinispan10Marshaller.class, getMarshallerForVersion(11, SOURCE));
+      assertInstanceOf(PersistenceMarshaller.class, getMarshallerForVersion(12, SOURCE));
+      assertInstanceOf(PersistenceMarshaller.class, getMarshallerForVersion(13, SOURCE));
 
       Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(8, TARGET));
       Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(9, TARGET));

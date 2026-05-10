@@ -1,7 +1,7 @@
 package org.infinispan.test.hibernate.cache.commons.stress;
 
 import static org.infinispan.test.hibernate.cache.commons.util.TestingUtil.withTx;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.ArrayList;
 import java.util.List;

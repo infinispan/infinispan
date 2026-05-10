@@ -1,7 +1,7 @@
 package org.infinispan.persistence;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.Ownership;
@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 /**
  * Tests if the conditional commands correctly fetch the value from cache loader even with the skip cache load/store
  * flags.
-  * The configuration used is a tx distributed cache without passivation.
+ * The configuration used is a tx distributed cache without passivation.
  *
  * @author Pedro Ruivo
  * @since 7.0
@@ -45,10 +45,10 @@ public class ClusteredTxConditionalCommandTest extends ClusteredConditionalComma
                // It gets loaded all the time on primary, but if the response to the retrieval does not
                // come soon enough, staggered logic sends second retrieval to backup owner, so it's possible
                // that both owners load once.
-               assertEquals("primary owner load", 1, cacheHelper.loads(Ownership.PRIMARY));
+               assertEquals(1, cacheHelper.loads(Ownership.PRIMARY), "primary owner load");
                long backupLoads = cacheHelper.loads(Ownership.BACKUP);
-               assertTrue("backup owner load: " + backupLoads, backupLoads <= 1);
-               assertEquals("non owner load", 0, cacheHelper.loads(Ownership.NON_OWNER));
+               assertTrue(backupLoads <= 1, "backup owner load: " + backupLoads);
+               assertEquals(0, cacheHelper.loads(Ownership.NON_OWNER), "non owner load");
             }
             break;
       }

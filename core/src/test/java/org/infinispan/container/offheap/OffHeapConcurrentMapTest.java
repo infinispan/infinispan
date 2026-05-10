@@ -1,8 +1,8 @@
 package org.infinispan.container.offheap;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -70,7 +70,7 @@ public class OffHeapConcurrentMapTest {
       }
 
       for (WrappedBytes expected : expectedKeys) {
-         assertTrue("Results didn't contain: " + expected, results.contains(expected));
+         assertTrue(results.contains(expected), "Results didn't contain: " + expected);
       }
    }
 
@@ -93,7 +93,7 @@ public class OffHeapConcurrentMapTest {
       }
 
       for (WrappedBytes expected : expectedKeys) {
-         assertTrue("Results didn't contain: " + expected, results.contains(expected));
+         assertTrue(results.contains(expected), "Results didn't contain: " + expected);
       }
    }
 

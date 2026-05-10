@@ -3,10 +3,10 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.AbstractMap;
@@ -249,7 +249,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
 
       try (Stream<?> stream = collection.stream()) {
          // Test short circuit (non parallel) - it can't match all
-         assertEquals(false, stream.allMatch(o -> Objects.equals(o, transform.function.apply(1))));
+         assertFalse(stream.allMatch(o -> Objects.equals(o, transform.function.apply(1))));
       }
 
       try (Stream<?> stream = collection.parallelStream()) {
@@ -265,8 +265,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
    public void testForEach(CollectionOp op, ItemTransform transform) {
       populateCacheManager();
       Collection<?> collection = op.function.apply(remoteCache);
-      List<Object> objects = new ArrayList<>();
-      collection.forEach(objects::add);
+      List<Object> objects = new ArrayList<>(collection);
       assertEquals(100, objects.size());
 
       for (int i = 0; i < 100; i++) {

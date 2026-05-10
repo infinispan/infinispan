@@ -1,5 +1,7 @@
 package org.infinispan.statetransfer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -8,8 +10,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -114,7 +114,7 @@ public class StateTransferSegmentMetricsTest extends BaseDistFunctionalTest<Stri
       checkPoint.awaitStrict("topology_update_notify_executed_" + c3, 10, TimeUnit.SECONDS);
 
       // Node 3 already received the transactional segments
-      assertEquals(manager.getInflightTransactionalSegmentCount(), 0);
+      assertEquals(0, manager.getInflightTransactionalSegmentCount());
 
       // Node 3 ask for data from all the segments he currently owns.
       assertEquals(manager.getInflightSegmentTransferCount(), MAX_NUM_SEGMENTS);
@@ -127,7 +127,7 @@ public class StateTransferSegmentMetricsTest extends BaseDistFunctionalTest<Stri
 
       // Wait until the batch is applied. If, for any reason, the batch does not have all the segments this will fail.
       checkPoint.awaitStrict("state_applied_" + c3, 10, TimeUnit.SECONDS);
-      assertEquals(manager.getInflightSegmentTransferCount(), 0);
+      assertEquals(0, manager.getInflightSegmentTransferCount());
 
       // We do not actually care about the new node.
       join.cancel(true);

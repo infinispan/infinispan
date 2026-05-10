@@ -2,8 +2,8 @@ package org.infinispan.client.hotrod.query;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.Date;
@@ -95,25 +95,25 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
 
    @Test
    public void testMassIndexing() {
-      assertEquals(query("sample_bank_account.Account", accountCache, "description", "'account1'"), 1);
-      assertEquals(query("sample_bank_account.User", userCache, "name", "'name1'"), 1);
+      assertEquals(1, query("sample_bank_account.Account", accountCache, "description", "'account1'"));
+      assertEquals(1, query("sample_bank_account.User", userCache, "name", "'name1'"));
 
       reindex(ACCOUNT_CACHE);
 
-      assertEquals(query("sample_bank_account.Account", accountCache, "description", "'account1'"), 1);
-      assertEquals(query("sample_bank_account.User", userCache, "name", "'name1'"), 1);
+      assertEquals(1, query("sample_bank_account.Account", accountCache, "description", "'account1'"));
+      assertEquals(1, query("sample_bank_account.User", userCache, "name", "'name1'"));
 
       reindex(USER_CACHE);
 
-      assertEquals(query("sample_bank_account.Account", accountCache, "description", "'account1'"), 1);
-      assertEquals(query("sample_bank_account.User", userCache, "name", "'name1'"), 1);
+      assertEquals(1, query("sample_bank_account.Account", accountCache, "description", "'account1'"));
+      assertEquals(1, query("sample_bank_account.User", userCache, "name", "'name1'"));
    }
 
    @Test
    public void testLocalQueries() {
       Query<?> matchAll = userCache.query("FROM  sample_bank_account.User");
       long totalUsers = matchAll.execute().count().value();
-      assertEquals(totalUsers, NUM_ENTRIES);
+      assertEquals(NUM_ENTRIES, totalUsers);
 
       long partialCount = matchAll.local(true).execute().count().value();
       assertTrue(partialCount > 0 && partialCount < NUM_ENTRIES);

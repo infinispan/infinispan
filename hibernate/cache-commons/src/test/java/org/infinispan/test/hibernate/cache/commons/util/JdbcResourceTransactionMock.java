@@ -1,6 +1,6 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.hibernate.resource.transaction.backend.jdbc.spi.JdbcResourceTransaction;
 import org.hibernate.resource.transaction.spi.TransactionStatus;

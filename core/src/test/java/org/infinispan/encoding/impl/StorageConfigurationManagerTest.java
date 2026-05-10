@@ -1,7 +1,7 @@
 package org.infinispan.encoding.impl;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
@@ -61,40 +61,40 @@ public class StorageConfigurationManagerTest extends SingleCacheManagerTest {
    public void testDefaultMediaType() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       assertStorageMediaTypes(configurationBuilder, StorageType.HEAP, StorageType.HEAP,
-                              MediaType.APPLICATION_OBJECT);
+            MediaType.APPLICATION_OBJECT);
 
 
       configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.memory().storage(StorageType.HEAP);
       assertStorageMediaTypes(configurationBuilder, StorageType.HEAP, StorageType.HEAP,
-                              MediaType.APPLICATION_OBJECT);
+            MediaType.APPLICATION_OBJECT);
 
       configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.memory().storage(StorageType.HEAP);
       assertStorageMediaTypes(configurationBuilder, StorageType.HEAP, StorageType.HEAP,
-                              MediaType.APPLICATION_OBJECT);
-
-
-      configurationBuilder = new ConfigurationBuilder();
-      configurationBuilder.memory().storage(StorageType.HEAP);
-      assertStorageMediaTypes(configurationBuilder, StorageType.HEAP, StorageType.HEAP,
-                              MediaType.APPLICATION_OBJECT);
+            MediaType.APPLICATION_OBJECT);
 
 
       configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.memory().storage(StorageType.HEAP);
       assertStorageMediaTypes(configurationBuilder, StorageType.HEAP, StorageType.HEAP,
-                              MediaType.APPLICATION_OBJECT);
+            MediaType.APPLICATION_OBJECT);
+
+
+      configurationBuilder = new ConfigurationBuilder();
+      configurationBuilder.memory().storage(StorageType.HEAP);
+      assertStorageMediaTypes(configurationBuilder, StorageType.HEAP, StorageType.HEAP,
+            MediaType.APPLICATION_OBJECT);
 
       configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.memory().storage(StorageType.OFF_HEAP);
       assertStorageMediaTypes(configurationBuilder, StorageType.OFF_HEAP, StorageType.OFF_HEAP,
-                              MediaType.APPLICATION_PROTOSTREAM);
+            MediaType.APPLICATION_PROTOSTREAM);
 
       configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.memory().storage(StorageType.OFF_HEAP);
       assertStorageMediaTypes(configurationBuilder, StorageType.OFF_HEAP, StorageType.OFF_HEAP,
-                              MediaType.APPLICATION_PROTOSTREAM);
+            MediaType.APPLICATION_PROTOSTREAM);
    }
 
    private void assertStorageMediaTypes(ConfigurationBuilder configurationBuilder, StorageType storage,
@@ -102,13 +102,12 @@ public class StorageConfigurationManagerTest extends SingleCacheManagerTest {
       cacheManager.defineConfiguration(CACHE_NAME, configurationBuilder.build());
       Cache<Object, Object> cache = cacheManager.getCache(CACHE_NAME);
       Configuration cacheConfiguration = cache.getCacheConfiguration();
-      assertEquals("Wrong storage", storage, cacheConfiguration.memory().storage());
-      assertEquals("Wrong storageType", storageType, cacheConfiguration.memory().storage());
-      assertEquals("Wrong heapConfiguration.storageType", storageType,
-                   cacheConfiguration.memory().storage());
+      assertEquals(storage, cacheConfiguration.memory().storage(), "Wrong storage");
+      assertEquals(storageType, cacheConfiguration.memory().storage(), "Wrong storageType");
+      assertEquals(storageType, cacheConfiguration.memory().storage(), "Wrong heapConfiguration.storageType");
       StorageConfigurationManager scm = extractComponent(cache, StorageConfigurationManager.class);
-      assertEquals("Wrong key media type", mediaType, scm.getKeyStorageMediaType());
-      assertEquals("Wrong value media type", mediaType, scm.getValueStorageMediaType());
+      assertEquals(mediaType, scm.getKeyStorageMediaType(), "Wrong key media type");
+      assertEquals(mediaType, scm.getValueStorageMediaType(), "Wrong value media type");
       cacheManager.administration().removeCache(CACHE_NAME);
    }
 }

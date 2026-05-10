@@ -1,7 +1,10 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -37,7 +40,7 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
 
       try {
          tm(0).commit();
-         assert false : "Exception expected";
+         fail("Exception expected");
       } catch (Exception e) {
          log.debug("Ignoring expected exception during 1-phase prepare", e);
       }
@@ -52,9 +55,9 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
 
    private void assertExpectedState(int index) {
       assertNull(cache(index).get("k"));
-      assert !lockManager(index).isLocked("k");
-      assert TestingUtil.getTransactionTable(cache(index)).getLocalTxCount() == 0;
-      assert TestingUtil.getTransactionTable(cache(index)).getRemoteTxCount() == 0;
+      assertFalse(lockManager(index).isLocked("k"));
+      assertTrue(TestingUtil.getTransactionTable(cache(index)).getLocalTxCount() == 0);
+      assertTrue(TestingUtil.getTransactionTable(cache(index)).getRemoteTxCount() == 0);
    }
 
    class FailInterceptor extends DDAsyncInterceptor {

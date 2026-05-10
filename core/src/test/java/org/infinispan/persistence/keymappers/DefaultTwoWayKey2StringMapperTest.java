@@ -1,8 +1,8 @@
 package org.infinispan.persistence.keymappers;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.UUID;
 
@@ -63,7 +63,7 @@ public class DefaultTwoWayKey2StringMapperTest {
       for (Object o : toTest) {
          Class<?> type = o.getClass();
          String rep = mapper.getStringMapping(o);
-         assertEquals(String.format("Failed on type %s and value %s", type, rep), o, mapper.getKeyMapping(rep));
+         assertEquals(o, mapper.getKeyMapping(rep), String.format("Failed on type %s and value %s", type, rep));
       }
    }
 

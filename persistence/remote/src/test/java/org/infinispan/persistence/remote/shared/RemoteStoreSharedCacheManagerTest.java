@@ -2,8 +2,8 @@ package org.infinispan.persistence.remote.shared;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,12 +62,12 @@ public class RemoteStoreSharedCacheManagerTest extends AbstractInfinispanTest {
             Cache<Object, Object> c1 = cm.getCache("AnotherRemoteStore");
 
             c0.put("k", "v");
-            assertEquals(c1.get("k"), "v");
+            assertEquals("v", c1.get("k"));
 
             List<RemoteStore> rs0 = new ArrayList<>(extractRemoteStore(c0));
             List<RemoteStore> rs1 = new ArrayList<>(extractRemoteStore(c1));
 
-            assertEquals(rs0.size(), 1);
+            assertEquals(1, rs0.size());
             assertEquals(rs0.size(), rs1.size());
 
             RemoteCacheManager rcm0 = TestingUtil.extractField(rs0.get(0), "remoteCacheManager");

@@ -1,12 +1,12 @@
 package org.infinispan.configuration;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "configuration.HashConfigurationBuilderTest")
@@ -21,7 +21,7 @@ public class HashConfigurationBuilderTest extends AbstractInfinispanTest {
 
       try {
          cb.clustering().hash().numOwners(0);
-         Assert.fail("IllegalArgumentException expected");
+         fail("IllegalArgumentException expected");
       } catch (IllegalArgumentException ignore) {
       }
    }
@@ -36,7 +36,7 @@ public class HashConfigurationBuilderTest extends AbstractInfinispanTest {
 
       try {
          cb.clustering().hash().numSegments(0);
-         Assert.fail("IllegalArgumentException expected");
+         fail("IllegalArgumentException expected");
       } catch (IllegalArgumentException ignore) {
       }
    }

@@ -1,5 +1,7 @@
 package org.infinispan.tx.recovery;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
@@ -26,6 +28,6 @@ public class RecoveryHandlerTest extends MultipleCacheManagersTest {
    public void testRecoveryHandler() throws Exception {
       final XAResource xaResource = cache(0).getAdvancedCache().getXAResource();
       final Xid[] recover = xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN);
-      assert recover != null && recover.length == 0;
+      assertTrue(recover != null && recover.length == 0);
    }
 }

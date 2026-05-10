@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -51,51 +52,51 @@ public class ConsistentHashV2Test {
    public void simpleTest() {
       setUp(1);
       hash.value = 0;
-      assert v1.getServer(Util.EMPTY_BYTE_ARRAY).equals(a1);
+      assertEquals(a1, v1.getServer(Util.EMPTY_BYTE_ARRAY));
       hash.value = 1;
-      assert v1.getServer(Util.EMPTY_BYTE_ARRAY).equals(a2);
+      assertEquals(a2, v1.getServer(Util.EMPTY_BYTE_ARRAY));
       hash.value = 1001;
-      assert v1.getServer(Util.EMPTY_BYTE_ARRAY).equals(a3);
+      assertEquals(a3, v1.getServer(Util.EMPTY_BYTE_ARRAY));
       hash.value = 2001;
-      assertEquals(v1.getServer(Util.EMPTY_BYTE_ARRAY), a4);
+      assertEquals(a4, v1.getServer(Util.EMPTY_BYTE_ARRAY));
       hash.value = 3001;
-      assert v1.getServer(Util.EMPTY_BYTE_ARRAY).equals(a1);
+      assertEquals(a1, v1.getServer(Util.EMPTY_BYTE_ARRAY));
    }
 
    public void numOwners2Test() {
       setUp(2);
       hash.value = 0;
-      assert list(a1, a2).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list(a1, a2)).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1;
-      assert list(a2, a3).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list(a2, a3)).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1001;
-      assert list(a3, a4).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list(a3, a4)).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 2001;
-      assert list(a4, a1).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list(a4, a1)).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 3001;
-      assert list(a1, a2).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list(a1, a2)).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
    }
 
    public void numOwners3Test() {
       setUp(3);
       hash.value = 0;
-      assert list(a1, a2, a3).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list(a1, a2, a3)).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1;
-      assert list(a2, a3, a4).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list(a2, a3, a4)).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1001;
-      assert list(a3, a4, a1).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list(a3, a4, a1)).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 2001;
-      assert list(a4, a1, a2).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list(a4, a1, a2)).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 3001;
-      assert list(a1, a2, a3).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list(a1, a2, a3)).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
    }
 
    //now a bit more extreme...
@@ -105,19 +106,19 @@ public class ConsistentHashV2Test {
       List<InetSocketAddress> list = list(a1, a2, a3, a4);
 
       hash.value = 0;
-      assert list.contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1;
-      assert list.contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1001;
-      assert list.contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 2001;
-      assert list.contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 3001;
-      assert list.contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
+      assertThat(list).contains((InetSocketAddress) v1.getServer(Util.EMPTY_BYTE_ARRAY));
    }
 
    private List<InetSocketAddress> list(InetSocketAddress... a) {
@@ -156,9 +157,7 @@ public class ConsistentHashV2Test {
 
          DummyHash dummyHash = (DummyHash) o;
 
-         if (value != dummyHash.value) return false;
-
-         return true;
+         return value == dummyHash.value;
       }
 
       @Override

@@ -9,9 +9,9 @@ import static org.infinispan.rest.resources.ClusterResource.NODE_ADDRESS;
 import static org.infinispan.rest.resources.ClusterResource.PHYSICAL_ADDRESSES;
 import static org.infinispan.rest.resources.ClusterResource.ROLLING_UPGRADE;
 import static org.infinispan.rest.resources.ClusterResource.VERSION;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,7 @@ public class ClusterResourceV3Test extends AbstractRestResourceTest {
       for (Json node : list) {
          assertTrue(node.at("memory_available").asLong() > 0);
          assertTrue(node.at("memory_used").asLong() > 0);
-         assertEquals(node.at("node_addresses").asJsonList().size(), 1);
+         assertEquals(1, node.at("node_addresses").asJsonList().size());
          assertTrue(pattern.matcher(node.at("node_name").asString()).matches());
       }
    }

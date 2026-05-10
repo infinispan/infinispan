@@ -1,5 +1,7 @@
 package org.infinispan.tx;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,8 +40,8 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
       //check if caches contain these same keys
       i = 0;
       for (Cache c : caches) {
-         assert "value".equals(c.get("key0")) : "Failed getting value for key0 on cache " + i;
-         assert "value".equals(c.get("key1")) : "Failed getting value for key1 on cache " + i;
+         assertEquals(c.get("key0"), "value", "Failed getting value for key0 on cache " + i);
+         assertEquals(c.get("key1"), "value", "Failed getting value for key1 on cache " + i);
          i++;
       }
    }

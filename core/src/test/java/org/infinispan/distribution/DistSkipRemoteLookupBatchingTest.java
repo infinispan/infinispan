@@ -1,6 +1,7 @@
 package org.infinispan.distribution;
 
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.test.AbstractCacheTest;
 import org.testng.annotations.Test;
@@ -28,7 +29,7 @@ public class DistSkipRemoteLookupBatchingTest extends BaseDistFunctionalTest<Obj
       assertIsNotInL1(c4, k1);
 
       c4.startBatch();
-      assert c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k1) == null;
+      assertNull(c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k1));
       c4.endBatch(true);
 
       assertOwnershipAndNonOwnership(k1, false);

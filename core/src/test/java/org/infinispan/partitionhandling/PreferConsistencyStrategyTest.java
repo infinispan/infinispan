@@ -1,5 +1,7 @@
 package org.infinispan.partitionhandling;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
 import java.util.Collections;
@@ -16,7 +18,6 @@ import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.topology.RebalancingStatus;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.TestingEventLogManager;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -44,10 +45,10 @@ public class PreferConsistencyStrategyTest {
       preferConsistencyStrategy.onPartitionMerge(status, Collections.emptyMap());
 
       //then
-      Assert.assertNull(status.getCurrentTopology());
-      Assert.assertNull(status.getStableTopology());
-      Assert.assertEquals(AvailabilityMode.AVAILABLE, status.getAvailabilityMode());
-      Assert.assertEquals(RebalancingStatus.COMPLETE, status.getRebalancingStatus());
+      assertNull(status.getCurrentTopology());
+      assertNull(status.getStableTopology());
+      assertEquals(AvailabilityMode.AVAILABLE, status.getAvailabilityMode());
+      assertEquals(RebalancingStatus.COMPLETE, status.getRebalancingStatus());
    }
 
 

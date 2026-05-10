@@ -3,8 +3,9 @@ package org.infinispan.rest.resources;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,7 +27,6 @@ import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.ConvertUtil;
 import org.infinispan.rest.assertion.ResponseAssertion;
-import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -178,7 +178,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
             response = join(counterClient.decrement());
             break;
          default:
-            Assert.fail("Invalid operation " + op);
+            fail("Invalid operation " + op);
       }
       ResponseAssertion.assertThat(response).isOk();
    }

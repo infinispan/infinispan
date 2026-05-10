@@ -1,7 +1,8 @@
 package org.infinispan.persistence.support;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -41,7 +42,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
       return config;
    }
 
-   private static final ThreadLocal<LockableStore> STORE = new ThreadLocal<LockableStore>();
+   private static final ThreadLocal<LockableStore> STORE = new ThreadLocal<>();
 
 
    public static class LockableStoreConfigurationBuilder extends DummyInMemoryStoreConfigurationBuilder {
@@ -112,7 +113,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
                cache.put("k3", "v3");
                cache.put("k4", "v4"); // force eviction of "k3"
 
-               assert "v3".equals(cache.get("k3")) : "cache must return k3 == v3 (was: " + cache.get("k3") + ")";
+               assertEquals(cache.get("k3"), "v3", "cache must return k3 == v3 (was: " + cache.get("k3") + ")");
             } finally {
                store.future.complete(null);
             }
@@ -133,12 +134,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
             cache.put("k1", "v0");
             cache.put("k2", "v2"); // force eviction of "k1"
 
-            eventually(new Condition() {
-               @Override
-               public boolean isSatisfied() throws Exception {
-                  return store.loadEntry("k1") != null;
-               }
-            });
+            eventually(() -> store.loadEntry("k1") != null);
 
             // simulate slow back end store
             store.future = new CompletableFuture<>();
@@ -149,7 +145,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
                cache.put("k1", "v1");
                cache.put("k5", "v5"); // force eviction of "k1"
 
-               assert "v1".equals(cache.get("k1")) : "cache must return k1 == v1 (was: " + cache.get("k1") + ")";
+               assertEquals(cache.get("k1"), "v1", "cache must return k1 == v1 (was: " + cache.get("k1") + ")");
             } finally {
                store.future.complete(null);
             }
@@ -163,7 +159,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
    public void testEndToEndRemove() throws Exception {
       testEndToEndRemove(false);
    }
-   private void testEndToEndRemove(boolean passivation) throws Exception {
+   private void testEndToEndRemove(boolean passivation) {
       TestingUtil.withCacheManager(new CacheCallable(config(passivation, 2)) {
          @Override
          public void call() {
@@ -180,7 +176,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
                cache.remove("k1"); // make second AsyncProcessor thread burn asyncProcessorIds
                TestingUtil.sleepThread(200); // wait for reaper to collect InternalNullEntry
 
-               assert null == cache.get("k1") : "cache must return k1 == null (was: " + cache.get("k1") + ")";
+               assertNull(cache.get("k1"), "cache must return k1 == null (was: " + cache.get("k1") + ")");
             } finally {
                store.future.complete(null);
             }
@@ -188,7 +184,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testNPE() throws Exception {
+   public void testNPE() {
       TestingUtil.withCacheManager(new CacheCallable(config(false, 1)) {
          @Override
          public void call() {
@@ -200,7 +196,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testLIRS() throws Exception {
+   public void testLIRS() {
       ConfigurationBuilder config = config(false, 1);
       config.memory().maxCount(1);
       TestingUtil.withCacheManager(new CacheCallable(config) {
@@ -223,12 +219,12 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
 
-            assertEquals("cache size must be 1", 1, cache.getAdvancedCache().getDataContainer().size());
+            assertEquals(1, cache.getAdvancedCache().getDataContainer().size(), "cache size must be 1");
          }
       });
    }
 
-   public void testSizeAfterExpiration() throws Exception {
+   public void testSizeAfterExpiration() {
       TestingUtil.withCacheManager(new CacheCallable(config(false, 1)) {
          @Override
          public void call() {
@@ -236,31 +232,31 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
             cache.put("k2", "v2");
             TestingUtil.sleepThread(200);
 
-            assertFalse("expiry doesn't work even after expiration", 2 == cache.getAdvancedCache().getDataContainer().size());
+            assertNotEquals(2, cache.getAdvancedCache().getDataContainer().size(), "expiry doesn't work even after expiration");
          }
       });
    }
 
-   public void testSizeAfterEvict() throws Exception {
+   public void testSizeAfterEvict() {
       TestingUtil.withCacheManager(new CacheCallable(config(false, 1)) {
          @Override
          public void call() {
             cache.put("k1", "v1");
             cache.evict("k1");
 
-            assertEquals("cache size must be 0", 0, cache.getAdvancedCache().getDataContainer().size());
+            assertEquals( 0, cache.getAdvancedCache().getDataContainer().size(), "cache size must be 0");
          }
       });
    }
 
-   public void testSizeAfterRemove() throws Exception {
+   public void testSizeAfterRemove() {
       TestingUtil.withCacheManager(new CacheCallable(config(false, 1)) {
          @Override
          public void call() {
             cache.put("k1", "v1");
             cache.remove("k1");
 
-            assertEquals("cache size must be 0", 0, cache.getAdvancedCache().getDataContainer().size());
+            assertEquals(0, cache.getAdvancedCache().getDataContainer().size(), "cache size must be 0");
          }
       });
    }

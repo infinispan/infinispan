@@ -17,8 +17,8 @@ import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeString
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedInt;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeXid;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Closeable;
 import java.lang.reflect.Method;
@@ -198,11 +198,11 @@ public class HotRodClient implements Closeable {
       OperationStatus status = resp.getStatus();
       boolean isSuccess = status == expected;
       if (resp instanceof TestErrorResponse) {
-         assertTrue(String.format("Status should have been '%s' but instead was: '%s', and the error message was: %s",
-               expected, status, ((TestErrorResponse) resp).msg), isSuccess);
+         assertTrue(isSuccess, String.format("Status should have been '%s' but instead was: '%s', and the error message was: %s",
+               expected, status, ((TestErrorResponse) resp).msg));
       } else {
-         assertTrue(String.format(
-               "Status should have been '%s' but instead was: '%s'", expected, status), isSuccess);
+         assertTrue(isSuccess, String.format(
+               "Status should have been '%s' but instead was: '%s'", expected, status));
       }
    }
 

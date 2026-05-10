@@ -1,5 +1,7 @@
 package org.infinispan.test;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -52,7 +54,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
       if (cleanupAfterTest()) {
          Testing.retryOnFailure(this::setup, this::teardown);
       } else {
-         assert cleanupAfterMethod() : "you must either cleanup after test or after method";
+         assertTrue(cleanupAfterMethod(), "you must either cleanup after test or after method");
       }
    }
 

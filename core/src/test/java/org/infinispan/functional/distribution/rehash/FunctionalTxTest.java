@@ -2,13 +2,13 @@ package org.infinispan.functional.distribution.rehash;
 
 import static org.infinispan.test.TestingUtil.withTx;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
@@ -144,7 +144,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       future.get(10, TimeUnit.SECONDS);
 
       InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().peek("key");
-      assertEquals("Current ICE: " + ice, 1 + expectedIncrement, ice.getValue());
+      assertEquals(1 + expectedIncrement, ice.getValue(), "Current ICE: " + ice);
    }
 
    private void testAfterTopology(BiFunction<FunctionalMap.ReadWriteMap<String, Integer>, String, Integer> op, int expectedIncrement) throws Exception {
@@ -189,7 +189,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       future.get(10, TimeUnit.SECONDS);
 
       InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().peek("key");
-      assertEquals("Current ICE: " + ice, 1 + expectedIncrement, ice.getValue());
+      assertEquals(1 + expectedIncrement, ice.getValue(), "Current ICE: " + ice);
    }
 
    private static Integer increment(EntryView.ReadWriteEntryView<String, Integer> view) {

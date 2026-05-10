@@ -1,7 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -54,7 +54,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    private StoreConfiguration buildCacheManagerWithCacheStore(final String config) {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       cacheManager = TestCacheManagerFactory.fromStream(is, true, false);
-      assert cacheManager.getDefaultCacheConfiguration().persistence().stores().size() == 1;
+      assertEquals(1, cacheManager.getDefaultCacheConfiguration().persistence().stores().size());
       return cacheManager.getDefaultCacheConfiguration().persistence().stores().get(0);
    }
 }

@@ -1,7 +1,10 @@
 package org.infinispan.tx.recovery.admin;
 
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -27,7 +30,7 @@ public class OriginatorAndOwnerFailureTest extends AbstractRecoveryTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configuration = defaultRecoveryConfig();
-      assert configuration.build().transaction().transactionMode().isTransactional();
+      assertTrue(configuration.build().transaction().transactionMode().isTransactional());
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, configuration, 3);
       waitForClusterToForm();
 
@@ -40,8 +43,8 @@ public class OriginatorAndOwnerFailureTest extends AbstractRecoveryTest {
 
       killMember(2);
 
-      assert !recoveryOps(0).showInDoubtTransactions().isEmpty();
-      assert !recoveryOps(1).showInDoubtTransactions().isEmpty();
+      assertFalse(recoveryOps(0).showInDoubtTransactions().isEmpty());
+      assertFalse(recoveryOps(1).showInDoubtTransactions().isEmpty());
    }
 
    protected Object getKey() {
@@ -63,19 +66,19 @@ public class OriginatorAndOwnerFailureTest extends AbstractRecoveryTest {
 
    protected void runTest(int index) {
 
-      assert cache(0).getCacheConfiguration().transaction().transactionMode().isTransactional();
+      assertTrue(cache(0).getCacheConfiguration().transaction().transactionMode().isTransactional());
 
       List<Long> internalIds = getInternalIds(recoveryOps(index).showInDoubtTransactions());
-      assertEquals(internalIds.size(), 1);
+      assertEquals(1, internalIds.size());
 
-      assertEquals(cache(0).get(key), null);
-      assertEquals(cache(1).get(key), null);
+      assertNull(cache(0).get(key));
+      assertNull(cache(1).get(key));
 
       log.trace("About to force commit!");
       isSuccess(recoveryOps(index).forceCommit(internalIds.get(0)));
 
-      assertEquals(cache(0).get(key), "newValue");
-      assertEquals(cache(1).get(key), "newValue");
+      assertEquals("newValue", cache(0).get(key));
+      assertEquals("newValue", cache(1).get(key));
 
       assertCleanup(0);
       assertCleanup(1);

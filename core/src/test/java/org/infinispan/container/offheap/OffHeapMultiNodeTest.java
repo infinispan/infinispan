@@ -1,10 +1,9 @@
 package org.infinispan.container.offheap;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -67,11 +66,11 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
          map.put(randomBytes(KEY_SIZE), value);
       }
 
-      assertEquals(value, map.remove(key));
+      assertArrayEquals(value, map.remove(key));
 
       assertNull(map.put(key, value));
 
-      assertEquals(value, map.remove(key));
+      assertArrayEquals(value, map.remove(key));
 
       assertNull(map.put(key, value2));
    }
@@ -84,9 +83,9 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
       byte[] value3 = randomBytes(VALUE_SIZE);
       assertNull(map.put(key, value));
       byte[] prev = map.put(key, value2);
-      assertTrue(Arrays.equals(prev, value));
-      assertTrue(Arrays.equals(value2, map.put(key, value3)));
-      assertTrue(Arrays.equals(value3, map.get(key)));
+      assertArrayEquals(prev, value);
+      assertArrayEquals(value2, map.put(key, value3));
+      assertArrayEquals(value3, map.get(key));
    }
 
    public void testClear() {
@@ -122,7 +121,7 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
       AtomicInteger count = new AtomicInteger();
       iterator.forEachRemaining(e -> {
          count.incrementAndGet();
-         assertEquals(e.getValue(), map.get(e.getKey()));
+         assertArrayEquals(e.getValue(), map.get(e.getKey()));
       });
       assertEquals(cacheSize, count.get());
    }

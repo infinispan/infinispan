@@ -5,8 +5,8 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.JULIEN;
 import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;

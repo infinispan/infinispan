@@ -1,5 +1,7 @@
 package org.infinispan.distribution.rehash;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -47,7 +49,7 @@ public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
 
    private void hasKey(Cache<String, String> cache) {
       Object object = cache.get(KEY);
-      assert VALUE.equals(object);
+      assertEquals(object, VALUE);
    }
 
    public EmbeddedCacheManager newCM() {

@@ -1,7 +1,7 @@
 package org.infinispan.util;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -92,8 +92,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
 
    public BlockedTopology expectTopologyUpdate(CacheTopology.Phase phase) throws InterruptedException {
       BlockedTopology blockedTopology = expectTopologyUpdate();
-      assertNotSame("Expected a CH_UPDATE or REBALANCE_START, but got a CONFIRMATION",
-                    blockedTopology.getType(), Type.CONFIRMATION);
+      assertNotSame(Type.CONFIRMATION, blockedTopology.getType(), "Expected a CH_UPDATE or REBALANCE_START, but got a CONFIRMATION");
       assertEquals(phase, blockedTopology.getCacheTopology().getPhase());
       return blockedTopology;
    }

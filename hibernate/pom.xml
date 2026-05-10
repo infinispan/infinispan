@@ -68,11 +68,6 @@
                <groupId>log4j</groupId>
                <artifactId>log4j</artifactId>
             </exclusion>
-            <exclusion>
-               <groupId>org.junit.jupiter</groupId>
-               <artifactId>junit-jupiter-*</artifactId>
-            </exclusion>
-
          </exclusions>
       </dependency>
       <dependency>
@@ -86,20 +81,6 @@
          <scope>test</scope>
       </dependency>
    </dependencies>
-
-   <build>
-      <pluginManagement>
-         <plugins>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-checkstyle-plugin</artifactId>
-               <configuration>
-                  <configLocation>checkstyle-hibernate-cache.xml</configLocation>
-               </configuration>
-            </plugin>
-         </plugins>
-      </pluginManagement>
-   </build>
 
    <profiles>
       <profile>

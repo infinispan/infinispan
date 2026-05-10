@@ -1,9 +1,9 @@
 package org.infinispan.spring.embedded.support;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "spring.embedded.support.InfinispanEmbeddedCacheManagerFactoryBeanTest", groups = "unit")
 @ContextConfiguration(classes = BasicConfiguration.class)
-@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode =  TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpringContextTests {
 
    private static final String CACHE_NAME_FROM_CONFIGURATION_FILE = "asyncCache";
@@ -57,9 +57,9 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractTestN
       withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
          @Override
          public void call() {
-            assertNotNull(
+            assertNotNull(cm,
                   "getObject() should have returned a valid EmbeddedCacheManager, even if no defaulConfigurationLocation "
-                        + "has been specified. However, it returned null.", cm);
+                        + "has been specified. However, it returned null.");
          }
       });
    }
@@ -75,7 +75,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractTestN
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldCreateACustomizedCacheManagerIfGivenADefaultConfigurationLocation()
          throws Exception {
       final Resource infinispanConfig = new ClassPathResource(NAMED_ASYNC_CACHE_CONFIG_LOCATION,
-                                                              getClass());
+            getClass());
 
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setConfigurationFileLocation(infinispanConfig);
@@ -84,20 +84,18 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractTestN
       withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
          @Override
          public void call() {
-            assertNotNull(
-                  "getObject() should have returned a valid EmbeddedCacheManager, configured using the configuration file "
-                        + "set on SpringEmbeddedCacheManagerFactoryBean. However, it returned null.",
-                  cm);
+            assertNotNull(cm, "getObject() should have returned a valid EmbeddedCacheManager, configured using the configuration file "
+                  + "set on SpringEmbeddedCacheManagerFactoryBean. However, it returned null.");
             final Cache<Object, Object> cacheDefinedInCustomConfiguration = cm.getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
             final Configuration configuration = cacheDefinedInCustomConfiguration.getCacheConfiguration();
             assertEquals(
+                  CacheMode.REPL_ASYNC, configuration.clustering().cacheMode(),
                   "The cache named ["
                         + CACHE_NAME_FROM_CONFIGURATION_FILE
                         + "] is configured to have asynchonous replication cache mode. Yet, the cache returned from getCache("
                         + CACHE_NAME_FROM_CONFIGURATION_FILE
                         + ") has a different cache mode. Obviously, SpringEmbeddedCacheManagerFactoryBean did not use "
-                        + "the configuration file when instantiating EmbeddedCacheManager.",
-                  CacheMode.REPL_ASYNC, configuration.clustering().cacheMode());
+                        + "the configuration file when instantiating EmbeddedCacheManager.");
          }
       });
    }
@@ -119,9 +117,9 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractTestN
          @Override
          public void call() {
             assertEquals(
+                  cm.getClass(), objectUnderTest.getObjectType(),
                   "getObjectType() should return the most derived class of the actual EmbeddedCacheManager "
-                        + "implementation returned from getObject(). However, it didn't.",
-                  cm.getClass(), objectUnderTest.getObjectType());
+                        + "implementation returned from getObject(). However, it didn't.");
          }
       });
    }
@@ -135,8 +133,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractTestN
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldDeclareItselfToOnlyProduceSingletons() {
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
 
-      assertTrue("isSingleton() should always return true. However, it returned false",
-                 objectUnderTest.isSingleton());
+      assertTrue(objectUnderTest.isSingleton(), "isSingleton() should always return true. However, it returned false");
    }
 
    /**
@@ -160,10 +157,9 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractTestN
       withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
          @Override
          public void call() {
-            assertEquals(
+            assertEquals(ComponentStatus.TERMINATED, embeddedCacheManager.getStatus(),
                   "SpringEmbeddedCacheManagerFactoryBean should stop the created EmbeddedCacheManager when being destroyed. "
-                        + "However, the created EmbeddedCacheManager is still not terminated.",
-                  ComponentStatus.TERMINATED, embeddedCacheManager.getStatus());
+                        + "However, the created EmbeddedCacheManager is still not terminated.");
          }
       });
    }
@@ -188,10 +184,10 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractTestN
          // Get the cache manager and make assertions.
          final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject();
          assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().defaultCacheName(),
-                      gcb.build().defaultCacheName());
+               gcb.build().defaultCacheName());
          assertEquals(infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction()
-                                                    .transactionMode().isTransactional(),
-                      builder.build().transaction().transactionMode().isTransactional());
+                     .transactionMode().isTransactional(),
+               builder.build().transaction().transactionMode().isTransactional());
       } finally {
          objectUnderTest.destroy();
       }

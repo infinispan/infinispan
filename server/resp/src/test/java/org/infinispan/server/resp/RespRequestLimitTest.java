@@ -1,6 +1,6 @@
 package org.infinispan.server.resp;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -63,6 +63,6 @@ public class RespRequestLimitTest extends SingleNodeRespBaseTest {
       redisConnection = newConnection();
       RedisCommands<String, String> fresh = redisConnection.sync();
       fresh.set("small", "hello");
-      assertEquals(fresh.get("small"), "hello");
+      assertEquals("hello", fresh.get("small"));
    }
 }

@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc.impl.table;
 
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -36,6 +36,6 @@ public class OracleTableManagerTest {
       OracleTableManager tableManager = new OracleTableManager(context, null, storeConfiguration, dbMetaData, "ALongishCacheName");
       String segmentIndexName = tableManager.getIndexName(30, true, "segment_index");
       String timestampIndexName = tableManager.getIndexName(30, true, "timestamp_index");
-      assertFalse(segmentIndexName.equals(timestampIndexName));
+      assertNotEquals(segmentIndexName, timestampIndexName);
    }
 }

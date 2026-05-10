@@ -1,5 +1,10 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -8,9 +13,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -239,7 +241,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          String key = event.getKey();
          Metadata metadata = event.getMetadata();
          assertNotNull(metadata);
-         assertEquals(metadata.lifespan(), -1);
+         assertEquals(-1, metadata.lifespan());
          assertEquals(metadata.maxIdle(), Long.parseLong(key.substring(4)));
       }
    }
@@ -261,7 +263,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
             position = eventPosition / 2;
          }
 
-         assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
+         assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());
          assertEquals(event.getKey(), expected.get(position).getKey());
          assertEquals(event.isPre(), !isPost);
          if (isPost) {
@@ -476,20 +478,20 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       for (CacheEntry<String, String> expected : initialValues) {
          if (isClustered) {
             CacheEntryEvent<String, String> event = listener.events.get(position);
-            assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
-            assertEquals(event.isPre(), false);
+            assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());
+            assertFalse(event.isPre());
             assertEquals(event.getKey(), expected.getKey());
             assertEquals(event.getValue(), expected.getValue());
          } else {
             CacheEntryEvent<String, String> event = listener.events.get(position * 2);
-            assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
-            assertEquals(event.isPre(), true);
+            assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());
+            assertTrue(event.isPre());
             assertEquals(event.getKey(), expected.getKey());
             assertNull(event.getValue());
 
             event = listener.events.get((position * 2) + 1);
-            assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
-            assertEquals(event.isPre(), false);
+            assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());
+            assertFalse(event.isPre());
             assertEquals(event.getKey(), expected.getKey());
             assertEquals(event.getValue(), expected.getValue());
          }
@@ -500,19 +502,19 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       if (isClustered) {
          CacheEntryEvent<String, String> event = listener.events.get(position);
          assertEquals(event.getType(), operation.getType());
-         assertEquals(event.isPre(), false);
+         assertFalse(event.isPre());
          assertEquals(event.getKey(), key);
          assertEquals(event.getValue(), value);
       } else {
          CacheEntryEvent<String, String> event = listener.events.get(position * 2);
          assertEquals(event.getType(), operation.getType());
-         assertEquals(event.isPre(), true);
+         assertTrue(event.isPre());
          assertEquals(event.getKey(), key);
          assertEquals(event.getValue(), prevValue);
 
          event = listener.events.get((position * 2) + 1);
          assertEquals(event.getType(), operation.getType());
-         assertEquals(event.isPre(), false);
+         assertFalse(event.isPre());
          assertEquals(event.getKey(), key);
          assertEquals(event.getValue(), value);
       }

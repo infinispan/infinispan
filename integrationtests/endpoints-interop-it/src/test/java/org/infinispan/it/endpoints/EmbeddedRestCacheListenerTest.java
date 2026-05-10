@@ -1,8 +1,9 @@
 package org.infinispan.it.endpoints;
 
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
@@ -50,7 +51,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       join(remote.put("k", v));
 
       assertEquals(1, l.createdCounter);
-      assertEquals("v".getBytes(), (byte[]) l.created.get("k"));
+      assertArrayEquals("v".getBytes(), (byte[]) l.created.get("k"));
       assertTrue(l.removed.isEmpty());
       assertEquals(0, l.modifiedCounter);
       assertTrue(l.visited.isEmpty());
@@ -70,7 +71,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
       assertEquals(1, l.modifiedCounter);
-      assertEquals("modifiedValue".getBytes(), (byte[]) l.modified.get("key"));
+      assertArrayEquals("modifiedValue".getBytes(), (byte[]) l.modified.get("key"));
       assertTrue(l.visited.isEmpty());
 
       RestEntity replacedValue = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "replacedValue".getBytes());
@@ -79,7 +80,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
       assertEquals(2, l.modifiedCounter);
-      assertEquals("replacedValue".getBytes(), (byte[]) l.modified.get("k"));
+      assertArrayEquals("replacedValue".getBytes(), (byte[]) l.modified.get("k"));
       assertTrue(l.visited.isEmpty());
 
       //resetting so don't have to type "== 2" etc. all over again
@@ -89,7 +90,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       assertTrue(l.created.isEmpty());
       assertEquals(1, l.removedCounter);
-      assertEquals("modifiedValue".getBytes(), (byte[]) l.removed.get("key"));
+      assertArrayEquals("modifiedValue".getBytes(), (byte[]) l.removed.get("key"));
       assertTrue(l.modified.isEmpty());
 
       l.reset();
@@ -100,7 +101,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       assertTrue(l.removed.isEmpty());
       assertTrue(l.modified.isEmpty());
       assertEquals(1, l.visitedCounter);
-      assertEquals("replacedValue".getBytes(), (byte[]) l.visited.get("k"));
+      assertArrayEquals("replacedValue".getBytes(), (byte[]) l.visited.get("k"));
 
       l.reset();
    }

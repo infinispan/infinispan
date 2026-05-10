@@ -1,7 +1,8 @@
 package org.infinispan.eviction.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,9 +79,8 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
       for (int i = 0; i < CACHE_SIZE * 2; i++) {
          cache.put("key-" + (i + 1), "value-" + (i + 1));
       }
-      assertEquals("cache size too big: " + cache.size(), CACHE_SIZE, cache.size());
-      assertEquals("eviction events count should be same with case size: " + evictionListener.getEvictedEvents(),
-            CACHE_SIZE, evictionListener.getEvictedEvents().size());
+      assertEquals(CACHE_SIZE, cache.size(), "cache size too big: " + cache.size());
+      assertEquals(CACHE_SIZE, evictionListener.getEvictedEvents().size(), "eviction events count should be same with case size: " + evictionListener.getEvictedEvents());
 
       for (int i = 0; i < CACHE_SIZE; i++) {
          cache.put("key-" + (i + 1), "value-" + (i + 1));
@@ -113,7 +113,7 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
       }
       timeService.advance(1000);
       cache.getAdvancedCache().getExpirationManager().processExpiration();
-      assert cache.isEmpty() : "cache size should be zero: " + cache.size();
+      assertTrue(cache.isEmpty(), "cache size should be zero: " + cache.size());
    }
 
    public void testEvictionNotificationSkipped() {
@@ -134,11 +134,11 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
 
       @CacheEntriesEvicted
       public void nodeEvicted(CacheEntriesEvictedEvent e) {
-         assert e.isPre() || !e.isPre();
+         assertTrue(e.isPre() || !e.isPre());
          Object key = e.getEntries().keySet().iterator().next();
-         assert key != null;
-         assert e.getCache() != null;
-         assert e.getType() == Event.Type.CACHE_ENTRY_EVICTED;
+         assertNotNull(key);
+         assertNotNull(e.getCache());
+         assertTrue(e.getType() == Event.Type.CACHE_ENTRY_EVICTED);
          e.getEntries().entrySet().stream().forEach(entry -> evictedEntries.add((Map.Entry) entry));
       }
 

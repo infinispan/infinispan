@@ -1,7 +1,7 @@
 package org.infinispan.distribution.ch.impl;
 
 import static org.infinispan.distribution.ch.impl.SyncConsistentHashFactory.Builder.fudgeExpectedSegments;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.testng.annotations.Test;
 

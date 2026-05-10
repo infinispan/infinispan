@@ -1,5 +1,8 @@
 package org.infinispan.persistence.jdbc;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -35,7 +38,7 @@ public abstract class ManagedConnectionFactoryTest extends BaseNonBlockingStoreT
       ds.start();
       InitialContext ic = new InitialContext();
       ic.bind(getDatasourceLocation(), ds);
-      assert ic.lookup(getDatasourceLocation()) instanceof DummyDataSource;
+      assertInstanceOf(DummyDataSource.class, ic.lookup(getDatasourceLocation()));
    }
 
    public abstract String getDatasourceLocation();
@@ -44,7 +47,7 @@ public abstract class ManagedConnectionFactoryTest extends BaseNonBlockingStoreT
    public void destroyDatasourceAndUnbind() throws NamingException {
       InitialContext ic = new InitialContext();
       ic.unbind(getDatasourceLocation());
-      assert ic.lookup(getDatasourceLocation()) == null;
+      assertNull(ic.lookup(getDatasourceLocation()));
       ds.stop();
    }
 

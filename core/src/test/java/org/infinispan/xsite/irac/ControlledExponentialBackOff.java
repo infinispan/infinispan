@@ -1,6 +1,7 @@
 package org.infinispan.xsite.irac;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +13,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.util.ExponentialBackOff;
-import org.testng.AssertJUnit;
 
 public class ControlledExponentialBackOff implements ExponentialBackOff {
 
@@ -60,9 +60,9 @@ public class ControlledExponentialBackOff implements ExponentialBackOff {
             current = backOffEvents.poll(30, TimeUnit.SECONDS);
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            AssertJUnit.fail(e.getMessage());
+            fail(e.getMessage());
          }
-         assertTrue("At " + name + ": " + message + " Expected " + events + ", current " + current, events.contains(current));
+         assertTrue(events.contains(current), "At " + name + ": " + message + " Expected " + events + ", current " + current);
          events.remove(current);
       }
    }
@@ -74,7 +74,7 @@ public class ControlledExponentialBackOff implements ExponentialBackOff {
    }
 
    void assertNoEvents() {
-      assertTrue("At " + name + ": Expected no events, found: " + backOffEvents, backOffEvents.isEmpty());
+      assertTrue(backOffEvents.isEmpty(), "At " + name + ": Expected no events, found: " + backOffEvents);
    }
 
    enum Event {

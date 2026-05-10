@@ -3,7 +3,7 @@ package org.infinispan.tx.recovery;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collection;
 import java.util.List;
@@ -66,20 +66,20 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
 
       RecoveryManagerImpl rm1 = (RecoveryManagerImpl) ComponentRegistry.componentOf(advancedCache(1), RecoveryManager.class);
       TransactionTable tt1 = ComponentRegistry.componentOf(advancedCache(1), TransactionTable.class);
-      assertEquals(rm1.getInDoubtTransactionsMap().size(), 0);
-      assertEquals(tt1.getRemoteTxCount(), 0);
+      assertEquals(0, rm1.getInDoubtTransactionsMap().size());
+      assertEquals(0, tt1.getRemoteTxCount());
 
       EmbeddedTransaction t0 = beginAndSuspendTx(cache(0));
-      assertEquals(rm1.getInDoubtTransactionsMap().size(),0);
-      assertEquals(tt1.getRemoteTxCount(), 0);
+      assertEquals(0, rm1.getInDoubtTransactionsMap().size());
+      assertEquals(0, tt1.getRemoteTxCount());
 
       prepareTransaction(t0);
-      assertEquals(rm1.getInDoubtTransactionsMap().size(),0);
-      assertEquals(tt1.getRemoteTxCount(), 1);
+      assertEquals(0, rm1.getInDoubtTransactionsMap().size());
+      assertEquals(1, tt1.getRemoteTxCount());
 
       commitTransaction(t0);
-      assertEquals(tt1.getRemoteTxCount(), 1);
-      assertEquals(rm1.getInDoubtTransactionsMap().size(), 0);
+      assertEquals(1, tt1.getRemoteTxCount());
+      assertEquals(0, rm1.getInDoubtTransactionsMap().size());
    }
 
    public static class RecoveryManagerDelegate implements RecoveryManager {

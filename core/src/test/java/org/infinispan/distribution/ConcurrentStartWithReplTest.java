@@ -1,5 +1,7 @@
 package org.infinispan.distribution;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -128,7 +130,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
          Cache<String, String> c2r = startCache(cm2, "r", false).get();
          TestingUtil.blockUntilViewsReceived(10000, c1r, c2r);
          TestingUtil.waitForNoRebalance(c1r, c2r);
-         assert "value".equals(c2r.get("key"));
+         assertEquals(c2r.get("key"), "value");
 
          // now the dist ones
          Future<Cache<String, String>> c1df = startCache(inOrder ? cm1 : cm2, "d", nonBlockingStartupForDist);
@@ -137,7 +139,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
          Cache<String, String> c2d = c2df.get();
 
          c1d.put("key", "value");
-         assert "value".equals(c2d.get("key"));
+         assertEquals(c2d.get("key"), "value");
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }

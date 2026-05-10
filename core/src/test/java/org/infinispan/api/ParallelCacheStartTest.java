@@ -1,5 +1,9 @@
 package org.infinispan.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -32,7 +36,7 @@ public class ParallelCacheStartTest extends MultipleCacheManagersTest {
       // start both caches in parallel
       cm1.startCaches("cache1", "cache2");
       List memb1 = cm1.getMembers();
-      assert 1 == memb1.size() : "Expected 1 member; was " + memb1;
+      assertTrue(1 == memb1.size(), "Expected 1 member; was " + memb1);
 
       Object coord = memb1.get(0);
 
@@ -46,14 +50,14 @@ public class ParallelCacheStartTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewsReceived(50000, true, cm1, cm2);
       memb1 = cm1.getMembers();
       List memb2 = cm2.getMembers();
-      assert 2 == memb1.size();
-      assert memb1.equals(memb2);
+      assertTrue(2 == memb1.size());
+      assertEquals(memb2, memb1);
 
       cm1.stop();
       TestingUtil.blockUntilViewsReceived(50000, false, cm2);
 
       memb2 = cm2.getMembers();
-      assert 1 == memb2.size();
-      assert !coord.equals(memb2.get(0));
+      assertTrue(1 == memb2.size());
+      assertNotEquals(memb2.get(0), coord);
    }
 }

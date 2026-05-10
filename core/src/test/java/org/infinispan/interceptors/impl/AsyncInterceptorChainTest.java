@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -53,12 +55,12 @@ public class AsyncInterceptorChainTest extends AbstractInfinispanTest {
       } finally {
          executorService.shutdownNow();
       }
-      assert ic.containsInterceptorType(DummyCallInterceptor.class);
-      assert ic.containsInterceptorType(DummyActivationInterceptor.class);
-      assert ic.containsInterceptorType(DummyCacheMgmtInterceptor.class);
-      assert ic.containsInterceptorType(DummyDistCacheWriterInterceptor.class);
-      assert ic.containsInterceptorType(DummyInvalidationInterceptor.class);
-      assert ic.getInterceptors().size() == 5 : "Resulting interceptor chain was actually " + ic.getInterceptors();
+      assertTrue(ic.containsInterceptorType(DummyCallInterceptor.class));
+      assertTrue(ic.containsInterceptorType(DummyActivationInterceptor.class));
+      assertTrue(ic.containsInterceptorType(DummyCacheMgmtInterceptor.class));
+      assertTrue(ic.containsInterceptorType(DummyDistCacheWriterInterceptor.class));
+      assertTrue(ic.containsInterceptorType(DummyInvalidationInterceptor.class));
+      assertTrue(ic.getInterceptors().size() == 5, "Resulting interceptor chain was actually " + ic.getInterceptors());
    }
 
    private static class InterceptorChainUpdater implements Callable<Void> {

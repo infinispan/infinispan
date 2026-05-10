@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
 
-import static org.testng.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import javax.net.ssl.SSLContext;
 

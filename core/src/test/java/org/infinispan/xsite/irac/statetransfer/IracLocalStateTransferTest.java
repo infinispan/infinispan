@@ -1,9 +1,9 @@
 package org.infinispan.xsite.irac.statetransfer;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.LinkedList;
@@ -264,10 +264,10 @@ public class IracLocalStateTransferTest extends AbstractXSiteTest {
          InternalDataContainer<String, String> dc = getInternalDataContainer(cache);
          InternalCacheEntry<String, String> ice = dc.peek(key);
          log.debugf("Checking DataContainer in %s. entry=%s", DistributionTestHelper.addressOf(cache), ice);
-         assertNotNull(String.format("Internal entry is null for key %s", key), ice);
-         assertEquals("Internal entry wrong key", key, ice.getKey());
-         assertEquals("Internal entry wrong value", value, ice.getValue());
-         assertEquals("Internal entry wrong metadata", metadata, ice.getInternalMetadata().iracMetadata());
+         assertNotNull(ice, String.format("Internal entry is null for key %s", key));
+         assertEquals(key, ice.getKey(), "Internal entry wrong key");
+         assertEquals(value, ice.getValue(), "Internal entry wrong value");
+         assertEquals(metadata, ice.getInternalMetadata().iracMetadata(), "Internal entry wrong metadata");
       }
    }
 
@@ -279,7 +279,7 @@ public class IracLocalStateTransferTest extends AbstractXSiteTest {
          InternalDataContainer<String, String> dc = getInternalDataContainer(cache);
          InternalCacheEntry<String, String> ice = dc.peek(key);
          log.debugf("Checking DataContainer in %s. entry=%s", DistributionTestHelper.addressOf(cache), ice);
-         assertNull(String.format("Internal entry found for key %s", key), ice);
+         assertNull(ice, String.format("Internal entry found for key %s", key));
       }
    }
 

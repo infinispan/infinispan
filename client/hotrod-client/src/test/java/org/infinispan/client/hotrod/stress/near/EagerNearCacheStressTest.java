@@ -3,8 +3,8 @@ package org.infinispan.client.hotrod.stress.near;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManagers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

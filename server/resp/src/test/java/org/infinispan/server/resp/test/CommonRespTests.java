@@ -1,7 +1,7 @@
 package org.infinispan.server.resp.test;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.AbstractMap;
 import java.util.Map;

@@ -1,12 +1,12 @@
 package org.infinispan.stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -303,7 +303,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
          while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
             String prev = results.put(entry.getKey(), entry.getValue());
-            assertNull("Entry " + entry + " replaced an existing value of " + prev, prev);
+            assertNull( prev, "Entry " + entry + " replaced an existing value of " + prev);
          }
          assertEquals(originalValues, results);
 

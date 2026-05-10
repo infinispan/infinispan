@@ -1,7 +1,8 @@
 package org.infinispan.lock.singlelock.optimistic;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
@@ -40,7 +41,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
       eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 1, 0)&& checkTxCount(2, 0, 0));
 
       killMember(2);
-      assert caches().size() == 2;
+      assertTrue(caches().size() == 2);
 
       tm(1).resume(transaction);
       tm(1).commit();
@@ -69,7 +70,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
       eventually(() -> checkTxCount(0, 0, 1) &&  checkTxCount(1, 1, 0) &&  checkTxCount(2, 0, 1));
 
       killMember(2);
-      assert caches().size() == 2;
+      assertTrue(caches().size() == 2);
 
 
       tm(1).begin();

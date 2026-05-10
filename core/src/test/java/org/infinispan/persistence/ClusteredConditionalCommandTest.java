@@ -3,9 +3,9 @@ package org.infinispan.persistence;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getFirstStore;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -141,14 +141,14 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
    }
 
    protected final <K, V> void assertLoad(CacheHelper<K, V> cacheHelper, int primaryOwner, int backupOwner, int nonOwner) {
-      assertEquals("primary owner load", primaryOwner, cacheHelper.loads(Ownership.PRIMARY));
-      assertEquals("backup owner load", backupOwner, cacheHelper.loads(Ownership.BACKUP));
-      assertEquals("non owner load", nonOwner, cacheHelper.loads(Ownership.NON_OWNER));
+      assertEquals(primaryOwner, cacheHelper.loads(Ownership.PRIMARY), "primary owner load");
+      assertEquals(backupOwner, cacheHelper.loads(Ownership.BACKUP), "backup owner load");
+      assertEquals(nonOwner, cacheHelper.loads(Ownership.NON_OWNER), "non owner load");
    }
 
    private <K, V> void assertEmpty(List<Cache<K, V>> cacheList) {
       for (Cache<K, V> cache : cacheList) {
-         assertTrue(cache + ".isEmpty()", cache.isEmpty());
+         assertTrue(cache.isEmpty(), cache + ".isEmpty()");
       }
    }
 

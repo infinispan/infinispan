@@ -1,11 +1,11 @@
 package org.infinispan.query.blackbox;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Iterator;
 import java.util.List;
@@ -56,10 +56,10 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       List<Person> found = cacheQuery.execute().list();
 
       int elems = found.size();
-      assert elems == 1 : "Expected 1 but was " + elems;
+      assertEquals(1, elems, "Expected 1 but was " + elems);
 
       Person val = found.get(0);
-      assert val.equals(person1) : "Expected " + person1 + " but was " + val;
+      assertEquals(person1, val, "Expected " + person1 + " but was " + val);
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
@@ -132,7 +132,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       QueryResult<Person> result = cacheQuery.execute();
       List<Person> found = result.list();
 
-      assert found.size() == 2;
+      assertEquals(2, found.size());
       assertEquals(2, getNumberOfHits(result));
       assertTrue(found.contains(person2));
       assertTrue(found.contains(person3));
@@ -145,8 +145,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       List<Person> found = cacheQuery.execute().list();
 
-      assert found.size() == 1;
-      assert found.get(0).equals(person1);
+      assertEquals(1, found.size());
+      assertEquals(person1, found.get(0));
 
       person1.setBlurb("Likes pizza");
       cache.put(key1, person1);
@@ -155,8 +155,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       found = cacheQuery.execute().list();
 
-      assert found.size() == 1;
-      assert found.get(0).equals(person1);
+      assertEquals(1, found.size());
+      assertEquals(person1, found.get(0));
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
@@ -181,10 +181,10 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cacheQuery = createQuery("name:'Goat'", Person.class);
       found = cacheQuery.execute().list();
 
-      assert found.size() == 3 : "Size of list should be 3";
-      assert found.contains(person2);
-      assert found.contains(person3);
-      assert found.contains(person4) : "This should now contain object person4";
+      assertEquals(3, found.size());
+      assertTrue(found.contains(person2));
+      assertTrue(found.contains(person3));
+      assertTrue(found.contains(person4), "This should now contain object person4");
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 

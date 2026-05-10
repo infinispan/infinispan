@@ -4,10 +4,10 @@ import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.Method;
 
@@ -69,7 +69,7 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       assertEquals("1", server.getAttribute(cacheManagerObjectName, "CreatedCacheCount"));
       assertEquals("1", server.getAttribute(cacheManagerObjectName, "RunningCacheCount"));
       server.invoke(cacheObjectName, "stop", new Object[0], new String[0]);
-      assertFalse(cacheObjectName + " should NOT be registered", server.isRegistered(cacheObjectName));
+      assertFalse(server.isRegistered(cacheObjectName), cacheObjectName + " should NOT be registered");
       assertEquals("1", server.getAttribute(cacheManagerObjectName, "CreatedCacheCount"));
       assertEquals("0", server.getAttribute(cacheManagerObjectName, "RunningCacheCount"));
       server.invoke(cacheManagerObjectName, "startCache", new Object[]{getDefaultCacheName()}, new String[]{String.class.getName()});
@@ -77,7 +77,7 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       assertEquals("1", server.getAttribute(cacheManagerObjectName, "CreatedCacheCount"));
       assertEquals("1", server.getAttribute(cacheManagerObjectName, "RunningCacheCount"));
       server.invoke(cacheObjectName, "stop", new Object[0], new String[0]);
-      assertFalse(cacheObjectName + " should NOT be registered", server.isRegistered(cacheObjectName));
+      assertFalse(server.isRegistered(cacheObjectName), cacheObjectName + " should NOT be registered");
       assertEquals("1", server.getAttribute(cacheManagerObjectName, "CreatedCacheCount"));
       assertEquals("0", server.getAttribute(cacheManagerObjectName, "RunningCacheCount"));
       server.invoke(cacheManagerObjectName, "startCache", new Object[]{getDefaultCacheName()}, new String[]{String.class.getName()});
@@ -85,7 +85,7 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       assertEquals("1", server.getAttribute(cacheManagerObjectName, "CreatedCacheCount"));
       assertEquals("1", server.getAttribute(cacheManagerObjectName, "RunningCacheCount"));
       server.invoke(cacheObjectName, "stop", new Object[0], new String[0]);
-      assertFalse(cacheObjectName + " should NOT be registered", server.isRegistered(cacheObjectName));
+      assertFalse(server.isRegistered(cacheObjectName), cacheObjectName + " should NOT be registered");
       assertEquals("1", server.getAttribute(cacheManagerObjectName, "CreatedCacheCount"));
       assertEquals("0", server.getAttribute(cacheManagerObjectName, "RunningCacheCount"));
    }
@@ -97,8 +97,8 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       ObjectName managerON = getCacheManagerObjectName(otherJmxDomain);
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
       gc.jmx().enabled(true)
-        .domain(otherJmxDomain)
-        .mBeanServerLookup(mBeanServerLookup);
+            .domain(otherJmxDomain)
+            .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.statistics().enabled(true);
       EmbeddedCacheManager otherContainer = TestCacheManagerFactory.createCacheManager(gc, c);
@@ -130,8 +130,8 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
    public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() {
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
       gc.jmx().enabled(true)
-        .domain(JMX_DOMAIN)
-        .mBeanServerLookup(mBeanServerLookup);
+            .domain(JMX_DOMAIN)
+            .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.statistics().enabled(true);
 
@@ -143,8 +143,8 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       String otherJmxDomain = "jmx_" + m.getName();
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
       gc.jmx().enabled(true)
-        .domain(otherJmxDomain)
-        .mBeanServerLookup(mBeanServerLookup);
+            .domain(otherJmxDomain)
+            .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.statistics().enabled(false);
 
@@ -154,9 +154,9 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
             cm.getCache();
             MBeanServer server = mBeanServerLookup.getMBeanServer();
             ObjectName cacheObjectName = getCacheObjectName(otherJmxDomain, getDefaultCacheName() + "(local)");
-            assertTrue(cacheObjectName + " should be registered", server.isRegistered(cacheObjectName));
+            assertTrue(server.isRegistered(cacheObjectName), cacheObjectName + " should be registered");
             TestingUtil.killCacheManagers(cm);
-            assertFalse(cacheObjectName + " should NOT be registered", server.isRegistered(cacheObjectName));
+            assertFalse(server.isRegistered(cacheObjectName), cacheObjectName + " should NOT be registered");
          }
       });
    }

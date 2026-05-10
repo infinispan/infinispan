@@ -3,9 +3,10 @@ package org.infinispan.client.hotrod.marshall;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 
@@ -73,9 +74,9 @@ public class ClientProtoStreamMarshallerTest extends SingleCacheManagerTest {
       byte[] key = (byte[]) cache.keySet().iterator().next();
       Object localObject = cache.get(key);
       assertNotNull(localObject);
-      assertTrue(localObject instanceof byte[]);
+      assertInstanceOf(byte[].class, localObject);
       Object unmarshalledObject = ProtobufUtil.fromWrappedByteArray(MarshallerUtil.getSerializationContext(remoteCacheManager), (byte[]) localObject);
-      assertTrue(unmarshalledObject instanceof User);
+      assertInstanceOf(User.class, unmarshalledObject);
       assertUser((User) unmarshalledObject);
 
       // get the object through the remote cache interface and check it's the same object we put

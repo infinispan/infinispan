@@ -1,7 +1,7 @@
 package org.infinispan.distribution.ch;
 
 import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.stream.IntStream;
 

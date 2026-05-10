@@ -1,7 +1,7 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
@@ -50,12 +50,12 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
 
             StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
             assertNotNull(firstCacheLoaderConfig);
-            assertTrue(firstCacheLoaderConfig instanceof JdbcStringBasedStoreConfiguration);
+            assertInstanceOf(JdbcStringBasedStoreConfiguration.class, firstCacheLoaderConfig);
             StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
             assertNotNull(secondCacheLoaderConfig);
-            assertTrue(secondCacheLoaderConfig instanceof JdbcStringBasedStoreConfiguration);
+            assertInstanceOf(JdbcStringBasedStoreConfiguration.class, secondCacheLoaderConfig);
             WaitDelegatingNonBlockingStore loader = TestingUtil.getFirstStoreWait(first);
-            assertTrue(((JdbcStringBasedStore) loader.delegate()).getConnectionFactory() instanceof ManagedConnectionFactory);
+            assertInstanceOf(ManagedConnectionFactory.class, ((JdbcStringBasedStore) loader.delegate()).getConnectionFactory());
          }
       });
    }

@@ -13,11 +13,11 @@ import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.infinispan.partitionhandling.PartitionHandling.DENY_READ_WRITES;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.Closeable;
 import java.io.IOException;

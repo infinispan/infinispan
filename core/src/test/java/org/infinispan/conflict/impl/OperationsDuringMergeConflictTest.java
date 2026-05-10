@@ -5,7 +5,7 @@ import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.infinispan.topology.CacheTopology.Phase.READ_OLD_WRITE_ALL;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;

@@ -3,11 +3,11 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -131,8 +131,8 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
 
       Set<String> classNames = (Set<String>) mBeanServer.getAttribute(name, "IndexedClassNames");
       assertEquals(1, classNames.size());
-      assertTrue("The set should contain the ProtobufValueWrapper class name.", classNames.contains(ProtobufValueWrapper.class.getName()));
-      assertTrue("The query execution total time should be > 0.", (Long) mBeanServer.getAttribute(name, "SearchQueryTotalTime") > 0);
+      assertTrue(classNames.contains(ProtobufValueWrapper.class.getName()), "The set should contain the ProtobufValueWrapper class name.");
+      assertTrue((Long) mBeanServer.getAttribute(name, "SearchQueryTotalTime") > 0, "The query execution total time should be > 0.");
       assertEquals((long) 1, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));
    }
 

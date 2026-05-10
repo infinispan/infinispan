@@ -1,5 +1,7 @@
 package org.infinispan.tx;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -20,12 +22,12 @@ public class NoAutoCommitAndPferTest extends SingleCacheManagerTest {
       tm().begin();
       cache.putForExternalRead("k1","v");
       tm().commit();
-      assert cache.get("k1").equals("v"); //here is the failure!
+      assertEquals("v", cache.get("k1")); //here is the failure!
    }
 
    public void testPferNoAutoCommit() throws Exception {
       cache.putForExternalRead("k2","v");
-      assert cache.get("k2").equals("v"); //here is the failure!
+      assertEquals("v", cache.get("k2")); //here is the failure!
    }
 
 }

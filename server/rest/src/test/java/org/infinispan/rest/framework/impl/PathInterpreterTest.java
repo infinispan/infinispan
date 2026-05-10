@@ -1,7 +1,7 @@
 package org.infinispan.rest.framework.impl;
 
 import static org.infinispan.rest.framework.impl.PathInterpreter.resolveVariables;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
 
@@ -15,7 +15,7 @@ public class PathInterpreterTest {
       Map<String, String> res = resolveVariables("{id}", "5435");
 
       assertEquals(1, res.size());
-      assertEquals(res.get("id"), "5435");
+      assertEquals("5435", res.get("id"));
    }
 
    @Test
@@ -23,7 +23,7 @@ public class PathInterpreterTest {
       Map<String, String> res = resolveVariables("{variable_name}", "a");
 
       assertEquals(1, res.size());
-      assertEquals(res.get("variable_name"), "a");
+      assertEquals("a", res.get("variable_name"));
    }
 
    @Test
@@ -31,8 +31,8 @@ public class PathInterpreterTest {
       Map<String, String> res = resolveVariables("{cachemanager}-{cache}", "default-mycache");
 
       assertEquals(2, res.size());
-      assertEquals(res.get("cachemanager"), "default");
-      assertEquals(res.get("cache"), "mycache");
+      assertEquals("default", res.get("cachemanager"));
+      assertEquals("mycache", res.get("cache"));
    }
 
    @Test
@@ -47,8 +47,8 @@ public class PathInterpreterTest {
       Map<String, String> res = resolveVariables("{a}:{b}", "value1:value2");
 
       assertEquals(2, res.size());
-      assertEquals(res.get("a"), "value1");
-      assertEquals(res.get("b"), "value2");
+      assertEquals("value1", res.get("a"));
+      assertEquals("value2", res.get("b"));
    }
 
    @Test
@@ -56,8 +56,8 @@ public class PathInterpreterTest {
       Map<String, String> res = resolveVariables("prefix_{variable1}_{variable2}_suffix", "prefix_value1_value2_suffix");
 
       assertEquals(2, res.size());
-      assertEquals(res.get("variable1"), "value1");
-      assertEquals(res.get("variable2"), "value2");
+      assertEquals("value1", res.get("variable1"));
+      assertEquals("value2", res.get("variable2"));
    }
 
    @Test
@@ -65,7 +65,7 @@ public class PathInterpreterTest {
       Map<String, String> res = resolveVariables("counter-{id}", "counter-2345");
 
       assertEquals(1, res.size());
-      assertEquals(res.get("id"), "2345");
+      assertEquals("2345", res.get("id"));
    }
 
    @Test

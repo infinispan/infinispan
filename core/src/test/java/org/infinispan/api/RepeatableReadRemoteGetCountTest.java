@@ -1,5 +1,9 @@
 package org.infinispan.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -11,7 +15,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.CountingRpcManager;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import jakarta.transaction.TransactionManager;
@@ -49,25 +52,24 @@ public class RepeatableReadRemoteGetCountTest extends MultipleCacheManagersTest 
       tm.begin();
       rpcManager.resetStats();
       cache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES).put(key, "v1");
-      AssertJUnit.assertEquals("Wrong number of gets after put.", 0, rpcManager.clusterGet);
+      assertEquals(0, rpcManager.clusterGet, "Wrong number of gets after put.");
+      assertEquals("v1", cache.get(key), "Wrong value read.");
+      assertEquals(0, rpcManager.clusterGet, "Wrong number of gets after read.");
 
-      AssertJUnit.assertEquals("Wrong value read.", "v1", cache.get(key));
-      AssertJUnit.assertEquals("Wrong number of gets after read.", 0, rpcManager.clusterGet);
+      assertEquals("v1", cache.put(key, "v2"), "Wrong put return value.");
+      assertEquals(0, rpcManager.clusterGet, "Wrong number of gets after put.");
 
-      AssertJUnit.assertEquals("Wrong put return value.", "v1", cache.put(key, "v2"));
-      AssertJUnit.assertEquals("Wrong number of gets after put.", 0, rpcManager.clusterGet);
+      assertEquals("v2", cache.replace(key, "v3"), "Wrong replace return value.");
+      assertEquals(0, rpcManager.clusterGet, "Wrong number of gets after replace.");
 
-      AssertJUnit.assertEquals("Wrong replace return value.", "v2", cache.replace(key, "v3"));
-      AssertJUnit.assertEquals("Wrong number of gets after replace.", 0, rpcManager.clusterGet);
+      assertTrue(cache.replace(key, "v3", "v4"), "Wrong conditional replace return value.");
+      assertEquals(0, rpcManager.clusterGet, "Wrong number of gets after conditional replace.");
 
-      AssertJUnit.assertEquals("Wrong conditional replace return value.", true, cache.replace(key, "v3", "v4"));
-      AssertJUnit.assertEquals("Wrong number of gets after conditional replace.", 0, rpcManager.clusterGet);
+      assertTrue(cache.remove(key, "v4"), "Wrong conditional remove return value.");
+      assertEquals(0, rpcManager.clusterGet, "Wrong number of gets after conditional remove.");
 
-      AssertJUnit.assertEquals("Wrong conditional remove return value.", true, cache.remove(key, "v4"));
-      AssertJUnit.assertEquals("Wrong number of gets after conditional remove.", 0, rpcManager.clusterGet);
-
-      AssertJUnit.assertEquals("Wrong conditional put return value.", null, cache.putIfAbsent(key, "v5"));
-      AssertJUnit.assertEquals("Wrong number of gets after conditional put.", 0, rpcManager.clusterGet);
+      assertNull(cache.putIfAbsent(key, "v5"), "Wrong conditional put return value.");
+      assertEquals(0, rpcManager.clusterGet, "Wrong number of gets after conditional put.");
       tm.commit();
    }
 
@@ -83,23 +85,23 @@ public class RepeatableReadRemoteGetCountTest extends MultipleCacheManagersTest 
 
       tm.begin();
       rpcManager.resetStats();
-      AssertJUnit.assertEquals("Wrong value read.", initialized ? "v1" : null, cache.get(key));
-      AssertJUnit.assertEquals("Wrong number of gets after read.", 1, rpcManager.clusterGet);
+      assertEquals(initialized ? "v1" : null, cache.get(key), "Wrong value read.");
+      assertEquals(1, rpcManager.clusterGet, "Wrong number of gets after read.");
 
-      AssertJUnit.assertEquals("Wrong put return value.", initialized ? "v1" : null, cache.put(key, "v2"));
-      AssertJUnit.assertEquals("Wrong number of gets after put.", 1, rpcManager.clusterGet);
+      assertEquals(initialized ? "v1" : null, cache.put(key, "v2"), "Wrong put return value.");
+      assertEquals(1, rpcManager.clusterGet, "Wrong number of gets after put.");
 
-      AssertJUnit.assertEquals("Wrong replace return value.", "v2", cache.replace(key, "v3"));
-      AssertJUnit.assertEquals("Wrong number of gets after replace.", 1, rpcManager.clusterGet);
+      assertEquals("v2", cache.replace(key, "v3"), "Wrong replace return value.");
+      assertEquals(1, rpcManager.clusterGet, "Wrong number of gets after replace.");
 
-      AssertJUnit.assertEquals("Wrong conditional replace return value.", true, cache.replace(key, "v3", "v4"));
-      AssertJUnit.assertEquals("Wrong number of gets after conditional replace.", 1, rpcManager.clusterGet);
+      assertTrue(cache.replace(key, "v3", "v4"), "Wrong conditional replace return value.");
+      assertEquals(1, rpcManager.clusterGet, "Wrong number of gets after conditional replace.");
 
-      AssertJUnit.assertEquals("Wrong conditional remove return value.", true, cache.remove(key, "v4"));
-      AssertJUnit.assertEquals("Wrong number of gets after conditional remove.", 1, rpcManager.clusterGet);
+      assertTrue(cache.remove(key, "v4"), "Wrong conditional remove return value.");
+      assertEquals(1, rpcManager.clusterGet, "Wrong number of gets after conditional remove.");
 
-      AssertJUnit.assertEquals("Wrong conditional put return value.", null, cache.putIfAbsent(key, "v5"));
-      AssertJUnit.assertEquals("Wrong number of gets after conditional put.", 1, rpcManager.clusterGet);
+      assertNull(cache.putIfAbsent(key, "v5"), "Wrong conditional put return value.");
+      assertEquals(1, rpcManager.clusterGet, "Wrong number of gets after conditional put.");
       tm.commit();
    }
 

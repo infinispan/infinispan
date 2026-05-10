@@ -26,11 +26,11 @@ import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.fail;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -104,7 +104,6 @@ import org.infinispan.testing.Exceptions;
 import org.infinispan.testing.annotation.TestForIssue;
 import org.infinispan.topology.LocalTopologyManager;
 import org.mockito.Mockito;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.reporters.Files;
 import org.w3c.dom.Document;
@@ -705,8 +704,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).isOk();
 
       Json jsonNode = Json.read(join(response).body());
-      assertEquals(jsonNode.at("current_number_of_entries").asInteger(), 2);
-      assertEquals(jsonNode.at("stores").asInteger(), 2);
+      assertEquals(2, jsonNode.at("current_number_of_entries").asInteger());
+      assertEquals(2, jsonNode.at("stores").asInteger());
 
       response = cacheClient.clear();
       assertThat(response).isOk();
@@ -750,9 +749,9 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       Pattern pattern = Pattern.compile(this.getClass().getSimpleName() + "-Node[a-zA-Z]$");
       Map<String, Long> previousSizes = new HashMap<>();
       for (Json node : jsons) {
-         assertEquals(node.at("memory_entries").asInteger(), 2);
-         assertEquals(node.at("total_entries").asInteger(), 2);
-         assertEquals(node.at("node_addresses").asJsonList().size(), 1);
+         assertEquals(2, node.at("memory_entries").asInteger());
+         assertEquals(2, node.at("total_entries").asInteger());
+         assertEquals(1, node.at("node_addresses").asJsonList().size());
          assertTrue(pattern.matcher(node.at("node_name").asString()).matches());
          assertTrue(node.at("memory_used").asLong() > 0);
 
@@ -770,8 +769,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       jsons = jsonNode.asJsonList();
       assertEquals(NUM_SERVERS, jsons.size());
       for (Json node : jsons) {
-         assertEquals(node.at("memory_entries").asInteger(), 0);
-         assertEquals(node.at("total_entries").asInteger(), 0);
+         assertEquals(0, node.at("memory_entries").asInteger());
+         assertEquals(0, node.at("total_entries").asInteger());
 
          // Even though the cache was cleared, it still occupies some space.
          assertTrue(node.at("memory_used").asLong() > 0);
@@ -807,7 +806,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
             Pattern pattern = Pattern.compile(this.getClass().getSimpleName() + "-Node[a-zA-Z]$");
             for (Json node : distribution) {
-               assertEquals(node.at("node_addresses").asJsonList().size(), 1);
+               assertEquals(1, node.at("node_addresses").asJsonList().size());
                assertTrue(pattern.matcher(node.at("node_name").asString()).matches());
                assertTrue(node.has("primary"));
             }
@@ -850,44 +849,44 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertEquals(expectedNames, new HashSet<>(names));
 
       List<String> status = find(jsonNode, "status");
-      Assert.assertTrue(status.contains("RUNNING"));
+      assertTrue(status.contains("RUNNING"));
 
       List<String> types = find(jsonNode, "type");
-      Assert.assertTrue(types.contains("distributed-cache"));
+      assertTrue(types.contains("distributed-cache"));
 
       List<String> simpleCaches = find(jsonNode, "simple_cache");
-      Assert.assertTrue(simpleCaches.contains("false"));
+      assertTrue(simpleCaches.contains("false"));
 
       List<String> transactional = find(jsonNode, "transactional");
-      Assert.assertTrue(transactional.contains("false"));
+      assertTrue(transactional.contains("false"));
 
       List<String> persistent = find(jsonNode, "persistent");
-      Assert.assertTrue(persistent.contains("false"));
+      assertTrue(persistent.contains("false"));
 
       List<String> bounded = find(jsonNode, "bounded");
-      Assert.assertTrue(bounded.contains("false"));
+      assertTrue(bounded.contains("false"));
 
       List<String> secured = find(jsonNode, "secured");
-      Assert.assertTrue(secured.contains("false"));
+      assertTrue(secured.contains("false"));
 
       List<String> indexed = find(jsonNode, "indexed");
-      Assert.assertTrue(indexed.contains("false"));
+      assertTrue(indexed.contains("false"));
 
       List<String> hasRemoteBackup = find(jsonNode, "has_remote_backup");
-      Assert.assertTrue(hasRemoteBackup.contains("false"));
+      assertTrue(hasRemoteBackup.contains("false"));
 
       List<String> health = find(jsonNode, "health");
 
-      Assert.assertTrue(health.contains("HEALTHY"));
+      assertTrue(health.contains("HEALTHY"));
 
       List<String> isRebalancingEnabled = find(jsonNode, "rebalancing_enabled");
-      Assert.assertTrue(isRebalancingEnabled.contains("true"));
+      assertTrue(isRebalancingEnabled.contains("true"));
 
       List<String> tracing = find(jsonNode, "tracing");
-      Assert.assertFalse(tracing.isEmpty());
+      assertFalse(tracing.isEmpty());
 
       List<String> aliases = find(jsonNode, "aliases");
-      Assert.assertFalse(aliases.isEmpty());
+      assertFalse(aliases.isEmpty());
    }
 
    private List<String> find(Json array, String name) {
@@ -1593,12 +1592,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).isOk();
 
       String body = response.body();
-      Assert.assertTrue(body.contains("key-1"));
-      Assert.assertTrue(body.contains("key-2"));
-      Assert.assertTrue(body.contains("key-3"));
+      assertTrue(body.contains("key-1"));
+      assertTrue(body.contains("key-2"));
+      assertTrue(body.contains("key-3"));
 
       List<Json> returnedEntries = Json.read(body).asJsonList();
-      Assert.assertEquals(3, returnedEntries.size());
+      assertEquals(3, returnedEntries.size());
 
       for (int i = 0; i < 3; i++) {
          Json entry = returnedEntries.get(0);
@@ -1962,7 +1961,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          assertThat(response1).isOk();
          Json queryJson = Json.read(response1.body());
          assertEquals(2, queryJson.at("hit_count").asInteger());
-         assertEquals(true, queryJson.at("hit_count_exact").asBoolean());
+         assertTrue(queryJson.at("hit_count_exact").asBoolean());
       });
       response = join(cacheClient.searchStats());
       statJson = Json.read(response.body());

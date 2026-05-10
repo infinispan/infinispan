@@ -1,7 +1,7 @@
 package org.infinispan.configuration.parsing;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.test.AbstractInfinispanTest;

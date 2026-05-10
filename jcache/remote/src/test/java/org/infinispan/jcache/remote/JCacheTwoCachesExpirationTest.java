@@ -5,8 +5,8 @@ import static org.infinispan.jcache.util.JCacheTestingUtil.createCache;
 import static org.infinispan.jcache.util.JCacheTestingUtil.createCacheManager;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.testng.AssertJUnit.assertNotSame;
-import static org.testng.AssertJUnit.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.lang.reflect.Method;
 import java.util.Properties;

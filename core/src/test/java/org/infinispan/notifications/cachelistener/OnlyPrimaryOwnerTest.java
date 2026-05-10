@@ -1,5 +1,9 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -141,9 +145,9 @@ public class OnlyPrimaryOwnerTest {
       n.notifyCacheEntryCreated("reject", "v1", null, true, ctx, null);
       n.notifyCacheEntryCreated("reject", "v1", null, false, ctx, null);
 
-      assert !cl.isReceivedPost();
-      assert !cl.isReceivedPre();
-      assert cl.getInvocationCount() == 0;
+      assertFalse(cl.isReceivedPost());
+      assertFalse(cl.isReceivedPre());
+      assertTrue(cl.getInvocationCount() == 0);
 
       // Is an owner but not primary owner
       cdl.isOwner = true;
@@ -151,9 +155,9 @@ public class OnlyPrimaryOwnerTest {
       n.notifyCacheEntryCreated("reject", "v1", null, true, ctx, null);
       n.notifyCacheEntryCreated("reject", "v1", null, false, ctx, null);
 
-      assert !cl.isReceivedPost();
-      assert !cl.isReceivedPre();
-      assert cl.getInvocationCount() == 0;
+      assertFalse(cl.isReceivedPost());
+      assertFalse(cl.isReceivedPre());
+      assertTrue(cl.getInvocationCount() == 0);
 
       // Is primary owner
       cdl.isOwner = true;
@@ -161,17 +165,17 @@ public class OnlyPrimaryOwnerTest {
       n.notifyCacheEntryCreated("accept", "v1", null, true, ctx, null);
       n.notifyCacheEntryCreated("accept", "v1", null, false, ctx, null);
 
-      assert cl.isReceivedPost();
-      assert cl.isReceivedPre();
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_CREATED;
-      assert ((CacheEntryCreatedEvent) cl.getEvents().get(0)).getKey().equals("accept");
-      assert ((CacheEntryCreatedEvent) cl.getEvents().get(0)).getValue() == null;
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_CREATED;
-      assert ((CacheEntryCreatedEvent) cl.getEvents().get(1)).getKey().equals("accept");
-      assert ((CacheEntryCreatedEvent) cl.getEvents().get(1)).getValue().equals("v1");
+      assertTrue(cl.isReceivedPost());
+      assertTrue(cl.isReceivedPre());
+      assertTrue(cl.getInvocationCount() == 2);
+      assertTrue(cl.getEvents().get(0).getCache() == mockCache);
+      assertTrue(cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_CREATED);
+      assertEquals("accept", ((CacheEntryCreatedEvent) cl.getEvents().get(0)).getKey());
+      assertNull(((CacheEntryCreatedEvent) cl.getEvents().get(0)).getValue());
+      assertTrue(cl.getEvents().get(1).getCache() == mockCache);
+      assertTrue(cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_CREATED);
+      assertEquals("accept", ((CacheEntryCreatedEvent) cl.getEvents().get(1)).getKey());
+      assertEquals("v1", ((CacheEntryCreatedEvent) cl.getEvents().get(1)).getValue());
 
    }
 

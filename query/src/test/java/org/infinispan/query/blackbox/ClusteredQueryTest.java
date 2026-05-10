@@ -1,9 +1,9 @@
 package org.infinispan.query.blackbox;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -172,7 +172,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testIteratorRemove() {
       cacheQuery.maxResults(1);
       try (CloseableIterator<Person> iterator = cacheQuery.iterator()) {
-         assert iterator.hasNext();
+         assertTrue(iterator.hasNext());
          iterator.remove();
       }
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);

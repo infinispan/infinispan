@@ -1,6 +1,6 @@
 package org.infinispan.globalstate;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.util.Arrays;
@@ -37,7 +37,7 @@ public class NodeRestartPartitionHandlingTest extends BaseStatefulPartitionHandl
       for (int i = 0; i < numMembersInCluster; i++) {
          String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
          File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
-         assertEquals(Arrays.toString(listFiles), 1, listFiles.length);
+         assertEquals(1, listFiles.length, Arrays.toString(listFiles));
       }
       cacheManagers.clear();
 

@@ -1,9 +1,9 @@
 package org.infinispan.replication;
 
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,12 +28,12 @@ import jakarta.transaction.TransactionManager;
 
 /**
  * Tests for implicit locking
-  * Transparent eager locking for transactions https://jira.jboss.org/jira/browse/ISPN-70
+ * Transparent eager locking for transactions <a href="https://jira.jboss.org/jira/browse/ISPN-70">ISPN-70</a>
  *
  * @author Vladimir Blagojevic
  */
 @Test(groups = "functional", testName = "replication.SyncPessimisticLockingTest")
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.REPL_SYNC})
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC})
 public class SyncPessimisticLockingTest extends MultipleCacheManagersTest {
 
    private String k = "key", v = "value";
@@ -59,8 +59,8 @@ public class SyncPessimisticLockingTest extends MultipleCacheManagersTest {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
       Cache cache1 = cache(0, "testcache");
       Cache cache2 = cache(1, "testcache");
-      assertNull("Should be null", cache1.get(k));
-      assertNull("Should be null", cache2.get(k));
+      assertNull(cache1.get(k), "Should be null");
+      assertNull(cache2.get(k), "Should be null");
 
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
@@ -88,10 +88,10 @@ public class SyncPessimisticLockingTest extends MultipleCacheManagersTest {
       Object old = cache1.replace(k, "blah");
 
       boolean replaced = cache1.replace(k, "Vladimir", "Blagojevic");
-      assert !replaced;
+      assertFalse(replaced);
 
-      assertNull("Should be null", cache1.get(k));
-      assertNull("Should be null", cache2.get(k));
+      assertNull(cache1.get(k), "Should be null");
+      assertNull(cache2.get(k), "Should be null");
 
       mgr.commit();
 
@@ -107,8 +107,8 @@ public class SyncPessimisticLockingTest extends MultipleCacheManagersTest {
 
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
-      assertNull("Should be null", cache1.get(k));
-      assertNull("Should be null", cache2.get(k));
+      assertNull(cache1.get(k), "Should be null");
+      assertNull(cache2.get(k), "Should be null");
 
       String name = "Infinispan";
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
@@ -142,10 +142,10 @@ public class SyncPessimisticLockingTest extends MultipleCacheManagersTest {
 
       if (useCommit) {
          assertEquals(name, cache1.get(k));
-         assertEquals("Should have replicated", name, cache2.get(k));
+         assertEquals(name, cache2.get(k), "Should have replicated");
       } else {
-         assertEquals(null, cache1.get(k));
-         assertEquals("Should not have replicated", null, cache2.get(k));
+         assertNull(cache1.get(k));
+         assertNull(cache2.get(k), "Should not have replicated");
       }
 
       cache2.remove(k);
@@ -158,8 +158,8 @@ public class SyncPessimisticLockingTest extends MultipleCacheManagersTest {
       tm(0, "testcache").begin();
       cache(0, "testcache").put("k", "v");
       tm(0, "testcache").commit();
-      assertEquals(cache(0, "testcache").get("k"), "v");
-      assertEquals(cache(1, "testcache").get("k"), "v");
+      assertEquals("v", cache(0, "testcache").get("k"));
+      assertEquals("v", cache(1, "testcache").get("k"));
 
       assertNotLocked("testcache", "k");
 
@@ -168,8 +168,8 @@ public class SyncPessimisticLockingTest extends MultipleCacheManagersTest {
       cache(0, "testcache").put("k", "v");
       cache(0, "testcache").remove("k");
       tm(0, "testcache").commit();
-      assertEquals(cache(0, "testcache").get("k"), null);
-      assertEquals(cache(1, "testcache").get("k"), null);
+      assertNull(cache(0, "testcache").get("k"));
+      assertNull(cache(1, "testcache").get("k"));
 
       assertNotLocked("testcache", "k");
    }
@@ -178,11 +178,11 @@ public class SyncPessimisticLockingTest extends MultipleCacheManagersTest {
       tm(0, "testcache").begin();
       cache(0, "testcache").put("k", "v");
       tm(0, "testcache").rollback();
-      assert !lockManager(1, "testcache").isLocked("k");
+      assertFalse(lockManager(1, "testcache").isLocked("k"));
 
-      assertEquals(cache(0, "testcache").get("k"), null);
-      assertEquals(cache(1, "testcache").get("k"), null);
-      assert !lockManager(0, "testcache").isLocked("k");
+      assertNull(cache(0, "testcache").get("k"));
+      assertNull(cache(1, "testcache").get("k"));
+      assertFalse(lockManager(0, "testcache").isLocked("k"));
    }
 
    @Test

@@ -1,7 +1,7 @@
 package org.infinispan.spring.common.session;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.Duration;
 import java.util.List;
@@ -109,7 +109,7 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       sessionRepository.save(sessionToBeExpired);
 
       //then
-      assertEquals(eventsCollector.getEvents().count(), 0);
+      assertEquals(0, eventsCollector.getEvents().count());
    }
 
    static class EventsCollector implements ApplicationEventPublisher {

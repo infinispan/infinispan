@@ -1,7 +1,7 @@
 package org.infinispan.counter;
 
 import static java.lang.String.format;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;

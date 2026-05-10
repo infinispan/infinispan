@@ -1,5 +1,7 @@
 package org.infinispan.notifications;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -97,7 +99,7 @@ public class ConcurrentNotificationTest extends AbstractInfinispanTest {
       // gets would miss.  And this would cause no notification to fire for that get.  And we cannot be sure of the
       // timing between removes and gets, so we just make sure *some* of these have got through, and no exceptions
       // were thrown due to concurrent access.
-      assert loops * workers.length < listener.counter.get();
+      assertTrue(loops * workers.length < listener.counter.get());
    }
 
    @Listener

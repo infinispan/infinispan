@@ -1,8 +1,8 @@
 package org.infinispan.notifications.cachelistener;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -90,21 +90,21 @@ public class MultipleListenerConverterTest extends SingleCacheManagerTest {
 
       int i = 1;
       for (CacheListener listener : listeners) {
-         assertEquals("Listener" + i + "failed", 2, listener.getEvents().size());
+         assertEquals(2, listener.getEvents().size(), "Listener" + i + "failed");
 
          Event event = listener.getEvents().get(0);
-         assertEquals("Listener" + i + "failed", Event.Type.CACHE_ENTRY_CREATED, event.getType());
+         assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType(), "Listener" + i + "failed");
          CacheEntryCreatedEvent createdEvent = (CacheEntryCreatedEvent) event;
-         assertTrue("Listener" + i + "failed", createdEvent.isPre());
-         assertEquals("Listener" + i + "failed", "key", createdEvent.getKey());
-         assertEquals("Listener" + i + "failed", "null-listener-" + i, createdEvent.getValue());
+         assertTrue(createdEvent.isPre(), "Listener" + i + "failed");
+         assertEquals("key", createdEvent.getKey(), "Listener" + i + "failed");
+         assertEquals("null-listener-" + i, createdEvent.getValue(), "Listener" + i + "failed");
 
          event = listener.getEvents().get(1);
-         assertEquals("Listener" + i + "failed", Event.Type.CACHE_ENTRY_CREATED, event.getType());
+         assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType(), "Listener" + i + "failed");
          createdEvent = (CacheEntryCreatedEvent) event;
-         assertFalse("Listener" + i + "failed", createdEvent.isPre());
-         assertEquals("Listener" + i + "failed", "key", createdEvent.getKey());
-         assertEquals("Listener" + i + "failed", "value-listener-" + i,createdEvent.getValue());
+         assertFalse(createdEvent.isPre(), "Listener" + i + "failed");
+         assertEquals("key", createdEvent.getKey(), "Listener" + i + "failed");
+         assertEquals("value-listener-" + i, createdEvent.getValue(), "Listener" + i + "failed");
 
          ++i;
       }

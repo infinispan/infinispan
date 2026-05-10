@@ -1,6 +1,7 @@
 package org.infinispan.spring.embedded.config;
 
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +11,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -42,7 +42,7 @@ public class CacheLoaderNotFoundTest extends AbstractTestNGSpringContextTests {
 
    @Test
    public void testCacheManagerExists() {
-      Assert.assertNull(cm);
+      assertNull(cm);
    }
 
 }

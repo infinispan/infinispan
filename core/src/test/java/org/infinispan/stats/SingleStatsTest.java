@@ -2,10 +2,10 @@ package org.infinispan.stats;
 
 import static org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator.estimateSizeOverhead;
 import static org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator.offHeapEntrySize;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Arrays;
 

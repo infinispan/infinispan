@@ -1,7 +1,9 @@
 package org.infinispan.replication;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,16 +24,16 @@ public class ReplicatedAPITest extends MultipleCacheManagersTest {
    }
 
    public void put() {
-      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
-      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
+      AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
       // test a simple put!
-      assert cache1.get("key") == null;
-      assert cache2.get("key") == null;
+      assertNull(cache1.get("key"));
+      assertNull(cache2.get("key"));
 
       cache1.put("key", "value");
 
-      assert cache1.get("key").equals("value");
-      assert cache2.get("key").equals("value");
+      assertEquals("value", cache1.get("key"));
+      assertEquals("value", cache2.get("key"));
 
       Map<String, String> map = new HashMap<>();
       map.put("key2", "value2");
@@ -39,43 +41,43 @@ public class ReplicatedAPITest extends MultipleCacheManagersTest {
 
       cache1.putAll(map);
 
-      assert cache1.get("key").equals("value");
-      assert cache2.get("key").equals("value");
-      assert cache1.get("key2").equals("value2");
-      assert cache2.get("key2").equals("value2");
-      assert cache1.get("key3").equals("value3");
-      assert cache2.get("key3").equals("value3");
+      assertEquals("value", cache1.get("key"));
+      assertEquals("value", cache2.get("key"));
+      assertEquals("value2", cache1.get("key2"));
+      assertEquals("value2", cache2.get("key2"));
+      assertEquals("value3", cache1.get("key3"));
+      assertEquals("value3", cache2.get("key3"));
    }
 
    public void remove() {
-      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
-      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
+      AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value");
-      assert cache2.get("key").equals("value");
-      assert cache1.get("key") == null;
+      assertEquals("value", cache2.get("key"));
+      assertNull(cache1.get("key"));
 
       cache1.remove("key");
 
-      assert cache1.get("key") == null;
-      assert cache2.get("key") == null;
+      assertNull(cache1.get("key"));
+      assertNull(cache2.get("key"));
 
       cache1.withFlags(CACHE_MODE_LOCAL).put("key", "value");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value");
-      assert cache1.get("key").equals("value");
-      assert cache2.get("key").equals("value");
+      assertEquals("value", cache1.get("key"));
+      assertEquals("value", cache2.get("key"));
 
       cache1.remove("key");
 
-      assert cache1.get("key") == null;
-      assert cache2.get("key") == null;
+      assertNull(cache1.get("key"));
+      assertNull(cache2.get("key"));
    }
 
    public void testPutIfAbsent() {
-      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
-      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
+      AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "valueOld");
-      assert cache2.get("key").equals("valueOld");
-      assert cache1.get("key") == null;
+      assertEquals("valueOld", cache2.get("key"));
+      assertNull(cache1.get("key"));
 
       cache1.putIfAbsent("key", "value");
 
@@ -84,86 +86,86 @@ public class ReplicatedAPITest extends MultipleCacheManagersTest {
 
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value3");
 
-      assert cache1.get("key").equals("value");
-      assert cache2.get("key").equals("value3");
+      assertEquals("value", cache1.get("key"));
+      assertEquals("value3", cache2.get("key"));
 
       cache1.putIfAbsent("key", "value4");
 
-      assert cache1.get("key").equals("value");
-      assert cache2.get("key").equals("value3"); // should not invalidate cache2!!
+      assertEquals("value", cache1.get("key"));
+      assertEquals("value3", cache2.get("key")); // should not invalidate cache2!!
    }
 
    public void testRemoveIfPresent() {
-      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
-      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
+      AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
       cache1.withFlags(CACHE_MODE_LOCAL).put("key", "value1");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
-      assert cache1.get("key").equals("value1");
-      assert cache2.get("key").equals("value2");
+      assertEquals("value1", cache1.get("key"));
+      assertEquals("value2", cache2.get("key"));
 
       cache1.remove("key", "value");
 
-      assert cache1.get("key").equals("value1") : "Should not remove";
-      assert cache2.get("key").equals("value2") : "Should not remove";
+      assertEquals("value1", cache1.get("key"), "Should not remove");
+      assertEquals("value2", cache2.get("key"), "Should not remove");
 
       cache1.remove("key", "value1");
 
-      assert cache1.get("key") == null;
-      assert cache2.get("key") == null;
+      assertNull(cache1.get("key"));
+      assertNull(cache2.get("key"));
    }
 
    public void testClear() {
-      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
-      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
+      AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
       cache1.withFlags(CACHE_MODE_LOCAL).put("key", "value1");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
-      assert cache1.get("key").equals("value1");
-      assert cache2.get("key").equals("value2");
+      assertEquals("value1", cache1.get("key"));
+      assertEquals("value2", cache2.get("key"));
 
       cache1.clear();
 
-      assert cache1.get("key") == null;
-      assert cache2.get("key") == null;
+      assertNull(cache1.get("key"));
+      assertNull(cache2.get("key"));
    }
 
    public void testReplace() {
-      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
-      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
+      AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
-      assert cache1.get("key") == null;
-      assert cache2.get("key").equals("value2");
+      assertNull(cache1.get("key"));
+      assertEquals("value2", cache2.get("key"));
 
       cache1.replace("key", "value1"); // should do nothing since there is nothing to replace on cache1
 
-      assert cache1.get("key") == null;
-      assert cache2.get("key").equals("value2");
+      assertNull(cache1.get("key"));
+      assertEquals("value2", cache2.get("key"));
 
       cache1.withFlags(CACHE_MODE_LOCAL).put("key", "valueN");
 
       cache1.replace("key", "value1");
 
-      assert cache1.get("key").equals("value1");
-      assert cache2.get("key").equals("value1");
+      assertEquals("value1", cache1.get("key"));
+      assertEquals("value1", cache2.get("key"));
    }
 
    public void testReplaceWithOldVal() {
-      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
-      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
+      AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
-      assert cache1.get("key") == null;
-      assert cache2.get("key").equals("value2");
+      assertNull(cache1.get("key"));
+      assertEquals("value2", cache2.get("key"));
 
       cache1.replace("key", "valueOld", "value1"); // should do nothing since there is nothing to replace on cache1
 
-      assert cache1.get("key") == null;
-      assert cache2.get("key").equals("value2");
+      assertNull(cache1.get("key"));
+      assertEquals("value2", cache2.get("key"));
 
       cache1.withFlags(CACHE_MODE_LOCAL).put("key", "valueN");
 
       cache1.replace("key", "valueOld", "value1"); // should do nothing since there is nothing to replace on cache1
 
-      assert cache1.get("key").equals("valueN");
-      assert cache2.get("key").equals("value2");
+      assertEquals("valueN", cache1.get("key"));
+      assertEquals("value2", cache2.get("key"));
 
       cache1.replace("key", "valueN", "value1");
 
@@ -173,17 +175,17 @@ public class ReplicatedAPITest extends MultipleCacheManagersTest {
    }
 
    public void testLocalOnlyClear() {
-      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
-      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
+      AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
       cache1.withFlags(CACHE_MODE_LOCAL).put("key", "value1");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
-      assert cache1.get("key").equals("value1");
-      assert cache2.get("key").equals("value2");
+      assertEquals("value1", cache1.get("key"));
+      assertEquals("value2", cache2.get("key"));
 
       cache1.withFlags(CACHE_MODE_LOCAL).clear();
 
-      assert cache1.get("key") == null;
-      assert cache2.get("key") != null;
-      assert cache2.get("key").equals("value2");
+      assertNull(cache1.get("key"));
+      assertNotNull(cache2.get("key"));
+      assertEquals("value2", cache2.get("key"));
    }
 }

@@ -1,7 +1,7 @@
 package org.infinispan.jmx;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -38,7 +38,7 @@ public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {
          cm = TestCacheManagerFactory.fromStream(stream);
          cm.getCache();
          MBeanServerLookup mbsl = cm.getCacheManagerConfiguration().jmx().mbeanServerLookup();
-         assertTrue(mbsl instanceof TestLookup);
+         assertInstanceOf(TestLookup.class, mbsl);
          assertEquals("value", ((TestLookup) mbsl).props.get("key"));
       } finally {
          TestingUtil.killCacheManagers(cm);

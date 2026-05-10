@@ -1,5 +1,8 @@
 package org.infinispan.tx;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -61,8 +64,8 @@ public class TransactionCleanupWithRecoveryTest extends MultipleCacheManagersTes
                Flag.FAIL_SILENTLY, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
 
          tm(0).begin();
-         assert !silentC0.getAdvancedCache().lock(1);
-         assert "v1".equals(silentC0.get(1));
+         assertFalse(silentC0.getAdvancedCache().lock(1));
+         assertEquals(silentC0.get(1), "v1");
          tm(0).rollback();
       } finally {
          tm(1).resume(suspendedTx);

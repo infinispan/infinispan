@@ -1,7 +1,8 @@
 package org.infinispan.query.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -75,7 +76,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
       cacheManager.defineConfiguration("notIndexedB", cacheManager.getDefaultCacheConfiguration());
       final Cache<Object, Object> notIndexedCache = cacheManager.getCache("notIndexedB");
       notIndexedCache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
-      assert notIndexedCache.get("1") != null;
+      assertNotNull(notIndexedCache.get("1"));
    }
 
    @Test

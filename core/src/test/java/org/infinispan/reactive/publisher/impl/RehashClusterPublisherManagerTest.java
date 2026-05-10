@@ -1,11 +1,11 @@
 package org.infinispan.reactive.publisher.impl;
 
 import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -264,7 +264,7 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       // When it is AT_MOST_ONCE if a segment moves it can be missed. We are only moving one segment so it
       // can be missed sometimes
       if (deliveryGuarantee != DeliveryGuarantee.AT_MOST_ONCE || (actualSize != expectedAmount && actualSize != expectedAmount - 1)) {
-         assertEquals("Retrieved values are: " + actualCount, expectedAmount, actualCount.size());
+         assertEquals(expectedAmount, actualCount.size(), "Retrieved values are: " + actualCount);
       }
    }
 }

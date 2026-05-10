@@ -1,6 +1,6 @@
 package org.infinispan.distribution.topologyaware;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.List;
@@ -93,19 +93,19 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
    private void assertTopologyInfo3Nodes(List<Address> caches) {
       assertTopologyInfo2Nodes(Arrays.asList(caches.get(0), caches.get(2)));
       Address address1 = caches.get(1);
-      assertEquals(address1.getSiteId(), "s1");
-      assertEquals(address1.getRackId(), "r1");
-      assertEquals(address1.getMachineId(), "m1");
+      assertEquals("s1", address1.getSiteId());
+      assertEquals("r1", address1.getRackId());
+      assertEquals("m1", address1.getMachineId());
    }
 
    private void assertTopologyInfo2Nodes(List<Address> caches) {
       Address address0 = caches.get(0);
-      assertEquals(address0.getSiteId(), "s0");
-      assertEquals(address0.getRackId(), "r0");
-      assertEquals(address0.getMachineId(), "m0");
+      assertEquals("s0", address0.getSiteId());
+      assertEquals("r0", address0.getRackId());
+      assertEquals("m0", address0.getMachineId());
       Address address2 = caches.get(1);
-      assertEquals(address2.getSiteId(), "s2");
-      assertEquals(address2.getRackId(), "r2");
-      assertEquals(address2.getMachineId(), "m2");
+      assertEquals("s2", address2.getSiteId());
+      assertEquals("r2", address2.getRackId());
+      assertEquals("m2", address2.getMachineId());
    }
 }

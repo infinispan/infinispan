@@ -4,10 +4,10 @@ import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,8 +43,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.testng.Assert;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
@@ -124,8 +122,8 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
             Cache<String, String> cache = cm.getCache();
             cache.put("Foo", "2");
             cache.put("Bar", "4");
-            Assert.assertEquals(cache.get("Foo"), "2");
-            Assert.assertEquals(cache.get("Bar"), "4");
+            assertEquals("2", cache.get("Foo"));
+            assertEquals("4", cache.get("Bar"));
          }
       });
    }
@@ -152,7 +150,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
             cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable();
             cm.defineConfiguration("testConfigCache", cb.build());
             Cache<Object, Object> cache = cm.getCache("testConfigCache");
-            assert !cache.getCacheConfiguration().clustering().l1().enabled();
+            assertFalse(cache.getCacheConfiguration().clustering().l1().enabled());
          }
       });
    }
@@ -188,7 +186,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          factory.setResourceResolver(new TestResolver());
          factory.newSchema(schemaFile).newValidator().validate(xmlFile);
       } catch (IllegalArgumentException e) {
-         Assert.fail("Unable to validate schema", e);
+         fail("Unable to validate schema", e);
       }
    }
 
@@ -360,7 +358,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
             TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
          public void call() {
-            AssertJUnit.assertTrue(cm.getCache().getCacheConfiguration().transaction().recovery().enabled());
+            assertTrue(cm.getCache().getCacheConfiguration().transaction().recovery().enabled());
          }
       });
    }
@@ -401,7 +399,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          fail("Expected CacheConfigurationException");
       } catch (CacheConfigurationException e) {
          assertEquals(2, e.getSuppressed().length);
-         assertTrue(e.getMessage(), e.getMessage().startsWith("ISPN000919"));
+         assertTrue(e.getMessage().startsWith("ISPN000919"), e.getMessage());
          assertTrue(e.getSuppressed()[0].getMessage().startsWith("ISPN000288"));
          assertEquals("MODULE ERROR", e.getSuppressed()[1].getMessage());
       }

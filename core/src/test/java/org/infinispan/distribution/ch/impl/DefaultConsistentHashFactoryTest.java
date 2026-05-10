@@ -1,10 +1,10 @@
 package org.infinispan.distribution.ch.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertSame;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -203,7 +203,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
          assertEquals(actualNumOwners, owners.size());
          for (int i = 1; i < owners.size(); i++) {
             Address owner = owners.get(i);
-            assertEquals("Found the same owner twice in the owners list", i, owners.indexOf(owner));
+            assertEquals(i, owners.indexOf(owner), "Found the same owner twice in the owners list");
          }
       }
 

@@ -1,9 +1,9 @@
 package org.infinispan.stream;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -199,8 +199,8 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       ConcurrentMap<Boolean, List<Map.Entry<Integer, String>>> grouped = createStream(entrySet).collect(
                   () -> Collectors.groupingByConcurrent(k -> k.getKey() % 2 == 0));
-      grouped.get(true).parallelStream().forEach(e -> assertTrue(e.getKey() % 2 == 0));
-      grouped.get(false).parallelStream().forEach(e -> assertTrue(e.getKey() % 2 == 1));
+      grouped.get(true).parallelStream().forEach(e -> assertEquals(0, e.getKey() % 2));
+      grouped.get(false).parallelStream().forEach(e -> assertEquals(1, e.getKey() % 2));
    }
 
    public void testObjCollect() {

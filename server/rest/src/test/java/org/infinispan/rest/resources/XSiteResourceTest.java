@@ -11,9 +11,9 @@ import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
 import static org.infinispan.xsite.XSiteAdminOperations.OFFLINE;
 import static org.infinispan.xsite.XSiteAdminOperations.ONLINE;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -315,14 +315,14 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       assertSuccessful(restClient.cache(CACHE_2).takeSiteOffline(NYC));
 
       Json json = jsonResponseBody(restClient.container().backupStatuses());
-      assertEquals(json.at(NYC).at("status").asString(), "mixed");
-      assertEquals(json.at(NYC).at("online").asJsonList().iterator().next().asString(), CACHE_1);
-      assertEquals(json.at(NYC).at("offline").asJsonList().iterator().next().asString(), CACHE_2);
+      assertEquals("mixed", json.at(NYC).at("status").asString());
+      assertEquals(CACHE_1, json.at(NYC).at("online").asJsonList().iterator().next().asString());
+      assertEquals(CACHE_2, json.at(NYC).at("offline").asJsonList().iterator().next().asString());
 
       json = jsonResponseBody(restClient.container().backupStatus(NYC));
-      assertEquals(json.at("status").asString(), "mixed");
-      assertEquals(json.at("online").asJsonList().iterator().next().asString(), CACHE_1);
-      assertEquals(json.at("offline").asJsonList().iterator().next().asString(), CACHE_2);
+      assertEquals("mixed", json.at("status").asString());
+      assertEquals(CACHE_1, json.at("online").asJsonList().iterator().next().asString());
+      assertEquals(CACHE_2, json.at("offline").asJsonList().iterator().next().asString());
 
       assertSuccessful(restClient.cache(CACHE_2).bringSiteOnline(NYC));
 
@@ -338,15 +338,15 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       takeOfflineManager.takeSiteOffline(NYC);
 
       json = jsonResponseBody(restClient.container().backupStatuses());
-      assertEquals(json.at(NYC).at("status").asString(), "mixed");
-      assertEquals(json.at(NYC).at("online").asJsonList().iterator().next().asString(), CACHE_2);
-      assertEquals(json.at(NYC).at("offline").asJsonList().iterator().next().asString(), CACHE_1);
+      assertEquals("mixed", json.at(NYC).at("status").asString());
+      assertEquals(CACHE_2, json.at(NYC).at("online").asJsonList().iterator().next().asString());
+      assertEquals(CACHE_1, json.at(NYC).at("offline").asJsonList().iterator().next().asString());
       assertTrue(json.at(NYC).at("mixed").asJsonList().isEmpty()); // status is global, no more mixed state at a cache level.
 
       json = jsonResponseBody(restClient.container().backupStatus(NYC));
-      assertEquals(json.at("status").asString(), "mixed");
-      assertEquals(json.at("online").asJsonList().iterator().next().asString(), CACHE_2);
-      assertEquals(json.at("offline").asJsonList().iterator().next().asString(), CACHE_1);
+      assertEquals("mixed", json.at("status").asString());
+      assertEquals(CACHE_2, json.at("online").asJsonList().iterator().next().asString());
+      assertEquals(CACHE_1, json.at("offline").asJsonList().iterator().next().asString());
       assertTrue(json.at("mixed").asJsonList().isEmpty()); // status is global, no more mixed state at a cache level.
 
       takeOfflineManager.bringSiteOnline(NYC);
@@ -361,12 +361,12 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       assertSuccessful(restCacheManagerClient.takeOffline(SFO));
 
       Json json = jsonResponseBody(restCacheManagerClient.backupStatuses());
-      assertEquals(json.at(SFO).at("status").asString(), "offline");
+      assertEquals("offline", json.at(SFO).at("status").asString());
 
       assertSuccessful(restCacheManagerClient.bringBackupOnline(SFO));
 
       json = jsonResponseBody(restCacheManagerClient.backupStatuses());
-      assertEquals(json.at(SFO).at("status").asString(), "online");
+      assertEquals("online", json.at(SFO).at("status").asString());
    }
 
    @Test
@@ -471,12 +471,12 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       takeBackupOffline(site, backup);
 
       String siteStatus = getBackupStatus(site, backup);
-      assertEquals(siteStatus, OFFLINE);
+      assertEquals(OFFLINE, siteStatus);
 
       bringBackupOnline(site, backup);
 
       siteStatus = getBackupStatus(site, backup);
-      assertEquals(siteStatus, ONLINE);
+      assertEquals(ONLINE, siteStatus);
    }
 
    private void takeBackupOffline(String site, String backup) {
@@ -505,7 +505,7 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
 
    private void assertAllSitesOnline(RestClient restClient, String... sites) {
       Json json = jsonResponseBody(restClient.container().backupStatuses());
-      Arrays.stream(sites).forEach(s -> assertEquals(json.at(s).at("status").asString(), "online"));
+      Arrays.stream(sites).forEach(s -> assertEquals("online", json.at(s).at("status").asString()));
    }
 
    @Override

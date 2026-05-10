@@ -1,9 +1,9 @@
 package org.infinispan.container;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashSet;
 import java.util.List;
@@ -160,7 +160,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
          assertTrue(expected.remove(o));
       }
 
-      assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
+      assertTrue(expected.isEmpty(), "Did not see keys " + expected + " in iterator!");
    }
 
    public void testContainerIteration() {
@@ -180,7 +180,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
          assertTrue(expected.remove(ice.getKey()));
       }
 
-      assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
+      assertTrue(expected.isEmpty(), "Did not see keys " + expected + " in iterator!");
    }
 
    public void testKeys() {
@@ -201,7 +201,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
          assertTrue(expected.remove(o));
       }
 
-      assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
+      assertTrue(expected.isEmpty(), "Did not see keys " + expected + " in iterator!");
    }
 
    public void testValues() {
@@ -222,7 +222,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
          assertTrue(expected.remove(o));
       }
 
-      assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
+      assertTrue(expected.isEmpty(), "Did not see keys " + expected + " in iterator!");
    }
 
    public void testEntrySet() {
@@ -243,7 +243,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
          assertTrue(actual.add(o));
       }
 
-      assertEquals("Expected to see keys " + expected + " but only saw " + actual, expected, actual);
+      assertEquals(expected, actual, "Expected to see keys " + expected + " but only saw " + actual);
    }
 
    public void testGetDuringKeySetLoop() {
@@ -292,7 +292,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
    private <E> void assertArrayAndSetContainSame(Set<E> expected, List<E> results) {
       for (E result : results) {
-         assertTrue("Set didn't contain " + result, expected.contains(result));
+         assertTrue(expected.contains(result), "Set didn't contain " + result);
       }
    }
 }

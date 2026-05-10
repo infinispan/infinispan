@@ -1,6 +1,8 @@
 package org.infinispan.commands;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,18 +60,18 @@ public class PutMapCommandTest extends MultipleCacheManagersTest {
       MagicKey mk = new MagicKey("key", cache(0));
       cache(3).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).put(mk, "value");
 
-      assert cache(0).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(mk) != null;
-      assert cache(1).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(mk) == null;
-      assert cache(2).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(mk) == null;
-      assert cache(3).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(mk) == null;
+      assertNotNull(cache(0).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(mk));
+      assertNull(cache(1).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(mk));
+      assertNull(cache(2).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(mk));
+      assertNull(cache(3).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(mk));
    }
 
    public void testPutMapCommand() {
       for (int i = 0; i < numberOfKeys; ++i) {
-         assert cache(0).get("key" + i) == null;
-         assert cache(1).get("key" + i) == null;
-         assert cache(2).get("key" + i) == null;
-         assert cache(3).get("key" + i) == null;
+         assertNull(cache(0).get("key" + i));
+         assertNull(cache(1).get("key" + i));
+         assertNull(cache(2).get("key" + i));
+         assertNull(cache(3).get("key" + i));
       }
 
       Map<String, String> map = new HashMap<>();

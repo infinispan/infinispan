@@ -1,7 +1,7 @@
 package org.infinispan.util;
 
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -27,15 +27,16 @@ import org.infinispan.topology.ClusterTopologyManager;
 /**
  * ConsistentHashFactory implementation that allows the user to control who the owners are.
  *
-* @author Dan Berindei
-* @since 7.0
-*/
+ * @author Dan Berindei
+ * @since 7.0
+ */
 public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
    protected volatile int[][] ownerIndexes;
 
    protected volatile List<Address> membersToUse;
 
-   ControlledConsistentHashFactory() {}
+   ControlledConsistentHashFactory() {
+   }
 
    /**
     * Create a consistent hash factory with a single segment.
@@ -95,14 +96,13 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
 
    public void setOwnerIndexes(int[][] segmentOwners) {
       this.ownerIndexes = Arrays.stream(segmentOwners)
-                                .map(owners -> Arrays.copyOf(owners, owners.length))
-                                .toArray(int[][]::new);
+            .map(owners -> Arrays.copyOf(owners, owners.length))
+            .toArray(int[][]::new);
    }
 
    public void triggerRebalance(Cache<?, ?> cache) {
       EmbeddedCacheManager cacheManager = cache.getCacheManager();
-      assertTrue("triggerRebalance must be called on the coordinator node",
-            extractGlobalComponent(cacheManager, Transport.class).isCoordinator());
+      assertTrue(extractGlobalComponent(cacheManager, Transport.class).isCoordinator(), "triggerRebalance must be called on the coordinator node");
       ClusterTopologyManager clusterTopologyManager =
             extractGlobalComponent(cacheManager, ClusterTopologyManager.class);
       clusterTopologyManager.forceRebalance(cache.getName());
@@ -111,8 +111,8 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
    @Override
    protected int[][] assignOwners(int numSegments, List<Address> members) {
       return Arrays.stream(ownerIndexes)
-                   .map(indexes -> mapOwnersToCurrentMembers(members, indexes))
-                   .toArray(int[][]::new);
+            .map(indexes -> mapOwnersToCurrentMembers(members, indexes))
+            .toArray(int[][]::new);
    }
 
    private int[] mapOwnersToCurrentMembers(List<Address> members, int[] indexes) {

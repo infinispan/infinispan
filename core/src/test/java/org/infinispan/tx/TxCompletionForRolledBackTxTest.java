@@ -1,8 +1,8 @@
 package org.infinispan.tx;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -53,7 +53,7 @@ public class TxCompletionForRolledBackTxTest extends MultipleCacheManagersTest {
       assertNotLocked(k);
       assertNull(cache(0).get(k));
 
-      assertEquals(commandCounters.get(RollbackCommand.class).get(), 1);
+      assertEquals(1, commandCounters.get(RollbackCommand.class).get());
       assertFalse(commandCounters.containsKey(TxCompletionNotificationCommand.class));
    }
 

@@ -1,6 +1,6 @@
 package org.infinispan.manager;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;

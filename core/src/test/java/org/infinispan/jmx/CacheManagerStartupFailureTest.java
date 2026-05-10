@@ -1,7 +1,7 @@
 package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.IOException;
 

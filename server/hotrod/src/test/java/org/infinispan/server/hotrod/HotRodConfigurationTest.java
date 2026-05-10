@@ -3,8 +3,8 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.function.BiConsumer;
 
@@ -28,8 +28,8 @@ public class HotRodConfigurationTest extends AbstractInfinispanTest {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       builder.topologyLockTimeout(26000).topologyReplTimeout(31000);
       withClusteredServer(builder, (cfg, distSyncTimeout) -> {
-         assertEquals(cfg.locking().lockAcquisitionTimeout(), 26000);
-         assertEquals(cfg.clustering().remoteTimeout(), 31000);
+         assertEquals(26000, cfg.locking().lockAcquisitionTimeout());
+         assertEquals(31000, cfg.clustering().remoteTimeout());
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState());
          assertEquals(cfg.clustering().stateTransfer().timeout(), 31000 + distSyncTimeout);
          assertTrue(cfg.persistence().stores().isEmpty());

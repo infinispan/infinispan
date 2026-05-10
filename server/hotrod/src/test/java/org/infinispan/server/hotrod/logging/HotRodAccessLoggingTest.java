@@ -1,6 +1,6 @@
 package org.infinispan.server.hotrod.logging;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
@@ -22,9 +22,9 @@ public class HotRodAccessLoggingTest extends HotRodSingleNodeTest {
    protected void setup() throws Exception {
       testShortName = TestResourceTracker.getCurrentTestShortName();
       logAppender = new StringLogAppender("org.infinispan.HOTROD_ACCESS_LOG",
-                                          Level.TRACE,
+            Level.TRACE,
             t -> t.getName().startsWith("non-blocking-thread-" + testShortName),
-                                          PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
+            PatternLayout.newBuilder().setPattern(LOG_FORMAT).build());
       logAppender.install();
       super.setup();
    }
@@ -46,8 +46,9 @@ public class HotRodAccessLoggingTest extends HotRodSingleNodeTest {
             () -> logAppender.size() >= 2);
 
       String logline = logAppender.get(1);
-      assertTrue(logline, logline.matches(
-            "^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"PUT /" +
-            getDefaultCacheName() + "/\\[B0x6B6579 HOTROD/2\\.1\" OK \\d+ \\d+ \\d+$"));
+      assertTrue(logline.matches(
+                  "^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"PUT /" +
+                        getDefaultCacheName() + "/\\[B0x6B6579 HOTROD/2\\.1\" OK \\d+ \\d+ \\d+$"),
+            logline);
    }
 }

@@ -1,6 +1,8 @@
 package org.infinispan.spring.remote.config;
 
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -9,7 +11,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -19,7 +20,7 @@ import org.testng.annotations.Test;
 @Test(groups = {"functional", "smoke"}, testName = "spring.config.InfinispanRemoteCacheManagerDefinitionTest")
 @ContextConfiguration
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@TestExecutionListeners(value = InfinispanTestExecutionListener.class,  mergeMode =  TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class InfinispanRemoteCacheManagerDefinitionTest extends AbstractTestNGSpringContextTests {
 
    @Autowired
@@ -32,7 +33,7 @@ public class InfinispanRemoteCacheManagerDefinitionTest extends AbstractTestNGSp
 
    @Test
    public void testRemoteCacheManagerExists() {
-      Assert.assertNotNull(remoteCacheManager);
-      Assert.assertNotNull(remoteCacheManagerWithConfigFile);
+      assertNotNull(remoteCacheManager);
+      assertNotNull(remoteCacheManagerWithConfigFile);
    }
 }

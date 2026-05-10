@@ -1,5 +1,7 @@
 package org.infinispan.api.mvcc;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -77,6 +79,6 @@ public class LockPerEntryTest extends SingleCacheManagerTest {
       LockAssert.assertNoLocks(lm);
 
       LockContainer lc = TestingUtil.extractField(lm, "lockContainer");
-      assert lc.size() == 0;
+      assertTrue(lc.size() == 0);
    }
 }

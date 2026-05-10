@@ -1,7 +1,7 @@
 package org.infinispan.container.offheap;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +54,7 @@ public class OffHeapBoundedSingleNodeTest extends OffHeapSingleNodeTest {
       AtomicInteger offset = new AtomicInteger();
       AtomicBoolean collision = new AtomicBoolean();
       int threadCount = 5;
-      List<Future> futures = new ArrayList<>(threadCount);
+      List<Future<?>> futures = new ArrayList<>(threadCount);
 
       for (int i = 0; i < threadCount; ++i) {
          futures.add(fork(() -> {
@@ -73,7 +73,7 @@ public class OffHeapBoundedSingleNodeTest extends OffHeapSingleNodeTest {
          }));
       }
 
-      for (Future future : futures) {
+      for (Future<?> future : futures) {
          try {
             future.get(10, TimeUnit.SECONDS);
          } catch (Exception e) {
@@ -87,6 +87,6 @@ public class OffHeapBoundedSingleNodeTest extends OffHeapSingleNodeTest {
       if (cacheSize > COUNT) {
          log.fatal("Entries were: " + cache.entrySet().stream().map(Object::toString).collect(Collectors.joining(",")));
       }
-      assertTrue("Cache size was " + cacheSize, cacheSize <= COUNT);
+      assertTrue(cacheSize <= COUNT, "Cache size was " + cacheSize);
    }
 }

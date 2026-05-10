@@ -1,5 +1,7 @@
 package org.infinispan.expiration.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -7,8 +9,6 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -28,8 +28,7 @@ import org.testng.annotations.Test;
 public class ExpirationManagerTest extends AbstractInfinispanTest {
 
    private ConfigurationBuilder getCfg() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      return builder;
+      return new ConfigurationBuilder();
    }
 
    public void testNoExpirationThread() {
@@ -41,7 +40,7 @@ public class ExpirationManagerTest extends AbstractInfinispanTest {
             new TestComponentAccessors.NamedComponent(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR, mockService));
       em.start();
 
-      assertNull("Expiration task is not null!  Should not have scheduled anything!", em.expirationTask);
+      assertNull(em.expirationTask, "Expiration task is not null!  Should not have scheduled anything!");
    }
 
    public void testWakeupInterval() {

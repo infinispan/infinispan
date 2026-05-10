@@ -1,6 +1,6 @@
 package org.infinispan.util;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.commons.util.Util;
 import org.testng.annotations.Test;

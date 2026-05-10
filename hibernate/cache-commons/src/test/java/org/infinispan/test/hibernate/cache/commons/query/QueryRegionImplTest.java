@@ -1,10 +1,10 @@
 package org.infinispan.test.hibernate.cache.commons.query;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -112,15 +112,15 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
          writer.setDaemon(true);
 
          writer.start();
-         assertFalse("Writer is blocking", completionLatch.await(100, TimeUnit.MILLISECONDS));
+         assertFalse(completionLatch.await(100, TimeUnit.MILLISECONDS), "Writer is blocking");
 
          // Start the reader
          reader.start();
-         assertTrue("Reader finished promptly", readerLatch.await(100, TimeUnit.MILLISECONDS));
+         assertTrue(readerLatch.await(100, TimeUnit.MILLISECONDS), "Reader finished promptly");
 
          writerLatch.countDown();
 
-         assertTrue("Reader finished promptly", completionLatch.await(100, TimeUnit.MILLISECONDS));
+         assertTrue(completionLatch.await(100, TimeUnit.MILLISECONDS), "Reader finished promptly");
 
          assertEquals(VALUE2, callWithSession(sessionFactory, session -> TEST_SESSION_ACCESS.fromRegion(region).get(session, KEY)));
       });
@@ -175,10 +175,10 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
             reader.start();
             writer.start();
 
-            assertFalse("Reader is blocking", completionLatch.await(100, TimeUnit.MILLISECONDS));
+            assertFalse(completionLatch.await(100, TimeUnit.MILLISECONDS), "Reader is blocking");
             // Start the writer
             writerLatch.countDown();
-            assertTrue("Writer finished promptly", completionLatch.await(100, TimeUnit.MILLISECONDS));
+            assertTrue(completionLatch.await(100, TimeUnit.MILLISECONDS), "Writer finished promptly");
 
             blockerLatch.countDown();
             unblocked = true;

@@ -10,8 +10,8 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.EnumSet;
@@ -74,7 +74,7 @@ public class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
             .execute(0xA0, (byte) 0x01, hotRodServer.getConfiguration().topologyCacheName(), k(m), 0, 0, v(m), 0,
                      (byte) 1, 0);
       assertTrue(resp.msg.contains("Remote requests are not allowed to private caches."));
-      assertEquals("Status should have been 'ParseError' but instead was: " + resp.status, ParseError, resp.status);
+      assertEquals(ParseError, resp.status, "Status should have been 'ParseError' but instead was: " + resp.status);
       hotRodClient.assertPut(m);
    }
 

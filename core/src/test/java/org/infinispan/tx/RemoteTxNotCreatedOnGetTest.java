@@ -1,6 +1,6 @@
 package org.infinispan.tx;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -35,11 +35,11 @@ public class RemoteTxNotCreatedOnGetTest extends MultipleCacheManagersTest {
       Thread.sleep(1000);
 
       TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
-      assertEquals(tt1.getRemoteTransactions().size(), 0);
+      assertEquals(0, tt1.getRemoteTransactions().size());
       tm(0).begin();
       log.trace("Before going remotely");
       cache(0).get(key);
-      assertEquals(tt1.getRemoteTransactions().size(), 0);
+      assertEquals(0, tt1.getRemoteTransactions().size());
       tm(0).commit();
    }
 }

@@ -1,9 +1,11 @@
 package org.infinispan.tx;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.UUID;
 
@@ -78,7 +80,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       XidImpl xid = EmbeddedTransaction.createXid(uuid);
       try {
          xaAdapter.prepare(xid);
-         assert false;
+         fail();
       } catch (XAException e) {
          assertEquals(XAException.XAER_NOTA, e.errorCode);
       }
@@ -88,7 +90,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       XidImpl xid = EmbeddedTransaction.createXid(uuid);
       try {
          xaAdapter.commit(xid, false);
-         assert false;
+         fail();
       } catch (XAException e) {
          assertEquals(XAException.XAER_NOTA, e.errorCode);
       }
@@ -98,7 +100,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       XidImpl xid = EmbeddedTransaction.createXid(uuid);
       try {
          xaAdapter.rollback(xid);
-         assert false;
+         fail();
       } catch (XAException e) {
          assertEquals(XAException.XAER_NOTA, e.errorCode);
       }
@@ -108,7 +110,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       localTx.markForRollback(true);
       try {
          xaAdapter.prepare(xid);
-         assert false;
+         fail();
       } catch (XAException e) {
          assertEquals(XAException.XA_RBROLLBACK, e.errorCode);
       }
@@ -118,7 +120,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).build();
       TestingUtil.inject(txCoordinator, configuration);
       txCoordinator.start();
-      assert XAResource.XA_OK == xaAdapter.prepare(xid);
+      assertTrue(XAResource.XA_OK == xaAdapter.prepare(xid));
    }
 
    public void test1PcAndNonExistentXid() {
@@ -127,7 +129,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       try {
          XidImpl doesNotExists = EmbeddedTransaction.createXid(uuid);
          xaAdapter.commit(doesNotExists, false);
-         assert false;
+         fail();
       } catch (XAException e) {
          assertEquals(XAException.XAER_NOTA, e.errorCode);
       }
@@ -139,7 +141,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       try {
          XidImpl doesNotExists = EmbeddedTransaction.createXid(uuid);
          xaAdapter.commit(doesNotExists, true);
-         assert false;
+         fail();
       } catch (XAException e) {
          assertEquals(XAException.XAER_NOTA, e.errorCode);
       }

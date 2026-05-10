@@ -1,7 +1,7 @@
 package org.infinispan.spring.embedded.support;
 
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -36,9 +36,9 @@ public class InfinispanDefaultCacheFactoryBeanContextTest extends AbstractTestNG
       final Cache<Object, Object> testDefaultCache = this.applicationContext.getBean(
             DEFAULT_CACHE_NAME, Cache.class);
 
-      assertNotNull(
+      assertNotNull(testDefaultCache,
             "Spring application context should contain an Infinispan cache under the bean name \""
-                  + DEFAULT_CACHE_NAME + "\". However, it doesn't.", testDefaultCache);
+                  + DEFAULT_CACHE_NAME + "\". However, it doesn't.");
    }
 
    @Test
@@ -49,9 +49,9 @@ public class InfinispanDefaultCacheFactoryBeanContextTest extends AbstractTestNG
             DEFAULT_CACHE_NAME, Cache.class);
 
       assertSame(
+            testDefaultCache1, testDefaultCache2,
             "InfinispanDefaultCacheFactoryBean should always return the same cache instance when being "
-                  + "called repeatedly. However, the cache instances are not the same.",
-            testDefaultCache1, testDefaultCache2);
+                  + "called repeatedly. However, the cache instances are not the same.");
    }
 
    /**

@@ -1,6 +1,7 @@
 package org.infinispan.test.fwk;
 
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -455,7 +456,7 @@ public class TestCacheManagerFactory {
    }
 
    public static void amendDefaultCache(GlobalConfigurationBuilder builder) {
-      if (!builder.defaultCacheName().isPresent()) {
+      if (builder.defaultCacheName().isEmpty()) {
          builder.defaultCacheName(DEFAULT_CACHE_NAME);
       }
    }
@@ -473,8 +474,7 @@ public class TestCacheManagerFactory {
    }
 
    private static void checkJmx(GlobalConfiguration gc) {
-      assert !(gc.jmx().enabled() && gc.jmx().mbeanServerLookup() instanceof PlatformMBeanServerLookup)
-            : "Tests must configure a MBeanServerLookup other than the default PlatformMBeanServerLookup or not enable JMX";
+      assertFalse(gc.jmx().enabled() && gc.jmx().mbeanServerLookup() instanceof PlatformMBeanServerLookup, "Tests must configure a MBeanServerLookup other than the default PlatformMBeanServerLookup or not enable JMX");
    }
 
    public static GlobalConfigurationBuilder addInterceptor(GlobalConfigurationBuilder global, Predicate<String> namePredicate, AsyncInterceptor interceptor,

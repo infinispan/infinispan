@@ -3,7 +3,7 @@ package org.infinispan.rest.search;
 import static org.infinispan.commons.util.concurrent.CompletionStages.await;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +94,7 @@ public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
 
       Json body = Json.read(response.toCompletableFuture().get().body());
       Object hitCountExact = body.at("hit_count_exact").getValue();
-      assertEquals(hitCountExact, false);
+      assertEquals(false, hitCountExact);
 
       // raise the default accuracy
       response = cacheClient.query("from Game where description : 'game'", 10, 0, ENTRIES);
@@ -102,8 +102,8 @@ public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
 
       body = Json.read(response.toCompletableFuture().get().body());
       hitCountExact = body.at("hit_count_exact").getValue();
-      assertEquals(hitCountExact, true);
-      assertEquals(body.at("hit_count").asInteger(), ENTRIES);
+      assertEquals(true, hitCountExact);
+      assertEquals(ENTRIES, body.at("hit_count").asInteger());
    }
 
    private static void writeEntries(int entries, RestCacheClient cacheClient) {

@@ -1,8 +1,8 @@
 package org.infinispan.tx;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 
@@ -83,10 +83,10 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       c1.put("c1key", "c1value_new");
       c2.put("c2key", "c2value_new");
 
-      assertEquals(c1.get("c1key"), "c1value_new");
-      assertEquals(c1Replica.get("c1key"), "c1value");
-      assertEquals(c2.get("c2key"), "c2value_new");
-      assertEquals(c2Replica.get("c2key"), "c2value");
+      assertEquals("c1value_new", c1.get("c1key"));
+      assertEquals("c1value", c1Replica.get("c1key"));
+      assertEquals("c2value_new", c2.get("c2key"));
+      assertEquals("c2value", c2Replica.get("c2key"));
 
       Transaction tx = tm.suspend();
 
@@ -98,10 +98,10 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       tm.commit();
 
 
-      assertEquals(c1.get("c1key"), "c1value_new");
-      assertEquals(c1Replica.get("c1key"), "c1value_new");
-      assertEquals(c2.get("c2key"), "c2value_new");
-      assertEquals(c2Replica.get("c2key"), "c2value_new");
+      assertEquals("c1value_new", c1.get("c1key"));
+      assertEquals("c1value_new", c1Replica.get("c1key"));
+      assertEquals("c2value_new", c2.get("c2key"));
+      assertEquals("c2value_new", c2Replica.get("c2key"));
    }
 
    public void testRollbackSpanningCaches() throws Exception {
@@ -126,36 +126,36 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       c1.put("c1key", "c1value_new");
       c2.put("c2key", "c2value_new");
 
-      assertEquals(c1.get("c1key"), "c1value_new");
-      assertEquals(c1Replica.get("c1key"), "c1value");
-      assertEquals(c2.get("c2key"), "c2value_new");
-      assertEquals(c2Replica.get("c2key"), "c2value");
+      assertEquals("c1value_new", c1.get("c1key"));
+      assertEquals("c1value", c1Replica.get("c1key"));
+      assertEquals("c2value_new", c2.get("c2key"));
+      assertEquals("c2value", c2Replica.get("c2key"));
 
       Transaction tx = tm.suspend();
 
-      assertEquals(c1.get("c1key"), "c1value");
-      assertEquals(c1Replica.get("c1key"), "c1value");
-      assertEquals(c2.get("c2key"), "c2value");
-      assertEquals(c2Replica.get("c2key"), "c2value");
+      assertEquals("c1value", c1.get("c1key"));
+      assertEquals("c1value", c1Replica.get("c1key"));
+      assertEquals("c2value", c2.get("c2key"));
+      assertEquals("c2value", c2Replica.get("c2key"));
 
       tm.resume(tx);
       tm.rollback();
 
-      assertEquals(c1.get("c1key"), "c1value");
-      assertEquals(c1Replica.get("c1key"), "c1value");
-      assertEquals(c2.get("c2key"), "c2value");
+      assertEquals("c1value", c1.get("c1key"));
+      assertEquals("c1value", c1Replica.get("c1key"));
+      assertEquals("c2value", c2.get("c2key"));
       assertEquals("c2value", c2Replica.get("c2key"));
    }
 
    private void assertInitialValues(Cache<String, String> c1, Cache<String, String> c1Replica, Cache<String, String> c2, Cache<String, String> c2Replica) {
       for (Cache<String, String> c : Arrays.asList(c1, c1Replica)) {
-         assertEquals(c.size(), 1);
-         assertEquals(c.get("c1key"), "c1value");
+         assertEquals(1, c.size());
+         assertEquals("c1value", c.get("c1key"));
       }
 
       for (Cache<String, String> c : Arrays.asList(c2, c2Replica)) {
-         assertEquals(c.size(), 1);
-         assertEquals(c.get("c2key"), "c2value");
+         assertEquals(1, c.size());
+         assertEquals("c2value", c.get("c2key"));
       }
    }
 
@@ -169,8 +169,8 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       assertTrue(c1Replica.isEmpty());
 
       c1.put("c1key", "c1value");
-      assertEquals(c1.get("c1key"), "c1value");
-      assertEquals(c1Replica.get("c1key"), "c1value");
+      assertEquals("c1value", c1.get("c1key"));
+      assertEquals("c1value", c1Replica.get("c1key"));
    }
 
    public void testSimpleCommit() throws Exception {
@@ -186,8 +186,8 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       c1.put("c1key", "c1value");
       tm.commit();
 
-      assertEquals(c1.get("c1key"), "c1value");
-      assertEquals(c1Replica.get("c1key"), "c1value");
+      assertEquals("c1value", c1.get("c1key"));
+      assertEquals("c1value", c1Replica.get("c1key"));
    }
 
    public void testPutIfAbsent() throws Exception {
@@ -203,15 +203,15 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       c1.put("c1key", "c1value");
       tm.commit();
 
-      assertEquals(c1.get("c1key"), "c1value");
-      assertEquals(c1Replica.get("c1key"), "c1value");
+      assertEquals("c1value", c1.get("c1key"));
+      assertEquals("c1value", c1Replica.get("c1key"));
 
       tm.begin();
       c1.putIfAbsent("c1key", "SHOULD_NOT_GET_INSERTED");
       tm.commit();
 
-      assertEquals(c1.get("c1key"), "c1value");
-      assertEquals(c1Replica.get("c1key"), "c1value");
+      assertEquals("c1value", c1.get("c1key"));
+      assertEquals("c1value", c1Replica.get("c1key"));
    }
 
    public void testTwoNamedCachesSameNode() throws Exception {

@@ -5,10 +5,11 @@ import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.DEFAULT_CACHE_NAME;
 import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
 import static org.infinispan.util.BlockingLocalTopologyManager.finishRebalance;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -199,7 +200,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       blockedGet.send().receiveAll();
 
       //check the value returned and make sure that the requestor is still in currentTopologyId (consistency check)
-      assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
+      assertEquals("v", remoteGetFuture.get(), "Wrong value from remote get.");
       fri.assertNotHit();
       assertTopologyId(currentTopologyId, cache(0));
 
@@ -241,7 +242,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       blockedGet.send().receiveAll();
 
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
-      assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
+      assertEquals("v", remoteGetFuture.get(), "Wrong value from remote get.");
       fri.assertNotHit();
       assertTopologyId(currentTopologyId + 1, cache(1));
       assertTopologyId(currentTopologyId + 1, cache(0));
@@ -272,7 +273,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final int currentTopologyId = currentTopologyId(cache(0));
 
       extractInterceptorChain(cache(0))
-              .addInterceptorAfter(new AssertNoRetryInterceptor(), StateTransferInterceptor.class);
+            .addInterceptorAfter(new AssertNoRetryInterceptor(), StateTransferInterceptor.class);
 
       FailReadsInterceptor fri = new FailReadsInterceptor();
       NewNode joiner = addNode(g -> TestCacheManagerFactory.addInterceptor(g, DEFAULT_CACHE_NAME::equals, fri, TestCacheManagerFactory.InterceptorPosition.FIRST, null), null);
@@ -292,7 +293,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       blockedGet.send().receiveAll();
 
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
-      assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
+      assertEquals("v", remoteGetFuture.get(), "Wrong value from remote get.");
       fri.assertNotHit();
       assertTopologyId(currentTopologyId + 1, cache(0));
 
@@ -359,7 +360,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       rpcManager0.expectCommand(ClusteredGetCommand.class).send().receiveAll();
 
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
-      assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
+      assertEquals("v", remoteGetFuture.get(), "Wrong value from remote get.");
       assertTopologyId(currentTopologyId + topologyOnNode0, cache(0));
 
       // Finish the rebalance
@@ -434,7 +435,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       rpcManager0.expectCommand(ClusteredGetCommand.class).send().receiveAll();
 
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
-      assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
+      assertEquals("v", remoteGetFuture.get(), "Wrong value from remote get.");
       assertTopologyId(currentTopologyId + topologyOnNode0, cache(0));
 
       // Finish the rebalance
@@ -532,7 +533,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
          joiner.topologyManager.confirmTopologyUpdate(Phase.READ_NEW_WRITE_ALL);
       }
       eventuallyEquals(currentTopologyId + topologyOnNode2,
-                       () -> wfti.distributionManager.getCacheTopology().getTopologyId());
+            () -> wfti.distributionManager.getCacheTopology().getTopologyId());
 
       ControlledRpcManager.BlockedResponseMap blockedGet = sentGet.expectAllResponses();
       int succesful = 0;
@@ -545,11 +546,11 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
          } else {
             assertEquals(UnsureResponse.INSTANCE, rsp.getValue());
             if (expectSuccessFrom >= 0) {
-               assertFalse(rsp.getKey().equals(address(expectSuccessFrom)));
+               assertNotEquals(rsp.getKey(), address(expectSuccessFrom));
             }
          }
       }
-      assertTrue(succesful == expectedSuccessResponses);
+      assertEquals(succesful, expectedSuccessResponses);
 
       // Unblock the responses and retry if necessary
       blockedGet.receive();
@@ -558,7 +559,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       }
 
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
-      assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
+      assertEquals("v", remoteGetFuture.get(), "Wrong value from remote get.");
 
       if (topologyOnNode2 < 2) {
          joiner.topologyManager.confirmTopologyUpdate(Phase.READ_ALL_WRITE_ALL);
@@ -597,7 +598,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       CyclicBarrier barrier2 = new CyclicBarrier(2);
 
       NewNode joiner = addNode(g -> TestCacheManagerFactory.addInterceptor(g, DEFAULT_CACHE_NAME::equals,
-            new BlockingInterceptor<>(barrier2, GetCacheEntryCommand.class,true, false),
+            new BlockingInterceptor<>(barrier2, GetCacheEntryCommand.class, true, false),
             TestCacheManagerFactory.InterceptorPosition.FIRST, null), null);
 
       // Install T1 everywhere and T2 on node 0
@@ -607,7 +608,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
 
       // Block the command on node 1 so we can install T3 first
       extractInterceptorChain(cache(1))
-              .addInterceptor(new BlockingInterceptor<>(barrier1, GetCacheEntryCommand.class, false, false), 0);
+            .addInterceptor(new BlockingInterceptor<>(barrier1, GetCacheEntryCommand.class, false, false), 0);
 
       // Send the remote get and wait for the reply from node 2
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
@@ -643,7 +644,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       sentRetry.receiveAll();
 
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
-      assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
+      assertEquals("v", remoteGetFuture.get(), "Wrong value from remote get.");
       assertTopologyId(currentTopologyId + 2, cache(0));
 
       // Finish the rebalance
@@ -708,7 +709,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
 
       //check the value returned and make sure that the requestor is in the correct topology id (consistency check)
-      assertEquals("Wrong value from remote get.", "v", remoteGetFuture.get());
+      assertEquals("v", remoteGetFuture.get(), "Wrong value from remote get.");
       fri.assertNotHit();
 
       assertTopologyId(currentTopologyId + topologyOnNode0, cache(0));
@@ -777,25 +778,25 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    private void ownerCheckAndInit(Cache<Object, Object> owner, Object key, Object value) {
-      assertTrue(address(owner) + " should be the owner of " + key + ".", isFirstOwner(owner, key));
+      assertTrue(isFirstOwner(owner, key), address(owner) + " should be the owner of " + key + ".");
       owner.put(key, value);
       assertCacheValue(key, value);
    }
 
    private void assertCacheValue(Object key, Object value) {
       for (Cache cache : caches()) {
-         assertEquals("Wrong value for key " + key + " on " + address(cache) + ".", value, cache.get(key));
+         assertEquals(value, cache.get(key), "Wrong value for key " + key + " on " + address(cache) + ".");
       }
    }
 
    private ConfigurationBuilder configuration() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.clustering()
-             .hash()
-             .numSegments(1)
-             .numOwners(1)
-             .stateTransfer()
-             .timeout(30, TimeUnit.SECONDS);
+            .hash()
+            .numSegments(1)
+            .numOwners(1)
+            .stateTransfer()
+            .timeout(30, TimeUnit.SECONDS);
       builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new SingleKeyConsistentHashFactory());
       return builder;
    }
@@ -873,7 +874,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
          assertFalse(command.hasAnyFlag(FlagBitSets.COMMAND_RETRY));
          return invokeNextAndExceptionally(ctx, command, (rCtx, rCommand, t) -> {
             assertFalse(t instanceof OutdatedTopologyException);
-            throw  t;
+            throw t;
          });
       }
    }

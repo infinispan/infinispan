@@ -1,13 +1,15 @@
 package org.infinispan.query.blackbox;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.distribution.Ownership.BACKUP;
 import static org.infinispan.distribution.Ownership.NON_OWNER;
 import static org.infinispan.distribution.Ownership.PRIMARY;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -169,8 +171,8 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    private void assertQueryInterceptorPresent(Cache<?, ?> c) {
       QueryInterceptor i = TestingUtil.findInterceptor(c, QueryInterceptor.class);
-      assert i != null : "Expected to find a QueryInterceptor, only found " +
-            extractInterceptorChain(c).getInterceptors();
+      assertNotNull(i, "Expected to find a QueryInterceptor, only found " +
+            extractInterceptorChain(c).getInterceptors());
    }
 
    public void testModified() throws Exception {
@@ -181,8 +183,8 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       List<Person> found = cacheQuery.execute().list();
 
-      assert found.size() == 1 : "Expected list of size 1, was of size " + found.size();
-      assert found.get(0).equals(person1);
+      assertEquals(1, found.size(), "Expected list of size 1, was of size " + found.size());
+      assertEquals(person1, found.get(0));
 
       person1.setBlurb("Likes pizza");
       cache1.put("Navin", person1);
@@ -191,8 +193,8 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       found = cacheQuery.execute().list();
 
-      assert found.size() == 1;
-      assert found.get(0).equals(person1);
+      assertEquals(1, found.size());
+      assertEquals(person1, found.get(0));
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
 
@@ -206,7 +208,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       assertEquals(2, found.size());
       assertTrue(found.contains(person2));
       assertTrue(found.contains(person3));
-      assertFalse("This should not contain object person4", found.contains(person4));
+      assertFalse(found.contains(person4), "This should not contain object person4");
 
       person4 = new Person();
       person4.setName("Mighty Goat");
@@ -221,7 +223,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       assertEquals(3, found.size());
       assertTrue(found.contains(person2));
       assertTrue(found.contains(person3));
-      assertTrue("This should now contain object person4", found.contains(person4));
+      assertTrue(found.contains(person4), "This should now contain object person4");
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
 
@@ -230,19 +232,19 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cacheQuery = createQuery(cache2, "blurb:'eats'");
       List<Person> found = cacheQuery.execute().list();
 
-      assert found.size() == 2;
-      assert found.contains(person2);
-      assert found.contains(person3) : "This should still contain object person3";
+      assertEquals(2, found.size());
+      assertThat(found).contains(person2);
+      assertThat(found).as("This should still contain object person3").contains(person3);
 
       cache1.remove(key3);
 
       cacheQuery = createQuery(cache2, "blurb:'eats'");
 
       found = cacheQuery.execute().list();
-      assert found.size() == 1;
-      assert found.contains(person2);
-      assert !found.contains(person3) : "This should not contain object person3 anymore";
-      assert countIndex(cache1) == 2 : "Two documents should remain in the index";
+      assertEquals(1, found.size());
+      assertThat(found).contains(person2);
+      assertThat(found).as("This should not contain object person3 anymore").doesNotContain(person3);
+      assertEquals(2, countIndex(cache1), "Two documents should remain in the index");
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
 
@@ -295,13 +297,13 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       Cache<Object, Person> cache = findCache(memberType, key1).orElse(cache2);
 
-      assertEquals(createQuery(cache2, "blurb:'wow'").execute().list().size(), 1);
+      assertEquals(1, createQuery(cache2, "blurb:'wow'").execute().list().size());
 
       boolean replaced = cache.replace(key1, person1, person2);
 
       assertTrue(replaced);
-      assertEquals(createQuery(cache1, "blurb:'wow'").execute().list().size(), 0);
-      assertEquals(createQuery(cache, "blurb:'wow'").execute().count().value(), 0);
+      assertEquals(0, createQuery(cache1, "blurb:'wow'").execute().list().size());
+      assertEquals(0, createQuery(cache, "blurb:'wow'").execute().count().value());
    }
 
    private void testConditionalRemoveFrom(Ownership owneship) throws Exception {
@@ -311,20 +313,20 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cache.remove(key1, person1);
 
-      assertEquals(createSelectAllQuery(cache2).execute().list().size(), 2);
-      assertEquals(countIndex(cache), 2);
+      assertEquals(2, createSelectAllQuery(cache2).execute().list().size());
+      assertEquals(2, countIndex(cache));
 
       cache.remove(key1, person1);
 
-      assertEquals(createSelectAllQuery(cache2).execute().list().size(), 2);
-      assertEquals(countIndex(cache), 2);
+      assertEquals(2, createSelectAllQuery(cache2).execute().list().size());
+      assertEquals(2, countIndex(cache));
 
       cache = findCache(owneship, key3).orElse(cache2);
 
       cache.remove(key3);
 
-      assertEquals(createSelectAllQuery(cache2).execute().list().size(), 1);
-      assertEquals(countIndex(cache), 1);
+      assertEquals(1, createSelectAllQuery(cache2).execute().list().size());
+      assertEquals(1, countIndex(cache));
 
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
@@ -359,7 +361,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    public void testPutMapAsync() throws Exception {
       prepareTestData();
-      assert createSelectAllQuery(cache2).execute().list().size() == 3;
+      assertEquals(3, createSelectAllQuery(cache2).execute().list().size());
 
       person4 = new Person();
       person4.setName("New Goat");
@@ -373,17 +375,17 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       Future<Void> futureTask = cache2.putAllAsync(allWrites);
       futureTask.get();
-      assert futureTask.isDone();
+      assertTrue(futureTask.isDone());
       List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
-      assert found.contains(person4);
+      assertThat(found).contains(person4);
 
       futureTask = cache1.putAllAsync(allWrites);
       futureTask.get();
-      assert futureTask.isDone();
+      assertTrue(futureTask.isDone());
       found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
-      assert found.contains(person4);
+      assertThat(found).contains(person4);
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
 
@@ -420,7 +422,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    public void testPutIfAbsent() throws Exception {
       prepareTestData();
-      assert createSelectAllQuery(cache2).execute().list().size() == 3;
+      assertEquals(3, createSelectAllQuery(cache2).execute().list().size());
 
       person4 = new Person();
       person4.setName("New Goat");
@@ -431,7 +433,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
 
-      assert found.contains(person4);
+      assertThat(found).contains(person4);
 
       Person person5 = new Person();
       person5.setName("Abnormal Goat");

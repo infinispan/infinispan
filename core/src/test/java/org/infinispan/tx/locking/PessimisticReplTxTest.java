@@ -1,9 +1,11 @@
 package org.infinispan.tx.locking;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -99,23 +101,23 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       tm(secondTxIndex).begin();
       try {
          cache(secondTxIndex).put(k, "v2");
-         assert false : "Exception expected";
+         fail("Exception expected");
       } catch (TimeoutException e) {
          //expected
          tm(secondTxIndex).suspend();
       } catch (RemoteException e) {
-         assert e.getCause() instanceof TimeoutException;
+         assertInstanceOf(TimeoutException.class, e.getCause());
          //expected
          tm(secondTxIndex).suspend();
       }
 
       tm(firstTxIndex).resume(tx1);
       tm(firstTxIndex).commit();
-      assert cache(0).get(k).equals("v1");
+      assertEquals("v1", cache(0).get(k));
 
       log.info("Before get...");
       assertNotLocked(k);
-      assert cache(1).get(k).equals("v1");
+      assertEquals("v1", cache(1).get(k));
       assertNotLocked(k);
    }
 
@@ -123,8 +125,8 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       tm(0).begin();
       cache(0).put(k,"v");
       tm(0).commit();
-      assertEquals(cache(0).get(k), "v");
-      assertEquals(cache(1).get(k), "v");
+      assertEquals("v", cache(0).get(k));
+      assertEquals("v", cache(1).get(k));
    }
 
 

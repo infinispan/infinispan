@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -75,7 +75,7 @@ public class TransportFactoryTest extends SingleCacheManagerTest {
       EventLoopGroup eventLoopGroup;
       try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
          Configuration configuration = remoteCacheManager.getConfiguration();
-         assertTrue(configuration.transportFactory() instanceof TestTransportFactory);
+         assertInstanceOf(TestTransportFactory.class, configuration.transportFactory());
          TestTransportFactory transportFactory = (TestTransportFactory) configuration.transportFactory();
          assertEquals(0, transportFactory.socketChannelLatch.getCount());
          assertEquals(0, transportFactory.createEventLoopGroupLatch.getCount());

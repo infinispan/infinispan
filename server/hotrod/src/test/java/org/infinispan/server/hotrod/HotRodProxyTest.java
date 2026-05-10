@@ -5,8 +5,8 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,7 +58,7 @@ public class HotRodProxyTest extends HotRodMultiNodeTest {
       assertStatus(resp, Success);
       AbstractTestTopologyAwareResponse topoResp = resp.asTopologyAwareResponse();
       assertEquals(topoResp.topologyId, currentServerTopologyId());
-      assertEquals(topoResp.members.size(), 2);
+      assertEquals(2, topoResp.members.size());
       Set<ServerAddress> serverAddresses = servers().stream()
                                                     .map(HotRodServer::getAddress)
                                                     .collect(Collectors.toSet());

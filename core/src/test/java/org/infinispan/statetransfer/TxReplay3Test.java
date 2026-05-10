@@ -2,7 +2,7 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collection;
 import java.util.HashMap;

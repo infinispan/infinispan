@@ -1,7 +1,7 @@
 package org.infinispan.rest.logging;
 
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
@@ -75,6 +75,6 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
       String logline = logAppender.get(0);
 
       String regex = String.format("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d+] \"PUT /rest/v2/caches/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+ %s/\\p{Graph}+$", System.getProperty("infinispan.brand.name"));
-      assertTrue(logline, logline.matches(regex));
+      assertTrue(logline.matches(regex), logline);
    }
 }

@@ -3,6 +3,8 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.HashMap;
 
@@ -56,9 +58,9 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
    }
 
    public void testGetCacheOperations() {
-      assert remoteCacheManager.getCache() != null;
-      assert remoteCacheManager.getCache(CACHE_NAME) != null;
-      assert !remoteCacheManager.isStarted();
+      assertNotNull(remoteCacheManager.getCache());
+      assertNotNull(remoteCacheManager.getCache(CACHE_NAME));
+      assertFalse(remoteCacheManager.isStarted());
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)

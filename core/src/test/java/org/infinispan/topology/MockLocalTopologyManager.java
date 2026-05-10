@@ -1,9 +1,9 @@
 package org.infinispan.topology;
 
 import static java.util.Collections.singletonMap;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -62,7 +62,7 @@ class MockLocalTopologyManager implements LocalTopologyManager {
    public void expectTopology(int topologyId, List<Address> currentMembers, List<Address> pendingMembers,
                               CacheTopology.Phase phase) throws Exception {
       CacheTopology topology = topologies.poll(10, TimeUnit.SECONDS);
-      assertNotNull("Timed out waiting for topology " + topologyId, topology);
+      assertNotNull(topology, "Timed out waiting for topology " + topologyId);
 
       verifyTopology(topology, topologyId, currentMembers, pendingMembers, phase);
    }

@@ -1,6 +1,7 @@
 package org.infinispan.lock.singlelock.optimistic;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -33,13 +34,13 @@ public class InitiatorCrashOptimisticTest extends AbstractInitiatorCrashTest {
       Future<Void> future = beginAndPrepareTx(k, 1);
 
       txControlInterceptor.preparedReceived.await();
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 1, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue(checkTxCount(0, 0, 1));
+      assertTrue(checkTxCount(1, 1, 0));
+      assertTrue(checkTxCount(2, 0, 1));
 
       killMember(1);
 
-      assert caches().size() == 2;
+      assertTrue(caches().size() == 2);
       txControlInterceptor.prepareProgress.countDown();
 
       assertNotLocked(k);

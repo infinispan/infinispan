@@ -1,9 +1,9 @@
 package org.infinispan.rest.assertion;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.commons.dataconversion.internal.Json;
 
@@ -24,7 +24,7 @@ public class JsonAssertion {
    public JsonAssertion(Json node, String path) {
       this.node = node;
       this.path = path;
-      assertNotNull(path, node);
+      assertNotNull(node, path);
    }
 
    public JsonAssertion hasProperty(String propertyName) {
@@ -37,7 +37,7 @@ public class JsonAssertion {
    }
 
    public JsonAssertion hasNoProperty(String propertyName) {
-      assertFalse(propertyPath(propertyName), node.has(propertyName));
+      assertFalse(node.has(propertyName), propertyPath(propertyName));
       return this;
    }
 
@@ -50,7 +50,7 @@ public class JsonAssertion {
    }
 
    public void isNull() {
-      assertTrue(path, node.isNull());
+      assertTrue(node.isNull(), path);
    }
 
    private String propertyPath(String propertyName) {

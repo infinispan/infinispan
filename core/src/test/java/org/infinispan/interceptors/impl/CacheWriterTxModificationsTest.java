@@ -1,8 +1,8 @@
 package org.infinispan.interceptors.impl;
 
 import static org.infinispan.test.TestingUtil.mapOf;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -69,7 +69,7 @@ public class CacheWriterTxModificationsTest extends SingleCacheManagerTest {
       DataContainer<Object, Object> dataContainer = cache.getAdvancedCache().getDataContainer();
       dataContainer.forEach(entry -> {
          MarshallableEntry<Object, Object> storeEntry = store.loadEntry(entry.getKey());
-         assertNotNull("Missing store entry: " + entry.getKey(), storeEntry);
+         assertNotNull(storeEntry, "Missing store entry: " + entry.getKey());
          assertEquals(entry.getValue(), storeEntry.getValue());
       });
       store.keySet().forEach(k -> {

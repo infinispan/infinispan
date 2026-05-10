@@ -1,5 +1,7 @@
 package org.infinispan.util;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -18,9 +20,9 @@ public class HashFunctionTest extends AbstractInfinispanTest {
       int i2 = hash.hash(o);
       int i3 = hash.hash(o);
 
-      assert i1 == i2: "i1 and i2 are not the same: " + i1 + ", " + i2;
-      assert i3 == i2: "i3 and i2 are not the same: " + i2 + ", " + i3;
-      assert i1 == i3: "i1 and i3 are not the same: " + i1 + ", " + i3;
+      assertTrue(i1 == i2, "i1 and i2 are not the same: " + i1 + ", " + i2);
+      assertTrue(i3 == i2, "i3 and i2 are not the same: " + i2 + ", " + i3);
+      assertTrue(i1 == i3, "i1 and i3 are not the same: " + i1 + ", " + i3);
    }
 
 }

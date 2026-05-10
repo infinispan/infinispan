@@ -18,7 +18,6 @@
 package org.infinispan.server.security.http.localuser;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
@@ -29,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -77,7 +77,7 @@ final class LocalUserAuthenticationMechanism extends UsernamePasswordAuthenticat
     *                        establish the current identity.
     */
    LocalUserAuthenticationMechanism(final CallbackHandler callbackHandler, final boolean silent) {
-      super(checkNotNullParam("callbackHandler", callbackHandler));
+      super(Objects.requireNonNull(callbackHandler, "callbackHandler"));
       this.silent = silent;
       this.useSecureRandom = true;
       this.basePath = new File(System.getProperty("java.io.tmpdir"));

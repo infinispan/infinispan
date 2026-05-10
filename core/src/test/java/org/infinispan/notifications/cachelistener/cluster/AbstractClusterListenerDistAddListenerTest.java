@@ -1,11 +1,11 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
 import static org.infinispan.test.TestingUtil.getListeners;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;

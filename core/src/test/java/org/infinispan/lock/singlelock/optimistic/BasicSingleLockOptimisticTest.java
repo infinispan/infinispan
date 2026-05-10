@@ -1,6 +1,9 @@
 package org.infinispan.lock.singlelock.optimistic;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
@@ -32,9 +35,9 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
        EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).getTransaction();
       dtm.runPrepare();
 
-      assert !lockManager(0).isLocked(k);
-      assert lockManager(1).isLocked(k);
-      assert !lockManager(2).isLocked(k);
+      assertFalse(lockManager(0).isLocked(k));
+      assertTrue(lockManager(1).isLocked(k));
+      assertFalse(lockManager(2).isLocked(k));
 
       dtm.runCommit(false);
 
@@ -56,12 +59,12 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
       EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).getTransaction();
       dtm.runPrepare();
 
-      assert !lockManager(0).isLocked(k1);
-      assert lockManager(1).isLocked(k1);
-      assert !lockManager(2).isLocked(k1);
-      assert !lockManager(0).isLocked(k2);
-      assert !lockManager(1).isLocked(k2);
-      assert lockManager(2).isLocked(k2);
+      assertFalse(lockManager(0).isLocked(k1));
+      assertTrue(lockManager(1).isLocked(k1));
+      assertFalse(lockManager(2).isLocked(k1));
+      assertFalse(lockManager(0).isLocked(k2));
+      assertFalse(lockManager(1).isLocked(k2));
+      assertTrue(lockManager(2).isLocked(k2));
 
       dtm.runCommit(false);
 
@@ -80,15 +83,15 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
       dtm.runPrepare();
       tm(0).suspend();
 
-      assert checkTxCount(0, 1, 0);
-      assert checkTxCount(1, 0, 1);
-      assert checkTxCount(2, 0, 1);
+      assertTrue(checkTxCount(0, 1, 0));
+      assertTrue(checkTxCount(1, 0, 1));
+      assertTrue(checkTxCount(2, 0, 1));
 
       tm(0).begin();
       cache(0).put(k, "other");
       try {
          tm(0).commit();
-         assert false;
+         fail();
       } catch (Throwable e) {
          //ignore
       }
@@ -101,7 +104,7 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
       cache(1).put(k, "other");
       try {
          tm(1).commit();
-         assert false;
+         fail();
       } catch (Throwable e) {
          //expected
       }

@@ -5,7 +5,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.assertNo
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.BYTE_ARRAY_GENERATOR;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.GENERIC_ARRAY_GENERATOR;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.STRING_GENERATOR;
-import static org.testng.AssertJUnit.assertSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;

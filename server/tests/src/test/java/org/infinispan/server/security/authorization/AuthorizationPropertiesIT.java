@@ -67,7 +67,7 @@ public class AuthorizationPropertiesIT extends InfinispanSuite {
          RestClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
          Json realmPrincipals = Json.read(assertStatus(OK, client.raw().get("/rest/v2/security/users")));
          List<Json> users = realmPrincipals.asJsonMap().get("default:properties").asJsonList();
-         assertEquals(users.size(), 21);
+         assertEquals(21, users.size());
       }
    }
 }

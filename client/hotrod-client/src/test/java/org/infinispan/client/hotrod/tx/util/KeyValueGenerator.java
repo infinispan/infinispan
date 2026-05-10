@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.tx.util;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import java.lang.reflect.Method;

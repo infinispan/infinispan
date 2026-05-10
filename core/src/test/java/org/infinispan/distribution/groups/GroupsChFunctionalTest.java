@@ -1,10 +1,13 @@
 package org.infinispan.distribution.groups;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.distribution.DistSyncFuncTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -24,12 +27,12 @@ public class GroupsChFunctionalTest extends DistSyncFuncTest {
 
       // Based on the grouping fn which uses computes a group by taking the digit from kX
       // and doing a modulo 2 on it we can verify the owners of keys
-      Assert.assertNotSame(getOwners("k1"), getOwners("k2"));
-      Assert.assertNotSame(getOwners("k1"), getOwners("k4"));
-      Assert.assertNotSame(getOwners("k3"), getOwners("k2"));
-      Assert.assertNotSame(getOwners("k3"), getOwners("k4"));
-      Assert.assertEquals(getOwners("k1"), getOwners("k3"));
-      Assert.assertEquals(getOwners("k2"), getOwners("k4"));
+      assertNotSame(getOwners("k1"), getOwners("k2"));
+      assertNotSame(getOwners("k1"), getOwners("k4"));
+      assertNotSame(getOwners("k3"), getOwners("k2"));
+      assertNotSame(getOwners("k3"), getOwners("k4"));
+      assertArrayEquals(getOwners("k1"), getOwners("k3"));
+      assertArrayEquals(getOwners("k2"), getOwners("k4"));
 
    }
 
@@ -41,18 +44,18 @@ public class GroupsChFunctionalTest extends DistSyncFuncTest {
       GroupedKey k3 = new GroupedKey("groupA", "k3");
       GroupedKey k4 = new GroupedKey("groupB", "k4");
 
-      Assert.assertNotSame(getOwners(k1), getOwners(k2));
-      Assert.assertNotSame(getOwners(k1), getOwners(k4));
-      Assert.assertNotSame(getOwners(k3), getOwners(k2));
-      Assert.assertNotSame(getOwners(k3), getOwners(k4));
-      Assert.assertEquals(getOwners(k1), getOwners(k3));
-      Assert.assertEquals(getOwners(k2), getOwners(k4));
+      assertNotSame(getOwners(k1), getOwners(k2));
+      assertNotSame(getOwners(k1), getOwners(k4));
+      assertNotSame(getOwners(k3), getOwners(k2));
+      assertNotSame(getOwners(k3), getOwners(k4));
+      assertArrayEquals(getOwners(k1), getOwners(k3));
+      assertArrayEquals(getOwners(k2), getOwners(k4));
 
       GroupedKey k1A = new GroupedKey("groupA", "k1");
       GroupedKey k1B = new GroupedKey("groupB", "k1");
 
       // Check that the same key in different groups is mapped to different nodes (nb this is not something you want to really do!)
-      Assert.assertNotSame(getOwners(k1A), getOwners(k1B));
+      assertNotSame(getOwners(k1A), getOwners(k1B));
 
    }
 
@@ -64,9 +67,9 @@ public class GroupsChFunctionalTest extends DistSyncFuncTest {
       GroupedKey k3 = new GroupedKey("groupA", "k3");
       GroupedKey k4 = new GroupedKey("groupA", "k4");
 
-      Assert.assertEquals(getOwners(k1), getOwners(k2));
-      Assert.assertEquals(getOwners(k1), getOwners(k3));
-      Assert.assertEquals(getOwners(k1), getOwners(k4));
+      assertArrayEquals(getOwners(k1), getOwners(k2));
+      assertArrayEquals(getOwners(k1), getOwners(k3));
+      assertArrayEquals(getOwners(k1), getOwners(k4));
 
       Cache<Object, String>[] owners1 = getOwners(k1);
       Cache<Object, String>[] owners2 = getOwners(k2);
@@ -83,21 +86,21 @@ public class GroupsChFunctionalTest extends DistSyncFuncTest {
          }
       }
 
-      assert ownerIndex != -1;
+      assertTrue(ownerIndex != -1);
 
       TestingUtil.killCacheManagers(manager(ownerIndex));
       caches.remove(ownerIndex);
       cacheManagers.remove(ownerIndex);
       TestingUtil.waitForNoRebalance(caches);
 
-      Assert.assertNotSame(getOwners(k1), owners1);
-      Assert.assertNotSame(getOwners(k2), owners2);
-      Assert.assertNotSame(getOwners(k3), owners3);
-      Assert.assertNotSame(getOwners(k4), owners4);
+      assertNotSame(getOwners(k1), owners1);
+      assertNotSame(getOwners(k2), owners2);
+      assertNotSame(getOwners(k3), owners3);
+      assertNotSame(getOwners(k4), owners4);
 
-      Assert.assertEquals(getOwners(k1), getOwners(k2));
-      Assert.assertEquals(getOwners(k1), getOwners(k3));
-      Assert.assertEquals(getOwners(k1), getOwners(k4));
+      assertArrayEquals(getOwners(k1), getOwners(k2));
+      assertArrayEquals(getOwners(k1), getOwners(k3));
+      assertArrayEquals(getOwners(k1), getOwners(k4));
 
    }
 }

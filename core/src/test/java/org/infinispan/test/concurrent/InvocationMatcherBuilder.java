@@ -1,5 +1,7 @@
 package org.infinispan.test.concurrent;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,14 +66,14 @@ public class InvocationMatcherBuilder {
    }
 
    public InvocationMatcherBuilder inOrAfterState(StateSequencer stateSequencer, String stateName) {
-      assert stateSequencer != null && (this.stateSequencer == null || this.stateSequencer == stateSequencer);
+      assertTrue(stateSequencer != null && (this.stateSequencer == null || this.stateSequencer == stateSequencer));
       this.stateSequencer = stateSequencer;
       this.inOrAfterState = stateName;
       return this;
    }
 
    public InvocationMatcherBuilder afterState(StateSequencer stateSequencer, String stateName) {
-      assert stateSequencer != null && (this.stateSequencer == null || this.stateSequencer == stateSequencer);
+      assertTrue(stateSequencer != null && (this.stateSequencer == null || this.stateSequencer == stateSequencer));
       this.stateSequencer = stateSequencer;
       this.afterState = stateName;
       return this;

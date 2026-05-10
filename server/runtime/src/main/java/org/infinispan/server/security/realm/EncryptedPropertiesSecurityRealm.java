@@ -22,6 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -31,7 +32,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.server.Server;
 import org.infinispan.server.security.ElytronPasswordProviderSupplier;
-import org.wildfly.common.Assert;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -184,7 +184,7 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm,
 
    @Override
    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
-      Assert.checkNotNullParam("credentialType", credentialType);
+      Objects.requireNonNull(credentialType, "credentialType cannot be null");
       return PasswordCredential.class.isAssignableFrom(credentialType) ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
    }
 
@@ -205,7 +205,7 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm,
       Properties groups = new Properties();
 
       if (groupsStream != null) {
-         try (InputStreamReader is = new InputStreamReader(groupsStream, StandardCharsets.UTF_8);) {
+         try (InputStreamReader is = new InputStreamReader(groupsStream, StandardCharsets.UTF_8)) {
             groups.load(is);
          }
       }

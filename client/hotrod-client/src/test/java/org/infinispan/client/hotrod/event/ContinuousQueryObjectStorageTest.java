@@ -2,10 +2,10 @@ package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -235,7 +235,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       assertEquals(3, remoteCache.size());
 
       Query<Object[]> query = remoteCache.<Object[]>query("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
-                      .setParameter("ageParam", 32);
+            .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, Object[]>> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<String> left = new LinkedBlockingQueue<>();
@@ -334,7 +334,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       assertEquals(3, remoteCache.size());
 
       Query<Object[]> query = remoteCache.<Object[]>query("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
-                      .setParameter("ageParam", 32);
+            .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, Object[]>> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<String> left = new LinkedBlockingQueue<>();
@@ -407,14 +407,14 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
          final T o;
          try {
             o = queue.poll(5, TimeUnit.SECONDS);
-            assertNotNull("Queue was empty after reading " + i + " elements!", o);
+            assertNotNull(o, "Queue was empty after reading " + i + " elements!");
          } catch (InterruptedException e) {
             throw new AssertionError("Interrupted while waiting for condition", e);
          }
          if (expectedValues != null) {
             Object v = valueTransformer != null ? valueTransformer.apply(o) : o;
             boolean found = expectedValues.remove(v);
-            assertTrue("Expectation failed on element number " + i + ", unexpected value: " + v, found);
+            assertTrue(found, "Expectation failed on element number " + i + ", unexpected value: " + v);
          }
       }
    }
@@ -424,7 +424,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       TestingUtil.sleepThread(100);
 
       for (BlockingQueue<?> queue : queues) {
-         assertNull("No more elements expected in queue!", queue.poll());
+         assertNull(queue.poll(), "No more elements expected in queue!");
       }
    }
 

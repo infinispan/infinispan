@@ -1,6 +1,7 @@
 package org.infinispan.container.versioning;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -8,7 +9,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 @Test(testName = "container.versioning.DistL1WriteSkewTest", groups = "functional")
@@ -56,8 +56,7 @@ public class DistL1WriteSkewTest extends DistWriteSkewTest {
 
    public void testL1Enabled() {
       for (Cache cache : caches()) {
-         AssertJUnit.assertTrue("L1 not enabled for " + address(cache),
-                                cache.getCacheConfiguration().clustering().l1().enabled());
+         assertTrue(cache.getCacheConfiguration().clustering().l1().enabled(), "L1 not enabled for " + address(cache));
       }
    }
 }

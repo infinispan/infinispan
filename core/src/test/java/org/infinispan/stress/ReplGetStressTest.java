@@ -1,6 +1,6 @@
 package org.infinispan.stress;
 
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.concurrent.TimeUnit;
 

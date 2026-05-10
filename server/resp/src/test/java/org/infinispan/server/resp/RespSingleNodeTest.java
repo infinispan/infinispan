@@ -10,7 +10,7 @@ import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;

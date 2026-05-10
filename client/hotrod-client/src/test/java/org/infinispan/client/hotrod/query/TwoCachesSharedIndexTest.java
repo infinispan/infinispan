@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.query;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Date;
 import java.util.List;
@@ -90,7 +90,7 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
       Query<Account> query = accountCache.query("FROM sample_bank_account.Account WHERE description = 'account1'");
       List<Account> accounts = query.execute().list();
 
-      assertEquals(accounts.iterator().next().getDescription(), "account1");
+      assertEquals("account1", accounts.iterator().next().getDescription());
    }
 
    private AccountPB getAccountPB() {

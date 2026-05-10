@@ -1,7 +1,7 @@
 package org.infinispan.lock;
 
 import static java.lang.String.valueOf;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
@@ -76,7 +76,7 @@ public class ExplicitUnlockTest extends SingleCacheManagerTest {
       for (Future<Boolean> next : results) {
          success = success && next.get(30, TimeUnit.SECONDS);
       }
-      assertTrue("All worker should complete without exceptions", success);
+      assertTrue(success, "All worker should complete without exceptions");
       assertNoTransactions();
       for (int i = 0; i < NUMBER_OF_KEYS; ++i) {
          assertEventuallyNotLocked(cache, valueOf(i));

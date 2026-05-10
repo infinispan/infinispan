@@ -1,5 +1,10 @@
 package org.infinispan.spring.embedded.provider.sample;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.lang.invoke.MethodHandles;
 import java.util.Random;
 
@@ -44,13 +49,12 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
    public void demonstrateCachingLoadedBooks() {
       final Integer bookToCacheId = 5;
 
-      assert !booksCache().containsKey(bookToCacheId) : "Cache should not initially contain the book with id " + bookToCacheId;
+      assertFalse(booksCache().containsKey(bookToCacheId), "Cache should not initially contain the book with id " + bookToCacheId);
 
       final Book cachedBook = getBookService().findBook(bookToCacheId);
       log.infof("Book [%s] cached", cachedBook);
 
-      assert cachedBook.equals(booksCache().get(bookToCacheId)) : "findBook(" + bookToCacheId
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToCacheId), cachedBook, "findBook(" + bookToCacheId + ") should have cached book");
    }
 
    /**
@@ -62,20 +66,18 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
    public void demonstrateRemovingBookFromCache() {
       final Integer bookToDeleteId = new Random().nextInt(10) + 1;
 
-      assert !booksCache().containsKey(bookToDeleteId) : "Cache should not initially contain the book with id " + bookToDeleteId;
+      assertFalse(booksCache().containsKey(bookToDeleteId), "Cache should not initially contain the book with id " + bookToDeleteId);
 
       final Book bookToDelete = getBookService().findBook(bookToDeleteId);
       log.infof("Book [%s] cached", bookToDelete);
 
-      assert booksCache().get(bookToDeleteId).equals(bookToDelete) : "findBook(" + bookToDeleteId
-            + ") should have cached book";
+      assertEquals(bookToDelete, booksCache().get(bookToDeleteId), "findBook(" + bookToDeleteId + ") should have cached book");
 
       log.infof("Deleting book [%s] ...", bookToDelete);
       getBookService().deleteBook(bookToDeleteId);
       log.infof("Book [%s] deleted", bookToDelete);
 
-      assert !booksCache().containsKey(bookToDeleteId) : "deleteBook(" + bookToDelete
-            + ") should have evicted book from cache.";
+      assertFalse(booksCache().containsKey(bookToDeleteId), "deleteBook(" + bookToDelete + ") should have evicted book from cache.");
    }
 
    /**
@@ -87,20 +89,18 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
    public void demonstrateCacheEvictionUponUpdate() {
       final Integer bookToUpdateId = 2;
 
-      assert !booksCache().containsKey(bookToUpdateId): "Cache should not initially contain the book with id " + bookToUpdateId;
+      assertFalse(booksCache().containsKey(bookToUpdateId), "Cache should not initially contain the book with id " + bookToUpdateId);
 
       log.infof("Caching book [ID = %d]", bookToUpdateId);
       final Book bookToUpdate = getBookService().findBook(bookToUpdateId);
-      assert booksCache().get(bookToUpdateId).equals(bookToUpdate) : "findBook(" + bookToUpdateId
-            + ") should have cached book";
+      assertEquals(bookToUpdate, booksCache().get(bookToUpdateId), "findBook(" + bookToUpdateId + ") should have cached book");
 
       log.infof("Updating book [%s] ...", bookToUpdate);
       bookToUpdate.setTitle("Work in Progress");
       getBookService().updateBook(bookToUpdate);
       log.infof("Book [%s] updated", bookToUpdate);
 
-      assert !booksCache().containsKey(bookToUpdateId) : "updateBook(" + bookToUpdate
-            + ") should have removed updated book from cache";
+      assertFalse(booksCache().containsKey(bookToUpdateId), "updateBook(" + bookToUpdate + ") should have removed updated book from cache");
    }
 
    /**
@@ -116,99 +116,91 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       getBookService().createBook(bookToCreate);
       log.infof("Book [%s] created", bookToCreate);
 
-      assert booksCache().get(bookToCreate.getId()).equals(bookToCreate) : "createBook(" + bookToCreate
-            + ") should have inserted created book into cache";
+      assertEquals(bookToCreate, booksCache().get(bookToCreate.getId()), "createBook(" + bookToCreate + ") should have inserted created book into cache");
    }
 
    @Test
    public void testFindCustomCacheResolver() {
       final Integer bookToCacheId = 5;
 
-      assert !getCache("custom").containsKey(bookToCacheId): "Cache should not initially contain the book with id " + bookToCacheId;
+      assertFalse(getCache("custom").containsKey(bookToCacheId), "Cache should not initially contain the book with id " + bookToCacheId);
 
       final Book cachedBook = getBookService().findBookCustomCacheResolver(bookToCacheId);
       log.infof("Book [%s] cached", cachedBook);
 
-      assert cachedBook.equals(getCache("custom").get(bookToCacheId)) : "findBook(" + bookToCacheId
-            + ") should have cached book";
+      assertEquals(getCache("custom").get(bookToCacheId), cachedBook, "findBook(" + bookToCacheId + ") should have cached book");
    }
 
    @Test
    public void testFindCustomKeyGenerator() {
       final Integer bookToCacheId = 5;
 
-      assert !booksCache().containsKey(bookToCacheId): "Cache should not initially contain the book with id " + bookToCacheId;
+      assertFalse(booksCache().containsKey(bookToCacheId), "Cache should not initially contain the book with id " + bookToCacheId);
 
       final Book cachedBook = getBookService().findBookCustomKeyGenerator(bookToCacheId);
       log.infof("Book [%s] cached", cachedBook);
 
-      assert cachedBook.equals(booksCache().get(bookToCacheId)) : "findBook(" + bookToCacheId
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToCacheId), cachedBook, "findBook(" + bookToCacheId + ") should have cached book");
    }
 
    @Test
    public void testFindConditionMet() {
       final Integer bookToCacheId = 5;
 
-      assert !booksCache().containsKey(bookToCacheId): "Cache should not initially contain the book with id " + bookToCacheId;
+      assertFalse(booksCache().containsKey(bookToCacheId), "Cache should not initially contain the book with id " + bookToCacheId);
 
       final Book cachedBook = getBookService().findBookCondition(bookToCacheId);
       log.infof("Book [%s] cached", cachedBook);
 
-      assert cachedBook.equals(booksCache().get(bookToCacheId)) : "findBook(" + bookToCacheId
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToCacheId), cachedBook, "findBook(" + bookToCacheId + ") should have cached book");
    }
 
    @Test
    public void testFindConditionNotMet() {
       final Integer bookToCacheId = 1;
 
-      assert !booksCache().containsKey(bookToCacheId): "Cache should not initially contain the book with id " + bookToCacheId;
+      assertFalse(booksCache().containsKey(bookToCacheId), "Cache should not initially contain the book with id " + bookToCacheId);
 
       final Book cachedBook = getBookService().findBookCondition(bookToCacheId);
       log.infof("Book [%s] cached", cachedBook);
 
-      assert !booksCache().containsKey(bookToCacheId) : "findBook(" + bookToCacheId
-            + ") should not have cached book";
+      assertFalse(booksCache().containsKey(bookToCacheId), "findBook(" + bookToCacheId + ") should not have cached book");
    }
 
    @Test
    public void testFindUnlessMet() {
       final Integer bookToCacheId = 1;
 
-      assert !booksCache().containsKey(bookToCacheId): "Cache should not initially contain the book with id " + bookToCacheId;
+      assertFalse(booksCache().containsKey(bookToCacheId), "Cache should not initially contain the book with id " + bookToCacheId);
 
       final Book cachedBook = getBookService().findBookUnless(bookToCacheId);
       log.infof("Book [%s] cached", cachedBook);
 
-      assert cachedBook.equals(booksCache().get(bookToCacheId)) : "findBook(" + bookToCacheId
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToCacheId), cachedBook, "findBook(" + bookToCacheId + ") should have cached book");
    }
 
    @Test
    public void testFindUnlessNotMet() {
       final Integer bookToCacheId = 5;
 
-      assert !booksCache().containsKey(bookToCacheId): "Cache should not initially contain the book with id " + bookToCacheId;
+      assertFalse(booksCache().containsKey(bookToCacheId), "Cache should not initially contain the book with id " + bookToCacheId);
 
       final Book cachedBook = getBookService().findBookUnless(bookToCacheId);
       log.infof("Book [%s] cached", cachedBook);
 
-      assert !booksCache().containsKey(bookToCacheId) : "findBook(" + bookToCacheId
-            + ") should not have cached book";
+      assertFalse(booksCache().containsKey(bookToCacheId), "findBook(" + bookToCacheId + ") should not have cached book");
    }
 
    @Test
    public void testFindCustomCacheManager() {
       final Integer bookToCacheId = 5;
 
-      assert !booksCache().containsKey(bookToCacheId): "Cache should not initially contain the book with id " + bookToCacheId;
+      assertFalse(booksCache().containsKey(bookToCacheId), "Cache should not initially contain the book with id " + bookToCacheId);
 
       final Book cachedBook = getBookService().findBookCustomCacheManager(bookToCacheId);
       log.infof("Book [%s] cached", cachedBook);
 
-      assert cachedBook.equals(booksCache().get(bookToCacheId)) : "findBook(" + bookToCacheId
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToCacheId), cachedBook, "findBook(" + bookToCacheId + ") should have cached book");
    }
 
    @Test
@@ -219,8 +211,7 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       getBookService().createBookCustomCacheManager(bookToCreate);
       log.infof("Book [%s] created", bookToCreate);
 
-      assert bookToCreate.equals(booksCache().get(bookToCreate.getId())) : "createBook(" + bookToCreate
-            + ") should have inserted created book into cache";
+      assertEquals(booksCache().get(bookToCreate.getId()), bookToCreate, "createBook(" + bookToCreate + ") should have inserted created book into cache");
    }
 
    @Test
@@ -231,8 +222,7 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       getBookService().createBookCustomCacheResolver(bookToCreate);
       log.infof("Book [%s] created", bookToCreate);
 
-      assert bookToCreate.equals(getCache("custom").get(bookToCreate.getId())) : "createBook(" + bookToCreate
-            + ") should have inserted created book into cache";
+      assertEquals(getCache("custom").get(bookToCreate.getId()), bookToCreate, "createBook(" + bookToCreate + ") should have inserted created book into cache");
    }
 
    @Test
@@ -243,8 +233,7 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       getBookService().createBookCustomKeyGenerator(bookToCreate);
       log.infof("Book [%s] created", bookToCreate);
 
-      assert booksCache().containsKey(bookToCreate) : "createBook(" + bookToCreate
-            + ") should have inserted created book into cache";
+      assertTrue(booksCache().containsKey(bookToCreate), "createBook(" + bookToCreate + ") should have inserted created book into cache");
    }
 
    @Test
@@ -255,8 +244,7 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       Book result = getBookService().createBookCondition(bookToCreate);
       log.infof("Book [%s] created", bookToCreate);
 
-      assert bookToCreate.equals(booksCache().get(result.getId())) : "createBook(" + bookToCreate
-            + ") should have inserted created book into cache";
+      assertEquals(booksCache().get(result.getId()), bookToCreate, "createBook(" + bookToCreate + ") should have inserted created book into cache");
    }
 
    @Test
@@ -267,9 +255,8 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       getBookService().createBookCondition(bookToCreate);
       log.infof("Book [%s] created", bookToCreate);
 
-      assert bookToCreate.getId() != null : "Book.id should have been set.";
-      assert !booksCache().containsKey(bookToCreate.getId()) : "createBook(" + bookToCreate
-            + ") should not have inserted created book into cache";
+      assertNotNull(bookToCreate.getId(), "Book.id should have been set.");
+      assertFalse(booksCache().containsKey(bookToCreate.getId()), "createBook(" + bookToCreate + ") should not have inserted created book into cache");
    }
 
    @Test
@@ -280,8 +267,7 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       getBookService().createBookUnless(bookToCreate);
       log.infof("Book [%s] created", bookToCreate);
 
-      assert bookToCreate.equals(booksCache().get(bookToCreate.getId())) : "createBook(" + bookToCreate
-            + ") should have inserted created book into cache";
+      assertEquals(booksCache().get(bookToCreate.getId()), bookToCreate, "createBook(" + bookToCreate + ") should have inserted created book into cache");
    }
 
    @Test
@@ -292,89 +278,80 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       getBookService().createBookUnless(bookToCreate);
       log.infof("Book [%s] created", bookToCreate);
 
-      assert !booksCache().containsKey(bookToCreate.getId()) : "createBook(" + bookToCreate
-            + ") should not have inserted created book into cache";
+      assertFalse(booksCache().containsKey(bookToCreate.getId()), "createBook(" + bookToCreate + ") should not have inserted created book into cache");
    }
 
    @Test
    public void testDeleteCustomCacheResolver() {
       final Integer bookToDeleteId = new Random().nextInt(10) + 1;
 
-      assert !getCache("custom").containsKey(bookToDeleteId): "Cache should not initially contain the book with id " + bookToDeleteId;
+      assertFalse(getCache("custom").containsKey(bookToDeleteId), "Cache should not initially contain the book with id " + bookToDeleteId);
 
       final Book bookToDelete = getBookService().findBookCustomCacheResolver(bookToDeleteId);
       log.infof("Book [%s] cached", bookToDelete);
 
-      assert bookToDelete.getId() != null : "Book.id should have been set.";
-      assert bookToDelete.equals(getCache("custom").get(bookToDelete.getId())) : "findBook(" + bookToDeleteId
-            + ") should have cached book";
+      assertNotNull(bookToDelete.getId(), "Book.id should have been set.");
+      assertEquals(getCache("custom").get(bookToDelete.getId()), bookToDelete, "findBook(" + bookToDeleteId + ") should have cached book");
 
       log.infof("Deleting book [%s] ...", bookToDelete);
       getBookService().deleteBookCustomCacheResolver(bookToDeleteId);
       log.infof("Book [%s] deleted", bookToDelete);
 
-      assert !getCache("custom").containsKey(bookToDelete.getId()) : "deleteBook(" + bookToDelete
-            + ") should have evicted book from cache.";
+      assertFalse(getCache("custom").containsKey(bookToDelete.getId()), "deleteBook(" + bookToDelete + ") should have evicted book from cache.");
    }
 
    @Test
    public void testDeleteCustomKeyGenerator() {
       final Integer bookToDeleteId = new Random().nextInt(10) + 1;
 
-      assert !booksCache().containsKey(bookToDeleteId): "Cache should not initially contain the book with id " + bookToDeleteId;
+      assertFalse(booksCache().containsKey(bookToDeleteId), "Cache should not initially contain the book with id " + bookToDeleteId);
 
       final Book bookToDelete = getBookService().findBook(bookToDeleteId);
       log.infof("Book [%s] cached", bookToDelete);
 
-      assert bookToDelete.equals(booksCache().get(bookToDeleteId)) : "findBook(" + bookToDeleteId
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToDeleteId), bookToDelete, "findBook(" + bookToDeleteId + ") should have cached book");
 
       log.infof("Deleting book [%s] ...", bookToDelete);
       getBookService().deleteBookCustomKeyGenerator(bookToDeleteId);
       log.infof("Book [%s] deleted", bookToDelete);
 
-      assert !booksCache().containsKey(bookToDelete.getId()) : "deleteBook(" + bookToDelete
-            + ") should have evicted book from cache.";
+      assertFalse(booksCache().containsKey(bookToDelete.getId()), "deleteBook(" + bookToDelete + ") should have evicted book from cache.");
    }
 
    @Test
    public void testDeleteConditionMet() {
       final Integer bookToDeleteId = 2;
 
-      assert !booksCache().containsKey(bookToDeleteId): "Cache should not initially contain the book with id " + bookToDeleteId;
+      assertFalse(booksCache().containsKey(bookToDeleteId), "Cache should not initially contain the book with id " + bookToDeleteId);
 
       final Book bookToDelete = getBookService().findBook(bookToDeleteId);
       log.infof("Book [%s] cached", bookToDelete);
 
-      assert bookToDelete.equals(booksCache().get(bookToDeleteId)) : "findBook(" + bookToDeleteId
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToDeleteId), bookToDelete, "findBook(" + bookToDeleteId + ") should have cached book");
 
       log.infof("Deleting book [%s] ...", bookToDelete);
       getBookService().deleteBookCondition(bookToDeleteId);
       log.infof("Book [%s] deleted", bookToDelete);
 
-      assert !booksCache().containsKey(bookToDelete.getId()) : "deleteBook(" + bookToDelete
-            + ") should have evicted book from cache.";
+      assertFalse(booksCache().containsKey(bookToDelete.getId()), "deleteBook(" + bookToDelete + ") should have evicted book from cache.");
    }
 
    @Test
    public void testDeleteConditionNotMet() {
       final Integer bookToDeleteId = 1;
 
-      assert !booksCache().containsKey(bookToDeleteId): "Cache should not initially contain the book with id " + bookToDeleteId;
+      assertFalse(booksCache().containsKey(bookToDeleteId), "Cache should not initially contain the book with id " + bookToDeleteId);
 
       final Book bookToDelete = getBookService().findBook(bookToDeleteId);
       log.infof("Book [%s] cached", bookToDelete);
 
-      assert bookToDelete.equals(booksCache().get(bookToDeleteId)) : "findBook(" + bookToDeleteId
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToDeleteId), bookToDelete, "findBook(" + bookToDeleteId + ") should have cached book");
 
       log.infof("Deleting book [%s] ...", bookToDelete);
       getBookService().deleteBookCondition(bookToDeleteId);
       log.infof("Book [%s] deleted", bookToDelete);
 
-      assert bookToDelete.equals(booksCache().get(bookToDeleteId)) : "deleteBook(" + bookToDelete
-            + ") should have evicted book from cache.";
+      assertEquals(booksCache().get(bookToDeleteId), bookToDelete, "deleteBook(" + bookToDelete + ") should have evicted book from cache.");
    }
 
    @Test
@@ -382,63 +359,56 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       final Integer bookToDeleteId1 = 5;
       final Integer bookToDeleteId2 = 6;
 
-      assert !booksCache().containsKey(bookToDeleteId1): "Cache should not initially contain the book with id " + bookToDeleteId1;
-      assert !booksCache().containsKey(bookToDeleteId2): "Cache should not initially contain the book with id " + bookToDeleteId2;
+      assertFalse(booksCache().containsKey(bookToDeleteId1), "Cache should not initially contain the book with id " + bookToDeleteId1);
+      assertFalse(booksCache().containsKey(bookToDeleteId2), "Cache should not initially contain the book with id " + bookToDeleteId2);
 
       final Book bookToDelete1 = getBookService().findBook(bookToDeleteId1);
       log.infof("Book [%s] cached", bookToDelete1);
 
-      assert bookToDelete1.equals(booksCache().get(bookToDeleteId1)) : "findBook(" + bookToDeleteId1
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToDeleteId1), bookToDelete1, "findBook(" + bookToDeleteId1 + ") should have cached book");
 
       final Book bookToDelete2 = getBookService().findBook(bookToDeleteId2);
       log.infof("Book [%s] cached", bookToDelete2);
 
-      assert bookToDelete2.equals(booksCache().get(bookToDeleteId2)) : "findBook(" + bookToDeleteId2
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToDeleteId2), bookToDelete2, "findBook(" + bookToDeleteId2 + ") should have cached book");
 
       log.infof("Deleting book [%s] ...", bookToDelete1);
       getBookService().deleteBookAllEntries(bookToDeleteId1);
       log.infof("Book [%s] deleted", bookToDelete1);
 
-      assert !booksCache().containsKey(bookToDelete1.getId()) : "deleteBook(" + bookToDelete1
-            + ") should have evicted book from cache.";
-      assert !booksCache().containsKey(bookToDelete2.getId()) : "deleteBook(" + bookToDelete2
-            + ") should have evicted book from cache.";
+      assertFalse(booksCache().containsKey(bookToDelete1.getId()), "deleteBook(" + bookToDelete1 + ") should have evicted book from cache.");
+      assertFalse(booksCache().containsKey(bookToDelete2.getId()), "deleteBook(" + bookToDelete2 + ") should have evicted book from cache.");
    }
 
    @Test
    public void testDeleteCustomCacheManager() {
       final Integer bookToDeleteId = new Random().nextInt(10) + 1;
 
-      assert !booksCache().containsKey(bookToDeleteId): "Cache should not initially contain the book with id " + bookToDeleteId;
+      assertFalse(booksCache().containsKey(bookToDeleteId), "Cache should not initially contain the book with id " + bookToDeleteId);
 
       final Book bookToDelete = getBookService().findBookCustomCacheManager(bookToDeleteId);
       log.infof("Book [%s] cached", bookToDelete);
 
-      assert bookToDelete.getId() != null : "Book.id should have been set.";
-      assert bookToDelete.equals(booksCache().get(bookToDelete.getId())) : "findBook(" + bookToDeleteId
-            + ") should have cached book";
+      assertNotNull(bookToDelete.getId(), "Book.id should have been set.");
+      assertEquals(booksCache().get(bookToDelete.getId()), bookToDelete, "findBook(" + bookToDeleteId + ") should have cached book");
 
       log.infof("Deleting book [%s] ...", bookToDelete);
       getBookService().deleteBookCustomCacheManager(bookToDeleteId);
       log.infof("Book [%s] deleted", bookToDelete);
 
-      assert !booksCache().containsKey(bookToDelete.getId()) : "deleteBook(" + bookToDelete
-            + ") should have evicted book from cache.";
+      assertFalse(booksCache().containsKey(bookToDelete.getId()), "deleteBook(" + bookToDelete + ") should have evicted book from cache.");
    }
 
    @Test
    public void testDeleteBookBeforeInvocation() {
       final Integer bookToDeleteId = new Random().nextInt(10) + 1;
 
-      assert !booksCache().containsKey(bookToDeleteId): "Cache should not initially contain the book with id " + bookToDeleteId;
+      assertFalse(booksCache().containsKey(bookToDeleteId), "Cache should not initially contain the book with id " + bookToDeleteId);
 
       final Book bookToDelete = getBookService().findBook(bookToDeleteId);
       log.infof("Book [%s] cached", bookToDelete);
 
-      assert bookToDelete.equals(booksCache().get(bookToDelete.getId())) : "findBook(" + bookToDeleteId
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToDelete.getId()), bookToDelete, "findBook(" + bookToDeleteId + ") should have cached book");
 
       log.infof("Deleting book [%s] ...", bookToDelete);
       try {
@@ -448,8 +418,7 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       }
       log.infof("Book [%s] deleted", bookToDelete);
 
-      assert !booksCache().containsKey(bookToDelete.getId()) : "deleteBook(" + bookToDelete
-            + ") should have evicted book from cache.";
+      assertFalse(booksCache().containsKey(bookToDelete.getId()), "deleteBook(" + bookToDelete + ") should have evicted book from cache.");
    }
 
    @Test
@@ -460,10 +429,8 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
       getBookService().createBookCachingBackup(bookToCreate);
       log.infof("Book [%s] created", bookToCreate);
 
-      assert bookToCreate.equals(booksCache().get(bookToCreate.getId())) : "createBook(" + bookToCreate
-            + ") should have inserted created book into cache";
-      assert bookToCreate.equals(backupCache().get(bookToCreate.getId())) : "createBook(" + bookToCreate
-            + ") should have inserted created book into cache";
+      assertEquals(booksCache().get(bookToCreate.getId()), bookToCreate, "createBook(" + bookToCreate + ") should have inserted created book into cache");
+      assertEquals(backupCache().get(bookToCreate.getId()), bookToCreate, "createBook(" + bookToCreate + ") should have inserted created book into cache");
    }
 
    @Test
@@ -471,43 +438,37 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
 
       final Integer bookToCacheId = 5;
 
-      assert !booksCache().containsKey(bookToCacheId) : "Cache should not initially contain the book with id " + bookToCacheId;
-      assert !backupCache().containsKey(bookToCacheId) : "Cache should not initially contain the book with id " + bookToCacheId;
+      assertFalse(booksCache().containsKey(bookToCacheId), "Cache should not initially contain the book with id " + bookToCacheId);
+      assertFalse(backupCache().containsKey(bookToCacheId), "Cache should not initially contain the book with id " + bookToCacheId);
 
       final Book cachedBook = getBookService().findBookCachingBackup(bookToCacheId);
       log.infof("Book [%s] cached", cachedBook);
 
-      assert cachedBook.equals(booksCache().get(cachedBook.getId())) : "findBook(" + bookToCacheId
-            + ") should have cached book";
-      assert cachedBook.equals(backupCache().get(cachedBook.getId())) : "findBook(" + bookToCacheId
-            + ") should have cached book";
+      assertEquals(booksCache().get(cachedBook.getId()), cachedBook, "findBook(" + bookToCacheId + ") should have cached book");
+      assertEquals(backupCache().get(cachedBook.getId()), cachedBook, "findBook(" + bookToCacheId + ") should have cached book");
    }
 
    @Test
    public void testCachingDelete() {
       final Integer bookToDeleteId = new Random().nextInt(10) + 1;
 
-      assert !booksCache().containsKey(bookToDeleteId) : "Cache should not initially contain the book with id " + bookToDeleteId;
-      assert !backupCache().containsKey(bookToDeleteId) : "Cache should not initially contain the book with id " + bookToDeleteId;
+      assertFalse(booksCache().containsKey(bookToDeleteId), "Cache should not initially contain the book with id " + bookToDeleteId);
+      assertFalse(backupCache().containsKey(bookToDeleteId), "Cache should not initially contain the book with id " + bookToDeleteId);
 
       final Book bookToDelete1 = getBookService().findBook(bookToDeleteId);
       log.infof("Book [%s] cached", bookToDelete1);
       final Book bookToDelete2 = getBookService().findBookBackup(bookToDeleteId);
       log.infof("Book [%s] cached", bookToDelete2);
 
-      assert bookToDelete1.equals(booksCache().get(bookToDeleteId)) : "findBook(" + bookToDeleteId
-            + ") should have cached book";
-      assert bookToDelete1.equals(backupCache().get(bookToDeleteId)) : "findBook(" + bookToDeleteId
-            + ") should have cached book";
+      assertEquals(booksCache().get(bookToDeleteId), bookToDelete1, "findBook(" + bookToDeleteId + ") should have cached book");
+      assertEquals(backupCache().get(bookToDeleteId), bookToDelete1, "findBook(" + bookToDeleteId + ") should have cached book");
 
       log.infof("Deleting book [%s] ...", bookToDelete1);
       getBookService().deleteBookCachingBackup(bookToDeleteId);
       log.infof("Book [%s] deleted", bookToDelete1);
 
-      assert !booksCache().containsKey(bookToDelete1.getId()) : "deleteBook(" + bookToDelete1
-            + ") should have evicted book from cache.";
-      assert !backupCache().containsKey(bookToDelete1.getId()) : "deleteBook(" + bookToDelete2
-            + ") should have evicted book from cache.";
+      assertFalse(booksCache().containsKey(bookToDelete1.getId()), "deleteBook(" + bookToDelete1 + ") should have evicted book from cache.");
+      assertFalse(backupCache().containsKey(bookToDelete1.getId()), "deleteBook(" + bookToDelete2 + ") should have evicted book from cache.");
    }
 
    protected BasicCache<Object, Object> booksCache() {

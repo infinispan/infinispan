@@ -3,7 +3,7 @@ package org.infinispan.server.memcached.logging;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBuilder;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

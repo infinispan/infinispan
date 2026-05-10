@@ -2,7 +2,7 @@ package org.infinispan.spring.remote.provider;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -80,9 +80,9 @@ public class SpringRemoteCacheManagerWithReadWriteTimeoutTest extends SingleCach
 
       final Cache defaultCache = objectUnderTest.getCache(TEST_CACHE_NAME);
 
-      assertEquals("getCache(" + TEST_CACHE_NAME + ") should have returned a cache name \""
-                  + TEST_CACHE_NAME + "\". However, the returned cache has a different name.",
-            TEST_CACHE_NAME, defaultCache.getName());
+      assertEquals(TEST_CACHE_NAME, defaultCache.getName(),
+            "getCache(" + TEST_CACHE_NAME + ") should have returned a cache name \""
+                  + TEST_CACHE_NAME + "\". However, the returned cache has a different name.");
 
       defaultCache.put("k1", "v1");
       CountDownLatch latch = new CountDownLatch(1);

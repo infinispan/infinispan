@@ -2,9 +2,9 @@ package org.infinispan.distribution.rehash;
 
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;

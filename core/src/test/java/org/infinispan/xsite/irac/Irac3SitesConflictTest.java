@@ -1,5 +1,7 @@
 package org.infinispan.xsite.irac;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +22,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.TestOperation;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
-import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
@@ -290,7 +291,7 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
       //check if everything is correct
       for (int i = 0; i < N_SITES; ++i) {
          String fValue = finalValues[i];
-         assertInSite(siteName(i), cache -> AssertJUnit.assertEquals(fValue, cache.get(key)));
+         assertInSite(siteName(i), cache -> assertEquals(fValue, cache.get(key)));
       }
 
       //enable xsite. this will send the keys!

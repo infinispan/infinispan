@@ -233,7 +233,9 @@ public class PutFromLoadValidator {
       chain.removeInterceptor(NonTxPutFromLoadInterceptor.class);
 
       chain.getInterceptors().stream()
-            .filter(BaseInvalidationInterceptor.class::isInstance).findFirst().map(AsyncInterceptor::getClass)
+            .filter(BaseInvalidationInterceptor.class::isInstance)
+            .findFirst()
+            .map(AsyncInterceptor::getClass)
             .ifPresent(invalidationClass -> {
                InvalidationInterceptor invalidationInterceptor = new InvalidationInterceptor();
                cr.replaceComponent(InvalidationInterceptor.class.getName(), invalidationInterceptor, true);
@@ -242,15 +244,15 @@ public class PutFromLoadValidator {
             });
 
       chain.getInterceptors().stream()
-            .filter(LockingInterceptor.class::isInstance).findFirst().map(AsyncInterceptor::getClass)
+            .filter(LockingInterceptor.class::isInstance)
+            .findFirst()
+            .map(AsyncInterceptor::getClass)
             .ifPresent(invalidationClass -> {
                NonTransactionalLockingInterceptor lockingInterceptor = new NonTransactionalLockingInterceptor();
                cr.replaceComponent(NonTransactionalLockingInterceptor.class.getName(), lockingInterceptor, true);
                cr.getComponent(NonTransactionalLockingInterceptor.class).running();
                chain.replaceInterceptor(lockingInterceptor, LockingInterceptor.class);
             });
-
-
       return cr.getComponent(PutFromLoadValidator.class).running();
    }
 
@@ -314,10 +316,9 @@ public class PutFromLoadValidator {
                         // this is a naked put
                         if (pending.hasInvalidator()) {
                            valid = false;
-                        }
-                        // we need this check since registerPendingPut (creating new pp) can get between invalidation
-                        // and naked put caused by the invalidation
-                        else if (pending.lastInvalidationEnd != Long.MIN_VALUE) {
+                        } else if (pending.lastInvalidationEnd != Long.MIN_VALUE) {
+                           // we need this check since registerPendingPut (creating new pp) can get between invalidation
+                           // and naked put caused by the invalidation
                            // if this transaction started after last invalidation we can continue
                            valid = txTimestamp > pending.lastInvalidationEnd;
                         } else {
@@ -369,10 +370,8 @@ public class PutFromLoadValidator {
 
             if (t instanceof RuntimeException) {
                throw (RuntimeException) t;
-            } else if (t instanceof Error) {
-               throw (Error) t;
             } else {
-               throw new RuntimeException(t);
+               throw (Error) t;
             }
          }
       }
@@ -424,7 +423,7 @@ public class PutFromLoadValidator {
       try {
          // Acquire the lock for each entry to ensure any ongoing
          // work associated with it is completed before we return
-         // We cannot erase the map: if there was ongoing invalidation and we removed it, registerPendingPut
+         // We cannot erase the map: if there was ongoing invalidation, and we removed it, registerPendingPut
          // started after that would have no way of finding out that the entity *is* invalidated (it was
          // removed from the cache and now the DB is about to be updated).
          for (Iterator<PendingPutMap> it = pendingPuts.values().iterator(); it.hasNext(); ) {
@@ -712,8 +711,7 @@ public class PutFromLoadValidator {
       public PendingPut remove(Object ownerForPut) {
          PendingPut removed = null;
          if (fullMap == null) {
-            if (singlePendingPut != null
-                  && singlePendingPut.owner.equals(ownerForPut)) {
+            if (singlePendingPut != null && singlePendingPut.owner.equals(ownerForPut)) {
                removed = singlePendingPut;
                singlePendingPut = null;
             }
@@ -724,8 +722,7 @@ public class PutFromLoadValidator {
       }
 
       public int size() {
-         return fullMap == null ? (singlePendingPut == null ? 0 : 1)
-               : fullMap.size();
+         return fullMap == null ? (singlePendingPut == null ? 0 : 1) : fullMap.size();
       }
 
       public boolean acquireLock(long time, TimeUnit unit) {
@@ -770,12 +767,7 @@ public class PutFromLoadValidator {
          assert fullMap != null;
          long now = timeSource.nextTimestamp();
          log.tracef("Contains %d, doing GC at %d, expiration %d", size(), now, expirationPeriod);
-         for (Iterator<PendingPut> it = fullMap.values().iterator(); it.hasNext(); ) {
-            PendingPut pp = it.next();
-            if (pp.gc(now, expirationPeriod)) {
-               it.remove();
-            }
-         }
+         fullMap.values().removeIf(pp -> pp.gc(now, expirationPeriod));
       }
 
       public void addInvalidator(Object owner, Object valueForPFER, long now) {
@@ -827,7 +819,7 @@ public class PutFromLoadValidator {
             if (singleInvalidator != null) {
                return Collections.singleton(singleInvalidator);
             } else if (invalidators != null) {
-               return new ArrayList<Invalidator>(invalidators.values());
+               return new ArrayList<>(invalidators.values());
             } else {
                return Collections.EMPTY_LIST;
             }
@@ -896,8 +888,8 @@ public class PutFromLoadValidator {
       public boolean gc(long now, long expirationPeriod) {
          if (registeredTimestamp == Long.MIN_VALUE) {
             registeredTimestamp = now;
-         } else if (registeredTimestamp + expirationPeriod < now) {
-            return true; // this is a leaked pending put
+         } else {
+            return registeredTimestamp + expirationPeriod < now; // this is a leaked pending put
          }
          return false;
       }
@@ -916,11 +908,9 @@ public class PutFromLoadValidator {
 
       @Override
       public String toString() {
-         final StringBuilder sb = new StringBuilder("{");
-         sb.append("Owner=").append(lockOwnerToString(owner));
-         sb.append(", Timestamp=").append(registeredTimestamp);
-         sb.append('}');
-         return sb.toString();
+         return "{" + "Owner=" + lockOwnerToString(owner) +
+               ", Timestamp=" + registeredTimestamp +
+               '}';
       }
    }
 }

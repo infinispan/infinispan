@@ -1,6 +1,7 @@
 package org.infinispan.affinity.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +58,7 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
       }
 
       for (KeyConsumer kc : consumers) {
-         assertEquals(null, kc.exception);
+         assertNull(kc.exception);
       }
 
       assertCorrectCapacity();

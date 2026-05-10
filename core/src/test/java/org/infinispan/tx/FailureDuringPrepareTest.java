@@ -1,7 +1,8 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -52,20 +53,20 @@ public class FailureDuringPrepareTest extends MultipleCacheManagersTest {
          tm(0).getTransaction().enlistResource(new XAResourceAdapter());
       }
 
-      assertEquals(lockManager(0).getNumberOfLocksHeld(), 0);
-      assertEquals(lockManager(1).getNumberOfLocksHeld(), 0);
-      assertEquals(lockManager(2).getNumberOfLocksHeld(), 0);
+      assertEquals(0, lockManager(0).getNumberOfLocksHeld());
+      assertEquals(0, lockManager(1).getNumberOfLocksHeld());
+      assertEquals(0, lockManager(2).getNumberOfLocksHeld());
 
       try {
          tm(0).commit();
-         assert false;
+         fail();
       } catch (Exception e) {
          log.debug("Ignoring expected exception during prepare", e);
       }
 
-      assertEquals(lockManager(0).getNumberOfLocksHeld(), 0);
-      assertEquals(lockManager(1).getNumberOfLocksHeld(), 0);
-      assertEquals(lockManager(2).getNumberOfLocksHeld(), 0);
+      assertEquals(0, lockManager(0).getNumberOfLocksHeld());
+      assertEquals(0, lockManager(1).getNumberOfLocksHeld());
+      assertEquals(0, lockManager(2).getNumberOfLocksHeld());
    }
 
 

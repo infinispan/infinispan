@@ -1,8 +1,8 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -37,7 +37,7 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
 
    @Test
    public void testPrimaryOwnerGoesDownAfterSendingEvent() throws InterruptedException, ExecutionException,
-                                                                  TimeoutException {
+         TimeoutException {
       final Cache<Object, String> cache0 = cache(0, CACHE_NAME);
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
@@ -68,8 +68,7 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
       // 3: top     READ_ALL_WRITE_ALL
       // 4: top     READ_NEW_WRITE_ALL
       // 5: top     NO_REBALANCE
-      assertTrue("Expected 2 - 6 events, but received " + clusterListener.events,
-            clusterListener.events.size() >= 2 && clusterListener.events.size() <= 6);
+      assertTrue(clusterListener.events.size() >= 2 && clusterListener.events.size() <= 6, "Expected 2 - 6 events, but received " + clusterListener.events);
       // Since the first event was generated properly it is a create without retry
       checkEvent(clusterListener.events.get(0), key, true, false);
 
@@ -85,7 +84,7 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
    protected void checkEvent(CacheEntryEvent<Object, String> event, MagicKey key, boolean isCreated, boolean isRetried) {
       if (isCreated) {
          assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());
-         CacheEntryCreatedEvent<Object, String> createEvent = (CacheEntryCreatedEvent<Object, String>)event;
+         CacheEntryCreatedEvent<Object, String> createEvent = (CacheEntryCreatedEvent<Object, String>) event;
          assertEquals(createEvent.isCommandRetried(), isRetried);
       } else {
          assertEquals(Event.Type.CACHE_ENTRY_MODIFIED, event.getType());

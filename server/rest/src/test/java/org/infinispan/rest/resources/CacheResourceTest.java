@@ -22,7 +22,7 @@ import static org.infinispan.rest.RequestHeader.IF_MODIFIED_SINCE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.testing.skip.SkipTestNG.skipIf;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;

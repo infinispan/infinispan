@@ -1,6 +1,6 @@
 package org.infinispan.functional;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;

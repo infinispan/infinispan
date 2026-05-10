@@ -4,11 +4,11 @@ import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMe
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.sleepThread;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotSame;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -76,23 +76,23 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
 
    public void testUnsupportedStats() {
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
-      assertEquals(stats.val1().get("pointer_size"), "0");
-      assertEquals(stats.val1().get("rusage_user"), "0");
-      assertEquals(stats.val1().get("rusage_system"), "0");
-      assertEquals(stats.val1().get("bytes"), "0");
-      assertEquals(stats.val1().get("connection_structures"), "0");
-      assertEquals(stats.val1().get("auth_cmds"), "0");
-      assertEquals(stats.val1().get("auth_errors"), "0");
-      assertEquals(stats.val1().get("limit_maxbytes"), "0");
-      assertEquals(stats.val1().get("conn_yields"), "0");
-      assertEquals(stats.val1().get("reclaimed"), "0");
+      assertEquals("0", stats.val1().get("pointer_size"));
+      assertEquals("0", stats.val1().get("rusage_user"));
+      assertEquals("0", stats.val1().get("rusage_system"));
+      assertEquals("0", stats.val1().get("bytes"));
+      assertEquals("0", stats.val1().get("connection_structures"));
+      assertEquals("0", stats.val1().get("auth_cmds"));
+      assertEquals("0", stats.val1().get("auth_errors"));
+      assertEquals("0", stats.val1().get("limit_maxbytes"));
+      assertEquals("0", stats.val1().get("conn_yields"));
+      assertEquals("0", stats.val1().get("reclaimed"));
    }
 
    public void testUncomparableStats() {
       sleepThread(TimeUnit.SECONDS.toMillis(1));
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
-      assertNotSame(stats.val1().get("uptime"), "0");
-      assertNotSame(stats.val1().get("time"), "0");
+      assertNotSame("0", stats.val1().get("uptime"));
+      assertNotSame("0", stats.val1().get("time"));
       assertNotSame(stats.val1().get("uptime"), stats.val1().get("time"));
    }
 
@@ -103,28 +103,28 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
 
    public void testConnStats() {
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
-      assertEquals(stats.val1().get("curr_connections"), "1");
-      assertEquals(stats.val1().get("total_connections"), "1");
-      assertEquals(stats.val1().get("threads"), "0");
+      assertEquals("1", stats.val1().get("curr_connections"));
+      assertEquals("1", stats.val1().get("total_connections"));
+      assertEquals("0", stats.val1().get("threads"));
    }
 
    public void testStats(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
-      assertEquals(stats.val1().get("cmd_set"), "0");
-      assertEquals(stats.val1().get("cmd_get"), "0");
-      assertEquals(stats.val1().get("get_hits"), "0");
-      assertEquals(stats.val1().get("get_misses"), "0");
-      assertEquals(stats.val1().get("delete_hits"), "0");
-      assertEquals(stats.val1().get("delete_misses"), "0");
-      assertEquals(stats.val1().get("curr_items"), "0");
-      assertEquals(stats.val1().get("total_items"), "0");
-      assertEquals(stats.val1().get("incr_misses"), "0");
-      assertEquals(stats.val1().get("incr_hits"), "0");
-      assertEquals(stats.val1().get("decr_misses"), "0");
-      assertEquals(stats.val1().get("decr_hits"), "0");
-      assertEquals(stats.val1().get("cas_misses"), "0");
-      assertEquals(stats.val1().get("cas_hits"), "0");
-      assertEquals(stats.val1().get("cas_badval"), "0");
+      assertEquals("0", stats.val1().get("cmd_set"));
+      assertEquals("0", stats.val1().get("cmd_get"));
+      assertEquals("0", stats.val1().get("get_hits"));
+      assertEquals("0", stats.val1().get("get_misses"));
+      assertEquals("0", stats.val1().get("delete_hits"));
+      assertEquals("0", stats.val1().get("delete_misses"));
+      assertEquals("0", stats.val1().get("curr_items"));
+      assertEquals("0", stats.val1().get("total_items"));
+      assertEquals("0", stats.val1().get("incr_misses"));
+      assertEquals("0", stats.val1().get("incr_hits"));
+      assertEquals("0", stats.val1().get("decr_misses"));
+      assertEquals("0", stats.val1().get("decr_hits"));
+      assertEquals("0", stats.val1().get("cas_misses"));
+      assertEquals("0", stats.val1().get("cas_hits"));
+      assertEquals("0", stats.val1().get("cas_badval"));
 
       OperationFuture<Boolean> f = client.set(k(m), 0, v(m));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
@@ -133,33 +133,33 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       assertEquals(client.get(k(m, "k1-")), v(m, "v1-"));
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("cmd_set"), "2");
-      assertEquals(stats.val1().get("cmd_get"), "2");
-      assertEquals(stats.val1().get("get_hits"), "2");
-      assertEquals(stats.val1().get("get_misses"), "0");
-      assertEquals(stats.val1().get("delete_hits"), "0");
-      assertEquals(stats.val1().get("delete_misses"), "0");
-      assertEquals(stats.val1().get("curr_items"), "2");
-      assertEquals(stats.val1().get("total_items"), "2");
+      assertEquals("2", stats.val1().get("cmd_set"));
+      assertEquals("2", stats.val1().get("cmd_get"));
+      assertEquals("2", stats.val1().get("get_hits"));
+      assertEquals("0", stats.val1().get("get_misses"));
+      assertEquals("0", stats.val1().get("delete_hits"));
+      assertEquals("0", stats.val1().get("delete_misses"));
+      assertEquals("2", stats.val1().get("curr_items"));
+      assertEquals("2", stats.val1().get("total_items"));
 
       f = client.delete(k(m, "k1-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("curr_items"), "1");
-      assertEquals(stats.val1().get("total_items"), "2");
-      assertEquals(stats.val1().get("delete_hits"), "1");
-      assertEquals(stats.val1().get("delete_misses"), "0");
+      assertEquals("1", stats.val1().get("curr_items"));
+      assertEquals("2", stats.val1().get("total_items"));
+      assertEquals("1", stats.val1().get("delete_hits"));
+      assertEquals("0", stats.val1().get("delete_misses"));
 
       assertNull(client.get(k(m, "k99-")));
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("get_hits"), "2");
-      assertEquals(stats.val1().get("get_misses"), "1");
+      assertEquals("2", stats.val1().get("get_hits"));
+      assertEquals("1", stats.val1().get("get_misses"));
 
       f = client.delete(k(m, "k99-"));
       assertFalse(f.get(timeout, TimeUnit.SECONDS));
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("delete_hits"), "1");
-      assertEquals(stats.val1().get("delete_misses"), "1");
+      assertEquals("1", stats.val1().get("delete_hits"));
+      assertEquals("1", stats.val1().get("delete_misses"));
 
       int future = (int) TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime() + 1000);
       f = client.set(k(m, "k3-"), future, v(m, "v3-"));
@@ -167,13 +167,13 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       timeService.advance(1100);
       assertNull(client.get(k(m, "k3-")));
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("curr_items"), "1");
-      assertEquals(stats.val1().get("total_items"), "3");
+      assertEquals("1", stats.val1().get("curr_items"));
+      assertEquals("3", stats.val1().get("total_items"));
 
       client.incr(k(m, "k4-"), 1);
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("incr_misses"), "1");
-      assertEquals(stats.val1().get("incr_hits"), "0");
+      assertEquals("1", stats.val1().get("incr_misses"));
+      assertEquals("0", stats.val1().get("incr_hits"));
 
       f = client.set(k(m, "k4-"), 0, "1");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
@@ -181,13 +181,13 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       client.incr(k(m, "k4-"), 2);
       client.incr(k(m, "k4-"), 4);
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("incr_misses"), "1");
-      assertEquals(stats.val1().get("incr_hits"), "3");
+      assertEquals("1", stats.val1().get("incr_misses"));
+      assertEquals("3", stats.val1().get("incr_hits"));
 
       client.decr(k(m, "k5-"), 1);
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("decr_misses"), "1");
-      assertEquals(stats.val1().get("decr_hits"), "0");
+      assertEquals("1", stats.val1().get("decr_misses"));
+      assertEquals("0", stats.val1().get("decr_hits"));
 
       f = client.set(k(m, "k5-"), 0, "8");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
@@ -195,14 +195,14 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       client.decr(k(m, "k5-"), 2);
       client.decr(k(m, "k5-"), 4);
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("decr_misses"), "1");
-      assertEquals(stats.val1().get("decr_hits"), "3");
+      assertEquals("1", stats.val1().get("decr_misses"));
+      assertEquals("3", stats.val1().get("decr_hits"));
 
       client.cas(k(m, "k6-"), 1234, v(m, "v6-"));
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("cas_misses"), "1");
-      assertEquals(stats.val1().get("cas_hits"), "0");
-      assertEquals(stats.val1().get("cas_badval"), "0");
+      assertEquals("1", stats.val1().get("cas_misses"));
+      assertEquals("0", stats.val1().get("cas_hits"));
+      assertEquals("0", stats.val1().get("cas_badval"));
 
       f = client.set(k(m, "k6-"), 0, v(m, "v6-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
@@ -210,14 +210,14 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       long old = value.getCas();
       client.cas(k(m, "k6-"), value.getCas(), v(m, "v66-"));
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("cas_misses"), "1");
-      assertEquals(stats.val1().get("cas_hits"), "1");
-      assertEquals(stats.val1().get("cas_badval"), "0");
+      assertEquals("1", stats.val1().get("cas_misses"));
+      assertEquals("1", stats.val1().get("cas_hits"));
+      assertEquals("0", stats.val1().get("cas_badval"));
       client.cas(k(m, "k6-"), old, v(m, "v66-"));
       stats = getStats(stats.val2(), stats.val3());
-      assertEquals(stats.val1().get("cas_misses"), "1");
-      assertEquals(stats.val1().get("cas_hits"), "1");
-      assertEquals(stats.val1().get("cas_badval"), "1");
+      assertEquals("1", stats.val1().get("cas_misses"));
+      assertEquals("1", stats.val1().get("cas_hits"));
+      assertEquals("1", stats.val1().get("cas_badval"));
    }
 
    private List<MemcachedClient> createMultipleClients(List<MemcachedClient> clients, int number, int from)
@@ -246,7 +246,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
 
       assertTrue(Integer.parseInt(mbeanServer.getAttribute(on, "TotalBytesRead").toString()) > 0);
       assertTrue(Integer.parseInt(mbeanServer.getAttribute(on, "TotalBytesWritten").toString()) > 0);
-      assertEquals(mbeanServer.getAttribute(on, "NumberOfLocalConnections"), 1);
+      assertEquals(1, mbeanServer.getAttribute(on, "NumberOfLocalConnections"));
 
       List<MemcachedClient> clients = new ArrayList<>();
       try {
@@ -275,7 +275,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
 
    private Triple<Map<String, String>, Integer, Integer> getStats(int currentBytesRead, int currentBytesWritten) {
       Map<SocketAddress, Map<String, String>> globalStats = client.getStats();
-      assertEquals(globalStats.size(), 1);
+      assertEquals(1, globalStats.size());
       Map<String, String> stats = globalStats.values().iterator().next();
       int bytesRead = assertHigherBytes(currentBytesRead, stats.get("bytes_read"));
       int bytesWritten = assertHigherBytes(currentBytesWritten, stats.get("bytes_written"));

@@ -3,9 +3,9 @@ package org.infinispan.lock;
 import static java.util.Arrays.asList;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.testing.Exceptions.expectCompletionException;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -123,7 +123,7 @@ public class ConsistentReliabilitySplitBrainTest extends BaseClusteredLockSplitB
       CompletableFuture<Boolean> tryLock1Result = lock1.tryLock(1, TimeUnit.SECONDS);
       CompletableFuture<Boolean> tryLock2Result = lock2.tryLock(1, TimeUnit.SECONDS);
 
-      assertTrue("Just one of the locks has to work", await(tryLock1Result) ^ await(tryLock2Result));
+      assertTrue(await(tryLock1Result) ^ await(tryLock2Result), "Just one of the locks has to work");
 
       assertFailureFromMinorityPartition(lock0);
    }
@@ -146,7 +146,7 @@ public class ConsistentReliabilitySplitBrainTest extends BaseClusteredLockSplitB
 
       splitCluster(new int[]{0}, new int[]{1, 2, 3, 4, 5});
 
-      assertTrue("Just one of the locks has to work", await(tryLock1) ^ await(tryLock2));
+      assertTrue(await(tryLock1) ^ await(tryLock2), "Just one of the locks has to work");
 
       assertFailureFromMinorityPartition(lock0);
    }
@@ -156,7 +156,7 @@ public class ConsistentReliabilitySplitBrainTest extends BaseClusteredLockSplitB
       if (locked) {
          await(lock.unlock());
       }
-      assertTrue("Lock acquisition should be true " + lock, locked);
+      assertTrue(locked, "Lock acquisition should be true " + lock);
    }
 
    private void assertFailureFromMinorityPartition(ClusteredLock lock) {

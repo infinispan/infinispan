@@ -1,7 +1,7 @@
 package org.infinispan.test.concurrent;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;

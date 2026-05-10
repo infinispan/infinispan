@@ -1,7 +1,7 @@
 package org.infinispan.container.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
 
@@ -46,8 +46,7 @@ public class DefaultSegmentedDataContainerTest extends MultipleCacheManagersTest
 
          for (int i = 0; i < segmentedDataContainer.maps.length(); ++i) {
             if (segmentedDataContainer.maps.get(i) != null) {
-               assertTrue("Segment " + i + " has non null map, but wasn't owned by node: " + address + "!",
-                     segments.contains(i));
+               assertTrue(segments.contains(i), "Segment " + i + " has non null map, but wasn't owned by node: " + address + "!");
                mapCount++;
             }
          }

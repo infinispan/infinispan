@@ -3,7 +3,7 @@ package org.infinispan.server.resp;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.lang.reflect.Method;

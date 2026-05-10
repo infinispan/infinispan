@@ -2,7 +2,8 @@ package org.infinispan.persistence;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -112,7 +113,7 @@ public abstract class MultiStoresFunctionalTest<TStoreConfigurationBuilder exten
             cache0.put("KEY2", "VALUE2 V2");
             assertEquals("VALUE2 V2", cache0.get("KEY2"));
             cache0.remove("KEY2");
-            assertEquals(null, cache0.get("KEY2"));
+            assertNull(cache0.get("KEY2"));
 
             withCacheManager(new CacheManagerCallable(
                   TestCacheManagerFactory.createClusteredCacheManager(configs.get(1))) {

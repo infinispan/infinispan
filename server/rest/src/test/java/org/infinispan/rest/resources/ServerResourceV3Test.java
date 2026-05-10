@@ -3,8 +3,8 @@ package org.infinispan.rest.resources;
 import static io.netty.handler.codec.http.HttpHeaderNames.ACCEPT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 

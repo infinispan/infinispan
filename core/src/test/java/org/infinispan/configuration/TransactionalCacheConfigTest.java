@@ -1,7 +1,10 @@
 package org.infinispan.configuration;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -29,11 +32,11 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
 
    public void test() {
       final ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      assert !c.build().transaction().transactionMode().isTransactional();
+      assertFalse(c.build().transaction().transactionMode().isTransactional());
       c.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      assert c.build().transaction().transactionMode().isTransactional();
+      assertTrue(c.build().transaction().transactionMode().isTransactional());
       c.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
-      assert !c.build().transaction().transactionMode().isTransactional();
+      assertFalse(c.build().transaction().transactionMode().isTransactional());
    }
 
    public void testTransactionModeOverride() {
@@ -46,42 +49,42 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
 
    public void testDefaults() {
       Configuration c = new ConfigurationBuilder().build();
-      assert !c.transaction().transactionMode().isTransactional();
+      assertFalse(c.transaction().transactionMode().isTransactional());
 
       c = TestCacheManagerFactory.getDefaultCacheConfiguration(false).build();
-      assert !c.transaction().transactionMode().isTransactional();
+      assertFalse(c.transaction().transactionMode().isTransactional());
 
       c = TestCacheManagerFactory.getDefaultCacheConfiguration(true).build();
-      assert c.transaction().transactionMode().isTransactional();
+      assertTrue(c.transaction().transactionMode().isTransactional());
 
       c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false).build();
-      assert !c.transaction().transactionMode().isTransactional();
+      assertFalse(c.transaction().transactionMode().isTransactional());
 
       c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true).build();
-      assert c.transaction().transactionMode().isTransactional();
+      assertTrue(c.transaction().transactionMode().isTransactional());
    }
 
    public void testTransactionalityInduced() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       Configuration c = cb.build();
-      assert !c.transaction().transactionMode().isTransactional();
+      assertFalse(c.transaction().transactionMode().isTransactional());
 
       c = cb.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup()).build();
-      assert c.transaction().transactionMode().isTransactional();
+      assertTrue(c.transaction().transactionMode().isTransactional());
 
       cb = new ConfigurationBuilder();
       cb.invocationBatching().enable();
-      assert cb.build().transaction().transactionMode().isTransactional();
+      assertTrue(cb.build().transaction().transactionMode().isTransactional());
    }
 
    public void testInvocationBatchingAndInducedTm() {
       final ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.invocationBatching().enable();
-      assert cb.build().transaction().transactionMode().isTransactional();
+      assertTrue(cb.build().transaction().transactionMode().isTransactional());
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(cb)){
          @Override
          public void call() {
-            assert cm.getCache().getAdvancedCache().getTransactionManager() != null;
+            assertNotNull(cm.getCache().getAdvancedCache().getTransactionManager());
          }
       });
    }
@@ -96,7 +99,7 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
          public void call() {
             cm.defineConfiguration("transactional", c.build());
             Cache<?, ?> cache = cm.getCache("transactional");
-            assert cache.getCacheConfiguration().transaction().transactionMode().isTransactional();
+            assertTrue(cache.getCacheConfiguration().transaction().transactionMode().isTransactional());
          }
       });
    }
@@ -106,19 +109,19 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
       cb.invocationBatching().enable();
       final Configuration c = cb.build();
 
-      assert c.invocationBatching().enabled();
-      assert c.transaction().transactionMode().isTransactional();
+      assertTrue(c.invocationBatching().enabled());
+      assertTrue(c.transaction().transactionMode().isTransactional());
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())) {
          @Override
          public void call() {
-            assert !cm.getCache().getCacheConfiguration().transaction().transactionMode().isTransactional();
+            assertFalse(cm.getCache().getCacheConfiguration().transaction().transactionMode().isTransactional());
 
             cm.defineConfiguration("a", c);
             final Cache<Object, Object> a = cm.getCache("a");
 
-            assert a.getCacheConfiguration().invocationBatching().enabled();
-            assert a.getCacheConfiguration().transaction().transactionMode().isTransactional();
+            assertTrue(a.getCacheConfiguration().invocationBatching().enabled());
+            assertTrue(a.getCacheConfiguration().transaction().transactionMode().isTransactional());
          }
       });
    }

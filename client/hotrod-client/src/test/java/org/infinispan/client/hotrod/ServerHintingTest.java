@@ -3,8 +3,8 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -110,21 +110,20 @@ public class ServerHintingTest extends MultipleCacheManagersTest {
       for (Map.Entry<SocketAddress, Set<Integer>> entry : cti.getSegmentsPerServer().entrySet()) {
          IntSet serverPrimarySegments;
          InetSocketAddress clientAddress = (InetSocketAddress) entry.getKey();
-         if (hotRodServer1.getAddress().getPort() ==  clientAddress.getPort()) {
+         if (hotRodServer1.getAddress().getPort() == clientAddress.getPort()) {
             serverPrimarySegments = cache(0).getAdvancedCache().getDistributionManager().getCacheTopology().getLocalPrimarySegments();
-         } else if (hotRodServer2.getAddress().getPort() ==  clientAddress.getPort()) {
+         } else if (hotRodServer2.getAddress().getPort() == clientAddress.getPort()) {
             serverPrimarySegments = cache(1).getAdvancedCache().getDistributionManager().getCacheTopology().getLocalPrimarySegments();
          } else {
-            assert hotRodServer3.getAddress().getPort() ==  clientAddress.getPort();
+            assertTrue(hotRodServer3.getAddress().getPort() == clientAddress.getPort());
             serverPrimarySegments = cache(2).getAdvancedCache().getDistributionManager().getCacheTopology().getLocalPrimarySegments();
          }
          Set<Integer> clientPrimarySegments = entry.getValue();
 
-         assertEquals("Segments should be same server was : " + serverPrimarySegments + " and client was: " + clientPrimarySegments,
-               clientPrimarySegments.size(), serverPrimarySegments.size());
+         assertEquals(clientPrimarySegments.size(), serverPrimarySegments.size(), "Segments should be same server was : " + serverPrimarySegments + " and client was: " + clientPrimarySegments);
 
          serverPrimarySegments.forEach((Consumer<? super Integer>) segment ->
-            assertTrue("Wasn't primary owner of segment " + segment, clientPrimarySegments.contains(segment)));
+               assertTrue(clientPrimarySegments.contains(segment), "Wasn't primary owner of segment " + segment));
       }
    }
 }

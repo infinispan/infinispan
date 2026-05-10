@@ -3,9 +3,9 @@ package org.infinispan.persistence.file;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -154,8 +154,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       SingleFileStore<String, String> store = TestingUtil.getFirstStore(cache);
       assertEquals(0, (long) join(store.size(IntSets.immutableSet(0))));
 
-      long [] fileSizesWithoutPurge = new long [times];
-      long [] fileSizesWithPurge = new long [times];
+      long[] fileSizesWithoutPurge = new long[times];
+      long[] fileSizesWithPurge = new long[times];
       File file = new File(location, CACHE_NAME + ".dat");
 
       // Write values for all keys iteratively such that the entry size increases during each iteration
@@ -229,7 +229,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       long length1 = file.length();
       Flowable.fromPublisher(store.purgeExpired()).blockingSubscribe();
       long length2 = file.length();
-      assertTrue(String.format("Length1=%d, Length2=%d", length1, length2), length2 <= length1);
+      assertTrue(length2 <= length1, String.format("Length1=%d, Length2=%d", length1, length2));
 
       // Write entry with size larger than any previous to ensure that it is placed at the end of the file
       String key = "key" + numberOfKeys;
@@ -242,7 +242,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       join(store.delete(0, key));
       Flowable.fromPublisher(store.purgeExpired()).blockingSubscribe();
       length2 = file.length();
-      assertTrue(String.format("Length1=%d, Length2=%d", length1, length2), length2 < length1);
+      assertTrue(length2 < length1, String.format("Length1=%d, Length2=%d", length1, length2));
    }
 
    public List<String> populateStore(int numKeys, int numPadding, SingleFileStore<String, String> store,
@@ -421,8 +421,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
             long fileSizeAfterClear = file.length();
             long storeSizeAfterClear = store.getFileSize();
             log.tracef("Cleared store, store size after = %d, file size after = %d", storeSizeAfterClear, fileSizeAfterClear);
-            assertTrue("Store size " + storeSizeAfterClear + " is smaller than the file size " + fileSizeAfterClear,
-                  fileSizeAfterClear <= storeSizeAfterClear);
+            assertTrue(fileSizeAfterClear <= storeSizeAfterClear, "Store size " + storeSizeAfterClear + " is smaller than the file size " + fileSizeAfterClear);
             MILLISECONDS.sleep(100);
          }
          return null;

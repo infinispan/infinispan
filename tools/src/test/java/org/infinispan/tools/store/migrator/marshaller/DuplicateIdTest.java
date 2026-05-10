@@ -1,5 +1,7 @@
 package org.infinispan.tools.store.migrator.marshaller;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -28,7 +30,7 @@ public class DuplicateIdTest extends AbstractInfinispanTest {
 
       int largest = 0;
       for (Map.Entry<Integer, Set<String>> e : dupes.entrySet()) {
-         assert e.getValue().size() == 1 : "ID " + e.getKey() + " is duplicated by fields " + e.getValue();
+         assertTrue(e.getValue().size() == 1, "ID " + e.getKey() + " is duplicated by fields " + e.getValue());
          largest = Math.max(largest, e.getKey());
       }
 

@@ -2,7 +2,7 @@ package org.infinispan.counter;
 
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;

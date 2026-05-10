@@ -1,5 +1,8 @@
 package org.infinispan.lock;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.TimeoutException;
@@ -13,7 +16,6 @@ import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -62,16 +64,16 @@ public class KeyLockTest extends SingleCacheManagerTest {
       try {
          lockContainer.acquire(byteArray(), lockOwner, 10, TimeUnit.MILLISECONDS).lock();
       } catch (InterruptedException | TimeoutException e) {
-         AssertJUnit.fail();
+         fail();
       }
-      AssertJUnit.assertTrue(lockContainer.isLocked(byteArray()));
+      assertTrue(lockContainer.isLocked(byteArray()));
 
       fork(() -> {
          for (int i = 0; i < RETRIES; ++i) {
-            AssertJUnit.assertTrue(lockContainer.isLocked(byteArray()));
+            assertTrue(lockContainer.isLocked(byteArray()));
             try {
                lockContainer.acquire(byteArray(), new Object(), 10, TimeUnit.MILLISECONDS).lock();
-               AssertJUnit.fail();
+               fail();
             } catch (InterruptedException | TimeoutException e) {
                //expected
             }

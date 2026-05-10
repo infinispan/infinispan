@@ -2,8 +2,8 @@ package org.infinispan.query.distributed;
 
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -42,7 +42,7 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
          cache(i % NUM_NODES).put("car" + i, new Car("skoda", "white", 42));
       }
       for (Cache cache : caches()) {
-         assertEquals(cache.size(), NUM_CARS);
+         assertEquals(NUM_CARS, cache.size());
          verifyFindsCar(cache, NUM_CARS, "skoda");
       }
       rebuildIndexes();

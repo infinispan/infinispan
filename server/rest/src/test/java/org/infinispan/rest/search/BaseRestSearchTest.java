@@ -8,9 +8,9 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.server.core.query.json.JSONConstants.HIT;
 import static org.infinispan.server.core.query.json.JSONConstants.HIT_COUNT;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -190,34 +190,34 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    @Test(dataProvider = "HttpMethodProvider")
    public void testSimpleQuery(Method method) throws Exception {
       Json queryResult = query("from org.infinispan.rest.search.entity.Person p where p.surname = 'Cage'", method);
-      assertEquals(queryResult.at("hit_count").asInteger(), 1);
+      assertEquals(1, queryResult.at("hit_count").asInteger());
 
       Json hits = queryResult.at("hits");
       List<Json> jsonHits = hits.asJsonList();
-      assertEquals(jsonHits.size(), 1);
+      assertEquals(1, jsonHits.size());
 
       Json result = jsonHits.iterator().next();
       Json firstHit = result.at(HIT);
-      assertEquals(firstHit.at("id").asInteger(), 2);
-      assertEquals(firstHit.at("name").asString(), "Luke");
-      assertEquals(firstHit.at("surname").asString(), "Cage");
+      assertEquals(2, firstHit.at("id").asInteger());
+      assertEquals("Luke", firstHit.at("name").asString());
+      assertEquals("Cage", firstHit.at("surname").asString());
    }
 
    @Test(dataProvider = "HttpMethodProvider")
    public void testMultiResultQuery(Method method) throws Exception {
       Json results = query("from org.infinispan.rest.search.entity.Person p where p.id < 5 and p.gender = 'MALE'", method);
 
-      assertEquals(results.at(HIT_COUNT).asInteger(), 3);
+      assertEquals(3, results.at(HIT_COUNT).asInteger());
 
       Json hits = results.at("hits");
-      assertEquals(hits.asList().size(), 3);
+      assertEquals(3, hits.asList().size());
    }
 
    @Test(dataProvider = "HttpMethodProvider")
    public void testProjections(Method method) throws Exception {
       Json results = query("Select name, surname from org.infinispan.rest.search.entity.Person", method);
 
-      assertEquals(results.at(HIT_COUNT).asInteger(), ENTRIES);
+      assertEquals(ENTRIES, results.at(HIT_COUNT).asInteger());
 
       Json hits = results.at("hits");
 
@@ -244,15 +244,15 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    public void testGrouping(Method method) throws Exception {
       Json results = query("select p.gender, count(p.name) from org.infinispan.rest.search.entity.Person p where p.id < 5 group by p.gender order by p.gender", method);
 
-      assertEquals(results.at(HIT_COUNT).asInteger(), 2);
+      assertEquals(2, results.at(HIT_COUNT).asInteger());
 
       Json hits = results.at("hits");
 
       Json males = hits.at(0);
-      assertEquals(males.at(HIT).at("COUNT(name)").asInteger(), 3);
+      assertEquals(3, males.at(HIT).at("COUNT(name)").asInteger());
 
       Json females = hits.at(1);
-      assertEquals(females.at(HIT).at("COUNT(name)").asInteger(), 1);
+      assertEquals(1, females.at(HIT).at("COUNT(name)").asInteger());
    }
 
    @Test(dataProvider = "HttpMethodProvider")
@@ -260,13 +260,13 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       String q = "select p.name from org.infinispan.rest.search.entity.Person p where p.id < 5 order by p.name desc";
       Json results = query(q, method, 2, 2);
 
-      assertEquals(results.at("hit_count").asInteger(), 4);
-      assertEquals(results.at("hit_count_exact").asBoolean(), true);
+      assertEquals(4, results.at("hit_count").asInteger());
+      assertTrue(results.at("hit_count_exact").asBoolean());
       Json hits = results.at("hits");
-      assertEquals(hits.asList().size(), 2);
+      assertEquals(2, hits.asList().size());
 
-      assertEquals(hits.at(0).at(HIT).at("name").asString(), "Jessica");
-      assertEquals(hits.at(1).at(HIT).at("name").asString(), "Danny");
+      assertEquals("Jessica", hits.at(0).at(HIT).at("name").asString());
+      assertEquals("Danny", hits.at(1).at(HIT).at("name").asString());
    }
 
    @Test(dataProvider = "HttpMethodProvider")
@@ -303,7 +303,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       ResponseAssertion.assertThat(fromBrowser).hasContentType(APPLICATION_JSON_TYPE);
 
       Json person = Json.read(fromBrowser.body());
-      assertEquals(person.at("id").asInteger(), 2);
+      assertEquals(2, person.at("id").asInteger());
    }
 
    @Test
@@ -381,8 +381,8 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          response = join(cacheClient.queryStats());
          stats = Json.read(response.body());
          ResponseAssertion.assertThat(clearResponse).isOk();
-         assertEquals(stats.at("search_query_execution_count").asLong(), 0);
-         assertEquals(stats.at("search_query_execution_max_time").asLong(), 0);
+         assertEquals(0, stats.at("search_query_execution_count").asLong());
+         assertEquals(0, stats.at("search_query_execution_max_time").asLong());
       }
    }
 
@@ -398,7 +398,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          Json indexClassNames = stats.at("indexed_class_names");
 
          String indexName = "org.infinispan.rest.search.entity.Person";
-         assertEquals(indexClassNames.at(0).asString(), indexName);
+         assertEquals(indexName, indexClassNames.at(0).asString());
          assertNotNull(stats.at("indexed_entities_count"));
          //TODO: Index sizes are not currently exposed (HSEARCH-4056)
          assertTrue(stats.at("index_sizes").at(indexName).asInteger() >= 0);
@@ -473,7 +473,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          if (i == id) {
             assertTrue(count > 0);
          } else {
-            assertEquals(count, 0);
+            assertEquals(0, count);
          }
       });
    }
@@ -560,7 +560,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    private void assertZeroHits(Json queryResponse) {
       Json hits = queryResponse.at("hits");
-      assertEquals(hits.asList().size(), 0);
+      assertEquals(0, hits.asList().size());
    }
 
    private Json query(String q, Method method) throws Exception {

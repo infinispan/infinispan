@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -111,7 +111,7 @@ public abstract class BaseGetAllTest extends MultipleCacheManagersTest {
          }
       }
 
-      assertEquals("There shouldn't be any values left!", 0, size);
+      assertEquals(0, size, "There shouldn't be any values left!");
    }
 
 }

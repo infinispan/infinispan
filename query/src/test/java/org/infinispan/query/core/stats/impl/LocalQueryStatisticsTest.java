@@ -4,7 +4,7 @@ import static org.infinispan.query.core.stats.impl.LocalQueryStatisticsTest.Quer
 import static org.infinispan.query.core.stats.impl.LocalQueryStatisticsTest.QueryType.INDEX_DISTRIBUTED;
 import static org.infinispan.query.core.stats.impl.LocalQueryStatisticsTest.QueryType.INDEX_LOCAL;
 import static org.infinispan.query.core.stats.impl.LocalQueryStatisticsTest.QueryType.NON_INDEXED;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
 import java.util.Map.Entry;

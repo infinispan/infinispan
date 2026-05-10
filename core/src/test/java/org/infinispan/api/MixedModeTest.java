@@ -1,8 +1,8 @@
 package org.infinispan.api;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;

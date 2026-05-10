@@ -1,9 +1,9 @@
 package org.infinispan.container.versioning;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -236,7 +236,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       final TransactionManager tm = executeOnPrimaryOwner ? tm(0) : tm(1);
 
       for (Cache cache : caches()) {
-         assertNull("wrong initial value for " + address(cache) + ".", cache.get(key));
+         assertNull(cache.get(key), "wrong initial value for " + address(cache) + ".");
       }
 
       c.put("k", "init");
@@ -286,7 +286,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       final TransactionManager tm = executeOnPrimaryOwner ? tm(0, PASSIVATION_CACHE) : tm(1, PASSIVATION_CACHE);
 
       for (Cache cache : caches(PASSIVATION_CACHE)) {
-         assertNull("wrong initial value for " + address(cache) + ".", cache.get(key));
+         assertNull(cache.get(key), "wrong initial value for " + address(cache) + ".");
       }
 
       switch (operation) {
@@ -358,7 +358,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       log.debugf("So far so good. Check the key final value");
       assertNoTransactions();
       for (Cache cache : caches(PASSIVATION_CACHE)) {
-         assertEquals("wrong final value for " + address(cache) + ".", finalValue, cache.get(key));
+         assertEquals(finalValue, cache.get(key), "wrong final value for " + address(cache) + ".");
       }
    }
 
@@ -377,7 +377,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       final TransactionManager tm = executeOnPrimaryOwner ? tm(0) : tm(1);
 
       for (Cache cache : caches()) {
-         assertNull("wrong initial value for " + address(cache) + ".", cache.get(key));
+         assertNull(cache.get(key), "wrong initial value for " + address(cache) + ".");
       }
 
       log.debugf("Initialize the key? %s", initKey);
@@ -393,12 +393,9 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       switch (operation) {
          case PUT:
             finalValue = "v1";
-            rollbackExpected = false;
             c.withFlags(Flag.IGNORE_RETURN_VALUES).put(key, "v1");
             break;
          case REMOVE:
-            finalValue = null;
-            rollbackExpected = false;
             c.withFlags(Flag.IGNORE_RETURN_VALUES).remove(key);
             break;
          case REPLACE:
@@ -432,7 +429,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
 
       log.debugf("Checking if all the keys has the same value");
       for (Cache cache : caches()) {
-         assertEquals("wrong intermediate value for " + address(cache) + ".", "v2", cache.get(key));
+         assertEquals("v2", cache.get(key), "wrong intermediate value for " + address(cache) + ".");
       }
 
       log.debugf("It is going to try to commit the suspended transaction");
@@ -452,7 +449,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       log.debugf("So far so good. Check the key final value");
       assertNoTransactions();
       for (Cache cache : caches()) {
-         assertEquals("wrong final value for " + address(cache) + ".", finalValue, cache.get(key));
+         assertEquals(finalValue, cache.get(key), "wrong final value for " + address(cache) + ".");
       }
    }
 

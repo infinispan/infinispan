@@ -1,8 +1,8 @@
 package org.infinispan.distribution.rehash;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -71,7 +71,7 @@ public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersT
                      log.tracef("Successfully inserted value %s for key %s", value, key);
                      assertEquals(value, newValue);
                      boolean isFirst = insertedValues.putIfAbsent(key, value) == null;
-                     assertTrue("A second putIfAbsent succeeded for " + key, isFirst);
+                     assertTrue(isFirst, "A second putIfAbsent succeeded for " + key);
                   } else {
                      // failed
                      assertEquals(oldValue, newValue);

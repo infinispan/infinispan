@@ -1,7 +1,7 @@
 package org.infinispan.xsite;
 
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
 
@@ -80,7 +80,7 @@ public class PreloadWithXSiteTest extends AbstractTwoSitesTest {
    private void assertDataForSite(Method method, String site) {
       for (Cache<String, String> cache : this.<String, String>caches(site)) {
          for (int i = 0; i < NR_KEYS; ++i) {
-            assertEquals("Cache=" + addressOf(cache), TestingUtil.v(method, i), cache.get(TestingUtil.k(method, i)));
+            assertEquals(TestingUtil.v(method, i), cache.get(TestingUtil.k(method, i)), "Cache=" + addressOf(cache));
          }
       }
    }

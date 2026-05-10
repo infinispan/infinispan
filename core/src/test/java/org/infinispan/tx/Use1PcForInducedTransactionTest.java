@@ -1,7 +1,7 @@
 package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -34,15 +34,15 @@ public class Use1PcForInducedTransactionTest extends MultipleCacheManagersTest {
 
    public void testSinglePhaseCommit() {
       cache(0).put("k", "v");
-      assert cache(0).get("k").equals("v");
-      assert cache(1).get("k").equals("v");
+      assertEquals("v", cache(0).get("k"));
+      assertEquals("v", cache(1).get("k"));
 
       assertNotLocked("k");
 
-      assertEquals(ic0.prepareInvocations, 1);
-      assertEquals(ic1.prepareInvocations, 1);
-      assertEquals(ic0.commitInvocations, 0);
-      assertEquals(ic0.commitInvocations, 0);
+      assertEquals(1, ic0.prepareInvocations);
+      assertEquals(1, ic1.prepareInvocations);
+      assertEquals(0, ic0.commitInvocations);
+      assertEquals(0, ic0.commitInvocations);
    }
 
 

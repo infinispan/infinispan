@@ -1,8 +1,8 @@
 package org.infinispan.remoting.transport;
 
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -83,8 +83,9 @@ public class MockTransport implements Transport {
     * Expect a command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
     */
    public <T extends ReplicableCommand> BlockedRequest expectCommand(Class<T> expectedCommandClass)
-      throws InterruptedException {
-      return expectCommand(expectedCommandClass, c -> {});
+         throws InterruptedException {
+      return expectCommand(expectedCommandClass, c -> {
+      });
    }
 
    /**
@@ -92,9 +93,9 @@ public class MockTransport implements Transport {
     */
    public <T extends ReplicableCommand> BlockedRequest expectCommand(Class<T> expectedCommandClass,
                                                                      Consumer<T> checker)
-      throws InterruptedException {
+         throws InterruptedException {
       BlockedRequest request = blockedRequests.poll(10, TimeUnit.SECONDS);
-      assertNotNull("Timed out waiting for invocation", request);
+      assertNotNull(request, "Timed out waiting for invocation");
       T command = expectedCommandClass.cast(request.getCommand());
       checker.accept(command);
       return request;
@@ -108,9 +109,8 @@ public class MockTransport implements Transport {
     * Assert that all the commands already invoked remotely have been verified and there were no errors.
     */
    public void verifyNoErrors() {
-      assertTrue("Unexpected remote invocations: " +
-                    blockedRequests.stream().map(i -> i.getCommand().toString()).collect(Collectors.joining(", ")),
-                 blockedRequests.isEmpty());
+      assertTrue(blockedRequests.isEmpty(), "Unexpected remote invocations: " +
+            blockedRequests.stream().map(i -> i.getCommand().toString()).collect(Collectors.joining(", ")));
    }
 
    @Override
@@ -120,7 +120,7 @@ public class MockTransport implements Transport {
                                                                         DeliverOrder deliverOrder) {
       Collection<Address> targets = recipients != null ? recipients : members;
       MapResponseCollector collector =
-         mode.isSynchronous() ? MapResponseCollector.ignoreLeavers(shouldIgnoreLeavers(mode), targets.size()) : null;
+            mode.isSynchronous() ? MapResponseCollector.ignoreLeavers(shouldIgnoreLeavers(mode), targets.size()) : null;
       return blockRequest(recipients, rpcCommand, collector);
    }
 
@@ -237,14 +237,14 @@ public class MockTransport implements Transport {
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command, ResponseCollector<Address, T>
-      collector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
+         collector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       return blockRequest(Collections.singleton(target), command, collector);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
                                                ResponseCollector<Address, T> collector, DeliverOrder deliverOrder, long
-                                                  timeout, TimeUnit unit) {
+                                                     timeout, TimeUnit unit) {
       return blockRequest(targets, command, collector);
    }
 
@@ -270,7 +270,7 @@ public class MockTransport implements Transport {
 
    @Override
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets, Function<Address, ReplicableCommand>
-      commandGenerator, ResponseCollector<Address, T> responseCollector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
+         commandGenerator, ResponseCollector<Address, T> responseCollector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       throw new UnsupportedOperationException();
    }
 
@@ -306,7 +306,7 @@ public class MockTransport implements Transport {
       private final ResponseCollector<Address, ?> collector;
       private final CompletableFuture<Object> resultFuture = new CompletableFuture<>();
 
-      private BlockedRequest(ReplicableCommand command, ResponseCollector<Address,?> collector) {
+      private BlockedRequest(ReplicableCommand command, ResponseCollector<Address, ?> collector) {
          this.command = command;
          this.collector = collector;
       }

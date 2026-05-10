@@ -1,7 +1,7 @@
 package org.infinispan.partitionhandling;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,17 +29,17 @@ import org.infinispan.transaction.LockingMode;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
-@Test(groups = "stress", testName = "partitionhandling.PartitionStressTest", timeOut = 15*60*1000)
+@Test(groups = "stress", testName = "partitionhandling.PartitionStressTest", timeOut = 15 * 60 * 1000)
 public class PartitionStressTest extends MultipleCacheManagersTest {
 
    public static final int NUM_NODES = 4;
 
    @Override
    public Object[] factory() {
-      return new Object[] {
-         new PartitionStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
-         new PartitionStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
-         new PartitionStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+      return new Object[]{
+            new PartitionStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+            new PartitionStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+            new PartitionStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
       };
    }
 
@@ -167,7 +167,7 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
 
       for (String key : insertedKeys.keySet()) {
          for (int i = 0; i < NUM_NODES; i++) {
-            assertEquals("Failure for key " + key + " on " + cache(i), insertedKeys.get(key), cache(i).get(key));
+            assertEquals(insertedKeys.get(key), cache(i).get(key), "Failure for key " + key + " on " + cache(i));
          }
       }
 

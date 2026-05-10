@@ -1,5 +1,8 @@
 package org.infinispan.remoting;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -31,7 +34,6 @@ import org.infinispan.remoting.transport.raft.RaftStateMachine;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.testing.Exceptions;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -63,7 +65,7 @@ public class RaftTest extends MultipleCacheManagersTest {
    public void testRaft(Method method) throws ExecutionException, InterruptedException, TimeoutException {
       List<RaftManager> raftManagerList = raftManagers();
       for (RaftManager m : raftManagerList) {
-         AssertJUnit.assertTrue(m.isRaftAvailable());
+         assertTrue(m.isRaftAvailable());
       }
 
       List<RaftQueueStateMachine> stateMachines = registerStateMachine(raftManagerList, RaftQueueStateMachine::new, method.getName());
@@ -84,8 +86,8 @@ public class RaftTest extends MultipleCacheManagersTest {
       for (Future<CompletionStage<ByteBuffer>> f : futures) {
          CompletionStage<ByteBuffer> cf = f.get(10, TimeUnit.SECONDS);
          ByteBuffer buffer = cf.toCompletableFuture().get(10, TimeUnit.SECONDS);
-         AssertJUnit.assertEquals(1, buffer.getLength());
-         AssertJUnit.assertEquals(0, buffer.getBuf()[0]);
+         assertEquals(1, buffer.getLength());
+         assertEquals(0, buffer.getBuf()[0]);
       }
 
       List<Byte> expectedState = null;
@@ -96,7 +98,7 @@ public class RaftTest extends MultipleCacheManagersTest {
          if (expectedState == null) {
             expectedState = new ArrayList<>(m.state);
          } else {
-            AssertJUnit.assertEquals("State is different for node " + i, expectedState, m.state);
+            assertEquals(expectedState, m.state, "State is different for node " + i);
          }
       }
    }
@@ -104,7 +106,7 @@ public class RaftTest extends MultipleCacheManagersTest {
    public void testRaftStateTransfer(Method method) throws ExecutionException, InterruptedException, TimeoutException {
       List<RaftManager> raftManagerList = raftManagers();
       for (RaftManager m : raftManagerList) {
-         AssertJUnit.assertTrue(m.isRaftAvailable());
+         assertTrue(m.isRaftAvailable());
       }
 
       List<RaftQueueStateMachine> stateMachines = registerStateMachine(raftManagerList, RaftQueueStateMachine::new, method.getName());
@@ -125,8 +127,8 @@ public class RaftTest extends MultipleCacheManagersTest {
       for (Future<CompletionStage<ByteBuffer>> f : futures) {
          CompletionStage<ByteBuffer> cf = f.get(10, TimeUnit.SECONDS);
          ByteBuffer buffer = cf.toCompletableFuture().get(10, TimeUnit.SECONDS);
-         AssertJUnit.assertEquals(1, buffer.getLength());
-         AssertJUnit.assertEquals(0, buffer.getBuf()[0]);
+         assertEquals(1, buffer.getLength());
+         assertEquals(0, buffer.getBuf()[0]);
       }
 
       List<Byte> expectedState = null;
@@ -137,7 +139,7 @@ public class RaftTest extends MultipleCacheManagersTest {
          if (expectedState == null) {
             expectedState = new ArrayList<>(m.state);
          } else {
-            AssertJUnit.assertEquals("State is different for node " + i, expectedState, m.state);
+            assertEquals(expectedState, m.state, "State is different for node " + i);
          }
       }
 
@@ -153,7 +155,7 @@ public class RaftTest extends MultipleCacheManagersTest {
 
          // eventually, receives all entries!
          eventuallyEquals(CONCURRENT_THREADS, sm.state::size);
-         AssertJUnit.assertEquals("State is different for node 3", expectedState, sm.state);
+         assertEquals(expectedState, sm.state, "State is different for node 3");
       } finally {
          // kill the new member
          if (cacheManagers.size() == 4) {
@@ -165,7 +167,7 @@ public class RaftTest extends MultipleCacheManagersTest {
    public void testNoDupes(Method method) throws ExecutionException, InterruptedException, TimeoutException {
       List<RaftManager> raftManagerList = raftManagers();
       for (RaftManager m : raftManagerList) {
-         AssertJUnit.assertTrue(m.isRaftAvailable());
+         assertTrue(m.isRaftAvailable());
       }
 
       List<RaftQueueStateMachine> stateMachines = registerStateMachine(raftManagerList, RaftQueueStateMachine::new, method.getName());
@@ -186,8 +188,8 @@ public class RaftTest extends MultipleCacheManagersTest {
       for (Future<CompletionStage<ByteBuffer>> f : futures) {
          CompletionStage<ByteBuffer> cf = f.get(10, TimeUnit.SECONDS);
          ByteBuffer buffer = cf.toCompletableFuture().get(10, TimeUnit.SECONDS);
-         AssertJUnit.assertEquals(1, buffer.getLength());
-         AssertJUnit.assertEquals(0, buffer.getBuf()[0]);
+         assertEquals(1, buffer.getLength());
+         assertEquals(0, buffer.getBuf()[0]);
       }
 
       List<Byte> expectedState = null;
@@ -198,7 +200,7 @@ public class RaftTest extends MultipleCacheManagersTest {
          if (expectedState == null) {
             expectedState = new ArrayList<>(m.state);
          } else {
-            AssertJUnit.assertEquals("State is different for node " + i, expectedState, m.state);
+            assertEquals(expectedState, m.state, "State is different for node " + i);
          }
       }
 
@@ -258,7 +260,7 @@ public class RaftTest extends MultipleCacheManagersTest {
 
       @Override
       public ByteBuffer apply(ByteBuffer buffer) throws Exception {
-         AssertJUnit.assertEquals(1, buffer.getLength());
+         assertEquals(1, buffer.getLength());
          state.add(buffer.getBuf()[0]);
          log.debugf("[%s | %s] apply: %d", raftChannel.channelName(), raftChannel.raftId(), state.size());
          return ByteBufferImpl.create((byte) 0);

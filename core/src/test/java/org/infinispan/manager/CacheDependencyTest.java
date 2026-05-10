@@ -1,7 +1,8 @@
 package org.infinispan.manager;
 
 import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -147,7 +148,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
 
    private void assertAllTerminated(Cache<?, ?>... caches) {
       for (Cache<?, ?> cache : caches) {
-         assert cache.getStatus() == ComponentStatus.TERMINATED;
+         assertTrue(cache.getStatus() == ComponentStatus.TERMINATED);
       }
    }
 }

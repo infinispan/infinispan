@@ -1,8 +1,8 @@
 package org.infinispan.counter;
 
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -147,8 +147,7 @@ public class RestartCounterTest extends BaseCounterTest {
       for (int i = 0; i < CLUSTER_SIZE; ++i) {
          CounterManager counterManager = counterManager(i);
          for (CounterDefinition definition : counters) {
-            assertTrue("Configuration of " + definition.name + " is missing on manager " + i,
-                  counterManager.isDefined(definition.name));
+            assertTrue(counterManager.isDefined(definition.name), "Configuration of " + definition.name + " is missing on manager " + i);
          }
       }
    }
@@ -157,14 +156,13 @@ public class RestartCounterTest extends BaseCounterTest {
       for (int i = 0; i < CLUSTER_SIZE; ++i) {
          CounterManager counterManager = counterManager(i);
          for (CounterDefinition definition : counters) {
-            assertFalse("Configuration of " + definition.name + " is defined on manager " + i,
-                  counterManager.isDefined(definition.name));
+            assertFalse(counterManager.isDefined(definition.name), "Configuration of " + definition.name + " is defined on manager " + i);
          }
       }
    }
 
    private void assertCounterValue(Collection<CounterDefinition> counters, CounterManager counterManager,
-         long volatileValue, long persistentValue) {
+                                   long volatileValue, long persistentValue) {
       for (CounterDefinition definition : counters) {
          long expect = definition.storage == Storage.VOLATILE ? volatileValue : persistentValue;
          eventuallyEquals("Wrong value for counter " + definition.name, expect,

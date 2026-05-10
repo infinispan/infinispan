@@ -2,10 +2,10 @@ package org.infinispan.xsite;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -284,10 +284,10 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
          InternalDataContainer<String, String> dc = getInternalDataContainer(cache);
          InternalCacheEntry<String, String> ice = dc.peek("k");
          log.debugf("Checking DataContainer in %s. entry=%s", DistributionTestHelper.addressOf(cache), ice);
-         assertNotNull(String.format("Internal entry is null for key %s", "k"), ice);
-         assertEquals("Internal entry wrong key", "k", ice.getKey());
-         assertEquals("Internal entry wrong value", value, ice.getValue());
-         assertEquals("Internal entry wrong metadata", metadata, ice.getInternalMetadata().iracMetadata());
+         assertNotNull(ice, String.format("Internal entry is null for key %s", "k"));
+         assertEquals("k", ice.getKey(), "Internal entry wrong key");
+         assertEquals(value, ice.getValue(), "Internal entry wrong value");
+         assertEquals(metadata, ice.getInternalMetadata().iracMetadata(), "Internal entry wrong metadata");
       }
    }
 

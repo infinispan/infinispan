@@ -6,7 +6,6 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.InvalidTransactionException;
 import jakarta.transaction.NotSupportedException;
 import jakarta.transaction.RollbackException;
 import jakarta.transaction.Status;
@@ -26,12 +25,12 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
 
    private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(DualNodeJtaTransactionManagerImpl.class);
 
-   private static final Hashtable INSTANCES = new Hashtable();
+   private static final Hashtable<String, TransactionManager> INSTANCES = new Hashtable<>();
 
-   private final ThreadLocal currentTransaction = new ThreadLocal();
+   private final ThreadLocal<Transaction> currentTransaction = new ThreadLocal<>();
    private final String nodeId;
 
-   public synchronized static DualNodeJtaTransactionManagerImpl getInstance(String nodeId) {
+   public static synchronized DualNodeJtaTransactionManagerImpl getInstance(String nodeId) {
       DualNodeJtaTransactionManagerImpl tm = (DualNodeJtaTransactionManagerImpl) INSTANCES
             .get(nodeId);
       if (tm == null) {
@@ -41,9 +40,8 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
       return tm;
    }
 
-   public synchronized static void cleanupTransactions() {
-      for (java.util.Iterator it = INSTANCES.values().iterator(); it.hasNext(); ) {
-         TransactionManager tm = (TransactionManager) it.next();
+   public static synchronized void cleanupTransactions() {
+      for (TransactionManager tm : INSTANCES.values()) {
          try {
             tm.suspend();
          } catch (Exception e) {
@@ -52,7 +50,7 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
       }
    }
 
-   public synchronized static void cleanupTransactionManagers() {
+   public static synchronized void cleanupTransactionManagers() {
       INSTANCES.clear();
    }
 
@@ -77,16 +75,15 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
       currentTransaction.set(new DualNodeJtaTransactionImpl(this));
    }
 
-   public Transaction suspend() throws SystemException {
+   public Transaction suspend() {
       DualNodeJtaTransactionImpl suspended = getCurrentTransaction();
       log.trace(nodeId + ": Suspending " + suspended + " for thread "
             + Thread.currentThread().getName());
-      currentTransaction.set(null);
+      currentTransaction.remove();
       return suspended;
    }
 
-   public void resume(Transaction transaction) throws InvalidTransactionException,
-         IllegalStateException, SystemException {
+   public void resume(Transaction transaction) throws IllegalStateException {
       currentTransaction.set(transaction);
       log.trace(nodeId + ": Resumed " + transaction + " for thread "
             + Thread.currentThread().getName());
@@ -122,16 +119,14 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
 
    void endCurrent(DualNodeJtaTransactionImpl transaction) {
       if (transaction == currentTransaction.get()) {
-         currentTransaction.set(null);
+         currentTransaction.remove();
       }
    }
 
    @Override
    public String toString() {
-      StringBuilder sb = new StringBuilder(getClass().getName());
-      sb.append("[nodeId=");
-      sb.append(nodeId);
-      sb.append("]");
-      return sb.toString();
+      return getClass().getName() + "[nodeId=" +
+            nodeId +
+            "]";
    }
 }

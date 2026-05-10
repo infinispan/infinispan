@@ -2,8 +2,10 @@ package org.infinispan.lock;
 
 import static org.infinispan.context.Flag.FAIL_SILENTLY;
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -62,7 +64,7 @@ public class APITest extends MultipleCacheManagersTest {
 
       cache1.put("k", "v");
       tm(0).begin();
-      assert cache1.getAdvancedCache().lock("k");
+      assertTrue(cache1.getAdvancedCache().lock("k"));
       tm(0).rollback();
    }
 
@@ -89,7 +91,7 @@ public class APITest extends MultipleCacheManagersTest {
       tm(1).suspend();
 
       tm(0).begin();
-      assert !cache1.getAdvancedCache().withFlags(FAIL_SILENTLY).lock("k");
+      assertFalse(cache1.getAdvancedCache().withFlags(FAIL_SILENTLY).lock("k"));
       tm(0).rollback();
    }
 
@@ -129,9 +131,9 @@ public class APITest extends MultipleCacheManagersTest {
                AdvancedCache<Integer, String> silentCache = cache.getAdvancedCache().withFlags(
                      Flag.FAIL_SILENTLY, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
                silentCache.put(1, "v3");
-               assert !silentCache.lock(1);
+               assertFalse(silentCache.lock(1));
                String object = cache.get(1);
-               assert "v1".equals(object) : "Expected v1 but got " + object;
+               assertEquals(object, "v1", "Expected v1 but got " + object);
                cache.get(1);
             } catch (Exception e) {
                tm.setRollbackOnly();
@@ -158,7 +160,7 @@ public class APITest extends MultipleCacheManagersTest {
       cache1.put("k3", "v");
 
       tm(0).begin();
-      assert cache1.getAdvancedCache().lock(Arrays.asList("k1", "k2", "k3"));
+      assertTrue(cache1.getAdvancedCache().lock(Arrays.asList("k1", "k2", "k3")));
       tm(0).rollback();
    }
 
@@ -191,7 +193,7 @@ public class APITest extends MultipleCacheManagersTest {
       tm(1).suspend();
 
       tm(0).begin();
-      assert !cache1.getAdvancedCache().withFlags(FAIL_SILENTLY).lock(Arrays.asList("k1", "k2", "k3"));
+      assertFalse(cache1.getAdvancedCache().withFlags(FAIL_SILENTLY).lock(Arrays.asList("k1", "k2", "k3")));
       tm(0).rollback();
    }
 
@@ -214,7 +216,7 @@ public class APITest extends MultipleCacheManagersTest {
          public void call() {
             AbstractLockingInterceptor lockingInterceptor = TestingUtil.findInterceptor(
                   cm.getCache(), AbstractLockingInterceptor.class);
-            assertTrue(lockingInterceptor instanceof NonTransactionalLockingInterceptor);
+            assertInstanceOf(NonTransactionalLockingInterceptor.class, lockingInterceptor);
          }
       });
    }

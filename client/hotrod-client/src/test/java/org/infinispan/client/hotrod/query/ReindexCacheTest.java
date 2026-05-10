@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createServerModeCacheManager;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -84,13 +84,13 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
          userCache.put(user.getId(), user);
       }
 
-      assertEquals(query(userCache), NUM_ENTRIES);
+      assertEquals(NUM_ENTRIES, query(userCache));
 
       wipeIndexes();
       assertIndexEmpty();
       reindex();
 
-      assertEquals(query(userCache), NUM_ENTRIES);
+      assertEquals(NUM_ENTRIES, query(userCache));
    }
 
    private void wipeIndexes() {
@@ -100,7 +100,7 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
    }
 
    private void assertIndexEmpty() {
-      assertEquals(query(remoteCacheManager.getCache(USER_CACHE)), 0);
+      assertEquals(0, query(remoteCacheManager.getCache(USER_CACHE)));
    }
 
    private void reindex() {

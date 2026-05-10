@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNotSame;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -46,7 +46,7 @@ public class ForceReturnValuesIdentityTest extends SingleCacheManagerTest {
    public void testDifferentInstancesForDifferentForceReturnValues() {
       RemoteCache<String, String> rcDontForceReturn = remoteCacheManager.getCache();
       RemoteCache<String, String> rcForceReturn = rcDontForceReturn.withFlags(Flag.FORCE_RETURN_VALUE);
-      assertNotSame("RemoteCache instances should not be the same", rcDontForceReturn, rcForceReturn);
+      assertNotSame(rcDontForceReturn, rcForceReturn, "RemoteCache instances should not be the same");
 
       String rv = rcDontForceReturn.put("Key", "Value");
       assertNull(rv);
@@ -57,6 +57,6 @@ public class ForceReturnValuesIdentityTest extends SingleCacheManagerTest {
       assertNull(rv);
       rv = rcForceReturn.put("Key2", "Value2");
       assertNotNull(rv);
-      assertEquals("Previous value should be 'Value'", "Value", rv);
+      assertEquals("Value", rv, "Previous value should be 'Value'");
    }
 }

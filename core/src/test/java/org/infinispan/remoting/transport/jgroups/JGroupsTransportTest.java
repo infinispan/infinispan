@@ -1,8 +1,8 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -114,7 +114,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
 
    public void testOutOfOrderView() {
       Transport transport = TestingUtil.extractGlobalComponent(manager(0), Transport.class);
-      assertTrue(transport instanceof ExposedJGroupsTransport);
+      assertInstanceOf(ExposedJGroupsTransport.class, transport);
       ExposedJGroupsTransport exposedTransport = (ExposedJGroupsTransport) transport;
       long viewId = transport.getViewId();
       org.jgroups.Address creator = exposedTransport.getJGroupsViewCreator();

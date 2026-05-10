@@ -2,9 +2,9 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.configuration.cache.StorageType.HEAP;
 import static org.infinispan.configuration.cache.StorageType.OFF_HEAP;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -88,7 +88,7 @@ public class StorageRoutingTest extends MultiHotRodServersTest {
       RemoteCache<Object, String> remoteCache = clients.get(0).getCache();
       remoteCache.put(key, value);
 
-      assertEquals(remoteCache.get(key), "value");
+      assertEquals("value", remoteCache.get(key));
 
       assertCorrectServerContacted();
    }

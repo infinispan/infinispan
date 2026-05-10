@@ -1,7 +1,7 @@
 package org.infinispan.tx;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CountDownLatch;

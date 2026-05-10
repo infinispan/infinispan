@@ -2,10 +2,10 @@ package org.infinispan.globalstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.util.Arrays;
@@ -106,7 +106,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       for (int i = 0; i < getClusterSize(); i++) {
          String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
          File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
-         assertEquals(Arrays.toString(listFiles), 1, listFiles.length);
+         assertEquals(1, listFiles.length, Arrays.toString(listFiles));
       }
       this.cacheManagers.clear();
 
@@ -175,7 +175,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       for (int i = 0; i < getClusterSize(); i++) {
          String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
          File[] listFiles = new File(persistentLocation).listFiles((dir, name) -> name.equals(CACHE_NAME + ".state"));
-         assertEquals(Arrays.toString(listFiles), 0, listFiles.length);
+         assertEquals(0, listFiles.length, Arrays.toString(listFiles));
       }
 
       // Stop the cluster without graceful shutdown
@@ -208,8 +208,8 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
          LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(i), LocalTopologyManager.class);
          // Ensure that nodes have the old UUID
          var entry = addressIterator.next();
-         assertTrue(entry.getKey() + " is mapping to the wrong UUID: " +
-             "Expected: " + entry.getValue() + " not found in: " + uuids, uuids.contains(entry.getValue()));
+         assertTrue(uuids.contains(entry.getValue()), entry.getKey() + " is mapping to the wrong UUID: " +
+               "Expected: " + entry.getValue() + " not found in: " + uuids);
          // Ensure that rebalancing is enabled for the cache
          assertTrue(ltm.isCacheRebalancingEnabled(CACHE_NAME));
       }

@@ -1,7 +1,7 @@
 package org.infinispan.dataconversion;
 
-
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -14,7 +14,6 @@ import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.core.EncoderRegistryImpl;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -54,7 +53,7 @@ public class TranscoderRegistrationTest {
    private void assertNotFound(EncoderRegistry registry, MediaType one, MediaType other) {
       try {
          registry.getTranscoder(one, other);
-         Assert.fail("Should not have found transcoder");
+         fail("Should not have found transcoder");
       } catch (EncodingException ignored) {
       }
    }

@@ -1,7 +1,7 @@
 package org.infinispan.query.config;
 
 import static org.infinispan.query.impl.config.SearchPropertyExtractor.extractProperties;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.io.IOException;

@@ -3,9 +3,9 @@ package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -77,7 +77,7 @@ public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServer
       for (int i = 0; i < numElements; i++) {
          try {
             Object e = queue.poll(5, TimeUnit.SECONDS);
-            assertNotNull("Queue was empty!", e);
+            assertNotNull(e,"Queue was empty!");
          } catch (InterruptedException e) {
             throw new AssertionError("Interrupted while waiting for condition", e);
          }
@@ -85,7 +85,7 @@ public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServer
       try {
          // no more elements expected here
          Object e = queue.poll(5, TimeUnit.SECONDS);
-         assertNull("No more elements expected in queue!", e);
+         assertNull(e, "No more elements expected in queue!");
       } catch (InterruptedException e) {
          throw new AssertionError("Interrupted while waiting for condition", e);
       }

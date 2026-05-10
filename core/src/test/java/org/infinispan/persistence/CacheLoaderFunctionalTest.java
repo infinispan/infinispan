@@ -4,11 +4,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.fail;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -101,10 +101,10 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    protected ConfigurationBuilder getConfiguration() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.persistence()
-         .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .segmented(segmented)
-         .storeName(this.getClass().getName()) // in order to use the same store
-         .transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+            .storeName(this.getClass().getName()) // in order to use the same store
+            .transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       return cfg;
    }
 
@@ -116,7 +116,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       return cm.getCache(name);
    }
 
-   protected void configure(ConfigurationBuilder cb) { }
+   protected void configure(ConfigurationBuilder cb) {
+   }
 
    @AfterMethod(alwaysRun = true)
    public void tearDown() throws PersistenceException {
@@ -152,14 +153,14 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    }
 
    private void testStoredEntry(Object value, Object expectedValue, long lifespan, long expectedLifespan, String src, Object key) {
-      assertEquals("Wrong value on " + src, expectedValue, value);
-      assertEquals("Wrong lifespan on " + src, expectedLifespan, lifespan);
+      assertEquals(expectedValue, value, "Wrong value on " + src);
+      assertEquals(expectedLifespan, lifespan, "Wrong lifespan on " + src);
    }
 
    private static <K> void assertNotInCacheAndStore(Cache<? super K, ?> cache, DummyInMemoryStore store, K... keys) throws PersistenceException {
       for (K key : keys) {
-         assertFalse("Cache should not contain key " + key, cache.getAdvancedCache().getDataContainer().containsKey(key));
-         assertFalse("Store should not contain key " + key, store.contains(key));
+         assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), "Cache should not contain key " + key);
+         assertFalse(store.contains(key), "Store should not contain key " + key);
       }
    }
 
@@ -173,8 +174,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    private static <K> void assertInStoreNotInCache(Cache<? super K, ?> cache, DummyInMemoryStore store, K... keys) throws PersistenceException {
       for (K key : keys) {
-         assertFalse("Cache should not contain key " + key, cache.getAdvancedCache().getDataContainer().containsKey(key));
-         assertTrue("Store should contain key " + key, store.contains(key));
+         assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), "Cache should not contain key " + key);
+         assertTrue(store.contains(key), "Store should contain key " + key);
       }
    }
 
@@ -184,8 +185,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    private static <K> void assertInCacheAndNotInStore(Cache<? super K, ?> cache, DummyInMemoryStore store, K... keys) throws PersistenceException {
       for (K key : keys) {
-         assert cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
-         assertFalse("Store should contain key " + key, store.contains(key));
+         assertTrue(cache.getAdvancedCache().getDataContainer().containsKey(key), "Cache should not contain key " + key);
+         assertFalse(store.contains(key), "Store should contain key " + key);
       }
    }
 
@@ -212,7 +213,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
             assertInCacheAndStore("k" + i, "v" + i, lifespan);
       }
 
-      assert !cache.remove("k1", "some rubbish");
+      assertFalse(cache.remove("k1", "some rubbish"));
 
       for (int i = 1; i < 8; i++) {
          // even numbers have lifespans
@@ -314,7 +315,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertNoLocks(cache);
 
       int size = cache.size();
-      assertEquals("Expected the cache to contain 3 elements but contained " + cache.entrySet(), 3, size);
+      assertEquals(3, size, "Expected the cache to contain 3 elements but contained " + cache.entrySet());
 
       for (int i = 1; i < 5; i++) cache.evict("k" + i);
       // make sure we have no stale locks!!
@@ -357,9 +358,9 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       preloadingCfg.persistence()
             .clearStores()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-               .segmented(segmented)
-               .preload(true)
-               .storeName(storeName);
+            .segmented(segmented)
+            .preload(true)
+            .storeName(storeName);
       return preloadingCfg;
    }
 
@@ -368,7 +369,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       ConfigurationBuilder purgingCfg = new ConfigurationBuilder();
       purgingCfg.read(cfg.build(), Combine.DEFAULT);
       purgingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class)
-         .storeName("purgingCache").purgeOnStartup(true);
+            .storeName("purgingCache").purgeOnStartup(true);
       cm.defineConfiguration("purgingCache", purgingCfg.build());
       Cache<String, String> purgingCache = getCache(cm, "purgingCache");
       DummyInMemoryStore purgingLoader = TestingUtil.getFirstStore(purgingCache);
@@ -550,7 +551,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
          // Now simulate that someone else wrote to the store while during our tx
          store.write(MarshalledEntryUtil.create("k1", "v1", cache));
          IsolationLevel level = cache.getCacheConfiguration().locking().lockIsolationLevel();
-         switch(level) {
+         switch (level) {
             case READ_COMMITTED:
                assertEquals("v1", cache.get("k1"));
                break;
@@ -581,12 +582,12 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
 
    protected void doPreloadingTest(Configuration preloadingCfg, String cacheName) throws Exception {
-      assertTrue("Preload not enabled for preload test", preloadingCfg.persistence().preload());
+      assertTrue(preloadingCfg.persistence().preload(), "Preload not enabled for preload test");
       cm.defineConfiguration(cacheName, preloadingCfg);
       Cache<String, String> preloadingCache = getCache(cm, cacheName);
       DummyInMemoryStore preloadingCacheLoader = TestingUtil.getFirstStore(preloadingCache);
 
-      assert preloadingCache.getCacheConfiguration().persistence().preload();
+      assertTrue(preloadingCache.getCacheConfiguration().persistence().preload());
 
       assertNotInCacheAndStore(preloadingCache, preloadingCacheLoader, "k1", "k2", "k3", "k4");
 
@@ -610,9 +611,9 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertEquals(0, c.size());
 
       preloadingCache.start();
-      // The old store's marshaller is not working any more
+      // The old store's marshaller is not working anymore
       preloadingCacheLoader = TestingUtil.getFirstStore(preloadingCache);
-      assert preloadingCache.getCacheConfiguration().persistence().preload();
+      assertTrue(preloadingCache.getCacheConfiguration().persistence().preload());
       c = preloadingCache.getAdvancedCache().getDataContainer();
       assertEquals(4, c.size());
 
@@ -625,8 +626,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    }
 
    protected void doPreloadingTestWithEviction(Configuration preloadingCfg, String cacheName) throws Exception {
-      assertTrue("Preload not enabled for preload with eviction test", preloadingCfg.persistence().preload());
-      assertTrue("Eviction not enabled for preload with eviction test", preloadingCfg.memory().isEvictionEnabled());
+      assertTrue(preloadingCfg.persistence().preload(), "Preload not enabled for preload with eviction test");
+      assertTrue(preloadingCfg.memory().isEvictionEnabled(), "Eviction not enabled for preload with eviction test");
 
       cm.defineConfiguration(cacheName, preloadingCfg);
 
@@ -634,8 +635,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       final long expectedEntriesInContainer = Math.min(4L, preloadingCfg.memory().maxCount());
       DummyInMemoryStore preloadingCacheLoader = TestingUtil.getFirstStore(preloadingCache);
 
-      assertTrue("Preload not enabled in cache configuration",
-                 preloadingCache.getCacheConfiguration().persistence().preload());
+      assertTrue(preloadingCache.getCacheConfiguration().persistence().preload(), "Preload not enabled in cache configuration");
       assertNotInCacheAndStore(preloadingCache, preloadingCacheLoader, "k1", "k2", "k3", "k4");
 
       preloadingCache.getAdvancedCache().getTransactionManager().begin();
@@ -646,7 +646,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       preloadingCache.getAdvancedCache().getTransactionManager().commit();
 
       DataContainer c = preloadingCache.getAdvancedCache().getDataContainer();
-      assertEquals("Wrong number of entries in data container", expectedEntriesInContainer, c.size());
+      assertEquals(expectedEntriesInContainer, c.size(), "Wrong number of entries in data container");
 
       for (int i = 1; i < 5; i++) {
          final String key = "k" + i;
@@ -663,21 +663,20 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
             testStoredEntry(load.getValue(), value, load.getMetadata() == null ? -1 : load.getMetadata().lifespan(), lifespan, "Store", key);
             found = true;
          }
-         assertTrue("Key not found.", found);
+         assertTrue(found, "Key not found.");
       }
 
       preloadingCache.stop();
-      assertEquals("DataContainer still has entries after stop", 0, c.size());
+      assertEquals(0, c.size(), "DataContainer still has entries after stop");
 
       preloadingCache.start();
-      // The old store's marshaller is not working any more
+      // The old store's marshaller is not working anymore
       preloadingCacheLoader = TestingUtil.getFirstStore(preloadingCache);
 
-      assertTrue("Preload not enabled in cache configuration",
-                 preloadingCache.getCacheConfiguration().persistence().preload());
+      assertTrue(preloadingCache.getCacheConfiguration().persistence().preload(), "Preload not enabled in cache configuration");
 
       c = preloadingCache.getAdvancedCache().getDataContainer();
-      assertEquals("Wrong number of entries in data container", expectedEntriesInContainer, c.size());
+      assertEquals(expectedEntriesInContainer, c.size(), "Wrong number of entries in data container");
 
       for (int i = 1; i < 5; i++) {
          final String key = "k" + i;
@@ -694,7 +693,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
             testStoredEntry(load.getValue(), value, load.getMetadata() == null ? -1 : load.getMetadata().lifespan(), lifespan, "Store", key);
             found = true;
          }
-         assertTrue("Key not found.", found);
+         assertTrue(found, "Key not found.");
       }
    }
 

@@ -2,7 +2,7 @@ package org.infinispan.query.persistence;
 
 import static org.infinispan.configuration.cache.IndexStorage.FILESYSTEM;
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -69,7 +69,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
             if (inTran) c.getAdvancedCache().getTransactionManager().begin();
             c.put("key1", new SEntity(1, "name1", "surname1"));
             if (inTran) c.getAdvancedCache().getTransactionManager().commit();
-            assertEquals(searchByName("name1", c).size(), 1, "should be 1, even repeating this");
+            assertEquals(1, searchByName("name1", c).size(), "should be 1, even repeating this");
          }
       });
    }
@@ -98,7 +98,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
       Query<?> q = c.query(SEntity.searchByName(name));
       int resultSize = q.execute().count().value();
       List<?> l = q.list();
-      assert l.size() == resultSize;
+      assertEquals(resultSize, l.size());
       return q.list();
    }
 

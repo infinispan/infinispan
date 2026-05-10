@@ -211,7 +211,7 @@ public class RestOperations {
             while (pair.get() == null) {
                try {
                   KeyValuePair<String, String> event = events.poll(10, TimeUnit.SECONDS);
-                  assert event != null : "No event received";
+                  assertNotNull(event, "No event received");
 
                   if (type.equals(event.getKey()) && event.getValue().contains(subString)) {
                      pair.set(event);
@@ -230,7 +230,7 @@ public class RestOperations {
                }
             }
 
-            assert pair.get() != null : "Should contain event with: " + subString;
+            assertNotNull(pair.get(), "Should contain event with: " + subString);
             return pair.get();
          });
 

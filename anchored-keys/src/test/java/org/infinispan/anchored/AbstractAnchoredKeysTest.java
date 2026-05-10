@@ -1,8 +1,8 @@
 package org.infinispan.anchored;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public abstract class AbstractAnchoredKeysTest extends MultipleCacheManagersTest
       for (Cache<Object, Object> cache : caches()) {
          Address address = cache.getAdvancedCache().getRpcManager().getAddress();
          Object value = cache.get(key);
-         assertEquals("Wrong value for " + key + " on " + address, expectedValue, value);
+         assertEquals(expectedValue, value, "Wrong value for " + key + " on " + address);
       }
    }
 
@@ -26,7 +26,7 @@ public abstract class AbstractAnchoredKeysTest extends MultipleCacheManagersTest
       for (Cache<Object, Object> cache : caches()) {
          Address address = cache.getAdvancedCache().getRpcManager().getAddress();
          Object value = cache.get(key);
-         assertNull("Extra value for " + key + " on " + address, value);
+         assertNull(value, "Extra value for " + key + " on " + address);
       }
    }
 
@@ -40,14 +40,13 @@ public abstract class AbstractAnchoredKeysTest extends MultipleCacheManagersTest
          if (address.equals(expectedAddress)) {
             Object storedValue = entry != null ? entry.getValue() : null;
             Object value = cache.getAdvancedCache().getValueDataConversion().fromStorage(storedValue);
-            assertEquals("Wrong value for " + key + " on " + address, expectedValue, value);
+            assertEquals(expectedValue, value, "Wrong value for " + key + " on " + address);
             Metadata metadata = entry != null ? entry.getMetadata() : null;
-            assertFalse("No location expected for " + key + " on " + address + ", got " + metadata,
-                        metadata instanceof RemoteMetadata);
+            assertFalse(metadata instanceof RemoteMetadata, "No location expected for " + key + " on " + address + ", got " + metadata);
          } else {
-            assertNull("No value expected for key " + key + " on " + address, entry.getValue());
+            assertNull(entry.getValue(), "No value expected for key " + key + " on " + address);
             Address location = ((RemoteMetadata) entry.getMetadata()).getAddress();
-            assertEquals("Wrong location for " + key + " on " + address, expectedAddress, location);
+            assertEquals(expectedAddress, location, "Wrong location for " + key + " on " + address);
          }
       }
    }
@@ -58,7 +57,7 @@ public abstract class AbstractAnchoredKeysTest extends MultipleCacheManagersTest
          Object storageKey = cache.getAdvancedCache().getKeyDataConversion().toStorage(key);
          InternalCacheEntry<Object, Object> entry = cache.getAdvancedCache().getDataContainer().peek(storageKey);
          Address address = cache.getAdvancedCache().getRpcManager().getAddress();
-         assertNull("Expected no location on " + address, entry);
+         assertNull(entry, "Expected no location on " + address);
       }
 
    }

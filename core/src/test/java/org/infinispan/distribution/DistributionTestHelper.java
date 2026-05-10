@@ -1,5 +1,10 @@
 package org.infinispan.distribution;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -28,14 +33,14 @@ public class DistributionTestHelper {
    public static void assertIsInL1(Cache<?, ?> cache, Object key) {
       DataContainer<?, ?> dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> ice = dc.peek(key);
-      assert ice != null : "Entry for key [" + key + "] should be in L1 on cache at [" + addressOf(cache) + "]!";
-      assert !(ice instanceof ImmortalCacheEntry) : "Entry for key [" + key + "] should have a lifespan on cache at [" + addressOf(cache) + "]!";
+      assertNotNull(ice, "Entry for key [" + key + "] should be in L1 on cache at [" + addressOf(cache) + "]!");
+      assertFalse(ice instanceof ImmortalCacheEntry, "Entry for key [" + key + "] should have a lifespan on cache at [" + addressOf(cache) + "]!");
    }
 
    public static void assertIsNotInL1(Cache<?, ?> cache, Object key) {
       DataContainer<?, ?> dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> ice = dc.peek(key);
-      assert ice == null : "Entry for key [" + key + "] should not be in data container at all on cache at [" + addressOf(cache) + "]!";
+      assertNull(ice, "Entry for key [" + key + "] should not be in data container at all on cache at [" + addressOf(cache) + "]!");
    }
 
    public static void assertIsInContainerImmortal(Cache<?, ?> cache, Object key) {
@@ -45,12 +50,12 @@ public class DistributionTestHelper {
       if (ice == null) {
          String msg = "Entry for key [" + key + "] should be in data container on cache at [" + addressOf(cache) + "]!";
          log.fatal(msg);
-         assert false : msg;
+         fail(msg);
       }
       if (!(ice instanceof ImmortalCacheEntry)) {
          String msg = "Entry for key [" + key + "] on cache at [" + addressOf(cache) + "] should be immortal but was [" + ice + "]!";
          log.fatal(msg);
-         assert false : msg;
+         fail(msg);
       }
    }
 
@@ -61,7 +66,7 @@ public class DistributionTestHelper {
       if (ice instanceof ImmortalCacheEntry) {
          String msg = "Entry for key [" + key + "] on cache at [" + addressOf(cache) + "] should be mortal or null but was [" + ice + "]!";
          log.fatal(msg);
-         assert false : msg;
+         fail(msg);
       }
    }
 

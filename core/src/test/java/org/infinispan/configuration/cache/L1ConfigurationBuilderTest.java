@@ -1,8 +1,8 @@
 package org.infinispan.configuration.cache;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +25,7 @@ public class L1ConfigurationBuilderTest {
 
       assertTrue(l1Config.enabled());
       assertEquals(l1Config.cleanupTaskFrequency(), TimeUnit.MINUTES.toMillis(1));
-      assertEquals(l1Config.invalidationThreshold(), 0);
+      assertEquals(0, l1Config.invalidationThreshold());
       assertEquals(l1Config.lifespan(), TimeUnit.MINUTES.toMillis(10));
    }
 

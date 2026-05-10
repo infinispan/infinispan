@@ -1,7 +1,8 @@
 package org.infinispan.persistence.sifs;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -63,7 +64,7 @@ public class SoftIndexFileStoreCorruptRestartTest extends BaseDistStoreTest<Inte
    @Override
    protected StoreConfigurationBuilder addStore(PersistenceConfigurationBuilder persistenceConfigurationBuilder, boolean shared) {
       // We don't support shared for SIFS
-      assert !shared;
+      assertFalse(shared);
       return persistenceConfigurationBuilder.addSoftIndexFileStore()
             .dataLocation(Paths.get(tmpDirectory, "data").toString())
             .indexLocation(Paths.get(tmpDirectory, "index").toString());

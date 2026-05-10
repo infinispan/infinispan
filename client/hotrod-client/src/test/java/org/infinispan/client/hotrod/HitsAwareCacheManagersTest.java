@@ -5,6 +5,7 @@ import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -131,13 +132,11 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    protected void assertServerHit(SocketAddress serverAddress, String cacheName, int expectedHits) {
       CacheContainer cacheContainer = addr2hrServer.get(serverAddress).getCacheManager();
       HitCountInterceptor interceptor = getHitCountInterceptor(namedCache(cacheName, cacheContainer));
-      assert interceptor.getHits() == expectedHits :
-            "Expected " + expectedHits + " hit(s) for " + serverAddress + " but received " + interceptor.getHits();
+      assertTrue(interceptor.getHits() == expectedHits, "Expected " + expectedHits + " hit(s) for " + serverAddress + " but received " + interceptor.getHits());
       for (HotRodServer server : addr2hrServer.values()) {
          if (server.getCacheManager() != cacheContainer) {
             interceptor = getHitCountInterceptor(namedCache(cacheName, server.getCacheManager()));
-            assert interceptor.getHits() == 0 :
-                  "Expected 0 hits in " + serverAddress + " but got " + interceptor.getHits();
+            assertTrue(interceptor.getHits() == 0, "Expected 0 hits in " + serverAddress + " but got " + interceptor.getHits());
          }
       }
    }
@@ -149,7 +148,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    protected void assertNoHits() {
       for (HotRodServer server : addr2hrServer.values()) {
          HitCountInterceptor interceptor = getHitCountInterceptor(server.getCacheManager().getCache());
-         assert interceptor.getHits() == 0 : "Expected 0 hits but got " + interceptor.getHits();
+         assertTrue(interceptor.getHits() == 0, "Expected 0 hits but got " + interceptor.getHits());
       }
    }
 

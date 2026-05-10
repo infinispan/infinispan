@@ -1,8 +1,8 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -100,7 +100,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
       // wait a while to make sure that timestamp comparison works after collection remove (during insert)
       TIME_SERVICE.advance(1);
 
-      assertNull("contact exists despite not being added", getFirstContact(customerId));
+      assertNull(getFirstContact(customerId), "contact exists despite not being added");
 
       // check that cache was hit
       CacheRegionStatistics customerSlcs = sessionFactory()
@@ -120,19 +120,20 @@ public class ConcurrentWriteTest extends SingleNodeTest {
       assertEquals(1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), contactsRegionName).getElementCountInMemory());
 
       final Contact contact = addContact(customerId);
-      assertNotNull("contact returned by addContact is null", contact);
+      assertNotNull(contact, "contact returned by addContact is null");
       assertEquals(
-            "Customer.contacts cache was not invalidated after addContact", 0,
-            contactsCollectionSlcs.getElementCountInMemory()
+            0,
+            contactsCollectionSlcs.getElementCountInMemory(),
+            "Customer.contacts cache was not invalidated after addContact"
       );
 
-      assertNotNull("Contact missing after successful add call", getFirstContact(customerId));
+      assertNotNull(getFirstContact(customerId), "Contact missing after successful add call");
 
       // read everyone's contacts
       readEveryonesFirstContact();
 
       removeContact(customerId);
-      assertNull("contact still exists after successful remove call", getFirstContact(customerId));
+      assertNull(getFirstContact(customerId), "contact still exists after successful remove call");
 
    }
 
@@ -146,7 +147,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
             Customer customer = createCustomer(0);
             getCustomerIDs().add(customer.getId());
          }
-         assertEquals("failed to create enough Customers", USER_COUNT, getCustomerIDs().size());
+         assertEquals(USER_COUNT, getCustomerIDs().size(), "failed to create enough Customers");
 
          final ExecutorService executor = Executors.newFixedThreadPool(USER_COUNT);
 
@@ -220,7 +221,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
     * @return first Contact or null if customer has none
     */
    private Contact getFirstContact(Integer customerId) throws Exception {
-      assert customerId != null;
+      assertNotNull(customerId);
       return withTxSessionApply(s -> {
          Customer customer = s.getReference(Customer.class, customerId);
          Set<Contact> contacts = customer.getContacts();
@@ -239,7 +240,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
     * @return added Contact
     */
    private Contact addContact(Integer customerId) throws Exception {
-      assert customerId != null;
+      assertNotNull(customerId);
       return withTxSessionApply(s -> {
          final Customer customer = s.getReference(Customer.class, customerId);
          Contact contact = new Contact();
@@ -263,7 +264,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
     * @throws IllegalStateException if customer does not own a contact
     */
    private void removeContact(Integer customerId) throws Exception {
-      assert customerId != null;
+      assertNotNull(customerId);
 
       withTxSession(s -> {
          Customer customer = s.getReference(Customer.class, customerId);
@@ -302,7 +303,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
    }
 
    private String statusOfRunnersToString(Set<UserRunner> runners) {
-      assert runners != null;
+      assertNotNull(runners);
 
       StringBuilder sb = new StringBuilder(
             "TEST CONFIG [userCount=" + USER_COUNT
@@ -323,7 +324,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
       private Throwable causeOfFailure;
 
       public UserRunner(Integer cId, CyclicBarrier barrier) {
-         assert cId != null;
+         assertNotNull(cId);
          this.customerId = cId;
          this.barrier = barrier;
       }

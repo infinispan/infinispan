@@ -1,7 +1,7 @@
 package org.infinispan.query.distributed;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
@@ -114,6 +114,6 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       } else {
          indexedCount = count / clusteringConfiguration.hash().numOwners();
       }
-      assertEquals(indexedCount, expected);
+      assertEquals(expected, indexedCount);
    }
 }

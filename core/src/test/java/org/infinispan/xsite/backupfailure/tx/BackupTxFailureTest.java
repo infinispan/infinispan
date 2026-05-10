@@ -7,8 +7,9 @@ import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.getTransactionTable;
 import static org.infinispan.transaction.LockingMode.OPTIMISTIC;
 import static org.infinispan.transaction.LockingMode.PESSIMISTIC;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Objects;
@@ -224,7 +225,7 @@ public class BackupTxFailureTest extends AbstractMultipleSitesTest {
       var updates = IntSets.concurrentSet(maxUpdates * 2);
       updates.addAll(c1.addedValues);
       for (var i : c2.addedValues) {
-         assertTrue("concurrent update detected: " + c1.addedValues + " - " + c2.addedValues, updates.add(i));
+         assertTrue(updates.add(i), "concurrent update detected: " + c1.addedValues + " - " + c2.addedValues);
       }
 
       assertNoTransaction(cacheName);
@@ -252,7 +253,7 @@ public class BackupTxFailureTest extends AbstractMultipleSitesTest {
 
    private static ClusteredCacheBackupReceiver backupReceiver(Cache<?, ?> cache) {
       var receiver = extractComponent(cache, BackupReceiver.class);
-      assertTrue(receiver instanceof ClusteredCacheBackupReceiver);
+      assertInstanceOf(ClusteredCacheBackupReceiver.class, receiver);
       return (ClusteredCacheBackupReceiver) receiver;
    }
 

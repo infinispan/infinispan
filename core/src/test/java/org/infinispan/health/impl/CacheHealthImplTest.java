@@ -1,9 +1,9 @@
 package org.infinispan.health.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.testng.Assert.assertEquals;
 
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -38,7 +38,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.HEALTHY);
+        assertEquals(HealthStatus.HEALTHY, status);
     }
 
     @Test
@@ -54,7 +54,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.DEGRADED);
+        assertEquals(HealthStatus.DEGRADED, status);
     }
 
     @Test
@@ -70,7 +70,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.DEGRADED);
+        assertEquals(HealthStatus.DEGRADED, status);
     }
 
     @Test
@@ -86,7 +86,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.DEGRADED);
+        assertEquals(HealthStatus.DEGRADED, status);
     }
 
     @Test
@@ -106,7 +106,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.DEGRADED);
+        assertEquals(HealthStatus.DEGRADED, status);
     }
 
     @Test
@@ -129,7 +129,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.HEALTHY_REBALANCING);
+        assertEquals(HealthStatus.HEALTHY_REBALANCING, status);
     }
 
     @Test
@@ -144,6 +144,6 @@ public class CacheHealthImplTest {
         String name = cacheHealth.getCacheName();
 
         //then
-        assertEquals(name, "test");
+        assertEquals("test", name);
     }
 }

@@ -1,7 +1,7 @@
 package org.infinispan.partitionhandling;
 
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.stream.Stream;
 

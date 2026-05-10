@@ -1,9 +1,9 @@
 package org.infinispan.test.hibernate.cache.commons;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -243,10 +243,10 @@ public abstract class AbstractRegionAccessStrategyTest<S>
       node1.start();
       node2.start();
 
-      assertTrue("Threads completed", completionLatch.await(2, TimeUnit.SECONDS));
+      assertTrue(completionLatch.await(2, TimeUnit.SECONDS), "Threads completed");
 
       assertThreadsRanCleanly();
-      assertTrue("Update was replicated", remoteUpdate.await(2, TimeUnit.SECONDS));
+      assertTrue(remoteUpdate.await(2, TimeUnit.SECONDS), "Update was replicated");
 
       // At least one of the put from load latch should have completed
       assertPutFromLoadLatches(putFromLoadLatches);
@@ -269,9 +269,8 @@ public abstract class AbstractRegionAccessStrategyTest<S>
       // If waiting directly in the || condition, the right side might not wait
       boolean await0 = await(latches[0]);
       boolean await1 = await(latches[1]);
-      assertTrue(String.format(
-                  "One of the latches in %s should have at least completed", Arrays.toString(latches)),
-            await0 || await1);
+      assertTrue(await0 || await1, String.format(
+            "One of the latches in %s should have at least completed", Arrays.toString(latches)));
    }
 
    private boolean await(CountDownLatch latch) {
@@ -378,9 +377,9 @@ public abstract class AbstractRegionAccessStrategyTest<S>
       CountDownLatch remotePutFromLoadLatch = expectRemotePutFromLoad(localRegion.getCache(), remoteRegion.getCache(), KEY);
 
       Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
-      assertNull("local is clean", testLocalAccessStrategy.get(s1, KEY));
+      assertNull(testLocalAccessStrategy.get(s1, KEY), "local is clean");
       Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
-      assertNull("remote is clean", testRemoteAccessStrategy.get(s2, KEY));
+      assertNull(testRemoteAccessStrategy.get(s2, KEY), "remote is clean");
 
       Object s3 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
       testLocalAccessStrategy.putFromLoad(s3, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s3), VALUE1.version);
@@ -459,12 +458,12 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 
       if (node1Exception != null) {
          log.error("node1 saw an exception", node1Exception);
-         assertEquals("node1 saw no exceptions", null, node1Exception);
+         assertNull(node1Exception, "node1 saw no exceptions");
       }
 
       if (node2Exception != null) {
          log.error("node2 saw an exception", node2Exception);
-         assertEquals("node2 saw no exceptions", null, node2Exception);
+         assertNull(node2Exception, "node2 saw no exceptions");
       }
    }
 
@@ -475,9 +474,9 @@ public abstract class AbstractRegionAccessStrategyTest<S>
       assertEquals(0, localRegion.getElementCountInMemory());
       assertEquals(0, remoteRegion.getElementCountInMemory());
       Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
-      assertNull("local is clean", testLocalAccessStrategy.get(s1, KEY));
+      assertNull(testLocalAccessStrategy.get(s1, KEY), "local is clean");
       Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
-      assertNull("remote is clean", testRemoteAccessStrategy.get(s2, KEY));
+      assertNull(testRemoteAccessStrategy.get(s2, KEY), "remote is clean");
 
       CountDownLatch localPutFromLoadLatch = expectRemotePutFromLoad(remoteRegion.getCache(), localRegion.getCache(), KEY);
       CountDownLatch remotePutFromLoadLatch = expectRemotePutFromLoad(localRegion.getCache(), remoteRegion.getCache(), KEY);

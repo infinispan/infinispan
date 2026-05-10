@@ -4,7 +4,7 @@ import static java.util.Collections.singletonMap;
 import static org.infinispan.client.rest.RestTaskClient.ResultType.ALL;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_JAVASCRIPT;
 import static org.infinispan.commons.util.Util.getResourceAsString;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
 import java.util.concurrent.CompletionStage;

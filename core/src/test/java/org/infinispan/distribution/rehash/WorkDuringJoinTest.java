@@ -1,5 +1,7 @@
 package org.infinispan.distribution.rehash;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -74,6 +76,6 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest<Object, String> {
       }
 
       if (keyToTest == null) throw new NullPointerException("Couldn't find a key mapped to J!");
-      assert joiner.get(keyToTest) != null;
+      assertNotNull(joiner.get(keyToTest));
    }
 }

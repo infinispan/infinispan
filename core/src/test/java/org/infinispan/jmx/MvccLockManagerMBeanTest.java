@@ -2,6 +2,7 @@ package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.management.ObjectName;
 
@@ -89,7 +90,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
 
    private void assertAttributeValue(String attrName, int expectedVal) throws Exception {
       int cl = getAttrValue(attrName);
-      assert cl == expectedVal : "expected " + expectedVal + ", but received " + cl;
+      assertTrue(cl == expectedVal, "expected " + expectedVal + ", but received " + cl);
    }
 
    private int getAttrValue(String attrName) throws Exception {

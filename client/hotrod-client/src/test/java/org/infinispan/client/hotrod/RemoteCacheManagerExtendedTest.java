@@ -1,7 +1,9 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertSame;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -57,9 +59,9 @@ public class RemoteCacheManagerExtendedTest extends SingleCacheManagerTest {
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(port);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build(), false);
-      assert !remoteCacheManager.isStarted();
+      assertFalse(remoteCacheManager.isStarted());
       remoteCacheManager.start();
-      assert null == remoteCacheManager.getCache("Undefined1234");
+      assertNull(remoteCacheManager.getCache("Undefined1234"));
    }
 
    public void testMarshallerInstance() {

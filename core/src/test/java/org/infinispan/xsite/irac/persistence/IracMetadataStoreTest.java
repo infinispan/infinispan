@@ -1,8 +1,8 @@
 package org.infinispan.xsite.irac.persistence;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -315,7 +315,7 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
          InternalDataContainer<String, Object> dc = getInternalDataContainer(cache);
          InternalCacheEntry<String, Object> ice = dc.peek(key);
          log.debugf("Checking DataContainer in %s. entry=%s", DistributionTestHelper.addressOf(cache), ice);
-         assertNull(String.format("Internal entry found for key %s", key), ice);
+         assertNull(ice, String.format("Internal entry found for key %s", key));
       }
    }
 
@@ -327,10 +327,10 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
          InternalDataContainer<String, Object> dc = getInternalDataContainer(cache);
          InternalCacheEntry<String, Object> ice = dc.peek(key);
          log.debugf("Checking DataContainer in %s. entry=%s", DistributionTestHelper.addressOf(cache), ice);
-         assertNotNull(String.format("Internal entry is null for key %s", key), ice);
-         assertEquals("Internal entry wrong key", key, ice.getKey());
-         assertEquals("Internal entry wrong value", value, ice.getValue());
-         assertEquals("Internal entry wrong metadata", metadata, ice.getInternalMetadata().iracMetadata());
+         assertNotNull(ice, String.format("Internal entry is null for key %s", key));
+         assertEquals(key, ice.getKey(), "Internal entry wrong key");
+         assertEquals(value, ice.getValue(), "Internal entry wrong value");
+         assertEquals(metadata, ice.getInternalMetadata().iracMetadata(), "Internal entry wrong metadata");
       }
    }
 
@@ -342,11 +342,11 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
          WaitNonBlockingStore<String, Object> cl = TestingUtil.getFirstStoreWait(cache);
          MarshallableEntry<String, Object> mEntry = cl.loadEntry(key);
          log.debugf("Checking CacheLoader in %s. entry=%s", DistributionTestHelper.addressOf(cache), mEntry);
-         assertNotNull(String.format("CacheLoader entry is null for key %s", key), mEntry);
-         assertEquals("CacheLoader entry wrong key", key, mEntry.getKey());
-         assertEquals("CacheLoader entry wrong value", value, mEntry.getValue());
-         assertNotNull("CacheLoader entry wrong internal metadata", mEntry.getInternalMetadata());
-         assertEquals("CacheLoader entry wrong IRAC metadata", metadata, mEntry.getInternalMetadata().iracMetadata());
+         assertNotNull(mEntry, String.format("CacheLoader entry is null for key %s", key));
+         assertEquals(key, mEntry.getKey(), "CacheLoader entry wrong key");
+         assertEquals(value, mEntry.getValue(), "CacheLoader entry wrong value");
+         assertNotNull(mEntry.getInternalMetadata(), "CacheLoader entry wrong internal metadata");
+         assertEquals(metadata, mEntry.getInternalMetadata().iracMetadata(), "CacheLoader entry wrong IRAC metadata");
       }
    }
 

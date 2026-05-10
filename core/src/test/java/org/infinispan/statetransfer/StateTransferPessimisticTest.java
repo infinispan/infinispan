@@ -1,11 +1,11 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
-import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashSet;
 import java.util.Set;

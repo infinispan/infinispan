@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -131,7 +130,7 @@ public class ToolUtils {
       //it assumes a small file!
       List<String> lines = Files.lines(file.toPath())
             .filter(s -> !s.trim().isEmpty())
-            .collect(Collectors.toList());
+            .toList();
       try (FileWriter writer = new FileWriter(file)) {
          for (String line : lines) {
             writer.write(line);

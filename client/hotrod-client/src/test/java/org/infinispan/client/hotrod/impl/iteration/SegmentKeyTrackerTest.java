@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
 import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.NO_ERROR_STATUS;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.SocketAddress;
 import java.util.Set;

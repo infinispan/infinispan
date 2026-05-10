@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertHotRodEquals;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.api.Infinispan;
 import org.infinispan.api.common.CacheEntry;
@@ -72,7 +73,7 @@ public class HotRodApiIntegrationTest extends SingleCacheManagerTest {
       assertThat(ce.value()).isNull();
       assertHotRodEquals(cacheManager, "otherKey", "otherValue");
 
-      assert remoteCache.get("aKey").equals("aValue");
-      assert defaultRemote.get("otherKey").equals("otherValue");
+      assertEquals("aValue", remoteCache.get("aKey"));
+      assertEquals("otherValue", defaultRemote.get("otherKey"));
    }
 }

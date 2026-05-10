@@ -1,6 +1,8 @@
 package org.infinispan.lock.singlelock.replicated.pessimistic;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -58,9 +60,9 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       Future<Void> future = beginAndCommitTx(key, 1);
       releaseLocksLatch.await();
 
-      assert checkTxCount(0, 0, 1);
-      assert checkTxCount(1, 0, 0);
-      assert checkTxCount(2, 0, 1);
+      assertTrue(checkTxCount(0, 0, 1));
+      assertTrue(checkTxCount(1, 0, 0));
+      assertTrue(checkTxCount(2, 0, 1));
 
       assertLocked(cache(0), key);
       assertEventuallyNotLocked(cache(1), key);
@@ -70,17 +72,17 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
 
       eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
       assertNotLocked(key);
-      assert cache(0).get(key).equals("v");
-      assert cache(1).get(key).equals("v");
+      assertEquals("v", cache(0).get(key));
+      assertEquals("v", cache(1).get(key));
       future.get(30, TimeUnit.SECONDS);
    }
 
    public void testInitiatorNodeCrashesBeforePrepare() throws Exception {
       MagicKey key = new MagicKey("a", cache(0));
       cache(0).put(key, "b");
-      assert cache(0).get(key).equals("b");
-      assert cache(1).get(key).equals("b");
-      assert cache(2).get(key).equals("b");
+      assertEquals("b", cache(0).get(key));
+      assertEquals("b", cache(1).get(key));
+      assertEquals("b", cache(2).get(key));
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
       extractInterceptorChain(advancedCache(1)).addInterceptor(txControlInterceptor, 1);
@@ -92,7 +94,7 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
 
       killMember(1);
 
-      assert caches().size() == 2;
+      assertTrue(caches().size() == 2);
       txControlInterceptor.prepareProgress.countDown();
 
       assertNotLocked("k");

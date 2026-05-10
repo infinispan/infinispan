@@ -3,7 +3,8 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -178,7 +179,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
          remoteCache.put("k7", "v3");
          remoteCache.put("k8", "v4");
       } catch (Exception e) {
-         assert false : "exception should not happen even if the balancer redirects to failed node at the beggining";
+         fail("exception should not happen even if the balancer redirects to failed node at the beggining");
       }
    }
 

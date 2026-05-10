@@ -1,5 +1,7 @@
 package org.infinispan.partitionhandling;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
@@ -7,7 +9,6 @@ import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -58,7 +59,7 @@ public class OptimisticTxPartitionAndMergeDuringRollbackTest extends BaseOptimis
       transactionManager.begin();
       final EmbeddedTransaction transaction = transactionManager.getTransaction();
       keyInfo.putFinalValue(originator);
-      AssertJUnit.assertTrue(transaction.runPrepare());
+      assertTrue(transaction.runPrepare());
       transactionManager.suspend();
 
       SplitMode.BOTH_DEGRADED.split(this);

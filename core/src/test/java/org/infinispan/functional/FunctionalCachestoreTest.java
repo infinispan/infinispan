@@ -1,8 +1,8 @@
 package org.infinispan.functional;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Set;
@@ -51,7 +51,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
 
       assertInvocations(2);
 
-      caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
+      caches(DIST).forEach(cache -> assertEquals("value", cache.get(key), getAddress(cache).toString()));
       // Staggered gets could arrive after evict command and that would reload the entry into DC
       advanceGenerationsAndAwait(10, TimeUnit.SECONDS);
       caches(DIST).forEach(cache -> cache.evict(key));
@@ -66,7 +66,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       method.eval(key, wo, rw,
             view -> {
                assertTrue(view.find().isPresent());
-               assertEquals(view.get(), "value");
+               assertEquals("value", view.get());
                return null;
             },
             (view, nil) -> {
@@ -98,7 +98,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       assertInvocations(1);
 
       Cache<Integer, String> cache = cacheManagers.get(0).getCache();
-      assertEquals(cache.get(key), "value");
+      assertEquals("value", cache.get(key));
       cache.evict(key);
       assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key));
 
@@ -108,7 +108,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       method.eval(key, lwo, lrw,
             view -> {
                assertTrue(view.find().isPresent());
-               assertEquals(view.get(), "value");
+               assertEquals("value", view.get());
                return null;
             },
             (view, nil) -> {
@@ -122,9 +122,9 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       Object key = getKey(isSourceOwner, DIST);
       List<Cache<Object, Object>> owners = caches(DIST).stream()
             .filter(cache -> cache.getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(key))
-            .collect(Collectors.toList());
+            .toList();
 
-      assertTrue(method.eval(key, ro, view -> {
+      assertTrue(() -> method.eval(key, ro, view -> {
          assertFalse(view.find().isPresent());
          return true;
       }));
@@ -132,7 +132,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       // we can't add from read-only cache, so we put manually:
       cache(0, DIST).put(key, "value");
 
-      caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
+      caches(DIST).forEach(cache -> assertEquals("value", cache.get(key), getAddress(cache).toString()));
       caches(DIST).forEach(cache -> cache.evict(key));
       caches(DIST).forEach(cache -> assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), getAddress(cache).toString()));
       owners.forEach(cache -> {
@@ -141,11 +141,11 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
          assertTrue(store.contains(key), getAddress(cache).toString());
       });
 
-      assertEquals(method.eval(key, ro,
+      assertEquals("OK", method.eval(key, ro,
             view -> {
                assertTrue(view.find().isPresent());
-               assertEquals(view.get(), "value");
+               assertEquals("value", view.get());
                return "OK";
-            }), "OK");
+            }));
    }
 }

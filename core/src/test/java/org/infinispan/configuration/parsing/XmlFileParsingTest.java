@@ -2,11 +2,12 @@ package org.infinispan.configuration.parsing;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -79,7 +80,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       ConfigurationBuilderHolder holder = parseStringConfiguration(config);
       GlobalConfiguration globalCfg = holder.getGlobalConfigurationBuilder().build();
 
-      assertTrue(globalCfg.transport().transport() instanceof JGroupsTransport);
+      assertInstanceOf(JGroupsTransport.class, globalCfg.transport().transport());
       assertEquals("demoCluster", globalCfg.transport().clusterName());
 
       Configuration cfg = holder.getDefaultConfigurationBuilder().build();
@@ -179,7 +180,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       ConfigurationBuilderHolder holder = parseStringConfiguration(config);
       PersistenceConfiguration cfg = holder.getDefaultConfigurationBuilder().build().persistence();
       StoreConfiguration storeConfiguration = cfg.stores().get(0);
-      assertTrue(storeConfiguration instanceof DummyInMemoryStoreConfiguration);
+      assertInstanceOf(DummyInMemoryStoreConfiguration.class, storeConfiguration);
       DummyInMemoryStoreConfiguration dummyInMemoryStoreConfiguration = (DummyInMemoryStoreConfiguration) storeConfiguration;
       assertEquals("myStore", dummyInMemoryStoreConfiguration.storeName());
    }
@@ -235,7 +236,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       ConfigurationBuilderHolder holder = parseStringConfiguration(config);
       PersistenceConfiguration cfg = holder.getDefaultConfigurationBuilder().build().persistence();
       StoreConfiguration storeConfiguration = cfg.stores().get(0);
-      assertTrue(storeConfiguration instanceof AbstractStoreConfiguration);
+      assertInstanceOf(AbstractStoreConfiguration.class, storeConfiguration);
       AbstractStoreConfiguration abstractStoreConfiguration = (AbstractStoreConfiguration) storeConfiguration;
       assertTrue(abstractStoreConfiguration.preload());
    }
@@ -459,14 +460,14 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             gc.expirationThreadPool().threadFactory();
       assertEquals("ExpirationThread", evictionThreadFactory.threadNamePattern());
 
-      assertTrue(gc.transport().transport() instanceof JGroupsTransport);
+      assertInstanceOf(JGroupsTransport.class, gc.transport().transport());
       assertEquals("infinispan-cluster", gc.transport().clusterName());
       assertEquals("Jalapeno", gc.transport().nodeName());
       assertEquals(50000, gc.transport().distributedSyncTimeout());
 
       assertEquals(ShutdownHookBehavior.REGISTER, gc.shutdown().hookBehavior());
 
-      assertTrue(gc.serialization().marshaller() instanceof TestObjectStreamMarshaller);
+      assertInstanceOf(TestObjectStreamMarshaller.class, gc.serialization().marshaller());
 
       Configuration defaultCfg = holder.getDefaultConfigurationBuilder().build();
       assertEquals(1000, defaultCfg.locking().lockAcquisitionTimeout());
@@ -479,13 +480,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       Configuration c = getCacheConfiguration(holder, "transactional");
       assertFalse(c.clustering().cacheMode().isClustered());
-      assertTrue(c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup);
+      assertInstanceOf(GenericTransactionManagerLookup.class, c.transaction().transactionManagerLookup());
       if (!deprecated) {
          assertReaperAndTimeoutInfo(defaultCfg);
       }
 
       c = getCacheConfiguration(holder, "transactional2");
-      assertTrue(c.transaction().transactionManagerLookup() instanceof TestLookup);
+      assertInstanceOf(TestLookup.class, c.transaction().transactionManagerLookup());
       assertEquals(10000, c.transaction().cacheStopTimeout());
       assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
       assertFalse(c.transaction().autoCommit());
@@ -516,7 +517,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       c = getCacheConfiguration(holder, "txSyncRepl");
 
-      assertTrue(c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup);
+      assertInstanceOf(GenericTransactionManagerLookup.class, c.transaction().transactionManagerLookup());
       assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
       assertFalse(c.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(c.clustering().stateTransfer().awaitInitialTransfer());
@@ -555,7 +556,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(gc.statistics());
       assertTrue(gc.jmx().enabled());
       assertEquals("funky_domain", gc.jmx().domain());
-      assertTrue(gc.jmx().mbeanServerLookup() instanceof TestMBeanServerLookup);
+      assertInstanceOf(TestMBeanServerLookup.class, gc.jmx().mbeanServerLookup());
 
       c = getCacheConfiguration(holder, "dist");
       assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());

@@ -1,10 +1,11 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.Map;
@@ -130,13 +131,13 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       assertEquals("k", ((CacheEntryModifiedEvent) cl.getEvents().get(0)).getKey());
       assertEquals(getExpectedEventValue("k", "v1", Event.Type.CACHE_ENTRY_MODIFIED),
             ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
-      assertTrue(!((CacheEntryModifiedEvent) cl.getEvents().get(0)).isCreated());
+      assertFalse(((CacheEntryModifiedEvent) cl.getEvents().get(0)).isCreated());
       assertEquals(mockCache, cl.getEvents().get(1).getCache());
       assertEquals(Event.Type.CACHE_ENTRY_MODIFIED, cl.getEvents().get(1).getType());
       assertEquals("k", ((CacheEntryModifiedEvent) cl.getEvents().get(1)).getKey());
       assertEquals(getExpectedEventValue("k", "v2", Event.Type.CACHE_ENTRY_MODIFIED),
             ((CacheEntryEvent) cl.getEvents().get(1)).getValue());
-      assertTrue(!((CacheEntryModifiedEvent) cl.getEvents().get(1)).isCreated());
+      assertFalse(((CacheEntryModifiedEvent) cl.getEvents().get(1)).isCreated());
    }
 
    public void testNotifyCacheEntryRemoved() {
@@ -210,11 +211,11 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       n.notifyCacheEntryExpired("k", "v", null, null);
 
       assertTrue(cl.isReceivedPost());
-      assertEquals(cl.getInvocationCount(), 1);
+      assertEquals(1, cl.getInvocationCount());
       assertEquals(cl.getEvents().get(0).getCache(), mockCache);
-      assertEquals(cl.getEvents().get(0).getType(), Event.Type.CACHE_ENTRY_EXPIRED);
+      assertEquals(Type.CACHE_ENTRY_EXPIRED, cl.getEvents().get(0).getType());
       CacheEntryExpiredEvent expiredEvent = ((CacheEntryExpiredEvent) cl.getEvents().get(0));
-      assertEquals(expiredEvent.getKey(), "k");
+      assertEquals("k", expiredEvent.getKey());
       assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_EXPIRED),
             ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
    }
@@ -309,7 +310,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       assertEquals(((TransactionCompletedEvent) cl.getEvents().get(0)).getGlobalTransaction(), tx);
       assertEquals(mockCache, cl.getEvents().get(1).getCache());
       assertEquals(Event.Type.TRANSACTION_COMPLETED, cl.getEvents().get(1).getType());
-      assertTrue(!((TransactionCompletedEvent) cl.getEvents().get(1)).isTransactionSuccessful());
+      assertFalse(((TransactionCompletedEvent) cl.getEvents().get(1)).isTransactionSuccessful());
       assertEquals(((TransactionCompletedEvent) cl.getEvents().get(1)).getGlobalTransaction(), tx);
    }
 

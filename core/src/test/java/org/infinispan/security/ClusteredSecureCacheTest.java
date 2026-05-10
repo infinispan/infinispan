@@ -1,6 +1,6 @@
 package org.infinispan.security;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.security.Principal;
 import java.util.Map;

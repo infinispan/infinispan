@@ -1,8 +1,8 @@
 package org.infinispan.api;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashSet;
@@ -131,14 +131,14 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       exec.shutdown();
       try {
          boolean finished = exec.awaitTermination(5, TimeUnit.MINUTES);
-         assertTrue("Test took too long", finished);
+         assertTrue(finished, "Test took too long");
       } catch (InterruptedException e) {
          fail("Thread interrupted!");
       } finally {
          // Stop the worker threads so that they don't affect the following tests
          exec.shutdownNow();
       }
-      assertFalse(failureMessage, failed.get());
+      assertFalse(failed.get(), failureMessage);
    }
 
    private String[] generateValidMoves() {

@@ -1,16 +1,17 @@
 package org.infinispan.container.versioning;
 
-import static org.testng.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.junit.jupiter.api.Assertions;
 import org.testng.annotations.Test;
 
 /**
- * This test checks behaivour of versioned caches
+ * This test checks behavior of versioned caches
  * when executing conditional operations.
  *
  * @author Pedro Ruivo
@@ -126,8 +127,6 @@ public class VersionedConditionalOperationsTest extends MultipleCacheManagersTes
    }
 
    private void assertEquals(int index, Object key, Object value) {
-      assert value == null
-            ? value == cache(index).get(key)
-            : value.equals(cache(index).get(key));
+      Assertions.assertEquals(value, cache(index).get(key));
    }
 }

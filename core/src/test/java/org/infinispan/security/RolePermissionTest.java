@@ -1,7 +1,7 @@
 package org.infinispan.security;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
 
@@ -122,16 +122,16 @@ public class RolePermissionTest extends SingleCacheManagerTest {
       });
       Set<String> names = Security.doAs(TestingUtil.makeSubject("Subject34", "role3", "role4"), () -> cacheManager.getAccessibleCacheNames());
       assertEquals(2, names.size());
-      assertTrue(names.toString(), names.contains("cache3"));
-      assertTrue(names.toString(), names.contains("cache4"));
+      assertTrue(names.contains("cache3"), names.toString());
+      assertTrue(names.contains("cache4"), names.toString());
       names = Security.doAs(TestingUtil.makeSubject("Subject35", "role3", "role5"), () -> cacheManager.getAccessibleCacheNames());
       assertEquals(2, names.size());
-      assertTrue(names.toString(), names.contains("cache3"));
-      assertTrue(names.toString(), names.contains("cache5"));
+      assertTrue(names.contains("cache3"), names.toString());
+      assertTrue(names.contains("cache5"), names.toString());
       names = Security.doAs(TestingUtil.makeSubject("Subject45", "role4", "role5"), () -> cacheManager.getAccessibleCacheNames());
       assertEquals(2, names.size());
-      assertTrue(names.toString(), names.contains("cache4"));
-      assertTrue(names.toString(), names.contains("cache5"));
+      assertTrue(names.contains("cache4"), names.toString());
+      assertTrue(names.contains("cache5"), names.toString());
       names = Security.doAs(TestingUtil.makeSubject("Subject0"), () -> cacheManager.getAccessibleCacheNames());
       assertEquals(0, names.size());
    }

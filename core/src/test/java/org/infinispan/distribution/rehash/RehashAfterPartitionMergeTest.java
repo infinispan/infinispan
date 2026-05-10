@@ -1,5 +1,9 @@
 package org.infinispan.distribution.rehash;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -37,9 +41,9 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       c2.put("2", "value");
 
       for (Cache<Object, Object> c: caches) {
-         assert "value".equals(c.get("1"));
-         assert "value".equals(c.get("2"));
-         assert manager(c).getMembers().size() == 2;
+         assertEquals(c.get("1"), "value");
+         assertEquals(c.get("2"), "value");
+         assertTrue(manager(c).getMembers().size() == 2);
       }
 
       d1.discardAll(true);
@@ -54,11 +58,11 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       c1.put("3", "value");
       c2.put("4", "value");
 
-      assert "value".equals(c1.get("3"));
-      assert null == c2.get("3");
+      assertEquals(c1.get("3"), "value");
+      assertNull(c2.get("3"));
 
-      assert "value".equals(c2.get("4"));
-      assert null == c1.get("4");
+      assertEquals(c2.get("4"), "value");
+      assertNull(c1.get("4"));
 
       // lets "heal" the partition
       d1.discardAll(false);
@@ -72,9 +76,9 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       c1.put("5", "value");
       c2.put("6", "value");
       for (Cache<Object, Object> c: caches) {
-         assert "value".equals(c.get("5"));
-         assert "value".equals(c.get("6"));
-         assert manager(c).getMembers().size() == 2;
+         assertEquals(c.get("5"), "value");
+         assertEquals(c.get("6"), "value");
+         assertTrue(manager(c).getMembers().size() == 2);
       }
    }
 

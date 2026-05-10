@@ -1,9 +1,9 @@
 package org.infinispan.statetransfer;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -47,7 +47,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       c1.addListener(rehashListener);
 
       ConsistentHash ch1Node = advancedCache(0).getDistributionManager().getCacheTopology().getReadConsistentHash();
-      assertEquals(rehashListener.removeEvents().size(), 0);
+      assertEquals(0, rehashListener.removeEvents().size());
 
       // start a second node and wait for the rebalance to end
       addClusterEnabledCacheManager(getDefaultConfig());
@@ -57,7 +57,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       ConsistentHash ch2Nodes = advancedCache(0).getDistributionManager().getCacheTopology().getReadConsistentHash();
       rehashListener.waitForEvents(2);
       List<DataRehashedEvent<Object, Object>> events = rehashListener.removeEvents();
-      assertEquals(events.size(), 2);
+      assertEquals(2, events.size());
       DataRehashedEvent<Object, Object> pre = events.get(0);
       DataRehashedEvent<Object, Object> post = events.get(1);
 
@@ -79,7 +79,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       ConsistentHash ch3Nodes = advancedCache(0).getDistributionManager().getCacheTopology().getReadConsistentHash();
       rehashListener.waitForEvents(2);
       events = rehashListener.removeEvents();
-      assertEquals(events.size(), 2);
+      assertEquals(2, events.size());
       pre = events.get(0);
       post = events.get(1);
 
@@ -100,7 +100,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       ConsistentHash chAfterLeave = advancedCache(0).getDistributionManager().getCacheTopology().getReadConsistentHash();
       rehashListener.waitForEvents(2);
       events = rehashListener.removeEvents();
-      assertEquals(events.size(), 2);
+      assertEquals(2, events.size());
       pre = events.get(0);
       post = events.get(1);
 
@@ -119,7 +119,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
 
       // cache 0 was already an owner for all the segments, so there shouldn't be any rebalance
       events = rehashListener.removeEvents();
-      assertEquals(events.size(), 0);
+      assertEquals(0, events.size());
    }
 
    public void testPostOnlyEvent() {
@@ -127,7 +127,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       rehashListener = new DataRehashedListenerPostOnly();
       c1.addListener(rehashListener);
 
-      assertEquals(rehashListener.removeEvents().size(), 0);
+      assertEquals(0, rehashListener.removeEvents().size());
 
       // start a second node and wait for the rebalance to end
       addClusterEnabledCacheManager(getDefaultConfig());

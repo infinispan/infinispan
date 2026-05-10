@@ -1,5 +1,7 @@
 package org.infinispan.test.transport;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
@@ -32,6 +34,6 @@ public final class DelayedViewJGroupsTransport extends JGroupsTransport {
    }
 
    public void assertUnblocked() {
-      assert waitLatch.isDone();
+      assertTrue(waitLatch.isDone());
    }
 }

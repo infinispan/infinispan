@@ -1,8 +1,10 @@
 #!/usr/bin/python
 import re
-import time
 import sys
+import time
+
 from utils import *
+
 
 def main():
   start_time = time.clock()

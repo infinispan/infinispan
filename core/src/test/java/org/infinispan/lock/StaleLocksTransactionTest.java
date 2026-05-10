@@ -1,5 +1,7 @@
 package org.infinispan.lock;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -49,7 +51,7 @@ public class StaleLocksTransactionTest extends MultipleCacheManagersTest {
    private void doTest(boolean mods, boolean commit) throws Exception {
       tm(c1).begin();
       c1.getAdvancedCache().lock("k");
-      assert c1.get("k") == null;
+      assertNull(c1.get("k"));
       if (mods) c1.put("k", "v");
       if (commit)
          tm(c1).commit();

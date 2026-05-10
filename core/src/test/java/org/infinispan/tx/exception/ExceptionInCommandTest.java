@@ -1,5 +1,8 @@
 package org.infinispan.tx.exception;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -25,9 +28,9 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
          cache(0).computeIfAbsent("k", (k) -> {
             throw new RuntimeException();
          });
-         assert false;
+         fail();
       } catch (RuntimeException e) {
-         assert tx(0).getStatus() == Status.STATUS_MARKED_ROLLBACK;
+         assertTrue(tx(0).getStatus() == Status.STATUS_MARKED_ROLLBACK);
       }
    }
 }

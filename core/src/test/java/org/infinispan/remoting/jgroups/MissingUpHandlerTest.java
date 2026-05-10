@@ -1,6 +1,6 @@
 package org.infinispan.remoting.jgroups;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.util.Properties;

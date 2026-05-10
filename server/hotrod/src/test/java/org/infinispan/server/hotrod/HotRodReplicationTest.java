@@ -10,8 +10,9 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertTopology
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -80,11 +81,12 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
    public void testPingWithTopologyAwareClient() {
       TestResponse resp = clients().get(0).ping();
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+
+      assertNull(resp.topologyResponse);
 
       resp = clients().get(1).ping((byte) 1, 0);
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+      assertNull(resp.topologyResponse);
 
       resp = clients().get(0).ping((byte) 2, 0);
       assertStatus(resp, Success);
@@ -97,13 +99,13 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients().get(1).ping((byte) 2, serverClientTopologyId);
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+      assertNull(resp.topologyResponse);
    }
 
    public void testReplicatedPutWithTopologyChanges(Method m) {
       TestResponse resp = clients().get(0).put(k(m), 0, 0, v(m), (byte) 1, 0);
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+      assertNull(resp.topologyResponse);
       assertSuccess(clients().get(1).get(k(m), 0), v(m));
 
       resp = clients().get(0).put(k(m), 0, 0, v(m, "v1-"), (byte) 2, 0);
@@ -118,7 +120,7 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
       resp = clients().get(0)
             .put(k(m), 0, 0, v(m, "v3-"), (byte) 2, serverClientTopologyId);
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse, null);
+      assertNull(resp.topologyResponse);
       assertSuccess(clients().get(1).get(k(m), 0), v(m, "v3-"));
 
       HotRodServer newServer = startClusteredServer(servers().get(1).getPort() + 25);
@@ -129,7 +131,7 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
          serverClientTopologyId = currentServerTopologyId();
          assertEquals(resp.topologyResponse.topologyId, serverClientTopologyId);
          AbstractTestTopologyAwareResponse topoResp = resp.asTopologyAwareResponse();
-         assertEquals(topoResp.members.size(), 3);
+         assertEquals(3, topoResp.members.size());
          Stream.concat(Stream.of(newServer), servers().stream())
                .map(HotRodServer::getAddress)
                .forEach(serverAddress -> assertTrue(topoResp.members.contains(serverAddress)));
@@ -145,7 +147,7 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
       serverClientTopologyId = currentServerTopologyId();
       assertEquals(resp.topologyResponse.topologyId, serverClientTopologyId);
       AbstractTestTopologyAwareResponse topoResp3 = resp.asTopologyAwareResponse();
-      assertEquals(topoResp3.members.size(), 2);
+      assertEquals(2, topoResp3.members.size());
       servers().stream()
             .map(HotRodServer::getAddress)
             .forEach(addr -> assertTrue(topoResp3.members.contains(addr)));
@@ -158,7 +160,7 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
          serverClientTopologyId = currentServerTopologyId();
          assertEquals(resp.topologyResponse.topologyId, serverClientTopologyId);
          AbstractTestTopologyAwareResponse topoResp2 = resp.asTopologyAwareResponse();
-         assertEquals(topoResp2.members.size(), 3);
+         assertEquals(3, topoResp2.members.size());
          Stream.concat(Stream.of(crashingServer), servers().stream())
                .map(HotRodServer::getAddress)
                .forEach(addr -> assertTrue(topoResp2.members.contains(addr)));
@@ -173,7 +175,7 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse.topologyId, currentServerTopologyId());
       AbstractTestTopologyAwareResponse topoResp4 = resp.asTopologyAwareResponse();
-      assertEquals(topoResp4.members.size(), 2);
+      assertEquals(2, topoResp4.members.size());
       servers().stream()
                .map(HotRodServer::getAddress)
                .forEach(addr -> assertTrue(topoResp4.members.contains(addr)));

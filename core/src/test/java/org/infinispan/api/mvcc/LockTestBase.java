@@ -1,8 +1,9 @@
 package org.infinispan.api.mvcc;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 
@@ -150,7 +151,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       EmbeddedTransactionManager tm = tl.tm;
-      assert !cache.containsKey("k") : "Should not exist";
+      assertFalse(cache.containsKey("k"), "Should not exist");
 
       tm.begin();
       cache.remove("k");
@@ -158,7 +159,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       assertLocked("k");
       tm.getTransaction().runCommit(false);
 
-      assert !cache.containsKey("k") : "Should not exist";
+      assertFalse(cache.containsKey("k"), "Should not exist");
       assertNoLocks();
    }
 
@@ -166,13 +167,13 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       LockTestData tl = lockTestData;
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
-      assert !cache.containsKey("k") : "Should not exist";
+      assertFalse(cache.containsKey("k"), "Should not exist");
 
       tm.begin();
       cache.evict("k");
       assertNotLocked("k");
       tm.commit();
-      assert !cache.containsKey("k") : "Should not exist";
+      assertFalse(cache.containsKey("k"), "Should not exist");
       assertNoLocks();
    }
 
@@ -197,7 +198,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       assertLocked("k2");
       tm.getTransaction().runCommit(false);
 
-      assert cache.isEmpty();
+      assertTrue(cache.isEmpty());
       assertNoLocks();
    }
 
@@ -215,7 +216,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       // now start a read and confirm that the write doesn't block it.
       tm.begin();
       assertEquals("v", cache.get("k"));
-      assert null == cache.get("k2") : "Should not see uncommitted changes";
+      assertNull(cache.get("k2"), "Should not see uncommitted changes");
       Transaction read = tm.suspend();
 
       // commit the write
@@ -227,7 +228,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       tm.resume(read);
       String value = cache.get("k2");
       if (repeatableRead) {
-         assert null == value : "Should have repeatable read";
+         assertNull(value, "Should have repeatable read");
       } else
          // no guarantees with read committed
          assertTrue(null == value || "v2".equals(value));
@@ -259,9 +260,9 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
       tm.resume(read);
       if (repeatableRead)
-         assertEquals("Should have repeatable read", "v", cache.get("k"));
+         assertEquals("v", cache.get("k"), "Should have repeatable read");
       else
-         assertEquals("Read committed should see committed changes", "v2", cache.get("k"));
+         assertEquals("v2", cache.get("k"), "Read committed should see committed changes");
       tm.commit();
       assertNoLocks();
    }
@@ -278,7 +279,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
       // now start a read and confirm that the write doesn't block it.
       tm.begin();
-      assert null == cache.get("k") : "Should not see uncommitted changes";
+      assertNull(cache.get("k"), "Should not see uncommitted changes");
       Transaction read = tm.suspend();
 
       // commit the write
@@ -290,7 +291,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       tm.resume(read);
       String value = cache.get("k");
       if (repeatableRead) {
-         assert null == value : "Should have repeatable read";
+         assertNull(value, "Should have repeatable read");
       } else {
          // no guarantees with read committed
          assertTrue(null == value || "v".equals(value));
@@ -311,7 +312,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
       tm.begin();
       cache.put("k", "v");
-      assert !tm.getTransaction().runPrepare();
+      assertFalse(tm.getTransaction().runPrepare());
 
       tm.rollback();
       tm.resume(transaction);
@@ -348,7 +349,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       Cache<String, String> cache = tl.cache;
       TransactionManager tm = tl.tm;
       tm.begin();
-      assert null == cache.get("k");
+      assertNull(cache.get("k"));
       Transaction reader = tm.suspend();
 
       tm.begin();
@@ -357,11 +358,11 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       tm.rollback();
 
       tm.resume(reader);
-      assert null == cache.get("k") : "Expecting null but was " + cache.get("k");
+      assertNull(cache.get("k"), "Expecting null but was " + cache.get("k"));
       tm.commit();
 
       // even after commit
-      assert null == cache.get("k");
+      assertNull(cache.get("k"));
       assertNoLocks();
    }
 }

@@ -6,8 +6,8 @@ import static org.infinispan.server.memcached.test.MemcachedTestingUtil.enableEn
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemcachedServer;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBuilder;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +39,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
-import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
 
 import net.spy.memcached.MemcachedClient;
@@ -121,7 +120,7 @@ public abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
    }
 
    public static void wait(OperationFuture<Boolean> f) throws ExecutionException, InterruptedException, TimeoutException {
-      AssertJUnit.assertTrue(f.get(timeout, TimeUnit.SECONDS));
+      assertTrue(f.get(timeout, TimeUnit.SECONDS));
    }
 
    protected String send(String req) throws IOException {

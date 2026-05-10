@@ -2,7 +2,7 @@ package org.infinispan.lock;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockConfiguration;
@@ -39,7 +39,7 @@ public class ClusteredLockKillingNodesTest extends BaseClusteredLockTest {
          await(secondLockOwner.lock().thenRun(() -> value.append("hello")));
       }));
 
-      assertEquals(value.toString(), "hello");
+      assertEquals("hello", value.toString());
    }
 
 }

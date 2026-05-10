@@ -1,7 +1,8 @@
 package org.infinispan.util;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -49,7 +50,7 @@ public class ExponentialBackOffImplUnitTest extends AbstractInfinispanTest {
    private void assertInterval(long value, long min, long max) {
       String msg = String.format("%d in [%d, %d]?", value, min, max);
       log.debug(msg);
-      AssertJUnit.assertTrue(msg, min <= value && value <= max);
+      assertTrue(min <= value && value <= max, msg);
    }
 
 }

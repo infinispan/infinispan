@@ -2,7 +2,7 @@ package org.infinispan.query.distributed;
 
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;

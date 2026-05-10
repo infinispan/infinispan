@@ -1,9 +1,9 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,22 +53,20 @@ public class TxReplayTest extends MultipleCacheManagersTest {
       cache(0).put(key, VALUE);
       final EmbeddedTransaction transaction = transactionManager.getTransaction();
       transaction.runPrepare();
-      assertEquals("Wrong transaction status before killing backup owner.",
-                   Status.STATUS_PREPARED, transaction.getStatus());
+      assertEquals(Status.STATUS_PREPARED, transaction.getStatus(), "Wrong transaction status before killing backup owner.");
 
       //now, we kill cache(1). the transaction is prepared in cache(1) and it should be forward to cache(2)
       killMember(1);
 
       checkIfTransactionExists(newBackupOwnerCache);
-      assertEquals("Wrong transaction status after killing backup owner.",
-                   Status.STATUS_PREPARED, transaction.getStatus());
+      assertEquals(Status.STATUS_PREPARED, transaction.getStatus(), "Wrong transaction status after killing backup owner.");
       transaction.runCommit(false);
 
       assertNoTransactions();
 
-      assertEquals("Wrong number of prepares!", 1, interceptor.numberPrepares.get());
-      assertEquals("Wrong number of commits!", 1, interceptor.numberCommits.get());
-      assertEquals("Wrong number of rollbacks!", 0, interceptor.numberRollbacks.get());
+      assertEquals(1, interceptor.numberPrepares.get(), "Wrong number of prepares!");
+      assertEquals(1, interceptor.numberCommits.get(), "Wrong number of commits!");
+      assertEquals(0, interceptor.numberRollbacks.get(), "Wrong number of rollbacks!");
 
       checkKeyInDataContainer(key);
    }
@@ -90,14 +88,14 @@ public class TxReplayTest extends MultipleCacheManagersTest {
       for (Cache<Object, Object> cache : caches()) {
          DataContainer container = cache.getAdvancedCache().getDataContainer();
          InternalCacheEntry entry = container.peek(key);
-         assertNotNull("Cache '" + address(cache) + "' does not contain key!", entry);
-         assertEquals("Cache '" + address(cache) + "' has wrong value!", VALUE, entry.getValue());
+         assertNotNull(entry, "Cache '" + address(cache) + "' does not contain key!");
+         assertEquals(VALUE, entry.getValue(), "Cache '" + address(cache) + "' has wrong value!");
       }
    }
 
    private void checkIfTransactionExists(Cache<Object, Object> cache) {
       TransactionTable table = TestingUtil.extractComponent(cache, TransactionTable.class);
-      assertFalse("Expected a remote transaction.", table.getRemoteTransactions().isEmpty());
+      assertFalse(table.getRemoteTransactions().isEmpty(), "Expected a remote transaction.");
    }
 
    static class TxCommandInterceptor extends DDAsyncInterceptor {

@@ -8,7 +8,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.assertMultimapCache
 import static org.infinispan.multimap.impl.MultimapTestUtils.putValuesOnMultimapCache;
 import static org.infinispan.transaction.LockingMode.OPTIMISTIC;
 import static org.infinispan.transaction.LockingMode.PESSIMISTIC;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;

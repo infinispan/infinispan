@@ -1,6 +1,7 @@
 package org.infinispan.api;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -8,7 +9,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
-import static org.testng.Assert.assertNull;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;

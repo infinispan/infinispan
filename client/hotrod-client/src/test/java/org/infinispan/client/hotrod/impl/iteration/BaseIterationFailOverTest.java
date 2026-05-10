@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod.impl.iteration;
 import static org.infinispan.client.hotrod.impl.iteration.Util.extractKeys;
 import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
 import static org.infinispan.client.hotrod.impl.iteration.Util.rangeAsSet;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Collection;

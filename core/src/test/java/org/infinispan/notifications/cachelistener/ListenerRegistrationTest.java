@@ -1,11 +1,11 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
 import java.util.List;
 
@@ -56,7 +56,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       CacheNotifierImpl n = newNotifier();
       n.addListener(l);
       assertEquals("Hello", l.toString());
-      assertTrue("No listeners should be registered.", n.getListeners().isEmpty()); // since the valid listener has no methods to listen
+      assertTrue(n.getListeners().isEmpty(), "No listeners should be registered."); // since the valid listener has no methods to listen
    }
 
    public void testNonAnnotatedListener() {
@@ -68,7 +68,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       } catch (IncorrectListenerException icle) {
          // expected
       }
-      assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
+      assertTrue(n.getListeners().isEmpty(), "No listeners should be registered.");
    }
 
    public void testNonPublicListener() {
@@ -80,7 +80,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       } catch (IncorrectListenerException icle) {
          // expected
       }
-      assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
+      assertTrue(n.getListeners().isEmpty(), "No listeners should be registered.");
    }
 
    public void testNonPublicListenerMethod() {
@@ -90,7 +90,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
 
       // should not fail, should just not register anything
 
-      assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
+      assertTrue(n.getListeners().isEmpty(), "No listeners should be registered.");
    }
 
    public void testNonVoidReturnTypeMethod() {
@@ -102,7 +102,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       } catch (IncorrectListenerException icle) {
          // expected
       }
-      assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
+      assertTrue(n.getListeners().isEmpty(), "No listeners should be registered.");
    }
 
    public void testIncorrectMethodSignature1() {
@@ -114,7 +114,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       } catch (IncorrectListenerException icle) {
          // expected
       }
-      assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
+      assertTrue(n.getListeners().isEmpty(), "No listeners should be registered.");
    }
 
    public void testIncorrectMethodSignature2() {
@@ -126,7 +126,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       } catch (IncorrectListenerException icle) {
          // expected
       }
-      assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
+      assertTrue(n.getListeners().isEmpty(), "No listeners should be registered.");
    }
 
    public void testIncorrectMethodSignature3() {
@@ -138,7 +138,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       } catch (IncorrectListenerException icle) {
          // expected
       }
-      assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
+      assertTrue(n.getListeners().isEmpty(), "No listeners should be registered.");
    }
 
    public void testUnassignableMethodSignature() {
@@ -150,7 +150,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       } catch (IncorrectListenerException icle) {
          // expected
       }
-      assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
+      assertTrue(n.getListeners().isEmpty(), "No listeners should be registered.");
    }
 
    public void testPartlyUnassignableMethodSignature() {

@@ -2,10 +2,10 @@ package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.tx.TxCompletionForRolledBackTxTest.countCommands;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.fail;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -59,8 +59,8 @@ public class TxCompletionForRolledBackTxOptTest extends MultipleCacheManagersTes
       assertNull(cache(0).get(k1));
       assertNull(cache(0).get(k2));
 
-      assertEquals(commandCounters.get(VersionedPrepareCommand.class).get(), 1);
-      assertEquals(commandCounters.get(RollbackCommand.class).get(), 1);
+      assertEquals(1, commandCounters.get(VersionedPrepareCommand.class).get());
+      assertEquals(1, commandCounters.get(RollbackCommand.class).get());
       assertFalse(commandCounters.containsKey(TxCompletionNotificationCommand.class));
    }
 }

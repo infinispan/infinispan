@@ -3,9 +3,9 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 
@@ -69,15 +69,15 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
    public void testAllStatsArePresent() {
       ServerStatistics serverStatistics = remoteCache.serverStatistics();
       Map<String, String> statsMap = serverStatistics.getStatsMap();
-      assertEquals(statsMap.get(ServerStatistics.STORES), "0");
-      assertEquals(statsMap.get(ServerStatistics.CURRENT_NR_OF_ENTRIES), "0");
-      assertEquals(statsMap.get(ServerStatistics.HITS),"0");
-      assertEquals(statsMap.get(ServerStatistics.MISSES),"0");
-      assertEquals(statsMap.get(ServerStatistics.REMOVE_HITS),"0");
-      assertEquals(statsMap.get(ServerStatistics.REMOVE_MISSES),"0");
-      assertEquals(statsMap.get(ServerStatistics.RETRIEVALS),"0");
-      assertEquals(statsMap.get(ServerStatistics.APPROXIMATE_ENTRIES), "0");
-      assertEquals(statsMap.get(ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE), "0");
+      assertEquals("0", statsMap.get(ServerStatistics.STORES));
+      assertEquals("0", statsMap.get(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      assertEquals("0", statsMap.get(ServerStatistics.HITS));
+      assertEquals("0", statsMap.get(ServerStatistics.MISSES));
+      assertEquals("0", statsMap.get(ServerStatistics.REMOVE_HITS));
+      assertEquals("0", statsMap.get(ServerStatistics.REMOVE_MISSES));
+      assertEquals("0", statsMap.get(ServerStatistics.RETRIEVALS));
+      assertEquals("0", statsMap.get(ServerStatistics.APPROXIMATE_ENTRIES));
+      assertEquals("0", statsMap.get(ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE));
       assertEquals(0, remoteCache.size());
       assertTrue(remoteCache.isEmpty());
 

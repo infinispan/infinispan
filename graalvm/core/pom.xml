@@ -191,6 +191,7 @@
                               <buildArg>-H:IncludeResources=stacks/tcp.xml</buildArg>
                               <buildArg>-H:IncludeResources=stacks/tcp_mping/tcp1.xml</buildArg>
                               <buildArg>-H:ServiceLoaderFeatureExcludeServiceProviders=org.infinispan.marshall.ServiceLoadedSciImpl</buildArg>
+                              <buildArg>-H:SerializationConfigurationResources=serialization-config.json</buildArg>
                               <buildArg>--enable-url-protocols=http</buildArg>
                            </buildArgs>
                            <fallback>false</fallback>

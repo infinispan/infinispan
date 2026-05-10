@@ -1,8 +1,8 @@
 package org.infinispan.jcache;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -64,7 +64,7 @@ public class InvokeProcessorTest extends AbstractInfinispanTest {
          cache.invoke(query, new TestExceptionThrowingEntryProcessor());
          fail("Expected an exception to be thrown");
       } catch (CacheException e) {
-         assertTrue(e.getCause() instanceof UnexpectedException);
+         assertInstanceOf(UnexpectedException.class, e.getCause());
       }
       assertEquals(expectedValue, cache.get(query).integers);
    }

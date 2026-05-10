@@ -1,5 +1,8 @@
 package org.infinispan.test.fwk;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -77,7 +80,7 @@ public class TestNameVerifier {
    private String replaceAtTestAnnotation(String javaString, String testNameStr) {
       Matcher matcher = atAnnotationPattern.matcher(javaString);
       boolean found = matcher.find();
-      assert found : javaString;
+      assertTrue(found, javaString);
       String theMatch = matcher.group();
       return matcher.replaceFirst(theMatch + testNameStr);
    }
@@ -86,7 +89,7 @@ public class TestNameVerifier {
       String classNamePart = getClassNamePart(javaString, filename);
 
       //abstract classes do not require test names
-      if (classNamePart.indexOf("abstract") >= 0) return null;
+      if (classNamePart.contains("abstract")) return null;
 
       classNamePart = classNamePart.substring("public class ".length());
       String packagePart = getPackagePart(javaString, filename);
@@ -98,14 +101,14 @@ public class TestNameVerifier {
    private String getClassNamePart(String javaString, String filename) {
       Matcher matcher = classLinePattern.matcher(javaString);
       boolean found = matcher.find();
-      assert found : "could not determine class name for file: " + filename;
+      assertTrue(found, "could not determine class name for file: " + filename);
       return matcher.group();
    }
 
    private String getPackagePart(String javaString, String filename) {
       Matcher matcher = packageLinePattern.matcher(javaString);
       boolean found = matcher.find();
-      assert found : "Could not determine package name for file: " + filename;
+      assertTrue(found, "Could not determine package name for file: " + filename);
       String theMatch = matcher.group();
       String partial = theMatch.substring("package org.infinispan".length());
       if (partial.trim().isEmpty()) return partial.trim();
@@ -135,11 +138,11 @@ public class TestNameVerifier {
    // Loop through the list of module names and pass it to the getFilesFromModule()
    private File[] getAllJavaFiles() {
       List<File> listOfFiles = getFiles();
-      return listOfFiles.toArray(new File[listOfFiles.size()]);
+      return listOfFiles.toArray(new File[0]);
    }
 
    private void addJavaFiles(File file, ArrayList<File> result) {
-      assert file.isDirectory();
+      assertTrue(file.isDirectory());
       File[] javaFiles = file.listFiles(javaFilter);
 //      printFiles(javaFiles);
       result.addAll(Arrays.asList(javaFiles));
@@ -159,7 +162,7 @@ public class TestNameVerifier {
             hasErrors = true;
          }
       }
-      assert !hasErrors : errorMessage.append("The rules for writing unit tests are described on http://www.jboss.org/community/wiki/ParallelTestSuite");
+      assertFalse(hasErrors, errorMessage.append("The rules for writing unit tests are described on http://www.jboss.org/community/wiki/ParallelTestSuite").toString());
    }
 
    private String incorrectTestName(File file) throws Exception {
@@ -193,7 +196,7 @@ public class TestNameVerifier {
 
    private List<File> getFiles() {
       File file = new File(".");
-      assert file.isDirectory();
+      assertTrue(file.isDirectory());
       ArrayList<File> result = new ArrayList<File>();
       addJavaFiles(file, result);
       return result;

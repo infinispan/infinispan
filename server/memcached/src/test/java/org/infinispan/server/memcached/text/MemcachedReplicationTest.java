@@ -2,8 +2,8 @@ package org.infinispan.server.memcached.text;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -120,9 +120,9 @@ public class MemcachedReplicationTest extends MemcachedMultiNodeTest {
       assertTrue(value.getCas() != 0);
       assertTrue(value.getCas() != old);
       resp = clients.get(0).cas(k(m), old, v(m, "v2-"));
-      assertEquals(resp, CASResponse.EXISTS);
+      assertEquals(CASResponse.EXISTS, resp);
       resp = clients.get(1).cas(k(m), value.getCas(), v(m, "v2-"));
-      assertEquals(resp, CASResponse.OK);
+      assertEquals(CASResponse.OK, resp);
    }
 
    public void testReplicatedDelete(Method m) throws InterruptedException, ExecutionException, TimeoutException {
@@ -135,13 +135,13 @@ public class MemcachedReplicationTest extends MemcachedMultiNodeTest {
    public void testReplicatedIncrement(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       OperationFuture<Boolean> f = clients.get(0).set(k(m), 0, "1");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      assertEquals(clients.get(1).incr(k(m), 1), 2);
+      assertEquals(2, clients.get(1).incr(k(m), 1));
    }
 
    public void testReplicatedDecrement(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       OperationFuture<Boolean> f = clients.get(0).set(k(m), 0, "1");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      assertEquals(clients.get(1).decr(k(m), 1), 0);
+      assertEquals(0, clients.get(1).decr(k(m), 1));
    }
 
 }

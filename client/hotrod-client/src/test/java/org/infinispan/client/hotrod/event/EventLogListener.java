@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.test.TestingUtil.assertAnyEquals;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -107,16 +107,16 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
    public void expectNoEvents(ClientEvent.Type type) {
       switch (type) {
          case CLIENT_CACHE_ENTRY_CREATED:
-            assertEquals(createdEvents.toString(), 0, createdEvents.size());
+            assertEquals(0, createdEvents.size(), createdEvents.toString());
             break;
          case CLIENT_CACHE_ENTRY_MODIFIED:
-            assertEquals(modifiedEvents.toString(), 0, modifiedEvents.size());
+            assertEquals(0, modifiedEvents.size(), modifiedEvents.toString());
             break;
          case CLIENT_CACHE_ENTRY_REMOVED:
-            assertEquals(removedEvents.toString(), 0, removedEvents.size());
+            assertEquals(0, removedEvents.size(), removedEvents.toString());
             break;
          case CLIENT_CACHE_ENTRY_EXPIRED:
-            assertEquals(expiredEvents.toString(), 0, expiredEvents.size());
+            assertEquals(0, expiredEvents.size(), expiredEvents.toString());
             break;
       }
    }

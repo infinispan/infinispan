@@ -1,8 +1,9 @@
 package org.infinispan.persistence;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -95,12 +96,12 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
       assertEquals(0, countingCS.numLoads);
       //load using SKIP_CACHE_LOAD should not find the object in the store
-      assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get("k1") == null;
+      assertNull(cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get("k1"));
       assertEquals(0, countingCS.numLoads);
 
       // counter-verify that the object was actually in the store:
-      assert "v1".equals(cache.get("k1"));
-      assert countingCS.numLoads == 1 : "Expected 1, was " + countingCS.numLoads;
+      assertEquals(cache.get("k1"), "v1");
+      assertTrue(countingCS.numLoads == 1, "Expected 1, was " + countingCS.numLoads);
 
       // now check that put won't return the stored value
       store.write(MarshalledEntryUtil.create("k2", "v2", cache));
@@ -125,7 +126,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
       //now with batching:
       boolean batchStarted = cache.getAdvancedCache().startBatch();
-      assert batchStarted;
+      assertTrue(batchStarted);
       assertNull(cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get("k1batch"));
       assertEquals(2, countingCS.numLoads);
       assertNull(cache.getAdvancedCache().get("k2batch"));

@@ -1,9 +1,9 @@
 package org.infinispan.statetransfer;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -246,9 +246,9 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
 
    private void assertValue(int cacheIndex, int key, String expectedValue) {
       InternalCacheEntry ice = cache(cacheIndex).getAdvancedCache().getDataContainer().peek(key);
-      assertNotNull("Found null on cache " + cacheIndex, ice);
-      assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, ice.getValue());
-      assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, cache(cacheIndex).get(key));
+      assertNotNull(ice, "Found null on cache " + cacheIndex);
+      assertEquals(expectedValue, ice.getValue(), "Did not find the expected value on cache " + cacheIndex);
+      assertEquals(expectedValue, cache(cacheIndex).get(key), "Did not find the expected value on cache " + cacheIndex);
    }
 
    static class LatchInterceptor extends BaseAsyncInterceptor {

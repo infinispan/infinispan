@@ -1,9 +1,9 @@
 package org.infinispan.statetransfer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -73,7 +73,7 @@ public class CommitManagerTest {
 
       // The map should not store any entries since we are tracking only state transfer and
       // the manager was fed with only state transfer entries.
-      assertEquals(manager.tracker.size(), 0);
+      assertEquals(0, manager.tracker.size());
       assertTrue(manager.isEmpty());
 
       // Stop tracking some segments does not raise any problems.
@@ -119,7 +119,7 @@ public class CommitManagerTest {
 
       // Verify that we are tracking numberOfSegments segments. This is a different scenario because we are dealing
       // with both types simultaneously.
-      assertEquals(manager.tracker.size(), numberOfSegments);
+      assertEquals(numberOfSegments, manager.tracker.size());
 
       // We trigger the stop track for all segments, but only the even ones should be cleared.
       for (int i = 0; i < numberOfSegments; i++) {
@@ -127,7 +127,7 @@ public class CommitManagerTest {
       }
 
       // Leaving us with 5 segments on tracker.
-      assertEquals(manager.tracker.size(), 5);
+      assertEquals(5, manager.tracker.size());
 
       // Verify that we are left only with the even ones.
       // This happens because we keep entries to discard the "other way around", we are left with entries telling to

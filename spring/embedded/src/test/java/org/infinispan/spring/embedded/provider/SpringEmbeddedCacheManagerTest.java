@@ -1,11 +1,11 @@
 package org.infinispan.spring.embedded.provider;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNotSame;
-import static org.testng.AssertJUnit.assertSame;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "spring.embedded.provider.SpringEmbeddedCacheManagerTest", groups = "unit")
 @ContextConfiguration(classes = BasicConfiguration.class)
-@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode =  TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(value = InfinispanTestExecutionListener.class, mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class SpringEmbeddedCacheManagerTest extends AbstractTestNGSpringContextTests {
 
    private static final String CACHE_NAME_FROM_CONFIGURATION_FILE = "asyncCache";
@@ -71,10 +71,10 @@ public class SpringEmbeddedCacheManagerTest extends AbstractTestNGSpringContextT
             .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
 
       assertEquals(
+            CACHE_NAME_FROM_CONFIGURATION_FILE, cacheExpectedToHaveTheProvidedName.getName(),
             "getCache("
                   + CACHE_NAME_FROM_CONFIGURATION_FILE
-                  + ") should have returned the cache having the provided name. However, the cache returned has a different name.",
-            CACHE_NAME_FROM_CONFIGURATION_FILE, cacheExpectedToHaveTheProvidedName.getName());
+                  + ") should have returned the cache having the provided name. However, the cache returned has a different name.");
       nativeCacheManager.stop();
    }
 
@@ -103,11 +103,11 @@ public class SpringEmbeddedCacheManagerTest extends AbstractTestNGSpringContextT
             .getCache(nameOfInfinispanCacheAddedLater);
 
       assertEquals(
+            infinispanCacheAddedLater, springCacheAddedLater.getNativeCache(),
             "getCache("
                   + nameOfInfinispanCacheAddedLater
                   + ") should have returned the Spring cache having the Infinispan cache added after creating "
-                  + "SpringEmbeddedCacheManager as its underlying native cache. However, the underlying native cache is different.",
-            infinispanCacheAddedLater, springCacheAddedLater.getNativeCache());
+                  + "SpringEmbeddedCacheManager as its underlying native cache. However, the underlying native cache is different.");
       nativeCacheManager.stop();
    }
 
@@ -129,11 +129,11 @@ public class SpringEmbeddedCacheManagerTest extends AbstractTestNGSpringContextT
       final Collection<String> cacheNames = objectUnderTest.getCacheNames();
 
       assertTrue(
+            cacheNames.contains(CACHE_NAME_FROM_CONFIGURATION_FILE),
             "SpringEmbeddedCacheManager should load all named caches found in the configuration file of the wrapped "
                   + "native cache manager. However, it does not know about the cache named "
                   + CACHE_NAME_FROM_CONFIGURATION_FILE
-                  + " defined in said configuration file.",
-            cacheNames.contains(CACHE_NAME_FROM_CONFIGURATION_FILE));
+                  + " defined in said configuration file.");
       nativeCacheManager.stop();
    }
 
@@ -153,9 +153,9 @@ public class SpringEmbeddedCacheManagerTest extends AbstractTestNGSpringContextT
 
             objectUnderTest.stop();
 
-            assertEquals("Calling stop() on SpringEmbeddedCacheManager should stop the enclosed "
-                               + "Infinispan EmbeddedCacheManager. However, it is still running.",
-                         ComponentStatus.TERMINATED, cm.getStatus());
+            assertEquals(ComponentStatus.TERMINATED, cm.getStatus(),
+                  "Calling stop() on SpringEmbeddedCacheManager should stop the enclosed "
+                        + "Infinispan EmbeddedCacheManager. However, it is still running.");
          }
       });
    }
@@ -176,8 +176,8 @@ public class SpringEmbeddedCacheManagerTest extends AbstractTestNGSpringContextT
             final EmbeddedCacheManager nativeCacheManagerReturned = objectUnderTest.getNativeCacheManager();
 
             assertSame(
-                  "getNativeCacheManager() should have returned the EmbeddedCacheManager supplied at construction time. However, it retuned a different one.",
-                  cm, nativeCacheManagerReturned);
+                  cm, nativeCacheManagerReturned,
+                  "getNativeCacheManager() should have returned the EmbeddedCacheManager supplied at construction time. However, it retuned a different one.");
          }
       });
    }
@@ -198,8 +198,8 @@ public class SpringEmbeddedCacheManagerTest extends AbstractTestNGSpringContextT
 
             // Then
             assertSame(
-                    "getCache() should have returned the same SpringCache instance for the same name",
-                    firstObtainedSpringCache, secondObtainedSpringCache);
+                  firstObtainedSpringCache, secondObtainedSpringCache,
+                  "getCache() should have returned the same SpringCache instance for the same name");
          }
       });
    }
@@ -221,9 +221,8 @@ public class SpringEmbeddedCacheManagerTest extends AbstractTestNGSpringContextT
             final SpringCache secondObtainedSpringCache = objectUnderTest.getCache(secondCacheName);
 
             // Then
-            assertNotSame(
-                    "getCache() should have returned different SpringCache instances for different names",
-                    firstObtainedSpringCache, secondObtainedSpringCache);
+            assertNotSame(firstObtainedSpringCache, secondObtainedSpringCache,
+                  "getCache() should have returned different SpringCache instances for different names");
          }
       });
    }
@@ -242,8 +241,8 @@ public class SpringEmbeddedCacheManagerTest extends AbstractTestNGSpringContextT
             final SpringCache obtainedSpringCache = objectUnderTest.getCache(sameCacheName);
 
             assertNotNull(
-                    "getCache() should have returned a SpringCache instance",
-                    obtainedSpringCache
+                  obtainedSpringCache,
+                  "getCache() should have returned a SpringCache instance"
             );
 
             // Given

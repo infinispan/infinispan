@@ -62,7 +62,7 @@ public class EmptyIntSetTest {
    public void testToArray1() throws Exception {
       Object[] array = es.toArray(new Integer[1]);
       assertEquals(1, array.length);
-      assertEquals(null, array[0]);
+      assertNull(array[0]);
 
       array = es.toArray(new Integer[0]);
       assertEquals(0, array.length);

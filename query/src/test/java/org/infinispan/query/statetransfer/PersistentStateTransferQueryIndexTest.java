@@ -1,6 +1,7 @@
 package org.infinispan.query.statetransfer;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -69,7 +70,7 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
       for (Cache<Object, Object> cache : caches()) {
          DummyInMemoryStore store = TestingUtil.getFirstStore(cache);
          for (Person person : persons) {
-            assert !store.contains(person.getName());
+            assertFalse(store.contains(person.getName()));
          }
       }
    }

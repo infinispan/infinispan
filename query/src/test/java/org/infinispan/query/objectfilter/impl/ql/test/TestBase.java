@@ -15,8 +15,8 @@
  */
 package org.infinispan.query.objectfilter.impl.ql.test;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +64,7 @@ abstract class TestBase {
          if (expectedTokenType != null) {
             int expectedType = org.infinispan.query.grammar.IckleLexer.class
                   .getField(expectedTokenType).getInt(null);
-            assertEquals("Token type for: " + inputText, expectedType, token.getType());
+            assertEquals(expectedType, token.getType(), "Token type for: " + inputText);
          }
 
          if (expectFailure) {

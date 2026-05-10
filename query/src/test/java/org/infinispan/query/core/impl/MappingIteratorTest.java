@@ -1,12 +1,13 @@
 package org.infinispan.query.core.impl;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import org.infinispan.commons.util.Closeables;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "query.core.impl.MappingIteratorTest")
@@ -95,6 +96,6 @@ public class MappingIteratorTest {
    private void assertIterator(MappingIterator<Integer, String> iterator, String... expected) {
       Iterable<String> iterable = () -> iterator;
       Object[] elements = StreamSupport.stream(iterable.spliterator(), false).toArray();
-      Assert.assertEquals(elements, expected);
+      assertArrayEquals(expected, elements);
    }
 }

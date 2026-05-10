@@ -1,6 +1,6 @@
 package org.infinispan.lock;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
@@ -67,7 +67,7 @@ public class PessimistTxFailureAfterLockingTest extends MultipleCacheManagersTes
       }
       tm(0).rollback();
 
-      assertTrue("Expected an exception", failed);
+      assertTrue(failed, "Expected an exception");
       assertNoTransactions();
       assertEventuallyNotLocked(cache(1), key);
    }

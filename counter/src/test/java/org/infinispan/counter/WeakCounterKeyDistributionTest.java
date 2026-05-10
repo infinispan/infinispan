@@ -1,6 +1,8 @@
 package org.infinispan.counter;
 
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
@@ -20,7 +22,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -44,17 +45,17 @@ public class WeakCounterKeyDistributionTest extends BaseCounterTest {
       WeakCounterKey[] keys = counter.getPreferredKeys();
       if (keys != null) {
          for (WeakCounterKey key : keys) {
-            AssertJUnit.assertTrue(topology.getDistribution(key).isPrimary());
-            AssertJUnit.assertTrue(preferredKeys.add(key));
+            assertTrue(topology.getDistribution(key).isPrimary());
+            assertTrue(preferredKeys.add(key));
          }
       }
 
       for (WeakCounterKey key : counter.getKeys()) {
          if (!preferredKeys.remove(key)) {
-            AssertJUnit.assertFalse(topology.getDistribution(key).isPrimary());
+            assertFalse(topology.getDistribution(key).isPrimary());
          }
       }
-      AssertJUnit.assertTrue(preferredKeys.isEmpty());
+      assertTrue(preferredKeys.isEmpty());
    }
 
    private static WeakCounterImpl getCounter(EmbeddedCacheManager manager, String counterName) {

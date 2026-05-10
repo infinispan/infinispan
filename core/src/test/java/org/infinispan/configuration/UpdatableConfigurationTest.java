@@ -1,7 +1,7 @@
 package org.infinispan.configuration;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.Log;

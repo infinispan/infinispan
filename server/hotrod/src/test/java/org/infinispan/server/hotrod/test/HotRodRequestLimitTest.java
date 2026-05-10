@@ -3,8 +3,8 @@ package org.infinispan.server.hotrod.test;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.CompletionException;

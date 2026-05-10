@@ -12,8 +12,8 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import java.util.HashMap;
@@ -290,7 +290,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
             .accept(APPLICATION_OCTET_STREAM)
             .read();
 
-      assertEquals(response.bodyAsByteArray(), value);
+      assertArrayEquals(response.bodyAsByteArray(), value);
 
       // Read marshalled content directly
       response = new RestRequest().cache(MARSHALLED_CACHE_NAME)
@@ -329,7 +329,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
             .accept(APPLICATION_OCTET_STREAM)
             .read();
 
-      assertEquals(response.bodyAsByteArray(), value);
+      assertArrayEquals(response.bodyAsByteArray(), value);
 
       // Write via rest
       byte[] newKey = new byte[]{0, 0, 0, 1};
@@ -341,7 +341,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
             .write();
 
       // Read via Hot Rod
-      assertEquals(defaultRemoteCache.get(newKey), value);
+      assertArrayEquals(defaultRemoteCache.get(newKey), value);
    }
 
    @Test
@@ -354,7 +354,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Write <byte[], byte[]> via Hot Rod (the HR client is configured with a no-op marshaller)
       defaultRemoteCache.put(key, value);
-      assertEquals(value, defaultRemoteCache.get(key));
+      assertArrayEquals(value, defaultRemoteCache.get(key));
 
       String restKey = Base16Codec.encode(key);
 

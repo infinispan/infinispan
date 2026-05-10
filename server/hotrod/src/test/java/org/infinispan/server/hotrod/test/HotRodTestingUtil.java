@@ -3,17 +3,17 @@ package org.infinispan.server.hotrod.test;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.server.hotrod.OperationStatus.KeyDoesNotExist;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertSame;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -227,46 +227,42 @@ public class HotRodTestingUtil {
       return v(m, "v-");
    }
 
-   public static boolean assertStatus(TestResponse resp, OperationStatus expected) {
+   public static void assertStatus(TestResponse resp, OperationStatus expected) {
       OperationStatus status = resp.getStatus();
       boolean isSuccess = status == expected;
       if (resp instanceof TestErrorResponse) {
-         assertTrue(String.format("Status should have been '%s' but instead was: '%s', and the error message was: %s",
-               expected, status, ((TestErrorResponse) resp).msg), isSuccess);
+         assertTrue(isSuccess, String.format("Status should have been '%s' but instead was: '%s', and the error message was: %s",
+               expected, status, ((TestErrorResponse) resp).msg));
       } else {
-         assertTrue(String.format("Status should have been '%s' but instead was: '%s'", expected, status), isSuccess);
+         assertTrue(isSuccess, String.format("Status should have been '%s' but instead was: '%s'", expected, status));
       }
-      return isSuccess;
    }
 
-   public static boolean assertSuccess(TestGetResponse resp, byte[] expected) {
+   public static void assertSuccess(TestGetResponse resp, byte[] expected) {
       assertStatus(resp, Success);
-      boolean isArrayEquals = Arrays.equals(expected, resp.data.get());
-      assertTrue("Retrieved data should have contained " + Util.printArray(expected, true) + " (" + new String(expected)
-            + "), but instead we received " + Util.printArray(resp.data.get(), true) + " (" + new String(resp.data.get()) + ")", isArrayEquals);
-      return isArrayEquals;
+      assertArrayEquals(expected, resp.data.get(), "Retrieved data should have contained " + Util.printArray(expected, true) + " (" + new String(expected)
+            + "), but instead we received " + Util.printArray(resp.data.get(), true) + " (" + new String(resp.data.get()) + ")");
    }
 
    public static void assertByteArrayEquals(byte[] expected, byte[] actual) {
-      boolean isArrayEquals = Arrays.equals(expected, actual);
-      assertTrue("Retrieved data should have contained " + Util.printArray(expected, true) + " (" + new String(expected)
-            + "), but instead we received " + Util.printArray(actual, true) + " (" + new String(actual) + ")", isArrayEquals);
+      assertArrayEquals(expected, actual, "Retrieved data should have contained " + Util.printArray(expected, true) + " (" + new String(expected)
+            + "), but instead we received " + Util.printArray(actual, true) + " (" + new String(actual) + ")");
    }
 
-   public static boolean assertSuccess(TestGetWithVersionResponse resp, byte[] expected, int expectedVersion) {
+   public static void assertSuccess(TestGetWithVersionResponse resp, byte[] expected, int expectedVersion) {
       assertTrue(resp.getVersion() != expectedVersion);
-      return assertSuccess(resp, expected);
+      assertSuccess(resp, expected);
    }
 
-   public static boolean assertSuccess(TestGetWithMetadataResponse resp, byte[] expected, int expectedLifespan, int expectedMaxIdle) {
+   public static void assertSuccess(TestGetWithMetadataResponse resp, byte[] expected, int expectedLifespan, int expectedMaxIdle) {
       assertEquals(resp.lifespan, expectedLifespan);
       assertEquals(resp.maxIdle, expectedMaxIdle);
-      return assertSuccess(resp, expected);
+      assertSuccess(resp, expected);
    }
 
    public static boolean assertKeyDoesNotExist(TestGetResponse resp) {
       OperationStatus status = resp.getStatus();
-      assertSame("Status should have been 'KeyDoesNotExist' but instead was: " + status, KeyDoesNotExist, status);
+      assertSame(KeyDoesNotExist, status, "Status should have been 'KeyDoesNotExist' but instead was: " + status);
       assertEquals(resp.data, Optional.empty());
       return status == KeyDoesNotExist;
    }
@@ -376,7 +372,7 @@ public class HotRodTestingUtil {
          assertNull(entry);
       } else {
          byte[] value = entry.getValue();
-         assertEquals(expectedValue, value);
+         assertArrayEquals(expectedValue, value);
       }
 
       return entry;

@@ -1,6 +1,7 @@
 package org.infinispan.query.config;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 
@@ -11,7 +12,6 @@ import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -65,10 +65,10 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
          // ignored here, we deal with it later
       }
       if (expected && searchMapping == null) {
-         Assert.fail("SearchIntegrator not found but expected for cache " + cache.getName());
+         fail("SearchIntegrator not found but expected for cache " + cache.getName());
       }
       if (!expected && searchMapping != null) {
-         Assert.fail("SearchIntegrator not expected but found for cache " + cache.getName());
+         fail("SearchIntegrator not expected but found for cache " + cache.getName());
       }
       //verify as well that the indexing interceptor is (not) there:
       QueryInterceptor queryInterceptor = null;
@@ -78,10 +78,10 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
          // ignored here, we deal with it later
       }
       if (expected && queryInterceptor == null) {
-         Assert.fail("QueryInterceptor not found but expected for cache " + cache.getName());
+         fail("QueryInterceptor not found but expected for cache " + cache.getName());
       }
       if (!expected && queryInterceptor != null) {
-         Assert.fail("QueryInterceptor not expected but found for cache " + cache.getName());
+         fail("QueryInterceptor not expected but found for cache " + cache.getName());
       }
    }
 }

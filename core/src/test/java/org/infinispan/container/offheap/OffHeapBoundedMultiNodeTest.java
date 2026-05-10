@@ -1,6 +1,6 @@
 package org.infinispan.container.offheap;
 
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;

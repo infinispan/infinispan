@@ -1,7 +1,8 @@
 package org.infinispan.cdi.embedded.test.assertions;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class ObserverAssertion {
 
    private <T> List<T> getNonEmptyListOfEvents(Class<T> eventClass) {
       List<T> events = observer.getEventsMap().getEvents(cacheAnnotation, eventClass);
-      assertTrue(!events.isEmpty());
+      assertFalse(events.isEmpty());
       return events;
    }
 

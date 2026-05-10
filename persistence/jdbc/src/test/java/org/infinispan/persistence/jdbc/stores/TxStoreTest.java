@@ -1,12 +1,12 @@
 package org.infinispan.persistence.jdbc.stores;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
 
 import javax.transaction.xa.XAException;
 
@@ -90,16 +90,16 @@ public class TxStoreTest extends AbstractInfinispanTest {
       tm.begin();
       cache.put(KEY2, VAL1);
       String oldValue = cache.put(KEY1, VAL2);
-      assertEquals(oldValue, VAL1);
+      assertEquals(VAL1, oldValue);
       tm.commit();
 
       String cacheVal = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get(KEY1);
-      assertEquals(cacheVal, VAL2);
+      assertEquals(VAL2, cacheVal);
 
       // Ensure the values committed in the Tx were actually written to the store as well as to the cache
       assertRowCount(2);
-      assertEquals(store.loadEntry(KEY1).getValue(), VAL2);
-      assertEquals(store.loadEntry(KEY2).getValue(), VAL1);
+      assertEquals(VAL2, store.loadEntry(KEY1).getValue());
+      assertEquals(VAL1, store.loadEntry(KEY2).getValue());
    }
 
    @Test
@@ -110,7 +110,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
       cache.put(KEY1, VAL1);
       cache.put(KEY2, VAL2);
       tm.rollback();
-      assert tx.getStatus() == Status.STATUS_ROLLEDBACK;
+      assertEquals(Status.STATUS_ROLLEDBACK, tx.getStatus());
       assertRowCount(0);
    }
 
@@ -146,7 +146,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
       ConnectionFactory connectionFactory = jdbcStore.getConnectionFactory();
       TableName tableName = jdbcStore.getTableManager().getDataTableName();
       int value = UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
-      assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
+      assertEquals(rowCount, value, "Expected " + rowCount + " rows, actual value is " + value);
    }
 
    public void testSizeWithEntryInContext() throws Exception {

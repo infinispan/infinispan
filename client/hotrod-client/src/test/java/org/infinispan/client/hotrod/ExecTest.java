@@ -6,8 +6,9 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScri
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.testing.Testing.loadFileAsString;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +31,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.utils.ScriptingUtils;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.testng.AssertJUnit;
+import org.junit.jupiter.api.Assertions;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -162,8 +163,8 @@ public class ExecTest extends MultiHotRodServersTest {
       assertEquals(2, results.size());
       assertEquals(3202, results.get(0).size());
       assertEquals(3202, results.get(1).size());
-      assertTrue(results.get(0).get("macbeth").equals(287L));
-      assertTrue(results.get(1).get("macbeth").equals(287L));
+      assertEquals(287L, (long) results.get(0).get("macbeth"));
+      assertEquals(287L, (long) results.get(1).get("macbeth"));
    }
 
    @Test(dataProvider = "CacheNameProvider")
@@ -180,7 +181,7 @@ public class ExecTest extends MultiHotRodServersTest {
    public void testExecReturnNull(String cacheName) throws IOException {
       withScript(manager(0), "/test-null-return.js", scriptName -> {
          Object result = clients.get(0).getCache(cacheName).execute(scriptName, new HashMap<>());
-         assertEquals(null, result);
+         assertNull(result);
       });
    }
 
@@ -214,7 +215,7 @@ public class ExecTest extends MultiHotRodServersTest {
          RemoteCache<Object, Object> cache = clients.get(0).getCache(cacheName);
          for (int i = 0; i < 50; ++i) {
             String someKey = "someKey" + i;
-            assertTrue(cache.execute(scriptName, Collections.singletonMap("k", someKey), someKey));
+            assertTrue(() -> cache.execute(scriptName, Collections.singletonMap("k", someKey), someKey));
          }
          int notHinted = 0;
          for (int i = 0; i < 50; ++i) {
@@ -223,8 +224,8 @@ public class ExecTest extends MultiHotRodServersTest {
                ++notHinted;
             }
          }
-         assertTrue("Not hinted: " + notHinted, notHinted > 0);
-         assertTrue("Not hinted: " + notHinted, notHinted < 50);
+         assertTrue(notHinted > 0, "Not hinted: " + notHinted);
+         assertTrue(notHinted < 50, "Not hinted: " + notHinted);
       });
    }
 
@@ -245,7 +246,7 @@ public class ExecTest extends MultiHotRodServersTest {
    }
 
    enum ExecMode {
-      LOCAL(AssertJUnit::assertEquals),
+      LOCAL(Assertions::assertEquals),
       DIST((v, r) -> assertEquals(Arrays.asList(v, v), r));
 
       final BiConsumer<String, Object> assertResult;

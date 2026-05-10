@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -180,7 +180,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
    protected void verifyInitialDataOnLoader(Cache<Object, Object> c) {
       DummyInMemoryStore l = TestingUtil.getFirstStore(c);
       for (int i = 0; i < INSERTION_COUNT; ++i) {
-         assertTrue("Didn't contain key " + i, l.contains("key " + i));
+         assertTrue(l.contains("key " + i), "Didn't contain key " + i);
       }
 
       for (int i = 0; i < INSERTION_COUNT; ++i) {

@@ -4,8 +4,8 @@ import static java.lang.String.format;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -239,7 +239,7 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
 
    private void awaitXSiteStateTransferFor(String cacheName) {
       eventually(format("Failed to complete the x-site state transfer for cache '%s'", cacheName),
-                 () -> xSiteAdminOperations(cacheName).getRunningStateTransfer().isEmpty());
+            () -> xSiteAdminOperations(cacheName).getRunningStateTransfer().isEmpty());
    }
 
    private void setSitesStatus(boolean online) {
@@ -272,9 +272,8 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
 
    private void assertValueInCache(int siteIndex, String cacheName, String key, String value) {
       for (int nodeIndex = 0; nodeIndex < defaultNumberOfNodes(); nodeIndex++) {
-         assertEquals(format("Wrong value for key '%s' in cache '%s' on site '%d' and node '%d'",
-                             key, cacheName, siteIndex, nodeIndex),
-                      value, cache(siteIndex, nodeIndex, cacheName).get(key));
+         assertEquals(value, cache(siteIndex, nodeIndex, cacheName).get(key), format("Wrong value for key '%s' in cache '%s' on site '%d' and node '%d'",
+               key, cacheName, siteIndex, nodeIndex));
       }
    }
 
@@ -283,8 +282,7 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
    }
 
    private void assertCacheEmpty(int siteIndex, String cacheName) {
-      assertTrue(format("Cache '%s' is not empty in site '%d'", cache(siteIndex, 0, cacheName).getName(), siteIndex),
-                 cache(siteIndex, 0, cacheName).isEmpty());
+      assertTrue(cache(siteIndex, 0, cacheName).isEmpty(), format("Cache '%s' is not empty in site '%d'", cache(siteIndex, 0, cacheName).getName(), siteIndex));
    }
 
    private void assertAllCachesEmpty() {
@@ -305,8 +303,8 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
    }
 
    private void assertSiteStatus(String cacheName, int backupSiteIndex, String status) {
-      assertEquals(format("Wrong site status for cache '%s' for backup site '%d'.", cacheName, backupSiteIndex), status,
-                   xSiteAdminOperations(cacheName).siteStatus(siteName(backupSiteIndex)));
+      assertEquals(status, xSiteAdminOperations(cacheName).siteStatus(siteName(backupSiteIndex)),
+            format("Wrong site status for cache '%s' for backup site '%d'.", cacheName, backupSiteIndex));
    }
 
    private List<BlockingTransport> getBlockingTransport(boolean createIfAbsent) {
@@ -365,8 +363,8 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
       @Override
       public String toString() {
          return "BlockingTransport{" +
-                "actual=" + actual +
-                '}';
+               "actual=" + actual +
+               '}';
       }
    }
 }

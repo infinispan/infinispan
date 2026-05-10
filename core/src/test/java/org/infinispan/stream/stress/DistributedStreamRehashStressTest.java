@@ -1,7 +1,7 @@
 package org.infinispan.stream.stress;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
 import java.util.HashSet;

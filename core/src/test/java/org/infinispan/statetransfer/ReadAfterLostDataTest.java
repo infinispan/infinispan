@@ -2,8 +2,9 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.test.TestingUtil.crashCacheManagers;
 import static org.infinispan.test.TestingUtil.installNewView;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -208,8 +209,8 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
       assertEquals("value0", result.get(keys.get(0)));
       assertEquals("value1", result.get(keys.get(1)));
       assertEquals("value2", result.get(keys.get(2)));
-      assertEquals(null, result.get(keys.get(3)));
-      assertEquals(result.toString(), 3, result.size());
+      assertNull(result.get(keys.get(3)));
+      assertEquals(3, result.size(), result.toString());
    }
 
    private static Map<?, ?> get(Cache<Object, Object> cache, Collection<?> keys) {

@@ -1,6 +1,7 @@
 package org.infinispan.distribution;
 
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,7 +9,6 @@ import java.util.Collection;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.test.ReplListener;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.MulticastInvalidationFuncTest")
@@ -31,7 +31,7 @@ public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest<Object
 
       nonOwner.put(KEY1, "foo");
       assertNull(nonOwner.getAdvancedCache().getDataContainer().peek(KEY1));
-      Assert.assertEquals(owner.getAdvancedCache().getDataContainer().peek(KEY1).getValue(), "foo");
+      assertEquals("foo", owner.getAdvancedCache().getDataContainer().peek(KEY1).getValue());
 
       // Check that all nodes (except the one we put to) are notified
       // but only if the transport is multicast-capable
@@ -55,7 +55,7 @@ public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest<Object
          rl.waitForRpc();
       }
 
-      Assert.assertNull(nonOwner.getAdvancedCache().getDataContainer().peek(KEY1));
+      assertNull(nonOwner.getAdvancedCache().getDataContainer().peek(KEY1));
    }
 
 }

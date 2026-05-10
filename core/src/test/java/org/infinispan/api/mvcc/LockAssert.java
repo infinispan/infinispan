@@ -1,8 +1,8 @@
 package org.infinispan.api.mvcc;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.test.TestingUtil;
@@ -16,17 +16,16 @@ import org.infinispan.util.concurrent.locks.impl.LockContainer;
  */
 public class LockAssert {
    public static void assertLocked(Object key, LockManager lockManager) {
-      assertTrue("" + key + " not locked!", lockManager.isLocked(key));
+      assertTrue(lockManager.isLocked(key), key + " not locked!");
    }
 
    public static void assertNotLocked(Object key, LockManager lockManager) {
-      assertFalse("" + key + " not locked!", lockManager.isLocked(key));
+      assertFalse(lockManager.isLocked(key), key + " not locked!");
    }
 
    public static void assertNoLocks(LockManager lockManager) {
       LockContainer lc = TestingUtil.extractField(lockManager, "lockContainer");
-      assertEquals("Stale locks exist! NumLocksHeld is " + lc.getNumLocksHeld() + " and lock info is " + lockManager.printLockInfo(),
-            0, lc.getNumLocksHeld());
+      assertEquals(0, lc.getNumLocksHeld(), "Stale locks exist! NumLocksHeld is " + lc.getNumLocksHeld() + " and lock info is " + lockManager.printLockInfo());
    }
 
    public static void assertNoLocks(Cache cache) {

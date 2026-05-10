@@ -1,8 +1,9 @@
 package org.infinispan.util;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -118,21 +119,21 @@ public class BPlusTreeTest {
       assertEquals("c", keys.get(2));
    }
 
-   public void testPublishSortedValues() throws IOException {
+   public void testPublishSortedValues() {
       BPlusTree<Integer> tree = new BPlusTree<>(MIN_NODE_SIZE, MAX_NODE_SIZE);
       int count = 100;
       for (int i = 0; i < count; i++) {
          tree.put(key(String.format("key-%05d", i)), i);
       }
 
-      List<Integer> values = tree.<Integer>publish((k, v) -> v).toList().blockingGet();
+      List<Integer> values = tree.publish((k, v) -> v).toList().blockingGet();
       assertEquals(count, values.size());
       for (int i = 1; i < values.size(); i++) {
-         assertTrue("Values should follow sorted key order", values.get(i - 1) < values.get(i));
+         assertTrue(values.get(i - 1) < values.get(i), "Values should follow sorted key order");
       }
    }
 
-   public void testManyInsertions() throws IOException {
+   public void testManyInsertions() {
       BPlusTree<Integer> tree = new BPlusTree<>(MIN_NODE_SIZE, MAX_NODE_SIZE);
       int count = 200;
       for (int i = 0; i < count; i++) {
@@ -146,7 +147,7 @@ public class BPlusTreeTest {
       }
    }
 
-   public void testManyInsertionsReverseOrder() throws IOException {
+   public void testManyInsertionsReverseOrder() {
       BPlusTree<Integer> tree = new BPlusTree<>(MIN_NODE_SIZE, MAX_NODE_SIZE);
       int count = 200;
       for (int i = count - 1; i >= 0; i--) {
@@ -220,8 +221,7 @@ public class BPlusTreeTest {
             .toList().blockingGet();
 
       for (int i = 1; i < keys.size(); i++) {
-         assertTrue("Keys should be in sorted order: " + keys.get(i - 1) + " vs " + keys.get(i),
-               keys.get(i - 1).compareTo(keys.get(i)) < 0);
+         assertTrue(keys.get(i - 1).compareTo(keys.get(i)) < 0, "Keys should be in sorted order: " + keys.get(i - 1) + " vs " + keys.get(i));
       }
    }
 
@@ -239,7 +239,7 @@ public class BPlusTreeTest {
       assertEquals(4, tree.size());
    }
 
-   public void testEmptyKey() throws IOException {
+   public void testEmptyKey() {
       BPlusTree<String> tree = createTree();
       tree.put(new byte[0], "empty");
       tree.put(key("a"), "a");
@@ -247,7 +247,7 @@ public class BPlusTreeTest {
       assertEquals("a", tree.get(key("a")));
    }
 
-   public void testSingleByteKeys() throws IOException {
+   public void testSingleByteKeys() {
       BPlusTree<Integer> tree = new BPlusTree<>(MIN_NODE_SIZE, MAX_NODE_SIZE);
       for (int i = 0; i < 256; i++) {
          tree.put(new byte[]{(byte) i}, i);
@@ -283,20 +283,20 @@ public class BPlusTreeTest {
                int val = rng.nextInt(10000);
                Integer oldRef = reference.put(k, val);
                Integer oldTree = tree.put(key(k), val);
-               assertEquals("seed=" + seed + " put(" + k + ") old value mismatch at op " + op, oldRef, oldTree);
+               assertEquals(oldRef, oldTree, "seed=" + seed + " put(" + k + ") old value mismatch at op " + op);
                break;
             case 1: // get
                Integer refVal = reference.get(k);
                Integer treeVal = tree.get(key(k));
-               assertEquals("seed=" + seed + " get(" + k + ") mismatch at op " + op, refVal, treeVal);
+               assertEquals(refVal, treeVal, "seed=" + seed + " get(" + k + ") mismatch at op " + op);
                break;
             case 2: // remove
                Integer removedRef = reference.remove(k);
                Integer removedTree = tree.remove(key(k));
-               assertEquals("seed=" + seed + " remove(" + k + ") mismatch at op " + op, removedRef, removedTree);
+               assertEquals(removedRef, removedTree, "seed=" + seed + " remove(" + k + ") mismatch at op " + op);
                break;
          }
-         assertEquals("seed=" + seed + " size mismatch at op " + op, reference.size(), tree.size());
+         assertEquals(reference.size(), tree.size(), "seed=" + seed + " size mismatch at op " + op);
       }
 
       for (Map.Entry<String, Integer> entry : reference.entrySet()) {
@@ -308,19 +308,19 @@ public class BPlusTreeTest {
       assertEquals(0, BPlusTree.compare(key("abc"), key("abc")));
 
       int cmp = BPlusTree.compare(key("abc"), key("abd"));
-      assertTrue("abc < abd should give positive result", cmp > 0);
+      assertTrue(cmp > 0, "abc < abd should give positive result");
       assertEquals(3, cmp);
 
       cmp = BPlusTree.compare(key("abd"), key("abc"));
-      assertTrue("abd > abc should give negative result", cmp < 0);
+      assertTrue(cmp < 0, "abd > abc should give negative result");
       assertEquals(-3, cmp);
 
       cmp = BPlusTree.compare(key("ab"), key("abc"));
-      assertTrue("ab < abc (prefix) should give positive result", cmp > 0);
+      assertTrue(cmp > 0, "ab < abc (prefix) should give positive result");
       assertEquals(3, cmp);
 
       cmp = BPlusTree.compare(key("abc"), key("ab"));
-      assertTrue("abc > ab should give negative result", cmp < 0);
+      assertTrue(cmp < 0, "abc > ab should give negative result");
       assertEquals(-3, cmp);
    }
 
@@ -348,7 +348,7 @@ public class BPlusTreeTest {
       }
    }
 
-   public void testRepeatedClearAndInsert() throws IOException {
+   public void testRepeatedClearAndInsert() {
       BPlusTree<Integer> tree = new BPlusTree<>(MIN_NODE_SIZE, MAX_NODE_SIZE);
       for (int round = 0; round < 5; round++) {
          for (int i = 0; i < 50; i++) {
@@ -360,7 +360,7 @@ public class BPlusTreeTest {
       }
    }
 
-   public void testJoinOnRemoveLeftmostChild() throws IOException {
+   public void testJoinOnRemoveLeftmostChild() {
       BPlusTree<Integer> tree = new BPlusTree<>(15, 30);
       int count = 60;
       for (int i = 0; i < count; i++) {
@@ -377,7 +377,7 @@ public class BPlusTreeTest {
       }
    }
 
-   public void testJoinOnRemoveRightmostChild() throws IOException {
+   public void testJoinOnRemoveRightmostChild() {
       BPlusTree<Integer> tree = new BPlusTree<>(15, 30);
       int count = 60;
       for (int i = 0; i < count; i++) {
@@ -394,7 +394,7 @@ public class BPlusTreeTest {
       }
    }
 
-   public void testJoinOnRemoveMiddleChild() throws IOException {
+   public void testJoinOnRemoveMiddleChild() {
       BPlusTree<Integer> tree = new BPlusTree<>(15, 30);
       int count = 100;
       for (int i = 0; i < count; i++) {
@@ -415,7 +415,7 @@ public class BPlusTreeTest {
       }
    }
 
-   public void testJoinCascadesToHigherLevels() throws IOException {
+   public void testJoinCascadesToHigherLevels() {
       // Very small nodes force a deeper tree and multi-level join cascades
       BPlusTree<Integer> tree = new BPlusTree<>(15, 30);
       int count = 200;
@@ -519,20 +519,20 @@ public class BPlusTreeTest {
                int val = rng.nextInt(10000);
                Integer oldRef = reference.put(k, val);
                Integer oldTree = tree.put(bk, val);
-               assertEquals("seed=" + seed + " put(" + k + ") old value mismatch at op " + op, oldRef, oldTree);
+               assertEquals(oldRef, oldTree, "seed=" + seed + " put(" + k + ") old value mismatch at op " + op);
                break;
             case 1:
                Integer refVal = reference.get(k);
                Integer treeVal = tree.get(bk);
-               assertEquals("seed=" + seed + " get(" + k + ") mismatch at op " + op, refVal, treeVal);
+               assertEquals(refVal, treeVal, "seed=" + seed + " get(" + k + ") mismatch at op " + op);
                break;
             case 2:
                Integer removedRef = reference.remove(k);
                Integer removedTree = tree.remove(bk);
-               assertEquals("seed=" + seed + " remove(" + k + ") mismatch at op " + op, removedRef, removedTree);
+               assertEquals(removedRef, removedTree, "seed=" + seed + " remove(" + k + ") mismatch at op " + op);
                break;
          }
-         assertEquals("seed=" + seed + " size mismatch at op " + op, reference.size(), tree.size());
+         assertEquals(reference.size(), tree.size(), "seed=" + seed + " size mismatch at op " + op);
       }
    }
 
@@ -563,11 +563,11 @@ public class BPlusTreeTest {
          tree.put(key(String.format("key-%05d", i)), i);
       }
 
-      List<Integer> odds = tree.<Integer>publish((k, v) -> v % 2 != 0 ? v : null)
+      List<Integer> odds = tree.publish((k, v) -> v % 2 != 0 ? v : null)
             .toList().blockingGet();
       assertEquals(10, odds.size());
       for (int v : odds) {
-         assertTrue("Expected odd value", v % 2 != 0);
+         assertTrue(v % 2 != 0, "Expected odd value");
       }
    }
 
@@ -578,14 +578,14 @@ public class BPlusTreeTest {
          tree.put(key(String.format("key-%05d", i)), i);
       }
 
-      List<Integer> allValues = tree.<Integer>publish((k, v) -> v).toList().blockingGet();
+      List<Integer> allValues = tree.publish((k, v) -> v).toList().blockingGet();
       assertEquals(total, allValues.size());
       for (int i = 0; i < total; i++) {
          assertEquals(Integer.valueOf(i), allValues.get(i));
       }
    }
 
-   public void testRemoveAllEntriesTinyNodes() throws IOException {
+   public void testRemoveAllEntriesTinyNodes() {
       BPlusTree<Integer> tree = new BPlusTree<>(10, 28);
       int count = 500;
       List<String> inserted = new ArrayList<>();
@@ -617,18 +617,18 @@ public class BPlusTreeTest {
                   int val = rng.nextInt(10000);
                   Integer oldRef = reference.put(k, val);
                   Integer oldTree = tree.put(bk, val);
-                  assertEquals("seed=" + seed + " put op " + op, oldRef, oldTree);
+                  assertEquals(oldRef, oldTree, "seed=" + seed + " put op " + op);
                   break;
                case 1:
-                  assertEquals("seed=" + seed + " get op " + op, reference.get(k), tree.get(bk));
+                  assertEquals(reference.get(k), tree.get(bk), "seed=" + seed + " get op " + op);
                   break;
                case 2:
                   Integer removedRef = reference.remove(k);
                   Integer removedTree = tree.remove(bk);
-                  assertEquals("seed=" + seed + " remove op " + op, removedRef, removedTree);
+                  assertEquals(removedRef, removedTree, "seed=" + seed + " remove op " + op);
                   break;
             }
-            assertEquals("seed=" + seed + " size mismatch at op " + op, reference.size(), tree.size());
+            assertEquals(reference.size(), tree.size(), "seed=" + seed + " size mismatch at op " + op);
          }
       }
    }
@@ -649,8 +649,7 @@ public class BPlusTreeTest {
          while (cause.getCause() != null) {
             cause = cause.getCause();
          }
-         assertTrue("Root cause should be IndexNodeOutdatedException, got: " + cause.getClass().getSimpleName(),
-               cause instanceof SoftBPlusTree.IndexNodeOutdatedException);
+         assertInstanceOf(SoftBPlusTree.IndexNodeOutdatedException.class, cause, "Root cause should be IndexNodeOutdatedException, got: " + cause.getClass().getSimpleName());
       }
    }
 
@@ -676,18 +675,18 @@ public class BPlusTreeTest {
                   int val = rng.nextInt(10000);
                   Integer oldRef = reference.put(k, val);
                   Integer oldTree = tree.put(bk, val);
-                  assertEquals("seed=" + seed + " put op " + op, oldRef, oldTree);
+                  assertEquals(oldRef, oldTree, "seed=" + seed + " put op " + op);
                   break;
                case 1:
-                  assertEquals("seed=" + seed + " get op " + op, reference.get(k), tree.get(bk));
+                  assertEquals(reference.get(k), tree.get(bk), "seed=" + seed + " get op " + op);
                   break;
                case 2:
                   Integer removedRef = reference.remove(k);
                   Integer removedTree = tree.remove(bk);
-                  assertEquals("seed=" + seed + " remove op " + op, removedRef, removedTree);
+                  assertEquals(removedRef, removedTree, "seed=" + seed + " remove op " + op);
                   break;
             }
-            assertEquals("seed=" + seed + " size mismatch at op " + op, reference.size(), tree.size());
+            assertEquals(reference.size(), tree.size(), "seed=" + seed + " size mismatch at op " + op);
          }
       }
    }
@@ -752,8 +751,7 @@ public class BPlusTreeTest {
 
          assertEquals(reference.size(), tree.size());
          for (Map.Entry<String, Integer> entry : reference.entrySet()) {
-            assertEquals("maxNodeSize=" + maxNodeSize + " get(" + entry.getKey() + ")",
-                  entry.getValue(), tree.get(key(entry.getKey())));
+            assertEquals(entry.getValue(), tree.get(key(entry.getKey())), "maxNodeSize=" + maxNodeSize + " get(" + entry.getKey() + ")");
          }
       }
    }
@@ -784,22 +782,18 @@ public class BPlusTreeTest {
                      int val = rng.nextInt(10000);
                      Integer oldRef = reference.put(k, val);
                      Integer oldTree = tree.put(bk, val);
-                     assertEquals("seed=" + seed + ",max=" + maxNodeSize + " put op " + op,
-                           oldRef, oldTree);
+                     assertEquals(oldRef, oldTree, "seed=" + seed + ",max=" + maxNodeSize + " put op " + op);
                      break;
                   case 1:
-                     assertEquals("seed=" + seed + ",max=" + maxNodeSize + " get op " + op,
-                           reference.get(k), tree.get(bk));
+                     assertEquals(reference.get(k), tree.get(bk), "seed=" + seed + ",max=" + maxNodeSize + " get op " + op);
                      break;
                   case 2:
                      Integer removedRef = reference.remove(k);
                      Integer removedTree = tree.remove(bk);
-                     assertEquals("seed=" + seed + ",max=" + maxNodeSize + " remove op " + op,
-                           removedRef, removedTree);
+                     assertEquals(removedRef, removedTree, "seed=" + seed + ",max=" + maxNodeSize + " remove op " + op);
                      break;
                }
-               assertEquals("seed=" + seed + ",max=" + maxNodeSize + " size at op " + op,
-                     reference.size(), tree.size());
+               assertEquals(reference.size(), tree.size(), "seed=" + seed + ",max=" + maxNodeSize + " size at op " + op);
             }
          }
       }
@@ -845,8 +839,8 @@ public class BPlusTreeTest {
 
       startLatch.countDown();
       executor.shutdown();
-      assertTrue("Executor timed out", executor.awaitTermination(30, TimeUnit.SECONDS));
-      assertTrue("Expected ConcurrentModificationException with " + nThreads
-            + " concurrent writers", cmeDetected.get());
+      assertTrue(executor.awaitTermination(30, TimeUnit.SECONDS), "Executor timed out");
+      assertTrue(cmeDetected.get(), "Expected ConcurrentModificationException with " + nThreads
+            + " concurrent writers");
    }
 }

@@ -1,6 +1,6 @@
 package org.infinispan.xsite;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupConfiguration;

@@ -3,9 +3,9 @@ package org.infinispan.distribution.rehash;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnComponentMethod;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 

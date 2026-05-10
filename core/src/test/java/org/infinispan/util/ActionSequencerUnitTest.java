@@ -4,8 +4,8 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static org.infinispan.testing.Exceptions.expectException;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,15 +54,15 @@ public class ActionSequencerUnitTest extends AbstractInfinispanTest {
    }
 
    private static void assertMapSize(ActionSequencer sequencer, int size) {
-      assertEquals("Wrong ActionSequencer.getMapSize()", size, sequencer.getMapSize());
+      assertEquals(size, sequencer.getMapSize(), "Wrong ActionSequencer.getMapSize()");
    }
 
    private static void assertPendingActions(ActionSequencer sequencer, int size) {
-      assertEquals("Wrong ActionSequencer.getPendingActions()", size, sequencer.getPendingActions());
+      assertEquals(size, sequencer.getPendingActions(), "Wrong ActionSequencer.getPendingActions()");
    }
 
    private static void assertActionResult(CompletionStage<Integer> cf, int result) {
-      assertEquals("Wrong result", result, getResult(cf));
+      assertEquals(result, getResult(cf), "Wrong result");
    }
 
    private static void assertActionResult(CompletionStage<Integer> cf, String exceptionMessage) {
@@ -72,8 +72,8 @@ public class ActionSequencerUnitTest extends AbstractInfinispanTest {
 
    private static void assertActionState(NonBlockingAction action, CompletionStage<Integer> cf, boolean started,
          boolean completed) {
-      assertEquals("Is action started?", started, action.isStarted());
-      assertEquals("Is action completed?", completed, cf.toCompletableFuture().isDone());
+      assertEquals(started, action.isStarted(), "Is action started?");
+      assertEquals(completed, cf.toCompletableFuture().isDone(), "Is action completed?");
    }
 
    private static void assertActionState(List<NonBlockingAction> actionList, List<CompletionStage<Integer>> cfList,

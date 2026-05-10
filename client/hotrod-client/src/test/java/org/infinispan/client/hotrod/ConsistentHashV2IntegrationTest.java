@@ -3,8 +3,8 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 /**
  * @author Mircea Markus
  */
-@Test (groups = "functional", testName = "client.hotrod.ConsistentHashV2IntegrationTest")
+@Test(groups = "functional", testName = "client.hotrod.ConsistentHashV2IntegrationTest")
 public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
    public static final int NUM_KEYS = 200;
 
@@ -65,7 +65,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
       clientBuilder.addServer().host("localhost").port(hotRodServer2.getPort());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = (RemoteCacheImpl) remoteCacheManager.getCache();
-      assert super.cacheManagers.size() == 4;
+      assertEquals(4, cacheManagers.size());
 
       ex = Executors.newSingleThreadExecutor(getTestThreadFactory("KeyGenerator"));
       kas = KeyAffinityServiceFactory.newKeyAffinityService(cache(0),
@@ -73,7 +73,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
 
       for (int i = 0; i < 4; i++) {
          extractInterceptorChain(advancedCache(i))
-                         .addInterceptor(new HitsAwareCacheManagersTest.HitCountInterceptor(), 1);
+               .addInterceptor(new HitsAwareCacheManagersTest.HitCountInterceptor(), 1);
       }
    }
 
@@ -178,7 +178,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
       runTest(3);
    }
 
-  private void resetHitInterceptors() {
+   private void resetHitInterceptors() {
       for (int i = 0; i < 4; i++) {
          HitsAwareCacheManagersTest.HitCountInterceptor interceptor = hitCountInterceptor(i);
          interceptor.reset();

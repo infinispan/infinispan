@@ -2,7 +2,7 @@ package org.infinispan.lock;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.TimeUnit;
 

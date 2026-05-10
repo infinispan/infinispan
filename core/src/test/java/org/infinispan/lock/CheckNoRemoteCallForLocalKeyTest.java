@@ -1,7 +1,9 @@
 package org.infinispan.lock;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -71,17 +73,17 @@ public class CheckNoRemoteCallForLocalKeyTest extends MultipleCacheManagersTest 
    }
 
    private void testLocalOperation(CheckRemoteLockAcquiredOnlyOnceTest.CacheOperation o) throws Exception {
-      assert !advancedCache(1).getRpcManager().getTransport().isCoordinator();
-      assert advancedCache(0).getRpcManager().getTransport().isCoordinator();
+      assertFalse(advancedCache(1).getRpcManager().getTransport().isCoordinator());
+      assertTrue(advancedCache(0).getRpcManager().getTransport().isCoordinator());
 
       tm(0).begin();
 
       o.execute();
 
-      assert lockManager(0).isLocked(key);
-      assert !lockManager(1).isLocked(key);
+      assertTrue(lockManager(0).isLocked(key));
+      assertFalse(lockManager(1).isLocked(key));
 
-      assertEquals(controlInterceptor.remoteInvocations, 0);
+      assertEquals(0, controlInterceptor.remoteInvocations);
       tm(0).rollback();
    }
 }

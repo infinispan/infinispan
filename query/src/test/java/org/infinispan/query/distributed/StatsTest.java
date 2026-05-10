@@ -3,8 +3,8 @@ package org.infinispan.query.distributed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -93,7 +93,7 @@ public class StatsTest extends MultipleCacheManagersTest {
          Map<String, IndexInfo> indexInfos = await(searchStatistics.getIndexStatistics().computeIndexInfos());
          totalEntities.addAll(indexInfos.keySet());
          for (IndexInfo indexInfo : indexInfos.values()) {
-            assertEquals(indexInfo.count(), 0L);
+            assertEquals(0L, indexInfo.count());
             assertThat(indexInfo.size()).isLessThan(MAX_EMPTY_INDEX_SIZE);
          }
       }
@@ -104,7 +104,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(classIndexInfoMap.keySet(), expectedEntities);
 
       Long reduceCount = classIndexInfoMap.values().stream().map(IndexInfo::count).reduce(0L, Long::sum);
-      assertEquals(reduceCount.intValue(), 0L);
+      assertEquals(0L, reduceCount.intValue());
 
       Long reduceSize = classIndexInfoMap.values().stream().map(IndexInfo::size).reduce(0L, Long::sum);
       assertThat(reduceSize.longValue()).isLessThan(MAX_EMPTY_INDEX_SIZE * 2); // 2 indexes
@@ -152,142 +152,142 @@ public class StatsTest extends MultipleCacheManagersTest {
 
       SearchStatistics clustered = await(Search.getClusteredSearchStatistics(cache0));
       QueryStatistics localQueryStatistics = clustered.getQueryStatistics();
-      assertEquals(localQueryStatistics.getNonIndexedQueryCount(), 0);
-      assertEquals(localQueryStatistics.getHybridQueryCount(), 0);
-      assertEquals(localQueryStatistics.getDistributedIndexedQueryCount(), 0);
-      assertEquals(localQueryStatistics.getLocalIndexedQueryCount(), 0);
+      assertEquals(0, localQueryStatistics.getNonIndexedQueryCount());
+      assertEquals(0, localQueryStatistics.getHybridQueryCount());
+      assertEquals(0, localQueryStatistics.getDistributedIndexedQueryCount());
+      assertEquals(0, localQueryStatistics.getLocalIndexedQueryCount());
    }
 
    private void testNonIndexedQueryStats() {
       executeQuery(nonIndexedQuery, cache0);
 
-      assertEquals(queryStatistics0.getNonIndexedQueryCount(), 1);
-      assertEquals(queryStatistics1.getNonIndexedQueryCount(), 0);
-      assertEquals(queryStatistics2.getNonIndexedQueryCount(), 0);
+      assertEquals(1, queryStatistics0.getNonIndexedQueryCount());
+      assertEquals(0, queryStatistics1.getNonIndexedQueryCount());
+      assertEquals(0, queryStatistics2.getNonIndexedQueryCount());
       SearchStatistics clustered1 = await(Search.getClusteredSearchStatistics(cache1));
-      assertEquals(clustered1.getQueryStatistics().getNonIndexedQueryCount(), 1);
+      assertEquals(1, clustered1.getQueryStatistics().getNonIndexedQueryCount());
 
       executeQuery(nonIndexedQuery, cache1);
 
-      assertEquals(queryStatistics0.getNonIndexedQueryCount(), 1);
-      assertEquals(queryStatistics1.getNonIndexedQueryCount(), 1);
-      assertEquals(queryStatistics2.getNonIndexedQueryCount(), 0);
+      assertEquals(1, queryStatistics0.getNonIndexedQueryCount());
+      assertEquals(1, queryStatistics1.getNonIndexedQueryCount());
+      assertEquals(0, queryStatistics2.getNonIndexedQueryCount());
       SearchStatistics clustered2 = await(Search.getClusteredSearchStatistics(cache2));
-      assertEquals(clustered2.getQueryStatistics().getNonIndexedQueryCount(), 2);
+      assertEquals(2, clustered2.getQueryStatistics().getNonIndexedQueryCount());
 
       executeQuery(nonIndexedQuery, cache2);
 
-      assertEquals(queryStatistics0.getNonIndexedQueryCount(), 1);
-      assertEquals(queryStatistics1.getNonIndexedQueryCount(), 1);
-      assertEquals(queryStatistics2.getNonIndexedQueryCount(), 1);
+      assertEquals(1, queryStatistics0.getNonIndexedQueryCount());
+      assertEquals(1, queryStatistics1.getNonIndexedQueryCount());
+      assertEquals(1, queryStatistics2.getNonIndexedQueryCount());
       SearchStatistics clustered0 = await(Search.getClusteredSearchStatistics(cache0));
-      assertEquals(clustered0.getQueryStatistics().getNonIndexedQueryCount(), 3);
+      assertEquals(3, clustered0.getQueryStatistics().getNonIndexedQueryCount());
    }
 
    private void testIndexedQueryStats() {
       executeQuery(indexedQuery, cache0);
 
-      assertEquals(queryStatistics0.getLocalIndexedQueryCount(), 1);
-      assertEquals(queryStatistics0.getDistributedIndexedQueryCount(), 1);
+      assertEquals(1, queryStatistics0.getLocalIndexedQueryCount());
+      assertEquals(1, queryStatistics0.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics1.getLocalIndexedQueryCount(), 1);
-      assertEquals(queryStatistics1.getDistributedIndexedQueryCount(), 0);
+      assertEquals(1, queryStatistics1.getLocalIndexedQueryCount());
+      assertEquals(0, queryStatistics1.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics2.getLocalIndexedQueryCount(), 1);
-      assertEquals(queryStatistics2.getDistributedIndexedQueryCount(), 0);
+      assertEquals(1, queryStatistics2.getLocalIndexedQueryCount());
+      assertEquals(0, queryStatistics2.getDistributedIndexedQueryCount());
 
       SearchStatistics clustered = await(Search.getClusteredSearchStatistics(cache1));
-      assertEquals(clustered.getQueryStatistics().getLocalIndexedQueryCount(), 3);
-      assertEquals(clustered.getQueryStatistics().getDistributedIndexedQueryCount(), 1);
+      assertEquals(3, clustered.getQueryStatistics().getLocalIndexedQueryCount());
+      assertEquals(1, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
 
       executeQuery(indexedQuery, cache1);
 
-      assertEquals(queryStatistics0.getLocalIndexedQueryCount(), 2);
-      assertEquals(queryStatistics0.getDistributedIndexedQueryCount(), 1);
+      assertEquals(2, queryStatistics0.getLocalIndexedQueryCount());
+      assertEquals(1, queryStatistics0.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics1.getLocalIndexedQueryCount(), 2);
-      assertEquals(queryStatistics1.getDistributedIndexedQueryCount(), 1);
+      assertEquals(2, queryStatistics1.getLocalIndexedQueryCount());
+      assertEquals(1, queryStatistics1.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics2.getLocalIndexedQueryCount(), 2);
-      assertEquals(queryStatistics2.getDistributedIndexedQueryCount(), 0);
+      assertEquals(2, queryStatistics2.getLocalIndexedQueryCount());
+      assertEquals(0, queryStatistics2.getDistributedIndexedQueryCount());
 
       clustered = await(Search.getClusteredSearchStatistics(cache1));
-      assertEquals(clustered.getQueryStatistics().getLocalIndexedQueryCount(), 6);
-      assertEquals(clustered.getQueryStatistics().getDistributedIndexedQueryCount(), 2);
+      assertEquals(6, clustered.getQueryStatistics().getLocalIndexedQueryCount());
+      assertEquals(2, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
 
       executeQuery(indexedQuery, cache2);
 
-      assertEquals(queryStatistics0.getLocalIndexedQueryCount(), 3);
-      assertEquals(queryStatistics0.getDistributedIndexedQueryCount(), 1);
+      assertEquals(3, queryStatistics0.getLocalIndexedQueryCount());
+      assertEquals(1, queryStatistics0.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics1.getLocalIndexedQueryCount(), 3);
-      assertEquals(queryStatistics1.getDistributedIndexedQueryCount(), 1);
+      assertEquals(3, queryStatistics1.getLocalIndexedQueryCount());
+      assertEquals(1, queryStatistics1.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics2.getLocalIndexedQueryCount(), 3);
-      assertEquals(queryStatistics2.getDistributedIndexedQueryCount(), 1);
+      assertEquals(3, queryStatistics2.getLocalIndexedQueryCount());
+      assertEquals(1, queryStatistics2.getDistributedIndexedQueryCount());
 
       clustered = await(Search.getClusteredSearchStatistics(cache1));
-      assertEquals(clustered.getQueryStatistics().getLocalIndexedQueryCount(), 9);
-      assertEquals(clustered.getQueryStatistics().getDistributedIndexedQueryCount(), 3);
+      assertEquals(9, clustered.getQueryStatistics().getLocalIndexedQueryCount());
+      assertEquals(3, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
    }
 
    private void testHybridQueryStats() {
       executeQuery(hybridQuery, cache0);
 
-      assertEquals(queryStatistics0.getHybridQueryCount(), 1);
-      assertEquals(queryStatistics0.getLocalIndexedQueryCount(), 4);
-      assertEquals(queryStatistics0.getDistributedIndexedQueryCount(), 2);
+      assertEquals(1, queryStatistics0.getHybridQueryCount());
+      assertEquals(4, queryStatistics0.getLocalIndexedQueryCount());
+      assertEquals(2, queryStatistics0.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics1.getHybridQueryCount(), 0);
-      assertEquals(queryStatistics1.getLocalIndexedQueryCount(), 4);
-      assertEquals(queryStatistics1.getDistributedIndexedQueryCount(), 1);
+      assertEquals(0, queryStatistics1.getHybridQueryCount());
+      assertEquals(4, queryStatistics1.getLocalIndexedQueryCount());
+      assertEquals(1, queryStatistics1.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics2.getHybridQueryCount(), 0);
-      assertEquals(queryStatistics2.getLocalIndexedQueryCount(), 4);
-      assertEquals(queryStatistics2.getDistributedIndexedQueryCount(), 1);
+      assertEquals(0, queryStatistics2.getHybridQueryCount());
+      assertEquals(4, queryStatistics2.getLocalIndexedQueryCount());
+      assertEquals(1, queryStatistics2.getDistributedIndexedQueryCount());
 
       SearchStatistics clustered = await(Search.getClusteredSearchStatistics(cache1));
-      assertEquals(clustered.getQueryStatistics().getHybridQueryCount(), 1);
-      assertEquals(clustered.getQueryStatistics().getLocalIndexedQueryCount(), 12);
-      assertEquals(clustered.getQueryStatistics().getDistributedIndexedQueryCount(), 4);
+      assertEquals(1, clustered.getQueryStatistics().getHybridQueryCount());
+      assertEquals(12, clustered.getQueryStatistics().getLocalIndexedQueryCount());
+      assertEquals(4, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
 
       executeQuery(hybridQuery, cache1);
 
-      assertEquals(queryStatistics0.getHybridQueryCount(), 1);
-      assertEquals(queryStatistics0.getLocalIndexedQueryCount(), 5);
-      assertEquals(queryStatistics0.getDistributedIndexedQueryCount(), 2);
+      assertEquals(1, queryStatistics0.getHybridQueryCount());
+      assertEquals(5, queryStatistics0.getLocalIndexedQueryCount());
+      assertEquals(2, queryStatistics0.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics1.getHybridQueryCount(), 1);
-      assertEquals(queryStatistics1.getLocalIndexedQueryCount(), 5);
-      assertEquals(queryStatistics1.getDistributedIndexedQueryCount(), 2);
+      assertEquals(1, queryStatistics1.getHybridQueryCount());
+      assertEquals(5, queryStatistics1.getLocalIndexedQueryCount());
+      assertEquals(2, queryStatistics1.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics2.getHybridQueryCount(), 0);
-      assertEquals(queryStatistics2.getLocalIndexedQueryCount(), 5);
-      assertEquals(queryStatistics2.getDistributedIndexedQueryCount(), 1);
+      assertEquals(0, queryStatistics2.getHybridQueryCount());
+      assertEquals(5, queryStatistics2.getLocalIndexedQueryCount());
+      assertEquals(1, queryStatistics2.getDistributedIndexedQueryCount());
 
       clustered = await(Search.getClusteredSearchStatistics(cache1));
-      assertEquals(clustered.getQueryStatistics().getHybridQueryCount(), 2);
-      assertEquals(clustered.getQueryStatistics().getLocalIndexedQueryCount(), 15);
-      assertEquals(clustered.getQueryStatistics().getDistributedIndexedQueryCount(), 5);
+      assertEquals(2, clustered.getQueryStatistics().getHybridQueryCount());
+      assertEquals(15, clustered.getQueryStatistics().getLocalIndexedQueryCount());
+      assertEquals(5, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
 
       executeQuery(hybridQuery, cache2);
 
-      assertEquals(queryStatistics0.getHybridQueryCount(), 1);
-      assertEquals(queryStatistics0.getLocalIndexedQueryCount(), 6);
-      assertEquals(queryStatistics0.getDistributedIndexedQueryCount(), 2);
+      assertEquals(1, queryStatistics0.getHybridQueryCount());
+      assertEquals(6, queryStatistics0.getLocalIndexedQueryCount());
+      assertEquals(2, queryStatistics0.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics1.getHybridQueryCount(), 1);
-      assertEquals(queryStatistics1.getLocalIndexedQueryCount(), 6);
-      assertEquals(queryStatistics1.getDistributedIndexedQueryCount(), 2);
+      assertEquals(1, queryStatistics1.getHybridQueryCount());
+      assertEquals(6, queryStatistics1.getLocalIndexedQueryCount());
+      assertEquals(2, queryStatistics1.getDistributedIndexedQueryCount());
 
-      assertEquals(queryStatistics2.getHybridQueryCount(), 1);
-      assertEquals(queryStatistics2.getLocalIndexedQueryCount(), 6);
-      assertEquals(queryStatistics2.getDistributedIndexedQueryCount(), 2);
+      assertEquals(1, queryStatistics2.getHybridQueryCount());
+      assertEquals(6, queryStatistics2.getLocalIndexedQueryCount());
+      assertEquals(2, queryStatistics2.getDistributedIndexedQueryCount());
 
       clustered = await(Search.getClusteredSearchStatistics(cache1));
-      assertEquals(clustered.getQueryStatistics().getHybridQueryCount(), 3);
-      assertEquals(clustered.getQueryStatistics().getLocalIndexedQueryCount(), 18);
-      assertEquals(clustered.getQueryStatistics().getDistributedIndexedQueryCount(), 6);
+      assertEquals(3, clustered.getQueryStatistics().getHybridQueryCount());
+      assertEquals(18, clustered.getQueryStatistics().getLocalIndexedQueryCount());
+      assertEquals(6, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
    }
 
    private void executeQuery(String q, Cache<String, Object> fromCache) {

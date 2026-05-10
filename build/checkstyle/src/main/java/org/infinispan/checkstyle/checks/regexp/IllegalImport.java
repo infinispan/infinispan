@@ -21,8 +21,7 @@ public class IllegalImport extends AbstractCheck {
    /**
     * Set the list of illegal import statements.
     *
-    * @param importStatements
-    *           array of illegal packages
+    * @param importStatements array of illegal packages
     */
    public void setIllegalClassnames(String[] importStatements) {
       notAllowedImports.addAll(Arrays.asList(importStatements));
@@ -36,7 +35,7 @@ public class IllegalImport extends AbstractCheck {
 
    @Override
    public int[] getDefaultTokens() {
-      return new int[] { TokenTypes.IMPORT, TokenTypes.STATIC_IMPORT };
+      return new int[]{TokenTypes.IMPORT, TokenTypes.STATIC_IMPORT};
    }
 
    @Override
@@ -51,13 +50,11 @@ public class IllegalImport extends AbstractCheck {
 
    @Override
    public void visitToken(DetailAST aAST) {
-      final FullIdent imp;
-      if (aAST.getType() == TokenTypes.IMPORT) {
-         imp = FullIdent.createFullIdentBelow(aAST);
-      } else {
-         // handle case of static imports of method names
-         imp = FullIdent.createFullIdent(aAST.getFirstChild().getNextSibling());
-      }
+      final FullIdent imp = switch (aAST.getType()) {
+         case TokenTypes.IMPORT -> FullIdent.createFullIdentBelow(aAST);
+         case TokenTypes.STATIC_IMPORT -> FullIdent.createFullIdent(aAST.getFirstChild().getNextSibling());
+         default -> throw new IllegalStateException("Unexpected token type: " + aAST.getType());
+      };
       final String text = imp.getText();
       if (isIllegalImport(text)) {
          final String message = buildError(text);
@@ -70,7 +67,15 @@ public class IllegalImport extends AbstractCheck {
    }
 
    private boolean isIllegalImport(String importString) {
-      return notAllowedImports.contains(importString);
+      if (notAllowedImports.contains(importString)) {
+         return true;
+      }
+      for (String notAllowed : notAllowedImports) {
+         if (importString.startsWith(notAllowed + ".")) {
+            return true;
+         }
+      }
+      return false;
    }
 
 }

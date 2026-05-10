@@ -3,7 +3,7 @@ package org.infinispan.tx.recovery.admin;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.transaction.xa.XAException;
 
@@ -45,19 +45,19 @@ public class ForgetTest extends AbstractRecoveryTest {
       tx = beginAndSuspendTx(cache(0));
       prepareTransaction(tx);
 
-      assertEquals(recoveryManager(0).getPreparedTransactionsFromCluster().all().length, 1);
-      assertEquals(tt(0).getLocalPreparedXids().size(), 1);
-      assertEquals(tt(1).getRemoteTxCount(), 1);
+      assertEquals(1, recoveryManager(0).getPreparedTransactionsFromCluster().all().length);
+      assertEquals(1, tt(0).getLocalPreparedXids().size());
+      assertEquals(1, tt(1).getRemoteTxCount());
 
       commitTransaction(tx);
 
-      assertEquals(tt(1).getRemoteTxCount(), 1);
+      assertEquals(1, tt(1).getRemoteTxCount());
    }
 
    public void testInternalIdOnSameNode() {
       XidImpl xid = tx.getXid();
       recoveryOps(0).forget(xid.getFormatId(), xid.getGlobalTransactionId(), xid.getBranchQualifier());
-      assertEquals(tt(1).getRemoteTxCount(), 0);//make sure tx has been removed
+      assertEquals(0, tt(1).getRemoteTxCount());//make sure tx has been removed
    }
 
    public void testForgetXidOnSameNode() {
@@ -87,14 +87,14 @@ public class ForgetTest extends AbstractRecoveryTest {
       if (internalId == -1) throw new IllegalStateException();
       log.tracef("About to forget... %s", internalId);
       recoveryOps(cacheIndex).forget(internalId);
-      assertEquals(tt(0).getRemoteTxCount(), 0);
-      assertEquals(tt(1).getRemoteTxCount(), 0);
+      assertEquals(0, tt(0).getRemoteTxCount());
+      assertEquals(0, tt(1).getRemoteTxCount());
    }
 
 
    private void forgetWithXid(int nodeIndex) {
       XidImpl xid = tx.getXid();
       recoveryOps(nodeIndex).forget(xid.getFormatId(), xid.getGlobalTransactionId(), xid.getBranchQualifier());
-      assertEquals(tt(1).getRemoteTxCount(), 0);//make sure tx has been removed
+      assertEquals(0, tt(1).getRemoteTxCount());//make sure tx has been removed
    }
 }

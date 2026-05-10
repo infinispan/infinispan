@@ -4,8 +4,8 @@ import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -132,7 +132,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
    }
 
    private void checkResponse(String result, int entryCount) {
-      assertTrue("Received: " + result, isSuccess(result));
+      assertTrue(isSuccess(result), "Received: " + result);
 
       assertEquals(cache(0, "test").keySet().size(), entryCount);
       assertEquals(cache(1, "test").keySet().size(), entryCount);

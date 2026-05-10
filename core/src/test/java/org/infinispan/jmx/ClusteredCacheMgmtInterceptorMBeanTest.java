@@ -2,7 +2,7 @@ package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
 import java.util.Map;

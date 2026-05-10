@@ -2,12 +2,12 @@ package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.sequence;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
-import static org.testng.AssertJUnit.assertEquals;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -386,10 +386,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    protected void verifyInitialData(Cache<Object, Object> c) {
       Address address = c.getAdvancedCache().getRpcManager().getAddress();
       log.debugf("Checking values on cache " + address);
-      assertEquals("Incorrect value for key " + A_B_NAME, JOE, c.get(A_B_NAME));
-      assertEquals("Incorrect value for key " + A_B_AGE, TWENTY, c.get(A_B_AGE));
-      assertEquals("Incorrect value for key " + A_C_NAME, BOB, c.get(A_C_NAME));
-      assertEquals("Incorrect value for key " + A_C_AGE, FORTY, c.get(A_C_AGE));
+      assertEquals(JOE, c.get(A_B_NAME), "Incorrect value for key " + A_B_NAME);
+      assertEquals(TWENTY, c.get(A_B_AGE), "Incorrect value for key " + A_B_AGE);
+      assertEquals(BOB, c.get(A_C_NAME), "Incorrect value for key " + A_C_NAME);
+      assertEquals(FORTY, c.get(A_C_AGE), "Incorrect value for key " + A_C_AGE);
    }
 
    protected void writeInitialData(final Cache<Object, Object> c) {
