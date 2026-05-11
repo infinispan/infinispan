@@ -1,7 +1,6 @@
 package org.infinispan.server.core.logging;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
-import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
@@ -25,7 +24,6 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
 
 import io.netty.channel.Channel;
-import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.ipfilter.IpFilterRule;
 
 /**
@@ -47,9 +45,9 @@ public interface Log extends BasicLogger {
       return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
    }
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Exception reported", id = 5003)
-   void exceptionReported(@Cause Throwable t);
+   @LogMessage(level = WARN)
+   @Message(value = "Exception reported: %s", id = 5003)
+   void exceptionReported(Throwable t);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Server channel group did not completely unbind", id = 5004)
@@ -230,8 +228,8 @@ public interface Log extends BasicLogger {
    CacheException unableToReadBackup(Path backup, @Cause IOException e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Request was too long, closing socket to '%s'", id = 5064)
-   void requestTooLarge(Channel channel, @Cause TooLongFrameException e);
+   @Message(value = "Closing connection to '%s': request exceeded configured maximum content length of %d bytes (request bytes: %d)", id = 5064)
+   void requestTooLarge(Channel channel, int maxContentLength, int requestBytes);
 
    @LogMessage(level = WARN)
    @Message(value = "For better performance, it is recommended to use Netty's default thread factory. Current: %s", id = 5065)

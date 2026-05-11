@@ -30,6 +30,9 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    protected final int maxContentLength;
    // And this is the ByteBuf pos before decode is performed
    protected int posBefore;
+   // Set when the connection is being closed due to a protocol error (e.g. TooLongFrameException)
+   // to suppress further error logging while the async close completes
+   protected boolean closing;
 
    protected Authentication auth;
    protected TransactionRequestProcessor cacheProcessor;

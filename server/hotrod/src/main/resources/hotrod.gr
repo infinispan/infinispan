@@ -57,8 +57,11 @@ init {
 }
 
 exceptionally {
+   if (closing) return;
    if (t instanceof TooLongFrameException tlfe) {
-      log.requestTooLarge(ctx.channel(), tlfe);
+      log.requestTooLarge(ctx.channel(), maxContentLength, requestBytes);
+      if (log.isTraceEnabled()) log.trace("Request too large", tlfe);
+      closing = true;
       ctx.close();
       return;
    }
