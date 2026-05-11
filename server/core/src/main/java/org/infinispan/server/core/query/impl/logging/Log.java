@@ -14,6 +14,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Once;
 import org.jboss.logging.annotations.ValidIdRange;
 
 /**
@@ -110,6 +111,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(id = 28026, value = "Error indexing protobuf entity.")
+   @Once
    void errorIndexingProtobufEntry(@Cause Throwable cause);
 
    @LogMessage(level = WARN)
