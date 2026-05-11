@@ -485,6 +485,21 @@
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
+            <xs:attribute name="listener-backpressure-high-watermark" type="xs:int" default="100">
+               <xs:annotation>
+                  <xs:documentation>Sets the event queue size at which backpressure is applied to client listener operations. Defaults to 100.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="listener-backpressure-low-watermark" type="xs:int" default="50">
+               <xs:annotation>
+                  <xs:documentation>Sets the event queue size at which backpressure is released for client listener operations. Defaults to 50.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="listener-max-queue-size" type="xs:int" default="512">
+               <xs:annotation>
+                  <xs:documentation>Sets the maximum event queue size for client listeners. Exceeding this limit closes the client connection. Defaults to 512.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>

@@ -12,7 +12,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.InvocationFinallyAction;
+import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.util.logging.Log;
@@ -25,8 +25,8 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private static final Log log = LogFactory.getLog(OptimisticLockingInterceptor.class);
-   private final InvocationFinallyAction<VisitableCommand> releaseLockOnCompletionAction = (rCtx, rCommand, rv, throwable) -> releaseLockOnTxCompletion((TxInvocationContext<?>) rCtx);
-   private final InvocationSuccessFunction<PrepareCommand> onePhaseCommitFunction = (rCtx, rCommand, rv) -> invokeNextAndFinally(rCtx, rCommand, releaseLockOnCompletionAction);
+   private final InvocationFinallyFunction<VisitableCommand> releaseLockOnCompletionAction = (rCtx, rCommand, rv, throwable) -> releaseLockOnTxCompletion((TxInvocationContext<?>) rCtx, rv, throwable);
+   private final InvocationSuccessFunction<PrepareCommand> onePhaseCommitFunction = (rCtx, rCommand, rv) -> invokeNextAndHandle(rCtx, rCommand, releaseLockOnCompletionAction);
 
    @Override
    protected Log getLog() {
@@ -63,7 +63,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
+      return invokeNextAndHandle(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
@@ -75,7 +75,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    protected <K> Object handleWriteManyCommand(InvocationContext ctx, WriteCommand command,
                                                Collection<K> keys, boolean forwarded) throws Throwable {
       // TODO: can locks be acquired here with optimistic locking at all? Shouldn't we unlock only when exception is thrown?
-      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
+      return invokeNextAndHandle(ctx, command, unlockAllReturnHandler);
    }
 
    @Override

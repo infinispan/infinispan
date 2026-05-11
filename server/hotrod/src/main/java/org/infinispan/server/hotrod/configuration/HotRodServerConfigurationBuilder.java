@@ -2,6 +2,9 @@ package org.infinispan.server.hotrod.configuration;
 
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.HOST;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.NAME;
+import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.LISTENER_BACKPRESSURE_HIGH_WATERMARK;
+import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.LISTENER_BACKPRESSURE_LOW_WATERMARK;
+import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.LISTENER_MAX_QUEUE_SIZE;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_HOST;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_PORT;
 
@@ -114,6 +117,21 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       return this;
    }
 
+   public HotRodServerConfigurationBuilder listenerBackpressureHighWatermark(int highWaterMark) {
+      attributes.attribute(LISTENER_BACKPRESSURE_HIGH_WATERMARK).set(highWaterMark);
+      return this;
+   }
+
+   public HotRodServerConfigurationBuilder listenerBackpressureLowWatermark(int lowWaterMark) {
+      attributes.attribute(LISTENER_BACKPRESSURE_LOW_WATERMARK).set(lowWaterMark);
+      return this;
+   }
+
+   public HotRodServerConfigurationBuilder listenerMaxQueueSize(int maxSize) {
+      attributes.attribute(LISTENER_MAX_QUEUE_SIZE).set(maxSize);
+      return this;
+   }
+
    @Override
    public HotRodServerConfigurationBuilder topologyNetworkPrefixOverride(boolean topologyNetworkPrefixOverride) {
       topologyCache.networkPrefixOverride(topologyNetworkPrefixOverride);
@@ -142,6 +160,12 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       super.validate();
       if (attributes.attribute(PROXY_HOST).isNull() && attributes.attribute(HOST).isNull()) {
          throw Log.CONFIG.missingHostAddress();
+      }
+      int low = attributes.attribute(LISTENER_BACKPRESSURE_LOW_WATERMARK).get();
+      int high = attributes.attribute(LISTENER_BACKPRESSURE_HIGH_WATERMARK).get();
+      int max = attributes.attribute(LISTENER_MAX_QUEUE_SIZE).get();
+      if (low >= high || high >= max) {
+         throw Log.CONFIG.invalidListenerEventWatermarks(low, high, max);
       }
       topologyCache.validate();
       encryption.validate();

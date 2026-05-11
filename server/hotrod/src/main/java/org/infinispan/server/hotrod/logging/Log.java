@@ -104,4 +104,11 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cache '%s' must use EmbeddedTransactionManager instead of '%s'. Set transaction-manager-lookup to EmbeddedTransactionManagerLookup", id = 6027)
    IllegalStateException unexpectedTransactionManager(String cacheName, String transactionManagerClass);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Client event queue overflow for listener %s on channel %s: queue size reached hard limit. Closing connection to slow client.", id = 6028)
+   void clientEventQueueOverflow(String listenerId, Object channel);
+
+   @Message(value = "Listener event watermarks are invalid: low-water-mark (%d) must be less than high-water-mark (%d), and high-water-mark must be less than max-size (%d)", id = 6029)
+   CacheConfigurationException invalidListenerEventWatermarks(int lowWaterMark, int highWaterMark, int maxSize);
 }

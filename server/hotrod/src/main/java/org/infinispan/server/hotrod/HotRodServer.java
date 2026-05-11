@@ -5,7 +5,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
-import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -15,7 +14,6 @@ import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -250,8 +248,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
       // Initialize query-specific stuff
       queryFacade = loadQueryFacade();
-      clientListenerRegistry = new ClientListenerRegistry(gcr.getComponent(EncoderRegistry.class),
-            gcr.getComponent(ExecutorService.class, NON_BLOCKING_EXECUTOR));
+      clientListenerRegistry = new ClientListenerRegistry(gcr.getComponent(EncoderRegistry.class), configuration);
 
       addKeyValueFilterConverterFactory(ToEmptyBytesKeyValueFilterConverter.class.getName(), new ToEmptyBytesFactory());
 
