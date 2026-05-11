@@ -1,7 +1,10 @@
 package org.infinispan.server.memcached.test;
 
+import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMemcachedClient;
+import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemcachedClient;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
+import static org.testng.Assert.assertEquals;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CancellationException;
@@ -62,5 +65,19 @@ public class MemcachedRequestLimitTest extends MemcachedSingleNodeTest {
    public void testValueTooLong(Method m) {
       OperationFuture<Boolean> f = client.set(k(m), 0, v(m, "v".repeat(MAX_CONTENT_LENGTH)));
       Exceptions.expectException(ExecutionException.class, CancellationException.class, () -> f.get(10, TimeUnit.SECONDS));
+   }
+
+   public void testExcessDataDoesNotCorruptSubsequentConnection(Method m) throws Exception {
+      String oversizedValue = "v".repeat(MAX_CONTENT_LENGTH * 4);
+      OperationFuture<Boolean> f = client.set(k(m), 0, oversizedValue);
+      Exceptions.expectException(ExecutionException.class, CancellationException.class, () -> f.get(10, TimeUnit.SECONDS));
+
+      killMemcachedClient(client);
+      client = createMemcachedClient(server);
+
+      String key = k(m, "after");
+      String value = "smallValue";
+      wait(client.set(key, 0, value));
+      assertEquals(value, client.get(key));
    }
 }

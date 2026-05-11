@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod.test;
 
+import static org.infinispan.server.hotrod.OperationStatus.Success;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.fail;
@@ -105,5 +107,23 @@ public class HotRodRequestLimitTest extends HotRodSingleNodeTest {
       } catch (TimeoutException e) {
          // If it is a Timeout that is fine as well, as some machines the socket detection takes too long
       }
+   }
+
+   public void testExcessDataDoesNotCorruptSubsequentConnection() {
+      byte[] oversizedValue = new byte[MAX_CONTENT_LENGTH * 4];
+      for (int i = 0; i < oversizedValue.length; i++) {
+         oversizedValue[i] = (byte) (i % 127 + 1);
+      }
+      Exceptions.expectException(CompletionException.class, ClosedChannelException.class,
+            () -> client().put(new byte[]{10, 20}, -1, -1, oversizedValue));
+
+      killClient(hotRodClient);
+      hotRodClient = connectClient();
+
+      byte[] key = new byte[]{1, 2, 3};
+      byte[] value = new byte[]{4, 5, 6};
+      TestResponse putResp = client().put(key, -1, -1, value);
+      HotRodTestingUtil.assertStatus(putResp, Success);
+      assertSuccess(client().get(key, 0), value);
    }
 }
