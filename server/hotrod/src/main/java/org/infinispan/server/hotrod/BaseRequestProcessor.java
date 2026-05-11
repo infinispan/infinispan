@@ -57,23 +57,25 @@ public class BaseRequestProcessor {
       OperationStatus status;
       if (cause instanceof InvalidMagicIdException) {
          SERVER.exceptionReported(cause);
+         log.trace("Exception details", cause);
          status = OperationStatus.InvalidMagicOrMsgId;
-      } else if (cause instanceof HotRodUnknownOperationException) {
+      } else if (cause instanceof HotRodUnknownOperationException hruoe) {
          SERVER.exceptionReported(cause);
-         HotRodUnknownOperationException hruoe = (HotRodUnknownOperationException) cause;
+         log.trace("Exception details", cause);
          header = hruoe.toHeader();
          status = OperationStatus.UnknownOperation;
-      } else if (cause instanceof UnknownVersionException) {
+      } else if (cause instanceof UnknownVersionException uve) {
          SERVER.exceptionReported(cause);
-         UnknownVersionException uve = (UnknownVersionException) cause;
+         log.trace("Exception details", cause);
          header = uve.toHeader();
          status = OperationStatus.UnknownVersion;
       } else if (cause instanceof RequestParsingException) {
-         if (cause instanceof CacheNotFoundException)
+         if (cause instanceof CacheNotFoundException) {
             log.debug(cause.getMessage());
-         else
+         } else {
             SERVER.exceptionReported(cause);
-
+            log.trace("Exception details", cause);
+         }
          msg = cause.getCause() == null ? cause.toString() : format("%s: %s", cause.getMessage(), cause.getCause().toString());
          RequestParsingException rpe = (RequestParsingException) cause;
          header = rpe.toHeader();
