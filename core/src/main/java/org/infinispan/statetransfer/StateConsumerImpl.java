@@ -114,7 +114,7 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import jakarta.transaction.Transaction;
+import jakarta.transaction.Status;
 import jakarta.transaction.TransactionManager;
 
 /**
@@ -723,8 +723,8 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   private CompletionStage<?> doApplyState(Address sender, int segmentId,
-                                           Collection<InternalCacheEntry<?, ?>> cacheEntries) {
+   CompletionStage<?> doApplyState(Address sender, int segmentId,
+                                   Collection<InternalCacheEntry<?, ?>> cacheEntries) {
       if (cacheEntries == null || cacheEntries.isEmpty())
          return CompletableFutures.completedNull();
 
@@ -735,36 +735,7 @@ public class StateConsumerImpl implements StateConsumer {
       // CACHE_MODE_LOCAL avoids handling by StateTransferInterceptor and any potential locks in StateTransferLock
       boolean transactional = transactionManager != null;
       if (transactional) {
-         Object key = NO_KEY;
-         Transaction transaction = new FakeJTATransaction();
-         InvocationContext ctx = icf.createInvocationContext(transaction, false);
-         LocalTransaction localTransaction = ((LocalTxInvocationContext) ctx).getCacheTransaction();
-         try {
-            localTransaction.setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
-            for (InternalCacheEntry<?, ?> e : cacheEntries) {
-               key = e.getKey();
-               CompletableFuture<?> future = invokePut(segmentId, ctx, e);
-               if (!future.isDone()) {
-                  throw new IllegalStateException("State transfer in-tx put should always be synchronous");
-               }
-            }
-         } catch (Throwable t) {
-            logApplyException(t, key);
-            return invokeRollback(localTransaction).handle((rv, t1) -> {
-               transactionTable.removeLocalTransaction(localTransaction);
-               if (t1 != null) {
-                  t.addSuppressed(t1);
-               }
-               return null;
-            });
-         }
-
-         return invoke1PCPrepare(localTransaction).whenComplete((rv, t) -> {
-            transactionTable.removeLocalTransaction(localTransaction);
-            if (t != null) {
-               logApplyException(t, NO_KEY);
-            }
-         });
+         return applyStateInTransaction(segmentId, cacheEntries.iterator());
       } else {
          // non-tx cache
          AggregateCompletionStage<Void> aggregateStage = CompletionStages.aggregateCompletionStage();
@@ -778,6 +749,44 @@ public class StateConsumerImpl implements StateConsumer {
          }
          return aggregateStage.freeze();
       }
+   }
+
+   private CompletionStage<?> applyStateInTransaction(int segmentId,
+                                                       Iterator<InternalCacheEntry<?, ?>> iterator) {
+      FakeJTATransaction transaction = new FakeJTATransaction();
+      InvocationContext ctx = icf.createInvocationContext(transaction, false);
+      LocalTransaction localTransaction = ((LocalTxInvocationContext) ctx).getCacheTransaction();
+      localTransaction.setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
+      while (iterator.hasNext()) {
+         InternalCacheEntry<?, ?> e = iterator.next();
+         try {
+            CompletableFuture<?> future = invokePut(segmentId, ctx, e);
+            if (!future.isDone()) {
+               throw new IllegalStateException("State transfer in-tx put should always be synchronous");
+            }
+            future.get();
+         } catch (Throwable t) {
+            logApplyException(t, e.getKey());
+            if (transaction.getStatus() == Status.STATUS_MARKED_ROLLBACK) {
+               return invokeRollback(localTransaction).handle((rv, t1) -> {
+                  transactionTable.removeLocalTransaction(localTransaction);
+                  return null;
+               }).thenCompose(rv -> {
+                  if (iterator.hasNext()) {
+                     return applyStateInTransaction(segmentId, iterator);
+                  }
+                  return CompletableFutures.completedNull();
+               });
+            }
+         }
+      }
+
+      return invoke1PCPrepare(localTransaction).whenComplete((rv, t) -> {
+         transactionTable.removeLocalTransaction(localTransaction);
+         if (t != null) {
+            logApplyException(t, NO_KEY);
+         }
+      });
    }
 
    private CompletionStage<?> invoke1PCPrepare(LocalTransaction localTransaction) {
