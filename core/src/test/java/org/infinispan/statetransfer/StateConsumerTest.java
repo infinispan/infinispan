@@ -9,7 +9,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -56,6 +56,7 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -85,7 +86,10 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.transaction.synchronization.SyncLocalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.logging.Log;
@@ -98,6 +102,7 @@ import org.testng.annotations.Test;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.processors.AsyncProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Tests StateConsumerImpl.
@@ -624,6 +629,224 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertFalse(stateConsumer.hasActiveTransfers());
       ProgressTracker progressTracker = TestingUtil.extractField(stateConsumer, "progressTracker");
       assertEquals(progressTracker.pendingTasks(), 0);
+
+      stateConsumer.stop();
+   }
+
+   /**
+    * Mocks an InvocationContextFactory that returns LocalTxInvocationContext instances,
+    * enabling the transactional state transfer code path.
+    */
+   private static InvocationContextFactory mockTxInvocationContextFactory(TransactionTable transactionTable) {
+      InvocationContextFactory icf = mock(InvocationContextFactory.class);
+      when(icf.createSingleKeyNonTxInvocationContext()).thenAnswer(
+            invocation -> new SingleKeyNonTxInvocationContext(null));
+      when(icf.createInvocationContext(any(jakarta.transaction.Transaction.class), anyBoolean()))
+            .thenAnswer(invocation -> {
+               jakarta.transaction.Transaction tx = invocation.getArgument(0);
+               LocalTransaction localTx = transactionTable.getOrCreateLocalTransaction(tx, false);
+               return new LocalTxInvocationContext(localTx);
+            });
+      when(icf.createTxInvocationContext(any(LocalTransaction.class)))
+            .thenAnswer(invocation -> new LocalTxInvocationContext(invocation.getArgument(0)));
+      return icf;
+   }
+
+   private static TransactionTable mockTxTransactionTable(Address address) {
+      TransactionTable transactionTable = mock(TransactionTable.class);
+      when(transactionTable.getLocalTransactions()).thenReturn(Collections.emptyList());
+      when(transactionTable.getRemoteTransactions()).thenReturn(Collections.emptyList());
+      when(transactionTable.getOrCreateLocalTransaction(any(jakarta.transaction.Transaction.class), anyBoolean()))
+            .thenAnswer(invocation -> {
+               jakarta.transaction.Transaction tx = invocation.getArgument(0);
+               GlobalTransaction gtx = new GlobalTransaction(address, false);
+               return new SyncLocalTransaction(tx, gtx, false, 0, System.currentTimeMillis());
+            });
+      return transactionTable;
+   }
+
+   /**
+    * Mocks an AsyncInterceptorChain where PutKeyValueCommand succeeds for all keys
+    * except the specified failing keys.
+    */
+   private static AsyncInterceptorChain mockInterceptorChainWithFailingKeys(Set<Object> failingKeys,
+                                                                            List<Object> appliedKeys) {
+      AsyncInterceptorChain chain = mock(AsyncInterceptorChain.class);
+      when(chain.invokeAsync(any(), any())).thenAnswer(invocation -> {
+         Object command = invocation.getArgument(1);
+         if (command instanceof PutKeyValueCommand putCmd) {
+            Object key = putCmd.getKey();
+            if (failingKeys.contains(key)) {
+               return CompletableFuture.failedFuture(new RuntimeException("Simulated failure for key: " + key));
+            }
+            appliedKeys.add(key);
+         }
+         return CompletableFuture.completedFuture(null);
+      });
+      return chain;
+   }
+
+   private void injectTxComponents(StateConsumer stateConsumer, AsyncInterceptorChain interceptorChain,
+                                   RpcManager rpcManager, ClusterPublisherManager clusterPublisherManager,
+                                   TransactionTable transactionTable, NodeVersion oldestMemberVersion) {
+      Transport transport = mock(Transport.class);
+      when(transport.getOldestMember()).thenReturn(oldestMemberVersion);
+      StateTransferTracker stt = mock(StateTransferTracker.class);
+      when(stt.forCache(any())).thenReturn(mock(StateTransferTracker.CacheStateTransferTracker.class));
+      TestingUtil.inject(stateConsumer,
+            mockCache(),
+            TestingUtil.named(NON_BLOCKING_EXECUTOR, pooledExecutorService),
+            interceptorChain,
+            mockTxInvocationContextFactory(transactionTable),
+            createConfiguration(),
+            rpcManager,
+            mockCommandsFactory(),
+            mockPersistenceManager(),
+            mock(InternalDataContainer.class),
+            transactionTable,
+            mock(StateTransferLock.class),
+            mock(CacheNotifier.class),
+            new CommitManager(),
+            new CommandAckCollector(),
+            new HashFunctionPartitioner(),
+            mock(InternalConflictManager.class),
+            mock(DistributionManager.class),
+            mock(LocalPublisherManager.class),
+            mock(PerCacheInboundInvocationHandler.class),
+            mockXSiteStateTransferManager(),
+            new ControlledTimeService(),
+            TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutorService),
+            clusterPublisherManager,
+            transport,
+            stt,
+            mock(TransactionManager.class)
+      );
+   }
+
+   /**
+    * Creates a StateConsumerImpl with transactional support, calling doApplyState directly
+    * to bypass the full state transfer machinery (topology, InboundTransferTask registration, etc.).
+    */
+   private StateConsumerImpl createTxStateConsumerForDirectApply(Address address, AsyncInterceptorChain chain,
+                                                                TransactionTable transactionTable) {
+      StateConsumerImpl stateConsumer = new StateConsumerImpl();
+      injectTxComponents(stateConsumer, chain,
+            mockRpcManager(new ConcurrentHashMap<>(), new ConcurrentSkipListSet<>(), address),
+            mock(ClusterPublisherManager.class), transactionTable, NodeVersion.INSTANCE);
+      stateConsumer.start();
+      return stateConsumer;
+   }
+
+   /**
+    * Tests that when a single entry fails in the transactional state transfer path
+    * and the transaction is marked rollback-only, the failed entry is skipped but
+    * remaining entries are applied in a new transaction.
+    */
+   public void testTxApplyStateContinuesAfterEntryFailure() throws Exception {
+      PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
+      Address[] addresses = createMembers(persistentUUIDManager);
+
+      Set<Object> failingKeys = Set.of("key3");
+      List<Object> appliedKeys = Collections.synchronizedList(new ArrayList<>());
+      AsyncInterceptorChain chain = mockInterceptorChainWithFailingKeys(failingKeys, appliedKeys);
+
+      TransactionTable transactionTable = mockTxTransactionTable(addresses[0]);
+      StateConsumerImpl stateConsumer = createTxStateConsumerForDirectApply(addresses[0], chain, transactionTable);
+
+      List<InternalCacheEntry<?, ?>> entries = List.of(
+            new ImmortalCacheEntry("key1", "value1"),
+            new ImmortalCacheEntry("key2", "value2"),
+            new ImmortalCacheEntry("key3", "value3"),
+            new ImmortalCacheEntry("key4", "value4"),
+            new ImmortalCacheEntry("key5", "value5")
+      );
+
+      CompletionStage<?> stage = stateConsumer.doApplyState(addresses[1], 0, entries);
+      stage.toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      // key3 failed and marked rollback; key1/key2 were rolled back with it
+      // but key4/key5 should be applied in the new transaction
+      assertTrue("key4 should have been applied after failed key3", appliedKeys.contains("key4"));
+      assertTrue("key5 should have been applied after failed key3", appliedKeys.contains("key5"));
+      assertFalse("key3 should not have been applied", appliedKeys.contains("key3"));
+
+      stateConsumer.stop();
+   }
+
+   /**
+    * Tests that when a put failure does NOT mark the transaction as rollback-only,
+    * all remaining entries continue in the same transaction.
+    */
+   public void testTxApplyStateContinuesInSameTransactionWhenNotRollbackOnly() throws Exception {
+      PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
+      Address[] addresses = createMembers(persistentUUIDManager);
+
+      List<Object> appliedKeys = Collections.synchronizedList(new ArrayList<>());
+
+      // Chain that throws on key3 but does NOT mark the transaction as rollback-only
+      AsyncInterceptorChain chain = mock(AsyncInterceptorChain.class);
+      when(chain.invokeAsync(any(), any())).thenAnswer(invocation -> {
+         Object command = invocation.getArgument(1);
+         if (command instanceof PutKeyValueCommand putCmd) {
+            Object key = putCmd.getKey();
+            if ("key3".equals(key)) {
+               throw new RuntimeException("Simulated non-fatal failure for key: " + key);
+            }
+            appliedKeys.add(key);
+         }
+         return CompletableFuture.completedFuture(null);
+      });
+
+      TransactionTable transactionTable = mockTxTransactionTable(addresses[0]);
+      StateConsumerImpl stateConsumer = createTxStateConsumerForDirectApply(addresses[0], chain, transactionTable);
+
+      List<InternalCacheEntry<?, ?>> entries = List.of(
+            new ImmortalCacheEntry("key1", "value1"),
+            new ImmortalCacheEntry("key2", "value2"),
+            new ImmortalCacheEntry("key3", "value3"),
+            new ImmortalCacheEntry("key4", "value4"),
+            new ImmortalCacheEntry("key5", "value5")
+      );
+
+      CompletionStage<?> stage = stateConsumer.doApplyState(addresses[1], 0, entries);
+      stage.toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      // key3 failed but transaction stayed active, all other keys should be applied
+      assertTrue("key1 should have been applied", appliedKeys.contains("key1"));
+      assertTrue("key2 should have been applied", appliedKeys.contains("key2"));
+      assertTrue("key4 should have been applied", appliedKeys.contains("key4"));
+      assertTrue("key5 should have been applied", appliedKeys.contains("key5"));
+      assertFalse("key3 should not have been applied", appliedKeys.contains("key3"));
+
+      stateConsumer.stop();
+   }
+
+   /**
+    * Tests that all entries are applied when none fail in the transactional path.
+    */
+   public void testTxApplyStateAllEntriesSucceed() throws Exception {
+      PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
+      Address[] addresses = createMembers(persistentUUIDManager);
+
+      List<Object> appliedKeys = Collections.synchronizedList(new ArrayList<>());
+      AsyncInterceptorChain chain = mockInterceptorChainWithFailingKeys(Set.of(), appliedKeys);
+
+      TransactionTable transactionTable = mockTxTransactionTable(addresses[0]);
+      StateConsumerImpl stateConsumer = createTxStateConsumerForDirectApply(addresses[0], chain, transactionTable);
+
+      List<InternalCacheEntry<?, ?>> entries = List.of(
+            new ImmortalCacheEntry("key1", "value1"),
+            new ImmortalCacheEntry("key2", "value2"),
+            new ImmortalCacheEntry("key3", "value3")
+      );
+
+      CompletionStage<?> stage = stateConsumer.doApplyState(addresses[1], 0, entries);
+      stage.toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      assertEquals(3, appliedKeys.size());
+      assertTrue(appliedKeys.contains("key1"));
+      assertTrue(appliedKeys.contains("key2"));
+      assertTrue(appliedKeys.contains("key3"));
 
       stateConsumer.stop();
    }
