@@ -1,5 +1,7 @@
 package org.infinispan.server.resp;
 
+import static org.testng.Assert.assertEquals;
+
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -50,5 +52,17 @@ public class RespRequestLimitTest extends SingleNodeRespBaseTest {
             redis.mset(IntStream.range(0, 8)
                   .mapToObj(Integer::toString)
                   .collect(Collectors.toMap(e -> "k" + e, e -> "v" + e))));
+   }
+
+   public void testExcessDataDoesNotCorruptSubsequentConnection() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String oversizedValue = "v".repeat(MAX_BYTE_ARRAY_SIZE * 4);
+      Exceptions.expectException(RedisCommandTimeoutException.class, () -> redis.set("oversized", oversizedValue));
+
+      redisConnection.close();
+      redisConnection = newConnection();
+      RedisCommands<String, String> fresh = redisConnection.sync();
+      fresh.set("small", "hello");
+      assertEquals(fresh.get("small"), "hello");
    }
 }

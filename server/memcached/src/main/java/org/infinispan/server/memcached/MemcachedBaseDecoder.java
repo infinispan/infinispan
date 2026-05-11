@@ -65,6 +65,9 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
    private BiConsumer<ChannelHandlerContext, MemcachedResponse> errorHandler;
    // And this is the ByteBuf pos before decode is performed
    protected int posBefore;
+   // Set when the connection is being closed due to a protocol error (e.g. TooLongFrameException)
+   // to suppress further error logging while the async close completes
+   protected boolean closing;
 
    protected MemcachedBaseDecoder(MemcachedServer server, Subject subject) {
       this.server = server;

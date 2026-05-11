@@ -31,6 +31,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
    // Variable to resume auto read when channel can be written to again. Some commands may resume themselves after
    // flush and may not want to also resume on writability changes
    protected boolean resumeAutoReadOnWritability;
+   private boolean closing;
 
    private final boolean traceAccess = RespAccessLogger.isEnabled();
    private AccessLoggerManager accessLogger;
@@ -224,13 +225,16 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-      if (cause instanceof TooLongFrameException tlfe) {
-         coreLog.requestTooLarge(ctx.channel(), tlfe);
+      if (closing) return;
+      if (cause instanceof TooLongFrameException) {
+         coreLog.requestTooLarge(ctx.channel(), resumeHandler.maxContentLength, 0);
+         if (log.isTraceEnabled()) log.trace("Request too large", cause);
       } else {
          log.unexpectedException(cause);
          requestHandler.writer.error(cause);
          flushBufferIfNeeded(ctx, false, null);
       }
+      closing = true;
       ctx.close();
    }
 }
