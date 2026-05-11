@@ -5,17 +5,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
-import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.query.mapper.mapping.EntityConverter;
+import org.infinispan.server.core.query.impl.logging.Log;
 import org.infinispan.server.core.query.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.server.core.query.impl.mapping.type.ProtobufKeyValuePair;
-import org.infinispan.query.mapper.mapping.EntityConverter;
 
 public final class ProtobufEntityConverter implements EntityConverter {
 
+   private static final Log log = Log.getLog(ProtobufEntityConverter.class);
    private static final PojoRawTypeIdentifier<byte[]> BYTE_ARRAY_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(byte[].class);
    private static final PojoRawTypeIdentifier<ProtobufKeyValuePair> KEY_VALUE_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(ProtobufKeyValuePair.class);
 
@@ -27,7 +28,7 @@ public final class ProtobufEntityConverter implements EntityConverter {
       this.serializationContext = serializationContext;
       this.globalReferenceHolder = globalReferenceHolder;
       this.indexedMessageTypes = globalReferenceHolder.getRootMessages().stream()
-            .map(rootMessage -> rootMessage.getFullName()).collect(Collectors.toSet());
+            .map(GlobalReferenceHolder.RootMessageInfo::getFullName).collect(Collectors.toSet());
    }
 
    @Override
@@ -52,8 +53,12 @@ public final class ProtobufEntityConverter implements EntityConverter {
       try {
          Descriptor wrapperDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
          ProtobufParser.INSTANCE.parse(tagHandler, wrapperDescriptor, valueWrapper.getBinary());
-      } catch (IOException e) {
-         throw new CacheException(e);
+      } catch (IOException | IllegalStateException | IllegalArgumentException e) {
+         log.errorIndexingProtobufEntry(e);
+         if (log.isTraceEnabled()) {
+            log.tracef(e, "Error indexing protobuf entity");
+         }
+         return new ProtobufConvertedEntity(true, null, null);
       }
 
       Descriptor messageDescriptor = valueWrapper.getMessageDescriptor();
@@ -73,8 +78,12 @@ public final class ProtobufEntityConverter implements EntityConverter {
       try {
          Descriptor wrapperDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
          ProtobufParser.INSTANCE.parse(tagHandler, wrapperDescriptor, keyValueWrapper.getBinary());
-      } catch (IOException e) {
-         throw new CacheException(e);
+      } catch (IOException | IllegalStateException | IllegalArgumentException e) {
+         log.errorIndexingProtobufEntry(e);
+         if (log.isTraceEnabled()) {
+            log.tracef(e, "Error indexing protobuf entity");
+         }
+         return new ProtobufConvertedEntity(true, entityName, null);
       }
 
       return new ProtobufKeyValueConvertedEntity(skip, entityName, tagHandler.getMessageBytes(), messageBytes);
