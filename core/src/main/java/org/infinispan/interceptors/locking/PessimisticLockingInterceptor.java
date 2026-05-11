@@ -15,7 +15,6 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -42,8 +41,8 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private final InvocationSuccessFunction<LockControlCommand> localLockCommandWork =
          (rCtx, rCommand, rv) -> localLockCommandWork((TxInvocationContext) rCtx, rCommand);
-   private final InvocationSuccessAction<PrepareCommand> releaseLockOnCompletion =
-         (rCtx, rCommand, rv) -> releaseLockOnTxCompletion((TxInvocationContext) rCtx);
+   private final InvocationSuccessFunction<PrepareCommand> releaseLockOnCompletion =
+         (rCtx, rCommand, rv) -> releaseLockOnTxCompletion((TxInvocationContext) rCtx, rv, null);
 
    @Inject CommandsFactory cf;
 
@@ -118,7 +117,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       }
 
       // Don't release the locks on exception, the RollbackCommand will do it
-      return invokeNextThenAccept(ctx, command, releaseLockOnCompletion);
+      return invokeNextThenApply(ctx, command, releaseLockOnCompletion);
    }
 
    @Override

@@ -14,7 +14,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -47,23 +46,43 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterConverterAsCacheEventFilterConverter;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.locks.LockManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.channel.EventLoop;
 
 /**
  * @author Galder Zamarreño
  */
 class ClientListenerRegistry {
    private final EncoderRegistry encoderRegistry;
-   private final Executor nonBlockingExecutor;
+   volatile int highWaterMark;
+   volatile int lowWaterMark;
+   volatile int maxSize;
 
-   ClientListenerRegistry(EncoderRegistry encoderRegistry, Executor nonBlockingExecutor) {
+   ClientListenerRegistry(EncoderRegistry encoderRegistry, HotRodServerConfiguration configuration) {
       this.encoderRegistry = encoderRegistry;
-      this.nonBlockingExecutor = nonBlockingExecutor;
+      this.highWaterMark = configuration.listenerBackpressureHighWatermark();
+      this.lowWaterMark = configuration.listenerBackpressureLowWatermark();
+      this.maxSize = configuration.listenerMaxQueueSize();
+      configuration.attributes().attribute(HotRodServerConfiguration.LISTENER_BACKPRESSURE_HIGH_WATERMARK)
+            .addListener((a, old) -> {
+               highWaterMark = a.get();
+               unblockCommands();
+            });
+      configuration.attributes().attribute(HotRodServerConfiguration.LISTENER_BACKPRESSURE_LOW_WATERMARK)
+            .addListener((a, old) -> {
+               lowWaterMark = a.get();
+               unblockCommands();
+            });
+      configuration.attributes().attribute(HotRodServerConfiguration.LISTENER_MAX_QUEUE_SIZE)
+            .addListener((a, old) -> {
+               maxSize = a.get();
+               unblockCommands();
+            });
    }
 
    private static final Log log = Log.getLog(ClientListenerRegistry.class);
@@ -72,6 +91,14 @@ class ClientListenerRegistry {
    private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
    private final ConcurrentMap<String, CacheEventConverterFactory> cacheEventConverterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
    private final ConcurrentMap<String, CacheEventFilterConverterFactory> cacheEventFilterConverterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
+
+   void unblockCommands() {
+      eventSenders.values().forEach(s -> {
+         if (s instanceof BaseClientEventSender bces) {
+            bces.ch.eventLoop().submit(bces::unblockCommands);
+         }
+      });
+   }
 
    void setEventMarshaller(Optional<Marshaller> eventMarshaller) {
       eventMarshaller.ifPresent(m -> {
@@ -323,11 +350,11 @@ class ClientListenerRegistry {
       protected final ClientEventType targetEventType;
       protected final Cache cache;
 
-      final int maxQueueSize = 100;
       final AtomicInteger eventSize = new AtomicInteger();
       final Queue<Events.Event> eventQueue = new ConcurrentLinkedQueue<>();
 
       private final Runnable writeEventsIfPossible = this::writeEventsIfPossible;
+      private volatile LockManager lockManager;
 
       BaseClientEventSender(Cache cache, Channel ch, VersionedEncoder encoder, byte[] listenerId, byte version, ClientEventType targetEventType) {
          this.cache = cache;
@@ -339,40 +366,42 @@ class ClientListenerRegistry {
       }
 
       void init() {
+         lockManager = ((AdvancedCache<?, ?>) cache).getLockManager();
          ch.closeFuture().addListener(f -> {
             log.debug("Channel disconnected, removing event sender listener for id: " + Util.printArray(listenerId));
-            removeClientListener(listenerId, cache)
-                  .whenComplete((ignore, t) -> unblockCommands());
+            unblockCommands();
+            removeClientListener(listenerId, cache);
          });
       }
 
-      private void unblockCommands() {
-         // Have to allow all waiting listeners to proceed
-         for (Events.Event event : eventQueue) {
-            event.eventFuture.complete(null);
+      void unblockCommands() {
+         Events.Event event;
+         while ((event = eventQueue.poll()) != null) {
+            CompletableFuture<Void> future = event.backpressureFuture;
+            if (future != null) {
+               future.complete(null);
+            }
          }
+         eventSize.set(0);
       }
 
       boolean hasChannel(Channel channel) {
          return ch == channel;
       }
 
-      // This method can only be invoked from the Event Loop thread!
       void writeEventsIfPossible() {
-         boolean submittedUnblock = false;
          boolean written = false;
          while (!eventQueue.isEmpty() && ch.isWritable()) {
             eventSize.decrementAndGet();
             Events.Event event = eventQueue.remove();
             if (log.isTraceEnabled()) log.tracef("Write event: %s to channel %s", event, ch);
-            CompletableFuture<Void> cf = event.eventFuture;
-            // We can just check instance equality as this is used to symbolize the event was not blocked below
-            if (cf != CompletableFutures.<Void>completedNull()) {
-               nonBlockingExecutor.execute(() -> event.eventFuture.complete(null));
-            }
             ByteBuf buf = ch.alloc().ioBuffer();
             encoder.writeEvent(event, buf);
             ch.write(buf);
+            CompletableFuture<Void> future = event.backpressureFuture;
+            if (future != null) {
+               future.complete(null);
+            }
             written = true;
          }
          if (written) {
@@ -395,7 +424,7 @@ class ClientListenerRegistry {
             }
             Object k = event.getKey();
             Object v = event.getValue();
-            return sendEvent((byte[]) k, (byte[]) v, version, event);
+            sendEvent((byte[]) k, (byte[]) v, version, event);
          }
          return null;
       }
@@ -422,39 +451,49 @@ class ClientListenerRegistry {
          return !ch.isOpen();
       }
 
-      CompletionStage<Void> sendEvent(byte[] key, byte[] value, long dataVersion, CacheEntryEvent event) {
-         EventLoop loop = ch.eventLoop();
+      void sendEvent(byte[] key, byte[] value, long dataVersion, CacheEntryEvent event) {
          int size = eventSize.incrementAndGet();
-         boolean forceWait = size >= maxQueueSize;
-         final CompletableFuture<Void> cf;
-         if (forceWait) {
-            if (log.isTraceEnabled()) {
-               log.tracef("Pending event size is %s which is forcing %s to delay operation until it is sent", size, event);
-            }
-
-            cf = new CompletableFuture<>();
-         } else {
-            cf = CompletableFutures.completedNull();
+         if (size >= maxSize) {
+            eventSize.decrementAndGet();
+            log.clientEventQueueOverflow(Util.printArray(listenerId), ch);
+            unblockCommands();
+            ch.close();
+            return;
          }
-         Events.Event remoteEvent = createRemoteEvent(key, value, dataVersion, event, cf);
 
+         CompletableFuture<Void> future = null;
+         if (size >= highWaterMark) {
+            future = new CompletableFuture<>();
+            if (log.isTraceEnabled()) {
+               log.tracef("Event queue at high water mark (%d), registering backpressure for key %s on listener %s",
+                     highWaterMark, Util.toStr(key), Util.printArray(listenerId));
+            }
+            try {
+               Object lockKey = event.getKey();
+               if (lockKey instanceof byte[] bytes) {
+                  lockKey = new WrappedByteArray(bytes);
+               }
+               CompletableFuture<Void> eventFuture = future;
+               lockManager.addPostUnlockListener(lockKey, () -> eventFuture);
+            } catch (IllegalStateException e) {
+               if (log.isTraceEnabled()) {
+                  log.tracef("Could not register backpressure listener for key %s: %s", Util.toStr(key), e.getMessage());
+               }
+            }
+         }
+
+         Events.Event remoteEvent = createRemoteEvent(key, value, dataVersion, event, future);
          if (log.isTraceEnabled())
             log.tracef("Queue event %s, before queuing event queue size is %d", remoteEvent, size - 1);
          eventQueue.add(remoteEvent);
 
          if (ch.isWritable()) {
-            // Make sure we write any event in main event loop
-            loop.submit(writeEventsIfPossible);
+            ch.eventLoop().submit(writeEventsIfPossible);
          }
-
-         return cf;
       }
 
       private Events.Event createRemoteEvent(byte[] key, byte[] value, long dataVersion, CacheEntryEvent event,
-            CompletableFuture<Void> eventFuture) {
-         // Embedded listener event implementation implements all interfaces,
-         // so can't pattern match on the event instance itself. Instead, pattern
-         // match on the type and the cast down to the expected event instance type
+                                              CompletableFuture<Void> backpressureFuture) {
          switch (targetEventType) {
             case PLAIN:
                switch (event.getType()) {
@@ -462,23 +501,23 @@ class ClientListenerRegistry {
                   case CACHE_ENTRY_MODIFIED:
                      KeyValuePair<HotRodOperation, Boolean> responseType = getEventResponseType(event);
                      return new Events.KeyWithVersionEvent(version, getEventId(event), responseType.getKey(), listenerId,
-                           responseType.getValue(), key, dataVersion, eventFuture);
+                           responseType.getValue(), key, dataVersion, backpressureFuture);
                   case CACHE_ENTRY_REMOVED:
                   case CACHE_ENTRY_EXPIRED:
                      responseType = getEventResponseType(event);
                      return new Events.KeyEvent(version, getEventId(event), responseType.getKey(), listenerId,
-                           responseType.getValue(), key, eventFuture);
+                           responseType.getValue(), key, backpressureFuture);
                   default:
                      throw log.unexpectedEvent(event);
                }
             case CUSTOM_PLAIN:
                KeyValuePair<HotRodOperation, Boolean> responseType = getEventResponseType(event);
                return new Events.CustomEvent(version, getEventId(event), responseType.getKey(), listenerId,
-                     responseType.getValue(), value, eventFuture);
+                     responseType.getValue(), value, backpressureFuture);
             case CUSTOM_RAW:
                responseType = getEventResponseType(event);
                return new Events.CustomRawEvent(version, getEventId(event), responseType.getKey(), listenerId,
-                     responseType.getValue(), value, eventFuture);
+                     responseType.getValue(), value, backpressureFuture);
             default:
                throw new IllegalArgumentException("Event type not supported: " + targetEventType);
          }

@@ -2,12 +2,16 @@ package org.infinispan.interceptors.locking;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -30,7 +34,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
+      return invokeNextAndHandle(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
@@ -38,16 +42,16 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       if (ctx.isInTxScope())
          return invokeNext(ctx, command);
 
-      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
+      return invokeNextAndHandle(ctx, command, unlockAllReturnHandler);
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (t instanceof OutdatedTopologyException)
             throw t;
 
-         releaseLockOnTxCompletion(((TxInvocationContext<?>) rCtx));
+         return releaseLockOnTxCompletion(((TxInvocationContext<?>) rCtx), rv, t);
       });
    }
 
@@ -163,11 +167,21 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }));
    }
 
-   void releaseLockOnTxCompletion(TxInvocationContext<?> ctx) {
+   Object releaseLockOnTxCompletion(TxInvocationContext<?> ctx, Object rv, Throwable t) throws Throwable {
       boolean shouldReleaseLocks = ctx.isOriginLocal() &&
             !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction());
       if (shouldReleaseLocks) {
-         lockManager.unlockAll(ctx);
+         Collection<Supplier<CompletionStage<Void>>> listeners = lockManager.unlockAll(ctx);
+         if (t != null) throw t;
+         if (!listeners.isEmpty()) {
+            AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+            for (Supplier<CompletionStage<Void>> supplier : listeners) {
+               stage.dependsOn(supplier.get());
+            }
+            return asyncValue(stage.freeze()).thenApply(ctx, null, (rCtx, rCommand, v) -> rv);
+         }
       }
+      if (t != null) throw t;
+      return rv;
    }
 }

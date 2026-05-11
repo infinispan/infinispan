@@ -19,19 +19,17 @@ class Events {
       protected final byte[] listenerId;
       protected final boolean isRetried;
       protected final byte marker;
-
-      // Delays the operation that generated this event
-      protected final CompletableFuture<Void> eventFuture;
+      final CompletableFuture<Void> backpressureFuture;
 
       protected Event(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried, byte marker,
-                      CompletableFuture<Void> eventFuture) {
+                      CompletableFuture<Void> backpressureFuture) {
          this.version = version;
          this.messageId = messageId;
          this.op = op;
          this.listenerId = listenerId;
          this.isRetried = isRetried;
          this.marker = marker;
-         this.eventFuture = eventFuture;
+         this.backpressureFuture = backpressureFuture;
       }
 
       abstract void writeEvent(ByteBuf buf);
@@ -46,8 +44,8 @@ class Events {
       protected final byte[] key;
 
       protected KeyEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
-                         byte[] key, CompletableFuture<Void> eventFuture) {
-         super(version, messageId, op, listenerId, isRetried, (byte) 0, eventFuture);
+                         byte[] key, CompletableFuture<Void> backpressureFuture) {
+         super(version, messageId, op, listenerId, isRetried, (byte) 0, backpressureFuture);
          this.key = key;
       }
 
@@ -75,8 +73,8 @@ class Events {
       protected final long dataVersion;
 
       protected KeyWithVersionEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
-                                    byte[] key, long dataVersion, CompletableFuture<Void> eventFuture) {
-         super(version, messageId, op, listenerId, isRetried, (byte) 0, eventFuture);
+                                    byte[] key, long dataVersion, CompletableFuture<Void> backpressureFuture) {
+         super(version, messageId, op, listenerId, isRetried, (byte) 0, backpressureFuture);
          this.key = key;
          this.dataVersion = dataVersion;
       }
@@ -106,8 +104,8 @@ class Events {
       protected final byte[] eventData;
 
       protected CustomEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
-                            byte[] eventData, CompletableFuture<Void> eventFuture) {
-         super(version, messageId, op, listenerId, isRetried, (byte) 1, eventFuture);
+                            byte[] eventData, CompletableFuture<Void> backpressureFuture) {
+         super(version, messageId, op, listenerId, isRetried, (byte) 1, backpressureFuture);
          this.eventData = eventData;
       }
 
@@ -134,8 +132,8 @@ class Events {
       protected final byte[] eventData;
 
       protected CustomRawEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
-                               byte[] eventData, CompletableFuture<Void> eventFuture) {
-         super(version, messageId, op, listenerId, isRetried, (byte) 2, eventFuture);
+                               byte[] eventData, CompletableFuture<Void> backpressureFuture) {
+         super(version, messageId, op, listenerId, isRetried, (byte) 2, backpressureFuture);
          this.eventData = eventData;
       }
 

@@ -45,7 +45,7 @@ public class ClientEventStressTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager();
+      return TestCacheManagerFactory.createCacheManager(new org.infinispan.configuration.cache.ConfigurationBuilder());
    }
 
    @Override

@@ -17,7 +17,23 @@ Listeners that receive many events and use a lot of CPU to process those events 
 
 For remote caches, {brandname} Server uses an internal process to trigger client notifications.
 {brandname} Server sends the event from the primary owner node to the node where the listener is registered before sending it to the client.
-{brandname} Server also includes a backpressure mechanism that delays write operations to caches if client listeners process events too slowly.
+
+.Backpressure
+
+{brandname} Server includes a backpressure mechanism that protects the server when a client listener cannot keep up with the rate of cache updates.
+Each registered listener maintains a queue of pending events.
+When the queue reaches the high watermark (default 100), {brandname} Server delays responses to write operations until the queue drains below the low watermark (default 50).
+This prevents the server from accumulating unbounded events in memory while still allowing the slow client time to catch up.
+
+If the client remains unresponsive and pending events reach the maximum queue size (default 512), {brandname} Server closes the client socket connection and discards the listener registration.
+
+You can configure these thresholds in the Hot Rod connector:
+
+* `listener-backpressure-high-watermark` -- queue depth at which write responses are delayed (default: 100)
+* `listener-backpressure-low-watermark` -- queue depth at which delayed responses resume (default: 50)
+* `listener-max-queue-size` -- queue depth at which the client connection is closed (default: 512)
+
+These settings can be changed at runtime without restarting the server.
 
 .Filtering listener events
 

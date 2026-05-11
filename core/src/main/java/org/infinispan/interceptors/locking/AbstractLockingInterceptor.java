@@ -5,7 +5,9 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -37,12 +39,14 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.TimeoutException;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationFinallyAction;
+import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -54,7 +58,7 @@ import org.infinispan.util.logging.Log;
  * @author Mircea Markus
  */
 public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
-   final InvocationFinallyAction<VisitableCommand> unlockAllReturnHandler = this::handleUnlockAll;
+   final InvocationFinallyFunction<VisitableCommand> unlockAllReturnHandler = this::handleUnlockAll;
 
    @Inject protected LockManager lockManager;
    @Inject protected ClusteringDependentLogic cdl;
@@ -181,9 +185,25 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
       }
 
       command.setKeys(keysToInvalidate.toArray());
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, t) -> {
          rCommand.setKeys(keys);
-         if (!rCtx.isInTxScope()) lockManager.unlockAll(rCtx);
+         if (!rCtx.isInTxScope()) {
+            Collection<Supplier<CompletionStage<Void>>> postUnlockListeners = lockManager.unlockAll(rCtx);
+            if (t != null) {
+               throw t;
+            }
+            if (!postUnlockListeners.isEmpty()) {
+               AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+               for (Supplier<CompletionStage<Void>> supplier : postUnlockListeners) {
+                  stage.dependsOn(supplier.get());
+               }
+               return asyncValue(stage.freeze().thenApply(v -> rv));
+            }
+         }
+         if (t != null) {
+            throw t;
+         }
+         return rv;
       });
    }
 
@@ -309,18 +329,29 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
     * Locks and invoke the next interceptor for non-transactional commands.
     */
    final Object nonTxLockAndInvokeNext(InvocationContext ctx, VisitableCommand command,
-                                       InvocationStage lockStage, InvocationFinallyAction<VisitableCommand> finallyFunction) {
+                                       InvocationStage lockStage, InvocationFinallyFunction<VisitableCommand> handleFunction) {
       return lockStage.andHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
          if (throwable != null) {
             lockManager.unlockAll(rCtx);
             throw throwable;
          } else {
-            return invokeNextAndFinally(rCtx, rCommand, finallyFunction);
+            return invokeNextAndHandle(rCtx, rCommand, handleFunction);
          }
       });
    }
 
-   private void handleUnlockAll(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) {
-      lockManager.unlockAll(rCtx);
+   private Object handleUnlockAll(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) throws Throwable {
+      Collection<Supplier<CompletionStage<Void>>> postUnlockListeners = lockManager.unlockAll(rCtx);
+      if (throwable != null) {
+         throw throwable;
+      }
+      if (postUnlockListeners.isEmpty()) {
+         return rv;
+      }
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      for (Supplier<CompletionStage<Void>> supplier : postUnlockListeners) {
+         stage.dependsOn(supplier.get());
+      }
+      return asyncValue(stage.freeze().thenApply(v -> rv));
    }
 }

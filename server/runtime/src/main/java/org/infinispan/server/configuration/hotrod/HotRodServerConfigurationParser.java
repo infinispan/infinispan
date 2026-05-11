@@ -97,6 +97,18 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                builder.topologyNetworkPrefixOverride(Boolean.parseBoolean(value));
                break;
             }
+            case LISTENER_BACKPRESSURE_HIGH_WATERMARK: {
+               builder.listenerBackpressureHighWatermark(Integer.parseInt(value));
+               break;
+            }
+            case LISTENER_BACKPRESSURE_LOW_WATERMARK: {
+               builder.listenerBackpressureLowWatermark(Integer.parseInt(value));
+               break;
+            }
+            case LISTENER_MAX_QUEUE_SIZE: {
+               builder.listenerMaxQueueSize(Integer.parseInt(value));
+               break;
+            }
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
             }
