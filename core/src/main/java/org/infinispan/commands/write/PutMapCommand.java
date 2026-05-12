@@ -40,7 +40,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    private Map<Object, Object> map;
    private Metadata metadata;
    private boolean isForwarded = false;
-   private CommandInvocationId commandInvocationId;
+   private final CommandInvocationId commandInvocationId;
    private Map<Object, PrivateMetadata> internalMetadataMap;
 
 

@@ -17,6 +17,7 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -131,6 +132,12 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       Object[] keys = command.getMap() == null ? null : command.getMap().keySet().toArray();
+      return handleInvalidate(ctx, command, keys);
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) {
+      Object[] keys = command.getKeys().toArray();
       return handleInvalidate(ctx, command, keys);
    }
 

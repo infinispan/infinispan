@@ -9,6 +9,7 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.marshall.NotSerializableException;
@@ -81,6 +82,14 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getMap());
+      }
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
+      if (isUsingAsyncStore(ctx, command)) {
+         checkMarshallable(command.getKeys());
       }
       return invokeNext(ctx, command);
    }

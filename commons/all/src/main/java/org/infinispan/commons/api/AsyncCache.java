@@ -118,6 +118,23 @@ public interface AsyncCache<K, V> {
    CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
+    * Asynchronous version of {@link BasicCache#removeAll(Set)}.  This method does not block on remote calls, even if
+    * your cache mode is synchronous.
+    *
+    * @param keys keys to remove
+    * @return a future containing a void return type
+    * @since 16.3
+    */
+   default CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
+      CompletableFuture<?>[] futures = new CompletableFuture[keys.size()];
+      int i = 0;
+      for (K key : keys) {
+         futures[i++] = removeAsync(key);
+      }
+      return CompletableFuture.allOf(futures);
+   }
+
+   /**
     * Asynchronous version of {@link BasicCache#clear()}.  This method does not block on remote calls, even if your cache mode is
     * synchronous.
     *
