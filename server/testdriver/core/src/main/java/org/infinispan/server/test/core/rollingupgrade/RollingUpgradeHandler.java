@@ -22,6 +22,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
@@ -284,9 +285,24 @@ public class RollingUpgradeHandler {
 
       log.debugf("Starting 1 node to version %s at cluster %s", versionTo, clusterName);
       if (toDriver == null) {
+         String serverConfigurationFile = configuration.serverConfigurationFile();
+         Archive<?>[] artifacts = configuration.customArtifacts();
+
+         if (!versionTo.version().equals(Version.getVersion())) {
+            String serverConfiguration = Optional.ofNullable(VersionInterop.loadVersionedConfigurations(versionTo.version()))
+                  .map(p -> p.toAbsolutePath().toString())
+                  .orElse("");
+            serverConfigurationFile = String.format("%s/%s", serverConfiguration, serverConfigurationFile);
+
+            if (artifacts.length > 0) {
+               artifacts = Optional.ofNullable(VersionInterop.loadVersionedArtifacts(versionTo.version()))
+                     .orElse(artifacts);
+            }
+         }
+
          toDriver = startNode(VersionType.TO, 1, nodeCount,
-               configuration.jgroupsProtocol(), volumeId, configuration.serverConfigurationFile(),
-               configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
+               configuration.jgroupsProtocol(), volumeId, serverConfigurationFile,
+               configuration.defaultServerConfigurationFile(), artifacts,
                configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
       } else {
          toDriver.containerInfinispanServerDriver.startAdditionalServer(nodeCount, volumeId);
@@ -440,7 +456,7 @@ public class RollingUpgradeHandler {
 
       if (versionToUse.startsWith("image://")) {
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME, versionToUse.substring("image://".length()));
-         name += "image-" + AbstractInfinispanServerDriver.abbreviate(versionToUse);
+         name += "image-" + AbstractInfinispanServerDriver.abbreviate(versionToUse).replaceAll("@sha256:.+", "");
       } else if (versionToUse.startsWith("file://")) {
          // Need to strip the file: as testcontainers strips all `file:` occurrences which seems like a bug
          versionToUse = versionToUse.substring("file://".length());
