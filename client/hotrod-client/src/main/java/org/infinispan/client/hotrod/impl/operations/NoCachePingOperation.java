@@ -17,11 +17,11 @@ public class NoCachePingOperation extends AbstractNoCacheHotRodOperation<PingRes
 
    @Override
    public PingResponse createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
-      pingDecoder.processResponse(null, buf, decoder);
+      pingDecoder.processResponse(buf, decoder);
       if (HotRodConstants.isSuccess(status)) {
          PingResponse pingResponse = pingDecoder.build(status);
 
-         decoder.setCodec(pingResponse.getVersion().getCodec());
+         decoder.setCodec(pingResponse.getVersion().getCodec(pingResponse.getServerOps()));
          return pingResponse;
       } else {
          String hexStatus = Integer.toHexString(status);

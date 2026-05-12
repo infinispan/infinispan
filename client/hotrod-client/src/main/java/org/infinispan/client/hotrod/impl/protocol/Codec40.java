@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import java.util.BitSet;
 import java.util.Map;
 
 import org.infinispan.client.hotrod.MetadataValue;
@@ -15,6 +16,11 @@ import io.netty.buffer.ByteBuf;
  * @since 14.0
  */
 public class Codec40 extends Codec31 {
+
+   public Codec40(BitSet supportedOps) {
+      super(supportedOps);
+   }
+
    @Override
    public void writeHeader(ByteBuf buf, long messageId, ClientTopology clientTopology, HotRodOperation<?> operation) {
       writeHeader(buf, messageId, clientTopology, operation, HotRodConstants.VERSION_40);

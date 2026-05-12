@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -232,9 +233,22 @@ public class OperationDispatcher {
    }
 
    public <E, O extends HotRodOperation<E>> CompletionStage<E> executeBulk(String cacheName, HotRodBulkOperation<?, E, O> operation) {
-
       return operation.executeOperations(identifyOperationTarget(cacheName, connectionFailedServers),
             this::executeOnSingleAddress);
+   }
+
+   public <E, O extends HotRodOperation<E>> CompletionStage<E> executeBulk(String cacheName, HotRodBulkOperation<?, E, O> operation,
+                                                                            short requiredOpCode,
+                                                                            BiFunction<O, SocketAddress, CompletionStage<E>> fallbackInvoker) {
+      return operation.executeOperations(identifyOperationTarget(cacheName, connectionFailedServers),
+            (op, addr) -> {
+               OperationChannel ch = channelHandler.getChannelForAddress(addr);
+               if (ch == null || ch.isOpSupported(requiredOpCode)) {
+                  return executeOnSingleAddress(op, addr);
+               } else {
+                  return fallbackInvoker.apply(op, addr);
+               }
+            });
    }
 
    public CompletionStage<Channel> executeAddListener(ClientListenerOperation operation) {
@@ -242,7 +256,7 @@ public class OperationDispatcher {
    }
 
    public CompletionStage<Channel> executeAddListener(ClientListenerOperation operation, SocketAddress target) {
-      // Unfortunately, we have to do this preemptively for the case when a listener has include current state
+      // Unfortunately, we have to do this preemptively for the case when a listener has included current state
       // as that will not complete until all initial events have been received
       clientListenerNotifier.addDispatcher(ClientEventDispatcher.create(operation,
             target, () -> {/* TODO s*/}, operation.getRemoteCache()));
@@ -318,7 +332,7 @@ public class OperationDispatcher {
       // If the lock stamp changed - that means a channel may have been modified, verify if it was ours
       if (!lock.validate(stamp)) {
          // Note we don't need to acquire the read lock as channelHandler#getChannelForAddress is thread safe. The
-         // callers would would acquire the write lock will try to shut down operations, so all we have to do is
+         // callers would acquire the write lock will try to shut down operations, so all we have to do is
          // check our own operation only if it is present or not in the queue.
          handleChannelChangePossibility(operation, socketAddress, operationChannel);
       }
@@ -738,12 +752,12 @@ public class OperationDispatcher {
 
    /**
     * This method is called back whenever an operation is completed either through success (null Throwable)
-    * or through exception/error (non null Throwable)
+    * or through exception/error (non-null Throwable)
     * @param op the operation that completed
     * @param messageId the id of the message when sent
     * @param channel the channel that performed the operation
     * @param returnValue the return value for the operation (may be null)
-    * @param t the throwable, which if a problem was encountered will be not null, otherwise null
+    * @param t the throwable, which, if a problem was encountered will be not null, otherwise null
     * @param <E> the operation result type
     */
    public <E> void handleResponse(HotRodOperation<E> op, long messageId, Channel channel, E returnValue, Throwable t) {

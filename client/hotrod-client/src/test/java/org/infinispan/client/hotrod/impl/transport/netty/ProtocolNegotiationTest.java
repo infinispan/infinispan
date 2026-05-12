@@ -5,6 +5,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServ
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
@@ -14,6 +15,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.Codec41;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -69,6 +71,9 @@ public class ProtocolNegotiationTest extends SingleCacheManagerTest {
       HeaderDecoder headerDecoder = channel.pipeline().get(HeaderDecoder.class);
       assertNotNull(headerDecoder);
 
+      // Check that supported ops from PING are accessible through OperationChannel
+      assertTrue(operationChannel.isOpSupported(HotRodConstants.PUT_REQUEST));
+
       // Downgrade the HeaderDecoder codec to the safe handshake version (3.1),
       // simulating the state after a handshake that used the safe codec
       Codec safeCodec = ProtocolVersion.SAFE_HANDSHAKE_PROTOCOL_VERSION.getCodec();
@@ -89,7 +94,7 @@ public class ProtocolNegotiationTest extends SingleCacheManagerTest {
       future.join();
 
       // Verify the HeaderDecoder codec was updated to Codec41
-      Object codec = TestingUtil.extractField(headerDecoder, "codec");
+      Codec codec = TestingUtil.extractField(headerDecoder, "codec");
       assertInstanceOf(Codec41.class, codec, "Expected Codec41 after setCodec but got " + codec.getClass().getSimpleName());
    }
 }

@@ -43,4 +43,6 @@ public interface HotRodOperation<T> {
    long timeout();
 
    boolean isInstanceOf(Class<? extends HotRodOperation<?>> klass);
+
+   <O extends HotRodOperation<?>> O unwrap(Class<O> klass);
 }

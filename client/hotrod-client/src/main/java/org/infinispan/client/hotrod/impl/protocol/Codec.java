@@ -84,4 +84,6 @@ public interface Codec {
    default boolean isUnsafeForTheHandshake() {
       return false;
    }
+
+   boolean isOpSupported(short opCode);
 }

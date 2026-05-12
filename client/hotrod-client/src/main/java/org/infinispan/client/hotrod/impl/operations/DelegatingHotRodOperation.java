@@ -99,6 +99,11 @@ public abstract class DelegatingHotRodOperation<T> implements HotRodOperation<T>
    }
 
    @Override
+   public <O extends HotRodOperation<?>> O unwrap(Class<O> klass) {
+      return delegate.unwrap(klass);
+   }
+
+   @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
             "delegate=" + delegate +

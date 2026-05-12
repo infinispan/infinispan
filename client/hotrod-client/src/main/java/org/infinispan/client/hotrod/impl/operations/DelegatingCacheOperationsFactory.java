@@ -144,6 +144,16 @@ public abstract class DelegatingCacheOperationsFactory implements CacheOperation
    }
 
    @Override
+   public HotRodOperation<Void> newRemoveAllBytesOperation(Set<byte[]> keys) {
+      return delegate.newRemoveAllBytesOperation(keys);
+   }
+
+   @Override
+   public <V> HotRodOperation<MetadataValue<V>> newRemoveBytesOperation(byte[] keyBytes) {
+      return delegate.newRemoveBytesOperation(keyBytes);
+   }
+
+   @Override
    public HotRodOperation<Void> newUpdateBloomFilterOperation(byte[] bloomFilterBits) {
       return delegate.newUpdateBloomFilterOperation(bloomFilterBits);
    }

@@ -4,6 +4,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.util.BitSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -119,6 +120,10 @@ public class ClientListenerRetryTest extends MultiHotRodServersTest {
    private static class FailureInducingCodec extends Codec41 {
       private volatile boolean failure;
       private final IOException failWith = new IOException("Connection reset by peer");
+
+      public FailureInducingCodec() {
+         super(new BitSet(0xFF));
+      }
 
       @Override
       public AbstractClientEvent readCacheEvent(ByteBuf buf, long messageId, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassAllowList allowList, SocketAddress serverAddress) {

@@ -72,4 +72,10 @@ public abstract class AbstractHotRodOperation<T> extends CompletableFuture<T> im
    public boolean isInstanceOf(Class<? extends HotRodOperation<?>> klass) {
       return klass.isInstance(this);
    }
+
+   @Override
+   @SuppressWarnings("unchecked")
+   public <O extends HotRodOperation<?>> O unwrap(Class<O> klass) {
+      return klass.isInstance(this) ? (O) this : null;
+   }
 }

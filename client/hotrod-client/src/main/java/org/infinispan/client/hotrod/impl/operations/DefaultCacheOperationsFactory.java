@@ -168,6 +168,16 @@ public final class DefaultCacheOperationsFactory implements CacheOperationsFacto
    }
 
    @Override
+   public RemoveAllOperation newRemoveAllBytesOperation(Set<byte[]> keys) {
+      return new RemoveAllOperation(remoteCache, keys);
+   }
+
+   @Override
+   public <V> HotRodOperation<MetadataValue<V>> newRemoveBytesOperation(byte[] keyBytes) {
+      return new RemoveOperation<>(remoteCache, keyBytes);
+   }
+
+   @Override
    public HotRodOperation<Void> newUpdateBloomFilterOperation(byte[] bloomFilterBits) {
       return new UpdateBloomFilterOperation(remoteCache, bloomFilterBits);
    }
