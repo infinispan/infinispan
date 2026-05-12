@@ -100,6 +100,6 @@ abstract class AbstractContainerResource implements ContainerResource {
    }
 
    static boolean isInternalName(String name) {
-      return name !=null && (name.startsWith("org.infinispan") || name.startsWith("example.") || "memcachedCache".equals(name) || "respCache".equals(name));
+      return name != null && (name.startsWith("org.infinispan") || name.startsWith("example."));
    }
 }
