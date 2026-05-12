@@ -32,6 +32,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -190,6 +191,11 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleWriteManyCommand(ctx, command, command.getMap().keySet(), command.isForwarded());
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
+      return handleWriteManyCommand(ctx, command, command.getKeys(), command.isForwarded());
    }
 
    @Override

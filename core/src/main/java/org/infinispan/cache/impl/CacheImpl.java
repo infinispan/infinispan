@@ -51,6 +51,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -1866,6 +1867,33 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
    @Override
    public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
       putAll(map, metadata, EnumUtil.EMPTY_BIT_SET, defaultContextBuilderForWrite());
+   }
+
+   @Override
+   public void removeAll(Set<? extends K> keys) {
+      removeAll(keys, EnumUtil.EMPTY_BIT_SET, defaultContextBuilderForWrite());
+   }
+
+   final void removeAll(Set<? extends K> keys, long explicitFlags, ContextBuilder contextBuilder) {
+      explicitFlags = EnumUtil.mergeBitSets(explicitFlags, FlagBitSets.IGNORE_RETURN_VALUES);
+      RemoveAllCommand command = createRemoveAllCommand(keys, explicitFlags);
+      invocationHelper.invoke(contextBuilder, command, keys.size());
+   }
+
+   @Override
+   public CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
+      return removeAllAsync(keys, EnumUtil.EMPTY_BIT_SET, defaultContextBuilderForWrite());
+   }
+
+   final CompletableFuture<Void> removeAllAsync(Set<? extends K> keys, long explicitFlags, ContextBuilder contextBuilder) {
+      explicitFlags = EnumUtil.mergeBitSets(explicitFlags, FlagBitSets.IGNORE_RETURN_VALUES);
+      RemoveAllCommand command = createRemoveAllCommand(keys, explicitFlags);
+      return invocationHelper.invokeAsync(contextBuilder, command, keys.size());
+   }
+
+   private RemoveAllCommand createRemoveAllCommand(Set<? extends K> keys, long explicitFlags) {
+      requireNonNull(keys, "keys");
+      return commandsFactory.buildRemoveAllCommand(keys, explicitFlags);
    }
 
    private Metadata applyDefaultMetadata(Metadata metadata) {

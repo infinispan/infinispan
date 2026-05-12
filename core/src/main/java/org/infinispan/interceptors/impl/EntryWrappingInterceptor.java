@@ -43,6 +43,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -446,6 +447,21 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
+      boolean ignoreOwnership = ignoreOwnership(command);
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+         removeFromContextOnRetry(ctx, command.getAffectedKeys());
+      }
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
+      for (Object key : command.getKeys()) {
+         currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+               ignoreOwnership || canReadKey(key), false, currentStage);
+      }
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
+   }
+
+   @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       command.setFlagsBitSet(command.getFlagsBitSet() | EVICT_FLAGS_BITSET); //to force the wrapping
       return visitRemoveCommand(ctx, command);
@@ -770,6 +786,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private final class EntryWrappingVisitor extends AbstractVisitor {
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+         return handleWriteManyCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
          return handleWriteManyCommand(ctx, command);
       }
 
