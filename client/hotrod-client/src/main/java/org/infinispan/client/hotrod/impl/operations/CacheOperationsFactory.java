@@ -86,6 +86,8 @@ public interface CacheOperationsFactory {
     */
    <K, V> HotRodOperation<Map<K, V>> newGetAllBytesOperation(Set<byte[]> keys);
 
+   HotRodOperation<Void> newRemoveAllBytesOperation(Set<byte[]> keys);
+
    <K, V> HotRodOperation<GetWithMetadataOperation.GetWithMetadataResult<V>> newGetWithMetadataOperation(K key, Channel channel);
 
    <K, V> HotRodOperation<VersionedOperationResponse<V>> newReplaceIfUnmodifiedOperation(K key, V value, long lifespan,

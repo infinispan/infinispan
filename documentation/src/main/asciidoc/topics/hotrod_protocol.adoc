@@ -110,6 +110,7 @@ In this particular case, this is +10+
 +0x2B+ = exec (since 2.1) +
 +0x2D+ = putAll (since 2.1) +
 +0x2F+ = getAll (since 2.1) +
++0x45+ = removeAll (since 4.1) +
 +0x31+ = iterationStart (since 2.3) +
 +0x33+ = iterationNext (since 2.3) +
 +0x35+ = iterationEnd (since 2.3) +
@@ -189,6 +190,7 @@ for which the response is sent.
 +0x2C+ = exec (since 2.1) +
 +0x2E+ = putAll (since 2.1) +
 +0x30+ = getAll (since 2.1) +
++0x46+ = removeAll (since 4.1) +
 +0x32+ = iterationStart (since 2.3) +
 +0x34+ = iterationNext (since 2.3) +
 +0x36+ = iterationEnd (since 2.3) +
@@ -694,6 +696,37 @@ Response (0x30):
 | Value 2             | byte array |
 |... continues until entry count is reached ||
 +0x00+ = success, if the get returned successfully +
+|==============================================================================
+
+.RemoveAll
+
+Bulk operation to remove all entries that map to a given set of keys.
+
+Request (0x45):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Key count           | vInt       | How many keys to remove
+| Key 1 Length        | vInt       | Length of key
+| Key 1               | byte array | Key to remove
+| Key 2 Length        | vInt       |
+| Key 2               | byte array |
+|... continues until key count is reached||
+
+|==============================================================================
+
+Response (0x46):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
++0x00+ = success, if all removals succeeded +
 |==============================================================================
 
 

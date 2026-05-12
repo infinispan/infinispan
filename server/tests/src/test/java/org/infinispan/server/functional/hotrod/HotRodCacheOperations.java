@@ -9,8 +9,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -351,6 +355,62 @@ public class HotRodCacheOperations<K, V> {
       CompletableFuture<V> f = cache.removeAsync(k);
       testFutureWithListener(generator, f, v3);
       assertNull(cache.get(k));
+   }
+
+   @ParameterizedTest
+   @ArgumentsSource(ArgsProvider.class)
+   public void testRemoveAll(ProtocolVersion protocolVersion, KeyValueGenerator<K, V> generator) {
+      RemoteCache<K, V> cache = remoteCache(protocolVersion);
+      Set<K> keys = new HashSet<>();
+      for (int i = 0; i < 5; i++) {
+         K key = generator.key(i);
+         keys.add(key);
+         cache.put(key, generator.value(i));
+      }
+      assertEquals(5, cache.size());
+      cache.removeAll(keys);
+      assertEquals(0, cache.size());
+      for (K key : keys) {
+         assertNull(cache.get(key));
+      }
+   }
+
+   @ParameterizedTest
+   @ArgumentsSource(ArgsProvider.class)
+   public void testRemoveAllAsync(ProtocolVersion protocolVersion, KeyValueGenerator<K, V> generator) throws Exception {
+      RemoteCache<K, V> cache = remoteCache(protocolVersion);
+      Set<K> keys = new HashSet<>();
+      for (int i = 0; i < 5; i++) {
+         K key = generator.key(i);
+         keys.add(key);
+         cache.put(key, generator.value(i));
+      }
+      assertEquals(5, cache.size());
+      CompletableFuture<Void> f = cache.removeAllAsync(keys);
+      assertNotNull(f);
+      f.get();
+      assertTrue(f.isDone());
+      assertEquals(0, cache.size());
+   }
+
+   @ParameterizedTest
+   @ArgumentsSource(ArgsProvider.class)
+   public void testRemoveAllPartial(ProtocolVersion protocolVersion, KeyValueGenerator<K, V> generator) {
+      RemoteCache<K, V> cache = remoteCache(protocolVersion);
+      List<K> keys = new ArrayList<>();
+      for (int i = 0; i < 10; i++) {
+         K key = generator.key(i);
+         keys.add(key);
+         cache.put(key, generator.value(i));
+      }
+      cache.removeAll(new HashSet<>(keys.subList(0, 5)));
+      assertEquals(5, cache.size());
+      for (int i = 0; i < 5; i++) {
+         assertNull(cache.get(keys.get(i)));
+      }
+      for (int i = 5; i < 10; i++) {
+         assertNotNull(cache.get(keys.get(i)));
+      }
    }
 
    @ParameterizedTest

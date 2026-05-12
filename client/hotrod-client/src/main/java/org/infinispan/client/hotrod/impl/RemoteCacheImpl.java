@@ -60,6 +60,7 @@ import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.operations.PutAllBulkOperation;
+import org.infinispan.client.hotrod.impl.operations.RemoveAllBulkOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec30;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
@@ -569,6 +570,16 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       return dispatcher.executeBulk(name, op)
             .thenApply(Collections::unmodifiableMap)
             .toCompletableFuture();
+   }
+
+   @Override
+   public CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
+      assertRemoteCacheManagerIsStarted();
+      if (log.isTraceEnabled()) {
+         log.tracef("About to removeAll entries (%s)", keys);
+      }
+      var op = new RemoveAllBulkOperation(keys, dataFormat, operationsFactory::newRemoveAllBytesOperation);
+      return dispatcher.executeBulk(name, op).toCompletableFuture();
    }
 
    @Override
