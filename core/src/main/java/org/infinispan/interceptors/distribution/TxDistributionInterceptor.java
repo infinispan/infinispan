@@ -44,6 +44,7 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -165,6 +166,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleTxWriteManyEntriesCommand(ctx, command, command.getMap(),
             (c, entries) -> new PutMapCommand(c).withMap(entries));
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
+      return handleTxWriteManyCommand(ctx, command, command.getKeys(),
+            (c, keys) -> new RemoveAllCommand(c).withKeys(keys));
    }
 
    @Override

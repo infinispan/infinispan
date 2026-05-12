@@ -29,6 +29,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -268,6 +269,27 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       return invokeNextThenApply(ctx, command, handlePutMapCommandReturn);
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
+      if (!isStoreEnabled(command) || ctx.isInTxScope())
+         return invokeNext(ctx, command);
+
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+         long count = 0;
+         for (Object key : rCommand.getKeys()) {
+            if (isProperWriter(rCtx, rCommand, key)) {
+               stage.dependsOn(removeEntry(rCtx, key, keyPartitioner.getSegment(key), rCommand));
+               count++;
+            }
+         }
+         if (getStatisticsEnabled()) {
+            cacheStores.getAndAdd(count);
+         }
+         return delayedValue(stage.freeze(), rv);
+      });
    }
 
    protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand putMapCommand, Object rv) {
