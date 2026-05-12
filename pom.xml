@@ -1963,11 +1963,6 @@
                      <artifactId>ant-jsch</artifactId>
                      <version>${version.ant}</version>
                   </dependency>
-                  <dependency>
-                     <groupId>org.codehaus.groovy</groupId>
-                     <artifactId>groovy-all</artifactId>
-                     <version>${version.groovy}</version>
-                  </dependency>
                </dependencies>
             </plugin>
             <plugin>
