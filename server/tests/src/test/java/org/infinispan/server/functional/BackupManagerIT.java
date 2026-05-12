@@ -22,17 +22,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -41,6 +44,10 @@ import java.util.zip.ZipFile;
 
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
+import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
+import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestContainerClient;
@@ -61,6 +68,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.ScoredValue;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
+import net.spy.memcached.ConnectionFactoryBuilder;
+import net.spy.memcached.MemcachedClient;
+
 /**
  * @author Ryan Emerson
  * @since 12.0
@@ -69,6 +83,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    static final File WORKING_DIR = new File(Testing.tmpDirectory(BackupManagerIT.class));
    static final int NUM_ENTRIES = 10;
+   static final String MULTIMAP_CACHE = "multimap-cache";
 
    public BackupManagerIT() {
       super(Common.NASHORN_DEPS);
@@ -481,6 +496,45 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
          String script = Testing.loadFileAsString(is);
          assertStatus(OK, client.tasks().uploadScript("scripts/test.js", RestEntity.create(MediaType.APPLICATION_JAVASCRIPT, script)));
       }
+
+      ConfigurationBuilder mmBuilder = new ConfigurationBuilder();
+      mmBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      createCache(MULTIMAP_CACHE, mmBuilder, client);
+
+      try (RemoteCacheManager rcm = createRemoteCacheManager(source)) {
+         MultimapCacheManager<String, String> mmManager = RemoteMultimapCacheManagerFactory.from(rcm);
+         RemoteMultimapCache<String, String> multimap = mmManager.get(MULTIMAP_CACHE);
+         multimap.put("key1", "value1").join();
+         multimap.put("key1", "value2").join();
+         multimap.put("key2", "value3").join();
+      }
+
+      // Populate the RESP cache with all Redis data types
+      InetSocketAddress respSocket = source.driver.getServerSocket(0, 11222);
+      RedisClient redisClient = RedisClient.create("redis://" + respSocket.getHostString() + ":" + respSocket.getPort());
+      try (StatefulRedisConnection<String, String> conn = redisClient.connect()) {
+         RedisCommands<String, String> redis = conn.sync();
+         redis.set("string-key", "string-value");
+         redis.rpush("list-key", "item1", "item2", "item3");
+         redis.sadd("set-key", "member1", "member2", "member3");
+         redis.hset("hash-key", Map.of("field1", "value1", "field2", "value2"));
+         redis.zadd("zset-key", ScoredValue.just(1.0, "a"), ScoredValue.just(2.0, "b"), ScoredValue.just(3.0, "c"));
+      } finally {
+         redisClient.shutdown();
+      }
+
+      // Populate the memcached cache
+      InetSocketAddress mcSocket = source.driver.getServerSocket(0, 11222);
+      ConnectionFactoryBuilder mcBuilder = new ConnectionFactoryBuilder();
+      mcBuilder.setProtocol(ConnectionFactoryBuilder.Protocol.BINARY);
+      MemcachedClient mc = new MemcachedClient(mcBuilder.build(), Collections.singletonList(mcSocket));
+      try {
+         mc.set("mc-key1", 0, "mc-value1").get(10, TimeUnit.SECONDS);
+         mc.set("mc-key2", 0, "mc-value2").get(10, TimeUnit.SECONDS);
+         mc.set("mc-key3", 0, "mc-value3").get(10, TimeUnit.SECONDS);
+      } finally {
+         mc.shutdown();
+      }
    }
 
    private void assertWildcardContent(RestClient client) {
@@ -503,6 +557,51 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       List<Json> tasks = json.asJsonList();
       assertEquals(1, tasks.size());
       assertEquals("scripts/test.js", tasks.get(0).at("name").asString());
+
+      try (RemoteCacheManager rcm = createRemoteCacheManager(target)) {
+         MultimapCacheManager<String, String> mmManager = RemoteMultimapCacheManagerFactory.from(rcm);
+         RemoteMultimapCache<String, String> multimap = mmManager.get(MULTIMAP_CACHE);
+         Collection<String> values1 = multimap.get("key1").join();
+         assertEquals(2, values1.size());
+         assertTrue(values1.contains("value1"));
+         assertTrue(values1.contains("value2"));
+         Collection<String> values2 = multimap.get("key2").join();
+         assertEquals(1, values2.size());
+         assertTrue(values2.contains("value3"));
+      }
+
+      // Verify RESP cache data survived backup/restore
+      InetSocketAddress respSocket = target.driver.getServerSocket(0, 11222);
+      RedisClient redisClient = RedisClient.create("redis://" + respSocket.getHostString() + ":" + respSocket.getPort());
+      try (StatefulRedisConnection<String, String> conn = redisClient.connect()) {
+         RedisCommands<String, String> redis = conn.sync();
+         assertEquals("string-value", redis.get("string-key"));
+         assertEquals(List.of("item1", "item2", "item3"), redis.lrange("list-key", 0, -1));
+         assertEquals(3, redis.smembers("set-key").size());
+         assertTrue(redis.smembers("set-key").containsAll(List.of("member1", "member2", "member3")));
+         assertEquals(Map.of("field1", "value1", "field2", "value2"), redis.hgetall("hash-key"));
+         List<ScoredValue<String>> zsetValues = redis.zrangeWithScores("zset-key", 0, -1);
+         assertEquals(3, zsetValues.size());
+      } finally {
+         redisClient.shutdown();
+      }
+
+      // Verify memcached cache data survived backup/restore
+      try {
+         InetSocketAddress mcSocket = target.driver.getServerSocket(0, 11222);
+         ConnectionFactoryBuilder mcBuilder = new ConnectionFactoryBuilder();
+         mcBuilder.setProtocol(ConnectionFactoryBuilder.Protocol.BINARY);
+         MemcachedClient mc = new MemcachedClient(mcBuilder.build(), Collections.singletonList(mcSocket));
+         try {
+            assertEquals("mc-value1", mc.get("mc-key1"));
+            assertEquals("mc-value2", mc.get("mc-key2"));
+            assertEquals("mc-value3", mc.get("mc-key3"));
+         } finally {
+            mc.shutdown();
+         }
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
    }
 
    private void createCounter(String name, String type, Storage storage, RestClient client, long delta) {
@@ -529,6 +628,14 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       assertEquals(0, config.at("initial-value").asInteger());
 
       assertStatusAndBodyEquals(OK, Long.toString(expectedValue), client.counter(name).get());
+   }
+
+   private RemoteCacheManager createRemoteCacheManager(Cluster cluster) {
+      InetSocketAddress serverSocket = cluster.driver.getServerSocket(0, 11222);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      builder.addServer().host(serverSocket.getHostString()).port(serverSocket.getPort());
+      return new RemoteCacheManager(builder.build());
    }
 
    static void assertNoServerBackupFilesExist(Cluster cluster) {

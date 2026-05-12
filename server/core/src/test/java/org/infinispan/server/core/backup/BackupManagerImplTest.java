@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -59,6 +60,9 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
+import org.infinispan.multimap.api.embedded.MultimapCache;
+import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -287,6 +291,33 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                assertNotNull(cache);
                assertEquals("value", cache.get("key"));
             });
+   }
+
+   public void testBackupAndRestoreMultimap() {
+      String name = "testBackupAndRestoreMultimap";
+      String cacheName = "multimap-cache";
+      createAndRestore(
+            (source, backupManager) -> {
+               source.defineConfiguration(cacheName, config(APPLICATION_OBJECT_TYPE));
+               MultimapCacheManager<String, String> mmManager = EmbeddedMultimapCacheManagerFactory.from(source);
+               MultimapCache<String, String> multimap = mmManager.get(cacheName);
+               await(multimap.put("key1", "value1"));
+               await(multimap.put("key1", "value2"));
+               await(multimap.put("key2", "value3"));
+               return backupManager.create(name, null);
+            },
+            (target, backupManager, backup) -> {
+               await(backupManager.restore(name, backup));
+               assertTrue(target.cacheExists(cacheName));
+               MultimapCacheManager<String, String> mmManager = EmbeddedMultimapCacheManagerFactory.from(target);
+               MultimapCache<String, String> multimap = mmManager.get(cacheName);
+               Collection<String> values1 = await(multimap.get("key1"));
+               assertEquals(2, values1.size());
+               Collection<String> values2 = await(multimap.get("key2"));
+               assertEquals(1, values2.size());
+               assertTrue(values2.contains("value3"));
+            }
+      );
    }
 
    public void testCustomWorkingDirectory() throws IOException {
