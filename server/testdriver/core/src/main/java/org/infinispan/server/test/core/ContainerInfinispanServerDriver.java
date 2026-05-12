@@ -186,7 +186,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    }
 
    private void configureImage(String fqcn, File rootDir) {
-      this.name = abbreviate(fqcn);
+      this.name = abbreviate(fqcn).replaceAll("@sha256:.+", "");
       this.fullName = fqcn;
       // If properties define the cluster stack let that take priority over the system property
       String jGroupsStack = !configuration.properties().containsKey(Server.INFINISPAN_CLUSTER_STACK) ?
@@ -279,7 +279,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             imageName = createServerImage(serverOutputDir, versionToUse);
          }
       } else {
-         imageName = baseImageName;
+         imageName = stripTagIfDigestPresent(baseImageName);
          log.infof("Using prebuilt image '%s'", imageName);
       }
       image = new ImageFromDockerfile("localhost/infinispan/server-" + name.toLowerCase(), !preserveImageAfterTest)
@@ -365,6 +365,19 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static boolean isCoverage() {
       String jacocoVersion = System.getProperty("version.jacoco");
       return jacocoVersion != null;
+   }
+
+   // Testcontainers' DockerImageName does not support the name:tag@digest format.
+   // When a digest is present, strip the tag since the digest is the authoritative reference.
+   static String stripTagIfDigestPresent(String imageName) {
+      int atIdx = imageName.indexOf('@');
+      if (atIdx < 0) return imageName;
+      int slashIdx = imageName.lastIndexOf('/', atIdx);
+      int colonIdx = imageName.indexOf(':', slashIdx >= 0 ? slashIdx : 0);
+      if (colonIdx >= 0 && colonIdx < atIdx) {
+         return imageName.substring(0, colonIdx) + imageName.substring(atIdx);
+      }
+      return imageName;
    }
 
    private GenericContainer<?> createContainer(int i, Consumer<OutputFrame>... logConsumers) {
