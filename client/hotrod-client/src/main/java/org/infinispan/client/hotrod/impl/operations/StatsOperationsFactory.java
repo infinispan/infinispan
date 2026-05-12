@@ -75,6 +75,16 @@ public class StatsOperationsFactory extends DelegatingCacheOperationsFactory {
    }
 
    @Override
+   public HotRodOperation<Void> newRemoveAllBytesOperation(Set<byte[]> keys) {
+      return new StatisticOperation<>(super.newRemoveAllBytesOperation(keys), statistics);
+   }
+
+   @Override
+   public <V> HotRodOperation<MetadataValue<V>> newRemoveBytesOperation(byte[] keyBytes) {
+      return new StatisticOperation<>(super.newRemoveBytesOperation(keyBytes), statistics);
+   }
+
+   @Override
    public HotRodOperation<Boolean> newPutStreamNextOperation(int id, boolean lastChunk, ByteBuf valueBytes, Channel channel) {
       // Here solely to document this is done in the StreamingRemoteCacheImpl
       return super.newPutStreamNextOperation(id, lastChunk, valueBytes, channel);

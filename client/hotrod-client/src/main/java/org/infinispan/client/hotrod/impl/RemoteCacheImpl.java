@@ -5,8 +5,10 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -60,7 +62,10 @@ import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.operations.PutAllBulkOperation;
+import org.infinispan.client.hotrod.impl.operations.RemoveAllBulkOperation;
+import org.infinispan.client.hotrod.impl.operations.RemoveAllOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec30;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
@@ -79,7 +84,9 @@ import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Publisher;
 
@@ -569,6 +576,33 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       return dispatcher.executeBulk(name, op)
             .thenApply(Collections::unmodifiableMap)
             .toCompletableFuture();
+   }
+
+   @Override
+   public CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
+      assertRemoteCacheManagerIsStarted();
+      if (log.isTraceEnabled()) {
+         log.tracef("About to removeAll entries (%s)", keys);
+      }
+      var op = new RemoveAllBulkOperation(keys, dataFormat, operationsFactory::newRemoveAllBytesOperation);
+      return dispatcher.executeBulk(name, op, HotRodConstants.REMOVE_ALL_REQUEST,
+            (removeAllOp, addr) -> {
+               List<byte[]> serverKeys = new ArrayList<>(removeAllOp.unwrap(RemoveAllOperation.class).getKeys());
+               int batchSize = 20;
+               CompletionStage<Void> stage = CompletableFutures.completedNull();
+               for (int i = 0; i < serverKeys.size(); i += batchSize) {
+                  int batchStart = i;
+                  int batchEnd = Math.min(i + batchSize, serverKeys.size());
+                  stage = stage.thenCompose(ignored -> {
+                     AggregateCompletionStage<Void> acs = CompletionStages.aggregateCompletionStage();
+                     for (int j = batchStart; j < batchEnd; j++) {
+                        acs.dependsOn(dispatcher.executeOnSingleAddress(operationsFactory.newRemoveBytesOperation(serverKeys.get(j)), addr));
+                     }
+                     return acs.freeze();
+                  });
+               }
+               return stage;
+            }).toCompletableFuture();
    }
 
    @Override

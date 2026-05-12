@@ -54,6 +54,7 @@ public interface HotRodConstants {
    byte ROLLBACK_TX = 0x3F;
    byte ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_REQUEST = 0x41;
    byte UPDATE_BLOOM_FILTER_REQUEST = 0x43;
+   byte REMOVE_ALL_REQUEST = 0x45;
    byte FORGET_TX = 0x79;
    byte FETCH_TX_RECOVERY = 0x7B;
    byte PREPARE_TX_2 = 0x7D;

@@ -51,9 +51,14 @@ import io.netty.buffer.ByteBuf;
  * @since 10.0
  */
 public class Codec30 implements Codec {
-   static final Log log = LogFactory.getLog(Codec.class);
-
    public static final String EMPTY_VALUE_CONVERTER = "org.infinispan.server.hotrod.HotRodServer$ToEmptyBytesKeyValueFilterConverter";
+   static final Log log = LogFactory.getLog(Codec.class);
+   private final BitSet supportedOps;
+
+   public Codec30(BitSet supportedOps) {
+      this.supportedOps = supportedOps;
+   }
+
    @Override
    public void writeBloomFilter(ByteBuf buf, int bloomFilterBits) {
       if (bloomFilterBits > 0) {
@@ -389,5 +394,10 @@ public class Codec30 implements Codec {
             });
          }
       }
+   }
+
+   @Override
+   public boolean isOpSupported(short opCode) {
+      return supportedOps.get(opCode);
    }
 }

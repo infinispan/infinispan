@@ -145,6 +145,10 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
       this.codec = codec;
    }
 
+   public boolean isOpSupported(short opCode) {
+      return codec.isOpSupported(opCode);
+   }
+
    public boolean isAcceptingRequests() {
       var f = attemptedConnect.get();
       return f != null && f.isDone();
