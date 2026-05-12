@@ -725,6 +725,18 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    @Override
+   public void removeAll(Set<? extends K> keys) {
+      authzManager.checkPermission(subject, writePermission);
+      delegate.removeAll(keys);
+   }
+
+   @Override
+   public CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
+      authzManager.checkPermission(subject, writePermission);
+      return delegate.removeAllAsync(keys);
+   }
+
+   @Override
    public CompletableFuture<V> removeAsync(Object key) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.removeAsync(key);

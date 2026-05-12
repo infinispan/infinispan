@@ -25,6 +25,7 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -65,6 +66,7 @@ import org.infinispan.util.CacheTopologyUtil;
 public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private final PutMapHelper putMapHelper = new PutMapHelper(this::createRemoteCallback);
+   private final RemoveAllHelper removeAllHelper = new RemoveAllHelper(this::createRemoteCallback);
    private final ReadWriteManyHelper readWriteManyHelper = new ReadWriteManyHelper(this::createRemoteCallback);
    private final ReadWriteManyEntriesHelper readWriteManyEntriesHelper = new ReadWriteManyEntriesHelper(this::createRemoteCallback);
    private final WriteOnlyManyEntriesHelper writeOnlyManyEntriesHelper = new WriteOnlyManyEntriesHelper(this::createRemoteCallback);
@@ -154,6 +156,12 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command)
          throws Throwable {
       return handleReadWriteManyCommand(ctx, command, putMapHelper);
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command)
+         throws Throwable {
+      return handleReadWriteManyCommand(ctx, command, removeAllHelper);
    }
 
    @Override
