@@ -357,6 +357,7 @@ parameters switch opCode
    | { EXEC_REQUEST }? taskName taskParams { taskProcessor.exec(getHeader(), auth.getSubject(operation), taskName, taskParams); }
    | { PUT_ALL_REQUEST }? expiration entryMap { cacheProcessor.putAll(getHeader(), auth.getSubject(operation), entryMap, expiration) }
    | { GET_ALL_REQUEST }? keys { cacheProcessor.getAll(getHeader(), auth.getSubject(operation), keys) }
+   | { REMOVE_ALL_REQUEST }? keys { cacheProcessor.removeAll(getHeader(), auth.getSubject(operation), keys) }
    | { ITERATION_START_REQUEST }? segmentMask filterConverterFactory filterConverterParams batchSize includeMetadata
       { cacheProcessor.iterationStart(getHeader(), auth.getSubject(operation), segmentMask, filterConverterFactory, filterConverterParams, batchSize, includeMetadata); }
    | { ITERATION_NEXT_REQUEST }? iterationId { cacheProcessor.iterationNext(getHeader(), auth.getSubject(operation), iterationId); }
