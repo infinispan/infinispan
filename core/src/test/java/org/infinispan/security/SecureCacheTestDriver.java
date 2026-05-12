@@ -3,6 +3,7 @@ package org.infinispan.security;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 
 import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -258,6 +259,16 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testRemove_Object(SecureCache<String, String> cache) {
       cache.remove("a");
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testRemoveAll_Set(SecureCache<String, String> cache) {
+      cache.removeAll(Set.of("a"));
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testRemoveAllAsync_Set(SecureCache<String, String> cache) {
+      cache.removeAllAsync(Set.of("a"));
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)

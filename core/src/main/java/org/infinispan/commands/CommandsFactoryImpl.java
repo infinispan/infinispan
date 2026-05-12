@@ -59,6 +59,7 @@ import org.infinispan.commands.triangle.BackupNoopCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
+import org.infinispan.commands.triangle.RemoveAllBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -77,6 +78,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -257,6 +259,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet) {
       return new PutMapCommand(cacheName, map, metadata, flagsBitSet, generateUUID(transactional));
+   }
+
+   @Override
+   public RemoveAllCommand buildRemoveAllCommand(Collection<?> keys, long flagsBitSet) {
+      return new RemoveAllCommand(cacheName, keys, flagsBitSet, generateUUID(transactional));
    }
 
    @Override
@@ -591,6 +598,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public PutMapBackupWriteCommand buildPutMapBackupWriteCommand(PutMapCommand command, Collection<Object> keys, long sequence, int segmentId) {
       return new PutMapBackupWriteCommand(cacheName, command, sequence, segmentId, keys);
+   }
+
+   @Override
+   public RemoveAllBackupWriteCommand buildRemoveAllBackupWriteCommand(RemoveAllCommand command, Collection<Object> keys, long sequence, int segmentId) {
+      return new RemoveAllBackupWriteCommand(cacheName, command, sequence, segmentId, keys);
    }
 
    @Override

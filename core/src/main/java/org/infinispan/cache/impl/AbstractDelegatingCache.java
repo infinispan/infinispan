@@ -207,6 +207,16 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V>, Inte
    }
 
    @Override
+   public void removeAll(Set<? extends K> keys) {
+      cache.removeAll(keys);
+   }
+
+   @Override
+   public CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
+      return cache.removeAllAsync(keys);
+   }
+
+   @Override
    public CompletableFuture<Void> clearAsync() {
       return cache.clearAsync();
    }

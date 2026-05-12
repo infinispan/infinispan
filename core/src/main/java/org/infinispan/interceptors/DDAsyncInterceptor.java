@@ -31,6 +31,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
@@ -87,6 +88,11 @@ public abstract class DDAsyncInterceptor extends BaseAsyncInterceptor implements
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 

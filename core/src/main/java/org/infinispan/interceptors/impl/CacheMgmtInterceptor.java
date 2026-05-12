@@ -34,6 +34,7 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.stat.MetricInfo;
@@ -187,6 +188,24 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
             counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanos);
             counters.add(StripeB.storesFieldUpdater, stripe, data.size());
             keyMetrics.recordStore(intervalNanos);
+         }
+      });
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) {
+      boolean statisticsEnabled = collectStatisticsForCommand(command);
+      if (!statisticsEnabled || !ctx.isOriginLocal())
+         return invokeNext(ctx, command);
+
+      long start = timeService.time();
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+         final long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         int count = rCommand.getKeys().size();
+         if (count > 0) {
+            StripeB stripe = counters.stripeForCurrentThread();
+            counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalNanos);
+            counters.add(StripeB.removeHitsFieldUpdater, stripe, count);
          }
       });
    }
