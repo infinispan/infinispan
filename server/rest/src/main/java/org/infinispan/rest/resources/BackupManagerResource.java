@@ -52,17 +52,12 @@ class BackupManagerResource {
                                                             TriConsumer<String, Path, Json> creationConsumer) {
       String name = request.variables().get("backupName");
       Method method = request.method();
-      switch (method) {
-         case DELETE:
-            return handleDeleteBackup(invocationHelper, name, request, backupManager);
-         case GET:
-         case HEAD:
-            return handleGetBackup(invocationHelper, name, request, backupManager, method);
-         case POST:
-            return handleCreateBackup(invocationHelper, name, request, backupManager, creationConsumer);
-         default:
-            throw Log.REST.wrongMethod(method.toString());
-      }
+      return switch (method) {
+         case DELETE -> handleDeleteBackup(invocationHelper, name, request, backupManager);
+         case GET, HEAD -> handleGetBackup(invocationHelper, name, request, backupManager, method);
+         case POST -> handleCreateBackup(invocationHelper, name, request, backupManager, creationConsumer);
+         default -> throw Log.REST.wrongMethod(method.toString());
+      };
    }
 
    private static CompletionStage<RestResponse> handleCreateBackup(InvocationHelper invocationHelper, String name, RestRequest request, BackupManager backupManager,
@@ -115,16 +110,12 @@ class BackupManagerResource {
                                                              TriFunction<String, Path, Json, CompletionStage<Void>> function) {
       String name = request.variables().get("restoreName");
       Method method = request.method();
-      switch (method) {
-         case DELETE:
-            return handleDeleteRestore(invocationHelper, name, request, backupManager);
-         case HEAD:
-            return handleRestoreStatus(invocationHelper, name, request, backupManager);
-         case POST:
-            return handleRestore(invocationHelper, name, request, backupManager, function);
-         default:
-            throw Log.REST.wrongMethod(method.toString());
-      }
+      return switch (method) {
+         case DELETE -> handleDeleteRestore(invocationHelper, name, request, backupManager);
+         case HEAD -> handleRestoreStatus(invocationHelper, name, request, backupManager);
+         case POST -> handleRestore(invocationHelper, name, request, backupManager, function);
+         default -> throw Log.REST.wrongMethod(method.toString());
+      };
    }
 
    static CompletionStage<RestResponse> handleDeleteRestore(InvocationHelper invocationHelper, String name, RestRequest request, BackupManager backupManager) {
@@ -133,16 +124,12 @@ class BackupManagerResource {
 
    static CompletionStage<RestResponse> handleRestoreStatus(InvocationHelper invocationHelper, String name, RestRequest request, BackupManager backupManager) {
       BackupManager.Status status = backupManager.getRestoreStatus(name);
-      switch (status) {
-         case NOT_FOUND:
-            return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
-         case IN_PROGRESS:
-            return invocationHelper.newResponse(request, ACCEPTED).toFuture();
-         case COMPLETE:
-            return invocationHelper.newResponse(request, CREATED).toFuture();
-         default:
-            throw Log.REST.restoreFailed();
-      }
+      return switch (status) {
+         case NOT_FOUND -> invocationHelper.newResponse(request, NOT_FOUND).toFuture();
+         case IN_PROGRESS -> invocationHelper.newResponse(request, ACCEPTED).toFuture();
+         case COMPLETE -> invocationHelper.newResponse(request, CREATED).toFuture();
+         default -> throw Log.REST.restoreFailed();
+      };
    }
 
    static CompletionStage<RestResponse> handleRestore(InvocationHelper invocationHelper, String name, RestRequest request, BackupManager backupManager,
@@ -225,15 +212,11 @@ class BackupManagerResource {
       if (t != null) {
          throw Util.unchecked(t);
       }
-      switch (s) {
-         case NOT_FOUND:
-            return invocationHelper.newResponse(request, NOT_FOUND);
-         case IN_PROGRESS:
-            return invocationHelper.newResponse(request, ACCEPTED);
-         case COMPLETE:
-            return invocationHelper.newResponse(request, NO_CONTENT);
-         default:
-            throw Log.REST.backupDeleteFailed();
-      }
+      return switch (s) {
+         case NOT_FOUND -> invocationHelper.newResponse(request, NOT_FOUND);
+         case IN_PROGRESS -> invocationHelper.newResponse(request, ACCEPTED);
+         case COMPLETE -> invocationHelper.newResponse(request, NO_CONTENT);
+         default -> throw Log.REST.backupDeleteFailed();
+      };
    }
 }

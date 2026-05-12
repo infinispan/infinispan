@@ -231,13 +231,16 @@ public class CacheResource extends AbstractContainerResource {
             .rebatchRequests(batchSize)
             .map(entry -> {
                Object key = keyMarshalling ? unmarshall(entry.key, userMarshaller) : scm.getKeyWrapper().wrap(entry.key);
-               Object value = valueMarshalling ? unmarshall(entry.value, userMarshaller) : scm.getValueWrapper().wrap(entry.value);
                Metadata metadata = unmarshall(entry.metadata, persistenceMarshaller);
+               boolean multimapMetadata = metadata instanceof MetaParamsInternalMetadata;
+               Object value = multimapMetadata
+                     ? unmarshall(entry.value, persistenceMarshaller)
+                     : valueMarshalling
+                        ? unmarshall(entry.value, userMarshaller)
+                        : scm.getValueWrapper().wrap(entry.value);
                Metadata internalMetadataImpl = new InternalMetadataImpl(metadata, entry.created, entry.lastUsed);
 
                PutKeyValueCommand cmd = commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key),
-                     internalMetadataImpl, FlagBitSets.IGNORE_RETURN_VALUES);
-               commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key),
                      internalMetadataImpl, FlagBitSets.IGNORE_RETURN_VALUES);
                cmd.setInternalMetadata(entry.internalMetadata);
                return cmd;
@@ -295,10 +298,10 @@ public class CacheResource extends AbstractContainerResource {
                   // TODO Handle this with proper metadata inspection.
                   boolean multimapMetadata = e.getMetadata() instanceof MetaParamsInternalMetadata;
                   be.key = keyMarshalling ? marshall(e.getKey(), userMarshaller) : (byte[]) scm.getKeyWrapper().unwrap(e.getKey());
-                  be.value = valueMarshalling
-                        ? marshall(e.getValue(), userMarshaller)
-                        : multimapMetadata
-                           ? marshall(e.getValue(), persistenceMarshaller)
+                  be.value = multimapMetadata
+                        ? marshall(e.getValue(), persistenceMarshaller)
+                        : valueMarshalling
+                           ? marshall(e.getValue(), userMarshaller)
                            : (byte[]) scm.getValueWrapper().unwrap(e.getValue());
                   be.metadata = marshall(e.getMetadata(), persistenceMarshaller);
                   be.internalMetadata = e.getInternalMetadata();
