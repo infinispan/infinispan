@@ -506,6 +506,22 @@ class CacheRequestProcessor extends BaseRequestProcessor {
             .whenCompleteAsync((nil, throwable) -> handleGenericResponse(header, throwable, span), channel.eventLoop());
    }
 
+   void removeAll(HotRodHeader header, Subject subject, Set<?> keys) {
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      InfinispanSpan<Void> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
+      try (var ignored = span.makeCurrent()) {
+         removeAllInternal(header, cache, keys, span);
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   private void removeAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Set<?> keys,
+                                  InfinispanSpan<Void> span) {
+      cache.removeAllAsync((Set<byte[]>) keys)
+            .whenCompleteAsync((nil, throwable) -> handleGenericResponse(header, throwable, span), channel.eventLoop());
+   }
+
    private void handleGenericResponse(HotRodHeader header, Throwable throwable, InfinispanSpan<Void> span) {
       try {
          if (throwable != null) {

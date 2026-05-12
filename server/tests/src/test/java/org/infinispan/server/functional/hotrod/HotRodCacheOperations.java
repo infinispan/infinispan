@@ -11,6 +11,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -351,6 +353,63 @@ public class HotRodCacheOperations<K, V> {
       CompletableFuture<V> f = cache.removeAsync(k);
       testFutureWithListener(generator, f, v3);
       assertNull(cache.get(k));
+   }
+
+   @ParameterizedTest
+   @ArgumentsSource(ArgsProvider.class)
+   public void testRemoveAll(ProtocolVersion protocolVersion, KeyValueGenerator<K, V> generator) {
+      RemoteCache<K, V> cache = remoteCache(protocolVersion);
+      Set<K> keys = new HashSet<>();
+      for (int i = 0; i < 5; i++) {
+         K key = generator.key(i);
+         keys.add(key);
+         cache.put(key, generator.value(i));
+      }
+      assertEquals(5, cache.size());
+      cache.removeAll(keys);
+      assertEquals(0, cache.size());
+      for (K key : keys) {
+         assertNull(cache.get(key));
+      }
+   }
+
+   @ParameterizedTest
+   @ArgumentsSource(ArgsProvider.class)
+   public void testRemoveAllAsync(ProtocolVersion protocolVersion, KeyValueGenerator<K, V> generator) throws Exception {
+      RemoteCache<K, V> cache = remoteCache(protocolVersion);
+      Set<K> keys = new HashSet<>();
+      for (int i = 0; i < 5; i++) {
+         K key = generator.key(i);
+         keys.add(key);
+         cache.put(key, generator.value(i));
+      }
+      assertEquals(5, cache.size());
+      CompletableFuture<Void> f = cache.removeAllAsync(keys);
+      assertNotNull(f);
+      f.get();
+      assertTrue(f.isDone());
+      assertEquals(0, cache.size());
+   }
+
+   @ParameterizedTest
+   @ArgumentsSource(ArgsProvider.class)
+   public void testRemoveAllPartial(ProtocolVersion protocolVersion, KeyValueGenerator<K, V> generator) {
+      RemoteCache<K, V> cache = remoteCache(protocolVersion);
+      for (int i = 0; i < 10; i++) {
+         cache.put(generator.key(i), generator.value(i));
+      }
+      Set<K> keysToRemove = new HashSet<>();
+      for (int i = 0; i < 5; i++) {
+         keysToRemove.add(generator.key(i));
+      }
+      cache.removeAll(keysToRemove);
+      assertEquals(5, cache.size());
+      for (int i = 0; i < 5; i++) {
+         assertNull(cache.get(generator.key(i)));
+      }
+      for (int i = 5; i < 10; i++) {
+         assertNotNull(cache.get(generator.key(i)));
+      }
    }
 
    @ParameterizedTest
