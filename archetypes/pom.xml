@@ -59,6 +59,10 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
+                <excludes>
+                    <exclude>archetype-resources/pom.xml</exclude>
+                    <exclude>archetype-resources/src/main/resources/*.xml</exclude>
+                </excludes>
             </resource>
         </resources>
         <extensions>
