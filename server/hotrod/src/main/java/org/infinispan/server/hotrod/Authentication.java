@@ -100,6 +100,10 @@ public class Authentication extends BaseRequestProcessor {
             throw log.invalidMech(mech);
          }
       }
+      if (saslServer.isComplete()) {
+         authComplete(header, null);
+         return;
+      }
       byte[] serverChallenge = saslServer.evaluateResponse(response);
       if (saslServer.isComplete()) {
          authComplete(header, serverChallenge);
