@@ -1,10 +1,10 @@
 package org.infinispan.commons.configuration.attributes;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -18,7 +18,7 @@ import org.infinispan.commons.logging.Log;
  * {@link AttributeDefinition}. An attribute contains an optional value (or defers to its AttributeDefinition for the
  * default value). It is possible to determine whether a value has been changed with respect to its initial value. An
  * Attribute remains modifiable until it is protected. At which point it can only be modified if its AttributeDefinition
- * allows it to be mutable. Additionally it is possible to register listeners when values change so that code can react
+ * allows it to be mutable. Additionally, it is possible to register listeners when values change so that code can react
  * to these changes.
  *
  * @author Tristan Tarrant
@@ -29,7 +29,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
    private T value;
    private boolean protect;
    private boolean modified;
-   private List<AttributeListener<T>> listeners;
+   private volatile List<AttributeListener<T>> listeners;
 
    Attribute(AttributeDefinition<T> definition) {
       this.definition = definition;
@@ -115,8 +115,12 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       if (isImmutable() && isProtect()) {
          throw new UnsupportedOperationException();
       }
-      if (listeners == null) {
-         listeners = new ArrayList<>();
+      if (this.listeners == null) {
+         synchronized (this) {
+            if (this.listeners == null) {
+               this.listeners = new CopyOnWriteArrayList<>();
+            }
+         }
       }
       listeners.add(listener);
       return this;
@@ -130,7 +134,9 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
    }
 
    public Attribute<T> removeListener(Predicate<AttributeListener<T>> filter) {
-      listeners.removeIf(filter);
+      if (listeners != null) {
+         listeners.removeIf(filter);
+      }
       return this;
    }
 
