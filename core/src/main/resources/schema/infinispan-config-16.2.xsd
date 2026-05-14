@@ -363,6 +363,14 @@
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
+                <xs:attribute name="dynamic-resize" type="xs:boolean" default="false">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Enables dynamic resizing of this container based on JVM memory pressure.
+                      Requires the memory-monitor to be enabled. Default is false.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
               </xs:complexType>
             </xs:element>
             <xs:element name="max-size-container">
@@ -384,6 +392,14 @@
                     <xs:documentation>
                       Sets the maximum size of the memory container in bytes.
                       The value can be a number or a string ending with KB, MB, GB, TB, PB (e.g., "10MB").
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="dynamic-resize" type="xs:boolean" default="false">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Enables dynamic resizing of this container based on JVM memory pressure.
+                      Requires the memory-monitor to be enabled. Default is false.
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>

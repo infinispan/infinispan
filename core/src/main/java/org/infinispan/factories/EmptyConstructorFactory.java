@@ -3,6 +3,7 @@ package org.infinispan.factories;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.container.impl.DynamicMemoryResizer;
 import org.infinispan.container.impl.SharedContainerMaps;
 import org.infinispan.container.versioning.RankCalculator;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -56,7 +57,8 @@ import org.infinispan.xsite.events.XSiteEventsManagerImpl;
       GlobalStateManager.class, GlobalConfigurationManager.class,
       SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class,
       RankCalculator.class, EventLoggerNotifier.class, PrincipalRoleMapper.class, RolePermissionMapper.class,
-      XSiteCacheMapper.class, XSiteEventsManager.class, SharedContainerMaps.class, StateTransferTracker.class,
+      XSiteCacheMapper.class, XSiteEventsManager.class, SharedContainerMaps.class, DynamicMemoryResizer.class,
+      StateTransferTracker.class,
 })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -111,6 +113,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
                NoOpXSiteEventsManager.INSTANCE;
       } else if (componentName.equals(SharedContainerMaps.class.getName())) {
          return new SharedContainerMaps();
+      } else if (componentName.equals(DynamicMemoryResizer.class.getName())) {
+         return new DynamicMemoryResizer();
       } else if (componentName.equals(StateTransferTracker.class.getName())) {
          return new StateTransferTracker();
       }

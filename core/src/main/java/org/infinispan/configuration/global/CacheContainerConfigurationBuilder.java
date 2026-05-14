@@ -8,6 +8,7 @@ import static org.infinispan.configuration.global.CacheContainerConfiguration.NA
 import static org.infinispan.configuration.global.CacheContainerConfiguration.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.STATISTICS;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.ZERO_CAPACITY_NODE;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -243,6 +244,13 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
          throw e;
       });
       containerMaps.values().forEach(ContainerMemoryConfigurationBuilder::validate);
+      boolean memoryMonitorEnabled = memoryMonitor.attributes()
+            .attribute(GlobalMemoryMonitorConfiguration.ENABLED).get();
+      for (Map.Entry<String, ContainerMemoryConfigurationBuilder> entry : containerMaps.entrySet()) {
+         if (entry.getValue().dynamicResize() && !memoryMonitorEnabled) {
+            throw CONFIG.dynamicResizeRequiresMemoryMonitor(entry.getKey());
+         }
+      }
    }
 
    @Override

@@ -1,0 +1,15 @@
+infinispan:
+  cacheContainer:
+    memoryMonitor:
+      enabled: true
+      memoryThreshold: 0.85
+      gcPressureThreshold: 0.20
+    evictionContainers:
+      maxSizeContainer:
+        - name: "my-container"
+          size: "1GB"
+          dynamicResize: true
+    distributedCache:
+      "my-cache":
+        memory:
+          evictionContainer: "my-container"

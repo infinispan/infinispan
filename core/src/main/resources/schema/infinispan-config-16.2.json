@@ -621,6 +621,13 @@
         "size": {
           "type": "string",
           "description": "Sets the maximum size of the memory container (e.g. '23MB')."
+        },
+        "dynamic-resize": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Enables dynamic resizing of the eviction container based on JVM memory pressure. Requires the memory monitor to be enabled."
         }
       },
       "required": [

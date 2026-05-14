@@ -59,6 +59,7 @@ public enum Attribute {
     DEFAULT_MAX_RESULTS,
     DESCRIPTION,
     DOMAIN,
+    DYNAMIC_RESIZE,
     ENABLED,
     ENCODER,
     EXECUTOR,

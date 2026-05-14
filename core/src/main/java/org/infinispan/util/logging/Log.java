@@ -2452,4 +2452,26 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Stopping all caches in cache container", id = 720)
    void stoppingAllCaches();
+
+   @Message(value = "Container '%s' has dynamic-resize enabled but the memory-monitor is disabled. " +
+         "Enable the memory-monitor or disable dynamic-resize.", id = 721)
+   CacheConfigurationException dynamicResizeRequiresMemoryMonitor(String containerName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Shared container '%s' resized from %d to %d", id = 722)
+   void containerResized(String containerName, long oldCapacity, long newCapacity);
+
+   @LogMessage(level = WARN)
+   @Message(value = "All shared containers have reached their minimum floor capacity", id = 723)
+   void containerAtFloor();
+
+   @LogMessage(level = INFO)
+   @Message(value = "All shared containers have recovered to their original capacity", id = 724)
+   void allContainersRecovered();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cache uses shared container '%s' with dynamic-resize and passivation enabled. " +
+         "When the container shrinks under memory pressure, evicted entries must be persisted to the " +
+         "store, which may increase memory churn and reduce the effectiveness of the resize.", id = 725)
+   void dynamicResizeWithPassivation(String containerName);
 }
