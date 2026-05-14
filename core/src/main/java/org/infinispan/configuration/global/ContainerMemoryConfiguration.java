@@ -10,9 +10,10 @@ import org.infinispan.configuration.parsing.Attribute;
 public class ContainerMemoryConfiguration {
    public static final AttributeDefinition<String> MAX_SIZE = AttributeDefinition.builder(Attribute.MAX_SIZE, null, String.class).matcher((a1, a2) -> maxSizeToBytes(a1.get()) == maxSizeToBytes(a2.get())).build();
    public static final AttributeDefinition<Long> MAX_COUNT = AttributeDefinition.builder(Attribute.MAX_COUNT, -1L).build();
+   public static final AttributeDefinition<Boolean> DYNAMIC_RESIZE = AttributeDefinition.builder(Attribute.DYNAMIC_RESIZE, false).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ContainerMemoryConfiguration.class, MAX_SIZE, MAX_COUNT);
+      return new AttributeSet(ContainerMemoryConfiguration.class, MAX_SIZE, MAX_COUNT, DYNAMIC_RESIZE);
    }
 
    protected static long maxSizeToBytes(String maxSizeStr) {
@@ -59,6 +60,10 @@ public class ContainerMemoryConfiguration {
    public void maxCount(long maxCount) {
       if (!isCountBounded()) throw CONFIG.cannotChangeMaxCount();
       attributes.attribute(MAX_COUNT).set(maxCount);
+   }
+
+   public boolean dynamicResize() {
+      return attributes.attribute(DYNAMIC_RESIZE).get();
    }
 
    private boolean isSizeBounded() {
