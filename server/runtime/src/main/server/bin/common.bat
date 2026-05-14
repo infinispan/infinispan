@@ -39,7 +39,7 @@ if "%JAVA_HOME%" == "" (
    set "JAVA=%JAVA_HOME%\bin\java"
 )
 
-for /F "tokens=3" %%V in ('java -version 2^>^&1 ^| findstr /i "version"') do (
+for /F "tokens=3" %%V in ('"%JAVA%" -version 2^>^&1 ^| findstr /i "version"') do (
    set "VERSION=%%V"
 )
 set "VERSION=%VERSION:"=,%"
@@ -47,10 +47,10 @@ for /F "delims=., tokens=1" %%a in ("%VERSION%") do (
    set "JAVA_VERSION=%%a"
 )
 
-if %JAVA_VERSION% geq 24 (
+if defined JAVA_VERSION if %JAVA_VERSION% geq 24 (
     set "JAVA_OPTS=--enable-native-access=ALL-UNNAMED %JAVA_OPTS%"
 )
-if %JAVA_VERSION% geq 25 (
+if defined JAVA_VERSION if %JAVA_VERSION% geq 25 (
    set "JAVA_OPTS=-XX:+UseCompactObjectHeaders %JAVA_OPTS%"
 )
 
