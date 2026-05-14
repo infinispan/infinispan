@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -152,5 +154,140 @@ public class MemoryMonitorTest {
       monitor.reset();
       assertFalse(monitor.isMemoryLow());
       assertFalse(monitor.isGcPressureExceeded());
+   }
+
+   @Test
+   public void testListenerGcPressureHighCallback() {
+      monitor.setGcPressureWindow(10_000);
+      monitor.setGcPressureThreshold(0.20);
+
+      AtomicInteger highCount = new AtomicInteger();
+      monitor.addListener(new CountingListener(null, null, highCount, null), Runnable::run);
+
+      monitor.recordGcEvent(100_000, 3000);
+      assertEquals(1, highCount.get());
+
+      // Second event while still pressured should not re-fire
+      monitor.recordGcEvent(101_000, 3000);
+      assertEquals(1, highCount.get());
+   }
+
+   @Test
+   public void testListenerGcPressureRelievedCallback() {
+      monitor.setGcPressureWindow(10_000);
+      monitor.setGcPressureThreshold(0.20);
+
+      AtomicInteger relievedCount = new AtomicInteger();
+      monitor.addListener(new CountingListener(null, null, null, relievedCount), Runnable::run);
+
+      // Trigger pressure
+      monitor.recordGcEvent(100_000, 3000);
+      assertTrue(monitor.isGcPressureExceeded());
+
+      // Pressure clears after window passes
+      monitor.recordGcEvent(120_000, 10);
+      assertFalse(monitor.isGcPressureExceeded());
+      assertEquals(1, relievedCount.get());
+   }
+
+   @Test
+   public void testListenerMemoryLowCallback() {
+      AtomicInteger lowCount = new AtomicInteger();
+      monitor.addListener(new CountingListener(lowCount, null, null, null), Runnable::run);
+
+      monitor.simulateMemoryLow();
+      assertTrue(monitor.isMemoryLow());
+      assertEquals(1, lowCount.get());
+
+      // Second call should not re-fire
+      monitor.simulateMemoryLow();
+      assertEquals(1, lowCount.get());
+   }
+
+   @Test
+   public void testListenerMemoryRecoveredCallback() {
+      AtomicInteger recoveredCount = new AtomicInteger();
+      monitor.addListener(new CountingListener(null, recoveredCount, null, null), Runnable::run);
+
+      monitor.simulateMemoryLow();
+      assertTrue(monitor.isMemoryLow());
+
+      monitor.simulateMemoryRecovered();
+      assertFalse(monitor.isMemoryLow());
+      assertEquals(1, recoveredCount.get());
+   }
+
+   @Test
+   public void testRemoveListener() {
+      AtomicInteger count = new AtomicInteger();
+      MemoryMonitor.Listener listener = new CountingListener(count, null, null, null);
+
+      monitor.addListener(listener, Runnable::run);
+      monitor.simulateMemoryLow();
+      assertEquals(1, count.get());
+
+      monitor.removeListener(listener);
+      monitor.simulateMemoryRecovered();
+      monitor.simulateMemoryLow();
+      assertEquals(1, count.get());
+   }
+
+   @Test
+   public void testGcCompletedCallback() {
+      AtomicInteger completedCount = new AtomicInteger();
+      monitor.addListener(new CountingListener(null, null, null, null, completedCount), Runnable::run);
+
+      monitor.recordGcEvent(100_000, 100);
+      monitor.recordGcEvent(101_000, 200);
+      monitor.recordGcEvent(102_000, 50);
+      assertEquals(3, completedCount.get());
+   }
+
+   private static class CountingListener implements MemoryMonitor.Listener {
+      private final AtomicInteger memoryLow;
+      private final AtomicInteger memoryRecovered;
+      private final AtomicInteger gcPressureHigh;
+      private final AtomicInteger gcPressureRelieved;
+      private final AtomicInteger gcCompleted;
+
+      CountingListener(AtomicInteger memoryLow, AtomicInteger memoryRecovered,
+                       AtomicInteger gcPressureHigh, AtomicInteger gcPressureRelieved) {
+         this(memoryLow, memoryRecovered, gcPressureHigh, gcPressureRelieved, null);
+      }
+
+      CountingListener(AtomicInteger memoryLow, AtomicInteger memoryRecovered,
+                       AtomicInteger gcPressureHigh, AtomicInteger gcPressureRelieved,
+                       AtomicInteger gcCompleted) {
+         this.memoryLow = memoryLow;
+         this.memoryRecovered = memoryRecovered;
+         this.gcPressureHigh = gcPressureHigh;
+         this.gcPressureRelieved = gcPressureRelieved;
+         this.gcCompleted = gcCompleted;
+      }
+
+      @Override
+      public void onMemoryLow() {
+         if (memoryLow != null) memoryLow.incrementAndGet();
+      }
+
+      @Override
+      public void onMemoryRecovered() {
+         if (memoryRecovered != null) memoryRecovered.incrementAndGet();
+      }
+
+      @Override
+      public void onGcPressureHigh() {
+         if (gcPressureHigh != null) gcPressureHigh.incrementAndGet();
+      }
+
+      @Override
+      public void onGcPressureRelieved() {
+         if (gcPressureRelieved != null) gcPressureRelieved.incrementAndGet();
+      }
+
+      @Override
+      public void onGcCompleted() {
+         if (gcCompleted != null) gcCompleted.incrementAndGet();
+      }
    }
 }

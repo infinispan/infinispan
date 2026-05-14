@@ -23,6 +23,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalMemoryMonitorConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
+import org.infinispan.container.impl.DynamicMemoryResizer;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -154,6 +155,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.getComponent(XSiteEventsManager.class);
 
          basicComponentRegistry.getComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, ScheduledExecutorService.class);
+         basicComponentRegistry.getComponent(DynamicMemoryResizer.class);
 
          cacheComponents();
       } catch (Exception e) {

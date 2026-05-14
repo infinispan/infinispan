@@ -1,0 +1,96 @@
+[id='configuring-dynamic-eviction_{context}']
+= Configuring dynamic eviction
+
+Dynamic eviction automatically adjusts eviction container capacity in response to JVM memory pressure.
+When the memory monitor detects low memory or excessive garbage collection, {brandname} shrinks the container to free heap space by evicting entries.
+When memory pressure subsides, {brandname} gradually restores the container to its original configured capacity.
+
+When using a shared eviction container, size-based eviction (`max-size-container`) is generally preferred over count-based eviction (`max-count-container`).
+A shared container may hold entries of varying sizes across different caches, so a count-based limit may not accurately reflect the actual memory usage required.
+Size-based eviction tracks the an approximate size of each entry individually, providing a more accurate representation of memory consumption.
+
+NOTE: Dynamic eviction is not guaranteed to prevent `OutOfMemoryError` exceptions.
+It is designed to ease memory pressure during situations such as operations that temporarily require additional memory or a large influx of requests.
+
+Dynamic eviction requires:
+
+* A shared eviction container (`max-count-container` or `max-size-container`) with `dynamic-resize="true"`.
+* The memory monitor enabled on the cache container.
+
+.How it works
+
+{brandname} monitors JVM memory using the memory monitor.
+When low memory or high GC pressure is detected, the dynamic resizer transitions through the following states:
+
+Stable::
+Normal operation.
+The container uses its originally configured capacity.
+
+Shrinking::
+Memory pressure detected.
+The container capacity is reduced by 20% of the original capacity per step, down to a floor of 10% of the original capacity.
+A 5-second cooldown between shrink steps prevents rapid thrashing.
+After each garbage collection, {brandname} rechecks whether further shrinking is needed.
+
+Growing::
+Memory pressure has subsided.
+The container capacity is increased by 10% of the original capacity per step, with exponential backoff between steps (starting at 10 seconds, up to 30 seconds).
+If memory pressure returns during growth, {brandname} transitions back to shrinking.
+Growth continues until the container reaches its original configured capacity.
+
+.Passivation warning
+When a cache uses a dynamically resized container with passivation enabled, evicted entries must be written to the persistence store.
+Under memory pressure this creates additional memory churn that can reduce the effectiveness of the resize.
+{brandname} logs a warning at startup when this combination is detected.
+
+.Procedure
+
+. Enable the memory monitor on the cache container.
+. Add the `dynamic-resize` attribute to your eviction container.
+. Reference the eviction container in your cache configuration.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/dynamic_eviction_container.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/dynamic_eviction_container.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+]
+----
+include::yaml/dynamic_eviction_container.yaml[]
+----
+
+.Dynamic eviction attributes
+[cols="1,1,3"]
+|===
+| Attribute | Default | Description
+
+| `dynamic-resize`
+| `false`
+| Enables dynamic resizing of the eviction container based on JVM memory pressure.
+  Requires the memory monitor to be enabled.
+|===
+
+[discrete]
+== Programmatic configuration
+
+[source,java,options="nowrap"]
+----
+GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+global.memoryMonitor()
+      .enabled(true);
+global.containerMemoryConfiguration("my-container")
+      .maxSize("1GB")
+      .dynamicResize(true);
+
+ConfigurationBuilder cache = new ConfigurationBuilder();
+cache.memory()
+     .containerMemory("my-container");
+----

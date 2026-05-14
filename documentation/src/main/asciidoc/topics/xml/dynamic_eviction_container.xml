@@ -1,0 +1,12 @@
+<cache-container>
+   <memory-monitor enabled="true"
+                   memory-threshold="0.85"
+                   gc-pressure-threshold="0.20" />
+   <eviction-containers>
+      <max-size-container name="my-container" size="1GB" dynamic-resize="true"/>
+   </eviction-containers>
+   ...
+   <distributed-cache name="my-cache">
+      <memory eviction-container="my-container"/>
+   </distributed-cache>
+</cache-container>

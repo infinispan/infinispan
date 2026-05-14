@@ -12,7 +12,11 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
@@ -55,12 +59,60 @@ public class MemoryMonitor {
    private volatile double gcPressureThreshold;
    private volatile long gcPressureWindowMs;
 
+   private final AtomicLong gcGeneration = new AtomicLong();
+
    private record GcEvent(long timestampMs, long durationMs) {}
    private final Deque<GcEvent> gcEvents = new ConcurrentLinkedDeque<>();
 
    private final List<ListenerRegistration> registeredListeners = new ArrayList<>();
 
    private record ListenerRegistration(NotificationEmitter emitter, NotificationListener listener) {}
+
+   /**
+    * Receives notifications when the monitor detects memory state transitions. Each callback fires
+    * exactly once per transition — repeated signals in the same state are suppressed.
+    * <p>
+    * Callbacks are dispatched on the {@link java.util.concurrent.Executor} supplied at registration
+    * time. See {@link #addListener(Listener, Executor)} for details.
+    */
+   public interface Listener {
+      /**
+       * Invoked when old generation heap usage exceeds the configured memory threshold. Fires once
+       * when the threshold is first crossed; subsequent JMX notifications while already in the low
+       * memory state are suppressed.
+       */
+      void onMemoryLow();
+
+      /**
+       * Invoked after a GC cycle when old generation usage has dropped back below the memory
+       * threshold, following a prior {@link #onMemoryLow()} notification.
+       */
+      void onMemoryRecovered();
+
+      /**
+       * Invoked when the ratio of time spent in GC over the rolling pressure window exceeds the
+       * configured GC pressure threshold. Fires once on the transition; further GC events while
+       * pressure remains high are suppressed.
+       */
+      void onGcPressureHigh();
+
+      /**
+       * Invoked when a GC event causes the rolling pressure ratio to drop back below the threshold,
+       * following a prior {@link #onGcPressureHigh()} notification.
+       */
+      void onGcPressureRelieved();
+
+      /**
+       * Invoked after every GC event, regardless of alert state. Useful for listeners that need to
+       * recheck their own state after GC has reclaimed memory — for example, to verify whether a
+       * previous corrective action (like shrinking a container) was sufficient.
+       */
+      default void onGcCompleted() {}
+   }
+
+   private record CallbackRegistration(Listener listener, Executor executor) {}
+
+   private final List<CallbackRegistration> callbackListeners = new CopyOnWriteArrayList<>();
 
    private final MemoryPoolMXBean oldGenPool;
 
@@ -103,8 +155,10 @@ public class MemoryMonitor {
 
       NotificationListener listener = (n, hb) -> {
          if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(n.getType())) {
-            lowMemoryAlert.set(true);
-            CONFIG.lowMemoryDetected();
+            if (lowMemoryAlert.compareAndSet(false, true)) {
+               CONFIG.lowMemoryDetected();
+               fireCallback(Listener::onMemoryLow);
+            }
          }
       };
       emitter.addNotificationListener(listener, null, null);
@@ -149,17 +203,24 @@ public class MemoryMonitor {
          }
       }
       registeredListeners.clear();
+      callbackListeners.clear();
    }
 
    // Visible for testing
-   void recordGcEvent(long timestampMs, long durationMs) {
+   public void recordGcEvent(long timestampMs, long durationMs) {
+      gcGeneration.incrementAndGet();
       gcEvents.addLast(new GcEvent(timestampMs, durationMs));
       evictOldEvents(timestampMs);
       if (computeGcPressure(timestampMs) >= gcPressureThreshold) {
-         gcPressureAlert.compareAndSet(false, true);
+         if (gcPressureAlert.compareAndSet(false, true)) {
+            fireCallback(Listener::onGcPressureHigh);
+         }
       } else {
-         gcPressureAlert.set(false);
+         if (gcPressureAlert.compareAndSet(true, false)) {
+            fireCallback(Listener::onGcPressureRelieved);
+         }
       }
+      fireCallback(Listener::onGcCompleted);
    }
 
    private void evictOldEvents(long now) {
@@ -186,7 +247,9 @@ public class MemoryMonitor {
          long used = oldGenPool.getUsage().getUsed();
          long max = oldGenPool.getUsage().getMax();
          if (max > 0 && (double) used / max < memoryThresholdPercentage) {
-            lowMemoryAlert.set(false);
+            if (lowMemoryAlert.compareAndSet(true, false)) {
+               fireCallback(Listener::onMemoryRecovered);
+            }
          }
       }
    }
@@ -212,6 +275,48 @@ public class MemoryMonitor {
          }
       }
       return fallback;
+   }
+
+   /**
+    * Registers a listener that will be notified of memory state transitions.
+    * <p>
+    * Callbacks are dispatched on the provided {@code executor} rather than on the JMX notification
+    * thread. This is required because JMX notification delivery is synchronous — blocking in a
+    * callback would stall all subsequent notifications for the entire JVM. The executor also
+    * decouples the listener's concurrency model from the monitor's internals.
+    *
+    * @param listener the listener to notify
+    * @param executor the executor on which callbacks will be invoked
+    */
+   public void addListener(Listener listener, Executor executor) {
+      callbackListeners.add(new CallbackRegistration(listener, executor));
+   }
+
+   /**
+    * Removes a previously registered listener.
+    */
+   public void removeListener(Listener listener) {
+      callbackListeners.removeIf(reg -> reg.listener() == listener);
+   }
+
+   private void fireCallback(Consumer<Listener> event) {
+      for (CallbackRegistration reg : callbackListeners) {
+         reg.executor().execute(() -> event.accept(reg.listener()));
+      }
+   }
+
+   // Visible for testing
+   public void simulateMemoryLow() {
+      if (lowMemoryAlert.compareAndSet(false, true)) {
+         fireCallback(Listener::onMemoryLow);
+      }
+   }
+
+   // Visible for testing
+   public void simulateMemoryRecovered() {
+      if (lowMemoryAlert.compareAndSet(true, false)) {
+         fireCallback(Listener::onMemoryRecovered);
+      }
    }
 
    /**
@@ -312,5 +417,13 @@ public class MemoryMonitor {
 
    public long getGcPressureWindow() {
       return gcPressureWindowMs;
+   }
+
+   /**
+    * Returns a monotonically increasing counter incremented on each GC event. Useful for detecting
+    * whether a GC has occurred since a previous snapshot.
+    */
+   public long getGcGeneration() {
+      return gcGeneration.get();
    }
 }

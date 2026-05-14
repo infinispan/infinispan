@@ -16,6 +16,7 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Policy;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 
 @Scope(Scopes.GLOBAL)
@@ -34,6 +35,17 @@ public class SharedCaffeineMap<K, V> {
 
    public ConcurrentMap<String, EvictionListener<K, V>> getListenerMap() {
       return listenerMap;
+   }
+
+   public void resize(long newSize) {
+      cache.policy().eviction()
+            .ifPresent(eviction -> eviction.setMaximum(newSize));
+   }
+
+   public long capacity() {
+      return cache.policy().eviction()
+            .map(Policy.Eviction::getMaximum)
+            .orElseThrow(UnsupportedOperationException::new);
    }
 
    public SharedCaffeineMap(long thresholdSize, boolean memoryBased) {
