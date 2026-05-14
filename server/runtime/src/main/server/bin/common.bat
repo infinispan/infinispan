@@ -112,7 +112,7 @@ goto ARGS_LOOP_START
 
 :ARGS_LOOP_END
 if not exist "%ISPN_LOG_DIR%\" (
-   mkdir %ISPN_LOG_DIR%
+   mkdir "%ISPN_LOG_DIR%"
 )
 set "PREPEND_JAVA_OPTS="
 set "JAVA_OPTS=--add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED %JAVA_OPTS% %JAVA_OPTS_EXTRA%"
