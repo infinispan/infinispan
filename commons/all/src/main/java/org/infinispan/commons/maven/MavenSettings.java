@@ -68,7 +68,11 @@ public final class MavenSettings {
    }
 
    public static MavenSettings init() {
-      return init(null);
+      if (mavenSettings != null) {
+         return mavenSettings;
+      } else {
+         return init(null);
+      }
    }
 
    public static MavenSettings init(Path settingsPath) {
