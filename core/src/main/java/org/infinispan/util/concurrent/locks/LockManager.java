@@ -1,7 +1,9 @@
 package org.infinispan.util.concurrent.locks;
 
 import java.util.Collection;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
@@ -51,8 +53,9 @@ public interface LockManager {
     *
     * @param key       key to unlock.
     * @param lockOwner the owner of the lock.
+    * @return any post-unlock listener suppliers that were registered for the lock owner.
     */
-   void unlock(Object key, Object lockOwner);
+   Collection<Supplier<CompletionStage<Void>>> unlock(Object key, Object lockOwner);
 
    /**
     * Same as {@link #unlock(Object, Object)} but for multiple keys.
@@ -61,8 +64,9 @@ public interface LockManager {
     * </p>
     * @param keys      keys to unlock.
     * @param lockOwner the owner of the lock.
+    * @return any post-unlock listener suppliers that were registered for the unlocked keys.
     */
-   void unlockAll(Collection<?> keys, Object lockOwner);
+   Collection<Supplier<CompletionStage<Void>>> unlockAll(Collection<?> keys, Object lockOwner);
 
    /**
     * Same as {@code unlockAll(context.getLockedKeys(), context.getKeyLockOwner();}.
@@ -70,8 +74,29 @@ public interface LockManager {
     * Note this method will <b>not</b> unlock a lock where the key is the lockOwner
     * </p>
     * @param context the context with the locked keys and the lock owner.
+    * @return any post-unlock listener suppliers that were registered for the unlocked keys.
     */
-   void unlockAll(InvocationContext context);
+   Collection<Supplier<CompletionStage<Void>>> unlockAll(InvocationContext context);
+
+   /**
+    * Registers a listener that will be returned when the current lock owner releases its locks via
+    * {@link #unlock(Object, Object)}, {@link #unlockAll(Collection, Object)}, or {@link #unlockAll(InvocationContext)}.
+    * <p>
+    * The key must currently be locked. If it is not, an {@link IllegalStateException} is thrown.
+    * The listener is associated with the current lock owner and will only be returned when that
+    * owner's locks are released.
+    * </p>
+    * <p>
+    * Note: registered listeners are not invoked when the operation that acquired the lock completes
+    * with an exception. In that case, the listeners are still drained from the map but are discarded
+    * by the interceptor chain.
+    * </p>
+    *
+    * @param key      the key that must be currently locked.
+    * @param listener a supplier that produces a {@link CompletionStage} to be awaited after unlock.
+    * @throws IllegalStateException if the key is not currently locked.
+    */
+   void addPostUnlockListener(Object key, Supplier<CompletionStage<Void>> listener);
 
    /**
     * Tests if the {@code lockOwner} owns a lock on the {@code key}.

@@ -18,13 +18,16 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration<HotRo
 
    public static final AttributeDefinition<String> PROXY_HOST = AttributeDefinition.builder(Attribute.EXTERNAL_HOST, null, String.class).immutable().build();
    public static final AttributeDefinition<Integer> PROXY_PORT = AttributeDefinition.builder(Attribute.EXTERNAL_PORT, -1).immutable().build();
+   public static final AttributeDefinition<Integer> LISTENER_BACKPRESSURE_HIGH_WATERMARK = AttributeDefinition.builder(Attribute.LISTENER_BACKPRESSURE_HIGH_WATERMARK, 100).build();
+   public static final AttributeDefinition<Integer> LISTENER_BACKPRESSURE_LOW_WATERMARK = AttributeDefinition.builder(Attribute.LISTENER_BACKPRESSURE_LOW_WATERMARK, 50).build();
+   public static final AttributeDefinition<Integer> LISTENER_MAX_QUEUE_SIZE = AttributeDefinition.builder(Attribute.LISTENER_MAX_QUEUE_SIZE, 512).build();
 
    private final TopologyCacheConfiguration topologyCache;
    private final EncryptionConfiguration encryption;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(HotRodServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(),
-            PROXY_HOST, PROXY_PORT);
+            PROXY_HOST, PROXY_PORT, LISTENER_BACKPRESSURE_HIGH_WATERMARK, LISTENER_BACKPRESSURE_LOW_WATERMARK, LISTENER_MAX_QUEUE_SIZE);
    }
 
    HotRodServerConfiguration(AttributeSet attributes,
@@ -71,6 +74,18 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration<HotRo
 
    public boolean networkPrefixOverride() {
       return topologyCache.networkPrefixOverride();
+   }
+
+   public int listenerBackpressureHighWatermark() {
+      return attributes.attribute(LISTENER_BACKPRESSURE_HIGH_WATERMARK).get();
+   }
+
+   public int listenerBackpressureLowWatermark() {
+      return attributes.attribute(LISTENER_BACKPRESSURE_LOW_WATERMARK).get();
+   }
+
+   public int listenerMaxQueueSize() {
+      return attributes.attribute(LISTENER_MAX_QUEUE_SIZE).get();
    }
 
    @Override

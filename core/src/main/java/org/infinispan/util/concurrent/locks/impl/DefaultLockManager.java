@@ -5,12 +5,16 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -67,6 +71,13 @@ public class DefaultLockManager implements LockManager {
    ScheduledExecutorService scheduler;
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    Executor nonBlockingExecutor;
+
+   private final ConcurrentMap<Object, List<Supplier<CompletionStage<Void>>>> postUnlockListeners = new ConcurrentHashMap<>();
+
+   private List<Supplier<CompletionStage<Void>>> drainListeners(Object lockOwner) {
+      List<Supplier<CompletionStage<Void>>> listeners = postUnlockListeners.remove(lockOwner);
+      return listeners != null ? listeners : Collections.emptyList();
+   }
 
    @Override
    public KeyAwareLockPromise lock(Object key, Object lockOwner, long time, TimeUnit unit) {
@@ -143,20 +154,21 @@ public class DefaultLockManager implements LockManager {
    }
 
    @Override
-   public void unlock(Object key, Object lockOwner) {
+   public Collection<Supplier<CompletionStage<Void>>> unlock(Object key, Object lockOwner) {
       if (log.isTraceEnabled()) {
          log.tracef("Release lock for key=%s. owner=%s", key, lockOwner);
       }
       lockContainer.release(key, lockOwner);
+      return drainListeners(lockOwner);
    }
 
    @Override
-   public void unlockAll(Collection<?> keys, Object lockOwner) {
+   public Collection<Supplier<CompletionStage<Void>>> unlockAll(Collection<?> keys, Object lockOwner) {
       if (log.isTraceEnabled()) {
          log.tracef("Release locks for keys=%s. owner=%s", toStr(keys), lockOwner);
       }
       if (keys.isEmpty()) {
-         return;
+         return Collections.emptyList();
       }
       for (Object key : keys) {
          // If the key is the lock owner that means it was explicitly locked, which can only be unlocked via the single
@@ -168,11 +180,14 @@ public class DefaultLockManager implements LockManager {
             lockContainer.release(key, lockOwner);
          }
       }
+      return drainListeners(lockOwner);
    }
 
    @Override
-   public void unlockAll(InvocationContext context) {
-      unlockAll(context.getLockedKeys(), context.getLockOwner());
+   public Collection<Supplier<CompletionStage<Void>>> unlockAll(InvocationContext context) {
+      // The first call drains all listeners for the lockOwner, so the second call for
+      // affectedKeys will always return empty — listeners are keyed by owner, not by key.
+      Collection<Supplier<CompletionStage<Void>>> listeners = unlockAll(context.getLockedKeys(), context.getLockOwner());
       context.clearLockedKeys();
       if (context instanceof TxInvocationContext<?>) {
          // this may be on overkill but if the TM's Transaction Reaper aborts a transaction and a lock is not acquired
@@ -181,6 +196,16 @@ public class DefaultLockManager implements LockManager {
          // leaving the lock acquired forever
          unlockAll(((TxInvocationContext<?>) context).getAffectedKeys(), context.getLockOwner());
       }
+      return listeners;
+   }
+
+   @Override
+   public void addPostUnlockListener(Object key, Supplier<CompletionStage<Void>> listener) {
+      Object owner = getOwner(key);
+      if (owner == null) {
+         throw new IllegalStateException("Cannot add post-unlock listener for key " + key + ": key is not locked");
+      }
+      postUnlockListeners.computeIfAbsent(owner, k -> Collections.synchronizedList(new ArrayList<>())).add(listener);
    }
 
    @Override
