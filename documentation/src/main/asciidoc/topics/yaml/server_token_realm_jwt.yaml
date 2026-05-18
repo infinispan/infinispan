@@ -1,0 +1,16 @@
+infinispan:
+  server:
+    security:
+      securityRealms:
+        - name: "default"
+          tokenRealm:
+            name: "token"
+            authServerUrl: "https://oauth-server/auth/"
+            clientId: "my-client"
+            principalClaim: "sub"
+            jwt:
+              issuer: "https://oauth-server/realms/my-realm"
+              audience: "account"
+    endpoints:
+      socketBinding: "default"
+      securityRealm: "default"

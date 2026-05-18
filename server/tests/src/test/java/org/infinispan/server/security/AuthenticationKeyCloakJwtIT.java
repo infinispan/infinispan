@@ -21,37 +21,36 @@ import org.testcontainers.utility.MountableFile;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
- * @since 10.0
+ * @since 16.2
  **/
-public class AuthenticationKeyCloakSSLIT extends AbstractAuthenticationKeyCloak {
+public class AuthenticationKeyCloakJwtIT extends AbstractAuthenticationKeyCloak {
 
    static final CertificateAuthority certificateAuthority = new CertificateAuthority();
 
    @RegisterExtension
    @Order(1)
-   public static KeycloakServerExtension KEYCLOAK =
-      new KeycloakServerExtension(
-         System.getProperty(TestSystemPropertyNames.KEYCLOAK_REALM, "keycloak/infinispan-keycloak-realm.json")
-      ).addBeforeListener(k -> {
-         try {
-            certificateAuthority.getCertificate("server", getContainerNetworkGateway(ContainerInfinispanServerDriver.NETWORK.getId()));
-            Path serverCertificate = certificateAuthority.exportCertificateWithKey("server", Paths.get(Testing.tmpDirectory(AuthenticationKeyCloakSSLIT.class.getName())), "secret".toCharArray(), CertificateAuthority.ExportType.PFX);
-            k.getKeycloakContainer()
+   public static KeycloakServerExtension KEYCLOAK = new KeycloakServerExtension(
+      System.getProperty(TestSystemPropertyNames.KEYCLOAK_REALM, "keycloak/infinispan-keycloak-realm.json")
+   ).addBeforeListener(k -> {
+      try {
+         certificateAuthority.getCertificate("server", getContainerNetworkGateway(ContainerInfinispanServerDriver.NETWORK.getId()), KEYCLOAK_HOSTNAME);
+         Path serverCertificate = certificateAuthority.exportCertificateWithKey("server", Paths.get(Testing.tmpDirectory(AuthenticationKeyCloakSSLIT.class.getName())), "secret".toCharArray(), CertificateAuthority.ExportType.PFX);
+         k.getKeycloakContainer()
                .withCopyFileToContainer(MountableFile.forHostPath(serverCertificate), "/opt/keycloak/conf/server.pfx")
                .withCommand("start-dev", "--import-realm", "--hostname", KEYCLOAK_HOSTNAME, "--https-key-store-file=/opt/keycloak/conf/server.pfx", "--https-key-store-password=secret");
-         } catch (IOException | GeneralSecurityException e) {
-            throw new RuntimeException(e);
-         }
-      });
+      } catch (IOException | GeneralSecurityException e) {
+         throw new RuntimeException(e);
+      }
+   });
 
    @RegisterExtension
    @Order(2)
    public static final InfinispanServerExtension SERVERS =
-      InfinispanServerExtensionBuilder.config("configuration/AuthenticationKeyCloakSSLTest.xml").certificateAuthority(certificateAuthority)
+      InfinispanServerExtensionBuilder.config("configuration/AuthenticationKeyCloakJwtTest.xml").certificateAuthority(certificateAuthority)
          .addListener(new KeycloakServerExtension.KeyCloakServerAddressListener(KEYCLOAK))
          .build();
 
-   public AuthenticationKeyCloakSSLIT() {
+   public AuthenticationKeyCloakJwtIT() {
       super(SERVERS);
    }
 

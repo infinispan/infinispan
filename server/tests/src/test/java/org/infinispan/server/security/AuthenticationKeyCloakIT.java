@@ -1,6 +1,6 @@
 package org.infinispan.server.security;
 
-import org.infinispan.server.test.core.KeyCloakServerExtension;
+import org.infinispan.server.test.core.KeycloakServerExtension;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -15,7 +15,7 @@ public class AuthenticationKeyCloakIT extends AbstractAuthenticationKeyCloak {
 
    @RegisterExtension
    @Order(1)
-   public static KeyCloakServerExtension KEYCLOAK = new KeyCloakServerExtension(
+   public static KeycloakServerExtension KEYCLOAK = new KeycloakServerExtension(
       System.getProperty(TestSystemPropertyNames.KEYCLOAK_REALM, "keycloak/infinispan-keycloak-realm.json")
    );
 
@@ -23,7 +23,7 @@ public class AuthenticationKeyCloakIT extends AbstractAuthenticationKeyCloak {
    @Order(2)
    public static final InfinispanServerExtension SERVERS =
       InfinispanServerExtensionBuilder.config("configuration/AuthenticationKeyCloakTest.xml")
-         .addListener(new KeyCloakServerExtension.KeyCloakServerAddressListener(KEYCLOAK))
+         .addListener(new KeycloakServerExtension.KeyCloakServerAddressListener(KEYCLOAK))
          .build();
 
    public AuthenticationKeyCloakIT() {
@@ -32,6 +32,6 @@ public class AuthenticationKeyCloakIT extends AbstractAuthenticationKeyCloak {
 
    @Override
    protected String getToken() {
-      return KEYCLOAK.getAccessTokenForCredentials(INFINISPAN_REALM, INFINISPAN_CLIENT_ID, INFINISPAN_CLIENT_SECRET, "admin", "adminPassword", null, null);
+      return KEYCLOAK.getOAuthToken(INFINISPAN_REALM, INFINISPAN_CLIENT_ID, INFINISPAN_CLIENT_SECRET, "admin", "adminPassword", null, null);
    }
 }
