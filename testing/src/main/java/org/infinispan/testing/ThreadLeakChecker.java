@@ -108,6 +108,7 @@ public class ThreadLeakChecker {
                       "|RMI RenewClean" +
                       "|RMI GC Daemon" +
                       "|RMI Scheduler" +
+                      "|localuser-challenge-cleanup" +
                       ").*");
    private static final Pattern ARQUILLIAN_CONSOLE_CONSUMER_REGEX = Pattern.compile("org\\.jboss(\\.as)?\\.arquillian\\.container[^$]+\\$ConsoleConsumer");
    private static final boolean ENABLED =

@@ -137,23 +137,37 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       domainBuilder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
 
       realms = new HashMap<>(realmProviders.size());
+      String localRealmName = null;
       for (RealmProvider provider : realmProviders) {
          SecurityRealm realm = provider.build(security, this, domainBuilder, properties);
          provider.applyFeatures(features);
          realms.put(provider.name(), realm);
          if (realm != null) {
             domainBuilder.addRealm(provider.name(), cacheable(realm)).build();
-            if (domainBuilder.getDefaultRealmName() == null) {
+            if (domainBuilder.getDefaultRealmName() == null && !(provider instanceof LocalRealmConfiguration)) {
                domainBuilder.setDefaultRealmName(provider.name());
             }
          }
+         if (provider instanceof LocalRealmConfiguration) {
+            localRealmName = provider.name();
+         }
+      }
+      // If no default realm was set (e.g. only local realm present), use the local realm
+      if (domainBuilder.getDefaultRealmName() == null && localRealmName != null) {
+         domainBuilder.setDefaultRealmName(localRealmName);
+      }
+      // Route the $local principal to the local realm so LOCALUSER auth works
+      // regardless of which realm is the default
+      if (localRealmName != null) {
+         String localRealm = localRealmName;
+         domainBuilder.setRealmMapper((principal, evidence) ->
+               "$local".equals(principal.getName()) ? localRealm : null);
       }
 
       SecurityDomain securityDomain = domainBuilder.build();
       if (features.contains(ServerSecurityRealm.Feature.TRUST)) {
          SSLConfiguration sslConfiguration = serverIdentitiesConfiguration.sslConfiguration();
-         SSLContextBuilder sslContextBuilder = sslConfiguration != null ? sslConfiguration.build(properties, features) : null;
-         sslContextBuilder.setSecurityDomain(securityDomain);
+         SSLContextBuilder sslContextBuilder = sslConfiguration != null ? sslConfiguration.build(properties, features).setSecurityDomain(securityDomain) : null;
          // Initialize the SSLContexts
          buildSSLContexts(sslContextBuilder);
       }

@@ -33,11 +33,12 @@
                                generate-self-signed-certificate-host="localhost"/>
                   </ssl>
                </server-identities-->
+               <local-realm/>
                <properties-realm/>
             </security-realm>
          </security-realms>
       </security>
 
-      <endpoints socket-binding="default" security-realm="default" />
+      <endpoints socket-binding="default" security-realm="default"/>
    </server>
 </infinispan>

@@ -65,7 +65,7 @@ public class AggregateRealmConfigurationBuilder implements RealmProviderBuilder<
    }
 
    @Override
-   public int compareTo(RealmProviderBuilder o) {
-      return 1; // Must be the last
+   public int sortOrder() {
+      return SORT_PENULTIMATE;
    }
 }
