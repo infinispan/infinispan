@@ -185,6 +185,9 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
             if (!path.contains(".")) return StaticContentResource.DEFAULT_RESOURCE;
             return path;
          }));
+
+         Path schemas = staticResources.getParent().resolve("docs").resolve("schema");
+         resourceManager.registerResource(rootContext, new StaticContentResource(invocationHelper, schemas, "schemas"));
       }
       if (adminEndpoint) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
