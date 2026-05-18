@@ -1,0 +1,7 @@
+<licenseSummary>
+   <knownLicenses>
+      <license name="bsd licence 3" url="http://opensource.org/licenses/BSD-3-Clause"/>
+   </knownLicenses>
+   <!-- required or it fails to parse -->
+   <dependencies/>
+</licenseSummary>
