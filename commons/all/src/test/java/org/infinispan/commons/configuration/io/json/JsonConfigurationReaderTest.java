@@ -1,8 +1,8 @@
 package org.infinispan.commons.configuration.io.json;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,7 +15,7 @@ import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.configuration.io.PropertyReplacer;
 import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
 import org.infinispan.commons.util.Version;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -68,8 +68,8 @@ public class JsonConfigurationReaderTest {
 
    private void assertLocation(JsonConfigurationReader json, int line, int col) {
       Location location = json.getLocation();
-      assertEquals("Line", line, location.getLineNumber());
-      assertEquals("Column", col, location.getColumnNumber());
+      assertEquals(line, location.getLineNumber(), "Line");
+      assertEquals(col, location.getColumnNumber(), "Column");
    }
 
    private void assertAttribute(JsonConfigurationReader json, String name, String value) {

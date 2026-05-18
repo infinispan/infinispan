@@ -1,11 +1,12 @@
 package org.infinispan.commons.util;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.BitSet;
 import java.util.HashSet;
@@ -15,7 +16,7 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author wburns
@@ -90,34 +91,34 @@ public class RangeSetTest {
       assertArrayEquals(new int[]{0, 1, 2, 3}, array);
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void add() throws Exception {
       RangeSet rs = new RangeSet(4);
-      rs.add(1);
+      assertThrows(UnsupportedOperationException.class, () -> rs.add(1));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void add1() throws Exception {
       RangeSet rs = new RangeSet(4);
-      rs.add(Integer.valueOf(1));
+      assertThrows(UnsupportedOperationException.class, () -> rs.add(Integer.valueOf(1)));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void set() throws Exception {
       RangeSet rs = new RangeSet(4);
-      rs.set(1);
+      assertThrows(UnsupportedOperationException.class, () -> rs.set(1));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void remove() throws Exception {
       RangeSet rs = new RangeSet(4);
-      rs.remove(1);
+      assertThrows(UnsupportedOperationException.class, () -> rs.remove(1));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void remove1() throws Exception {
       RangeSet rs = new RangeSet(4);
-      rs.remove(Integer.valueOf(1));
+      assertThrows(UnsupportedOperationException.class, () -> rs.remove(Integer.valueOf(1)));
    }
 
    @Test
@@ -145,91 +146,91 @@ public class RangeSetTest {
       assertTrue(rs.containsAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void addAll() throws Exception {
       RangeSet rs = new RangeSet(4);
 
       RangeSet rs2 = new RangeSet(5);
-      rs.addAll(rs2);
+      assertThrows(UnsupportedOperationException.class, () -> rs.addAll(rs2));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void addAll1() throws Exception {
       RangeSet rs = new RangeSet(4);
 
       SmallIntSet sis = new SmallIntSet();
-      rs.addAll(sis);
+      assertThrows(UnsupportedOperationException.class, () -> rs.addAll(sis));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void addAll2() throws Exception {
       Set<Integer> hashSet = new HashSet<>();
       hashSet.add(1);
       hashSet.add(4);
 
       RangeSet rs = new RangeSet(4);
-      rs.addAll(hashSet);
+      assertThrows(UnsupportedOperationException.class, () -> rs.addAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void removeAll() throws Exception {
       RangeSet rs = new RangeSet(4);
 
       RangeSet rs2 = new RangeSet(6);
 
-      rs.removeAll(rs2);
+      assertThrows(UnsupportedOperationException.class, () -> rs.removeAll(rs2));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void removeAll1() throws Exception {
       RangeSet rs = new RangeSet(5);
 
       SmallIntSet sis = new SmallIntSet();
 
-      rs.removeAll(sis);
+      assertThrows(UnsupportedOperationException.class, () -> rs.removeAll(sis));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void removeAll2() throws Exception {
       RangeSet rs = new RangeSet(4);
 
       Set<Integer> hashSet = new HashSet<>();
 
-      rs.removeAll(hashSet);
+      assertThrows(UnsupportedOperationException.class, () -> rs.removeAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void retainAll() throws Exception {
       RangeSet rs = new RangeSet(4);
 
       RangeSet rs2 = new RangeSet(5);
 
-      rs.retainAll(rs2);
+      assertThrows(UnsupportedOperationException.class, () -> rs.retainAll(rs2));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void retainAll1() throws Exception {
       IntSet rs = new RangeSet(5);
 
       SmallIntSet sis = new SmallIntSet();
 
-      rs.retainAll(sis);
+      assertThrows(UnsupportedOperationException.class, () -> rs.retainAll(sis));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void retainAll2() throws Exception {
       RangeSet rs = new RangeSet(4);
 
       Set<Integer> hashSet = new HashSet<>();
 
-      rs.retainAll(hashSet);
+      assertThrows(UnsupportedOperationException.class, () -> rs.retainAll(hashSet));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void clear() throws Exception {
       RangeSet rs = new RangeSet(5);
 
-      rs.clear();
+      assertThrows(UnsupportedOperationException.class, rs::clear);
    }
 
    @Test
@@ -323,16 +324,16 @@ public class RangeSetTest {
       assertTrue(results.contains(3));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void removeIfPrimitive() {
       RangeSet rs = new RangeSet(4);
-      rs.removeIf((int i) -> i == 3);
+      assertThrows(UnsupportedOperationException.class, () -> rs.removeIf((int i) -> i == 3));
    }
 
-   @Test(expected = UnsupportedOperationException.class)
+   @Test
    public void removeIfObject() {
       RangeSet rs = new RangeSet(4);
-      rs.removeIf((Integer i) -> i == 3);
+      assertThrows(UnsupportedOperationException.class, () -> rs.removeIf((Integer i) -> i == 3));
    }
 
    @Test

@@ -1,10 +1,11 @@
 package org.infinispan.query.distributed;
 
+import static org.testng.AssertJUnit.fail;
+
 import javax.security.auth.Subject;
 
 import org.infinispan.security.Security;
 import org.infinispan.test.TestingUtil;
-import org.junit.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -49,7 +50,7 @@ public class SecureMassIndexingTest extends DistributedMassIndexingTest {
             execution.apply();
          } catch (Throwable e) {
             e.printStackTrace();
-            Assert.fail();
+            fail();
          }
       });
    }

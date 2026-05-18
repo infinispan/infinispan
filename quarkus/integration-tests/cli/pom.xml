@@ -38,10 +38,6 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-testdriver-junit5</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-tests</artifactId>
             <type>test-jar</type>
         </dependency>

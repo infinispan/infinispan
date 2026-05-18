@@ -1,6 +1,7 @@
 package org.infinispan.server.license;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,18 +14,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * We tried to use
  * Path path = jarfs.getPath("META-INF/", "maven");
- *             Optional<Path> propertyPath = Files.find(path,
- *                   100,
- *                   (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.getFileName().toString().endsWith("properties"))
- *                   .findFirst();
+ * Optional<Path> propertyPath = Files.find(path,
+ * 100,
+ * (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.getFileName().toString().endsWith("properties"))
+ * .findFirst();
  * but some artifacts are productized with ANT
- *
+ * <p>
  * The META-INF/MANIFEST.MF that comes with ANT is missing the group, artifact and version
  */
 public class LicenseTest {
@@ -68,11 +68,11 @@ public class LicenseTest {
 
             tdMatcher.find();
             String remoteLicenses = tdMatcher.group(1);
-            Assert.assertTrue("Remote License: " + artifact + ":" + version + ":" + remoteLicenses, hasLicenseLink(remoteLicenses));
+            assertTrue(hasLicenseLink(remoteLicenses), "Remote License: " + artifact + ":" + version + ":" + remoteLicenses);
 
             tdMatcher.find();
             String localLicenses = tdMatcher.group(1);
-            Assert.assertTrue("Local License: " + artifact + ":" + version + ":" + localLicenses, hasLicenseLink(localLicenses));
+            assertTrue(hasLicenseLink(localLicenses), "Local License: " + artifact + ":" + version + ":" + localLicenses);
 
             htmlDependencies.add(String.format("%s-%s.jar", artifact, version));
          }
@@ -85,7 +85,7 @@ public class LicenseTest {
          System.out.println("Missing: " + lib);
       }
 
-      assertEquals(libs.toString(), 0, libs.size());
+      assertEquals(0, libs.size(), libs.toString());
    }
 
    private static String removeOsName(String jarFile) {

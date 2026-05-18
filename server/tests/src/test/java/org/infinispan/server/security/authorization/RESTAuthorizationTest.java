@@ -66,7 +66,7 @@ import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ResponseAssertion;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.testing.Exceptions;
 import org.junit.jupiter.api.Test;
 

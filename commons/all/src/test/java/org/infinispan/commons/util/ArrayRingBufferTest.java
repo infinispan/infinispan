@@ -1,10 +1,16 @@
 package org.infinispan.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ArrayRingBufferTest {
 
@@ -12,13 +18,13 @@ public class ArrayRingBufferTest {
    public void testShouldEnlargeItWithGaps() {
       ArrayRingBuffer<Integer> rb = new ArrayRingBuffer<>(1);
       rb.set(1, 1);
-      Assert.assertEquals(rb.size(), 1);
-      Assert.assertEquals(rb.get(1), Integer.valueOf(1));
+      assertEquals(1, rb.size());
+      assertEquals(rb.get(1), Integer.valueOf(1));
       rb.set(3, 2);
-      Assert.assertEquals(rb.size(), 3);
-      Assert.assertEquals(rb.get(1), Integer.valueOf(1));
-      Assert.assertNull(rb.get(2));
-      Assert.assertEquals(rb.get(3), Integer.valueOf(2));
+      assertEquals(3, rb.size());
+      assertEquals(rb.get(1), Integer.valueOf(1));
+      assertNull(rb.get(2));
+      assertEquals(rb.get(3), Integer.valueOf(2));
    }
 
    @Test
@@ -27,11 +33,11 @@ public class ArrayRingBufferTest {
       for (int i = 6; i < 10; i++) {
          rb.set(i, i);
       }
-      Assert.assertEquals(rb.availableCapacityWithoutResizing(), 4);
+      assertEquals(4, rb.availableCapacityWithoutResizing());
       rb.set(10, 10);
-      Assert.assertEquals(rb.availableCapacityWithoutResizing(), 3);
+      assertEquals(3, rb.availableCapacityWithoutResizing());
       for (int i = 6; i < 11; i++) {
-         Assert.assertEquals(rb.get(i), Integer.valueOf(i));
+         assertEquals(rb.get(i), Integer.valueOf(i));
       }
    }
 
@@ -43,11 +49,11 @@ public class ArrayRingBufferTest {
       }
       Map<Integer, Long> expected_values = new HashMap<>(5);
       rb.forEach(expected_values::put);
-      Assert.assertEquals(expected_values.size(), 5);
+      assertEquals(5, expected_values.size());
       for (Map.Entry<Integer, Long> e : expected_values.entrySet()) {
          Integer key = e.getKey();
          Long val = e.getValue();
-         Assert.assertEquals(key.intValue(), val.intValue());
+         assertEquals(key.intValue(), val.intValue());
       }
    }
 
@@ -56,24 +62,24 @@ public class ArrayRingBufferTest {
       ArrayRingBuffer<Integer> rb = new ArrayRingBuffer<>(1);
       for (int i = 1; i <= 10; i++)
          rb.set(i, i);
-      Assert.assertEquals(rb.size(), 10);
-      Assert.assertEquals(rb.size(false), 10);
+      assertEquals(10, rb.size());
+      assertEquals(10, rb.size(false));
       Integer ret = rb.remove(0);
-      Assert.assertNull(ret);
+      assertNull(ret);
 
       ret = rb.remove(1); // head
-      Assert.assertNotNull(ret);
-      Assert.assertEquals(ret.intValue(), 1);
-      Assert.assertEquals(rb.size(), 9);
-      Assert.assertEquals(rb.size(false), 9);
+      assertNotNull(ret);
+      assertEquals(1, ret.intValue());
+      assertEquals(9, rb.size());
+      assertEquals(9, rb.size(false));
 
       ret = rb.remove(5);
-      Assert.assertNotNull(ret);
-      Assert.assertEquals(ret.intValue(), 5);
-      Assert.assertEquals(String.format("size should be 8 but is %d", rb.size(false)), rb.size(false), 8);
+      assertNotNull(ret);
+      assertEquals(5, ret.intValue());
+      assertEquals(8, rb.size(false), String.format("size should be 8 but is %d", rb.size(false)));
 
       rb.set(5, 5);
-      Assert.assertEquals(rb.size(false),  9);
+      assertEquals(9, rb.size(false));
    }
 
    @Test
@@ -81,11 +87,11 @@ public class ArrayRingBufferTest {
       ArrayRingBuffer<Integer> rb = new ArrayRingBuffer<>(1);
       rb.set(1, 1);
       rb.set(7, 2);
-      Assert.assertEquals(rb.size(), 7);
+      assertEquals(7, rb.size());
       rb.set(8, 3);
-      Assert.assertEquals(rb.get(1), Integer.valueOf(1));
-      Assert.assertEquals(rb.get(7), Integer.valueOf(2));
-      Assert.assertEquals(rb.get(8), Integer.valueOf(3));
+      assertEquals(rb.get(1), Integer.valueOf(1));
+      assertEquals(rb.get(7), Integer.valueOf(2));
+      assertEquals(rb.get(8), Integer.valueOf(3));
    }
 
    @Test
@@ -95,10 +101,10 @@ public class ArrayRingBufferTest {
       rb.set(7, 2);
       rb.set(8, 3);
       rb.set(15, 4);
-      Assert.assertEquals(rb.get(1), Integer.valueOf(1));
-      Assert.assertEquals(rb.get(7), Integer.valueOf(2));
-      Assert.assertEquals(rb.get(8), Integer.valueOf(3));
-      Assert.assertEquals(rb.get(15), Integer.valueOf(4));
+      assertEquals(rb.get(1), Integer.valueOf(1));
+      assertEquals(rb.get(7), Integer.valueOf(2));
+      assertEquals(rb.get(8), Integer.valueOf(3));
+      assertEquals(rb.get(15), Integer.valueOf(4));
    }
 
    @Test
@@ -110,12 +116,12 @@ public class ArrayRingBufferTest {
       final int before = rb.availableCapacityWithoutResizing();
       rb.dropHeadUntil(5);
       final int after = rb.availableCapacityWithoutResizing();
-      Assert.assertEquals(after - before, 6);
-      Assert.assertEquals(rb.get(7), Integer.valueOf(2));
-      Assert.assertEquals(rb.get(8), Integer.valueOf(3));
+      assertEquals(6, after - before);
+      assertEquals(rb.get(7), Integer.valueOf(2));
+      assertEquals(rb.get(8), Integer.valueOf(3));
       rb.set(12, 4);
-      Assert.assertEquals(rb.availableCapacityWithoutResizing(), 2);
-      Assert.assertEquals(rb.get(12), Integer.valueOf(4));
+      assertEquals(2, rb.availableCapacityWithoutResizing());
+      assertEquals(rb.get(12), Integer.valueOf(4));
    }
 
    @Test
@@ -127,7 +133,7 @@ public class ArrayRingBufferTest {
       rb.set(8, 4);
       rb.dropHeadUntil(5);
       rb.set(14, 5);
-      Assert.assertEquals(rb.availableCapacityWithoutResizing(), 0);
+      assertEquals(0, rb.availableCapacityWithoutResizing());
    }
 
    @Test
@@ -137,8 +143,8 @@ public class ArrayRingBufferTest {
          rb.set(i, i);
       }
       rb.dropHeadUntil(11);
-      Assert.assertEquals(rb.size(), 1);
-      Assert.assertEquals(rb.get(11), Integer.valueOf(11));
+      assertEquals(1, rb.size());
+      assertEquals(rb.get(11), Integer.valueOf(11));
    }
 
    @Test
@@ -148,11 +154,11 @@ public class ArrayRingBufferTest {
          rb.set(i, i);
       }
       rb.dropTailTo(7);
-      Assert.assertEquals(rb.size(), 3);
-      Assert.assertEquals(rb.size(false), 3);
-      Assert.assertEquals(rb.get(4), Integer.valueOf(4));
-      Assert.assertEquals(rb.get(5), Integer.valueOf(5));
-      Assert.assertEquals(rb.get(6), Integer.valueOf(6));
+      assertEquals(3, rb.size());
+      assertEquals(3, rb.size(false));
+      assertEquals(rb.get(4), Integer.valueOf(4));
+      assertEquals(rb.get(5), Integer.valueOf(5));
+      assertEquals(rb.get(6), Integer.valueOf(6));
    }
 
    @Test
@@ -162,7 +168,7 @@ public class ArrayRingBufferTest {
          rb.set(i, i);
       }
       rb.clear();
-      Assert.assertEquals(rb.size(), 0);
+      assertEquals(0, rb.size());
    }
 
    @Test
@@ -172,7 +178,7 @@ public class ArrayRingBufferTest {
          rb.set(i, i);
       }
       rb.dropTailTo(rb.getHeadSequence());
-      Assert.assertEquals(rb.size(), 0);
+      assertEquals(0, rb.size());
    }
 
    @Test
@@ -180,19 +186,19 @@ public class ArrayRingBufferTest {
       ArrayRingBuffer<Integer> rb = new ArrayRingBuffer<>(1);
       for (int i = 1; i <= 20; i++)
          rb.set(i, i);
-      Assert.assertEquals(rb.size(), 20);
+      assertEquals(20, rb.size());
       for (int i = 1; i <= 20; i++)
-         Assert.assertEquals((int) rb.get(i), i);
+         assertEquals((int) rb.get(i), i);
       rb.dropTailTo(5);
-      Assert.assertEquals(rb.size(), 4);
+      assertEquals(4, rb.size());
       try {
-         Assert.assertEquals((int) rb.get(5), 0); // drop was *inclusive*
-         Assert.fail("index 5 should not be found");
+         assertEquals(0, (int) rb.get(5)); // drop was *inclusive*
+         fail("index 5 should not be found");
       } catch (IllegalArgumentException t) {
          System.out.println("get(5) triggered an exception, as expected");
       }
       for (int i = 1; i <= 4; i++)
-         Assert.assertEquals((int) rb.get(i), i);
+         assertEquals((int) rb.get(i), i);
    }
 
    @Test
@@ -200,17 +206,17 @@ public class ArrayRingBufferTest {
       ArrayRingBuffer<Integer> rb = new ArrayRingBuffer<>(1);
       for (int i = 1; i <= 20; i++)
          rb.set(i, i);
-      Assert.assertEquals(rb.size(), 20);
+      assertEquals(20, rb.size());
       rb.dropHeadUntil(6);
-      Assert.assertEquals(rb.size(), 15);
+      assertEquals(15, rb.size());
       try {
          rb.get(5);
-         Assert.fail("index 5 should not be found");
+         fail("index 5 should not be found");
       } catch (IllegalArgumentException ex) {
          System.out.println("get(5) triggered an exception, as expected");
       }
       for (int i = 6; i <= 20; i++) {
-         Assert.assertEquals((int) rb.get(i), i);
+         assertEquals((int) rb.get(i), i);
       }
    }
 
@@ -221,12 +227,12 @@ public class ArrayRingBufferTest {
       rb.set(5, 3);
       rb.set(15, 4);
       rb.dropHeadUntil(5);
-      Assert.assertThrows(IllegalArgumentException.class, () -> rb.get(4));
+      assertThrows(IllegalArgumentException.class, () -> rb.get(4));
    }
 
    @Test
    public void testCreatingBackedArrayOfSpecificSize() {
-      Assert.assertEquals(new ArrayRingBuffer<Integer>(8, 0).availableCapacityWithoutResizing(), 8);
+      assertEquals(8, new ArrayRingBuffer<Integer>(8, 0).availableCapacityWithoutResizing());
    }
 
    @Test
@@ -237,18 +243,18 @@ public class ArrayRingBufferTest {
       for (int i = 0; i < size; i++) {
          rb.add(i);
       }
-      Assert.assertEquals(rb.size(), size);
+      assertEquals(size, rb.size());
       for (int i = 0; i < 10; i++) {
          final Integer expected = i;
-         Assert.assertEquals(rb.peek(), expected);
-         Assert.assertEquals(rb.poll(), expected);
-         Assert.assertEquals(rb.size(), size - (i + 1));
-         Assert.assertEquals(rb.getHeadSequence(), initialHead + i + 1);
+         assertEquals(rb.peek(), expected);
+         assertEquals(rb.poll(), expected);
+         assertEquals(rb.size(), size - (i + 1));
+         assertEquals(rb.getHeadSequence(), initialHead + i + 1);
       }
-      Assert.assertTrue(rb.isEmpty());
-      Assert.assertNull(rb.peek());
-      Assert.assertNull(rb.poll());
-      Assert.assertEquals(rb.size(), 0);
+      assertTrue(rb.isEmpty());
+      assertNull(rb.peek());
+      assertNull(rb.poll());
+      assertEquals(0, rb.size());
    }
 
 }

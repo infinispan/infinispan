@@ -93,7 +93,7 @@
     </dependency>
     <dependency>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-server-testdriver-junit5</artifactId>
+      <artifactId>infinispan-server-testdriver-core</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

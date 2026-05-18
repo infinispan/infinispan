@@ -16,8 +16,8 @@ import org.infinispan.cli.impl.StreamShell;
 import org.infinispan.commons.util.Util;
 import org.infinispan.testing.Eventually;
 import org.infinispan.testing.Testing;
-import org.junit.ComparisonFailure;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
 
 /**
  * @since 14.0
@@ -39,7 +39,7 @@ public class CliPipeTest {
       PrintWriter pw = new PrintWriter(pipe, true);
       pw.println("echo Piped");
       Eventually.eventually(
-            () -> new ComparisonFailure("Expected output was not equal to expected string after timeout", "Piped", out.toString(StandardCharsets.UTF_8)),
+            () -> new AssertionFailedError("Expected output was not equal to expected string after timeout", "Piped", out.toString(StandardCharsets.UTF_8)),
             () -> out.toString(StandardCharsets.UTF_8).startsWith("Piped"), 10_000, 50, TimeUnit.MILLISECONDS);
       pw.close();
       thread.join();

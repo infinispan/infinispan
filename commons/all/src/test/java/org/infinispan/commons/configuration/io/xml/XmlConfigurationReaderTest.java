@@ -1,7 +1,7 @@
 package org.infinispan.commons.configuration.io.xml;
 
 import static org.infinispan.commons.configuration.io.yaml.YamlConfigurationReaderTest.assertAttribute;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.StringReader;
 import java.util.Properties;
@@ -10,7 +10,7 @@ import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.configuration.io.PropertyReplacer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class XmlConfigurationReaderTest {
    @Test

@@ -1,16 +1,16 @@
 package org.infinispan.server.configuration;
 
 import static org.infinispan.server.configuration.security.CredentialStoresConfiguration.resolvePassword;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.NetworkAddress;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.configuration.security.LdapRealmConfiguration;
@@ -21,9 +21,9 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
-import org.infinispan.testing.junit.JUnitThreadTrackerRule;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.infinispan.testing.jupiter.JupiterThreadTrackerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -31,12 +31,8 @@ import org.junit.Test;
  **/
 public class ServerConfigurationParserTest extends AbstractConfigurationParserTest {
 
-   @ClassRule
-   public static final JUnitThreadTrackerRule tracker = new JUnitThreadTrackerRule();
-
-   public ServerConfigurationParserTest(MediaType type) {
-      super(type);
-   }
+   @RegisterExtension
+   public static final JupiterThreadTrackerExtension tracker = new JupiterThreadTrackerExtension();
 
    @Override
    public String path() {
@@ -98,9 +94,9 @@ public class ServerConfigurationParserTest extends AbstractConfigurationParserTe
       // Connectors
       List<ProtocolServerConfiguration<?, ?>> connectors = configuration.endpoints().endpoints().get(0).connectors();
       assertEquals(3, connectors.size());
-      assertTrue(connectors.get(0) instanceof HotRodServerConfiguration);
-      assertTrue(connectors.get(1) instanceof RestServerConfiguration);
-      assertTrue(connectors.get(2) instanceof MemcachedServerConfiguration);
+      assertInstanceOf(HotRodServerConfiguration.class, connectors.get(0));
+      assertInstanceOf(RestServerConfiguration.class, connectors.get(1));
+      assertInstanceOf(MemcachedServerConfiguration.class, connectors.get(2));
 
       // Ensure HotRod and Memcached support max request limits (these positions were asserted in previous block)
       assertEquals(1027, connectors.get(0).maxContentLengthBytes());

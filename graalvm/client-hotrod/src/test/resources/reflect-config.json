@@ -1,22 +1,30 @@
 [
   {
+    "name": "org.testcontainers.shaded.com.github.dockerjava.core.command.CreateNetworkCmdImpl",
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.github.dockerjava.api.command.CreateNetworkResponse",
+    "allPublicMethods": true
+  },
+  {
     "name": "org.testcontainers.shaded.com.github.dockerjava.core.DockerConfigFile",
     "allDeclaredConstructors": true
   },
   {
     "name": "com.fasterxml.jackson.annotation.JsonProperty",
-    "allDeclaredConstructors" : true
+    "allDeclaredConstructors": true
   },
   {
     "name": "org.infinispan.server.functional.extensions.entities.Entities$Person",
     "allDeclaredFields": true
   },
   {
-    "name": "org.infinispan.server.test.junit5.CustomInfinispanExtension",
+    "name": "org.infinispan.server.test.jupiter.CustomInfinispanExtension",
     "allDeclaredConstructors": true
   },
   {
-    "name": "org.infinispan.server.test.junit5.InfinispanServerExtension",
+    "name": "org.infinispan.server.test.jupiter.InfinispanServerExtension",
     "allPublicMethods": true
   }
 ]

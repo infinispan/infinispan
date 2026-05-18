@@ -1,6 +1,6 @@
 package org.infinispan.query.objectfilter.impl.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 

@@ -5,8 +5,8 @@ import static org.infinispan.server.functional.rest.RestMetricsResourceIT.getMet
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.jupiter.InfinispanServerExtension;
+import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

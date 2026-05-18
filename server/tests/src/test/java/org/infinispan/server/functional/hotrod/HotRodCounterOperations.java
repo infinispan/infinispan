@@ -9,7 +9,7 @@ import org.infinispan.counter.api.SyncStrongCounter;
 import org.infinispan.counter.api.SyncWeakCounter;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
-import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.server.test.jupiter.InfinispanServer;
 import org.junit.jupiter.api.Test;
 
 /**

@@ -65,7 +65,7 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-testdriver-junit5</artifactId>
+         <artifactId>infinispan-server-testdriver-core</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -150,7 +150,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration combine.self="override">
-                     <argLine>-Dorg.infinispan.test.server.driver=CONTAINER</argLine>
+                     <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.driver=CONTAINER</argLine>
                      <systemPropertyVariables>
                         <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
                         <infinispan.server.log.path>${project.build.directory}</infinispan.server.log.path>
@@ -190,7 +190,7 @@
                            <dependency>
                               <groupId>org.testcontainers</groupId>
                               <artifactId>testcontainers</artifactId>
-                              <metadataVersion>1.17.6</metadataVersion>
+                              <metadataVersion>${versionx.org.testcontainers.testcontainers}</metadataVersion>
                            </dependency>
                         </dependencies>
                      </metadataRepository>

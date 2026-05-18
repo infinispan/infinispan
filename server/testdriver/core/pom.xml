@@ -16,6 +16,9 @@
 
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+      <org.infinispan.test.server.dir>${project.basedir}/../../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
+      <!-- The default configuration does not support test-tcp -->
+      <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
    </properties>
 
    <dependencies>
@@ -59,19 +62,49 @@
       </dependency>
       <dependency>
          <groupId>org.testcontainers</groupId>
-         <artifactId>jdbc</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
-         <scope>compile</scope>
+         <artifactId>testcontainers-jdbc</artifactId>
       </dependency>
       <dependency>
          <groupId>com.fasterxml.jackson.core</groupId>
          <artifactId>jackson-databind</artifactId>
       </dependency>
+      <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-api</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-engine</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.platform</groupId>
+         <artifactId>junit-platform-launcher</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.platform</groupId>
+         <artifactId>junit-platform-suite-api</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-params</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-slf4j-impl</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
    <build>
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -83,8 +116,13 @@
                <disableXmlReport>false</disableXmlReport>
                <properties combine.self="override">
                   <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${junitListener}</listener>
+                  <listener>${jupiterListener},org.infinispan.server.test.jupiter.InfinispanServerTestListener</listener>
                </properties>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir} -Djdk.attach.allowAttachSelf=true</argLine>
+               <systemPropertyVariables>
+                  <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+               </systemPropertyVariables>
             </configuration>
          </plugin>
       </plugins>

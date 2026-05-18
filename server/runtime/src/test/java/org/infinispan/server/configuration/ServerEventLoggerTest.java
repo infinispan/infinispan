@@ -4,8 +4,9 @@ import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.infinispan.testing.Testing.tmpDirectory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.List;
@@ -38,7 +39,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.Eventually;
 import org.infinispan.testing.Exceptions;
 import org.infinispan.testing.TestResourceTracker;
-import org.infinispan.testing.junit.JUnitThreadTrackerRule;
+import org.infinispan.testing.jupiter.JupiterThreadTrackerExtension;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.annotation.impl.Logged;
@@ -47,9 +48,9 @@ import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * ServerEventLoggerTest.
@@ -60,11 +61,11 @@ import org.junit.Test;
 public class ServerEventLoggerTest {
    private static final Log log = LogFactory.getLog(ServerEventLoggerTest.class);
 
-   @ClassRule
-   public static final JUnitThreadTrackerRule tracker = new JUnitThreadTrackerRule();
+   @RegisterExtension
+   public static final JupiterThreadTrackerExtension tracker = new JupiterThreadTrackerExtension();
 
 
-   @BeforeClass
+   @BeforeAll
    public static void prepare() {
       Util.recursiveFileRemove(tmpDirectory(TestResourceTracker.getCurrentTestName()));
    }
@@ -78,7 +79,7 @@ public class ServerEventLoggerTest {
             TestLogListener listener = new TestLogListener(countDown);
             cm.getCache();
             EventLogger eventLogger = EventLogManager.getEventLogger(cm);
-            assertTrue(eventLogger.getClass().getName(), eventLogger instanceof ServerEventLogger);
+            assertInstanceOf(ServerEventLogger.class, eventLogger, eventLogger.getClass().getName());
 
             eventLogger.addListener(listener);
             eventLogger.info(EventLogCategory.CLUSTER, "message #1");
@@ -139,9 +140,9 @@ public class ServerEventLoggerTest {
             int msg = 1;
             blockUntilViewReceived(cms[0].getCache(), 3);
             // Fill all nodes with logs
-            for (int i = 0; i < cms.length; i++) {
-               EventLogger eventLogger = EventLogManager.getEventLogger(cms[i]);
-               assertTrue(eventLogger.getClass().getName(), eventLogger instanceof ServerEventLogger);
+            for (EmbeddedCacheManager cm : cms) {
+               EventLogger eventLogger = EventLogManager.getEventLogger(cm);
+               assertInstanceOf(ServerEventLogger.class, eventLogger, eventLogger.getClass().getName());
 
                eventLogger.addListener(listener);
 
@@ -158,9 +159,9 @@ public class ServerEventLoggerTest {
             }
 
             // query all nodes
-            for (int i = 0; i < cms.length; i++) {
-               log.debugf("Checking logs on %s", cms[i].getAddress());
-               EventLogger eventLogger = EventLogManager.getEventLogger(cms[i]);
+            for (EmbeddedCacheManager cm : cms) {
+               log.debugf("Checking logs on %s", cm.getAddress());
+               EventLogger eventLogger = EventLogManager.getEventLogger(cm);
                List<EventLog> events = waitForEvents(2 * cms.length, eventLogger, EventLogCategory.TASKS, null);
                for (EventLog event : events) {
                   assertEquals(EventLogCategory.TASKS, event.getCategory());

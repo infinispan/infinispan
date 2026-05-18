@@ -1,10 +1,12 @@
 package org.infinispan.commons.util;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.After;
-import org.junit.Test;
+import java.util.Arrays;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Integration test for {@link MemoryMonitor} that verifies memory threshold notifications
@@ -17,7 +19,7 @@ public class MemoryMonitorLowMemoryTest {
 
    private MemoryMonitor monitor;
 
-   @After
+   @AfterEach
    public void cleanup() {
       if (monitor != null) {
          monitor.stop();
@@ -53,12 +55,10 @@ public class MemoryMonitorLowMemoryTest {
          Thread.currentThread().interrupt();
       }
 
-      assertTrue("Low memory alert should have been triggered", monitor.isMemoryLow());
+      assertTrue(monitor.isMemoryLow(), "Low memory alert should have been triggered");
 
       // Release memory and trigger GC to verify auto-recovery
-      for (int i = 0; i < blocks.length; i++) {
-         blocks[i] = null;
-      }
+      Arrays.fill(blocks, null);
       for (int i = 0; i < 10; i++) {
          System.gc();
          try {
@@ -71,6 +71,6 @@ public class MemoryMonitorLowMemoryTest {
          }
       }
 
-      assertFalse("Low memory alert should have cleared after GC", monitor.isMemoryLow());
+      assertFalse(monitor.isMemoryLow(), "Low memory alert should have cleared after GC");
    }
 }

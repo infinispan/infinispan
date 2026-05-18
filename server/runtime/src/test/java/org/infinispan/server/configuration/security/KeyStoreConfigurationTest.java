@@ -1,26 +1,21 @@
 package org.infinispan.server.configuration.security;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Locale;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.configuration.AbstractConfigurationParserTest;
 import org.infinispan.server.configuration.ServerConfigurationParserTest;
-import org.infinispan.testing.junit.JUnitThreadTrackerRule;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.infinispan.testing.jupiter.JupiterThreadTrackerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 public class KeyStoreConfigurationTest extends AbstractConfigurationParserTest {
 
-   @ClassRule
-   public static final JUnitThreadTrackerRule tracker = new JUnitThreadTrackerRule();
-
-   public KeyStoreConfigurationTest(MediaType type) {
-      super(type);
-   }
+   @RegisterExtension
+   public static final JupiterThreadTrackerExtension tracker = new JupiterThreadTrackerExtension();
 
    @Override
    public String path() {
