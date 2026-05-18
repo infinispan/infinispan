@@ -276,11 +276,17 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
                writer.writeStartElement(Element.MAX_COUNT_CONTAINER);
                writer.writeAttribute(Attribute.NAME, entry.getKey());
                writer.writeAttribute(Attribute.COUNT, Long.toString(container.maxCount()));
+               if (container.dynamicResize()) {
+                  writer.writeAttribute(Attribute.DYNAMIC_RESIZE, Boolean.toString(true));
+               }
                writer.writeEndElement();
             } else if (container.maxSize() != null) {
                writer.writeStartElement(Element.MAX_SIZE_CONTAINER);
                writer.writeAttribute(Attribute.NAME, entry.getKey());
                writer.writeAttribute(Attribute.SIZE, container.maxSize());
+               if (container.dynamicResize()) {
+                  writer.writeAttribute(Attribute.DYNAMIC_RESIZE, Boolean.toString(true));
+               }
                writer.writeEndElement();
             }
          }

@@ -67,6 +67,25 @@ public class ContainerMemoryConfigurationBuilder extends AbstractGlobalConfigura
       return attributes.attribute(ContainerMemoryConfiguration.MAX_COUNT).get();
    }
 
+   /**
+    * Enables dynamic resizing of this container based on JVM memory pressure.
+    * Requires the memory-monitor to be enabled.
+    *
+    * @param dynamicResize whether to enable dynamic resizing
+    * @return <code>this</code>, for method chaining
+    */
+   public ContainerMemoryConfigurationBuilder dynamicResize(boolean dynamicResize) {
+      attributes.attribute(ContainerMemoryConfiguration.DYNAMIC_RESIZE).set(dynamicResize);
+      return this;
+   }
+
+   /**
+    * Whether dynamic resizing is currently enabled.
+    */
+   public boolean dynamicResize() {
+      return attributes.attribute(ContainerMemoryConfiguration.DYNAMIC_RESIZE).get();
+   }
+
    boolean isSizeBounded() {
       return maxSize() != null;
    }

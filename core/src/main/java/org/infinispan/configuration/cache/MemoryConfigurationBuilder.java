@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.global.ContainerMemoryConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 
@@ -176,8 +177,12 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       super.validate(globalConfig);
       String containerStorage = evictionContainer();
       if (containerStorage != null) {
-         if (!globalConfig.getMemoryContainer().containsKey(containerStorage)) {
+         ContainerMemoryConfiguration containerConfig = globalConfig.getMemoryContainer().get(containerStorage);
+         if (containerConfig == null) {
             throw CONFIG.memorySharedContainerNotExist(containerStorage);
+         }
+         if (containerConfig.dynamicResize() && getBuilder().persistence().passivation()) {
+            CONFIG.dynamicResizeWithPassivation(containerStorage);
          }
       }
    }

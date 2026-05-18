@@ -32,6 +32,7 @@ import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.AllowListConfigurationBuilder;
+import org.infinispan.configuration.global.ContainerMemoryConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalJmxConfigurationBuilder;
@@ -782,6 +783,7 @@ public class Parser extends CacheParser {
             case MAX_COUNT_CONTAINER: {
                String name = null;
                long count = -1;
+               boolean dynamicResize = false;
                for (int i = 0; i < reader.getAttributeCount(); i++) {
                   Attribute attribute = Attribute.forName(reader.getAttributeName(i));
                   switch (attribute) {
@@ -791,17 +793,23 @@ public class Parser extends CacheParser {
                      case COUNT:
                         count = Long.parseLong(reader.getAttributeValue(i));
                         break;
+                     case DYNAMIC_RESIZE:
+                        dynamicResize = Boolean.parseBoolean(reader.getAttributeValue(i));
+                        break;
                      default:
                         throw ParseUtils.unexpectedAttribute(reader, i);
                   }
                }
                long countToUse = count;
-               holder.getGlobalConfigurationBuilder().containerMemoryConfiguration(name).maxCount(countToUse);
+               ContainerMemoryConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().containerMemoryConfiguration(name);
+               builder.maxCount(countToUse);
+               builder.dynamicResize(dynamicResize);
                break;
             }
             case MAX_SIZE_CONTAINER: {
                String name = null;
                String size = null;
+               boolean dynamicResize = false;
                for (int i = 0; i < reader.getAttributeCount(); i++) {
                   Attribute attribute = Attribute.forName(reader.getAttributeName(i));
                   switch (attribute) {
@@ -811,12 +819,17 @@ public class Parser extends CacheParser {
                      case SIZE:
                         size = reader.getAttributeValue(i);
                         break;
+                     case DYNAMIC_RESIZE:
+                        dynamicResize = Boolean.parseBoolean(reader.getAttributeValue(i));
+                        break;
                      default:
                         throw ParseUtils.unexpectedAttribute(reader, i);
                   }
                }
                String sizeToUse = size;
-               holder.getGlobalConfigurationBuilder().containerMemoryConfiguration(name).maxSize(sizeToUse);
+               ContainerMemoryConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().containerMemoryConfiguration(name);
+               builder.maxSize(sizeToUse);
+               builder.dynamicResize(dynamicResize);
                break;
             }
             default: {
