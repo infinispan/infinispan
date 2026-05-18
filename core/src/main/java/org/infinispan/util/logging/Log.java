@@ -2452,4 +2452,15 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Stopping all caches in cache container", id = 720)
    void stoppingAllCaches();
+
+   @Message(value = "Zero-capacity node cannot increase capacity factor", id = 721)
+   IllegalStateException capacityFactorUpdateOnZeroCapacityNode();
+
+   @Message(value = "Non-distributed cache %s with mode %s only accepts capacity factor of 0 or 1, but it was %f", id = 722)
+   IllegalArgumentException capacityFactorNonBinarySkipped(String cacheName, CacheMode mode, Float value);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Capacity factor for node %s in cache %s updated to %f but rebalancing is disabled. " +
+         "Data redistribution will not occur until rebalancing is re-enabled.", id = 723)
+   void capacityFactorUpdatedRebalancingDisabled(Object node, String cacheName, float capacityFactor);
 }

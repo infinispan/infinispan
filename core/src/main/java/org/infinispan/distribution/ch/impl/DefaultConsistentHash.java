@@ -244,6 +244,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    private int hashCodeInternal() {
       int result = numOwners;
       result = 31 * result + members.hashCode();
+      result = 31 * result + CapacityFactorHelper.capacityFactorHashCode(capacityFactors);
       result = 31 * result + Arrays.hashCode(segmentOwners);
       return result;
    }
@@ -263,7 +264,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
             return false;
       }
 
-      return true;
+      return CapacityFactorHelper.isCapacityFactorsEquals(capacityFactors, that.capacityFactors);
    }
 
    @Override

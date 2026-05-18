@@ -16,6 +16,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 public class NodeVersion implements Comparable<NodeVersion> {
 
    public static final NodeVersion SIXTEEN = new NodeVersion((byte) 16, (byte) 0, (byte) 0);
+   public static final NodeVersion SIXTEEN_TWO = new NodeVersion((byte) 16, (byte) 2, (byte) 0);
    public static final NodeVersion INSTANCE;
 
    static {

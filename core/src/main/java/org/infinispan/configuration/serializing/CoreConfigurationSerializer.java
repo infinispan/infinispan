@@ -1,5 +1,6 @@
 package org.infinispan.configuration.serializing;
 
+import static org.infinispan.configuration.parsing.Attribute.CAPACITY_FACTOR;
 import static org.infinispan.configuration.parsing.Attribute.CLUSTER;
 import static org.infinispan.configuration.parsing.Attribute.DEFAULT_STACK;
 import static org.infinispan.configuration.parsing.Attribute.EXTENDS;
@@ -433,6 +434,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       configuration.attributes().write(writer);
       AttributeSet hashAttributes = configuration.clustering().hash().attributes();
       hashAttributes.write(writer, HashConfiguration.NUM_SEGMENTS);
+      hashAttributes.write(writer, HashConfiguration.CAPACITY_FACTOR);
       hashAttributes.write(writer, HashConfiguration.KEY_PARTITIONER);
 
       writeCommonClusteredCacheAttributes(writer, configuration);
@@ -480,6 +482,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writer.writeMapItem(configuration.isTemplate() ? Element.INVALIDATION_CACHE_CONFIGURATION : Element.INVALIDATION_CACHE, Attribute.NAME, name);
       }
       configuration.attributes().write(writer);
+      configuration.clustering().hash().attributes().write(writer, CAPACITY_FACTOR);
       writeCommonClusteredCacheAttributes(writer, configuration);
       writeCommonCacheAttributesElements(writer, name, configuration);
       writeExtraConfiguration(writer, configuration.modules());

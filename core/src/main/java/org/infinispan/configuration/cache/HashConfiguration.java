@@ -10,6 +10,7 @@ import org.infinispan.configuration.parsing.Element;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
+import org.infinispan.util.logging.Log;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must be used only with 'distributed' cache mode.
@@ -21,7 +22,13 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    // Because it assigns owners randomly, SyncConsistentHashFactory doesn't work very well with a low number
    // of segments. (With DefaultConsistentHashFactory, 60 segments was ok up to 6 nodes.)
    public static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SEGMENTS, 256).immutable().build();
-   public static final AttributeDefinition<Float> CAPACITY_FACTOR = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CAPACITY_FACTOR, 1.0f).immutable().global(false).build();
+   public static final AttributeDefinition<Float> CAPACITY_FACTOR = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CAPACITY_FACTOR, 1.0f)
+         .global(false)
+         .validator(value -> {
+            if (value < 0)
+               throw Log.CONFIG.illegalCapacityFactor();
+         })
+         .build();
    public static final AttributeDefinition<KeyPartitioner> KEY_PARTITIONER = AttributeDefinition
          .builder(org.infinispan.configuration.parsing.Attribute.KEY_PARTITIONER, null, KeyPartitioner.class)
          .copier(original -> {
@@ -99,7 +106,7 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    public boolean matches(HashConfiguration other, ConfigurationElement<?> parent) {
       if (parent instanceof ClusteringConfiguration clustering) {
          if (clustering.cacheMode().isReplicated()) {
-            return super.matches(other, ConfigurationElement.extractAttributes(attributes, NUM_OWNERS));
+            return super.matches(other, ConfigurationElement.extractAttributes(attributes, NUM_OWNERS, CAPACITY_FACTOR));
          }
       }
       return super.matches(other, parent);
@@ -109,7 +116,7 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    public void update(String parentName, HashConfiguration other, ConfigurationElement<?> parent) {
       if (parent instanceof ClusteringConfiguration clustering) {
          if (clustering.cacheMode().isReplicated()) {
-            update(parentName, other, ConfigurationElement.extractAttributes(attributes, NUM_OWNERS));
+            update(parentName, other, ConfigurationElement.extractAttributes(attributes, NUM_OWNERS, CAPACITY_FACTOR));
             return;
          }
       }
@@ -120,7 +127,7 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    public void validateUpdate(String parentName, HashConfiguration other, ConfigurationElement<?> parent) {
       if (parent instanceof ClusteringConfiguration clustering) {
          if (clustering.cacheMode().isReplicated()) {
-            validateUpdate(parentName, other, ConfigurationElement.extractAttributes(attributes, NUM_OWNERS));
+            validateUpdate(parentName, other, ConfigurationElement.extractAttributes(attributes, NUM_OWNERS, CAPACITY_FACTOR));
             return;
          }
       }

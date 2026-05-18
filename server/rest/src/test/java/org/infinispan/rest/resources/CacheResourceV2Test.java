@@ -545,7 +545,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = cacheClient.configurationAttributes(true);
       assertThat(response).isOk();
       Json attributes = Json.read(join(response).body());
-      assertEquals(18, attributes.asJsonMap().size());
+      assertEquals(19, attributes.asJsonMap().size());
       assertEquals("timequantity", attributes.at("clustering.remote-timeout").at("type").asString());
       assertEquals("15s", attributes.at("clustering.remote-timeout").at("value").asString());
       assertThat(attributes.at("indexing.indexed-entities").at("type").asString()).isEqualTo("set");
@@ -612,6 +612,51 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       assertThat(configFromServer)
             .contains("\"indexed-entities\":[\"org.infinispan.Engineer\",\"org.infinispan.Developer\"]");
+   }
+
+   @Test
+   public void testUpdateCapacityFactor() {
+      ConfigurationBuilder distBuilder = new ConfigurationBuilder();
+      distBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      RestCacheClient distCache = createCache(adminClient, cacheConfigToJson("dist-capacity", distBuilder.build()), "dist-capacity");
+
+      ConfigurationBuilder replBuilder = new ConfigurationBuilder();
+      replBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
+      RestCacheClient replCache = createCache(adminClient, cacheConfigToJson("repl-capacity", replBuilder.build()), "repl-capacity");
+
+      CompletionStage<RestResponse> response;
+
+      // Distributed: fractional value accepted
+      response = distCache.updateConfigurationAttribute("clustering.hash.capacity-factor", "0.5");
+      assertThat(response).isOk();
+      assertThat(distCache.configuration()).containsReturnedText("\"capacity-factor\":\"0.5\"");
+
+      // Distributed: zero accepted
+      response = distCache.updateConfigurationAttribute("clustering.hash.capacity-factor", "0.0");
+      assertThat(response).isOk();
+      assertThat(distCache.configuration()).containsReturnedText("\"capacity-factor\":\"0.0\"");
+
+      // Distributed: restore to 1.0
+      response = distCache.updateConfigurationAttribute("clustering.hash.capacity-factor", "1.0");
+      assertThat(response).isOk();
+
+      // Distributed: negative rejected
+      response = distCache.updateConfigurationAttribute("clustering.hash.capacity-factor", "-1.0");
+      assertThat(response).containsReturnedText("ISPN000646");
+
+      // Replicated: binary zero accepted
+      response = replCache.updateConfigurationAttribute("clustering.hash.capacity-factor", "0.0");
+      assertThat(response).isOk();
+      assertThat(replCache.configuration()).containsReturnedText("\"capacity-factor\":\"0.0\"");
+
+      // Replicated: binary one accepted
+      response = replCache.updateConfigurationAttribute("clustering.hash.capacity-factor", "1.0");
+      assertThat(response).isOk();
+      assertThat(replCache.configuration()).containsReturnedText("\"capacity-factor\":\"1.0\"");
+
+      // Replicated: fractional rejected
+      response = replCache.updateConfigurationAttribute("clustering.hash.capacity-factor", "0.5");
+      assertThat(response).containsReturnedText("ISPN000722");
    }
 
    @Test

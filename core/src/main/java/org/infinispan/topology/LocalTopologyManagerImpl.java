@@ -36,6 +36,7 @@ import org.infinispan.commands.topology.CacheAvailabilityUpdateCommand;
 import org.infinispan.commands.topology.CacheJoinCommand;
 import org.infinispan.commands.topology.CacheLeaveCommand;
 import org.infinispan.commands.topology.CacheShutdownRequestCommand;
+import org.infinispan.commands.topology.CapacityFactorUpdateCommand;
 import org.infinispan.commands.topology.RebalancePhaseConfirmCommand;
 import org.infinispan.commands.topology.RebalancePolicyUpdateCommand;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
@@ -46,7 +47,10 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ConsistentHashPersistenceConstants;
 import org.infinispan.factories.ComponentRegistry;
@@ -177,6 +181,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public CompletionStage<CacheTopology> join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm,
                                               PartitionHandlingManager phm) {
+      // Listen for future configuration updates.
+      GlobalConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(gcr.getCacheManager());
+      Configuration configuration = SecurityActions.getCacheConfiguration(gcr.getCacheManager(), cacheName);
+      CapacityFactorRuntimeAttributeValidator validator = new CapacityFactorRuntimeAttributeValidator(cacheName, globalCfg, configuration, helper, transport);
+      configuration.clustering().hash()
+            .attributes().attribute(HashConfiguration.CAPACITY_FACTOR)
+            .registerRuntimeValidator(validator);
       // Use the action sequencer for the initial join request
       // This ensures that all topology updates from the coordinator will be delayed
       // until the join and the GET_CACHE_LISTENERS request are done
@@ -995,6 +1006,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    public boolean isCacheRecoveringShutdown(String cacheName) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       return cacheStatus != null && cacheStatus.needRecovery() && !cacheStatus.isTopologyRestored();
+   }
+
+   @Override
+   public CompletionStage<Void> setCapacityFactor(String cacheName, float capacityFactor) {
+      ReplicableCommand command = new CapacityFactorUpdateCommand(transport.getAddress(), cacheName, capacityFactor);
+      return helper.executeOnCoordinator(transport, command, getGlobalTimeout())
+            .thenApply(CompletableFutures.toNullFunction());
    }
 
    private void writeCHState(String cacheName) {

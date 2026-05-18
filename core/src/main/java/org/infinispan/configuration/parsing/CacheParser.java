@@ -746,6 +746,9 @@ public class CacheParser implements ConfigurationParser {
             }
             break;
          }
+         case CAPACITY_FACTOR:
+            builder.clustering().hash().capacityFactor(Float.parseFloat(value));
+            break;
          default: {
             this.parseClusteredCacheAttribute(reader, index, attribute, value, builder);
          }
