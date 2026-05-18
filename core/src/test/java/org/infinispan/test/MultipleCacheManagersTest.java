@@ -207,6 +207,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
       cm.start();
+      TestingUtil.awaitCacheStartup(cm);
       return cm;
    }
 
@@ -264,7 +265,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
             builder, flags);
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
-      if (shouldStart) cm.start();
+      if (shouldStart) {
+         cm.start();
+         TestingUtil.awaitCacheStartup(cm);
+      }
       return cm;
    }
 
@@ -275,6 +279,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
       cm.start();
+      TestingUtil.awaitCacheStartup(cm);
       return cm;
    }
 
@@ -285,6 +290,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
       cm.start();
+      TestingUtil.awaitCacheStartup(cm);
       return cm;
    }
 

@@ -41,9 +41,6 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
       return config;
    }
 
-   private static final ThreadLocal<LockableStore> STORE = new ThreadLocal<LockableStore>();
-
-
    public static class LockableStoreConfigurationBuilder extends DummyInMemoryStoreConfigurationBuilder {
       public LockableStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
          super(builder);
@@ -67,11 +64,6 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
    public static class LockableStore extends DummyInMemoryStore {
       private volatile CompletableFuture<Void> future = CompletableFutures.completedNull();
 
-      public LockableStore() {
-         super();
-         STORE.set(this);
-      }
-
       @Override
       public CompletionStage<Void> write(int segment, MarshallableEntry entry) {
          return future.thenCompose(ignore -> super.write(segment, entry));
@@ -90,7 +82,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
       CacheCallable(ConfigurationBuilder builder) {
          super(TestCacheManagerFactory.createCacheManager(builder));
          cache = cm.getCache();
-         store = STORE.get();
+         store = TestingUtil.getFirstStore(cache);
       }
    }
 

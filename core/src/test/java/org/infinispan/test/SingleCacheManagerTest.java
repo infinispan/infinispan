@@ -31,6 +31,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    protected void setup() throws Exception {
       cacheManager = createCacheManager();
+      TestingUtil.awaitCacheStartup(cacheManager);
       if (cache == null && SecurityActions.getCacheManagerConfiguration(cacheManager).defaultCacheName().isPresent()) {
          cache = cacheManager.getCache();
       }
