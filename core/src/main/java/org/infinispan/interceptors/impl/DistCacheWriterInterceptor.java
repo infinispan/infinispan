@@ -5,12 +5,16 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
@@ -76,6 +80,27 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       return invokeNextThenApply(ctx, command, handlePutMapCommandReturn);
    }
 
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
+      if (!isStoreEnabled(command) || ctx.isInTxScope())
+         return invokeNext(ctx, command);
+
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+         long count = 0;
+         for (Object key : rCommand.getKeys()) {
+            if (!skipNonPrimary(rCtx, key, rCommand) && isProperWriter(rCtx, rCommand, key)) {
+               stage.dependsOn(removeEntry(rCtx, key, keyPartitioner.getSegment(key), rCommand));
+               count++;
+            }
+         }
+         if (getStatisticsEnabled()) {
+            cacheStores.getAndAdd(count);
+         }
+         return delayedValue(stage.freeze(), rv);
+      });
+   }
+
    protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand putMapCommand, Object rv) {
       CompletionStage<Long> putMapStage = persistenceManager.writeMapCommand(putMapCommand, rCtx,
             ((writeCommand, key) -> !skipNonPrimary(rCtx, key, writeCommand) && isProperWriter(rCtx, writeCommand, key)));
@@ -88,6 +113,10 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    private boolean skipNonPrimary(InvocationContext rCtx, Object key, PutMapCommand command) {
       // In non-tx mode, a node may receive the same forwarded PutMapCommand many times - but each time
       // it must write only the keys locked on the primary owner that forwarded the rCommand
+      return isUsingLockDelegation && command.isForwarded() && !dm.getCacheTopology().getDistribution(key).primary().equals(rCtx.getOrigin());
+   }
+
+   private boolean skipNonPrimary(InvocationContext rCtx, Object key, RemoveAllCommand command) {
       return isUsingLockDelegation && command.isForwarded() && !dm.getCacheTopology().getDistribution(key).primary().equals(rCtx.getOrigin());
    }
 

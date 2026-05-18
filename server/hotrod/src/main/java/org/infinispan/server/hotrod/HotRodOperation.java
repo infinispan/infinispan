@@ -52,6 +52,7 @@ public enum HotRodOperation {
    // Operations that end after a Custom Value is read
    PUT_ALL(0x2D, 0x2E, EnumSet.of(OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_INDEXING, OpReqs.CAN_SKIP_CACHE_LOAD)),
    GET_ALL(0x2F, 0x30, EnumSet.of(OpReqs.REQUIRES_AUTH)),
+   REMOVE_ALL(0x45, 0x46, EnumSet.of(OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_INDEXING, OpReqs.CAN_SKIP_CACHE_LOAD)),
 
    // Stream operations
    GET_STREAM(0x37, 0x38, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD)),

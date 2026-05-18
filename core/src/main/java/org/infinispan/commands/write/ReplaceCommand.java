@@ -30,7 +30,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    private Object newValue;
    private Metadata metadata;
    private ValueMatcher valueMatcher;
-   private boolean returnEntry;
+   private final boolean returnEntry;
    private PrivateMetadata internalMetadata;
    private transient boolean successful = true;
 

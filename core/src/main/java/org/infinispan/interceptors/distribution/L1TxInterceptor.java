@@ -10,6 +10,7 @@ import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -31,6 +32,11 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // TODO: need to figure out if we do anything here? - is the prepare/commmit L1 invalidation sufficient?
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
       return invokeNext(ctx, command);
    }
 
