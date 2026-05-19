@@ -451,12 +451,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       while ((stage = pendingStages.poll()) != null || (stamp = tryAcquireWriteLock()) == 0) {
          if (stage != null) {
             try {
-               long remaining = timeService.remainingTime(deadline, MILLISECONDS);
-               if (remaining > 0) {
-                  stage.toCompletableFuture().get(remaining, MILLISECONDS);
-               } else {
-                  stage.toCompletableFuture().completeExceptionally(new TimeoutException("Operation timed out waiting for stop"));
-               }
+               awaitWithDeadline(stage, deadline);
             } catch (ExecutionException | java.util.concurrent.TimeoutException e) {
                stage.toCompletableFuture().completeExceptionally(new IllegalLifecycleStateException("Operation failed to complete during stop", e));
             } catch (InterruptedException e) {
@@ -486,8 +481,23 @@ public class PersistenceManagerImpl implements PersistenceManager {
       } finally {
          releaseWriteLock(stamp);
       }
-      // Wait until it completes
-      CompletionStages.join(allStage.freeze());
+      try {
+         awaitWithDeadline(allStage.freeze(), deadline);
+      } catch (ExecutionException | java.util.concurrent.TimeoutException e) {
+         log.warn("Exception stopping persistence stores", e);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      }
+   }
+
+   private void awaitWithDeadline(CompletionStage<?> stage, long deadline)
+         throws ExecutionException, InterruptedException, java.util.concurrent.TimeoutException {
+      long remaining = timeService.remainingTime(deadline, MILLISECONDS);
+      if (remaining > 0) {
+         stage.toCompletableFuture().get(remaining, MILLISECONDS);
+      } else {
+         throw new java.util.concurrent.TimeoutException("Operation timed out waiting for stop");
+      }
    }
 
    private void stopAvailabilityTask() {
