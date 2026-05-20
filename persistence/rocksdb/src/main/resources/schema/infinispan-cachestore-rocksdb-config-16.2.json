@@ -73,7 +73,8 @@
             "LZ4HC",
             "XPRESS",
             "ZSTD"
-          ]
+          ],
+          "default": "${RocksDBStore.compressionType}"
         }
       },
       "additionalProperties": false
