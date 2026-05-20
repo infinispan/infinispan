@@ -78,25 +78,29 @@
       "properties": {
         "fetch-size": {
           "type": "string",
-          "description": "The fetch size used when querying from this table. Used to avoid heap memory exhaustion when query is large."
+          "description": "The fetch size used when querying from this table. Used to avoid heap memory exhaustion when query is large.",
+          "default": "${TableManipulation.fetch-size}"
         },
         "batch-size": {
           "type": "string",
-          "description": "The statement batch size used when modifying this table."
+          "description": "The statement batch size used when modifying this table.",
+          "default": "${TableManipulation.batch-size}"
         },
         "create-on-start": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "Determines whether database tables should be created by the store on startup."
+          "description": "Determines whether database tables should be created by the store on startup.",
+          "default": "${TableManipulation.create-on-start}"
         },
         "drop-on-exit": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "Determines whether database tables should be dropped by the store on shutdown."
+          "description": "Determines whether database tables should be dropped by the store on shutdown.",
+          "default": "${TableManipulation.drop-on-exit}"
         },
         "id-column": {
           "$ref": "#/$defs/IdColumn"

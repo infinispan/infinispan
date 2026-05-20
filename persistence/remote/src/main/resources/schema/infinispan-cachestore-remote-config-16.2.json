@@ -38,29 +38,34 @@
         },
         "socket-timeout": {
           "type": "string",
-          "description": "Enable/disable SO_TIMEOUT on socket connections to remote Hot Rod servers with the specified timeout, in milliseconds."
+          "description": "Enable/disable SO_TIMEOUT on socket connections to remote Hot Rod servers with the specified timeout, in milliseconds.",
+          "default": "${RemoteStore.socket-timeout}"
         },
         "tcp-no-delay": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "Enable/disable TCP_NODELAY on socket connections to remote Hot Rod servers."
+          "description": "Enable/disable TCP_NODELAY on socket connections to remote Hot Rod servers.",
+          "default": "${RemoteStore.tcp-no-delay}"
         },
         "balancing-strategy": {
           "type": "string",
-          "description": "For replicated Hot Rod server clusters, the client balances requests to the servers according to this strategy."
+          "description": "For replicated Hot Rod server clusters, the client balances requests to the servers according to this strategy.",
+          "default": "${RemoteStore.balancing-strategy}"
         },
         "connect-timeout": {
           "type": "string",
-          "description": "Defines the maximum socket connect timeout before giving up connecting to the server."
+          "description": "Defines the maximum socket connect timeout before giving up connecting to the server.",
+          "default": "${RemoteStore.connect-timeout}"
         },
         "force-return-values": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "Whether or not to implicitly FORCE_RETURN_VALUE for all calls."
+          "description": "Whether or not to implicitly FORCE_RETURN_VALUE for all calls.",
+          "default": "${RemoteStore.force-return-values}"
         },
         "marshaller": {
           "type": "string",
@@ -68,7 +73,8 @@
         },
         "protocol-version": {
           "type": "string",
-          "description": "Defines the protocol version that this client should use."
+          "description": "Defines the protocol version that this client should use.",
+          "default": "${RemoteStore.protocol-version}"
         },
         "cache": {
           "type": "string",
@@ -124,19 +130,23 @@
         },
         "max-active": {
           "type": "string",
-          "description": "Controls the maximum number of connections per server that are allocated at one time."
+          "description": "Controls the maximum number of connections per server that are allocated at one time.",
+          "default": "${ConnectionPool.max-active}"
         },
         "min-idle": {
           "type": "string",
-          "description": "Sets a target value for the minimum number of idle connections (per server) that should always be available."
+          "description": "Sets a target value for the minimum number of idle connections (per server) that should always be available.",
+          "default": "${ConnectionPool.min-idle}"
         },
         "max-pending-requests": {
           "type": "string",
-          "description": "Specifies maximum number of requests sent over single connection at one instant."
+          "description": "Specifies maximum number of requests sent over single connection at one instant.",
+          "default": "${ConnectionPool.max-pending-requests}"
         },
         "min-evictable-idle-time": {
           "type": "string",
-          "description": "Specifies the minimum amount of time that a connection may sit idle in the pool before it is eligible for eviction due to idle time."
+          "description": "Specifies the minimum amount of time that a connection may sit idle in the pool before it is eligible for eviction due to idle time.",
+          "default": "${ConnectionPool.min-evictable-idle-time}"
         }
       },
       "additionalProperties": false

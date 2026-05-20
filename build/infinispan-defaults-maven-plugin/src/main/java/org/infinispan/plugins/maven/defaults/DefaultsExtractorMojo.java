@@ -244,7 +244,8 @@ public class DefaultsExtractorMojo extends AbstractMojo {
                               element("directory", xsdSrcPath),
                               element("targetPath", xsdTargetPath),
                               element("includes",
-                                    element("include", "*.xsd")
+                                    element("include", "*.xsd"),
+                                    element("include", "*.json")
                               ),
                               element("filtering", "true")
                         )
@@ -262,7 +263,10 @@ public class DefaultsExtractorMojo extends AbstractMojo {
       Pattern pattern = Pattern.compile("\\$\\{[^}]+}");
       Path xsdPath = Paths.get(xsdTargetPath);
       if (Files.exists(xsdPath)) {
-         List<Path> paths = Files.list(xsdPath).filter(p -> p.getFileName().toString().endsWith(".xsd")).toList();
+         List<Path> paths = Files.list(xsdPath).filter(p -> {
+            String name = p.getFileName().toString();
+            return name.endsWith(".xsd") || name.endsWith(".json");
+         }).toList();
          for (Path path : paths) {
             List<String> lines = Files.readAllLines(path);
             for (String line : lines) {

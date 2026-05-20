@@ -469,11 +469,13 @@
       "properties": {
         "gauges": {
           "type": "boolean",
-          "description": "Exports gauge metrics."
+          "description": "Exports gauge metrics.",
+          "default": "${GlobalMetrics.gauges}"
         },
         "histograms": {
           "type": "boolean",
-          "description": "Exports histogram metrics."
+          "description": "Exports histogram metrics.",
+          "default": "${GlobalMetrics.histograms}"
         },
         "prefix": {
           "type": "string",
@@ -481,19 +483,23 @@
         },
         "names-as-tags": {
           "type": "boolean",
-          "description": "Deprecated. Put the cache manager and cache name in tags."
+          "description": "Deprecated. Put the cache manager and cache name in tags.",
+          "default": "${GlobalMetrics.names-as-tags}"
         },
         "accurate-size": {
           "type": "boolean",
-          "description": "Enables accurate size computation for numberOfEntries statistics."
+          "description": "Enables accurate size computation for numberOfEntries statistics.",
+          "default": "${GlobalMetrics.accurate-size}"
         },
         "jvm": {
           "type": "boolean",
-          "description": "Whether JVM metrics should be reported."
+          "description": "Whether JVM metrics should be reported.",
+          "default": "${GlobalMetrics.jvm}"
         },
         "legacy": {
           "type": "boolean",
-          "description": "Whether legacy metrics should be reported."
+          "description": "Whether legacy metrics should be reported.",
+          "default": "${GlobalMetrics.legacy}"
         }
       },
       "additionalProperties": false
@@ -504,11 +510,13 @@
       "properties": {
         "enabled": {
           "type": "boolean",
-          "description": "Enables exporting of JMX MBeans."
+          "description": "Enables exporting of JMX MBeans.",
+          "default": "${GlobalJmx.enabled}"
         },
         "domain": {
           "type": "string",
-          "description": "JMX domain for published JMX objects."
+          "description": "JMX domain for published JMX objects.",
+          "default": "${GlobalJmx.domain}"
         },
         "mbean-server-lookup": {
           "type": "string",
@@ -535,7 +543,8 @@
             "IGNORE",
             "FAIL",
             "PURGE"
-          ]
+          ],
+          "default": "${GlobalState.unclean-shutdown-action}"
         },
         "persistent-location": {
           "$ref": "#/$defs/GlobalStatePath"
@@ -891,22 +900,26 @@
             "READ_COMMITTED",
             "REPEATABLE_READ",
             "SERIALIZABLE"
-          ]
+          ],
+          "default": "${Locking.isolation}"
         },
         "striping": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "If true, a pool of shared locks is maintained for all entries."
+          "description": "If true, a pool of shared locks is maintained for all entries.",
+          "default": "${Locking.striping}"
         },
         "acquire-timeout": {
           "type": "string",
-          "description": "Maximum time to attempt a particular lock acquisition."
+          "description": "Maximum time to attempt a particular lock acquisition.",
+          "default": "${Locking.acquire-timeout}"
         },
         "concurrency-level": {
           "type": "string",
-          "description": "Concurrency level for lock containers."
+          "description": "Concurrency level for lock containers.",
+          "default": "${Locking.concurrency-level}"
         }
       },
       "additionalProperties": false
@@ -928,7 +941,8 @@
         },
         "stop-timeout": {
           "type": "string",
-          "description": "The amount of time to wait for ongoing transactions to finish when a cache is stopped."
+          "description": "The amount of time to wait for ongoing transactions to finish when a cache is stopped.",
+          "default": "${Transaction.stop-timeout}"
         },
         "locking": {
           "type": "string",
@@ -936,26 +950,31 @@
           "enum": [
             "OPTIMISTIC",
             "PESSIMISTIC"
-          ]
+          ],
+          "default": "${Transaction.locking}"
         },
         "transaction-manager-lookup": {
           "type": "string",
-          "description": "Fully qualified class name of the TransactionManagerLookup implementation."
+          "description": "Fully qualified class name of the TransactionManagerLookup implementation.",
+          "default": "${Transaction.transaction-manager-lookup}"
         },
         "complete-timeout": {
           "type": "string",
-          "description": "The duration in which to keep information about the completion of a transaction."
+          "description": "The duration in which to keep information about the completion of a transaction.",
+          "default": "${Transaction.complete-timeout}"
         },
         "reaper-interval": {
           "type": "string",
-          "description": "The time interval at which the thread that cleans up transaction completion information kicks in."
+          "description": "The time interval at which the thread that cleans up transaction completion information kicks in.",
+          "default": "${Transaction.reaper-interval}"
         },
         "auto-commit": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "If enabled, single operation transactions do not need to be manually started."
+          "description": "If enabled, single operation transactions do not need to be manually started.",
+          "default": "${Transaction.auto-commit}"
         },
         "recovery-cache": {
           "type": "string",
@@ -963,7 +982,8 @@
         },
         "notifications": {
           "type": "boolean",
-          "description": "Enables or disables triggering transactional notifications on cache listeners."
+          "description": "Enables or disables triggering transactional notifications on cache listeners.",
+          "default": "${Transaction.notifications}"
         }
       },
       "additionalProperties": false
@@ -974,15 +994,18 @@
       "properties": {
         "max-idle": {
           "type": "string",
-          "description": "Specifies the maximum amount of time that cache entries can remain idle."
+          "description": "Specifies the maximum amount of time that cache entries can remain idle.",
+          "default": "${Expiration.max-idle}"
         },
         "lifespan": {
           "type": "string",
-          "description": "Specifies the maximum amount of time that cache entries can exist."
+          "description": "Specifies the maximum amount of time that cache entries can exist.",
+          "default": "${Expiration.lifespan}"
         },
         "interval": {
           "type": "string",
-          "description": "Specifies the interval between expiration runs."
+          "description": "Specifies the interval between expiration runs.",
+          "default": "${Expiration.interval}"
         },
         "touch": {
           "type": "string",
@@ -990,7 +1013,8 @@
           "enum": [
             "SYNC",
             "ASYNC"
-          ]
+          ],
+          "default": "${Expiration.touch}"
         }
       },
       "additionalProperties": false
@@ -1041,15 +1065,18 @@
             "boolean",
             "string"
           ],
-          "description": "Enables passivation so that data is written to cache stores only if it is evicted from memory."
+          "description": "Enables passivation so that data is written to cache stores only if it is evicted from memory.",
+          "default": "${Persistence.passivation}"
         },
         "connection-attempts": {
           "type": "string",
-          "description": "Sets the maximum number of attempts to start each configured CacheWriter or CacheLoader."
+          "description": "Sets the maximum number of attempts to start each configured CacheWriter or CacheLoader.",
+          "default": "${Persistence.connection-attempts}"
         },
         "availability-interval": {
           "type": "string",
-          "description": "Specifies the time between availability checks."
+          "description": "Specifies the time between availability checks.",
+          "default": "${Persistence.availability-interval}"
         },
         "file-store": {
           "$ref": "#/$defs/FileStore"
@@ -1069,37 +1096,44 @@
             "boolean",
             "string"
           ],
-          "description": "Determines if a cache store is shared between cache instances."
+          "description": "Determines if a cache store is shared between cache instances.",
+          "default": "${AbstractStore.shared}"
         },
         "preload": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "Pre-loads data into memory from the cache store when the cache starts."
+          "description": "Pre-loads data into memory from the cache store when the cache starts.",
+          "default": "${AbstractStore.preload}"
         },
         "purge": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "Empties the specified cache store at startup."
+          "description": "Empties the specified cache store at startup.",
+          "default": "${AbstractStore.purge}"
         },
         "read-only": {
           "type": "boolean",
-          "description": "Prevents data from being persisted to cache stores."
+          "description": "Prevents data from being persisted to cache stores.",
+          "default": "${AbstractStore.read-only}"
         },
         "write-only": {
           "type": "boolean",
-          "description": "Prevents data from being loaded from cache stores."
+          "description": "Prevents data from being loaded from cache stores.",
+          "default": "${AbstractStore.write-only}"
         },
         "transactional": {
           "type": "boolean",
-          "description": "Whether the underlying store supports transactions."
+          "description": "Whether the underlying store supports transactions.",
+          "default": "${AbstractStore.transactional}"
         },
         "max-batch-size": {
           "type": "integer",
-          "description": "Sets the maximum size of a batch to insert or delete."
+          "description": "Sets the maximum size of a batch to insert or delete.",
+          "default": "${AbstractStore.max-batch-size}"
         },
         "segmented": {
           "type": "boolean",
@@ -1142,11 +1176,13 @@
         },
         "open-files-limit": {
           "type": "integer",
-          "description": "Max number of data and index files opened for reading."
+          "description": "Max number of data and index files opened for reading.",
+          "default": "${SoftIndexFileStore.open-files-limit}"
         },
         "compaction-threshold": {
           "type": "number",
-          "description": "Threshold above which unused space triggers compaction."
+          "description": "Threshold above which unused space triggers compaction.",
+          "default": "${SoftIndexFileStore.compaction-threshold}"
         },
         "data": {
           "$ref": "#/$defs/DataType"
@@ -1167,11 +1203,13 @@
         },
         "max-file-size": {
           "type": "integer",
-          "description": "Max size of single file with entries, in bytes."
+          "description": "Max size of single file with entries, in bytes.",
+          "default": "${Data.max-file-size}"
         },
         "sync-writes": {
           "type": "boolean",
-          "description": "If true, the write is confirmed only after the entry is fsynced on disk."
+          "description": "If true, the write is confirmed only after the entry is fsynced on disk.",
+          "default": "${Data.sync-writes}"
         }
       },
       "additionalProperties": false
@@ -1186,15 +1224,18 @@
         },
         "max-queue-length": {
           "type": "integer",
-          "description": "Max number of entry writes waiting to be written to the index."
+          "description": "Max number of entry writes waiting to be written to the index.",
+          "default": "${Index.max-queue-length}"
         },
         "max-node-size": {
           "type": "integer",
-          "description": "Max size of node in bytes."
+          "description": "Max size of node in bytes.",
+          "default": "${Index.max-node-size}"
         },
         "min-node-size": {
           "type": "integer",
-          "description": "Min size of node in bytes."
+          "description": "Min size of node in bytes.",
+          "default": "${Index.min-node-size}"
         }
       },
       "additionalProperties": false
@@ -1205,14 +1246,16 @@
       "properties": {
         "modification-queue-size": {
           "type": "string",
-          "description": "Specifies the maximum number of entries in the asynchronous modification queue."
+          "description": "Specifies the maximum number of entries in the asynchronous modification queue.",
+          "default": "${AsyncStore.modification-queue-size}"
         },
         "fail-silently": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "Controls how asynchronous write operations take place when cache stores become unavailable."
+          "description": "Controls how asynchronous write operations take place when cache stores become unavailable.",
+          "default": "${AsyncStore.fail-silently}"
         }
       },
       "additionalProperties": false
@@ -1255,7 +1298,8 @@
             "boolean",
             "string"
           ],
-          "description": "Enables and disables cache indexing."
+          "description": "Enables and disables cache indexing.",
+          "default": "${Indexing.enabled}"
         },
         "storage": {
           "type": "string",
@@ -1298,7 +1342,8 @@
             "boolean",
             "string"
           ],
-          "description": "Whether indexes will be defined on the Java indexed entities accessible from the class path."
+          "description": "Whether indexes will be defined on the Java indexed entities accessible from the class path.",
+          "default": "${Indexing.use-java-embedded-entities}"
         },
         "index-reader": {
           "$ref": "#/$defs/IndexReader"
@@ -1422,11 +1467,13 @@
       "properties": {
         "default-max-results": {
           "type": "string",
-          "description": "Limits the number of results returned by a query."
+          "description": "Limits the number of results returned by a query.",
+          "default": "${Query.default-max-results}"
         },
         "hit-count-accuracy": {
           "type": "string",
-          "description": "Limit the required accuracy of the hit count for indexed queries."
+          "description": "Limit the required accuracy of the hit count for indexed queries.",
+          "default": "${Query.hit-count-accuracy}"
         }
       },
       "additionalProperties": false
@@ -1437,15 +1484,18 @@
       "properties": {
         "merge-policy": {
           "type": "string",
-          "description": "Specifies the fully qualified name of a class that implements XSiteEntryMergePolicy or an alias (DEFAULT, PREFER_NON_NULL, PREFER_NULL, ALWAYS_REMOVE)."
+          "description": "Specifies the fully qualified name of a class that implements XSiteEntryMergePolicy or an alias (DEFAULT, PREFER_NON_NULL, PREFER_NULL, ALWAYS_REMOVE).",
+          "default": "${Sites.merge-policy}"
         },
         "max-cleanup-delay": {
           "type": "string",
-          "description": "Specifies the maximum delay between which tombstone cleanup tasks run."
+          "description": "Specifies the maximum delay between which tombstone cleanup tasks run.",
+          "default": "${Sites.max-cleanup-delay}"
         },
         "tombstone-map-size": {
           "type": "string",
-          "description": "Specifies the target number of tombstones to store."
+          "description": "Specifies the target number of tombstones to store.",
+          "default": "${Sites.tombstone-map-size}"
         }
       },
       "additionalProperties": {
@@ -1472,7 +1522,8 @@
           "enum": [
             "ASYNC",
             "SYNC"
-          ]
+          ],
+          "default": "${Backup.strategy}"
         },
         "failure-policy": {
           "type": "string",
@@ -1482,15 +1533,18 @@
             "WARN",
             "FAIL",
             "CUSTOM"
-          ]
+          ],
+          "default": "${Backup.failure-policy}"
         },
         "timeout": {
           "type": "string",
-          "description": "Specifies timeout for synchronous and asynchronous backup operations."
+          "description": "Specifies timeout for synchronous and asynchronous backup operations.",
+          "default": "${Backup.timeout}"
         },
         "two-phase-commit": {
           "type": "boolean",
-          "description": "Enables two-phase commits for optimistic transactional caches."
+          "description": "Enables two-phase commits for optimistic transactional caches.",
+          "default": "${Backup.two-phase-commit}"
         },
         "failure-policy-class": {
           "type": "string",
@@ -1526,19 +1580,23 @@
       "properties": {
         "chunk-size": {
           "type": "string",
-          "description": "Specifies how many cache entries are batched in each transfer request."
+          "description": "Specifies how many cache entries are batched in each transfer request.",
+          "default": "${XSiteStateTransfer.chunk-size}"
         },
         "timeout": {
           "type": "string",
-          "description": "The time to wait for the backup site to acknowledge the state chunk."
+          "description": "The time to wait for the backup site to acknowledge the state chunk.",
+          "default": "${XSiteStateTransfer.timeout}"
         },
         "max-retries": {
           "type": "integer",
-          "description": "Sets the maximum number of retry attempts for push state failures."
+          "description": "Sets the maximum number of retry attempts for push state failures.",
+          "default": "${XSiteStateTransfer.max-retries}"
         },
         "wait-time": {
           "type": "string",
-          "description": "Sets the amount of time to wait between retry attempts."
+          "description": "Sets the amount of time to wait between retry attempts.",
+          "default": "${XSiteStateTransfer.wait-time}"
         },
         "mode": {
           "type": "string",
@@ -1546,7 +1604,8 @@
           "enum": [
             "MANUAL",
             "AUTO"
-          ]
+          ],
+          "default": "${XSiteStateTransfer.mode}"
         }
       },
       "additionalProperties": false
@@ -1579,15 +1638,18 @@
         },
         "timeout": {
           "type": "string",
-          "description": "The maximum amount of time to wait for state from neighboring caches."
+          "description": "The maximum amount of time to wait for state from neighboring caches.",
+          "default": "${StateTransfer.timeout}"
         },
         "chunk-size": {
           "type": "string",
-          "description": "The number of cache entries to batch in each transfer."
+          "description": "The number of cache entries to batch in each transfer.",
+          "default": "${StateTransfer.chunk-size}"
         },
         "await-initial-transfer": {
           "type": "boolean",
-          "description": "If enabled, the cache waits for initial state transfer to complete before responding to requests."
+          "description": "If enabled, the cache waits for initial state transfer to complete before responding to requests.",
+          "default": "${StateTransfer.await-initial-transfer}"
         }
       },
       "additionalProperties": false
@@ -1603,11 +1665,13 @@
             "DENY_READ_WRITES",
             "ALLOW_READS",
             "ALLOW_READ_WRITES"
-          ]
+          ],
+          "default": "${PartitionHandling.when-split}"
         },
         "merge-policy": {
           "type": "string",
-          "description": "The entry merge policy applied on partition merges. Use built-in values (NONE, PREFERRED_ALWAYS, PREFERRED_NON_NULL, REMOVE_ALL) or a fully qualified class name."
+          "description": "The entry merge policy applied on partition merges. Use built-in values (NONE, PREFERRED_ALWAYS, PREFERRED_NON_NULL, REMOVE_ALL) or a fully qualified class name.",
+          "default": "${PartitionHandling.merge-policy}"
         }
       },
       "additionalProperties": false

@@ -1598,7 +1598,8 @@
         },
         "max-content-length": {
           "type": "string",
-          "description": "Sets the maximum size a request from a remote client can be."
+          "description": "Sets the maximum size a request from a remote client can be.",
+          "default": "${ProtocolServer.max-content-length}"
         },
         "security-realm": {
           "type": "string",
@@ -1608,6 +1609,21 @@
           "type": "boolean",
           "description": "Configures whether to use the netmask that the host system provides for interfaces or override with netmasks that follow IANA private address conventions.",
           "default": true
+        },
+        "listener-backpressure-high-watermark": {
+          "type": "integer",
+          "description": "Sets the event queue size at which backpressure is applied to client listener operations.",
+          "default": "${HotRodServer.listener-backpressure-high-watermark}"
+        },
+        "listener-backpressure-low-watermark": {
+          "type": "integer",
+          "description": "Sets the event queue size at which backpressure is released for client listener operations.",
+          "default": "${HotRodServer.listener-backpressure-low-watermark}"
+        },
+        "listener-max-queue-size": {
+          "type": "integer",
+          "description": "Sets the maximum event queue size for client listeners. Exceeding this limit closes the client connection.",
+          "default": "${HotRodServer.listener-max-queue-size}"
         },
         "ip-filter": {
           "$ref": "#/$defs/IpFilter"
@@ -1678,7 +1694,8 @@
         },
         "max-content-length": {
           "type": "integer",
-          "description": "Sets the maximum allowed content length."
+          "description": "Sets the maximum allowed content length.",
+          "default": "${ProtocolServer.max-content-length}"
         },
         "compression-level": {
           "type": "integer",
@@ -1761,7 +1778,8 @@
         },
         "max-content-length": {
           "type": "string",
-          "description": "Sets the maximum size a request from a remote client can be."
+          "description": "Sets the maximum size a request from a remote client can be.",
+          "default": "${ProtocolServer.max-content-length}"
         },
         "protocol": {
           "type": "string",
@@ -1833,7 +1851,8 @@
         },
         "max-content-length": {
           "type": "string",
-          "description": "Sets the maximum size a request from a remote client can be."
+          "description": "Sets the maximum size a request from a remote client can be.",
+          "default": "${ProtocolServer.max-content-length}"
         },
         "security-realm": {
           "type": "string",
@@ -1981,7 +2000,8 @@
       "properties": {
         "require-ssl-client-auth": {
           "type": "boolean",
-          "description": "Requires clients to use certificates for authentication."
+          "description": "Requires clients to use certificates for authentication.",
+          "default": "${Encryption.require-ssl-client-auth}"
         },
         "security-realm": {
           "type": "string",
