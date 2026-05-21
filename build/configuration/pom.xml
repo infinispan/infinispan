@@ -121,7 +121,7 @@
       <version.json-smart>2.6.0</version.json-smart>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
-      <version.jupiter>6.0.3</version.jupiter>
+      <version.jupiter>6.1.0</version.jupiter>
       <version.log4j>2.26.0</version.log4j>
       <!-- version.lucene is defined in the lucene profiles below -->
       <version.lucene9>9.12.3</version.lucene9>
