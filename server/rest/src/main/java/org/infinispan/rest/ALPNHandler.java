@@ -98,8 +98,10 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
    }
 
    private static void configureHttpPipeline(ChannelPipeline pipeline, RestServer restServer) {
+      Http2Settings settings = Http2Settings.defaultSettings();
+      settings.maxConcurrentStreams(Long.getLong("infinispan.http2.maxConcurrentStreams", settings.maxConcurrentStreams()));
       Http2FrameCodec h2c = Http2FrameCodecBuilder.forServer()
-            .initialSettings(Http2Settings.defaultSettings())
+            .initialSettings(settings)
             .build();
       Http2MultiplexHandler multiplexCodec = new Http2MultiplexHandler(new ChannelInitializer<>() {
          @Override

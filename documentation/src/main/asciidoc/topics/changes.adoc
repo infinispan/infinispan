@@ -1,3 +1,10 @@
+== Upgrading from 16.1 to 16.2
+
+=== Maximum concurrent HTTP/2 streams
+
+The default maximum number of concurrent HTTP/2 streams is now set to `100`. If you wish to change it, set
+the `infinispan.http2.maxConcurrentStreams` system property to the value you need.
+
 == Upgrading from 16.0 to 16.1
 
 === Require JDK 25 for Infinispan Server
