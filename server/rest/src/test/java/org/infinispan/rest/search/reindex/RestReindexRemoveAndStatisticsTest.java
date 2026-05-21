@@ -30,12 +30,14 @@ import org.infinispan.testing.TestResourceTracker;
 import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 
+import io.netty.handler.codec.http2.Http2Settings;
+
 @Test(groups = "unit", testName = "rest.search.reindex.RestReindexRemoveAndStatisticsTest")
 public class RestReindexRemoveAndStatisticsTest extends SingleCacheManagerTest {
 
    private static final String CACHE_NAME = "types";
 
-   private static final int ENTRIES = 5_000;
+   private static final int ENTRIES = Http2Settings.defaultSettings().maxConcurrentStreams().intValue();
    private static final int FEW_ENTRIES = 5;
 
    private RestServerHelper restServer;
