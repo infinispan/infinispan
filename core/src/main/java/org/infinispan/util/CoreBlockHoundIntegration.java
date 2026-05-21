@@ -76,8 +76,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
 
          builder.allowBlockingCallsInside(JGroupsTransport.class.getName(), "withView");
 
-         // StateTransferTracker holds the lock briefly to update topology state and complete futures
-         builder.allowBlockingCallsInside(StateTransferTracker.class.getName(), "acquireLock");
+         // StateTransferTracker.CacheStateTransferTracker holds the lock briefly to update topology state and complete futures
+         builder.allowBlockingCallsInside(StateTransferTracker.CacheStateTransferTracker.class.getName(), "acquireLock");
       }
       // This invokes the actual runnable - we have to make sure it doesn't block as normal
       builder.disallowBlockingCallsInside(LimitedExecutor.class.getName(), "actualRun");
