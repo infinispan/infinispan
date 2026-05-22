@@ -98,9 +98,7 @@
       <module>integrationtests/endpoints-interop-it</module>
       <module>integrationtests/jboss-marshalling-it</module>
       <module>integrationtests/cdi-weld-se-it</module>
-      <module>integrationtests/server-integration</module>
-      <module>integrationtests/server-integration/server-integration-commons</module>
-      <module>integrationtests/server-integration/third-party-server</module>
+      <module>integrationtests/appserver</module>
       <module>hibernate</module>
       <module>anchored-keys</module>
       <module>test-support/proto-sample-domain-implementation</module>
@@ -1151,13 +1149,6 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-integrationtests-commons</artifactId>
-            <version>${version.infinispan}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-endpoint-interop-it</artifactId>
             <version>${version.infinispan}</version>
             <type>test-jar</type>
@@ -1224,6 +1215,11 @@
          <dependency>
             <groupId>org.jboss.arquillian.junit</groupId>
             <artifactId>arquillian-junit-container</artifactId>
+            <version>${version.arquillian}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.arquillian.junit5</groupId>
+            <artifactId>arquillian-junit5-container</artifactId>
             <version>${version.arquillian}</version>
          </dependency>
          <dependency>
@@ -2574,6 +2570,9 @@
       </profile>
       <profile>
          <id>image</id>
+         <properties>
+            <infinispan.test.container.image>infinispan/server:${project.version}</infinispan.test.container.image>
+         </properties>
          <modules>
             <module>server/image</module>
          </modules>

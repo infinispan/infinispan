@@ -5,6 +5,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.Indexer;
 import org.testng.annotations.Test;
 
 /**
@@ -26,7 +27,7 @@ public class JBMARRemoteNonIndexedQueryConditionsTest extends JBMARRemoteQueryCo
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Indexing was not enabled on cache.*")
    @Override
    public void testIndexPresence() {
-      org.infinispan.query.Search.getIndexer(getEmbeddedCache());
+      Indexer.of(getEmbeddedCache());
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.query.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
