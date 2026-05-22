@@ -375,9 +375,12 @@ jobs:
         if: ${{ matrix.targets == 'tomcat' }}
         run: |
           cd test_dir/infinispan &&
-          ./mvnw verify -pl server/runtime,\
-          integrationtests/server-integration/server-integration-commons,\
-          integrationtests/server-integration/third-party-server/ \
+          if [ -d integrationtests/server-integration/server-integration-commons ]; then
+            MODULES="server/runtime,integrationtests/server-integration/server-integration-commons,integrationtests/server-integration/third-party-server/"
+          else
+            MODULES="server/runtime,integrationtests/appserver"
+          fi
+          ./mvnw verify -pl "$MODULES" \
           -DcatalinaHome="${CATALINA_HOME}" -Dinfinispan.server.integration.launch=tomcat
 
       - name: Test

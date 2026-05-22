@@ -27,8 +27,15 @@ public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
    public static final String SERVER_LIBS = "SERVER_LIBS";
    public static final String USER = "USER";
 
+   public static final String IMAGE_PROPERTY = "infinispan.test.container.image";
+
    public InfinispanContainer() {
-      this(IMAGE_BASENAME + ":" + Version.getMajorMinor());
+      this(resolveImageName());
+   }
+
+   private static String resolveImageName() {
+      String override = System.getProperty(IMAGE_PROPERTY);
+      return override != null && !override.isEmpty() ? override : IMAGE_BASENAME + ":" + Version.getMajorMinor();
    }
 
    /**

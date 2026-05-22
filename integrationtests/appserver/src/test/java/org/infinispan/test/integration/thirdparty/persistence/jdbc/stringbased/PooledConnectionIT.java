@@ -1,0 +1,104 @@
+package org.infinispan.test.integration.thirdparty.persistence.jdbc.stringbased;
+
+import static org.infinispan.test.integration.persistence.jdbc.util.JdbcConfigurationUtil.CACHE_NAME;
+import static org.infinispan.test.integration.thirdparty.persistence.jdbc.util.BaseJdbcDeploy.addJdbcLibraries;
+import static org.infinispan.testing.Eventually.eventually;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import org.infinispan.Cache;
+import org.infinispan.context.Flag;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.test.integration.persistence.jdbc.util.JdbcConfigurationUtil;
+import org.infinispan.test.integration.persistence.jdbc.util.TableManipulation;
+import org.infinispan.test.integration.thirdparty.DeploymentHelper;
+import org.infinispan.testing.Eventually;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.TargetsContainer;
+import org.jboss.arquillian.junit5.container.annotation.ArquillianTest;
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
+@ArquillianTest
+public class PooledConnectionIT {
+
+    private EmbeddedCacheManager cm;
+
+    @Deployment
+    @TargetsContainer("server-1")
+    public static Archive<?> deployment() {
+        WebArchive war = DeploymentHelper.createDeployment();
+        war.addClass(TableManipulation.class);
+        war.addClass(JdbcConfigurationUtil.class);
+        war.addClass(Eventually.class);
+        war.addClass(Eventually.Condition.class);
+        addJdbcLibraries(war);
+        return war;
+    }
+
+    @AfterEach
+    public void cleanUp() {
+        if (cm != null)
+            cm.stop();
+    }
+
+    @Test
+    public void testPutGetRemove() throws Exception {
+        JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(true, true);
+        cm = jdbcUtil.getCacheManager();
+        Cache<String, String> cache = cm.getCache(CACHE_NAME);
+        PersistenceManager persistenceManager = ComponentRegistry.componentOf(cache, PersistenceManager.class);
+        JdbcStringBasedStore<String, String> jdbcStringBasedStore = persistenceManager.getStores(JdbcStringBasedStore.class).iterator().next();
+        try (TableManipulation table = new TableManipulation(jdbcStringBasedStore.getTableManager(), jdbcUtil.getPersistenceConfiguration())) {
+            cache.put("k1", "v1");
+            cache.put("k2", "v2");
+
+            //not yet in store (eviction.max-entries=2, LRU)
+            assertNull(table.getValueByKey("k1"));
+            assertNull(table.getValueByKey("k2"));
+            cache.put("k3", "v3");
+            //now some key is evicted and stored in store
+            assertEquals(2, getNumberOfEntriesInMemory(cache));
+            // Passivation will happen asynchronously.
+            eventually(() -> table.countAllRows() == 1);
+
+            cache.stop();
+            cache.start();
+
+            assertEquals(3, cache.size());
+            assertEquals("v1", cache.get("k1"));
+            assertEquals(2, getNumberOfEntriesInMemory(cache));
+            assertEquals(3, table.countAllRows());
+            assertCleanCacheAndStore(cache);
+        }
+    }
+
+    @Test
+    public void testWithoutPreload() {
+        JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(true, false);
+        cm = jdbcUtil.getCacheManager();
+        Cache<String, String> cache = cm.getCache(CACHE_NAME);
+        cache.put("k1", "v1");
+        cache.put("k2", "v2");
+
+        cache.stop();
+        cache.start();
+
+        assertEquals(0, getNumberOfEntriesInMemory(cache));
+        assertCleanCacheAndStore(cache);
+    }
+
+    private void assertCleanCacheAndStore(Cache<?, ?> cache) {
+        cache.clear();
+        assertEquals(0, cache.size());
+    }
+
+    private int getNumberOfEntriesInMemory(Cache<?, ?> cache) {
+        return cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size();
+    }
+}
