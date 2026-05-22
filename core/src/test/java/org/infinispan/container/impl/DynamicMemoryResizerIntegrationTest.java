@@ -74,9 +74,9 @@ public class DynamicMemoryResizerIntegrationTest extends AbstractInfinispanTest 
       monitor.recordGcEvent(120_000, 10);
       eventually(() -> !monitor.isGcPressureExceeded(), 5000);
 
-      // The resizer should be in GROWING state now, but the grow delay is 30s by default.
-      // Instead, manually invoke growStep to verify integration.
-      assertEquals(DynamicMemoryResizer.State.GROWING, resizer.state);
+      // The resizer should transition to GROWING once the async callback executes.
+      // The grow delay is 30s by default, so manually invoke growStep to verify integration.
+      eventually(() -> resizer.state == DynamicMemoryResizer.State.GROWING, 5000);
       resizer.growStep();
       assertEquals(900, sharedMap.capacity());
    }
