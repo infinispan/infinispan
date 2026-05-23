@@ -461,4 +461,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Error raised when retrieving errors of schemas %s", id = 4126)
    void schemasInErrorRetrieveFailure(String schemas, @Cause Throwable throwable);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Server error received after operation %s already timed out on %s: this is the actual cause of the timeout", id = 4127)
+   void delayedServerError(Object operation, SocketAddress address, @Cause Throwable cause);
+
 }
