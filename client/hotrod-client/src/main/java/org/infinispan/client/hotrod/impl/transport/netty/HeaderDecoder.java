@@ -279,7 +279,16 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                   String cacheName = operation == null ? "" : operation.getCacheName();
                   short responseCode = operation == null ? -1 : operation.responseOpCode();
                   if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
-                     codec.checkForErrorsInResponseStatus(in, cacheName, receivedMessageId, status, channel.remoteAddress());
+                     try {
+                        codec.checkForErrorsInResponseStatus(in, cacheName, receivedMessageId, status, channel.remoteAddress());
+                     } catch (Throwable t) {
+                        if (operation != null && operation.asCompletableFuture().isDone()) {
+                           HOTROD.delayedServerError(operation, channel.remoteAddress(), t);
+                           checkpoint(State.READ_MESSAGE_ID);
+                           break;
+                        }
+                        throw t;
+                     }
                   }
                   throw HOTROD.invalidResponse(cacheName, responseCode, receivedOpCode);
                }
@@ -289,11 +298,17 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                try {
                   unmarshaller.setDataFormat(operation.getDataFormat());
                   Object resp = operation.createResponse(in, status, this, codec, unmarshaller);
-                  dispatcher.handleResponse((HotRodOperation<Object>) operation, receivedMessageId, ctx.channel(), resp, null);
+                  if (!operation.asCompletableFuture().isDone()) {
+                     dispatcher.handleResponse((HotRodOperation<Object>) operation, receivedMessageId, ctx.channel(), resp, null);
+                  }
                } catch (Signal signal) {
                   throw signal;
                } catch (Throwable t) {
-                  dispatcher.handleResponse(operation, receivedMessageId, ctx.channel(), null, t);
+                  if (operation.asCompletableFuture().isDone()) {
+                     HOTROD.delayedServerError(operation, channel.remoteAddress(), t);
+                  } else {
+                     dispatcher.handleResponse(operation, receivedMessageId, ctx.channel(), null, t);
+                  }
                }
                checkpoint(State.READ_MESSAGE_ID);
                break;
