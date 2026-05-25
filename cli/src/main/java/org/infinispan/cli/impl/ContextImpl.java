@@ -20,7 +20,7 @@ import org.aesh.command.shell.Shell;
 import org.aesh.console.AeshContext;
 import org.aesh.console.ReadlineConsole;
 import org.aesh.io.FileResource;
-import org.aesh.readline.Prompt;
+import org.aesh.readline.prompt.Prompt;
 import org.aesh.terminal.utils.ANSI;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.connection.Connection;

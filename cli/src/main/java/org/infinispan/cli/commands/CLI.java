@@ -45,7 +45,7 @@ import org.aesh.command.shell.Shell;
 import org.aesh.console.ReadlineConsole;
 import org.aesh.io.FileResource;
 import org.aesh.io.Resource;
-import org.aesh.readline.CompositeSuggestionProvider;
+import org.aesh.readline.suggestion.CompositeSuggestionProvider;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.activators.ContextAwareCommandActivatorProvider;
 import org.infinispan.cli.commands.kubernetes.Kube;
