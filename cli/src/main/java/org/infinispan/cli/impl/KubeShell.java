@@ -4,7 +4,7 @@ import java.io.Console;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-import org.aesh.readline.Prompt;
+import org.aesh.readline.prompt.Prompt;
 import org.aesh.terminal.Key;
 import org.aesh.terminal.tty.TerminalConnection;
 import org.aesh.terminal.utils.ANSI;
