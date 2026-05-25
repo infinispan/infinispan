@@ -4,10 +4,12 @@ package org.infinispan.dataconversion;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.protostream.ProtobufUtil.toWrappedByteArray;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
@@ -181,6 +183,13 @@ public class ProtostreamTranscoderTest extends AbstractTranscoderTest {
       assertTrue(result instanceof String);
       assertJsonCorrect(result);
 
+   }
+
+   @Test
+   public void testTranscodeEmptyBytesToOctetStream() {
+      byte[] emptyBytes = new byte[0];
+      Object result = transcoder.transcode(emptyBytes, APPLICATION_PROTOSTREAM, APPLICATION_OCTET_STREAM);
+      assertNull(result);
    }
 
    private void assertJsonCorrect(Object json) {
