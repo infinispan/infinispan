@@ -229,7 +229,13 @@
 
    <dependencyManagement>
       <dependencies>
-
+         <dependency>
+            <groupId>org.aesh</groupId>
+            <artifactId>aesh-bom</artifactId>
+            <version>${version.aesh}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
          <dependency>
             <groupId>org.hibernate.search</groupId>
             <artifactId>hibernate-search-bom</artifactId>
@@ -237,7 +243,6 @@
             <type>pom</type>
             <scope>import</scope>
          </dependency>
-
          <dependency>
             <groupId>org.junit</groupId>
             <artifactId>junit-bom</artifactId>
@@ -674,16 +679,6 @@
             <groupId>org.infinispan</groupId>
             <artifactId>memcached-client</artifactId>
             <version>${versionx.org.infinispan.memcached-client}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.aesh</groupId>
-            <artifactId>aesh</artifactId>
-            <version>${version.aesh}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.aesh</groupId>
-            <artifactId>readline</artifactId>
-            <version>${version.aesh-readline}</version>
          </dependency>
          <dependency>
             <groupId>org.antlr</groupId>
