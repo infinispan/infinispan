@@ -74,7 +74,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
          }
          if (destinationType.match(MediaType.APPLICATION_OCTET_STREAM)) {
             Object unmarshalled = content instanceof byte[] ? unmarshall((byte[]) content, contentType, destinationType) : content;
-            if (unmarshalled instanceof byte[]) {
+            if (unmarshalled == null || unmarshalled instanceof byte[]) {
                return unmarshalled;
             }
             ImmutableSerializationContext ctx = getCtxForMarshalling(unmarshalled);
@@ -95,7 +95,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
          }
          if (destinationType.equals(APPLICATION_UNKNOWN)) {
             //TODO: Remove wrapping of byte[] into WrappedByteArray from the Hot Rod Multimap operations.
-            if (content instanceof WrappedByteArray) return content;
+            if (content == null || content instanceof WrappedByteArray) return content;
             ImmutableSerializationContext ctx = getCtxForMarshalling(content);
             return StandardConversions.convertJavaToProtoStream(content, MediaType.APPLICATION_OBJECT, ctx);
          }
