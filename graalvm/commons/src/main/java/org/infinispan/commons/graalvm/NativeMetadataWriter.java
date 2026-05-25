@@ -27,7 +27,7 @@ public class NativeMetadataWriter {
                   array(metadata.bundles())
             );
 
-      Files.writeString(Paths.get(rootDir, "reflection-config.json"), reflection.toPrettyString());
+      Files.writeString(Paths.get(rootDir, "reflect-config.json"), reflection.toPrettyString());
       Files.writeString(Paths.get(rootDir, "resource-config.json"), resource.toPrettyString());
    }
 

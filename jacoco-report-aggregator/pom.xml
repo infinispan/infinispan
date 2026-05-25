@@ -264,7 +264,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-quarkus-cli</artifactId>
+            <artifactId>infinispan-graalvm-cli</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>

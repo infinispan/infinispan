@@ -53,7 +53,7 @@ public class Install extends CliCommand {
          // Determine whether this is OpenShift or K8S+OLM
          List<GenericKubernetesResource> sources = client.genericKubernetesResources(Kube.OPERATOR_CATALOGSOURCE_CRD).inAnyNamespace().list().getItems();
          Optional<GenericKubernetesResource> catalog = sources.stream().filter(cs -> Version.getProperty("infinispan.olm.k8s.source").equals(cs.getMetadata().getName())).findFirst();
-         if (!catalog.isPresent()) {
+         if (catalog.isEmpty()) {
             catalog = sources.stream().filter(cs -> Version.getProperty("infinispan.olm.openshift.source").equals(cs.getMetadata().getName())).findFirst();
          }
          if (catalog.isPresent()) {

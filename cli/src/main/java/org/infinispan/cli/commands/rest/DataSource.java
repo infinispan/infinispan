@@ -4,7 +4,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
@@ -18,7 +17,7 @@ import org.infinispan.client.rest.RestResponse;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 13.0
  **/
-@GroupCommandDefinition(name = DataSource.CMD, description = "Performs operations on data sources", activator = ConnectionActivator.class, groupCommands = {DataSource.Ls.class, DataSource.Test.class})
+@CommandDefinition(name = DataSource.CMD, description = "Performs operations on data sources", activator = ConnectionActivator.class, groupCommands = {DataSource.Ls.class, DataSource.Test.class})
 public class DataSource extends CliCommand {
 
    public static final String CMD = "datasource";

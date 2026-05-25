@@ -53,7 +53,7 @@ jobs:
           - os: macos-latest
             asset_name: darwin-arm64
             gu_binary: gu
-            native_extra_args: -Dquarkus.native.native-image-xmx=5500m
+            native_extra_args: -Dnative.build.xmx=5500m -Dquarkus.native.native-image-xmx=5500m
           - os: windows-2022
             asset_name: windows-amd64
             gu_binary: gu.cmd
@@ -78,13 +78,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
+      - name: Detect CLI module path
+        id: detect-cli
+        shell: bash
+        run: |
+          if [ -f graalvm/cli/pom.xml ]; then
+            echo "module=graalvm/cli" >> $GITHUB_OUTPUT
+          else
+            echo "module=quarkus/cli" >> $GITHUB_OUTPUT
+          fi
+
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Build native executable
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-          mvnw.cmd -V install -Pdistribution -Pnative -Pwindows -am -pl quarkus/cli ${{ matrix.native_extra_args }}
+          mvnw.cmd -V install -Pdistribution -Pnative -Pwindows -am -pl ${{ steps.detect-cli.outputs.module }} ${{ matrix.native_extra_args }}
         shell: cmd
 
       - if: ${{ matrix.os != 'windows-2022' }}
         name: Build native executable
-        run: ./mvnw -V install -Pdistribution -Pnative -am -pl quarkus/cli ${{ matrix.native_extra_args }}
+        run: ./mvnw -V install -Pdistribution -Pnative -am -pl ${{ steps.detect-cli.outputs.module }} ${{ matrix.native_extra_args }}

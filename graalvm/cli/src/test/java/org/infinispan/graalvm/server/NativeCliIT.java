@@ -1,4 +1,4 @@
-package org.infinispan.quarkus.server;
+package org.infinispan.graalvm.server;
 
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
- * Test to ensure that the native quarkus CLI is able to execute.
+ * Test to ensure that the native CLI is able to execute.
  *
  * @author Ryan Emerson
  * @since 12.1

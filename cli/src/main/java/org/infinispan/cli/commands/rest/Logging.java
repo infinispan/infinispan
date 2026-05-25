@@ -6,7 +6,6 @@ import java.util.concurrent.CompletionStage;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.aesh.command.option.OptionList;
@@ -26,7 +25,7 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "logging", description = "Inspects/Manipulates the server logging configuration", activator = ConnectionActivator.class, groupCommands = {Logging.Loggers.class, Logging.Appenders.class, Logging.Set.class, Logging.Remove.class})
+@CommandDefinition(name = "logging", description = "Inspects/Manipulates the server logging configuration", activator = ConnectionActivator.class, groupCommands = {Logging.Loggers.class, Logging.Appenders.class, Logging.Set.class, Logging.Remove.class})
 public class Logging extends CliCommand {
 
 

@@ -1,0 +1,23 @@
+{
+  "reflection": [
+    {
+      "type": "org.infinispan.cli.impl.ExitCodeResultHandler",
+      "methods": [{"name": "<init>", "parameterTypes": []}]
+    },
+    {
+      "type": "org.infinispan.cli.logging.Messages_$bundle",
+      "methods": [{"name": "<init>", "parameterTypes": []}],
+      "fields": [
+        {"name": "INSTANCE", "allowWrite": true}
+      ]
+    },
+    {
+      "type": "org.infinispan.commons.logging.Log_$logger",
+      "methods": [{"name": "<init>", "parameterTypes": ["org.jboss.logging.Logger"]}]
+    },
+    {
+      "type": "org.wildfly.security.password.impl.PasswordFactorySpiImpl",
+      "methods": [{"name": "<init>", "parameterTypes": []}]
+    }
+  ]
+}

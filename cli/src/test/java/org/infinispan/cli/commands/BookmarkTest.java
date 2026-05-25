@@ -27,7 +27,7 @@ import org.aesh.command.invocation.CommandInvocationConfiguration;
 import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.shell.Shell;
 import org.aesh.console.ReadlineConsole;
-import org.aesh.readline.Prompt;
+import org.aesh.readline.prompt.Prompt;
 import org.aesh.terminal.Key;
 import org.aesh.terminal.KeyAction;
 import org.aesh.terminal.tty.Size;
