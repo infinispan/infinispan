@@ -5,7 +5,6 @@ import java.util.concurrent.CompletionStage;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
@@ -21,7 +20,7 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "server", description = "Obtains information about the server", activator = ConnectionActivator.class, groupCommands = {Connector.class, DataSource.class, Server.Report.class, Server.HeapDump.class, Connections.class, Principals.class, AclCache.class})
+@CommandDefinition(name = "server", description = "Obtains information about the server", activator = ConnectionActivator.class, groupCommands = {Connector.class, DataSource.class, Server.Report.class, Server.HeapDump.class, Connections.class, Principals.class, AclCache.class})
 public class Server extends CliCommand {
 
 

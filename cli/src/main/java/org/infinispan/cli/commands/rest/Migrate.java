@@ -10,7 +10,6 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Option;
 import org.aesh.command.option.OptionGroup;
@@ -33,7 +32,7 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "migrate", description = "Migration operations", groupCommands = {Migrate.Store.class, Migrate.Cluster.class})
+@CommandDefinition(name = "migrate", description = "Migration operations", groupCommands = {Migrate.Store.class, Migrate.Cluster.class})
 public class Migrate extends CliCommand {
 
 
@@ -73,7 +72,7 @@ public class Migrate extends CliCommand {
       }
    }
 
-   @GroupCommandDefinition(name = "cluster", description = "Performs data migration between clusters", groupCommands = {Migrate.ClusterConnect.class, Migrate.ClusterDisconnect.class, Migrate.ClusterSourceConnection.class, Migrate.ClusterSynchronize.class}, activator = ConnectionActivator.class)
+   @CommandDefinition(name = "cluster", description = "Performs data migration between clusters", groupCommands = {Migrate.ClusterConnect.class, Migrate.ClusterDisconnect.class, Migrate.ClusterSourceConnection.class, Migrate.ClusterSynchronize.class}, activator = ConnectionActivator.class)
    public static class Cluster extends CliCommand {
 
       @Override

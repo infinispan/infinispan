@@ -5,7 +5,6 @@ import java.util.concurrent.CompletionStage;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
@@ -22,7 +21,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "drop", description = "Drops a cache or a counter", activator = ConnectionActivator.class, groupCommands = {Drop.Cache.class, Drop.Counter.class})
+@CommandDefinition(name = "drop", description = "Drops a cache or a counter", activator = ConnectionActivator.class, groupCommands = {Drop.Cache.class, Drop.Counter.class})
 public class Drop extends CliCommand {
 
 

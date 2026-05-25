@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
@@ -42,7 +41,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * @since 12.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "backup", description = "Manages container backup creation and restoration", activator = ConnectionActivator.class,
+@CommandDefinition(name = "backup", description = "Manages container backup creation and restoration", activator = ConnectionActivator.class,
       groupCommands = {Backup.Create.class, Backup.Delete.class, Backup.Get.class, Backup.ListBackups.class, Backup.Restore.class})
 public class Backup extends CliCommand {
 
@@ -105,7 +104,6 @@ public class Backup extends CliCommand {
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
-         String container = invocation.getContext().connection().getActiveContainer().getName();
          return client.container().getBackupNames();
       }
    }

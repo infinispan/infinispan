@@ -128,17 +128,14 @@
                   <annotationProcessorPath>
                      <groupId>org.aesh</groupId>
                      <artifactId>aesh-processor</artifactId>
-                     <version>${version.aesh}</version>
                   </annotationProcessorPath>
                   <annotationProcessorPath>
                      <groupId>org.aesh</groupId>
                      <artifactId>aesh</artifactId>
-                     <version>${version.aesh}</version>
                   </annotationProcessorPath>
                   <annotationProcessorPath>
                      <groupId>org.aesh</groupId>
                      <artifactId>readline</artifactId>
-                     <version>${version.aesh-readline}</version>
                   </annotationProcessorPath>
                </annotationProcessorPaths>
             </configuration>

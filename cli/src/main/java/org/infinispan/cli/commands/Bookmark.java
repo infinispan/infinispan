@@ -17,7 +17,6 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
@@ -36,7 +35,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  * @since 16.2
  */
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "bookmark", description = "Manage connection bookmarks",
+@CommandDefinition(name = "bookmark", description = "Manage connection bookmarks",
       groupCommands = {Bookmark.SetBookmark.class, Bookmark.Remove.class, Bookmark.Ls.class, Bookmark.Get.class})
 public class Bookmark extends CliCommand {
 

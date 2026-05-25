@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.aesh.command.option.OptionGroup;
@@ -29,7 +28,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
  * @since 12.0
  **/
 
-@GroupCommandDefinition(
+@CommandDefinition(
       name = "create",
       description = "Creates resources.",
       groupCommands = {

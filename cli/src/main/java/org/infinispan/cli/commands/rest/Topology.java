@@ -6,7 +6,6 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
@@ -20,7 +19,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "topology", description = "Manages the cluster topology.",
+@CommandDefinition(name = "topology", description = "Manages the cluster topology.",
       activator = ConnectionActivator.class, groupCommands = {Topology.SetStable.class})
 public class Topology extends CliCommand {
 

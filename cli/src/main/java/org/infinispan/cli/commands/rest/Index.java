@@ -5,7 +5,6 @@ import java.util.concurrent.CompletionStage;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
@@ -21,7 +20,7 @@ import org.kohsuke.MetaInfServices;
  * @since 14.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "index", description = "Performs operations on indexes", activator = ConnectionActivator.class, groupCommands = {Index.Reindex.class, Index.Clear.class, Index.Stats.class, Index.Metamodel.class, Index.UpdateIndex.class, Index.ClearStats.class})
+@CommandDefinition(name = "index", description = "Performs operations on indexes", activator = ConnectionActivator.class, groupCommands = {Index.Reindex.class, Index.Clear.class, Index.Stats.class, Index.Metamodel.class, Index.UpdateIndex.class, Index.ClearStats.class})
 public class Index extends CliCommand {
 
 

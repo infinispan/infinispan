@@ -18,9 +18,6 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
-        <!-- Additional native build args that are required for distribution and development should be added to the property below directly. The comma is important -->
-        <quarkus.native.additional-build-args>${native.build.args},</quarkus.native.additional-build-args>
-        <quarkus.native.native-image-xmx>${native.build.xmx}</quarkus.native.native-image-xmx>
         <exe.suffix/>
     </properties>
 
@@ -57,9 +54,9 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>io.quarkus</groupId>
-                <artifactId>quarkus-bom</artifactId>
-                <version>${version.quarkus}</version>
+                <groupId>org.aesh</groupId>
+                <artifactId>aesh-bom</artifactId>
+                <version>${version.aesh}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

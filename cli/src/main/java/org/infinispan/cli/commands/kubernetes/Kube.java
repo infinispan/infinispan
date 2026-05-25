@@ -10,8 +10,8 @@ import java.util.Optional;
 import java.util.Properties;
 
 import org.aesh.command.Command;
+import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.invocation.CommandInvocation;
 import org.infinispan.cli.commands.Version;
 import org.infinispan.cli.logging.Messages;
@@ -31,7 +31,7 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
-@GroupCommandDefinition(
+@CommandDefinition(
       name = "kube",
       description = "Kubernetes commands.",
       groupCommands = {
@@ -43,7 +43,7 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
             Uninstall.class,
             Version.class
       })
-public class Kube implements Command {
+public class Kube implements Command<CommandInvocation> {
    public static final String DEFAULT_CLUSTER_NAME = "infinispan";
 
    static final CustomResourceDefinitionContext INFINISPAN_CLUSTER_CRD = new CustomResourceDefinitionContext.Builder()
@@ -156,7 +156,7 @@ public class Kube implements Command {
       // Global installation: determine the namespace
       List<Namespace> namespaces = client.namespaces().list().getItems();
       Optional<Namespace> ns = namespaces.stream().filter(n -> "openshift-operators".equals(n.getMetadata().getName())).findFirst();
-      if (!ns.isPresent()) {
+      if (ns.isEmpty()) {
          ns = namespaces.stream().filter(n -> "operators".equals(n.getMetadata().getName())).findFirst();
       }
       if (ns.isPresent()) {
