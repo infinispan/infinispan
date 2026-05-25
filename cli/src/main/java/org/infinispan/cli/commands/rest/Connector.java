@@ -7,7 +7,6 @@ import java.util.concurrent.CompletionStage;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.OptionList;
 import org.infinispan.cli.activators.ConnectionActivator;
@@ -25,7 +24,7 @@ import org.infinispan.client.rest.RestResponse;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.1
  **/
-@GroupCommandDefinition(name = Connector.CMD, description = "Performs operations on protocol connectors", activator = ConnectionActivator.class, groupCommands = {Connector.Ls.class, Connector.Describe.class, Connector.Start.class, Connector.Stop.class, Connector.IpFilter.class})
+@CommandDefinition(name = Connector.CMD, description = "Performs operations on protocol connectors", activator = ConnectionActivator.class, groupCommands = {Connector.Ls.class, Connector.Describe.class, Connector.Start.class, Connector.Stop.class, Connector.IpFilter.class})
 public class Connector extends CliCommand {
 
    public static final String CMD = "connector";
@@ -85,7 +84,7 @@ public class Connector extends CliCommand {
       }
    }
 
-   @GroupCommandDefinition(name = "ipfilter", description = "Manages connector IP filters", activator = ConnectionActivator.class, groupCommands = {IpFilter.Ls.class, IpFilter.Clear.class, IpFilter.Set.class})
+   @CommandDefinition(name = "ipfilter", description = "Manages connector IP filters", activator = ConnectionActivator.class, groupCommands = {IpFilter.Ls.class, IpFilter.Clear.class, IpFilter.Set.class})
    public static class IpFilter extends CliCommand {
 
       @Override

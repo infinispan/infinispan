@@ -8,7 +8,6 @@ import java.util.concurrent.CompletionStage;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
@@ -33,7 +32,7 @@ import org.kohsuke.MetaInfServices;
  * @since 13.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "alter", description = "Alters a configuration", activator = ConnectionActivator.class, groupCommands = {Alter.Cache.class})
+@CommandDefinition(name = "alter", description = "Alters a configuration", activator = ConnectionActivator.class, groupCommands = {Alter.Cache.class})
 public class Alter extends CliCommand {
 
 

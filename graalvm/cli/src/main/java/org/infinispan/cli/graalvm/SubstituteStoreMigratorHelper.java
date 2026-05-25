@@ -1,4 +1,4 @@
-package org.infinispan.cli.quarkus;
+package org.infinispan.cli.graalvm;
 
 import java.util.Properties;
 

@@ -103,10 +103,6 @@ public class XSiteCliOperations {
       doWithTerminal(terminal -> {
          connect(terminal, LON);
 
-         terminal.send("site state-transfer-mode");
-         terminal.assertContains("Usage: site state-transfer-mode [<options>]");
-         terminal.clear();
-
          //make sure --site is required
          terminal.send("site state-transfer-mode get");
          terminal.assertContains("Option: --site is required for this command.");

@@ -1,8 +1,8 @@
 package org.infinispan.cli.commands;
 
 import org.aesh.command.Command;
+import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.invocation.CommandInvocation;
 import org.infinispan.cli.commands.rest.Add;
 import org.infinispan.cli.commands.rest.Alter;
@@ -33,7 +33,7 @@ import org.infinispan.cli.impl.ExitCodeResultHandler;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@GroupCommandDefinition(
+@CommandDefinition(
       name = "batch",
       description = "",
       groupCommands = {

@@ -9,7 +9,6 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Arguments;
@@ -25,7 +24,7 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "patch", description = "Patch operations", groupCommands = {Patch.Create.class, Patch.Describe.class, Patch.Install.class, Patch.Ls.class, Patch.Rollback.class})
+@CommandDefinition(name = "patch", description = "Patch operations", groupCommands = {Patch.Create.class, Patch.Describe.class, Patch.Install.class, Patch.Ls.class, Patch.Rollback.class})
 public class Patch extends CliCommand {
 
 

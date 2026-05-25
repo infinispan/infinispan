@@ -5,7 +5,6 @@ import static org.infinispan.cli.commands.kubernetes.Kube.INFINISPAN_CLUSTER_CRD
 
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.commands.CliCommand;
@@ -18,7 +17,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
-@GroupCommandDefinition(
+@CommandDefinition(
       name = "delete",
       description = "Deletes resources.",
       groupCommands = {

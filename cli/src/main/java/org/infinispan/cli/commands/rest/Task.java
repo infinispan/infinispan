@@ -8,7 +8,6 @@ import java.util.concurrent.CompletionStage;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
@@ -29,7 +28,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.1
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "task", description = "Executes or manipulates server-side tasks", activator = ConnectionActivator.class, groupCommands = {Task.Exec.class, Task.Upload.class})
+@CommandDefinition(name = "task", description = "Executes or manipulates server-side tasks", activator = ConnectionActivator.class, groupCommands = {Task.Exec.class, Task.Upload.class})
 public class Task extends CliCommand {
 
    @Override

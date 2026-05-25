@@ -157,7 +157,6 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration combine.self="override">
-                     <skipTests>false</skipTests>
                      <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.driver=CONTAINER</argLine>
                      <systemPropertyVariables>
                         <infinispan.cluster.stack>tcp</infinispan.cluster.stack>

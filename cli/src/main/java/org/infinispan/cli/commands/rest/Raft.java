@@ -6,7 +6,6 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
@@ -17,7 +16,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "raft", description = "Manages RAFT membership",
+@CommandDefinition(name = "raft", description = "Manages RAFT membership",
       activator = ConnectionActivator.class,
       groupCommands = {
             Raft.AddMember.class,

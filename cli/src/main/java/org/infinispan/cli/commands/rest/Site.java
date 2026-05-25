@@ -11,7 +11,6 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
 import org.aesh.command.parser.RequiredOptionException;
 import org.infinispan.cli.activators.ConnectionActivator;
@@ -36,7 +35,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "site", description = "Manages backup sites",
+@CommandDefinition(name = "site", description = "Manages backup sites",
       activator = ConnectionActivator.class,
       groupCommands = {
             Site.Status.class,
@@ -288,7 +287,7 @@ public class Site extends CliCommand {
       }
    }
 
-   @GroupCommandDefinition(name = "state-transfer-mode", description = "Controls the cross-site state transfer mode.",
+   @CommandDefinition(name = "state-transfer-mode", description = "Controls the cross-site state transfer mode.",
          activator = ConnectionActivator.class,
          groupCommands = {
                GetStateTransferMode.class,

@@ -6,7 +6,6 @@ import java.util.concurrent.CompletionStage;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Arguments;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
@@ -22,7 +21,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "shutdown", description = "Stops server instances and clusters.", activator = ConnectionActivator.class, groupCommands = {Shutdown.Server.class, Shutdown.Cluster.class, Shutdown.Container.class})
+@CommandDefinition(name = "shutdown", description = "Stops server instances and clusters.", activator = ConnectionActivator.class, groupCommands = {Shutdown.Server.class, Shutdown.Cluster.class, Shutdown.Container.class})
 public class Shutdown extends CliCommand {
 
 

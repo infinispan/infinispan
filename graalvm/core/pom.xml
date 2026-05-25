@@ -15,6 +15,7 @@
 
    <properties>
       <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
+      <skipTests>true</skipTests>
    </properties>
 
    <dependencies>
@@ -144,7 +145,6 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-               <skipTests>true</skipTests>
                <parallel>none</parallel>
                <groups combine.self="override">${defaultJUnitGroups}</groups>
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
@@ -168,15 +168,11 @@
    <profiles>
       <profile>
          <id>native</id>
+         <properties>
+            <skipTests>false</skipTests>
+         </properties>
          <build>
             <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <skipTests>false</skipTests>
-                  </configuration>
-               </plugin>
                <plugin>
                   <groupId>org.graalvm.buildtools</groupId>
                   <artifactId>native-maven-plugin</artifactId>
