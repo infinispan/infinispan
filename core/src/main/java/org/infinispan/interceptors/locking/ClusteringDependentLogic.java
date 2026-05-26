@@ -253,11 +253,16 @@ public interface ClusteringDependentLogic {
          CompletionStage<DataOperationOrderer.Operation> waitingFuture = orderer.orderOn(key, ourFuture);
 
          CompletionStage<Void> chainedStage;
-         // We have to wait on another operation to complete before doing the update
-         if (waitingFuture != null) {
-            chainedStage = waitingFuture.thenCompose(ignore -> commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation));
-         } else {
-            chainedStage = commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation);
+         try {
+            // We have to wait on another operation to complete before doing the update
+            if (waitingFuture != null) {
+               chainedStage = waitingFuture.thenCompose(ignore -> commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation));
+            } else {
+               chainedStage = commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation);
+            }
+         } catch (Throwable t) {
+            orderer.completeOperation(key, ourFuture, operation(entry));
+            throw t;
          }
          // After everything is done we have to make sure to complete our future
          if (CompletionStages.isCompletedSuccessfully(chainedStage)) {
