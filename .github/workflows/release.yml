@@ -286,3 +286,4 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           gh variable set RELEASE -b "$(echo ${{ needs.release.outputs.nextVersion }} | cut -f 1 -d '-')" --org infinispan  --visibility all;
+          gh variable set "RELEASE_$(echo '${{ needs.release.outputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo '${{ needs.release.outputs.version }}' | cut -f 1-2 -d '.').1" --org infinispan --visibility all;
