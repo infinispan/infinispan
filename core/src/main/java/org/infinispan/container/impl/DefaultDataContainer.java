@@ -43,8 +43,13 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   private final PeekableTouchableMap<K, V> entries;
-   private final Cache<K, InternalCacheEntry<K, V>> evictionCache;
+   protected final PeekableTouchableMap<K, V> entries;
+   protected final Cache<K, InternalCacheEntry<K, V>> evictionCache;
+
+   protected DefaultDataContainer(PeekableTouchableMap<K, V> entries) {
+      this.entries = entries;
+      this.evictionCache = null;
+   }
 
    public DefaultDataContainer(int concurrencyLevel) {
       // If no comparing implementations passed, could fallback on JDK CHM

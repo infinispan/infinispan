@@ -86,16 +86,29 @@ public class SharedCaffeineMap<K, V> {
       }
    }
 
-   public SharedBoundedContainer<K, V> newContainer(String cacheName, BasicComponentRegistry componentRegistry,
-                                                    int numSegments) {
+   public AbstractInternalDataContainer<K, V> newContainer(String cacheName, BasicComponentRegistry componentRegistry,
+                                                             int numSegments) {
       PeekableTouchableCaffeineMap<K, V> ptcm = new PeekableTouchableCaffeineMap<>(new CaffeineCacheMapper<>(cache, KeyValuePair::getValue,
             k -> new KeyValuePair<>(cacheName, k)));
-      SharedBoundedContainer<K, V> container = new SharedBoundedContainer<>(ptcm, PeekableTouchableContainerMap::new, numSegments);
+      AbstractInternalDataContainer<K, V> container;
+      if (numSegments == 1) {
+         SharedBoundedLocalContainer<K, V> localContainer = new SharedBoundedLocalContainer<>(ptcm);
+         registerAndWire(cacheName, localContainer, componentRegistry);
+         container = localContainer;
+      } else {
+         SharedBoundedContainer<K, V> segmentedContainer = new SharedBoundedContainer<>(ptcm, PeekableTouchableContainerMap::new, numSegments);
+         registerAndWire(cacheName, segmentedContainer, componentRegistry);
+         segmentedContainer.start();
+         container = segmentedContainer;
+      }
+      return container;
+   }
+
+   private void registerAndWire(String cacheName, EvictionListener<K, V> container,
+                                BasicComponentRegistry componentRegistry) {
       if (listenerMap.putIfAbsent(cacheName, container) != null) {
          throw new IllegalArgumentException("Container already exists for cache: " + cacheName);
       }
       componentRegistry.wireDependencies(container, false);
-      container.start();
-      return container;
    }
 }
