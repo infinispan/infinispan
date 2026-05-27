@@ -10,9 +10,9 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
-import org.infinispan.container.impl.SharedBoundedContainer;
 import org.infinispan.container.impl.SharedCaffeineMap;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -79,7 +79,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
       int evictionSize = 10;
       SharedCaffeineMap<String, String> container = newMap(evictionSize, false);
 
-      SharedBoundedContainer<String, String> fooContainer = container.newContainer("foo", basicComponentRegistry, 32);
+      InternalDataContainer<String, String> fooContainer = container.newContainer("foo", basicComponentRegistry, 32);
 
       for (int i = 0; i < evictionSize; ++i) {
          fooContainer.put(i, "foo-" + i, "bar-" + i, null, null, -1, -1);
@@ -89,7 +89,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
 
       assertEquals(evictionSize, fooContainer.size());
 
-      SharedBoundedContainer<String, String> barContainer = container.newContainer("bar", basicComponentRegistry, 10);
+      InternalDataContainer<String, String> barContainer = container.newContainer("bar", basicComponentRegistry, 10);
 
       for (int i = 0; i < evictionSize; ++i) {
          barContainer.put(i, "bar-" + i, "foo", null, null, -1, -1);
@@ -105,10 +105,10 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
 
       SharedCaffeineMap<String, String> container = newMap(evictionMemorySize, true);
 
-      SharedBoundedContainer<String, String> container1 = container.newContainer("container1", basicComponentRegistry, 10);
-      SharedBoundedContainer<String, String> container2 = container.newContainer("container2", basicComponentRegistry, 98);
-      SharedBoundedContainer<String, String> container3 = container.newContainer("container3", basicComponentRegistry, 23);
-      SharedBoundedContainer<String, String> container4 = container.newContainer("container4", basicComponentRegistry, 62);
+      InternalDataContainer<String, String> container1 = container.newContainer("container1", basicComponentRegistry, 10);
+      InternalDataContainer<String, String> container2 = container.newContainer("container2", basicComponentRegistry, 98);
+      InternalDataContainer<String, String> container3 = container.newContainer("container3", basicComponentRegistry, 23);
+      InternalDataContainer<String, String> container4 = container.newContainer("container4", basicComponentRegistry, 62);
 
 
       for (int i = 0; i < 20; ++i) {
@@ -131,7 +131,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
    @Test
    public void testResize() {
       SharedCaffeineMap<String, String> container = newMap(10, false);
-      SharedBoundedContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
       for (int i = 0; i < 5; i++) {
          subContainer.put(0, "key-" + i, "value" + i, null, null, -1, -1);
       }
@@ -143,7 +143,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
    @Test
    public void testEvictionSize() {
       SharedCaffeineMap<String, String> container = newMap(10, false);
-      SharedBoundedContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 15);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 15);
       for (int i = 0; i < 5; i++) {
          subContainer.put("key-" + i, "value" + i, null);
       }
@@ -160,7 +160,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
    @Test
    public void testCapacity() {
       SharedCaffeineMap<String, String> container = newMap(10, false);
-      SharedBoundedContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
       for (int i = 0; i < 5; i++) {
          subContainer.put(0, "key-" + i, "value" + i, null, null, -1, -1);
       }
@@ -170,7 +170,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
    @Test
    public void testPeek() {
       SharedCaffeineMap<String, String> container = newMap(10, false);
-      SharedBoundedContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
       subContainer.put(1, "key-1", "value1", null, null, -1, -1);
       assertEquals(new ImmortalCacheEntry("key-1", "value1"), subContainer.peek("key-1"));
       assertEquals(1, subContainer.size()); // Peek should not affect size
@@ -179,7 +179,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
    @Test
    public void testClear() {
       SharedCaffeineMap<String, String> container = newMap(10, false);
-      SharedBoundedContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
       for (int i = 0; i < 5; i++) {
          subContainer.put(0, "key-" + i, "value" + i, null, null, -1, -1);
       }
@@ -191,7 +191,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
    @Test
    public void testContainsKey() {
       SharedCaffeineMap<String, String> container = newMap(10, false);
-      SharedBoundedContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
       subContainer.put(1, "key-1", "value1", null, null, -1, -1);
       assertTrue(subContainer.containsKey("key-1"));
       assertFalse(subContainer.containsKey("key-2"));
@@ -200,7 +200,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
    @Test
    public void testRemove() {
       SharedCaffeineMap<String, String> container = newMap(10, false);
-      SharedBoundedContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
       subContainer.put(1, "key-1", "value1", null, null, -1, -1);
       assertEquals(1, subContainer.size());
       subContainer.remove("key-1");
@@ -211,7 +211,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
    @Test
    public void testRemoveSegments() {
       SharedCaffeineMap<String, String> container = newMap(10, false);
-      SharedBoundedContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
 
       // Populate with entries across multiple segments
       subContainer.put(0, "key-0", "value-0", null, null, -1, -1);
@@ -235,7 +235,7 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
    @Test
    public void testClearWithSegments() {
       SharedCaffeineMap<String, String> container = newMap(10, false);
-      SharedBoundedContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 5);
 
       // Populate with entries across multiple segments
       subContainer.put(0, "key-0", "value-0", null, null, -1, -1);
@@ -256,11 +256,175 @@ public class SharedCaffeineMapTest extends AbstractInfinispanTest {
       assertTrue(subContainer.containsKey("key-3"));
    }
 
-   private void twoContainerSetup(TriConsumer<SharedCaffeineMap<String, String>, SharedBoundedContainer<String, String>,
-         SharedBoundedContainer<String, String>> verifications) {
+   @Test
+   public void testNonSegmentedBasicOperations() {
       SharedCaffeineMap<String, String> container = newMap(10, false);
-      SharedBoundedContainer<String, String> firstContainer = container.newContainer("first", basicComponentRegistry, 5);
-      SharedBoundedContainer<String, String> secondContainer = container.newContainer("second", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 1);
+
+      subContainer.put("key-0", "value-0", null);
+      subContainer.put("key-1", "value-1", null);
+      subContainer.put("key-2", "value-2", null);
+
+      assertEquals(3, subContainer.size());
+      assertEquals(3, subContainer.sizeIncludingExpired());
+      assertEquals(new ImmortalCacheEntry("key-1", "value-1"), subContainer.get("key-1"));
+   }
+
+   @Test
+   public void testNonSegmentedSizeIncludingExpiredWithLargeIntSet() {
+      SharedCaffeineMap<String, String> container = newMap(100, false);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 1);
+
+      for (int i = 0; i < 5; i++) {
+         subContainer.put("key-" + i, "value-" + i, null);
+      }
+
+      assertEquals(5, subContainer.sizeIncludingExpired());
+      // This is the exact scenario from the bug - calling sizeIncludingExpired with a large IntSet
+      // should not throw ArrayIndexOutOfBoundsException
+      IntSet largeSegmentSet = IntSets.immutableRangeSet(256);
+      assertEquals(5, subContainer.sizeIncludingExpired(largeSegmentSet));
+   }
+
+   @Test
+   public void testNonSegmentedEvictionAcrossContainers() {
+      SharedCaffeineMap<String, String> container = newMap(10, false);
+      InternalDataContainer<String, String> first = container.newContainer("first", basicComponentRegistry, 1);
+      InternalDataContainer<String, String> second = container.newContainer("second", basicComponentRegistry, 1);
+
+      // Fill first container to the limit
+      for (int i = 0; i < 10; i++) {
+         first.put("key-" + i, "value-" + i, null);
+      }
+      assertEquals(10, first.size());
+
+      // Inserting into second must evict entries from first since the shared container is full
+      for (int i = 0; i < 10; i++) {
+         second.put("key-" + i, "value-" + i, null);
+      }
+      assertTrue("Inserts into second should have evicted from first, but first has " + first.size(),
+            first.size() < 10);
+      int totalSize = first.size() + second.size();
+      assertTrue("Total size should be at most 10 but was " + totalSize, totalSize <= 10);
+
+      // Now insert more into first with new keys to cause evictions from second
+      int secondBefore = second.size();
+      for (int i = 10; i < 20; i++) {
+         first.put("key-" + i, "value-" + i, null);
+      }
+      assertTrue("Inserts into first should have evicted from second, but second has " + second.size()
+            + " (was " + secondBefore + ")", second.size() < secondBefore);
+      totalSize = first.size() + second.size();
+      assertTrue("Total size should be at most 10 but was " + totalSize, totalSize <= 10);
+   }
+
+   @Test
+   public void testNonSegmentedClear() {
+      SharedCaffeineMap<String, String> container = newMap(10, false);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 1);
+
+      for (int i = 0; i < 5; i++) {
+         subContainer.put("key-" + i, "value-" + i, null);
+      }
+
+      assertEquals(5, subContainer.size());
+      subContainer.clear();
+      assertEquals(0, subContainer.size());
+   }
+
+   @Test
+   public void testNonSegmentedClearNotAffectOther() {
+      SharedCaffeineMap<String, String> container = newMap(20, false);
+      InternalDataContainer<String, String> first = container.newContainer("first", basicComponentRegistry, 1);
+      InternalDataContainer<String, String> second = container.newContainer("second", basicComponentRegistry, 1);
+
+      for (int i = 0; i < 5; i++) {
+         first.put("key-" + i, "value-" + i, null);
+         second.put("key-" + i, "value-" + i, null);
+      }
+
+      assertEquals(10, container.getCache().estimatedSize());
+      assertEquals(5, first.size());
+      assertEquals(5, second.size());
+
+      first.clear();
+
+      assertEquals(5, container.getCache().estimatedSize());
+      assertEquals(0, first.size());
+      assertEquals(5, second.size());
+   }
+
+   @Test
+   public void testNonSegmentedPeekAndContainsKey() {
+      SharedCaffeineMap<String, String> container = newMap(10, false);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 1);
+
+      subContainer.put("key-1", "value-1", null);
+
+      assertEquals(new ImmortalCacheEntry("key-1", "value-1"), subContainer.peek("key-1"));
+      assertTrue(subContainer.containsKey("key-1"));
+      assertFalse(subContainer.containsKey("key-2"));
+   }
+
+   @Test
+   public void testNonSegmentedCapacityAndResize() {
+      SharedCaffeineMap<String, String> container = newMap(10, false);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 1);
+
+      assertEquals(10, subContainer.capacity());
+      subContainer.resize(20);
+      assertEquals(20, subContainer.capacity());
+   }
+
+   @Test
+   public void testNonSegmentedRemove() {
+      SharedCaffeineMap<String, String> container = newMap(10, false);
+      InternalDataContainer<String, String> subContainer = container.newContainer("test", basicComponentRegistry, 1);
+
+      subContainer.put("key-1", "value-1", null);
+      assertEquals(1, subContainer.size());
+
+      subContainer.remove("key-1");
+      assertEquals(0, subContainer.size());
+      assertFalse(subContainer.containsKey("key-1"));
+   }
+
+   @Test
+   public void testMixedSegmentedAndNonSegmentedSharingContainer() {
+      SharedCaffeineMap<String, String> container = newMap(100, false);
+      InternalDataContainer<String, String> segmented = container.newContainer("segmented", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> nonSegmented = container.newContainer("non-segmented", basicComponentRegistry, 1);
+
+      for (int i = 0; i < 5; i++) {
+         segmented.put(i, "seg-key-" + i, "seg-value-" + i, null, null, -1, -1);
+         nonSegmented.put("nonseg-key-" + i, "nonseg-value-" + i, null);
+      }
+
+      assertEquals(5, segmented.size());
+      assertEquals(5, nonSegmented.size());
+      assertEquals(10, container.getCache().estimatedSize());
+
+      // Clearing the non-segmented container should not affect the segmented one
+      nonSegmented.clear();
+      assertEquals(0, nonSegmented.size());
+      assertEquals(5, segmented.size());
+      assertEquals(5, container.getCache().estimatedSize());
+
+      // And vice versa
+      for (int i = 0; i < 3; i++) {
+         nonSegmented.put("nonseg-key-" + i, "nonseg-value-" + i, null);
+      }
+      segmented.clear();
+      assertEquals(0, segmented.size());
+      assertEquals(3, nonSegmented.size());
+      assertEquals(3, container.getCache().estimatedSize());
+   }
+
+   private void twoContainerSetup(TriConsumer<SharedCaffeineMap<String, String>, InternalDataContainer<String, String>,
+         InternalDataContainer<String, String>> verifications) {
+      SharedCaffeineMap<String, String> container = newMap(10, false);
+      InternalDataContainer<String, String> firstContainer = container.newContainer("first", basicComponentRegistry, 5);
+      InternalDataContainer<String, String> secondContainer = container.newContainer("second", basicComponentRegistry, 5);
 
       for (int i = 0; i < 5; ++i) {
          firstContainer.put(i, "key-" + i, "value-" + i, null, null, -1, -1);
