@@ -480,6 +480,9 @@ class Index {
                   write(statsChannel, buffer);
                   buffer.flip();
                }
+
+               // Force the stats written since some tests may read it after shutting down
+               statsChannel.force(false);
             }
          } catch (IOException e) {
             throw CompletableFutures.asCompletionException(e);
