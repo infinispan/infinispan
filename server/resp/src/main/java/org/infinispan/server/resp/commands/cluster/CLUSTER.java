@@ -18,6 +18,8 @@ public class CLUSTER extends FamilyCommand {
             new NODES(),
             new SLOTS(),
             new KEYSLOT(),
+            new MYID(),
+            new MYSHARDID(),
       };
    }
 
