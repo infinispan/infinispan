@@ -2,6 +2,7 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +74,13 @@ public class LeaveDuringStateTransferTest extends MultipleCacheManagersTest {
 
          log.debug("Isolating node " + cacheManagers.get(1));
          TestingUtil.getDiscardForCache(manager(1)).discardAll(true);
-         TestingUtil.blockUntilViewsReceived(60000, true, cacheManagers);
+         Future<Void> installViews = fork(() -> {
+            TestingUtil.installNewView(manager(0), manager(2), manager(3));
+            TestingUtil.installNewView(manager(1));
+         });
+         eventually(() -> manager(1).getMembers().size() == 1, 30, TimeUnit.SECONDS);
+         TestingUtil.blockUntilViewsReceived(60000, false, manager(0), manager(2), manager(3));
+         assertTrue(installViews.isDone());
 
          log.debug("Waiting for topology update from view change");
          // The coordinator sends a READ_NEW topology (+4), but doesn't wait for the confirmation
