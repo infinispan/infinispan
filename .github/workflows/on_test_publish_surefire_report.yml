@@ -35,7 +35,7 @@ jobs:
           id: app-token
           with:
             # required
-            app-id: ${{ secrets.GH_APP_ISPN_ID }}
+            client-id: ${{ secrets.GH_APP_ISPN_ID }}
             private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
         # Get job status, next steps will be executed only if test job was successful
@@ -170,7 +170,7 @@ jobs:
       id: app-token
       with:
         # required
-        app-id: ${{ secrets.GH_APP_ISPN_ID }}
+        client-id: ${{ secrets.GH_APP_ISPN_ID }}
         private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
     - name: Get job status
@@ -252,7 +252,7 @@ jobs:
         - uses: actions/create-github-app-token@v3
           id: app-token
           with:
-            app-id: ${{ secrets.GH_APP_ISPN_ID }}
+            client-id: ${{ secrets.GH_APP_ISPN_ID }}
             private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
         - name: Get Maven Test job status
@@ -359,7 +359,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ secrets.GH_APP_ISPN_ID }}
+          client-id: ${{ secrets.GH_APP_ISPN_ID }}
           private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
       - name: Get job status

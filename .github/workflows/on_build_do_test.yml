@@ -113,7 +113,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ secrets.GH_APP_ISPN_ID }}
+          client-id: ${{ secrets.GH_APP_ISPN_ID }}
           private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
       - name: Create Check Run for Test Report
@@ -180,7 +180,7 @@ jobs:
         if: always() && failure()
         id: app-token-2
         with:
-          app-id: ${{ secrets.GH_APP_ISPN_ID }}
+          client-id: ${{ secrets.GH_APP_ISPN_ID }}
           private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
       - name: set-commit-failure-status
@@ -329,7 +329,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-            app-id: ${{ secrets.GH_APP_ISPN_ID }}
+            client-id: ${{ secrets.GH_APP_ISPN_ID }}
             private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
       - name: Create Check Run for Test Report
