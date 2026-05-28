@@ -651,7 +651,8 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          LMPopArgs args = LMPopArgs.Builder.left().count(3);
          RedisFuture<KeyValue<String, List<String>>> rf = registerListener(() -> conn.async().blmpop(1, args, "whatever"));
          timeService.advance(TimeUnit.SECONDS.toMillis(2));
-         KeyValue<String, List<String>> response = rf.get(3, TimeUnit.SECONDS);
+         eventually(rf::isDone);
+         KeyValue<String, List<String>> response = rf.get();
 
          assertThat(response).isNull();
       } finally {
