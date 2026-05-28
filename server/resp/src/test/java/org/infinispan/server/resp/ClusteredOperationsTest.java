@@ -3,12 +3,19 @@ package org.infinispan.server.resp;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.resp.test.RespTestingUtil.OK;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.infinispan.server.resp.commands.cluster.SegmentSlotRelation;
 import org.testng.annotations.Test;
+
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 
 @Test(groups = "functional", testName = "server.resp.ClusteredOperationsTest")
 public class ClusteredOperationsTest extends BaseMultipleRespTest {
@@ -22,6 +29,28 @@ public class ClusteredOperationsTest extends BaseMultipleRespTest {
       for (int i = 0; i < 100; i++) {
          assertThat( redisConnection2.sync().get("key" + i)).isEqualTo("value" + i);
       }
+   }
+
+   public void retrieveMyId() {
+      String id1 = redisConnection1.sync().clusterMyId();
+      String id2 = redisConnection2.sync().clusterMyId();
+
+      assertThat(id1).isNotEmpty();
+      assertThat(id2).isNotEmpty();
+      assertThat(id1).isNotEqualTo(id2);
+   }
+
+   public void retrieveMyShardId() {
+      String id1 = redisConnection1.sync().dispatch(CommandType.CLUSTER,
+            new StatusOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).add("MYSHARDID"));
+      String id2 = redisConnection2.sync().dispatch(CommandType.CLUSTER,
+            new StatusOutput<>(StringCodec.UTF8),
+            new CommandArgs<>(StringCodec.UTF8).add("MYSHARDID"));
+
+      assertThat(id1).isNotEmpty();
+      assertThat(id2).isNotEmpty();
+      assertThat(id1).isNotEqualTo(id2);
    }
 
    public void retrieveShardsInformation() {
@@ -52,16 +81,27 @@ public class ClusteredOperationsTest extends BaseMultipleRespTest {
    public void retrieveSlotsInformation() {
       List<Object> slots = redisConnection1.sync().clusterSlots();
 
-      // With 2 nodes, we should have at least 2 slots.
+      // With 2 nodes, we should have at least 2 slot ranges.
       assertThat(slots).hasSizeGreaterThanOrEqualTo(2);
+
+      BitSet covered = new BitSet(SegmentSlotRelation.SLOT_SIZE);
+      long previousEnd = -1;
+
       for (Object slot : slots) {
          List<Object> values = (List<Object>) slot;
 
          // Base information includes the slot range start, end, and at least 1 owner.
          assertThat(values).hasSizeGreaterThanOrEqualTo(3);
 
-         assertThat(values.get(0)).isInstanceOf(Long.class);
-         assertThat(values.get(1)).isInstanceOf(Long.class);
+         long start = (Long) values.get(0);
+         long end = (Long) values.get(1);
+
+         assertThat(start).as("Slot range start").isGreaterThanOrEqualTo(0);
+         assertThat(end).as("Slot range end for start=%d", start).isGreaterThanOrEqualTo(start);
+         assertThat(start).as("Slot ranges must not overlap").isGreaterThan(previousEnd);
+         previousEnd = end;
+
+         covered.set((int) start, (int) end + 1);
 
          List<Object> owner = asList(values, 2);
          assertThat(owner).hasSizeGreaterThanOrEqualTo(3);
@@ -71,17 +111,27 @@ public class ClusteredOperationsTest extends BaseMultipleRespTest {
          assertThat(owner.get(1)).isInstanceOf(Long.class)
                .satisfies(v -> assertThat(v.equals((long) server1.getPort()) || v.equals((long) server2.getPort())).isTrue());
       }
+
+      assertThat(covered.cardinality())
+            .as("CLUSTER SLOTS must cover all %d hash slots", SegmentSlotRelation.SLOT_SIZE)
+            .isEqualTo(SegmentSlotRelation.SLOT_SIZE);
    }
 
    private void validate(List<Object> shards) {
       // We have 2 nodes in the system.
       assertThat(shards).hasSize(2);
 
-      assertShard(asList(shards, 0), 2);
-      assertShard(asList(shards, 1), 2);
+      BitSet covered = new BitSet(SegmentSlotRelation.SLOT_SIZE);
+      for (int i = 0; i < shards.size(); i++) {
+         assertShard(asList(shards, i), 2, covered);
+      }
+
+      assertThat(covered.cardinality())
+            .as("CLUSTER SHARDS must cover all %d hash slots", SegmentSlotRelation.SLOT_SIZE)
+            .isEqualTo(SegmentSlotRelation.SLOT_SIZE);
    }
 
-   static void assertShard(List<Object> values, int size) {
+   static void assertShard(List<Object> values, int size, BitSet covered) {
       assertThat(values)
             .hasSize(4)
             .contains("slots", "nodes");
@@ -90,9 +140,18 @@ public class ClusteredOperationsTest extends BaseMultipleRespTest {
       slot.put((String) values.get(0), values.get(1));
       slot.put((String) values.get(2), values.get(3));
 
-      assertThat(slot.get("slots")).isInstanceOf(List.class)
-            .asList()
-            .isNotEmpty();
+      List<Object> slotRanges = (List<Object>) slot.get("slots");
+      assertThat(slotRanges).isNotEmpty();
+      assertThat(slotRanges.size() % 2).as("Slot ranges must come in start/end pairs").isZero();
+
+      for (int i = 0; i < slotRanges.size(); i += 2) {
+         long start = (Long) slotRanges.get(i);
+         long end = (Long) slotRanges.get(i + 1);
+         assertThat(end).as("Slot range end for start=%d", start).isGreaterThanOrEqualTo(start);
+         if (covered != null) {
+            covered.set((int) start, (int) end + 1);
+         }
+      }
 
       assertThat(slot.get("nodes")).isInstanceOf(List.class)
             .asList()
