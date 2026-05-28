@@ -50,7 +50,8 @@ public class TransactionalGracefulShutdownTest extends MultipleCacheManagersTest
 
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC);
-      cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC);
+      cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
+            .cacheStopTimeout(10, TimeUnit.SECONDS);
       cb.persistence().addSoftIndexFileStore();
       EmbeddedCacheManager ecm = addClusterEnabledCacheManager(global, null);
       ecm.defineConfiguration(CACHE_NAME, cb.build());
@@ -99,9 +100,9 @@ public class TransactionalGracefulShutdownTest extends MultipleCacheManagersTest
       shutdownCheckpoint.triggerForever(Mocks.AFTER_RELEASE);
 
       // After some time, the shutdown will finally complete.
-      // C0 will wait a period before giving up transactions, this makes the shutdown procedure to take a while.
+      // C0 will wait for cacheStopTimeout before giving up transactions.
       shutdown.get(30, TimeUnit.SECONDS);
-      assertThat(tx.isDone()).isTrue();
+      eventually(() -> "Transaction should complete after shutdown", tx::isDone, 30, TimeUnit.SECONDS);
 
       // We restart the cluster again. Since persistence is enabled, the data should be present and still the same.
       recreateCluster();
