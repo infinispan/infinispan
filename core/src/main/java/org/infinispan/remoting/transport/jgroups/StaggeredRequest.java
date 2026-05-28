@@ -22,6 +22,7 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
    private final JGroupsTransport transport;
 
    private final long deadline;
+   private final long timeoutNanos;
    private int targetIndex;
 
    StaggeredRequest(ResponseCollector<Address, T> responseCollector, long requestId, RequestRepository repository,
@@ -32,6 +33,7 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
       this.command = command;
       this.deliverOrder = deliverOrder;
       this.transport = transport;
+      this.timeoutNanos = unit.toNanos(timeout);
       this.deadline = transport.timeService.expectedEndTime(timeout, unit);
    }
 
@@ -95,6 +97,11 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
          if (!isFinalTarget) {
             delayNanos = delayNanos / 10 / getTargetsSize();
          }
+         // On slow systems the scheduled executor may fire the stagger callback late,
+         // after the original deadline has already passed. Enforce a minimum delay so
+         // that every target we just sent a message to gets at least some time to respond.
+         long minDelayNanos = timeoutNanos / 10 / getTargetsSize();
+         delayNanos = Math.max(delayNanos, minDelayNanos);
          super.setTimeout(transport.getTimeoutExecutor(), delayNanos, TimeUnit.NANOSECONDS);
       } catch (Exception e) {
          completeExceptionally(e);
