@@ -97,10 +97,10 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
                   ? TransactionDecorator.completeTransaction(resume, t == null)
                   : CompletableFutures.completedNull();
          });
-      }, ctx.executor()).thenCompose(o -> {
+      }, ctx.executor()).thenComposeAsync(o -> {
          curr.writer().arrayEnd();
          return o;
-      });
+      }, ctx.executor());
    }
 
    private CompletionStage<Void> orderlyExecution(Resp3Handler handler, ChannelHandlerContext ctx,
