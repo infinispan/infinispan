@@ -1,6 +1,6 @@
 package org.infinispan.server.functional.hotrod;
 
-import static org.infinispan.testing.Eventually.eventually;
+import static org.infinispan.commons.test.Eventually.eventually;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
