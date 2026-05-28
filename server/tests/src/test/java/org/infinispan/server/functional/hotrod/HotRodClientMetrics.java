@@ -1,5 +1,6 @@
 package org.infinispan.server.functional.hotrod;
 
+import static org.infinispan.testing.Eventually.eventually;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -137,6 +138,12 @@ public class HotRodClientMetrics {
          assertEquals("v2", cache.get("k2"));  // read-hit++, near-cache-miss++, near-cache-size++
          assertNull(cache.get("k3")); // read-miss++, near-cache-miss++
          cache.remove("k1"); //remove++, near-cache-invalidation++, near-cache-size--
+
+         // Near cache invalidation is delivered asynchronously via a server-sent event.
+         // Wait for the event to be processed before scraping metrics.
+         if (nearCache) {
+            eventually(() -> cache.clientStatistics().getNearCacheInvalidations() >= 1);
+         }
 
          var scrape = registry.scrape();
          log.debugf("---%n%s%n----", scrape);
