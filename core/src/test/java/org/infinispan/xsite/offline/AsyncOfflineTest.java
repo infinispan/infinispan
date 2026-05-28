@@ -67,6 +67,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
    public void testSlowSFO(Method method) {
       createTestSite(SFO);
+      waitForSites(LON, NYC, SFO);
 
       String cacheName = method.getName();
       defineCache(LON, cacheName, getLONConfiguration());
@@ -97,6 +98,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
    public void testReset(Method method) {
       createTestSite(SFO);
+      waitForSites(LON, NYC, SFO);
 
       String cacheName = method.getName();
       defineCache(LON, cacheName, getLONConfiguration());
