@@ -30,6 +30,7 @@ Plan, configure, deploy, and manage Infinispan clusters.
 * link:titles/rest/rest.html[Using the REST API]
 * link:titles/security/security.html[Security guide]
 * link:titles/tuning/tuning.html[Performance considerations and tuning guidelines]
+* link:titles/troubleshooting/troubleshooting.html[Troubleshooting Infinispan]
 * link:titles/upgrading/upgrading.html[Upgrading Infinispan deployments]
 
 [discrete]
