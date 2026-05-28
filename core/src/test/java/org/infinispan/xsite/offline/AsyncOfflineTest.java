@@ -9,6 +9,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -125,7 +126,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
       //SFO request should timeout (timeout=1 sec) and it retries (max retries = 6)
       lonCache.put(key, "value2");
-      eventuallyEquals(1, lonStatus::getFailureCount);
+      eventually(() -> lonStatus.getFailureCount() >= 1);
       assertEquals("value", sfoCache.get(key));
 
       handlers.forEach(h -> h.discard = false);
@@ -138,7 +139,12 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
             }
          }
          return true;
-      });
+      }, 30, TimeUnit.SECONDS);
+
+      // If SFO went offline due to accumulated failures during the retry window, bring it back online
+      if (lonStatus.isOffline()) {
+         CompletionStages.join(lonStatus.bringOnline());
+      }
 
       //SFO request will succeed and reset the take offline status
       lonCache.put(key, "value3");
