@@ -178,9 +178,8 @@ public class SHARDS extends RespCommand implements Resp3Command {
          }
 
          segments.add(runStart * slotWidth);
-         int endSlot = (i - 1) * slotWidth;
-         // In case if the numSegments is not divisible by 2
-         if (endSlot > SegmentSlotRelation.SLOT_SIZE) {
+         int endSlot = ((i + 1) * slotWidth) - 1;
+         if (endSlot >= SegmentSlotRelation.SLOT_SIZE) {
             endSlot = SegmentSlotRelation.SLOT_SIZE - 1;
          }
          segments.add(endSlot);
