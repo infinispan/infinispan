@@ -37,6 +37,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -99,7 +100,9 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
       cb.memory().maxCount(WRITE_DELETE_BATCH_MAX_ENTRIES)
             .expiration().wakeUpInterval(10L);
 
-      // Unfortunately BaseNonBlockingStoreTest stops and restarts the store, which can start a second hrServer - prevent that
+      // Reuse the server and cache manager across test methods to avoid JGroups multicast
+      // socket conflicts. The OS may not release the multicast socket immediately after a
+      // JGroups channel disconnect, causing BindException on the next test method's startup.
       if (hrServer == null) {
          GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder().clusteredDefault();
          globalConfig.defaultCacheName(CACHE_NAME);
@@ -117,6 +120,9 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
          keyPartitioner = TestingUtil.extractComponent(serverCache, KeyPartitioner.class);
 
          hrServer = HotRodClientTestingUtil.startHotRodServer(serverCacheManager);
+      } else {
+         // Each test method creates a new TimeService; update the server to use it
+         TestingUtil.replaceComponent(serverCacheManager, TimeService.class, timeService, true);
       }
 
       // Set it to dist so it has segments
@@ -154,9 +160,14 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
    public void tearDown() {
       configuration = null;
       super.tearDown();
+   }
+
+   @AfterClass(alwaysRun = true)
+   protected void destroyServer() {
       HotRodClientTestingUtil.killServers(hrServer);
       hrServer = null;
       TestingUtil.killCacheManagers(serverCacheManager);
+      serverCacheManager = null;
    }
 
    @Override
