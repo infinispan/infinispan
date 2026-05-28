@@ -87,6 +87,10 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       DataConversion vc = cache.getValueDataConversion();
       PubSubListener pubSubListener = new PubSubListener(handler, cache, configuration);
       EventListenerKeysFilter filter = new EventListenerKeysFilter(configuration.keys().stream());
+      // Record the deadline before listener installation, which may take time in clustered environments.
+      // The timeout should be relative to when the command was issued, not when the listener is fully installed.
+      long timeout = configuration.timeout();
+      long deadline = timeout > 0 ? handler.respServer().getTimeService().expectedEndTime(timeout, TimeUnit.MILLISECONDS) : 0;
       CompletionStage<Void> addListenerStage = cache.addListenerAsync(pubSubListener, filter,
             new EventListenerConverter<Object, Object, byte[]>(vc));
       addListenerStage.whenComplete((ignore, t) -> {
@@ -98,8 +102,17 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
          // Listener can lose events during its install, so we need to poll again
          // and if we get values complete the listener future. In case of exception
          // completeExceptionally
-         // Start a timer if required
-         pubSubListener.startTimer(configuration.timeout());
+         // Start a timer with the remaining time, accounting for time spent installing the listener.
+         if (timeout > 0) {
+            long remaining = handler.respServer().getTimeService().remainingTime(deadline, TimeUnit.MILLISECONDS);
+            if (remaining <= 0) {
+               // Timeout expired during listener installation. Complete immediately.
+               cache.removeListenerAsync(pubSubListener);
+               pubSubListener.synchronizer.resultFuture.complete(null);
+               return;
+            }
+            pubSubListener.startTimer(remaining);
+         }
          pubSubListener.synchronizer.onListenerAdded();
       });
       ClientMetadata metadata = handler.respServer().metadataRepository().client();

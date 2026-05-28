@@ -332,6 +332,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          var cf = registerListener(() -> bxPopAsync(5, "key"));
          var cf2 = registerListener(() -> bxPopAsync(5, "key"));
          redis.lpush("key", "first");
+         timeService.advance(TimeUnit.SECONDS.toMillis(6));
          var res = cf.get(15, TimeUnit.SECONDS);
          var res2 = cf2.get(15, TimeUnit.SECONDS);
 
@@ -384,6 +385,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          var cf3 = registerListener(() -> bxPopAsync(3, "key"));
          fork(() -> redis1.lpush("key", "first"));
          fork(() -> redis2.lpush("key", "second"));
+         timeService.advance(TimeUnit.SECONDS.toMillis(4));
          var res = cf.get(10, TimeUnit.SECONDS);
          var res2 = cf2.get(10, TimeUnit.SECONDS);
          var res3 = cf3.get(10, TimeUnit.SECONDS);
@@ -444,7 +446,8 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          .isInstanceOf(RedisCommandExecutionException.class)
          .hasMessageContaining("ERR value is out of range, must be positive");
       var res = bxPopAsync(1, "keyZ");
-      // Ensure bxpop is expired
+      // Advance time past the timeout to expire the blocking pop
+      timeService.advance(TimeUnit.SECONDS.toMillis(2));
       eventually(res::isDone);
       redis.lpush("keyZ", "firstZ");
       assertThat(res.get()).isNull();
@@ -647,6 +650,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       try (StatefulRedisConnection<String, String> conn = newConnection()) {
          LMPopArgs args = LMPopArgs.Builder.left().count(3);
          RedisFuture<KeyValue<String, List<String>>> rf = registerListener(() -> conn.async().blmpop(1, args, "whatever"));
+         timeService.advance(TimeUnit.SECONDS.toMillis(2));
          KeyValue<String, List<String>> response = rf.get(3, TimeUnit.SECONDS);
 
          assertThat(response).isNull();
@@ -663,6 +667,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          RedisFuture<KeyValue<String, List<String>>> rf = blmpop(3, 1, key);
          assertThat(rf.isDone()).isFalse();
          redis.set(key, "some-value");
+         timeService.advance(TimeUnit.SECONDS.toMillis(4));
 
          KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
          assertThat(response).isNull();
