@@ -1,0 +1,6 @@
+# Workaround: actionlint's embedded action database doesn't yet know about the
+# client-id input added in actions/create-github-app-token v3.1.0.
+# Remove this file once actionlint updates its database.
+ignore:
+  - 'input "client-id" is not defined in action "actions/create-github-app-token'
+  - 'missing input "app-id" which is required by action "actions/create-github-app-token'
