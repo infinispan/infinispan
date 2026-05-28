@@ -279,7 +279,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-            app-id: ${{ secrets.GH_APP_ISPN_ID }}
+            client-id: ${{ secrets.GH_APP_ISPN_ID }}
             private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
       - name: Update GitHub Organization Variable to next release version
