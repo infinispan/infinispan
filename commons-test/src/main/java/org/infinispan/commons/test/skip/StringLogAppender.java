@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import org.apache.logging.log4j.Level;
@@ -12,7 +13,6 @@ import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
-import org.apache.logging.log4j.core.config.AppenderRef;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.config.Property;
@@ -25,13 +25,15 @@ import org.apache.logging.log4j.core.config.Property;
  */
 public class StringLogAppender extends AbstractAppender implements Iterable<String> {
 
+   private static final AtomicInteger COUNTER = new AtomicInteger();
+
    private final String category;
    private final Level level;
    private final List<String> logs;
    private final Predicate<Thread> threadFilter;
 
    public StringLogAppender(String category, Level level, Predicate<Thread> threadFilter, Layout<?> layout) {
-      super(StringLogAppender.class.getName(), null, layout, true, Property.EMPTY_ARRAY);
+      super(String.format("%s-%s-%d", StringLogAppender.class.getName(), category, COUNTER.incrementAndGet()), null, layout, true, Property.EMPTY_ARRAY);
       this.category = category;
       this.level = level;
       this.logs = Collections.synchronizedList(new ArrayList<>());
@@ -43,17 +45,33 @@ public class StringLogAppender extends AbstractAppender implements Iterable<Stri
       Configuration config = loggerContext.getConfiguration();
       this.start();
       config.addAppender(this);
-      AppenderRef ref = AppenderRef.createAppenderRef(this.getName(), level, null);
-      AppenderRef[] refs = new AppenderRef[]{ref};
-      LoggerConfig loggerConfig = LoggerConfig.newBuilder().withAdditivity(true).withLevel(level).withLoggerName(category).withRefs(refs).withConfig(config).build();
-      loggerConfig.addAppender(this, null, null);
-      config.addLogger(category, loggerConfig);
+
+      LoggerConfig loggerConfig = config.getLoggerConfig(category);
+      if (!loggerConfig.getName().equals(category)) {
+         synchronized (StringLogAppender.class) {
+            loggerConfig = config.getLoggerConfig(category);
+            if (!loggerConfig.getName().equals(category)) {
+               loggerConfig = LoggerConfig.newBuilder()
+                     .withAdditivity(true)
+                     .withLevel(level)
+                     .withLoggerName(category)
+                     .withConfig(config)
+                     .build();
+               config.addLogger(category, loggerConfig);
+            }
+         }
+      }
+      loggerConfig.addAppender(this, level, null);
       loggerContext.updateLoggers();
    }
 
    public void uninstall() {
       LoggerContext loggerContext = (LoggerContext) LogManager.getContext(false);
-      loggerContext.getConfiguration().removeLogger(category);
+      Configuration config = loggerContext.getConfiguration();
+      LoggerConfig loggerConfig = config.getLoggerConfig(category);
+      if (loggerConfig.getName().equals(category)) {
+         loggerConfig.removeAppender(this.getName());
+      }
       loggerContext.updateLoggers();
    }
 
