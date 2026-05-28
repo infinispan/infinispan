@@ -90,11 +90,15 @@ public class MemcachedOperations {
       MemcachedClient client = client(protocol);
       String k = k() + "-";
       int nKeys = 10;
-      for (int i = 1; i < nKeys; ++i) {
-         client.set(k + i, 0, "v-" + i);
+      // Wait for all sets to complete. The client distributes keys across servers via consistent
+      // hashing, so waiting on a single key only guarantees completion on that key's server.
+      List<Future<Boolean>> setFutures = new ArrayList<>(nKeys);
+      for (int i = 1; i <= nKeys; ++i) {
+         setFutures.add(client.set(k + i, 0, "v-" + i));
       }
-      // responses are sent ordered, waiting on the last one ensures that all the previous set() are completed!
-      client.set(k + nKeys, 0, "v-" + nKeys).get(10, TimeUnit.SECONDS);
+      for (Future<Boolean> f : setFutures) {
+         f.get(10, TimeUnit.SECONDS);
+      }
 
       List<GetFuture<Object>> getFutureList = new ArrayList<>(nKeys);
       for (int i = 1; i <= nKeys; ++i) {
