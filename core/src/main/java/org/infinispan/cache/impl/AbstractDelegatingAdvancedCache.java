@@ -275,6 +275,11 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    }
 
    @Override
+   public CacheEntry<K, V> peek(Object key) {
+      return cache.peek(key);
+   }
+
+   @Override
    public CacheEntry<K, V> getCacheEntry(Object key) {
       return cache.getCacheEntry(key);
    }
