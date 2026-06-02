@@ -222,7 +222,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       final Object key = command.getKey();
       CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, command.getSegment(),
             ignoreOwnership(command) || canRead(command), command.hasAnyFlag(FlagBitSets.ALREADY_HAS_LOCK)
-                  || (isPessimistic && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)), CompletableFutures.completedNull());
+                  || (isPessimistic && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)),
+            command.hasAnyFlag(FlagBitSets.PEEK), CompletableFutures.completedNull());
       return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, dataReadReturnHandler);
    }
 
@@ -234,7 +235,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       for (Object key : command.getKeys()) {
          currentStage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
                                                          ignoreOwnership || canReadKey(key), false,
-                                                         currentStage);
+                                                         false, currentStage);
       }
 
       return makeStage(asyncInvokeNext(ctx, command, expirationCheckDelay(currentStage, initialStage)))
@@ -462,7 +463,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       } else {
          stage = entryFactory.wrapEntryForReading(ctx, command.getKey(), command.getSegment(),
                                                   ignoreOwnership(command) || canRead(command), false,
-                                                  CompletableFutures.completedNull());
+                                                  false, CompletableFutures.completedNull());
       }
 
       // Repeatable reads are not achievable with functional commands, as we don't store the value locally
@@ -487,7 +488,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       } else {
          for (Object key : command.getKeys()) {
             currentStage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
-                  ignoreOwnership || canReadKey(key), false, currentStage);
+                  ignoreOwnership || canReadKey(key), false, false, currentStage);
          }
       }
       // Repeatable reads are not achievable with functional commands, see visitReadOnlyKeyCommand

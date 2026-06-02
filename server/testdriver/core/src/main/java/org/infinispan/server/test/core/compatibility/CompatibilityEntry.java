@@ -12,6 +12,10 @@ public record CompatibilityEntry(
       Map<String, String> properties,
       List<ExceptionDetail> exceptions
 ) {
+   public CompatibilityEntry {
+      if (properties == null) properties = Collections.emptyMap();
+   }
+
    public static final CompatibilityEntry EMPTY = new CompatibilityEntry(null, null, Collections.emptyMap(), Collections.emptyList());
 
    public boolean matchesVersions(String from, String to) {
