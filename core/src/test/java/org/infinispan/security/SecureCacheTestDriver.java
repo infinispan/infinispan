@@ -407,6 +407,11 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.READ)
+   public void testPeek_Object(SecureCache<String, String> cache) {
+      cache.peek("a");
+   }
+
+   @TestCachePermission(AuthorizationPermission.READ)
    public void testGetCacheEntry_Object(SecureCache<String, String> cache) {
       cache.getCacheEntry("a");
    }

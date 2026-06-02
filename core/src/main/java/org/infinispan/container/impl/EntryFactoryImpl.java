@@ -68,19 +68,19 @@ public class EntryFactoryImpl implements EntryFactory {
 
    @Override
    public final CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner,
-                                                          boolean hasLock, CompletionStage<Void> previousStage) {
+                                                          boolean hasLock, boolean peek, CompletionStage<Void> previousStage) {
       if (!isOwner && !isL1Enabled) {
          return previousStage;
       }
       CacheEntry cacheEntry = getFromContext(ctx, key);
       if (cacheEntry == null) {
-         InternalCacheEntry readEntry = getFromContainer(key, segment);
+         InternalCacheEntry readEntry = peek ? peekFromContainer(key, segment) : getFromContainer(key, segment);
          if (readEntry == null) {
             if (isOwner) {
                addReadEntryToContext(ctx, NullCacheEntry.getInstance(), key);
             }
          } else if (isOwner || readEntry.isL1Entry()) {
-            if (readEntry.canExpire()) {
+            if (!peek && readEntry.canExpire()) {
                CompletionStage<Boolean> expiredStage = expirationManager.handlePossibleExpiration(readEntry, segment, hasLock);
                if (CompletionStages.isCompletedSuccessfully(expiredStage)) {
                   Boolean expired = CompletionStages.join(expiredStage);
