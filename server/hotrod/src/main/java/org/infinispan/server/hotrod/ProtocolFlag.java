@@ -10,7 +10,8 @@ public enum ProtocolFlag {
    DefaultMaxIdle(1 << 2),
    SkipCacheLoader(1 << 3),
    SkipIndexing(1 << 4),
-   SkipListenerNotification(1 << 5);
+   SkipListenerNotification(1 << 5),
+   Peek(1 << 6);
 
    private final byte value;
 

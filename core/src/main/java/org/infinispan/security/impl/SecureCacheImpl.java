@@ -1114,6 +1114,12 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
       return delegate.putAsyncEntry(key, value, metadata);
    }
    @Override
+   public CacheEntry<K, V> peek(Object key) {
+      authzManager.checkPermission(subject, AuthorizationPermission.READ);
+      return delegate.peek(key);
+   }
+
+   @Override
    public CacheEntry<K, V> getCacheEntry(Object key) {
       authzManager.checkPermission(subject, AuthorizationPermission.READ);
       return delegate.getCacheEntry(key);

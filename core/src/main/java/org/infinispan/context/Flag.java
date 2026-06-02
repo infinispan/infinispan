@@ -260,5 +260,25 @@ public enum Flag {
     * Signals that a state transfer is in course. This is primarily used to identify how to load data from cache stores
     * during the state transfer.
     */
-   STATE_TRANSFER_PROGRESS
+   STATE_TRANSFER_PROGRESS,
+
+   /**
+    * Skips updating the last access time of a cache entry on read operations, preventing both max-idle expiration
+    * from being reset and eviction access order from being updated. This allows inspecting an entry's value
+    * and expiration metadata without affecting its expiration or eviction lifecycle.
+    * <p>
+    * Entries that have already exceeded their max-idle or lifespan may still be returned if they have "expired".
+    * However, entries that have been evicted are not visible.
+    * <p>
+    * This flag affects the following methods:
+    * <ul>
+    *    <li>{@link Cache#get(Object)}</li>
+    *    <li>{@link AdvancedCache#getCacheEntry(Object)}</li>
+    * </ul>
+    * <p>
+    * Users should prefer {@link AdvancedCache#peek(Object)} over using this flag directly.
+    *
+    * @since 16.3
+    */
+   PEEK
 }
