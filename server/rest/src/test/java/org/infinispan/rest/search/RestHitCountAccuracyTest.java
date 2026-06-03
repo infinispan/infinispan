@@ -28,12 +28,14 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import io.netty.handler.codec.http2.Http2Settings;
+
 @Test(groups = "functional", testName = "rest.search.RestHitCountAccuracyTest")
 @TestForIssue(jiraKey = "ISPN-14195")
 public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
 
    private static final String CACHE_NAME = "games";
-   private static final int ENTRIES = 5_000;
+   private static final int ENTRIES = Http2Settings.defaultSettings().maxConcurrentStreams().intValue();
 
    private RestServerHelper restServer;
    private RestClient restClient;
