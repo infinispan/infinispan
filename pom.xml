@@ -1306,6 +1306,16 @@
             <artifactId>narayana-jta</artifactId>
             <version>${version.jboss.narayana}</version>
             <scope>test</scope>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.infinispan</groupId>
+                  <artifactId>*</artifactId>
+               </exclusion>
+               <exclusion>
+                  <groupId>org.infinispan.protostream</groupId>
+                  <artifactId>*</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
          <dependency>
             <groupId>org.jboss.security</groupId>
