@@ -84,18 +84,18 @@
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
       <version.glassfish.jaxb>4.0.9</version.glassfish.jaxb>
       <version.hamcrest>2.2</version.hamcrest>
-      <version.hibernate.core>6.6.51.Final</version.hibernate.core>
+      <version.hibernate.core>6.6.52.Final</version.hibernate.core>
       <version.hibernate.search>8.4.0.Final</version.hibernate.search>
       <version.hibernate.models>1.1.1</version.hibernate.models>
       <version.infinispan>16.2.1-SNAPSHOT</version.infinispan>
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.9.Final</version.infinispan.maven-plugins>
       <version.insights>2.0.4</version.insights>
-      <version.io.agroal>2.8.1</version.io.agroal>
+      <version.io.agroal>2.8.2</version.io.agroal>
       <version.io.lettuce>6.8.2.RELEASE</version.io.lettuce>
       <version.vertx>4.5.27</version.vertx>
       <version.io.mashona>1.1.0</version.io.mashona>
-      <version.jackson>2.21.3</version.jackson>
+      <version.jackson>2.21.4</version.jackson>
       <version.jackson.annotations>2.22</version.jackson.annotations>
       <version.jackson.databind>2.21.0</version.jackson.databind>
       <version.jacoco>0.8.14</version.jacoco>
@@ -109,11 +109,11 @@
       <version.jboss.logging.processor>3.0.4.Final</version.jboss.logging.processor>
       <version.jboss.marshalling>2.3.0</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
-      <version.jboss.narayana>7.3.3.Final</version.jboss.narayana>
+      <version.jboss.narayana>7.3.4.Final</version.jboss.narayana>
       <version.jboss.security>3.0.6.Final</version.jboss.security>
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
-      <version.jboss.shrinkwrap.resolver>3.3.6</version.jboss.shrinkwrap.resolver>
+      <version.jboss.shrinkwrap.resolver>3.3.7</version.jboss.shrinkwrap.resolver>
       <version.jboss.threads>3.9.2</version.jboss.threads>
       <version.jgroups>5.5.5.Final</version.jgroups>
       <version.jgroups.raft>1.1.4.Final</version.jgroups.raft>
@@ -178,7 +178,7 @@
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.6.0</version.checkstyle.maven-plugin>
-      <version.native.maven.plugin>1.1.0</version.native.maven.plugin>
+      <version.native.maven.plugin>1.1.1</version.native.maven.plugin>
       <version.maven>3.9.16</version.maven>
       <version.maven.antlr4>4.13.2</version.maven.antlr4>
       <version.maven.antrun>3.2.0</version.maven.antrun>
