@@ -96,6 +96,11 @@
                               <include name="**/target/classes/schema/*.xsd"/>
                            </fileset>
                         </copy>
+                        <copy todir="${project.build.directory}/json" flatten="true">
+                           <fileset dir="${infinispan.root}">
+                              <include name="**/target/classes/schema/*.json"/>
+                           </fileset>
+                        </copy>
                      </target>
                   </configuration>
                   <goals>
@@ -141,6 +146,7 @@
                      <descriptors>
                         <descriptor>src/main/assemblies/src.xml</descriptor>
                         <descriptor>src/main/assemblies/xsd.xml</descriptor>
+                        <descriptor>src/main/assemblies/json.xml</descriptor>
                      </descriptors>
                      <finalName>${infinispan.brand.prefix}-${infinispan.brand.version}</finalName>
                   </configuration>
