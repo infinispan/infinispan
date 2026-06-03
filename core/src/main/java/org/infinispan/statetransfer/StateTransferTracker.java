@@ -31,13 +31,13 @@ import com.google.errorprone.annotations.ThreadSafe;
  * <li><b>State Provider:</b> The phase where this node provides state to other nodes. Observe, this applies to versions before 16.2.</li>
  * <li><b>Stable Topology:</b> The installation of a cache topology with no pending consistent hash ({@code pendingCH == null}).</li>
  * </ul>
- * </p>
+ *
  *
  * <p>
  * Listeners can be registered to wait for the completion of the state transfer. The tracker handles race conditions
  * where a new topology update (a new rebalance) supersedes an ongoing state transfer, ensuring listeners are notified
  * appropriately (usually via cancellation or by waiting for the newer topology).
- * </p>
+ *
  *
  * @since 15.0
  */
@@ -74,7 +74,7 @@ public class StateTransferTracker {
     * <p>
     * Instances are managed by the enclosing {@link StateTransferTracker} and should be obtained via
     * {@link StateTransferTracker#forCache(String)}.
-    * </p>
+    *
     */
    public static final class CacheStateTransferTracker {
       private final String cacheName;
@@ -115,7 +115,7 @@ public class StateTransferTracker {
        * <p>
        * A state transfer is considered "in progress" if any of the three tracking components (Consumer, Provider, or Stable
        * Topology) are pending completion for the current topology generation.
-       * </p>
+       *
        *
        * @return {@code true} if state transfer is active; {@code false} otherwise.
        */
@@ -137,7 +137,7 @@ public class StateTransferTracker {
        * <li>{@link CacheTopology}: The stable topology that marked the completion of the transfer (or null if failed).</li>
        * <li>{@link Throwable}: An exception if the transfer failed or was cancelled (e.g., superseded by a newer topology).</li>
        * </ul>
-       * </p>
+       *
        *
        * <p>
        * The listener must return a {@link Boolean}:
@@ -147,7 +147,7 @@ public class StateTransferTracker {
        * <li>{@code false}: To indicate the listener wishes to stay registered (e.g., waiting for a future topology).
        *                   The returned {@link CompletionStage} will NOT complete yet.</li>
        * </ul>
-       * </p>
+       *
        *
        * @param listener The function to invoke upon completion.
        * @return A {@link CompletionStage} that completes when the listener returns {@code true}.
@@ -181,7 +181,7 @@ public class StateTransferTracker {
        * <p>
        * If the provided topology is stable (has no pending consistent hash), this method marks the "Stable" phase as complete.
        * If all other phases are also done, it triggers the notification of waiting listeners.
-       * </p>
+       *
        *
        * @param cacheTopology The new cache topology.
        */
@@ -218,7 +218,7 @@ public class StateTransferTracker {
        * <p>
        * If the {@code topologyId} is higher than the currently tracked ID, the tracker resets all phases to track this new
        * generation, effectively canceling any previous pending state transfers.
-       * </p>
+       *
        *
        * @param topologyId The topology ID associated with this state transfer start.
        */
@@ -253,7 +253,7 @@ public class StateTransferTracker {
        * <p>
        * Similar to {@link #startStateConsumer(int)}, this ensures the tracker is synchronized with the given
        * topology ID.
-       * </p>
+       *
        *
        * @param topologyId The topology ID associated with this state transfer start.
        */
@@ -289,7 +289,7 @@ public class StateTransferTracker {
        * If the incoming {@code topologyId} represents a new generation, this method resets the internal futures, creates an
        * aggregate {@link CompletableFuture}, and attaches a callback to notify listeners when all phases (Consumer, Provider, Stable)
        * for this generation are complete.
-       * </p>
+       *
        *
        * @param topologyId The new topology ID to check.
        */
