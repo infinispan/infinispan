@@ -17,31 +17,30 @@ updates:
         update-types: [ "version-update:semver-minor" ]
       - dependency-name: "*"
         update-types: [ "version-update:semver-major" ]
+    groups:
+      netty:
+        patterns:
+          - "io.netty:*"
+      quarkus:
+        patterns:
+          - "io.quarkus:*"
+      vertx:
+        patterns:
+          - "io.vertx:*"
+      patch-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: daily
     open-pull-requests-limit: 10
-
-  # 16.1.x Security Updates Only
-  - package-ecosystem: maven
-    directory: "/"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 0
-    rebase-strategy: disabled
-    target-branch: "16.1.x"
-    commit-message:
-      prefix: "[16.1] "
-  - package-ecosystem: github-actions
-    directory: "/"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 10
-    rebase-strategy: disabled
-    target-branch: "16.1.x"
-    commit-message:
-      prefix: "[16.1] "
+    groups:
+      actions:
+        patterns:
+          - "*"
 
   # 16.0.x Security Updates Only
   - package-ecosystem: maven
@@ -53,6 +52,11 @@ updates:
     target-branch: "16.0.x"
     commit-message:
       prefix: "[16.0] "
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -62,6 +66,10 @@ updates:
     target-branch: "16.0.x"
     commit-message:
       prefix: "[16.0] "
+    groups:
+      actions:
+        patterns:
+          - "*"
 
   # 15.2.x Security Updates Only
   - package-ecosystem: maven
@@ -73,6 +81,11 @@ updates:
     target-branch: "15.2.x"
     commit-message:
       prefix: "[15.2] "
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -82,43 +95,7 @@ updates:
     target-branch: "15.2.x"
     commit-message:
       prefix: "[15.2] "
-
-  # 15.0.x Security Updates Only
-  - package-ecosystem: maven
-    directory: "/"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 0
-    rebase-strategy: disabled
-    target-branch: "15.0.x"
-    commit-message:
-      prefix: "[15.0] "
-  - package-ecosystem: github-actions
-    directory: "/"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 10
-    rebase-strategy: disabled
-    target-branch: "15.0.x"
-    commit-message:
-      prefix: "[15.0] "
-
-  # 14.0.x Security Updates Only
-  - package-ecosystem: maven
-    directory: "/"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 0
-    rebase-strategy: disabled
-    target-branch: "14.0.x"
-    commit-message:
-      prefix: "[14.0] "
-  - package-ecosystem: github-actions
-    directory: "/"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 10
-    rebase-strategy: disabled
-    target-branch: "14.0.x"
-    commit-message:
-      prefix: "[14.0] "
+    groups:
+      actions:
+        patterns:
+          - "*"

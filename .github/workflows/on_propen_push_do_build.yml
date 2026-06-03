@@ -5,8 +5,7 @@ on:
     branches:
       - feature/*
       - main
-      - 15.*.x
-      - 14.0.x
+      - '*.x'
 
 concurrency:
   # Cancel jobs same head_branch same repo, works

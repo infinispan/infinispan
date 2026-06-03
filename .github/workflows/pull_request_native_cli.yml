@@ -5,7 +5,7 @@ on:
     branches:
       - feature/*
       - main
-      - 15.*.x
+      - '*.x'
     paths-ignore:
       - '**.md'
       - 'LICENSE*'
@@ -18,7 +18,7 @@ on:
     branches:
       - feature/*
       - main
-      - 15.*.x
+      - '*.x'
     paths-ignore:
       - '**.md'
       - 'LICENSE*'

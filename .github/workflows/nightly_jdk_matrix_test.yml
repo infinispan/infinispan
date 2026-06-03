@@ -5,7 +5,7 @@ on:
     - cron: '42 1 * * *' # Runs every day at 01:42 UTC on main branch only
   push:
     branches:
-      - '16.1.x'
+      - '*.x'
   workflow_dispatch:
     inputs:
       jdk-versions:
