@@ -223,6 +223,15 @@
           "optional" : true
         } ]
       }, {
+        "name" : "TopKAddFunction",
+        "type_id" : 6165,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "items",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
+      }, {
         "name" : "CmsQueryFunction",
         "type_id" : 6156,
         "fields" : [ {
@@ -373,6 +382,30 @@
           "optional" : true
         } ]
       }, {
+        "name" : "TopKReserveFunction",
+        "type_id" : 6164,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "k",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "width",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "depth",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "decay",
+          "type" : "double",
+          "optional" : true
+        } ]
+      }, {
         "name" : "JsonArrinsertFunction",
         "type_id" : 6114,
         "fields" : [ {
@@ -422,6 +455,15 @@
           "name" : "type",
           "type" : "RespTypes",
           "optional" : true
+        } ]
+      }, {
+        "name" : "TopKCountFunction",
+        "type_id" : 6170,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "items",
+          "type" : "bytes",
+          "is_repeated" : true
         } ]
       }, {
         "name" : "BloomFilterInsertFunction",
@@ -509,6 +551,20 @@
         "type_id" : 6143,
         "fields" : [ ]
       }, {
+        "name" : "TopKIncrByFunction",
+        "type_id" : 6166,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "items",
+          "type" : "bytes",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "increments",
+          "type" : "int64",
+          "is_repeated" : true
+        } ]
+      }, {
         "name" : "JsonLenStrFunction",
         "type_id" : 6122,
         "fields" : [ {
@@ -548,6 +604,35 @@
           "name" : "path",
           "type" : "bytes",
           "optional" : true
+        } ]
+      }, {
+        "name" : "TopKInfoFunction",
+        "type_id" : 6169,
+        "fields" : [ ],
+        "messages" : [ {
+          "name" : "TopKInfo",
+          "type_id" : 6171,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "k",
+            "type" : "int32",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "width",
+            "type" : "int32",
+            "optional" : true
+          }, {
+            "id" : 3,
+            "name" : "depth",
+            "type" : "int32",
+            "optional" : true
+          }, {
+            "id" : 4,
+            "name" : "decay",
+            "type" : "double",
+            "optional" : true
+          } ]
         } ]
       }, {
         "name" : "EventListenerGlobFilter",
@@ -736,6 +821,15 @@
           "optional" : true
         } ]
       }, {
+        "name" : "TopKListFunction",
+        "type_id" : 6168,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "withCount",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
         "name" : "JsonArrtrimFunction",
         "type_id" : 6116,
         "fields" : [ {
@@ -768,6 +862,15 @@
           "type" : "bytes",
           "optional" : true
         } ]
+      }, {
+        "name" : "TopKQueryFunction",
+        "type_id" : 6167,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "items",
+          "type" : "bytes",
+          "is_repeated" : true
+        } ]
       } ],
       "imports" : [ {
         "path" : "persistence.resp.proto"
@@ -783,6 +886,80 @@
     "def" : {
       "enums" : [ ],
       "messages" : [ {
+        "name" : "TopK",
+        "type_id" : 6162,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "k",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "10"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "width",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "8"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "depth",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "7"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "decay",
+          "type" : "double",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0.9"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "flatCounters",
+          "type" : "int64",
+          "is_repeated" : true
+        }, {
+          "id" : 6,
+          "name" : "entries",
+          "type" : "TopK.TopKEntry",
+          "is_repeated" : true
+        }, {
+          "id" : 7,
+          "name" : "flatFingerprints",
+          "type" : "int64",
+          "is_repeated" : true
+        } ],
+        "messages" : [ {
+          "name" : "TopKEntry",
+          "type_id" : 6163,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "item",
+            "type" : "bytes",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "count",
+            "type" : "int64",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "0"
+            } ]
+          } ]
+        } ]
+      }, {
         "name" : "CompactSet",
         "type_id" : 6103,
         "fields" : [ {
