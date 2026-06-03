@@ -24,7 +24,7 @@ record AccessLogEntry(String file, String client, String operation, long duratio
     * <p>
     * This method creates a new instance to represent the log line. Therefore, it expects the line to have a pre-defined
     * format. The line should follow as:
-    * </p>
+    *
     *
     * <pre>ip-address - [date-time UTC] "operation /cache-name/key-bytes protocol" status request-size response-size duration-ms</pre>
     *
@@ -32,7 +32,7 @@ record AccessLogEntry(String file, String client, String operation, long duratio
     * The symbols and spaces are explicit. The `<code>date-time</code>` has to follow the pattern `<code>dd/MMM/yyyy:HH:mm:ss</code>`
     * to parse (e.g. <code>04/Sep/2024:14:35:11</code>). The other parameters do not need a specific format, only the
     * position is required.
-    * </p>
+    *
     *
     * @param file The file absolute path.
     * @param line A single line in the file, it must follow the expected format.

@@ -23,14 +23,14 @@ import org.springframework.util.StringUtils;
  * <code>org.infinispan.manager.EmbeddedCacheManager</code>}. If no cache name is explicitly set,
  * this <code>FactoryBean</code>'s {@link #setBeanName(String) <code>beanName</code>} will be used
  * instead.
- * </p>
+ *
  * <p>
  * Beyond merely creating named <code>Cache</code> instances, this <code>FactoryBean</code> offers
  * great flexibility in configuring those <code>Caches</code>. It has setters for all non-global
  * configuration settings, i.e. all settings that are specific to a single <code>Cache</code>. The
  * configuration settings thus defined override those settings obtained from the
  * <code>EmbeddedCacheManager</code>.
- * </p>
+ *
  * <p>
  * There are different configuration {@link #setConfigurationTemplateMode(String)
  * <code>modes</code>} that control with what <code>Configuration</code> to start before further
@@ -70,7 +70,7 @@ import org.springframework.util.StringUtils;
  * control that <code>Cache</code>' {@link org.infinispan.commons.api.Lifecycle lifecycle} by shutting
  * it down when the enclosing Spring application context is closed. It is therefore advisable to
  * <em>always</em> use this <code>FactoryBean</code> when creating a named <code>Cache</code>.
- * </p>
+ *
  *
  * @author Olaf Bergner
  * @author Marius Bogoevici
@@ -112,7 +112,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * Otherwise, it is equivalent to using
     * <code>DEFAULT</code>.</li>
     * </ul>
-    * </p>
+    *
     *
     * @author Olaf Bergner
     *
@@ -280,7 +280,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * <code>org.infinispan.Cache</code>} to be created. If no explicit <code>cacheName</code> is
     * set, this <code>FactoryBean</code> will use its {@link #setBeanName(String)
     * <code>beanName</code>} as the <code>cacheName</code>.
-    * </p>
+    *
     *
     * @param cacheName
     *           The {@link Cache#getName() name} of the {@link Cache
@@ -296,7 +296,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * <code>org.infinispan.manager.EmbeddedCacheManager</code>} to be used for creating our
     * {@link Cache <code>Cache</code>} instance. Note that this is a
     * <b>mandatory</b> property.
-    * </p>
+    *
     *
     * @param infinispanEmbeddedCacheManager
     *           The {@link EmbeddedCacheManager

@@ -13,10 +13,10 @@ public class TestSetupUtil {
     * <p>
     * Test assumptions may be violated deep within the exception chain during complex server initialization. This method
     * examines the entire cause chain to detect assumption violations that would otherwise be hidden by wrapping exceptions.
-    * </p>
+    *
     *
     * @param t the throwable to examine, typically caught during test setup
-    * @return {@code true} if the exception chain contains an {@link       return cause instanceof TestAbortedException;},
+    * @return {@code true} if the exception chain contains a {@link TestAbortedException},
     * indicating the test should be skipped rather than failed
     */
 

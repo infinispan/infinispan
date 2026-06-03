@@ -28,17 +28,17 @@ import org.infinispan.globalstate.impl.GlobalStateHandler;
  *
  * <p>
  * <b>DISCLAIMER:</b> This command is dangerous and should be utilized only for investigation. Deleting a scope is harmful.
- * </p>
+ *
  *
  * <p>
  * This command allows to list, read, and delete a scope in the global state. A scope is written during the graceful
  * shutdown procedure and is utilized during start-up to reconstruct the previous cluster and avoid unnecessary state
  * transfer.
- * </p>
+ *
  *
  * <p>
  * The operations are:
- * </p>
+ *
  * <ul>
  *    <li>Default: This command list all existing scopes in the file system. Usually, there is a scope per cache.</li>
  *    <li><b>show [name]</b>: Shows the data stored in the given scope.</li>
@@ -47,7 +47,7 @@ import org.infinispan.globalstate.impl.GlobalStateHandler;
  *
  * <p>
  * All commands accept the path to directory utilized in the server's global-state configuration.
- * </p>
+ *
  *
  * @author José Bolina
  * @since 16.0

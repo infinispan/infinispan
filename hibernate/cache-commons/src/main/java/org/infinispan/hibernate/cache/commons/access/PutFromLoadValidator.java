@@ -68,7 +68,7 @@ import org.infinispan.util.ByteString;
  * Naked puts are handled according to txTimestamp obtained by calling {@link RegionFactory#nextTimestamp()}
  * before the transaction is started. The timestamp is compared with timestamp of last invalidation end time
  * and to write to the cache is denied if it is lower or equal.
- * </p>
+ *
  *
  * @author Brian Stansberry
  * @version $Revision: $
@@ -273,7 +273,7 @@ public class PutFromLoadValidator {
     * <p>
     * <b>NOTE:</b> A call to this method that returns <code>true</code>
     * should always be matched with a call to {@link #releasePutFromLoadLock(Object, Lock)}.
-    * </p>
+    *
     *
     * @param session
     * @param key         the key

@@ -83,7 +83,7 @@
  * <p>
  * For more advanced ways to configure the underlying Infinispan <code>EmbeddedCacheManager</code> see
  * <code>org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean</code>.
- * </p>
+ *
  * <p>
  * If running Infinispan in remote mode the above configuration changes to
  * <pre>
@@ -103,7 +103,7 @@
  * <p>
  * For more advanced ways to configure the underlying Infinispan <code>RemoteCacheManager</code> see
  * <code>org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean</code>.
- * </p>
+ *
  * <em>Using Spring's caching annotations in application code</em>
  * <p>
  * A detailed discussion about how to use Spring's caching annotations {@link org.springframework.cache.annotation.Cacheable}

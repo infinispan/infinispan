@@ -473,7 +473,7 @@ public interface NonBlockingStore<K, V> {
     * <p>
     * WARNING: For performance reasons neither Publisher will emit any {@link SegmentedPublisher}s until both write
     * and remove Publishers are subscribed to. These Publishers should also be only subscribed once.
-    * </p>
+    *
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
@@ -562,7 +562,7 @@ public interface NonBlockingStore<K, V> {
     * The implementations should be O(1).
     * If a size approximation cannot be returned without iterating over all the entries in the store,
     * the implementation should return {@code -1L}.
-    * </p>
+    *
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
@@ -605,7 +605,7 @@ public interface NonBlockingStore<K, V> {
     * is recommended to wrap your Publisher before returning with the
     * {@link org.infinispan.util.concurrent.BlockingManager#blockingPublisher(Publisher)} method and it will handle
     * subscription and observation on the blocking and non-blocking executors respectively.
-    * </p>
+    *
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
@@ -692,7 +692,7 @@ public interface NonBlockingStore<K, V> {
     * is recommended to wrap your Publisher before returning with the
     * {@link org.infinispan.util.concurrent.BlockingManager#blockingPublisher(Publisher)} method and it will handle
     * subscription and observation on the blocking and non-blocking executors respectively.
-    * </p>
+    *
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
