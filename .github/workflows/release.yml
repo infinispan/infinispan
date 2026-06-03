@@ -180,6 +180,7 @@ jobs:
           - os: ubuntu-24.04-arm
             asset_name: linux-aarch_64
             gu_binary: gu
+            native_extra_args: -Dquarkus.native.native-image-xmx=10g
     steps:
       - uses: actions/checkout@v6
 
@@ -207,7 +208,7 @@ jobs:
 
       - if: ${{ matrix.os != 'windows-2022' }}
         name: Build native executable
-        run: ./mvnw package -Pdistribution -Pnative -am -pl quarkus/cli
+        run: ./mvnw package -Pdistribution -Pnative -am -pl quarkus/cli ${{ matrix.native_extra_args }}
 
       - name: Upload CLI native executable
         id: upload-cli-native-executable
