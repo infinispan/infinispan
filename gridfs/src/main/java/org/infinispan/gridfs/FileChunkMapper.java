@@ -1,8 +1,8 @@
 package org.infinispan.gridfs;
 
 import org.infinispan.Cache;
-import org.jgroups.logging.Log;
-import org.jgroups.logging.LogFactory;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * Takes care of properly storing and retrieving file chunks from/to cache.
