@@ -189,7 +189,7 @@ public class CacheResource extends AbstractContainerResource {
                try {
                   return is.available() > 0;
                } catch (IOException e) {
-                  log.errorf("Failed checking data available to recover %s", cacheName, e);
+                  log.errorf(e, "Failed checking data available to recover %s", cacheName);
                   return false;
                }
             }
@@ -199,7 +199,7 @@ public class CacheResource extends AbstractContainerResource {
                try {
                   return readMessageStream(serCtx, CacheBackupEntry.class, is);
                } catch (IOException e) {
-                  log.errorf("Failed reading entry to recover %s", cacheName, e);
+                  log.errorf(e, "Failed reading entry to recover %s", cacheName);
                   throw new CacheException(e);
                }
             }

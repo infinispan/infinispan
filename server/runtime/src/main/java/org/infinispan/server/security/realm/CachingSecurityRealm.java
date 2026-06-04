@@ -85,14 +85,14 @@ public class CachingSecurityRealm implements SecurityRealm {
          public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             if (credentials.contains(credentialType, algorithmName, parameterSpec)) {
                if (log.isTraceEnabled()) {
-                  log.tracef("getCredentialAcquireSupport credentialType='%s' with algorithmName='%' known for pincipal='%s'", credentialType.getName(), algorithmName, principal.getName());
+                  log.tracef("getCredentialAcquireSupport credentialType='%s' with algorithmName='%s' known for principal='%s'", credentialType.getName(), algorithmName, principal.getName());
                }
                return credentials.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
             }
             Credential credential = identity.getCredential(credentialType, algorithmName, parameterSpec);
             if (credential != null) {
                if (log.isTraceEnabled()) {
-                  log.tracef("getCredentialAcquireSupport Credential for credentialType='%s' with algorithmName='%' obtained from identity - caching for principal='%s'",
+                  log.tracef("getCredentialAcquireSupport Credential for credentialType='%s' with algorithmName='%s' obtained from identity - caching for principal='%s'",
                         credentialType.getName(), algorithmName, principal.getName());
                }
                credentials = credentials.withCredential(credential);
@@ -122,14 +122,14 @@ public class CachingSecurityRealm implements SecurityRealm {
          public <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName) throws RealmUnavailableException {
             if (credentials.contains(credentialType, algorithmName)) {
                if (log.isTraceEnabled()) {
-                  log.tracef("getCredential credentialType='%s' with algorithmName='%' cached, returning cached credential for principal='%s'", credentialType.getName(), algorithmName, principal.getName());
+                  log.tracef("getCredential credentialType='%s' with algorithmName='%s' cached, returning cached credential for principal='%s'", credentialType.getName(), algorithmName, principal.getName());
                }
                return credentials.getCredential(credentialType, algorithmName);
             }
             Credential credential = identity.getCredential(credentialType, algorithmName);
             if (credential != null) {
                if (log.isTraceEnabled()) {
-                  log.tracef("getCredential credentialType='%s' with algorithmName='%' obtained from identity - caching.", credentialType.getName(), algorithmName);
+                  log.tracef("getCredential credentialType='%s' with algorithmName='%s' obtained from identity - caching.", credentialType.getName(), algorithmName);
                }
                credentials = credentials.withCredential(credential);
             }
@@ -171,14 +171,14 @@ public class CachingSecurityRealm implements SecurityRealm {
             if (PasswordGuessEvidence.class.isAssignableFrom(evidenceType)) {
                if (credentials.canVerify(evidenceType, algorithmName)) {
                   if (log.isTraceEnabled()) {
-                     log.tracef("getEvidenceVerifySupport evidenceType='%s' with algorithmName='%' can verify from cache for principal='%s'", evidenceType.getName(), algorithmName, principal.getName());
+                     log.tracef("getEvidenceVerifySupport evidenceType='%s' with algorithmName='%s' can verify from cache for principal='%s'", evidenceType.getName(), algorithmName, principal.getName());
                   }
                   return SupportLevel.SUPPORTED;
                }
                Credential credential = identity.getCredential(PasswordCredential.class);
                if (credential != null) {
                   if (log.isTraceEnabled()) {
-                     log.tracef("getEvidenceVerifySupport evidenceType='%s' with algorithmName='%' credential obtained from identity and cached for principal='%s'",
+                     log.tracef("getEvidenceVerifySupport evidenceType='%s' with algorithmName='%s' credential obtained from identity and cached for principal='%s'",
                            evidenceType.getName(), algorithmName, principal.getName());
                   }
                   credentials = credentials.withCredential(credential);
