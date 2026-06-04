@@ -67,7 +67,7 @@ public class BoundedPurgePolicy extends AbstractLifeCycle implements PurgePolicy
          Iterator<String> iterator = appendersUsage.keySet().iterator();
          while (appendersUsage.size() > maxSize) {
             String key = iterator.next();
-            LOGGER.debug("Removing appender " + key);
+            LOGGER.debug("Removing appender {}", key);
             iterator.remove();
             routingAppender.getAppenders().get(key).getAppender().stop();
             routingAppender.deleteAppender(key);

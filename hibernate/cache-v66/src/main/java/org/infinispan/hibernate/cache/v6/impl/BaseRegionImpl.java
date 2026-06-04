@@ -89,7 +89,7 @@ abstract class BaseRegionImpl implements Region, InfinispanBaseRegion, ExtendedS
    @Override
    public void beginInvalidation() {
       if (log.isTraceEnabled()) {
-         log.trace("Begin invalidating region: " + name);
+         log.tracef("Begin invalidating region: %s", name);
       }
       synchronized (this) {
          lastRegionInvalidation = Long.MAX_VALUE;
@@ -106,7 +106,7 @@ abstract class BaseRegionImpl implements Region, InfinispanBaseRegion, ExtendedS
          }
       }
       if (log.isTraceEnabled()) {
-         log.trace("End invalidating region: " + name);
+         log.tracef("End invalidating region: %s", name);
       }
    }
 

@@ -718,7 +718,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       }
 
       if (log.isTraceEnabled())
-         log.tracef("Changed status of " + name + " to " + state);
+         log.tracef("Changed status of %s to %s", name, state);
    }
 
    private void awaitWrapperState(ComponentWrapper wrapper, WrapperState expectedState) {

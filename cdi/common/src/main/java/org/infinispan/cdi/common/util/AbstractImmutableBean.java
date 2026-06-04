@@ -68,13 +68,13 @@ public abstract class AbstractImmutableBean<T> implements Bean<T> {
         this.name = name;
         if (qualifiers == null) {
             this.qualifiers = Collections.<Annotation>singleton(DefaultLiteral.INSTANCE);
-            log.trace("No qualifers provided for bean class " + beanClass + ", using singleton set of @Default");
+            log.tracef("No qualifiers provided for bean class %s, using singleton set of @Default", beanClass);
         } else {
             this.qualifiers = new HashSet<Annotation>(qualifiers);
         }
         if (scope == null) {
             this.scope = Dependent.class;
-            log.trace("No scope provided for bean class " + beanClass + ", using @Dependent");
+            log.tracef("No scope provided for bean class %s, using @Dependent", beanClass);
         } else {
             this.scope = scope;
         }
@@ -85,7 +85,7 @@ public abstract class AbstractImmutableBean<T> implements Bean<T> {
         }
         if (types == null) {
             this.types = Arrays2.<Type>asSet(Object.class, beanClass);
-            log.trace("No types provided for bean class " + beanClass + ", using [java.lang.Object.class, " + beanClass.getName() + ".class]");
+            log.tracef("No types provided for bean class %s, using [java.lang.Object.class, %s.class]", beanClass, beanClass.getName());
         } else {
             this.types = new HashSet<Type>(types);
         }

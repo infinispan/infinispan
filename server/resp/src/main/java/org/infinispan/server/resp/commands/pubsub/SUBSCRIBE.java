@@ -52,7 +52,7 @@ public class SUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp3C
       AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       for (byte[] keyChannel : arguments) {
          if (log.isTraceEnabled()) {
-            log.tracef("Subscriber for channel: " + CharsetUtil.UTF_8.decode(ByteBuffer.wrap(keyChannel)));
+            log.tracef("Subscriber for channel: %s", CharsetUtil.UTF_8.decode(ByteBuffer.wrap(keyChannel)));
          }
          WrappedByteArray wrappedByteArray = new WrappedByteArray(keyChannel);
          if (handler.specificChannelSubscribers().get(wrappedByteArray) == null) {

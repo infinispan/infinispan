@@ -1418,7 +1418,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       if (newEntry != null)
          mergeAndLogEntry(newEntry, mergeCounter);
 
-      if (log.isTraceEnabled()) log.tracef("Total time taken for mergeFreeEntries: " + (timeService.wallClockTime() - startTime) + " (ms)");
+      if (log.isTraceEnabled()) log.tracef("Total time taken for mergeFreeEntries: %d (ms)", timeService.wallClockTime() - startTime);
    }
 
    private void mergeAndLogEntry(FileEntry entry, int mergeCounter) {

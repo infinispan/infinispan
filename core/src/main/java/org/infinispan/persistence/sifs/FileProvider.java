@@ -519,7 +519,7 @@ public class FileProvider {
             openFiles.remove(fileId, this);
             delete();
          } else {
-            log.debug("Marking file " + fileId + " for deletion");
+            log.debugf("Marking file %s for deletion", fileId);
             deleteOnClose = true;
          }
       }

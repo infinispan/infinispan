@@ -60,16 +60,13 @@ public abstract class AbstractRemoteCacheManagerFactory {
       final Properties answer;
       if (this.configurationProperties != null) {
          answer = this.configurationPropertiesOverrides.override(this.configurationProperties);
-         logger.debug("Using user-defined properties [" + this.configurationProperties
-                                 + "] for configuring RemoteCacheManager");
+         logger.debugf("Using user-defined properties [%s] for configuring RemoteCacheManager", this.configurationProperties);
       } else if (this.configurationPropertiesFileLocation != null) {
          answer = loadPropertiesFromFile(this.configurationPropertiesFileLocation);
-         logger.debug("Loading properties from file [" + this.configurationProperties
-                                 + "] for configuring RemoteCacheManager");
+         logger.debugf("Loading properties from file [%s] for configuring RemoteCacheManager", this.configurationProperties);
       } else if (!this.configurationPropertiesOverrides.isEmpty()) {
          answer = this.configurationPropertiesOverrides.override(new Properties());
-         logger.debug("Using explicitly set configuration settings [" + answer
-                                 + "] for configuring RemoteCacheManager");
+         logger.debugf("Using explicitly set configuration settings [%s] for configuring RemoteCacheManager", answer);
       } else {
          logger.debug("No configuration properties. RemoteCacheManager will use default configuration.");
          RemoteCacheManager remoteCacheManager = new RemoteCacheManager(false);

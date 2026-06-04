@@ -44,7 +44,7 @@ public class Charset {
          try {
             return new Charset(mediaType.substring(indexOfCharset + CHARSET_HEADER.length()));
          } catch (Exception e) {
-            logger.trace("Unrecognized charset from media type " + mediaType, e);
+            logger.tracef(e, "Unrecognized charset from media type %s", mediaType);
          }
       }
       return null;

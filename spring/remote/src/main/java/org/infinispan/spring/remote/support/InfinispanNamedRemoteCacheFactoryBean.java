@@ -60,12 +60,12 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
    private String obtainEffectiveCacheName() {
       if (StringUtils.hasText(this.cacheName)) {
          if (logger.isDebugEnabled()) {
-            logger.debug("Using custom cache name [" + this.cacheName + "]");
+            logger.debugf("Using custom cache name [%s]", this.cacheName);
          }
          return this.cacheName;
       } else {
          if (logger.isDebugEnabled()) {
-            logger.debug("Using bean name [" + this.beanName + "] as cache name");
+            logger.debugf("Using bean name [%s] as cache name", this.beanName);
          }
          return this.beanName;
       }

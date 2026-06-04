@@ -73,11 +73,11 @@ public class TestSuiteProgress {
    }
 
    public void configurationStarted(String name) {
-      log.debug("Test configuration started: " + name);
+      log.debugf("Test configuration started: %s", name);
    }
 
    public void configurationFinished(String name) {
-      log.debug("Test configuration finished: " + name);
+      log.debugf("Test configuration finished: %s", name);
    }
 
    public void configurationFailed(String name, Throwable exception) {

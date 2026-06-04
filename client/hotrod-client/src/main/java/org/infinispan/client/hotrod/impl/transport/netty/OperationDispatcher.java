@@ -941,7 +941,7 @@ public class OperationDispatcher {
    public void handleChannelFailure(Channel channel, Throwable t) {
       assert channel.eventLoop().inEventLoop();
       if (!isRunning) {
-         log.tracef("Dispatcher is not running, ignoring received exception: " + t.toString());
+         log.tracef("Dispatcher is not running, ignoring received exception: %s", t);
          return;
       }
       SocketAddress unresolved = ChannelRecord.of(channel);
