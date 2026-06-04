@@ -385,7 +385,7 @@ public class BlockingManagerImpl implements BlockingManager {
       };
 
       var scheduledStage = new ScheduledBlockingFuture<>(supplier, traceId);
-      log.tracef("Scheduling supply operation %s for %s to run in %s %s", supplier, traceId, initialDelay, period, unit);
+      log.tracef("Scheduling supply operation %s for %s to run in %s %s %s", supplier, traceId, initialDelay, period, unit);
       scheduledStage.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(runnable, initialDelay, period, unit);
       return scheduledStage;
    }

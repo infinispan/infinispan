@@ -62,7 +62,7 @@ class SegmentKeyTracker implements KeyTracker {
       }
       Set<WrappedByteArray> keys = keysPerSegment.get(segment);
       if (keys == null) {
-         if (log.isTraceEnabled()) log.tracef("Key %s maps to %d which is not present", Util.toStr(key), segment, segment);
+         if (log.isTraceEnabled()) log.tracef("Key %s maps to segment %d which is not present", Util.toStr(key), segment);
          throw new IllegalStateException("Segment " + segment + " already completed");
       }
       boolean result = keys.add(new WrappedByteArray(key));
