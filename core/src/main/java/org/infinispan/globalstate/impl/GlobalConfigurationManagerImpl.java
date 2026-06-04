@@ -3,6 +3,7 @@ package org.infinispan.globalstate.impl;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
@@ -16,17 +17,23 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.internal.InternalCacheNames;
+import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.ContainerMemoryConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.container.impl.SharedContainerMaps;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -58,6 +65,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    public static final String CACHE_SCOPE = "cache";
    public static final String TEMPLATE_SCOPE = "template";
+   public static final String CONTAINER_SCOPE = "container";
+   public static final String CONTAINER_GLOBAL_NAME = "__global";
 
    @Inject
    EmbeddedCacheManager cacheManager;
@@ -75,13 +84,15 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    RolePermissionMapper rolePermissionMapper;
    @Inject
    PrincipalRoleMapper principalRoleMapper;
+   @Inject
+   SharedContainerMaps sharedContainerMaps;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
    private LocalConfigurationStorage localConfigurationManager;
 
    static boolean isKnownScope(String scope) {
-      return CACHE_SCOPE.equals(scope) || TEMPLATE_SCOPE.equals(scope);
+      return CACHE_SCOPE.equals(scope) || TEMPLATE_SCOPE.equals(scope) || CONTAINER_SCOPE.equals(scope);
    }
 
    @Override
@@ -133,11 +144,15 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          if (isKnownScope(scope)) {
             String name = key.getName();
             CacheState state = (CacheState) v;
-            boolean cacheScope = CACHE_SCOPE.equals(scope);
-            Map<String, Configuration> map = cacheScope ? persistedCaches : persistedTemplates;
-            ensureClusterCompatibility(name, state, map);
-            CompletionStage<Void> future = cacheScope ? createCacheLocally(name, state) : createTemplateLocally(name, state);
-            CompletionStages.join(future);
+            if (CONTAINER_SCOPE.equals(scope)) {
+               CompletionStages.join(updateGlobalConfigurationLocally(state));
+            } else {
+               boolean cacheScope = CACHE_SCOPE.equals(scope);
+               Map<String, Configuration> map = cacheScope ? persistedCaches : persistedTemplates;
+               ensureClusterCompatibility(name, state, map);
+               CompletionStage<Void> future = cacheScope ? createCacheLocally(name, state) : createTemplateLocally(name, state);
+               CompletionStages.join(future);
+            }
          }
       });
 
@@ -361,6 +376,67 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       ConfigurationReader reader = ConfigurationReader.from(configStr).withProperties(properties).build();
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(reader, configurationManager.toBuilderHolder());
       return builderHolder.getNamedConfigurationBuilders().get(name).template(template).build(configurationManager.getGlobalConfiguration());
+   }
+
+   @Override
+   public CompletionStage<Void> updateGlobalConfigurationAttribute(String attributeName, String attributeValue) {
+      GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
+      Attribute<?> attribute = globalConfiguration.findAttribute(attributeName);
+      if (attribute.getAttributeDefinition().isImmutable()) {
+         throw new IllegalArgumentException("Attribute '" + attributeName + "' is immutable and cannot be updated at runtime");
+      }
+      attribute.fromString(attributeValue);
+      String configXml = serializeGlobalConfiguration(globalConfiguration);
+      EnumSet<CacheContainerAdmin.AdminFlag> updateFlags = EnumSet.of(CacheContainerAdmin.AdminFlag.UPDATE);
+      CacheState state = new CacheState(null, configXml, updateFlags);
+      return getStateCache().putAsync(new ScopedState(CONTAINER_SCOPE, CONTAINER_GLOBAL_NAME), state)
+            .thenApply(CompletableFutures.toNullFunction());
+   }
+
+   CompletionStage<Void> updateGlobalConfigurationLocally(CacheState state) {
+      log.debugf("Updating global configuration from global state");
+      GlobalConfiguration incoming = buildGlobalConfiguration(state.getConfiguration());
+      GlobalConfiguration live = configurationManager.getGlobalConfiguration();
+      applyMutableGlobalAttributes(live.metrics().attributes(), incoming.metrics().attributes());
+      for (Map.Entry<String, ContainerMemoryConfiguration> entry : incoming.getMemoryContainer().entrySet()) {
+         String name = entry.getKey();
+         ContainerMemoryConfiguration liveConfig = live.getMemoryContainer().get(name);
+         if (liveConfig != null) {
+            applyMutableGlobalAttributes(liveConfig.attributes(), entry.getValue().attributes());
+            boolean sizeInBytes = liveConfig.maxSize() != null;
+            long newSize = sizeInBytes ? liveConfig.maxSizeBytes() : liveConfig.maxCount();
+            sharedContainerMaps.getMap(name).resize(newSize);
+         }
+      }
+      return CompletableFutures.completedNull();
+   }
+
+   @SuppressWarnings("unchecked")
+   private static void applyMutableGlobalAttributes(AttributeSet target, AttributeSet source) {
+      for (Attribute<?> targetAttr : target.attributes()) {
+         AttributeDefinition<?> definition = targetAttr.getAttributeDefinition();
+         if (!definition.isImmutable()) {
+            Attribute<?> sourceAttr = source.attribute(definition.name());
+            @SuppressWarnings("rawtypes")
+            Attribute unchecked = targetAttr;
+            unchecked.set(sourceAttr.get());
+         }
+      }
+   }
+
+   private String serializeGlobalConfiguration(GlobalConfiguration globalConfiguration) {
+      StringBuilderWriter sw = new StringBuilderWriter();
+      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).prettyPrint(false).namespaceAware(false).build()) {
+         parserRegistry.serialize(writer, globalConfiguration, Collections.emptyMap());
+      }
+      return sw.toString();
+   }
+
+   private GlobalConfiguration buildGlobalConfiguration(String configStr) {
+      Properties properties = new Properties(System.getProperties());
+      ConfigurationReader reader = ConfigurationReader.from(configStr).withProperties(properties).build();
+      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(reader, configurationManager.toBuilderHolder());
+      return builderHolder.getGlobalConfigurationBuilder().build();
    }
 
    @Override

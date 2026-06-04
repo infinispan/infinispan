@@ -170,4 +170,24 @@ public interface RestContainerClient {
     * Globally disables automatic rebalancing.
     */
    CompletionStage<RestResponse> disableRebalancing();
+
+   /**
+    * Retrieves all mutable global configuration attributes.
+    */
+   default CompletionStage<RestResponse> globalConfigurationAttributes() {
+      return globalConfigurationAttributes(false);
+   }
+
+   /**
+    * Retrieves all mutable global configuration attributes, optionally including values and types.
+    */
+   CompletionStage<RestResponse> globalConfigurationAttributes(boolean full);
+
+   /**
+    * Updates a mutable global configuration attribute.
+    *
+    * @param attribute the dotted path of the attribute (e.g., "metrics.accurate-size")
+    * @param values the new value(s) to apply
+    */
+   CompletionStage<RestResponse> updateGlobalConfigurationAttribute(String attribute, String... values);
 }

@@ -94,4 +94,12 @@ public interface GlobalConfigurationManager {
     * @param flags
     */
    CompletionStage<Void> removeTemplate(String name, EnumSet<AdminFlag> flags);
+
+   /**
+    * Updates a mutable global configuration attribute cluster-wide.
+    *
+    * @param attribute the dotted path of the attribute (e.g., "metrics.accurate-size")
+    * @param value the new value as a string
+    */
+   CompletionStage<Void> updateGlobalConfigurationAttribute(String attribute, String value);
 }

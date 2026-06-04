@@ -22,8 +22,10 @@ import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +33,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -40,6 +44,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.ContainerMemoryConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -54,6 +59,7 @@ import org.infinispan.health.CacheHealth;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
@@ -128,6 +134,14 @@ public class ContainerResource implements ResourceHandler {
             // Cache Manager config
             .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/config").handleWith(this::getConfig)
             .invocation().methods(GET).path("/v2/container/config").handleWith(this::getConfig)
+
+            // Mutable global configuration attributes
+            .invocation().methods(GET).path("/v2/container/config").withAction("get-mutable-attributes")
+            .permission(AuthorizationPermission.ADMIN).handleWith(this::getGlobalConfigMutableAttributes)
+            .invocation().methods(GET).path("/v2/container/config").withAction("get-mutable-attribute")
+            .permission(AuthorizationPermission.ADMIN).handleWith(this::getGlobalConfigMutableAttribute)
+            .invocation().methods(POST).path("/v2/container/config").withAction("set-mutable-attribute")
+            .permission(AuthorizationPermission.ADMIN).handleWith(this::setGlobalConfigMutableAttribute)
 
             // Shutdown the container content
             .invocation().methods(POST).path("/v2/container").withAction("shutdown").name("SHUTDOWN CONTAINER")
@@ -413,6 +427,65 @@ public class ContainerResource implements ResourceHandler {
          return Json.object()
                .set("cluster_health", clusterHealth.toJson())
                .set("cache_health", Json.make(cacheHealth));
+      }
+   }
+
+   private CompletionStage<RestResponse> getGlobalConfigMutableAttributes(RestRequest request) {
+      boolean full = Boolean.parseBoolean(request.getParameter("full"));
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
+
+      Map<String, Attribute<?>> attributes = new LinkedHashMap<>();
+      collectMutableAttributes("metrics", globalConfiguration.metrics().attributes(), attributes);
+      collectMutableAttributes("tracing", globalConfiguration.tracing().attributes(), attributes);
+      for (Map.Entry<String, ContainerMemoryConfiguration> entry : globalConfiguration.getMemoryContainer().entrySet()) {
+         collectMutableAttributes("container-memory." + entry.getKey(), entry.getValue().attributes(), attributes);
+      }
+
+      if (full) {
+         Json all = Json.object();
+         for (Map.Entry<String, Attribute<?>> entry : attributes.entrySet()) {
+            Attribute<?> attribute = entry.getValue();
+            Class<?> type = attribute.getAttributeDefinition().getType();
+            Json object = Json.object("value", attribute.get(), "type", type.getSimpleName().toLowerCase());
+            if (type.isEnum()) {
+               object.set("universe", Arrays.stream(type.getEnumConstants()).map(Object::toString).collect(Collectors.toList()));
+            }
+            all.set(entry.getKey(), object);
+         }
+         return asJsonResponseFuture(invocationHelper.newResponse(request), all, isPretty(request));
+      } else {
+         return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(attributes.keySet()), isPretty(request));
+      }
+   }
+
+   private CompletionStage<RestResponse> getGlobalConfigMutableAttribute(RestRequest request) {
+      String attributeName = request.getParameter("attribute-name");
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
+      Attribute<?> attribute = globalConfiguration.findAttribute(attributeName);
+      if (attribute.isImmutable()) {
+         throw new IllegalArgumentException("Attribute '" + attributeName + "' is immutable");
+      }
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(String.valueOf(attribute.get())), isPretty(request));
+   }
+
+   private CompletionStage<RestResponse> setGlobalConfigMutableAttribute(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
+      String attributeName = request.getParameter("attribute-name");
+      String attributeValue = String.join(" ", request.parameters().get("attribute-value"));
+      EmbeddedCacheManagerAdmin administration = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
+      return CompletableFuture.supplyAsync(() -> {
+         administration.updateGlobalConfigurationAttribute(attributeName, attributeValue);
+         return responseBuilder.status(OK).build();
+      }, invocationHelper.getExecutor());
+   }
+
+   private static void collectMutableAttributes(String prefix, AttributeSet attributeSet, Map<String, Attribute<?>> attributes) {
+      for (Attribute<?> attribute : attributeSet.attributes()) {
+         if (!attribute.isImmutable()) {
+            attributes.put(prefix + "." + attribute.getAttributeDefinition().name(), attribute);
+         }
       }
    }
 
