@@ -174,8 +174,7 @@ class Index {
             }
             validCount = true;
          } else {
-            log.tracef("Previous index file cache segments " + cacheSegmentsCount + " doesn't match configured" +
-                  " cache segments " + cacheSegments);
+            log.tracef("Previous index file cache segments %d doesn't match configured cache segments %d", cacheSegmentsCount, cacheSegments);
          }
       } catch (IOException e) {
          log.tracef("Encountered IOException %s while reading index count file, assuming index dirty", e.getMessage());

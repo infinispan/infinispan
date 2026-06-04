@@ -410,7 +410,7 @@ public class PutFromLoadValidator {
     */
    public boolean beginInvalidatingRegion() {
       if (log.isTraceEnabled()) {
-         log.trace("Started invalidating region " + cache.getName());
+         log.tracef("Started invalidating region %s", cache.getName());
       }
       boolean ok = true;
       long now = timeSource.nextTimestamp();

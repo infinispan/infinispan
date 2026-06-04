@@ -709,7 +709,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          }
       }
       if (log.isTraceEnabled()) {
-         log.tracef("Targets determined to be %s on topology " + topology.getTopologyId(), targets);
+         log.tracef("Targets determined to be %s on topology %d", targets, topology.getTopologyId());
       }
       return targets;
    }

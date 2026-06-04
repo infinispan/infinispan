@@ -167,7 +167,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
             this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
             break;
          case NAMED:
-            logger.debug("ConfigurationTemplateMode is NAMED: using a named Configuration [" + cacheName + "]");
+            logger.debugf("ConfigurationTemplateMode is NAMED: using a named Configuration [%s]", cacheName);
             break;
          case DEFAULT:
             logger.debug("ConfigurationTemplateMode is DEFAULT.");
@@ -193,12 +193,12 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
    private String obtainEffectiveCacheName() {
       if (StringUtils.hasText(this.cacheName)) {
          if (logger.isDebugEnabled()) {
-            logger.debug("Using custom cache name [" + this.cacheName + "]");
+            logger.debugf("Using custom cache name [%s]", this.cacheName);
          }
          return this.cacheName;
       } else {
          if (logger.isDebugEnabled()) {
-            logger.debug("Using bean name [" + this.beanName + "] as cache name");
+            logger.debugf("Using bean name [%s] as cache name", this.beanName);
          }
          return this.beanName;
       }

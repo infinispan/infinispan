@@ -53,7 +53,7 @@ public class PSUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp3
       AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       for (byte[] patternArg : arguments) {
          if (log.isTraceEnabled()) {
-            log.tracef("Subscriber for pattern: " + CharsetUtil.UTF_8.decode(ByteBuffer.wrap(patternArg)));
+            log.tracef("Subscriber for pattern: %s", CharsetUtil.UTF_8.decode(ByteBuffer.wrap(patternArg)));
          }
          WrappedByteArray wrappedByteArray = new WrappedByteArray(patternArg);
          if (handler.patternSubscribers().get(wrappedByteArray) == null) {

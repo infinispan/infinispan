@@ -247,7 +247,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             CacheEntry cacheEntry = rCtx.lookupEntry(key);
             if (cacheEntry == null) {
                // Data was lost
-               if (log.isTraceEnabled()) log.tracef(t, "Missing entry for " + key);
+               if (log.isTraceEnabled()) log.tracef(t, "Missing entry for %s", key);
             } else {
                cacheEntry.setSkipLookup(true);
             }

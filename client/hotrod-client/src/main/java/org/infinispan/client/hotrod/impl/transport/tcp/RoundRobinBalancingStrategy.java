@@ -28,7 +28,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
    public void setServers(Collection<SocketAddress> servers) {
       this.servers = servers.toArray(new SocketAddress[0]);
       if (log.isTraceEnabled()) {
-         log.tracef("New server list is: " + Arrays.toString(this.servers));
+         log.tracef("New server list is: %s", Arrays.toString(this.servers));
       }
    }
 

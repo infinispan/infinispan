@@ -130,7 +130,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
          return RecoveryManager.RecoveryIterator.NOTHING;
       }
       if (log.isTraceEnabled())
-         log.trace("recover called: " + flag);
+         log.tracef("recover called: %s", flag);
 
       if (isFlag(flag, TMSTARTRSCAN)) {
          recoveryIterator = txTable.recoveryManager.getPreparedTransactionsFromCluster();

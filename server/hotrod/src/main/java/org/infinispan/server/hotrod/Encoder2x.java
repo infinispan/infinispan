@@ -635,8 +635,8 @@ class Encoder2x implements VersionedEncoder {
             ch.getMembers().contains(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
       if (log.isTraceEnabled()) {
-         log.trace("Topology cache contains: " + h.serverEndpointsMap);
-         log.trace("After read consistent hash filter, members are: " + members);
+         log.tracef("Topology cache contains: %s", h.serverEndpointsMap);
+         log.tracef("After read consistent hash filter, members are: %s", members);
       }
 
       if (members.isEmpty()) {

@@ -110,7 +110,7 @@ public class InsightsService {
       }
 
       if (log.isDebugEnabled()) {
-         log.debug("Starting Insights integration. Current Infinispan report: \n\r" + report.toPrettyString());
+         log.debugf("Starting Insights integration. Current Infinispan report: \n\r%s", report.toPrettyString());
       }
       Json nodeIdReport = report.at("node-id");
       String nodeId = (nodeIdReport.isNull()) ? UUID.randomUUID().toString() : nodeIdReport.asString();

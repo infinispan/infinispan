@@ -34,7 +34,7 @@ class FileChunkMapper {
       String key = getChunkKey(chunkNumber);
       byte[] val = cache.get(key);
       if (log.isTraceEnabled())
-         log.trace("fetching key=" + key + ": " + (val != null ? val.length + " bytes" : "null"));
+         log.tracef("fetching key=%s: %s", key, val != null ? val.length + " bytes" : "null");
       return val;
    }
 
@@ -43,7 +43,7 @@ class FileChunkMapper {
       byte[] val = trim(buffer, length);
       cache.put(key, val);
       if (log.isTraceEnabled())
-         log.trace("put(): key=" + key + ": " + val.length + " bytes");
+         log.tracef("put(): key=%s: %d bytes", key, val.length);
    }
 
    public void removeChunk(int chunkNumber) {

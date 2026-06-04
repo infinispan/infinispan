@@ -81,7 +81,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
 
    private CompletableFuture<Collection<byte[]>> addSubscriber(PopConfiguration configuration, Resp3Handler handler) {
       if (log.isTraceEnabled()) {
-         log.tracef("Subscriber for keys: " + configuration.keys());
+         log.tracef("Subscriber for keys: %s", configuration.keys());
       }
       AdvancedCache<byte[], Object> cache = handler.typedCache(null);
       DataConversion vc = cache.getValueDataConversion();

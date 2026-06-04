@@ -418,7 +418,7 @@ class Compactor {
 
    public void processRequest(CompletableFuture<Void> stageRequest) throws Throwable {
       if (terminateSignal) {
-         log.tracef("Compactor already terminated, ignoring request " + stageRequest);
+         log.tracef("Compactor already terminated, ignoring request %s", stageRequest);
          // Just ignore if terminated
          completeFuture(stageRequest);
          return;
@@ -467,7 +467,7 @@ class Compactor {
             completeFuture(request);
          }
       } catch (Throwable t) {
-         log.trace("Completing compaction for file: " + request.fileId + " due to exception!", t);
+         log.tracef(t, "Completing compaction for file: %s due to exception!", request.fileId);
          request.completeExceptionally(t);
       }
    }
