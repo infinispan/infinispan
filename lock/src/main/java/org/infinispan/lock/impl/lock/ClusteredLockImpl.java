@@ -349,7 +349,7 @@ public class ClusteredLockImpl implements ClusteredLock {
          }
          int viewChangeUnlockValue = viewChangeUnlockHappening.incrementAndGet();
          if (log.isTraceEnabled()) {
-            log.tracef("LOCK[%s] viewChangeUnlockHappening value in %s ", getName(), viewChangeUnlockValue, originator);
+            log.tracef("LOCK[%s] viewChangeUnlockHappening value %s from %s", getName(), viewChangeUnlockValue, originator);
          }
          unlock(null, possibleOwners)
                .whenComplete((unlockResult, ex) -> {
@@ -358,7 +358,7 @@ public class ClusteredLockImpl implements ClusteredLock {
                   }
                   int viewChangeUnlockValueAfterUnlock = viewChangeUnlockHappening.decrementAndGet();
                   if (log.isTraceEnabled()) {
-                     log.tracef("LOCK[%s] viewChangeUnlockHappening value in %s ", getName(), viewChangeUnlockValueAfterUnlock, originator);
+                     log.tracef("LOCK[%s] viewChangeUnlockHappening value %s from %s", getName(), viewChangeUnlockValueAfterUnlock, originator);
                   }
                   if (ex == null) {
                      if (log.isTraceEnabled()) {

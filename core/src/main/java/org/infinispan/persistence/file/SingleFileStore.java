@@ -541,7 +541,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
             destChannel.write(bodyBuf, this.filePos + KEY_POS_LATEST);
             this.filePos += newFe.size;
             if (log.isTraceEnabled())
-               log.tracef("Recovered entry %s at %d:%d", key, newFe.size, newFe.offset, newFe.size);
+               log.tracef("Recovered entry %s at %d:%d", key, newFe.offset, newFe.size);
          }
       } catch (IOException e) {
          throw PERSISTENCE.persistedDataMigrationFailed(cacheName(), e);

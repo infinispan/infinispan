@@ -233,7 +233,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                      if (operation != null && !(operation.isInstanceOf(AddClientListenerOperation.class))) {
                         throw HOTROD.operationIsNotAddClientListener(receivedMessageId, operation.toString());
                      } else if (log.isTraceEnabled()) {
-                        log.tracef("Received event for request %d", receivedMessageId, operation);
+                        log.tracef("Received event for request %d for %s", receivedMessageId, operation);
                      }
                      checkpoint(State.READ_CACHE_EVENT);
                      // the loop in HintedReplayingDecoder will call decode again

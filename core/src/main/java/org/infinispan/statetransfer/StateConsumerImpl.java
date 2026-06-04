@@ -1352,7 +1352,7 @@ public class StateConsumerImpl implements StateConsumer {
       for (Map.Entry<Address, IntSet> e : sources.entrySet()) {
          addTransfer(e.getKey(), e.getValue());
       }
-      if (log.isTraceEnabled()) log.tracef("Finished adding inbound state transfer for segments %s", segments, cacheName);
+      if (log.isTraceEnabled()) log.tracef("Finished adding inbound state transfer for segments %s of cache %s", segments, cacheName);
    }
 
    /**
