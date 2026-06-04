@@ -59,6 +59,22 @@
               ]
             }
           ]
+        },
+        {
+          "description": "Global configuration attribute REST endpoints are new in 16.2",
+          "issue": "https://github.com/infinispan/infinispan/issues/16323",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.rest.RestGlobalConfigurationTest",
+              "test-methods": [
+                "testGetMutableAttributes",
+                "testGetMutableAttributesFull",
+                "testUpdateAccurateSize",
+                "testUpdateImmutableAttributeFails",
+                "testUpdatePropagatesAcrossCluster"
+              ]
+            }
+          ]
         }
       ]
     }

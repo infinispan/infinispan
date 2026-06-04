@@ -24,14 +24,18 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.ContainerMemoryConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.container.impl.SharedContainerMaps;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.LocalConfigurationStorage;
+import org.infinispan.globalstate.ScopeType;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -56,8 +60,13 @@ import org.infinispan.util.logging.LogFactory;
 public class GlobalConfigurationManagerImpl implements GlobalConfigurationManager {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   public static final String CACHE_SCOPE = "cache";
-   public static final String TEMPLATE_SCOPE = "template";
+   @Deprecated(forRemoval = true, since = "16.2")
+   public static final String CACHE_SCOPE = ScopeType.CACHE.toString();
+   @Deprecated(forRemoval = true, since = "16.2")
+   public static final String TEMPLATE_SCOPE = ScopeType.TEMPLATE.toString();
+   @Deprecated(forRemoval = true, since = "16.2")
+   public static final String CONTAINER_SCOPE = ScopeType.CONTAINER.toString();
+   public static final String CONTAINER_GLOBAL_NAME = "__global";
 
    @Inject
    EmbeddedCacheManager cacheManager;
@@ -75,13 +84,15 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    RolePermissionMapper rolePermissionMapper;
    @Inject
    PrincipalRoleMapper principalRoleMapper;
+   @Inject
+   SharedContainerMaps sharedContainerMaps;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
    private LocalConfigurationStorage localConfigurationManager;
 
    static boolean isKnownScope(String scope) {
-      return CACHE_SCOPE.equals(scope) || TEMPLATE_SCOPE.equals(scope);
+      return ScopeType.fromString(scope) != null;
    }
 
    @Override
@@ -129,15 +140,21 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       Map<String, Configuration> persistedCaches = localConfigurationManager.loadAllCaches();
 
       getStateCache().forEach((key, v) -> {
-         String scope = key.getScope();
-         if (isKnownScope(scope)) {
+         ScopeType scopeType = ScopeType.fromString(key.getScope());
+         if (scopeType != null) {
             String name = key.getName();
             CacheState state = (CacheState) v;
-            boolean cacheScope = CACHE_SCOPE.equals(scope);
-            Map<String, Configuration> map = cacheScope ? persistedCaches : persistedTemplates;
-            ensureClusterCompatibility(name, state, map);
-            CompletionStage<Void> future = cacheScope ? createCacheLocally(name, state) : createTemplateLocally(name, state);
-            CompletionStages.join(future);
+            switch (scopeType) {
+               case CONTAINER -> CompletionStages.join(updateGlobalConfigurationLocally(state));
+               case CACHE -> {
+                  ensureClusterCompatibility(name, state, persistedCaches);
+                  CompletionStages.join(createCacheLocally(name, state));
+               }
+               case TEMPLATE -> {
+                  ensureClusterCompatibility(name, state, persistedTemplates);
+                  CompletionStages.join(createTemplateLocally(name, state));
+               }
+            }
          }
       });
 
@@ -205,7 +222,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       assertNameLength(name);
 
       Cache<ScopedState, Object> cache = getStateCache();
-      ScopedState key = new ScopedState(TEMPLATE_SCOPE, name);
+      ScopedState key = new ScopedState(ScopeType.TEMPLATE.toString(), name);
       return cache.containsKeyAsync(key).thenCompose(exists -> {
          if (exists)
             throw CONFIG.configAlreadyDefined(name);
@@ -219,7 +236,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       localConfigurationManager.validateFlags(flags);
       try {
          final CacheState state = new CacheState(null, configuration.toStringConfiguration(name), flags);
-         return getStateCache().putIfAbsentAsync(new ScopedState(TEMPLATE_SCOPE, name), state).thenApply((v) -> configuration);
+         return getStateCache().putIfAbsentAsync(new ScopedState(ScopeType.TEMPLATE.toString(), name), state).thenApply((v) -> configuration);
       } catch (Exception e) {
          throw CONFIG.configurationSerializationFailed(name, configuration, e);
       }
@@ -294,9 +311,9 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          if (existing != null) {
             applyNonGlobalAttributes(existing, configuration);
          }
-         return getStateCache().putAsync(new ScopedState(CACHE_SCOPE, cacheName), state);
+         return getStateCache().putAsync(new ScopedState(ScopeType.CACHE.toString(), cacheName), state);
       } else {
-         return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state);
+         return getStateCache().putIfAbsentAsync(new ScopedState(ScopeType.CACHE.toString(), cacheName), state);
       }
    }
 
@@ -364,8 +381,84 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
+   public CompletionStage<Void> updateGlobalConfigurationAttribute(String attributeName, String attributeValue) {
+      GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
+      Attribute<?> attribute = globalConfiguration.findAttribute(attributeName);
+      if (attribute.getAttributeDefinition().isImmutable()) {
+         throw new IllegalArgumentException("Attribute '" + attributeName + "' is immutable and cannot be updated at runtime");
+      }
+      attribute.fromString(attributeValue);
+      String serialized = serializeMutableAttributes(globalConfiguration);
+      EnumSet<CacheContainerAdmin.AdminFlag> updateFlags = EnumSet.of(CacheContainerAdmin.AdminFlag.UPDATE);
+      CacheState state = new CacheState(null, serialized, updateFlags);
+      return getStateCache().putAsync(new ScopedState(ScopeType.CONTAINER.toString(), CONTAINER_GLOBAL_NAME), state)
+            .thenApply(CompletableFutures.toNullFunction());
+   }
+
+   CompletionStage<Void> validateGlobalConfigurationUpdateLocally(CacheState state) {
+      log.debugf("Validating global configuration update from global state");
+      GlobalConfiguration live = configurationManager.getGlobalConfiguration();
+      Properties attrs = loadProperties(state.getConfiguration());
+      Map<String, Attribute<?>> mutableAttrs = live.collectMutableAttributes();
+      for (String name : attrs.stringPropertyNames()) {
+         Attribute<?> attribute = mutableAttrs.get(name);
+         if (attribute == null) {
+            throw new IllegalArgumentException("Unknown or immutable global configuration attribute: " + name);
+         }
+         attribute.getAttributeDefinition().parse(attrs.getProperty(name));
+      }
+      return CompletableFutures.completedNull();
+   }
+
+   CompletionStage<Void> updateGlobalConfigurationLocally(CacheState state) {
+      log.debugf("Updating global configuration from global state");
+      GlobalConfiguration live = configurationManager.getGlobalConfiguration();
+      Properties attrs = loadProperties(state.getConfiguration());
+      Map<String, Attribute<?>> mutableAttrs = live.collectMutableAttributes();
+      for (String name : attrs.stringPropertyNames()) {
+         Attribute<?> attribute = mutableAttrs.get(name);
+         if (attribute != null) {
+            attribute.fromString(attrs.getProperty(name));
+         }
+      }
+      for (Map.Entry<String, ContainerMemoryConfiguration> entry : live.getMemoryContainer().entrySet()) {
+         ContainerMemoryConfiguration memConfig = entry.getValue();
+         boolean sizeInBytes = memConfig.maxSize() != null;
+         long newSize = sizeInBytes ? memConfig.maxSizeBytes() : memConfig.maxCount();
+         sharedContainerMaps.getMap(entry.getKey()).resize(newSize);
+      }
+      return CompletableFutures.completedNull();
+   }
+
+   private static String serializeMutableAttributes(GlobalConfiguration globalConfiguration) {
+      Properties props = new Properties();
+      for (Map.Entry<String, Attribute<?>> entry : globalConfiguration.collectMutableAttributes().entrySet()) {
+         if (entry.getValue().get() != null) {
+            props.setProperty(entry.getKey(), String.valueOf(entry.getValue().get()));
+         }
+      }
+      java.io.StringWriter sw = new java.io.StringWriter();
+      try {
+         props.store(sw, null);
+      } catch (java.io.IOException e) {
+         throw new RuntimeException(e);
+      }
+      return sw.toString();
+   }
+
+   private static Properties loadProperties(String serialized) {
+      Properties props = new Properties();
+      try (java.io.StringReader sr = new java.io.StringReader(serialized)) {
+         props.load(sr);
+      } catch (java.io.IOException e) {
+         throw new RuntimeException(e);
+      }
+      return props;
+   }
+
+   @Override
    public CompletionStage<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      ScopedState cacheScopedState = new ScopedState(CACHE_SCOPE, name);
+      ScopedState cacheScopedState = new ScopedState(ScopeType.CACHE.toString(), name);
       if (getStateCache().containsKey(cacheScopedState)) {
          try {
             localTopologyManager.setCacheRebalancingEnabled(name, false);
@@ -380,7 +473,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    @Override
    public CompletionStage<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      return getStateCache().removeAsync(new ScopedState(TEMPLATE_SCOPE, name)).thenCompose((r) -> CompletableFutures.completedNull());
+      return getStateCache().removeAsync(new ScopedState(ScopeType.TEMPLATE.toString(), name)).thenCompose((r) -> CompletableFutures.completedNull());
    }
 
    CompletionStage<Void> removeCacheLocally(String name) {

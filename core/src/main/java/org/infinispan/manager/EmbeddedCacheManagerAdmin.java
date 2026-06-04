@@ -116,4 +116,12 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * @param value the new value to apply to the attribute
     */
    void updateConfigurationAttribute(String cacheName, String attribute, String value);
+
+   /**
+    * Updates a mutable global configuration attribute cluster-wide.
+    *
+    * @param attribute the dotted path of the attribute (e.g., "metrics.accurate-size")
+    * @param value the new value to apply to the attribute
+    */
+   void updateGlobalConfigurationAttribute(String attribute, String value);
 }

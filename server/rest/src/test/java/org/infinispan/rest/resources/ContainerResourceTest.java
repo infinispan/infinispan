@@ -89,6 +89,9 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       };
    }
 
+   private static final String COUNT_CONTAINER = "count-pool";
+   private static final String SIZE_CONTAINER = "size-pool";
+
    @Override
    protected GlobalConfigurationBuilder getGlobalConfigForNode(int id) {
       GlobalConfigurationBuilder config = super.getGlobalConfigForNode(id);
@@ -96,6 +99,8 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
             .configurationStorage(ConfigurationStorage.OVERLAY)
             .persistentLocation(Paths.get(PERSISTENT_LOCATION, Integer.toString(id)).toString())
             .metrics().accurateSize(true);
+      config.containerMemoryConfiguration(COUNT_CONTAINER).maxCount(100);
+      config.containerMemoryConfiguration(SIZE_CONTAINER).maxSize("1MB");
       return config;
    }
 
@@ -431,5 +436,108 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    protected String getConfigListenerEndpoint() {
       return "/rest/v2/container/config?action=listen&includeCurrentState=true";
+   }
+
+   @Test
+   public void testGlobalMutableAttributes() {
+      CompletionStage<RestResponse> response = adminClient.container().globalConfigurationAttributes(true);
+      assertThat(response).isOk();
+      String body = join(response).body();
+      Json attributes = Json.read(body);
+      assertTrue(attributes.asJsonMap().containsKey("metrics.accurate-size"));
+      assertEquals("boolean", attributes.at("metrics.accurate-size").at("type").asString());
+      // The value was set to true in getGlobalConfigForNode
+      assertNotNull(attributes.at("metrics.accurate-size").at("value"));
+   }
+
+   @Test
+   public void testGlobalMutableAttributesList() {
+      CompletionStage<RestResponse> response = adminClient.container().globalConfigurationAttributes(false);
+      assertThat(response).isOk();
+      String body = join(response).body();
+      Json attributeNames = Json.read(body);
+      assertTrue(attributeNames.asList().contains("metrics.accurate-size"));
+   }
+
+   @Test
+   public void testUpdateGlobalConfigurationAttribute() {
+      // First set to false
+      CompletionStage<RestResponse> response = adminClient.container()
+            .updateGlobalConfigurationAttribute("metrics.accurate-size", "false");
+      assertThat(response).isOk();
+
+      // Verify the change took effect
+      GlobalConfiguration globalConfig = Security.doAs(ADMIN, () -> manager(0).getCacheManagerConfiguration());
+      assertFalse(globalConfig.metrics().accurateSize());
+
+      // Set it back to true
+      response = adminClient.container()
+            .updateGlobalConfigurationAttribute("metrics.accurate-size", "true");
+      assertThat(response).isOk();
+
+      assertTrue(globalConfig.metrics().accurateSize());
+   }
+
+   @Test
+   public void testUpdateImmutableGlobalAttributeFails() {
+      CompletionStage<RestResponse> response = adminClient.container()
+            .updateGlobalConfigurationAttribute("metrics.gauges", "false");
+      assertThat(response).isBadRequest();
+   }
+
+   @Test
+   public void testContainerMemoryMutableAttributes() {
+      CompletionStage<RestResponse> response = adminClient.container().globalConfigurationAttributes(true);
+      assertThat(response).isOk();
+      String body = join(response).body();
+      Json attributes = Json.read(body);
+      String countKey = "container-memory." + COUNT_CONTAINER + ".max-count";
+      assertTrue(attributes.asJsonMap().containsKey(countKey));
+      assertEquals("long", attributes.at(countKey).at("type").asString());
+      String sizeKey = "container-memory." + SIZE_CONTAINER + ".max-size";
+      assertTrue(attributes.asJsonMap().containsKey(sizeKey));
+      assertEquals("string", attributes.at(sizeKey).at("type").asString());
+   }
+
+   @Test
+   public void testContainerMemoryMutableAttributesList() {
+      CompletionStage<RestResponse> response = adminClient.container().globalConfigurationAttributes(false);
+      assertThat(response).isOk();
+      String body = join(response).body();
+      Json attributeNames = Json.read(body);
+      assertTrue(attributeNames.asList().contains("container-memory." + COUNT_CONTAINER + ".max-count"));
+      assertTrue(attributeNames.asList().contains("container-memory." + SIZE_CONTAINER + ".max-size"));
+   }
+
+   @Test
+   public void testUpdateContainerMemoryMaxCount() {
+      CompletionStage<RestResponse> response = adminClient.container()
+            .updateGlobalConfigurationAttribute("container-memory." + COUNT_CONTAINER + ".max-count", "200");
+      assertThat(response).isOk();
+
+      GlobalConfiguration globalConfig = Security.doAs(ADMIN, () -> manager(0).getCacheManagerConfiguration());
+      assertEquals(200L, globalConfig.getMemoryContainer().get(COUNT_CONTAINER).maxCount());
+
+      // Reset
+      response = adminClient.container()
+            .updateGlobalConfigurationAttribute("container-memory." + COUNT_CONTAINER + ".max-count", "100");
+      assertThat(response).isOk();
+      assertEquals(100L, globalConfig.getMemoryContainer().get(COUNT_CONTAINER).maxCount());
+   }
+
+   @Test
+   public void testUpdateContainerMemoryMaxSize() {
+      CompletionStage<RestResponse> response = adminClient.container()
+            .updateGlobalConfigurationAttribute("container-memory." + SIZE_CONTAINER + ".max-size", "2MB");
+      assertThat(response).isOk();
+
+      GlobalConfiguration globalConfig = Security.doAs(ADMIN, () -> manager(0).getCacheManagerConfiguration());
+      assertEquals("2MB", globalConfig.getMemoryContainer().get(SIZE_CONTAINER).maxSize());
+
+      // Reset
+      response = adminClient.container()
+            .updateGlobalConfigurationAttribute("container-memory." + SIZE_CONTAINER + ".max-size", "1MB");
+      assertThat(response).isOk();
+      assertEquals("1MB", globalConfig.getMemoryContainer().get(SIZE_CONTAINER).maxSize());
    }
 }
