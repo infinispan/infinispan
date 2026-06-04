@@ -3,7 +3,6 @@ package org.infinispan.distribution;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
-import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.CACHE_SCOPE;
 import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -16,6 +15,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.ConfigurationStorage;
+import org.infinispan.globalstate.ScopeType;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -65,12 +65,12 @@ public class ZeroCapacityAdministrationTest extends MultipleCacheManagersTest {
       // Make sure this will trigger a remote call to create the cache.
       int tries = 0;
       String cacheName = "another-cache";
-      ScopedState ss = new ScopedState(CACHE_SCOPE, cacheName);
+      ScopedState ss = new ScopedState(ScopeType.CACHE.toString(), cacheName);
       while (!DistributionTestHelper.isFirstOwner(node1.getCache(CONFIG_STATE_CACHE_NAME), ss)) {
          if (tries > 50) fail("Exceeded attempts to find configuration mapping to remote");
 
          cacheName = "another-cache-" + tries++;
-         ss = new ScopedState(CACHE_SCOPE, cacheName);
+         ss = new ScopedState(ScopeType.CACHE.toString(), cacheName);
       }
 
       try {

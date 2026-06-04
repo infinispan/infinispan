@@ -128,6 +128,12 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    }
 
    @Override
+   public void updateGlobalConfigurationAttribute(String attributeName, String attributeValue) {
+      authorizer.checkPermission(subject, AuthorizationPermission.ADMIN);
+      join(clusterConfigurationManager.updateGlobalConfigurationAttribute(attributeName, attributeValue));
+   }
+
+   @Override
    public void assignAlias(String aliasName, String cacheName) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       Cache<Object, Object> cache = cacheManager.getCache(cacheName);

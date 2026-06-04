@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.util.Features;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
@@ -249,6 +250,21 @@ public class GlobalConfiguration {
     */
    public Map<String, ContainerMemoryConfiguration> getMemoryContainer() {
       return cacheContainerConfiguration.containerMemoryConfiguration();
+   }
+
+   /**
+    * Finds a mutable attribute by dotted path (e.g., "metrics.accurate-size").
+    *
+    * @param name the dotted attribute path
+    * @return the attribute
+    * @throws IllegalArgumentException if the attribute is not found
+    */
+   public Attribute<?> findAttribute(String name) {
+      return cacheContainerConfiguration.findAttribute(name);
+   }
+
+   public Map<String, Attribute<?>> collectMutableAttributes() {
+      return cacheContainerConfiguration.collectMutableAttributes();
    }
 
    @Override

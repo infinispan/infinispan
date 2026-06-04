@@ -2,18 +2,21 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.util.Features;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.util.ByteString;
 
 /*
  * @since 10.0
  */
-class CacheContainerConfiguration {
+class CacheContainerConfiguration extends ConfigurationElement<CacheContainerConfiguration> {
 
    private static final String ZERO_CAPACITY_NODE_FEATURE = "zero-capacity-node";
 
@@ -37,7 +40,6 @@ class CacheContainerConfiguration {
             NON_BLOCKING_EXECUTOR, BLOCKING_EXECUTOR);
    }
 
-   private final AttributeSet attributes;
    private final Attribute<String> defaultCache;
    private final Attribute<String> name;
    private final Attribute<Boolean> statistics;
@@ -55,7 +57,6 @@ class CacheContainerConfiguration {
    private final TransportConfiguration transport;
    private final Map<String, ContainerMemoryConfiguration> memoryContainers;
 
-
    CacheContainerConfiguration(AttributeSet attributes,
                                GlobalStateConfiguration globalState,
                                GlobalJmxConfiguration jmx,
@@ -68,7 +69,7 @@ class CacheContainerConfiguration {
                                GlobalTracingConfiguration tracing,
                                TransportConfiguration transport,
                                Features features, Map<String, ContainerMemoryConfiguration> memoryContainers) {
-      this.attributes = attributes.checkProtection();
+      super(Element.CACHE_CONTAINER, attributes, metrics, tracing);
       this.defaultCache = attributes.attribute(DEFAULT_CACHE);
       this.name = attributes.attribute(NAME);
       this.statistics = attributes.attribute(STATISTICS);
@@ -85,10 +86,6 @@ class CacheContainerConfiguration {
       this.transport = transport;
       this.zeroCapacityAvailable = features.isAvailable(ZERO_CAPACITY_NODE_FEATURE);
       this.memoryContainers = memoryContainers;
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    public String defaultCacheName() {
@@ -189,6 +186,40 @@ class CacheContainerConfiguration {
 
    public Map<String, ContainerMemoryConfiguration> containerMemoryConfiguration() {
       return memoryContainers;
+   }
+
+   public Map<String, Attribute<?>> collectMutableAttributes() {
+      Map<String, Attribute<?>> collector = new LinkedHashMap<>();
+      for (ConfigurationElement<?> child : children) {
+         child.collectMutableAttributes(null, collector);
+      }
+      for (Map.Entry<String, ContainerMemoryConfiguration> entry : memoryContainers.entrySet()) {
+         String prefix = "container-memory." + entry.getKey();
+         for (Attribute<?> attribute : entry.getValue().attributes().attributes()) {
+            if (!attribute.isImmutable()) {
+               collector.put(prefix + "." + attribute.getAttributeDefinition().name(), attribute);
+            }
+         }
+      }
+      return collector;
+   }
+
+   @Override
+   public Attribute<?> findAttribute(String name) {
+      if (name.startsWith("container-memory.")) {
+         String remainder = name.substring("container-memory.".length());
+         int sep = remainder.indexOf('.');
+         if (sep < 0) {
+            throw org.infinispan.commons.logging.Log.CONFIG.noAttribute(name, element);
+         }
+         String containerName = remainder.substring(0, sep);
+         ContainerMemoryConfiguration container = memoryContainers.get(containerName);
+         if (container == null) {
+            throw org.infinispan.commons.logging.Log.CONFIG.noAttribute(name, element);
+         }
+         return container.findAttribute(remainder.substring(sep + 1));
+      }
+      return super.findAttribute(name);
    }
 
    @Override

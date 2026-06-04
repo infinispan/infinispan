@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
@@ -67,6 +68,18 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
             }
          }
          throw Log.CONFIG.noAttribute(name, element);
+      }
+   }
+
+   public void collectMutableAttributes(String prefix, Map<String, Attribute<?>> collector) {
+      String qualifiedPrefix = prefix == null ? element : prefix + "." + element;
+      for (Attribute<?> attribute : attributes.attributes()) {
+         if (!attribute.isImmutable()) {
+            collector.put(qualifiedPrefix + "." + attribute.getAttributeDefinition().name(), attribute);
+         }
+      }
+      for (ConfigurationElement<?> child : children) {
+         child.collectMutableAttributes(qualifiedPrefix, collector);
       }
    }
 

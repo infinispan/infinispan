@@ -65,6 +65,11 @@ public class NoOpGlobalConfigurationManager implements GlobalConfigurationManage
       return CompletableFutures.completedNull();
    }
 
+   @Override
+   public CompletableFuture<Void> updateGlobalConfigurationAttribute(String attribute, String value) {
+      return CompletableFutures.completedNull();
+   }
+
    public static void amendCacheManager(EmbeddedCacheManager cm) {
       TestingUtil.replaceComponent(cm, PrincipalRoleMapper.class, new IdentityRoleMapper(), true);
       TestingUtil.replaceComponent(cm, RolePermissionMapper.class, new RolePermissionMapper() {

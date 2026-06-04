@@ -1,12 +1,11 @@
 package org.infinispan.globalstate.impl;
 
-import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.CACHE_SCOPE;
-import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.isKnownScope;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.globalstate.ScopeType;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -36,13 +35,16 @@ public class GlobalConfigurationStateListener {
       if (event.isPre()) {
          return CompletableFutures.completedNull();
       }
-      String scope = event.getKey().getScope();
-      if (!isKnownScope(scope))
+      ScopeType scopeType = ScopeType.fromString(event.getKey().getScope());
+      if (scopeType == null)
          return CompletableFutures.completedNull();
+
+      if (scopeType == ScopeType.CONTAINER)
+         return gcm.updateGlobalConfigurationLocally(event.getValue());
 
       String name = event.getKey().getName();
       CacheState state = event.getValue();
-      if (CACHE_SCOPE.equals(scope)) {
+      if (scopeType == ScopeType.CACHE) {
          CompletionStage<Void> cs = gcm.createCacheLocally(name, state);
          // zero capacity nodes have to wait for a non-zero capacity node to start the cache.
          // prevent the cache creating to blocking the listener invocation
@@ -56,9 +58,17 @@ public class GlobalConfigurationStateListener {
 
    @CacheEntryModified
    public CompletionStage<Void> handleUpdate(CacheEntryModifiedEvent<ScopedState, CacheState> event) {
-      String scope = event.getKey().getScope();
-      if (!isKnownScope(scope))
+      ScopeType scopeType = ScopeType.fromString(event.getKey().getScope());
+      if (scopeType == null)
          return CompletableFutures.completedNull();
+
+      if (scopeType == ScopeType.CONTAINER) {
+         CacheState state = event.getNewValue();
+         if (event.isPre()) {
+            return event.isOriginLocal() ? gcm.validateGlobalConfigurationUpdateLocally(state) : CompletableFutures.completedNull();
+         }
+         return gcm.updateGlobalConfigurationLocally(state);
+      }
 
       String name = event.getKey().getName();
       CacheState state = event.getNewValue();
@@ -74,12 +84,15 @@ public class GlobalConfigurationStateListener {
       // We are only interested in POST for removal
       if (event.isPre())
          return CompletableFutures.completedNull();
-      String scope = event.getKey().getScope();
-      if (!isKnownScope(scope))
+      ScopeType scopeType = ScopeType.fromString(event.getKey().getScope());
+      if (scopeType == null)
+         return CompletableFutures.completedNull();
+
+      if (scopeType == ScopeType.CONTAINER)
          return CompletableFutures.completedNull();
 
       String name = event.getKey().getName();
-      if (CACHE_SCOPE.equals(scope)) {
+      if (scopeType == ScopeType.CACHE) {
          CONTAINER.debugf("Stopping cache %s because it was removed from global state", name);
          return gcm.removeCacheLocally(name);
       } else {
