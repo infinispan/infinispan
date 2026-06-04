@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.StateTransferConfiguration.AWAIT_INITIAL_TRANSFER;
+import static org.infinispan.configuration.cache.StateTransferConfiguration.AWAIT_LEAVE_TRANSFER;
 import static org.infinispan.configuration.cache.StateTransferConfiguration.CHUNK_SIZE;
 import static org.infinispan.configuration.cache.StateTransferConfiguration.FETCH_IN_MEMORY_STATE;
 import static org.infinispan.configuration.cache.StateTransferConfiguration.TIMEOUT;
@@ -53,6 +54,16 @@ public class StateTransferConfigurationBuilder extends
    public StateTransferConfigurationBuilder awaitInitialTransfer(boolean b) {
       attributes.attribute(AWAIT_INITIAL_TRANSFER).set(b);
       return this;
+   }
+
+   /**
+    * If {@code true}, this will cause the call to method {@code Cache.stop()} to block and wait until the state transfer
+    * is complete and the cache has finished sending state to neighboring caches. This option applies to distributed caches
+    * only and is disabled by default.
+    */
+   public StateTransferConfigurationBuilder awaitLeaveTransfer(boolean b) {
+       attributes.attribute(AWAIT_LEAVE_TRANSFER).set(b);
+       return this;
    }
 
    /**
@@ -111,6 +122,11 @@ public class StateTransferConfigurationBuilder extends
       if (awaitInitialTransfer.isModified() && awaitInitialTransfer.get()
             && !getClusteringBuilder().cacheMode().needsStateTransfer())
          throw CONFIG.awaitInitialTransferOnlyForDistOrRepl();
+
+      Attribute<Boolean> awaitLeaveTransfer = attributes.attribute(AWAIT_LEAVE_TRANSFER);
+      if (awaitLeaveTransfer.isModified() && awaitLeaveTransfer.get()
+            && !getClusteringBuilder().cacheMode().isDistributed())
+         throw CONFIG.awaitLeaveTransferOnlyForDist();
 
       Attribute<TimeQuantity> timeoutAttribute = attributes.attribute(TIMEOUT);
       Attribute<TimeQuantity> remoteTimeoutAttribute = clustering().attributes.attribute(ClusteringConfiguration.REMOTE_TIMEOUT);

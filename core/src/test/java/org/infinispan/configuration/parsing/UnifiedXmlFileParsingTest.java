@@ -125,6 +125,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(6_000, config.memoryMonitor().gcDurationThreshold());
             assertEquals(0.15, config.memoryMonitor().gcPressureThreshold());
             assertEquals(20_000, config.memoryMonitor().gcPressureWindow());
+            Configuration distTemplate = getConfiguration(holder, "dist");
+            assertTrue(distTemplate.clustering().stateTransfer().awaitLeaveTransfer());
          }
       },
       INFINISPAN_161(16, 1) {
