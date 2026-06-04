@@ -805,7 +805,9 @@ public class DefaultCacheManager extends InternalCacheManager {
     * to ensure that they are safely terminated.
     */
    public void shutdownAllCaches() {
-      log.tracef("Attempting to shutdown cache manager: %s", getAddress());
+      if (log.isTraceEnabled()) {
+         log.tracef("Attempting to shutdown cache manager: %s", getAddress());
+      }
       authorizer.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
       try {
          performOnCaches(c -> {
