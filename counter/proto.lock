@@ -1,64 +1,5 @@
 {
   "definitions" : [ {
-    "protopath" : "org:/:infinispan:/:counter:/:persistence.counters.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "StrongCounterKey",
-        "type_id" : 126,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "counterName",
-          "type" : "org.infinispan.persistence.core.ByteString",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "CounterValue",
-        "type_id" : 125,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "value",
-          "type" : "int64",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        }, {
-          "id" : 2,
-          "name" : "state",
-          "type" : "org.infinispan.persistence.commons.CounterState",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "WeakCounterKey",
-        "type_id" : 127,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "counterName",
-          "type" : "org.infinispan.persistence.core.ByteString",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "index",
-          "type" : "int32",
-          "optional" : true,
-          "options" : [ {
-            "name" : "default",
-            "value" : "0"
-          } ]
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "persistence.counters-api.proto"
-      }, {
-        "path" : "persistence.core.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.counters"
-      }
-    }
-  }, {
     "protopath" : "org:/:infinispan:/:counter:/:global.counters.proto",
     "def" : {
       "enums" : [ ],
@@ -168,6 +109,65 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.counters"
+      }
+    }
+  }, {
+    "protopath" : "org:/:infinispan:/:counter:/:persistence.counters.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "StrongCounterKey",
+        "type_id" : 126,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "counterName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CounterValue",
+        "type_id" : 125,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "state",
+          "type" : "org.infinispan.persistence.commons.CounterState",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "WeakCounterKey",
+        "type_id" : 127,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "counterName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "index",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.counters-api.proto"
+      }, {
+        "path" : "persistence.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.counters"
       }
     }
   } ]
