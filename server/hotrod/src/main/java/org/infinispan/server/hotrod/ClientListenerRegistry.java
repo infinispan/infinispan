@@ -368,7 +368,9 @@ class ClientListenerRegistry {
       void init() {
          lockManager = ((AdvancedCache<?, ?>) cache).getLockManager();
          ch.closeFuture().addListener(f -> {
-            log.debugf("Channel disconnected, removing event sender listener for id: %s", Util.printArray(listenerId));
+            if (log.isDebugEnabled()) {
+               log.debugf("Channel disconnected, removing event sender listener for id: %s", Util.printArray(listenerId));
+            }
             unblockCommands();
             removeClientListener(listenerId, cache);
          });
