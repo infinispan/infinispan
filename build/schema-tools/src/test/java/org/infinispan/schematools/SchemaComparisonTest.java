@@ -64,11 +64,11 @@ public class SchemaComparisonTest {
          "server/runtime/src/main/resources/schema",
    };
 
-   // --- Exclusion sets keyed by schema base name (e.g. "infinispan-config-16.2") ---
+   // --- Exclusion sets keyed by schema base name without version (e.g. "infinispan-config") ---
 
    // XSD complexType names intentionally not in JSON $defs
    private static final Map<String, Set<String>> XSD_TYPES_EXCLUDED = Map.ofEntries(
-         Map.entry("infinispan-config-16.2", Set.of(
+         Map.entry("infinispan-config", Set.of(
                // Abstract base types (decomposed into allOf/$ref in JSON)
                "cache", "clustered-cache", "encodingType", "store", "loader",
                // JGroups stack types (separate jgroups-config JSON schema)
@@ -81,11 +81,11 @@ public class SchemaComparisonTest {
                // XSD-only structural helpers
                "property", "remote-server", "roles"
          )),
-         Map.entry("infinispan-counters-config-16.2", Set.of(
+         Map.entry("infinispan-counters-config", Set.of(
                // Abstract base type
                "counter"
          )),
-         Map.entry("infinispan-server-16.2", Set.of(
+         Map.entry("infinispan-server", Set.of(
                // XSD-only structural helpers
                "property", "boolean-element", "name-listType", "qop-listType",
                // Named protocol connector (abstract base in XSD)
@@ -95,7 +95,7 @@ public class SchemaComparisonTest {
                // Inline structural types
                "prefix", "security-realm-authentication", "security-realm-authorization"
          )),
-         Map.entry("infinispan-cachestore-remote-config-16.2", Set.of(
+         Map.entry("infinispan-cachestore-remote-config", Set.of(
                // Abstract base type
                "basekeystore",
                // JSON uses RemoteConnectionPool (naming mismatch)
@@ -107,7 +107,7 @@ public class SchemaComparisonTest {
 
    // JSON $defs names intentionally not in XSD
    private static final Map<String, Set<String>> JSON_TYPES_EXCLUDED = Map.ofEntries(
-         Map.entry("infinispan-config-16.2", Set.of(
+         Map.entry("infinispan-config", Set.of(
                // Structural wrappers for named-map pattern
                "CacheDefinition", "BackupSite", "ThreadFactoryWrapper",
                "ThreadPoolDefinition", "RoleDefinition",
@@ -121,30 +121,36 @@ public class SchemaComparisonTest {
                "EvictionContainers", "EvictionContainerDefinition",
                "BackupFor", "CacheTracing", "Query"
          )),
-         Map.entry("infinispan-server-16.2", Set.of(
+         Map.entry("infinispan-server", Set.of(
                // Unreferenced base type
                "ProtocolConnectorProperties",
                // Structural helper
                "Property"
          )),
-         Map.entry("infinispan-cachestore-jdbc-common-config-16.2", Set.of(
+         Map.entry("infinispan-cachestore-jdbc-common-config", Set.of(
                "WriteBehind" // re-exported from core
          )),
-         Map.entry("infinispan-cachestore-remote-config-16.2", Set.of(
+         Map.entry("infinispan-cachestore-remote-config", Set.of(
                // JSON-only types for remote store
                "RemoteConnectionPool", "RemoteServer", "WriteBehind"
          )),
-         Map.entry("infinispan-cachestore-rocksdb-config-16.2", Set.of(
+         Map.entry("infinispan-cachestore-rocksdb-config", Set.of(
                "WriteBehind" // re-exported from core
          )),
-         Map.entry("infinispan-cachestore-sql-config-16.2", Set.of(
+         Map.entry("infinispan-cachestore-sql-config", Set.of(
                "AbstractSqlStore", // abstract base decomposed in JSON
                "QueryJdbcStore", "TableJdbcStore" // anonymous inline types in XSD
          )),
-         Map.entry("infinispan-counters-config-16.2", Set.of(
+         Map.entry("infinispan-counters-config", Set.of(
                "AbstractCounter" // abstract base decomposed in JSON
          ))
    );
+
+   private static final java.util.regex.Pattern VERSION_SUFFIX = java.util.regex.Pattern.compile("-\\d+\\.\\d+$");
+
+   private static String stripVersion(String baseName) {
+      return VERSION_SUFFIX.matcher(baseName).replaceFirst("");
+   }
 
    @SafeVarargs
    private static Set<String> union(Set<String>... sets) {
@@ -174,7 +180,7 @@ public class SchemaComparisonTest {
 
    // XSD properties to skip per schema + JSON type name
    private static final Map<String, Map<String, Set<String>>> XSD_PROPS_EXCLUDED = Map.ofEntries(
-         Map.entry("infinispan-config-16.2", Map.ofEntries(
+         Map.entry("infinispan-config", Map.ofEntries(
                Map.entry("CacheContainer", Set.of(
                      "name", "jndi-name", "module", "start", "count", "size", "tracing",
                      "local-cache", "local-cache-configuration",
@@ -211,11 +217,11 @@ public class SchemaComparisonTest {
                Map.entry("CustomStore", Set.of("property")),
                Map.entry("IndexType", Set.of("segments"))
          )),
-         Map.entry("infinispan-cachestore-remote-config-16.2", Map.of(
+         Map.entry("infinispan-cachestore-remote-config", Map.of(
                "RemoteCacheContainer", Set.of("property"),
                "RemoteStore", Set.of("async-executor")
          )),
-         Map.entry("infinispan-server-16.2", Map.of(
+         Map.entry("infinispan-server", Map.of(
                // Server schema: inline children and structural differences
                "Security", Set.of("security-realm", "credential-store"),
                "SecurityRealm", Set.of("realm-name", "keytab")
@@ -224,7 +230,7 @@ public class SchemaComparisonTest {
 
    // JSON properties to skip per schema + JSON type name
    private static final Map<String, Map<String, Set<String>>> JSON_PROPS_EXCLUDED = Map.ofEntries(
-         Map.entry("infinispan-config-16.2", Map.ofEntries(
+         Map.entry("infinispan-config", Map.ofEntries(
                Map.entry("CacheContainer", Set.of("caches")),
                Map.entry("Threads", Set.of("thread-factories", "thread-pools")),
                Map.entry("GlobalState", Set.of(
@@ -245,11 +251,11 @@ public class SchemaComparisonTest {
                )),
                Map.entry("DistributedCache", Set.of("partition-handling"))
          )),
-         Map.entry("infinispan-cachestore-jdbc-common-config-16.2", Map.of(
+         Map.entry("infinispan-cachestore-jdbc-common-config", Map.of(
                // Inherited from core config:store
                "AbstractJdbcStore", STORE_INHERITED_PROPS
          )),
-         Map.entry("infinispan-cachestore-jdbc-config-16.2", Map.ofEntries(
+         Map.entry("infinispan-cachestore-jdbc-config", Map.ofEntries(
                // Inherited from jdbc-common and core config:store
                Map.entry("StringKeyedJdbcStore", Set.of(
                      "shared", "preload", "purge", "read-only", "write-only",
@@ -259,7 +265,7 @@ public class SchemaComparisonTest {
                      "simple-connection", "write-query-timeout"
                ))
          )),
-         Map.entry("infinispan-cachestore-remote-config-16.2", Map.ofEntries(
+         Map.entry("infinispan-cachestore-remote-config", Map.ofEntries(
                // Inherited from core config:store
                Map.entry("RemoteStore", STORE_INHERITED_PROPS),
                // Inherited from basekeystore
@@ -270,7 +276,7 @@ public class SchemaComparisonTest {
                // Child elements as properties
                Map.entry("Authentication", Set.of("digest", "external", "plain"))
          )),
-         Map.entry("infinispan-cachestore-rocksdb-config-16.2", Map.of(
+         Map.entry("infinispan-cachestore-rocksdb-config", Map.of(
                // Inherited from core config:store
                "RocksdbStore", STORE_INHERITED_PROPS
          ))
@@ -304,7 +310,7 @@ public class SchemaComparisonTest {
    // --- Assertions ---
 
    private void assertXsdTypesHaveJsonEquivalent(String schema, SchemaPair pair) throws Exception {
-      Set<String> xsdExcl = XSD_TYPES_EXCLUDED.getOrDefault(schema, Set.of());
+      Set<String> xsdExcl = XSD_TYPES_EXCLUDED.getOrDefault(stripVersion(schema), Set.of());
       Set<String> missingInJson = new TreeSet<>();
       for (String xsdType : pair.xsdTypes().keySet()) {
          if (xsdExcl.contains(xsdType)) continue;
@@ -319,8 +325,9 @@ public class SchemaComparisonTest {
    }
 
    private void assertJsonTypesHaveXsdEquivalent(String schema, SchemaPair pair) throws Exception {
-      Set<String> xsdExcl = XSD_TYPES_EXCLUDED.getOrDefault(schema, Set.of());
-      Set<String> jsonExcl = JSON_TYPES_EXCLUDED.getOrDefault(schema, Set.of());
+      String key = stripVersion(schema);
+      Set<String> xsdExcl = XSD_TYPES_EXCLUDED.getOrDefault(key, Set.of());
+      Set<String> jsonExcl = JSON_TYPES_EXCLUDED.getOrDefault(key, Set.of());
       Set<String> xsdJsonNames = new TreeSet<>();
       for (String xsdType : pair.xsdTypes().keySet()) {
          if (!xsdExcl.contains(xsdType)) xsdJsonNames.add(resolveJsonName(xsdType));
@@ -336,8 +343,9 @@ public class SchemaComparisonTest {
    }
 
    private void assertXsdPropertiesExistInJson(String schema, SchemaPair pair) throws Exception {
-      Set<String> xsdExcl = XSD_TYPES_EXCLUDED.getOrDefault(schema, Set.of());
-      Map<String, Set<String>> propsExcl = XSD_PROPS_EXCLUDED.getOrDefault(schema, Map.of());
+      String key = stripVersion(schema);
+      Set<String> xsdExcl = XSD_TYPES_EXCLUDED.getOrDefault(key, Set.of());
+      Map<String, Set<String>> propsExcl = XSD_PROPS_EXCLUDED.getOrDefault(key, Map.of());
       Set<String> mismatches = new TreeSet<>();
       for (Map.Entry<String, Set<String>> entry : pair.xsdTypes().entrySet()) {
          if (xsdExcl.contains(entry.getKey())) continue;
@@ -356,9 +364,10 @@ public class SchemaComparisonTest {
    }
 
    private void assertJsonPropertiesExistInXsd(String schema, SchemaPair pair) throws Exception {
-      Set<String> xsdExcl = XSD_TYPES_EXCLUDED.getOrDefault(schema, Set.of());
-      Set<String> jsonExcl = JSON_TYPES_EXCLUDED.getOrDefault(schema, Set.of());
-      Map<String, Set<String>> propsExcl = JSON_PROPS_EXCLUDED.getOrDefault(schema, Map.of());
+      String key = stripVersion(schema);
+      Set<String> xsdExcl = XSD_TYPES_EXCLUDED.getOrDefault(key, Set.of());
+      Set<String> jsonExcl = JSON_TYPES_EXCLUDED.getOrDefault(key, Set.of());
+      Map<String, Set<String>> propsExcl = JSON_PROPS_EXCLUDED.getOrDefault(key, Map.of());
       Map<String, Set<String>> xsdPropsByJsonName = new TreeMap<>();
       for (Map.Entry<String, Set<String>> entry : pair.xsdTypes().entrySet()) {
          if (xsdExcl.contains(entry.getKey())) continue;
