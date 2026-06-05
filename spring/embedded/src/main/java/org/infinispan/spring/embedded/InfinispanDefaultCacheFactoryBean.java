@@ -14,10 +14,10 @@ import org.springframework.beans.factory.InitializingBean;
 
 /**
  * <p>
- * A {@link FactoryBean <code>FactoryBean</code>} for creating a
- * native <em>default</em> Infinispan {@link Cache <code>org.infinispan.Cache</code>}
- * , delegating to a {@link #setInfinispanCacheContainer(CacheContainer) <code>configurable</code>}
- * {@link CacheContainer <code>org.infinispan.manager.CacheContainer</code>}.
+ * A {@link FactoryBean} for creating a
+ * native <em>default</em> Infinispan {@link Cache}
+ * , delegating to a {@link #setInfinispanCacheContainer(CacheContainer) configurable}
+ * {@link CacheContainer}.
  * A default <code>Cache</code> is a <code>Cache</code> that uses its <code>CacheContainer</code>'s
  * default settings. This is contrary to a <em>named</em> <code>Cache</code> where select settings
  * from a <code>CacheContainer</code>'s default configuration may be overridden with settings
@@ -44,16 +44,14 @@ public class InfinispanDefaultCacheFactoryBean<K, V> implements FactoryBean<Cach
 
    /**
     * <p>
-    * Sets the {@link CacheContainer
-    * <code>org.infinispan.manager.CacheContainer</code>} to be used for creating our
-    * {@link Cache <code>Cache</code>} instance. Note that this is a
+    * Sets the {@link CacheContainer} to be used for creating our
+    * {@link Cache} instance. Note that this is a
     * <b>mandatory</b> property.
     * </p>
     *
     * @param infinispanCacheContainer
-    *           The {@link CacheContainer
-    *           <code>org.infinispan.manager.CacheContainer</code>} to be used for creating our
-    *           {@link Cache <code>Cache</code>} instance
+    *           The {@link CacheContainer} to be used for creating our
+    *           {@link Cache} instance
     */
    public void setInfinispanCacheContainer(final CacheContainer infinispanCacheContainer) {
       this.infinispanCacheContainer = infinispanCacheContainer;

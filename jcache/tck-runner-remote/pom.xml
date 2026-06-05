@@ -218,14 +218,12 @@
                   <!-- TCK tests -->
                   <dependency>javax.cache:cache-tests</dependency>
                </dependenciesToScan>
-               <disableXmlReport>false</disableXmlReport>
                <!-- TODO  Remove? -->
                <includes>
                   <include>**/Test*.java</include>
                   <include>**/*Test.java</include>
                   <include>**/*TestCase.java</include>
                </includes>
-               <disableXmlReport>false</disableXmlReport>
                <systemPropertyVariables>
                   <ExcludeList>ExcludeList_remote</ExcludeList>
                   <javax.cache.CacheManager>${remote.CacheManagerImpl}</javax.cache.CacheManager>

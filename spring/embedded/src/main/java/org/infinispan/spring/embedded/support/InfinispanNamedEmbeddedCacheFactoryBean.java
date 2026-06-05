@@ -14,14 +14,11 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.StringUtils;
 
 /**
- * <p>
- * A {@link FactoryBean <code>FactoryBean</code>} for creating a
- * native {@link #setCacheName(String) named} Infinispan {@link Cache
- * <code>org.infinispan.Cache</code>}, delegating to a
- * {@link #setInfinispanEmbeddedCacheManager(EmbeddedCacheManager) <code>configurable</code>}
- * {@link EmbeddedCacheManager
- * <code>org.infinispan.manager.EmbeddedCacheManager</code>}. If no cache name is explicitly set,
- * this <code>FactoryBean</code>'s {@link #setBeanName(String) <code>beanName</code>} will be used
+ * A {@link FactoryBean} for creating a
+ * native {@link #setCacheName(String) named} Infinispan {@link Cache org.infinispan.Cache}, delegating to a
+ * {@link #setInfinispanEmbeddedCacheManager(EmbeddedCacheManager) configurable}
+ * {@link EmbeddedCacheManager org.infinispan.manager.EmbeddedCacheManager}. If no cache name is explicitly set,
+ * this <code>FactoryBean</code>'s {@link #setBeanName(String) beanName} will be used
  * instead.
  *
  * <p>
@@ -32,8 +29,7 @@ import org.springframework.util.StringUtils;
  * <code>EmbeddedCacheManager</code>.
  *
  * <p>
- * There are different configuration {@link #setConfigurationTemplateMode(String)
- * <code>modes</code>} that control with what <code>Configuration</code> to start before further
+ * There are different configuration {@link #setConfigurationTemplateMode(String) modes} that control with what <code>Configuration</code> to start before further
  * customizing it as described above:
  * <ul>
  * <li>
@@ -275,33 +271,24 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
    // ------------------------------------------------------------------------
 
    /**
-    * <p>
-    * Sets the {@link Cache#getName() name} of the {@link Cache
-    * <code>org.infinispan.Cache</code>} to be created. If no explicit <code>cacheName</code> is
-    * set, this <code>FactoryBean</code> will use its {@link #setBeanName(String)
-    * <code>beanName</code>} as the <code>cacheName</code>.
-    *
+    * Sets the {@link Cache#getName() name} of the {@link Cache org.infinispan.Cache} to be created. If no explicit <code>cacheName</code> is
+    * set, this <code>FactoryBean</code> will use its {@link #setBeanName(String) beanName} as the <code>cacheName</code>.
     *
     * @param cacheName
-    *           The {@link Cache#getName() name} of the {@link Cache
-    *           <code>org.infinispan.Cache</code>} to be created
+    *           The {@link Cache#getName() name} of the {@link Cache org.infinispan.Cache} to be created
     */
    public void setCacheName(final String cacheName) {
       this.cacheName = cacheName;
    }
 
    /**
-    * <p>
-    * Sets the {@link EmbeddedCacheManager
-    * <code>org.infinispan.manager.EmbeddedCacheManager</code>} to be used for creating our
-    * {@link Cache <code>Cache</code>} instance. Note that this is a
+    * Sets the {@link EmbeddedCacheManager org.infinispan.manager.EmbeddedCacheManager} to be used for creating our
+    * {@link Cache} instance. Note that this is a
     * <b>mandatory</b> property.
     *
-    *
     * @param infinispanEmbeddedCacheManager
-    *           The {@link EmbeddedCacheManager
-    *           <code>org.infinispan.manager.EmbeddedCacheManager</code>} to be used for creating
-    *           our {@link Cache <code>Cache</code>} instance
+    *           The {@link EmbeddedCacheManager org.infinispan.manager.EmbeddedCacheManager} to be used for creating
+    *           our {@link Cache} instance
     */
    public void setInfinispanEmbeddedCacheManager(
          final EmbeddedCacheManager infinispanEmbeddedCacheManager) {

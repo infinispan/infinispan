@@ -22,7 +22,7 @@ import jakarta.enterprise.inject.spi.Extension;
  * <p>This is really handy if you like to access CDI functionality
  * from places where no injection is available.</p>
  * <p>If a simple but manual bean-lookup is needed, it's easier to use the {@link BeanManagerProvider}.</p>
- * <p>As soon as an application shuts down, the reference to the {@link BeanManager} will be removed.<p>
+ * <p>As soon as an application shuts down, the reference to the {@link BeanManager} will be removed.</p>
  * <p>Usage:</p>
  * <pre>
  * BeanManager bm = BeanManagerProvider.getInstance().getBeanManager();

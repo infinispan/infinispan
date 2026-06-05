@@ -201,7 +201,6 @@ public class CounterConfiguration {
        * <p>
        * Only for {@link CounterType#WEAK}.
        * <p>
-       * <p>
        * The concurrency level set the amount of concurrent updates that can happen simultaneous. It is trade-off
        * between the write performance and read performance. A higher value will allow more concurrent updates, however
        * it will take more time to compute the counter value.

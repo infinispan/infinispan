@@ -28,15 +28,12 @@ import org.infinispan.commons.util.Experimental;
  * </pre>
  * <h2>Eviction</h2> <p> Eviction works per key. This means all the values associated on a key will be evicted.
  * </p>
- * <p>
  * <h2>Views</h2>
- * <p>
  * The returned collections when calling "get" are views of the values on the key. Any change on these collections won't
  * affect the cache values on the key.
- * <p>
- * <h2>Null values</h2> Null values are not supported. The multimap cache won't have a null key or any null value.
- * <p>
- * Example
+ * <h2>Null values</h2>
+ * Null values are not supported. The multimap cache won't have a null key or any null value.
+ * <p>Example</p>
  * <pre>
  *     multimapCache.put(null, "v1").join() &rarr; fails
  *     multimapCache.put("k", null).join() &rarr; fails
@@ -46,7 +43,6 @@ import org.infinispan.commons.util.Experimental;
  * removed
  *     multimapCache.containsKey("k").join() &rarr; false
  *  </pre>
- * <p>
  *
  * @author Katia Aresti, karesti@redhat.com
  * @see <a href="https://infinispan.org/documentation/">Infinispan documentation</a>
@@ -93,7 +89,6 @@ public interface BasicMultimapCache<K, V> {
    /**
     * Removes a key-value pair from this multimap cache, if such exists. Returns true when the
     * key-value pair has been removed from the key.
-    * <p>
     * <ul> <li>In the case where duplicates are <b>not supported</b>, <b>only one</b> the key-value pair will be
     * removed, if such exists.</li> <li>In the case where duplicates are supported, <b>all the key-value pairs</b> will
     * be removed.</li> <li>If the values remaining after the remove call are empty, the whole entry will be

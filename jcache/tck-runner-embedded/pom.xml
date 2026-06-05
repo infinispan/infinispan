@@ -108,7 +108,6 @@
                   <include>**/*Test.java</include>
                   <include>**/*TestCase.java</include>
                </includes>
-               <disableXmlReport>false</disableXmlReport>
                <systemPropertyVariables>
                   <ExcludeList>ExcludeList_embedded</ExcludeList>
                   <javax.cache.CacheManager>${embedded.CacheManagerImpl}</javax.cache.CacheManager>

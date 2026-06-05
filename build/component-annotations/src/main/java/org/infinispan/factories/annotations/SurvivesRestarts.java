@@ -7,7 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is used for components that will be registered in the {@link org.infinispan.factories.ComponentRegistry},
+ * This annotation is used for components that will be registered in the {@code ComponentRegistry},
  * that are meant to be retained in the component registry even after the component registry is stopped.  Components
  * annotated as such would not have to be recreated and rewired between stopping and starting a component registry.
  * <br />

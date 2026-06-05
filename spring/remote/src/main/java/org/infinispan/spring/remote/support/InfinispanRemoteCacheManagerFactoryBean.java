@@ -10,14 +10,13 @@ import org.springframework.beans.factory.InitializingBean;
 
 /**
  * <p>
- * A {@link FactoryBean <code>FactoryBean</code>} for creating an
- * {@link RemoteCacheManager
- * <code>Infinispan RemoteCacheManager</code>} instance.
+ * A {@link FactoryBean} for creating an
+ * {@link RemoteCacheManager} instance.
  * </p>
  * <b>Configuration</b><br/>
  * <p>
- * A <code>RemoteCacheManager</code> is configured through a {@link Properties
- * <code>Properties</code>} object. For an exhaustive list of valid properties to be used see
+ * A <code>RemoteCacheManager</code> is configured through a {@link Properties}
+ * object. For an exhaustive list of valid properties to be used see
  * <code>RemoteCacheManager</code>'s {@link RemoteCacheManager
  * javadocs}. This <code>FactoryBean</code> provides means to either
  * {@link #setConfigurationProperties(Properties) inject} a user-defined <code>Properties</code>
@@ -111,7 +110,7 @@ public class InfinispanRemoteCacheManagerFactoryBean extends AbstractRemoteCache
    // ------------------------------------------------------------------------
 
    /**
-    * {@link RemoteCacheManager#stop() <code>stop</code>} the
+    * {@link RemoteCacheManager#stop() stop} the
     * <code>RemoteCacheManager</code> created by this factory.
     *
     * @see DisposableBean#destroy()
