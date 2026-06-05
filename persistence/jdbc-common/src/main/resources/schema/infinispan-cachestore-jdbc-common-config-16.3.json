@@ -10,7 +10,7 @@
       "description": "Abstract JDBC-based cache store configuration.",
       "allOf": [
         {
-          "$ref": "infinispan-config-16.2.json#/$defs/AbstractStore"
+          "$ref": "infinispan-config-16.3.json#/$defs/AbstractStore"
         }
       ],
       "properties": {
@@ -153,7 +153,7 @@
       "additionalProperties": false
     },
     "WriteBehind": {
-      "$ref": "infinispan-config-16.2.json#/$defs/WriteBehind"
+      "$ref": "infinispan-config-16.3.json#/$defs/WriteBehind"
     }
   }
 }

@@ -15,7 +15,7 @@
       "description": "Defines a RocksDB cache store.",
       "allOf": [
         {
-          "$ref": "infinispan-config-16.2.json#/$defs/AbstractStore"
+          "$ref": "infinispan-config-16.3.json#/$defs/AbstractStore"
         }
       ],
       "properties": {
@@ -80,7 +80,7 @@
       "additionalProperties": false
     },
     "WriteBehind": {
-      "$ref": "infinispan-config-16.2.json#/$defs/WriteBehind"
+      "$ref": "infinispan-config-16.3.json#/$defs/WriteBehind"
     }
   }
 }

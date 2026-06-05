@@ -1,11 +1,11 @@
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:16.2 https://infinispan.org/schemas/infinispan-config-16.2.xsd
-                            urn:infinispan:server:16.2 https://infinispan.org/schemas/infinispan-server-16.2.xsd
+      xsi:schemaLocation="urn:infinispan:config:16.3 https://infinispan.org/schemas/infinispan-config-16.3.xsd
+                            urn:infinispan:server:16.3 https://infinispan.org/schemas/infinispan-server-16.3.xsd
                             urn:org:jgroups https://www.jgroups.org/schema/jgroups-5.5.xsd"
-      xmlns="urn:infinispan:config:16.2"
-      xmlns:ispn="urn:infinispan:config:16.2"
-      xmlns:server="urn:infinispan:server:16.2">
+      xmlns="urn:infinispan:config:16.3"
+      xmlns:ispn="urn:infinispan:config:16.3"
+      xmlns:server="urn:infinispan:server:16.3">
 
    <jgroups>
       <!--
@@ -47,7 +47,7 @@
       <distributed-cache name="default" configuration="distributed-cache-template"/>
    </cache-container>
 
-   <server xmlns="urn:infinispan:server:16.2">
+   <server xmlns="urn:infinispan:server:16.3">
       <interfaces>
          <interface name="public">
             <inet-address value="${infinispan.bind.address:127.0.0.1}"/>

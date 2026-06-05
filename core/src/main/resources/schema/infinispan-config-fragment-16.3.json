@@ -8,7 +8,7 @@
       "type": "object",
       "properties": {
         "local-cache": {
-          "$ref": "infinispan-config-16.2.json#/$defs/LocalCache"
+          "$ref": "infinispan-config-16.3.json#/$defs/LocalCache"
         }
       },
       "required": ["local-cache"],
@@ -18,7 +18,7 @@
       "type": "object",
       "properties": {
         "local-cache-configuration": {
-          "$ref": "infinispan-config-16.2.json#/$defs/LocalCache"
+          "$ref": "infinispan-config-16.3.json#/$defs/LocalCache"
         }
       },
       "required": ["local-cache-configuration"],
@@ -28,7 +28,7 @@
       "type": "object",
       "properties": {
         "replicated-cache": {
-          "$ref": "infinispan-config-16.2.json#/$defs/ReplicatedCache"
+          "$ref": "infinispan-config-16.3.json#/$defs/ReplicatedCache"
         }
       },
       "required": ["replicated-cache"],
@@ -38,7 +38,7 @@
       "type": "object",
       "properties": {
         "replicated-cache-configuration": {
-          "$ref": "infinispan-config-16.2.json#/$defs/ReplicatedCache"
+          "$ref": "infinispan-config-16.3.json#/$defs/ReplicatedCache"
         }
       },
       "required": ["replicated-cache-configuration"],
@@ -48,7 +48,7 @@
       "type": "object",
       "properties": {
         "invalidation-cache": {
-          "$ref": "infinispan-config-16.2.json#/$defs/InvalidationCache"
+          "$ref": "infinispan-config-16.3.json#/$defs/InvalidationCache"
         }
       },
       "required": ["invalidation-cache"],
@@ -58,7 +58,7 @@
       "type": "object",
       "properties": {
         "invalidation-cache-configuration": {
-          "$ref": "infinispan-config-16.2.json#/$defs/InvalidationCache"
+          "$ref": "infinispan-config-16.3.json#/$defs/InvalidationCache"
         }
       },
       "required": ["invalidation-cache-configuration"],
@@ -68,7 +68,7 @@
       "type": "object",
       "properties": {
         "distributed-cache": {
-          "$ref": "infinispan-config-16.2.json#/$defs/DistributedCache"
+          "$ref": "infinispan-config-16.3.json#/$defs/DistributedCache"
         }
       },
       "required": ["distributed-cache"],
@@ -78,7 +78,7 @@
       "type": "object",
       "properties": {
         "distributed-cache-configuration": {
-          "$ref": "infinispan-config-16.2.json#/$defs/DistributedCache"
+          "$ref": "infinispan-config-16.3.json#/$defs/DistributedCache"
         }
       },
       "required": ["distributed-cache-configuration"],
@@ -98,7 +98,7 @@
       "type": "object",
       "properties": {
         "threads": {
-          "$ref": "infinispan-config-16.2.json#/$defs/Threads"
+          "$ref": "infinispan-config-16.3.json#/$defs/Threads"
         }
       },
       "required": ["threads"],
@@ -108,7 +108,7 @@
       "type": "object",
       "properties": {
         "cache-container": {
-          "$ref": "infinispan-config-16.2.json#/$defs/CacheContainer"
+          "$ref": "infinispan-config-16.3.json#/$defs/CacheContainer"
         }
       },
       "required": ["cache-container"],
@@ -118,7 +118,7 @@
       "type": "object",
       "properties": {
         "transport": {
-          "$ref": "infinispan-config-16.2.json#/$defs/Transport"
+          "$ref": "infinispan-config-16.3.json#/$defs/Transport"
         }
       },
       "required": ["transport"],
@@ -128,7 +128,7 @@
       "type": "object",
       "properties": {
         "security": {
-          "$ref": "infinispan-config-16.2.json#/$defs/GlobalSecurity"
+          "$ref": "infinispan-config-16.3.json#/$defs/GlobalSecurity"
         }
       },
       "required": ["security"],

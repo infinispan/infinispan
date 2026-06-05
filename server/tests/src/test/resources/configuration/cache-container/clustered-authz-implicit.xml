@@ -1,6 +1,6 @@
 <cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xsi:schemaLocation="urn:infinispan:config:16.2 https://infinispan.org/schemas/infinispan-config-fragment-16.2.xsd"
-                 xmlns="urn:infinispan:config:16.2"
+                 xsi:schemaLocation="urn:infinispan:config:16.3 https://infinispan.org/schemas/infinispan-config-fragment-16.3.xsd"
+                 xmlns="urn:infinispan:config:16.3"
                  name="default">
    <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
    <security>

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://infinispan.org/infinispan-server",
-  "title": "Infinispan Server 16.2 Configuration",
-  "description": "Schema for Infinispan Server 16.2 configuration.",
+  "title": "Infinispan Server 16.3 Configuration",
+  "description": "Schema for Infinispan Server 16.3 configuration.",
   "type": "object",
   "properties": {
     "server": {
