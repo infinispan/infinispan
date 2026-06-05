@@ -66,3 +66,11 @@ jobs:
       - name: Push changes
         run: |
           git push origin main ${{ inputs.branch }}
+
+      - name: Create backport label
+        run: |
+          gh label create "backport/${{ inputs.branch }}" \
+            --color "A149F9" \
+            --description "Annotate a PR with this label if you want it to be backported to the ${{ inputs.branch }} branch"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
