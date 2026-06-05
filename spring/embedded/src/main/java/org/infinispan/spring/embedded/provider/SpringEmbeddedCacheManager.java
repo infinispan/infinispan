@@ -12,13 +12,13 @@ import org.springframework.util.Assert;
 
 /**
  * <p>
- * A {@link CacheManager <code>CacheManager</code>} implementation that is
+ * A {@link CacheManager} implementation that is
  * backed by an {@link EmbeddedCacheManager
- * <code>Infinispan EmbeddedCacheManager</code>} instance.
+ * Infinispan EmbeddedCacheManager} instance.
  * </p>
  * <p>
  * Note that this <code>CacheManager</code> <b>does</b> support adding new
- * {@link Cache <code>Caches</code>} at runtime, i.e. <code>Caches</code> added
+ * {@link Cache Caches} at runtime, i.e. <code>Caches</code> added
  * programmatically to the backing <code>EmbeddedCacheManager</code> after this
  * <code>CacheManager</code> has been constructed will be seen by this <code>CacheManager</code>.
  * </p>
@@ -66,11 +66,11 @@ public class SpringEmbeddedCacheManager implements CacheManager {
 
    /**
     * Return the {@link EmbeddedCacheManager
-    * <code>org.infinispan.manager.EmbeddedCacheManager</code>} that backs this
+    * org.infinispan.manager.EmbeddedCacheManager} that backs this
     * <code>CacheManager</code>.
     *
     * @return The {@link EmbeddedCacheManager
-    *         <code>org.infinispan.manager.EmbeddedCacheManager</code>} that backs this
+    *         org.infinispan.manager.EmbeddedCacheManager} that backs this
     *         <code>CacheManager</code>
     */
    public EmbeddedCacheManager getNativeCacheManager() {
@@ -78,7 +78,7 @@ public class SpringEmbeddedCacheManager implements CacheManager {
    }
 
    /**
-    * Stop the {@link EmbeddedCacheManager <code>EmbeddedCacheManager</code>} this
+    * Stop the {@link EmbeddedCacheManager} this
     * <code>CacheManager</code> delegates to.
     */
    public void stop() {

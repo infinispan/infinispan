@@ -29,6 +29,8 @@
       <maven.compiler.source>17</maven.compiler.source>
       <maven.compiler.target>17</maven.compiler.target>
       <maven.compiler.release>17</maven.compiler.release>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
       <project.build.outputTimestamp>2026-06-04T13:17:50Z</project.build.outputTimestamp>
 
@@ -236,6 +238,26 @@
    <build>
       <pluginManagement>
          <plugins>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-javadoc-plugin</artifactId>
+               <version>${version.maven.javadoc}</version>
+               <configuration>
+                  <doclint>all,-missing</doclint>
+                  <tags>
+                     <tag>
+                        <name>api.public</name>
+                        <placement>a</placement>
+                        <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;Public API&lt;/b&gt;&lt;/div&gt;</head>
+                     </tag>
+                     <tag>
+                        <name>api.private</name>
+                        <placement>a</placement>
+                        <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;THIS IS NOT PUBLIC API! This is a private implementation detail and must not be referenced by user code.&lt;/b&gt;&lt;/div&gt;</head>
+                     </tag>
+                  </tags>
+               </configuration>
+            </plugin>
             <plugin>
                <groupId>com.github.spotbugs</groupId>
                <artifactId>spotbugs-maven-plugin</artifactId>

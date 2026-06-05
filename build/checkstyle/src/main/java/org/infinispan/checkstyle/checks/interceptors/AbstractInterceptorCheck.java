@@ -45,6 +45,9 @@ public abstract class AbstractInterceptorCheck extends AbstractCheck {
 
    @Override
    public void visitToken(DetailAST klass) {
+      if (System.getProperty("infinispan.checkstyle.interceptors") == null) {
+         return;
+      }
       Set<String> containsMethods = new HashSet<>();
       stream(klass, OBJBLOCK).flatMap(objblock -> stream(objblock, METHOD_DEF)).forEach(m -> {
          DetailAST identNode = m.findFirstToken(IDENT);

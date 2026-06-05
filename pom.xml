@@ -174,8 +174,6 @@
       <jupiterListener>org.infinispan.testing.jupiter.JupiterTestListener</jupiterListener>
       <module.skipCopyDependencies>true</module.skipCopyDependencies>
       <packaging>jar</packaging>
-      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
       <testNGListeners>org.infinispan.testing.testng.TestNGTestListener,org.infinispan.testing.junit.PolarionJUnitXMLReporter</testNGListeners>
       <log4j.configurationFile>${infinispan.root}/etc/log4j2.xml</log4j.configurationFile>
       <uberjar.deps.optional>true</uberjar.deps.optional>
@@ -2053,20 +2051,6 @@
                         <Scm-Revision>${git.commit.id}</Scm-Revision>
                      </manifestEntries>
                   </archive>
-                  <doclint>all</doclint>
-                  <!-- Declare our custom javadoc tags and provide a replacement text for them to be used just in case exclusion fails. -->
-                  <tags>
-                     <tag>
-                        <name>api.public</name>
-                        <placement>a</placement>
-                        <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;Public API&lt;/b&gt;&lt;/div&gt;</head>
-                     </tag>
-                     <tag>
-                        <name>api.private</name>
-                        <placement>a</placement>
-                        <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;THIS IS NOT PUBLIC API! This is a private implementation detail and must not be referenced by user code.&lt;/b&gt;&lt;/div&gt;</head>
-                     </tag>
-                  </tags>
                </configuration>
             </plugin>
             <plugin>

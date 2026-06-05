@@ -58,7 +58,8 @@ import org.apache.maven.project.MavenProject;
  */
 @Mojo(name = "extract-defaults",
       defaultPhase = LifecyclePhase.PROCESS_CLASSES,
-      requiresDependencyResolution = ResolutionScope.RUNTIME)
+      requiresDependencyResolution = ResolutionScope.RUNTIME,
+      threadSafe = true)
 public class DefaultsExtractorMojo extends AbstractMojo {
 
    private enum AttributeDefType {

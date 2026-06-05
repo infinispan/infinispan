@@ -88,6 +88,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
    private static final Pattern MODULE_NAME_SEPARATOR_PATTERN = Pattern.compile("-");
 
    private boolean errorReported = false;
+   private boolean generated = false;
    private ModelBuilder modelBuilder;
    private TypeMirror autoInstantiableType;
 
@@ -121,30 +122,30 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
          autoInstantiableType = autoInstantiableElement.asType();
          modelBuilder.scan(roundEnv.getRootElements(), null);
 
-         // In theory we could generate the package classes early (or better generate a class for each component)
-         // but the classes we generate don't have any annotations for other processors to parse.
-         if (roundEnv.processingOver()) {
-            Model model = modelBuilder.getModel();
-            if (modelBuilder.module == null) {
-               warn(null, "@InfinispanModule annotation not found in any class. " +
-                           "Found components %s", modelBuilder.annotatedTypes.keySet());
-               return true;
-            }
-
-            // Only generate classes if valid
+         // Generate source files before the final round to avoid "created in the last round" warnings.
+         // The generated files don't have any annotations for other processors to parse.
+         if (!generated && !roundEnv.processingOver() && modelBuilder.module != null) {
             if (errorReported || roundEnv.errorRaised())
                return true;
 
+            Model model = modelBuilder.getModel();
             Generator generator = new Generator(model, filer());
 
             generator.writePackageClasses();
 
             // IntelliJ will delete the generated file before compilation if any of the source elements has changed
-            // We make the module impl and service fine depend only on the module class,
+            // We make the module impl and service file depend only on the module class,
             // so we know either they are present on disk or the module class is being compiled.
             TypeElement[] sourceElements = {model.module.typeElement};
             generator.writeModuleClass(sourceElements);
             generator.writeServiceFile(sourceElements);
+
+            generated = true;
+         }
+
+         if (roundEnv.processingOver() && !generated && modelBuilder.module == null) {
+            warn(null, "@InfinispanModule annotation not found in any class. " +
+                        "Found components %s", modelBuilder.annotatedTypes.keySet());
          }
       } catch (Throwable t) {
          uncaughtException(t);

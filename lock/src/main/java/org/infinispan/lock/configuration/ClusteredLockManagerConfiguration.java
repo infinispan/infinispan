@@ -9,7 +9,6 @@ import org.infinispan.lock.logging.Log;
 
 /**
  * The {@link org.infinispan.lock.api.ClusteredLockManager} configuration.
- * <p>
  *
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.4

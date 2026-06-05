@@ -10,8 +10,8 @@ import org.springframework.beans.factory.InitializingBean;
 
 /**
  * <p>
- * A {@link FactoryBean <code>FactoryBean</code>} for creating an
- * {@link EmbeddedCacheManager <code>Infinispan EmbeddedCacheManager</code>}
+ * A {@link FactoryBean} for creating an
+ * {@link EmbeddedCacheManager Infinispan EmbeddedCacheManager}
  * instance. The location of the Infinispan configuration file used to provide the default
  * {@link org.infinispan.configuration.cache.Configuration configuration} for the
  * <code>EmbeddedCacheManager</code> instance created by this <code>FactoryBean</code> is

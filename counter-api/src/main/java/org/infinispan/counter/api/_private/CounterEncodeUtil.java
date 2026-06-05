@@ -89,7 +89,6 @@ public final class CounterEncodeUtil {
     * Encodes the {@link Storage} and the {@link CounterType}.
     * <p>
     * See the documentation for further details about the encoding.
-    * <p>
     *
     * @return the encoded {@link Storage} and the {@link CounterType}.
     * @see <a href="https://infinispan.org/docs/dev/user_guide/user_guide.html#counter-config-encode">Counter
@@ -103,7 +102,6 @@ public final class CounterEncodeUtil {
     * Encodes the configuration.
     * <p>
     * See the documentation for further details about the encoding.
-    * <p>
     *
     * @see <a href="https://infinispan.org/docs/dev/user_guide/user_guide.html#counter-config-encode">Counter
     * Configuration Encoding</a>
