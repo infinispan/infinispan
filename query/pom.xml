@@ -40,11 +40,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.hibernate.search</groupId>
-         <artifactId>${hibernate.search.backend.artifactId}</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-testing</artifactId>
          <scope>test</scope>
@@ -272,6 +267,27 @@
    </build>
 
    <profiles>
+      <profile>
+         <id>lucene9</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <dependencies>
+            <dependency>
+               <groupId>org.hibernate.search</groupId>
+               <artifactId>hibernate-search-backend-lucene</artifactId>
+            </dependency>
+         </dependencies>
+      </profile>
+      <profile>
+         <id>lucene10</id>
+         <dependencies>
+            <dependency>
+               <groupId>org.hibernate.search</groupId>
+               <artifactId>hibernate-search-backend-lucene-next</artifactId>
+            </dependency>
+         </dependencies>
+      </profile>
       <profile>
          <id>smoke</id>
          <build>

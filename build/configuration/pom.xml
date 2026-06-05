@@ -306,14 +306,12 @@
          </activation>
          <properties>
             <version.lucene>${version.lucene9}</version.lucene>
-            <hibernate.search.backend.artifactId>hibernate-search-backend-lucene</hibernate.search.backend.artifactId>
          </properties>
       </profile>
       <profile>
          <id>lucene10</id>
          <properties>
             <version.lucene>${version.lucene10}</version.lucene>
-            <hibernate.search.backend.artifactId>hibernate-search-backend-lucene-next</hibernate.search.backend.artifactId>
          </properties>
       </profile>
    </profiles>
