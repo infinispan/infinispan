@@ -72,8 +72,10 @@ public class SoftBPlusTree<V> extends BPlusTree<V> {
       this.store = store;
       this.serializer = serializer;
       this.keyLoader = keyLoader;
-      this.serializeBuffer = ByteBuffer.allocate(maxNodeSize);
       this.blockAlignment = blockAlignment;
+      // Capacity must cover the aligned block size so writeNodeToStore can pad to occupiedSpace
+      int alignedMax = blockAlignment > 1 ? ((maxNodeSize + blockAlignment - 1) & -blockAlignment) : maxNodeSize;
+      this.serializeBuffer = ByteBuffer.allocate(alignedMax);
       this.initialStoreSize = initialStoreSize;
       this.storeSize = initialStoreSize;
    }
@@ -619,6 +621,10 @@ public class SoftBPlusTree<V> extends BPlusTree<V> {
       writeNode(node, serializer, serializeBuffer);
       serializeBuffer.flip();
       NodeSpace space = allocate((short) serializeBuffer.remaining());
+      // Write the full aligned block so the file extends to cover occupiedSpace.
+      // Without this, the file may be shorter than diskOffset + occupiedSpace when
+      // this is the last block written, causing EOF on SoftNode.resolve() after GC.
+      serializeBuffer.limit(space.occupiedSpace());
       store.write(serializeBuffer, space.offset);
       return space;
    }
