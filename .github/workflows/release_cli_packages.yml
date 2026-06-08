@@ -230,14 +230,14 @@ jobs:
       - name: Run JReleaser
         uses: jreleaser/release-action@v2
         with:
-          arguments: full-release --git-root-search --config-file distribution/src/main/packaging/cli/jreleaser/jreleaser.yml
+          arguments: full-release --basedir . --config-file distribution/src/main/packaging/cli/jreleaser/jreleaser.yml
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           JRELEASER_PROJECT_VERSION: ${{ inputs.version }}
 
       - name: Upload JReleaser output on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jreleaser-output
           path: |
