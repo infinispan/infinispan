@@ -131,6 +131,7 @@ jobs:
         run: |
           mkdir -p packages
           gh release download ${{ inputs.version }} \
+            --repo infinispan/infinispan \
             --pattern "*.deb" --pattern "*.rpm" \
             --dir packages/
         env:
@@ -229,7 +230,7 @@ jobs:
       - name: Run JReleaser
         uses: jreleaser/release-action@v2
         with:
-          arguments: full-release --config-file distribution/src/main/packaging/cli/jreleaser/jreleaser.yml
+          arguments: full-release --git-root-search --config-file distribution/src/main/packaging/cli/jreleaser/jreleaser.yml
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           JRELEASER_PROJECT_VERSION: ${{ inputs.version }}
