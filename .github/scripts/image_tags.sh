@@ -19,7 +19,7 @@ requiredEnv VERSION TYPE
 MAJOR_MINOR=$(echo "$VERSION"|cut -d . -f 1,2)
 
 TAGS="${MAJOR_MINOR} ${VERSION}"
-if [ "${TYPE}" != "prerelease" ]; then
+if [ "${TYPE}" == "latest" ]; then
   TAGS+=" latest"
 fi
 
