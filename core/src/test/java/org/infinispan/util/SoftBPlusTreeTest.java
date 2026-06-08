@@ -898,4 +898,84 @@ public class SoftBPlusTreeTest {
             ", after: " + sizeAfterReinsert,
             sizeAfterReinsert - sizeBeforeReinsert < sizeBeforeReinsert);
    }
+
+   // --- Alignment padding coverage test ---
+
+   /**
+    * A NodeStore that tracks the high-water mark of writes and throws IOException
+    * when reads go past the written extent, simulating FileChannel EOF behavior.
+    * This is how {@link org.infinispan.persistence.sifs.Index.IndexFileNodeStore}
+    * behaves: FileChannel.read() returns -1 when reading past the file's actual size.
+    */
+   static class FileSimulatingNodeStore implements SoftBPlusTree.NodeStore {
+      private byte[] data = new byte[4096];
+      private long fileSize = 0;
+
+      @Override
+      public void write(ByteBuffer buf, long offset) {
+         int length = buf.remaining();
+         ensureCapacity(offset + length);
+         buf.get(data, (int) offset, length);
+         long writeEnd = offset + length;
+         if (writeEnd > fileSize) {
+            fileSize = writeEnd;
+         }
+      }
+
+      @Override
+      public ByteBuffer read(long offset, int length) throws IOException {
+         if (offset >= fileSize) {
+            throw new IOException("Truncated node store at offset " + offset);
+         }
+         if (offset + length > fileSize) {
+            throw new IOException("Truncated node store at offset " + offset
+                  + " (requested " + length + " bytes, file size " + fileSize + ")");
+         }
+         byte[] result = new byte[length];
+         System.arraycopy(data, (int) offset, result, 0, length);
+         return ByteBuffer.wrap(result);
+      }
+
+      @Override
+      public void truncate(long size) {
+         fileSize = size;
+      }
+
+      private void ensureCapacity(long required) {
+         if (required > data.length) {
+            int newLen = Math.max((int) required, data.length * 2);
+            byte[] newData = new byte[newLen];
+            System.arraycopy(data, 0, newData, 0, data.length);
+            data = newData;
+         }
+      }
+   }
+
+   /**
+    * Reproduces the "Truncated node store at offset" bug. When a node's serialized
+    * size is not a multiple of the block alignment, writeNodeToStore() must write the
+    * full aligned block (not just the serialized bytes) so the file extends to cover
+    * the SoftNode's occupiedSpace. Without this fix, the last block written by
+    * persistNewNodes() leaves a gap between serialized data and the aligned block end,
+    * causing SoftNode.resolve() to hit EOF after GC clears the SoftReference.
+    */
+   public void testAlignmentPaddingWrittenToStore() throws IOException {
+      short blockAlignment = 64;
+      long headerSize = 26;
+      FileSimulatingNodeStore store = new FileSimulatingNodeStore();
+      SoftBPlusTree<Integer> tree = new SoftBPlusTree<>(MIN_NODE_SIZE, MAX_NODE_SIZE,
+            store, INT_SERIALIZER, keyLoader, blockAlignment, headerSize);
+
+      int count = 200;
+      for (int i = 0; i < count; i++) {
+         putTracked(tree, key(String.format("key-%05d", i)), i);
+      }
+
+      tree.clearSoftReferences();
+
+      for (int i = 0; i < count; i++) {
+         assertEquals("Value for key-" + String.format("%05d", i) + " should resolve from disk",
+               Integer.valueOf(i), tree.get(key(String.format("key-%05d", i))));
+      }
+   }
 }
