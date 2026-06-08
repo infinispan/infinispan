@@ -1,5 +1,23 @@
 {
   "definitions" : [ {
+    "protopath" : "org:/:infinispan:/:server:/:core:/:query:/:persistence.remote_query.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "ProtobufValueWrapper",
+        "type_id" : 11,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "binary",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.remote_query"
+      }
+    }
+  }, {
     "protopath" : "org:/:infinispan:/:server:/:core:/:persistence.server.core.proto",
     "def" : {
       "enums" : [ ],
@@ -188,24 +206,6 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.server.core"
-      }
-    }
-  }, {
-    "protopath" : "org:/:infinispan:/:server:/:core:/:query:/:persistence.remote_query.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "ProtobufValueWrapper",
-        "type_id" : 11,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "binary",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.remote_query"
       }
     }
   } ]
