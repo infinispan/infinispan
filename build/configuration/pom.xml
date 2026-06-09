@@ -82,7 +82,7 @@
       <version.console>16.2.3</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
       <version.fabric8.docker-maven-plugin>0.48.1</version.fabric8.docker-maven-plugin>
-      <version.fabric8.kubernetes-client>7.4.0</version.fabric8.kubernetes-client>
+      <version.fabric8.kubernetes-client>7.7.0</version.fabric8.kubernetes-client>
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
       <version.glassfish.jaxb>4.0.9</version.glassfish.jaxb>
       <version.hamcrest>2.2</version.hamcrest>
@@ -152,13 +152,11 @@
       <version.hdrhistogram>2.2.2</version.hdrhistogram>
       <version.latencyutils>2.0.3</version.latencyutils>
 
-      <version.quarkus>3.27.4</version.quarkus>
+      <version.quarkus>3.36.1</version.quarkus>
       <version.graalvm>25.0.3</version.graalvm>
       <version.jandex>3.5.3</version.jandex>
 
-      <version.opentelemetry>1.39.0</version.opentelemetry>
-      <!-- used by the opentelemetry autoconfigure module as incubator runtime dependency -->
-      <version.opentelemetry.alpha>1.39.0-alpha</version.opentelemetry.alpha>
+      <version.opentelemetry>1.60.1</version.opentelemetry>
 
       <version.smallrye-mutiny>2.9.5</version.smallrye-mutiny>
 
