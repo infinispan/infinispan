@@ -73,7 +73,7 @@
       <version.antlr4>4.13.2</version.antlr4>
       <version.arquillian>1.10.2.Final</version.arquillian>
       <version.awaitility>4.3.0</version.awaitility>
-      <version.blockhound>1.0.16.RELEASE</version.blockhound>
+      <version.blockhound>1.0.17.RELEASE</version.blockhound>
       <version.bouncycastle>1.84</version.bouncycastle>
       <version.byteman>4.0.26</version.byteman>
       <version.caffeine>3.2.4</version.caffeine>
@@ -100,7 +100,7 @@
       <version.jackson>2.22.0</version.jackson>
       <version.jackson.annotations>2.22</version.jackson.annotations>
       <version.jackson.databind>2.21.0</version.jackson.databind>
-      <version.jacoco>0.8.14</version.jacoco>
+      <version.jacoco>0.8.15</version.jacoco>
       <version.jakarta.annotation-api>2.1.1</version.jakarta.annotation-api>
       <version.jakarta.json>2.0.1</version.jakarta.json>
       <version.jakarta.transaction>2.0.1</version.jakarta.transaction>
@@ -163,7 +163,7 @@
       <version.smallrye-mutiny>2.9.5</version.smallrye-mutiny>
 
       <!-- Default versions Spring and Spring Boot-->
-      <version.spring>6.2.18</version.spring>
+      <version.spring>6.2.19</version.spring>
       <version.spring.boot>${version.spring.boot3}</version.spring.boot>
       <version.spring.session>3.5.6</version.spring.session>
       <!-- Spring 6, Spring Boot 3 versions -->
@@ -189,7 +189,7 @@
       <version.asciidoctor.maven.plugin>3.2.0</version.asciidoctor.maven.plugin>
       <version.asciidoctorj>3.0.1</version.asciidoctorj>
       <version.asciidoctorj.tabbed.code>0.3</version.asciidoctorj.tabbed.code>
-      <version.jruby>9.4.14.0</version.jruby>
+      <version.jruby>9.4.15.0</version.jruby>
       <version.maven.buildhelper>3.6.1</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
       <version.maven.clean>3.5.0</version.maven.clean>
