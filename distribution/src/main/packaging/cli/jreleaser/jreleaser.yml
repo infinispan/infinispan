@@ -10,7 +10,7 @@
 #   - JRELEASER_GITHUB_TOKEN must have write access to those repos
 #
 # Usage:
-#   jreleaser full-release --project-version 16.2.0
+#   JRELEASER_PROJECT_VERSION=16.2.0 jreleaser full-release --basedir .
 
 project:
   name: infinispan-cli
@@ -56,6 +56,7 @@ distributions:
   infinispan-cli:
     type: NATIVE_IMAGE
     stereotype: CLI
+    templateDirectory: distribution/src/main/packaging/cli/jreleaser/distributions/infinispan-cli
     executable:
       name: infinispan-cli
       windowsExtension: exe
@@ -66,6 +67,8 @@ distributions:
         platform: linux-aarch_64
       - path: artifacts/infinispan-cli-{{projectVersion}}-osx-aarch_64.zip
         platform: osx-aarch_64
+      - path: artifacts/infinispan-cli-{{projectVersion}}-osx-x86_64.zip
+        platform: osx-x86_64
       - path: artifacts/infinispan-cli-{{projectVersion}}-windows-x86_64.zip
         platform: windows-x86_64
 
