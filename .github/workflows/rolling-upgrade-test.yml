@@ -131,3 +131,14 @@ jobs:
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
             github-sha.txt
+
+      - name: Upload log files
+        if: (success() || failure())
+        uses: actions/upload-artifact@v7
+        with:
+          name: log-files-rolling-upgrades-${{ inputs.name }}
+          compression-level: 9
+          path: |
+            test_dir/infinispan/**/*.log
+            !**/*[:"<>\*\?]*/**/*.log
+            !**/*[:"<>\*\?]*.log
