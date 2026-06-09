@@ -14,7 +14,7 @@ jobs:
           uses: actions/checkout@v6
 
         - name: Install xmlstarlet tool
-# xmlstarlet is needed by bin/gh/track_flaky_tests.sh
+# xmlstarlet is needed by .github/scripts/track_flaky_tests.sh
           shell: bash
           run: |
              sudo apt-get update
@@ -40,7 +40,7 @@ jobs:
           run: |
             set +e
             cat target-branch.txt
-            TARGET_BRANCH=$(cat target-branch.txt) bin/gh/track_flaky_tests.sh
+            TARGET_BRANCH=$(cat target-branch.txt) .github/scripts/track_flaky_tests.sh
             true
 
         - name: Get event name
