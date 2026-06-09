@@ -1,0 +1,89 @@
+name: AI/IDE/CI Config Change Notice
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      # AI assistant directories
+      - '.claude/**'
+      - '.cursor/**'
+      - '.gemini/**'
+      - '.codex/**'
+      # IDE directories
+      - '.vscode/**'
+      - '.idea/**'
+      # AI/IDE dotfiles
+      - '.cursorrules'
+      - '.cursorignore'
+      - '.copilotignore'
+      - '.windsurfrules'
+      # GitHub workflows and config
+      - '.github/**'
+      # AI markdown files (any directory)
+      - '**/CLAUDE.md'
+      - '**/GEMINI.md'
+      - '**/COPILOT.md'
+      - '**/AGENTS.md'
+      - '**/CODEX.md'
+      - '**/AI.md'
+      - '**/AI-*.md'
+
+jobs:
+  notice:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Detect AI/IDE config changes and comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          COMMENT_MARKER="<!-- ai-ide-config-notice -->"
+
+          # Get all changed files in the PR
+          FILES=$(gh api "repos/${GH_REPO}/pulls/${PR_NUMBER}/files" --paginate -q '.[].filename')
+
+          # Filter for AI/IDE config files
+          MATCHED=$(echo "$FILES" | grep -E \
+            '(^\.claude/|^\.cursor/|^\.gemini/|^\.codex/|^\.vscode/|^\.idea/|^\.github/|^\.cursorrules$|^\.cursorignore$|^\.copilotignore$|^\.windsurfrules$|(^|/)(AI(-[A-Z_]+)?|CLAUDE|GEMINI|COPILOT|AGENTS|CODEX)\.md$)' \
+            || true)
+
+          if [ -z "$MATCHED" ]; then
+            echo "No AI/IDE config files changed"
+            exit 0
+          fi
+
+          # Build the comment body
+          FILE_LIST=$(echo "$MATCHED" | while IFS= read -r f; do echo "- \`${f}\`"; done)
+
+          BODY=$(printf '%s\n%s\n\n%s\n\n%s\n%s' \
+            "$COMMENT_MARKER" \
+            "## ⚠️ AI/IDE/CI Configuration Changes" \
+            "This PR includes changes to AI assistant, IDE, or GitHub Actions/workflow configuration files. These changes can affect how AI assistants interact with this codebase or how CI pipelines run. Please review carefully." \
+            "**Changed files:**" \
+            "$FILE_LIST")
+
+          # Check for an existing comment from a previous run
+          EXISTING=$(gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            -q ".[] | select(.body | contains(\"${COMMENT_MARKER}\")) | .id" | head -1)
+
+          if [ -n "$EXISTING" ]; then
+            gh api "repos/${GH_REPO}/issues/comments/${EXISTING}" -X PATCH -f body="$BODY"
+            echo "Updated existing comment"
+          else
+            gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/comments" -f body="$BODY"
+            echo "Created new comment"
+          fi
+
+          # Ensure the ai-config label exists, then add it to the PR
+          gh label create "ai-config" \
+            --description "Changes to AI assistant, IDE, or CI configuration" \
+            --color "D93F0B" \
+            --force \
+            --repo "$GH_REPO" 2>/dev/null || true
+          gh pr edit "$PR_NUMBER" --add-label "ai-config" --repo "$GH_REPO"
