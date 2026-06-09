@@ -5,9 +5,9 @@ Install the {brandname} CLI as a native executable on your system.
 The native CLI is a standalone binary that does not require a Java runtime.
 It is available for Linux, macOS, and Windows.
 
-== Linux packages (RPM and DEB)
+== Linux packages (RPM, DEB, and AUR)
 
-You can install the native CLI from the {brandname} package repository on RPM-based and DEB-based Linux distributions.
+You can install the native CLI from the {brandname} package repository on RPM-based, DEB-based, and Arch-based Linux distributions.
 
 === RPM (Fedora, RHEL, CentOS)
 
@@ -59,6 +59,19 @@ EOF
 [source,bash,options="nowrap",subs=attributes+]
 ----
 sudo apt update && sudo apt install infinispan-cli
+----
+
+=== AUR (Arch Linux)
+
+Install the CLI from the link:https://aur.archlinux.org/packages/infinispan-cli-bin[AUR] using an AUR helper such as `yay` or `paru`.
+
+.Procedure
+
+. Install the CLI package.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+yay -S infinispan-cli-bin
 ----
 
 == Homebrew (macOS and Linux)

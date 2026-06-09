@@ -152,7 +152,8 @@ jobs:
             'name=Infinispan' \
             'baseurl=https://download.jboss.org/infinispan/packages/yum/$basearch' \
             'enabled=1' \
-            'gpgcheck=1' \
+            'gpgcheck=0' \
+            'repo_gpgcheck=1' \
             'gpgkey=https://download.jboss.org/infinispan/packages/signing.key' \
             > repo/yum/infinispan.repo
 
@@ -219,7 +220,7 @@ jobs:
       - name: Download all native CLI artifacts
         run: |
           mkdir -p artifacts
-          for platform in linux-x86_64 linux-aarch_64 osx-aarch_64 windows-x86_64; do
+          for platform in linux-x86_64 linux-aarch_64 osx-aarch_64 osx-x86_64 windows-x86_64; do
             gh release download ${{ inputs.version }} \
               --pattern "infinispan-cli-${{ inputs.version }}-${platform}.zip" \
               --dir artifacts/ || echo "::warning::${platform} artifact not found, skipping"
@@ -243,3 +244,72 @@ jobs:
           path: |
             out/jreleaser/trace.log
             out/jreleaser/output.properties
+
+  publish-aur:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: distribution/src/main/packaging/cli/aur
+
+      - name: Compute checksums
+        run: |
+          for arch in x86_64 aarch_64; do
+            url="https://github.com/infinispan/infinispan/releases/download/${{ inputs.version }}/infinispan-cli-${{ inputs.version }}-linux-${arch}.zip"
+            sha=$(curl -sL "$url" | sha256sum | cut -d' ' -f1)
+            echo "SHA_${arch}=${sha}" >> "$GITHUB_ENV"
+          done
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          ssh-keyscan -H aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' 'Host aur.archlinux.org' '  IdentityFile ~/.ssh/aur' '  User aur' >> ~/.ssh/config
+
+      - name: Clone AUR repo
+        run: git clone ssh://aur@aur.archlinux.org/infinispan-cli-bin.git aur
+
+      - name: Update PKGBUILD
+        run: |
+          cp distribution/src/main/packaging/cli/aur/PKGBUILD aur/PKGBUILD
+          cd aur
+          sed -i "s/^pkgver=.*/pkgver=${{ inputs.version }}/" PKGBUILD
+          sed -i "s/SHA_X86_64_PLACEHOLDER/${SHA_x86_64}/" PKGBUILD
+          sed -i "s/SHA_AARCH64_PLACEHOLDER/${SHA_aarch_64}/" PKGBUILD
+
+      - name: Generate .SRCINFO
+        run: |
+          cd aur
+          VER="${{ inputs.version }}"
+          printf 'pkgbase = infinispan-cli-bin\n' > .SRCINFO
+          printf '\t%s\n' \
+            "pkgdesc = Command-line interface for Infinispan data grid" \
+            "pkgver = ${VER}" \
+            "pkgrel = 1" \
+            "url = https://infinispan.org" \
+            "arch = x86_64" \
+            "arch = aarch64" \
+            "license = Apache-2.0" \
+            "provides = infinispan-cli" \
+            "conflicts = infinispan-cli" \
+            "source_x86_64 = infinispan-cli-bin-${VER}-x86_64.zip::https://github.com/infinispan/infinispan/releases/download/${VER}/infinispan-cli-${VER}-linux-x86_64.zip" \
+            "sha256sums_x86_64 = ${SHA_x86_64}" \
+            "source_aarch64 = infinispan-cli-bin-${VER}-aarch64.zip::https://github.com/infinispan/infinispan/releases/download/${VER}/infinispan-cli-${VER}-linux-aarch_64.zip" \
+            "sha256sums_aarch64 = ${SHA_aarch_64}" \
+            >> .SRCINFO
+          printf '\npkgname = infinispan-cli-bin\n' >> .SRCINFO
+
+      - name: Push to AUR
+        run: |
+          cd aur
+          git config user.email "aur@infinispan.org"
+          git config user.name "Infinispan"
+          git add PKGBUILD .SRCINFO
+          git commit -m "infinispan-cli-bin ${{ inputs.version }}"
+          git push
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/aur
