@@ -241,9 +241,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 
    private Properties toProperties(Map<Object, Object> configValues) {
       Properties properties = new Properties();
-      for (Map.Entry<Object, Object> entry : configValues.entrySet()) {
-         properties.put(entry.getKey(), entry.getValue());
-      }
+      properties.putAll(configValues);
       return properties;
    }
 

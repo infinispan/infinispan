@@ -306,6 +306,48 @@ public interface Log extends BasicLogger {
    @Message(value = "Virtual threads support: %s", id = 974)
    void virtualThreadSupport(String status);
 
+   @Message(value = "Invalid value %s for attribute '%s': must be between 0 (exclusive) and 1.0 (inclusive)", id = 975)
+   CacheConfigurationException attributeMustBeFraction(Number value, String attribute);
+
+   @Message(value = "Invalid value %s for attribute '%s': must be positive", id = 976)
+   CacheConfigurationException attributeMustBePositive(Number value, String attribute);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Low memory detected. Memory usage has exceeded the configured threshold.", id = 977)
+   void lowMemoryDetected();
+
+   @LogMessage(level = WARN)
+   @Message(value = "GC pause of %d ms exceeded the configured threshold of %d ms.", id = 978)
+   void gcDurationExceeded(long duration, long threshold);
+
+   @LogMessage(level = WARN)
+   @Message(value = "GC pressure exceeded %d%% over the last %d s.", id = 979)
+   void gcPressureExceeded(int percentage, long windowSeconds);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Memory threshold monitoring is not available with the current garbage collector. GC duration and pressure monitoring are still active.", id = 980)
+   void memoryThresholdMonitoringUnavailable();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Could not find '%s' in any remote repository", id = 981)
+   void artifactNotFound(String s);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not download '%s' from '%s' repository (%s)%n", id = 982)
+   void artifactDownloadFailure(String artifact, String repository, String remote, @Cause Throwable t);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Feature '%s' is enabled", id = 983)
+   void featureEnabled(String featureName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "SSL NamedGroups are not supported on this JDK", id = 984)
+   void sslNamedGroupsUnsupported();
+
+   @LogMessage(level = WARN)
+   @Message(value = "JavaSerializationMarshaller is deprecated and will be removed in a future version. It is susceptible to deserialization attacks. Use ProtoStream-based marshalling instead.", id = 985)
+   void javaSerializationMarshallerEnabled();
+
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
 }

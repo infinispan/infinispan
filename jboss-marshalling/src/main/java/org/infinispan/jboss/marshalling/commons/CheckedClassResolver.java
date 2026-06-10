@@ -8,7 +8,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.jboss.marshalling.Unmarshaller;
 public final class CheckedClassResolver extends DefaultContextClassResolver {
 
-   protected static final Log log = LogFactory.getLog(CheckedClassResolver.class);
+   private static final Log log = LogFactory.getLog(CheckedClassResolver.class);
 
    private final ClassAllowList classAllowList;
 
@@ -24,6 +24,15 @@ public final class CheckedClassResolver extends DefaultContextClassResolver {
          throw log.classNotInAllowList(name);
 
       return super.resolveClass(unmarshaller, name, serialVersionUID);
+   }
+
+   @Override
+   public Class<?> resolveProxyClass(Unmarshaller unmarshaller, String[] interfaces) throws IOException, ClassNotFoundException {
+      for (String iface : interfaces) {
+         if (!classAllowList.isSafeClass(iface))
+            throw log.classNotInAllowList(iface);
+      }
+      return super.resolveProxyClass(unmarshaller, interfaces);
    }
 
 }

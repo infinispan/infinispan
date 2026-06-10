@@ -30,4 +30,13 @@ public class CheckedInputStream extends ObjectInputStream {
          return super.resolveClass(desc);
       }
    }
+
+   @Override
+   protected Class<?> resolveProxyClass(String[] interfaces) throws IOException, ClassNotFoundException {
+      for (String iface : interfaces) {
+         if (!allowList.isSafeClass(iface))
+            throw CONTAINER.classNotInAllowList(iface);
+      }
+      return super.resolveProxyClass(interfaces);
+   }
 }

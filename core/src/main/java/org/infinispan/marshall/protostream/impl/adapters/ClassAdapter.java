@@ -14,7 +14,7 @@ public class ClassAdapter {
    @ProtoFactory
    Class<?> create(String clazz) {
       try {
-         return Class.forName(clazz);
+         return Class.forName(clazz, false, Thread.currentThread().getContextClassLoader());
       } catch (ClassNotFoundException e) {
          throw new MarshallingException(e);
       }

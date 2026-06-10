@@ -93,8 +93,8 @@ public class CollectionRegionAccessStrategyTest extends AbstractRegionAccessStra
 			new TxInvalidationCacheAccessDelegate((InfinispanDataRegion) localRegion, mockValidator) :
 			new NonTxInvalidationCacheAccessDelegate((InfinispanDataRegion) localRegion, mockValidator);
 
-		ExecutorService executorService = Executors.newCachedThreadPool();
-		cleanup.add(() -> executorService.shutdownNow());
+      ExecutorService executorService = Executors.newCachedThreadPool();
+      cleanup.add(executorService::shutdownNow);
 
 		final String KEY = "k1";
 		Future<Void> pferFuture = executorService.submit(() -> {
