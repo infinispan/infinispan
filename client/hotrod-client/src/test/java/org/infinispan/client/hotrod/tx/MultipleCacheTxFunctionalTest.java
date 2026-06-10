@@ -277,7 +277,7 @@ public class MultipleCacheTxFunctionalTest<K, V> extends MultiHotRodServersTest 
          TransactionSetup.amendJTA(clientBuilder.remoteCache(cacheName)).transactionMode(transactionMode);
       }
       if (useJavaSerialization) {
-         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialAllowList("\\Q[\\ELjava.lang.Object;");
+         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialAllowList("java.lang.Object");
       }
       return clientBuilder;
    }

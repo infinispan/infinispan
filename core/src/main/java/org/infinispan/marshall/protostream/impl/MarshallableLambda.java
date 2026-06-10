@@ -98,7 +98,7 @@ public class MarshallableLambda {
 
    public Object unwrap(ClassLoader classLoader) {
       try {
-         Class<?> clazz = Class.forName(capturingClass, true, classLoader);
+         Class<?> clazz = Class.forName(capturingClass, false, classLoader);
          Object[] args = MarshallableArray.unwrap(arguments);
 
          SerializedLambda sl = new SerializedLambda(clazz, functionalInterfaceClass, functionalInterfaceMethodName,
