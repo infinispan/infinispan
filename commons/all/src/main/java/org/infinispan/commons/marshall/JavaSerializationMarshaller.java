@@ -13,14 +13,20 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.LazyByteArrayOutputStream;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * Standard Java serialization marshaller.
  *
  * @author Galder Zamarreño
  * @since 5.3
+ * @deprecated since 16.3. Use ProtoStream-based marshalling instead. Will be removed in a future major version.
  */
+@Deprecated(since = "16.3", forRemoval = true)
 public class JavaSerializationMarshaller extends AbstractMarshaller {
+
+   private static final Log log = LogFactory.getLog(JavaSerializationMarshaller.class);
 
    final ClassAllowList allowList;
 
@@ -35,6 +41,7 @@ public class JavaSerializationMarshaller extends AbstractMarshaller {
    @Override
    public void initialize(ClassAllowList classAllowList) {
       this.allowList.read(classAllowList);
+      log.javaSerializationMarshallerEnabled();
    }
 
    @Override

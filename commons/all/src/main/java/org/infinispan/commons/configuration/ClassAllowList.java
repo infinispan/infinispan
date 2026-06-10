@@ -44,6 +44,25 @@ public class ClassAllowList {
 
    private static final Set<String> SYS_ALLOWED_CLASSES = new HashSet<>();
    private static final List<String> SYS_ALLOWED_REGEXP = new ArrayList<>();
+   private static final List<String> DENIED_PREFIXES = List.of(
+         "bsh.",
+         "clojure.",
+         "com.mchange.",
+         "com.sun.rowset.",
+         "groovy.",
+         "java.rmi.",
+         "javax.management.remote.",
+         "javax.naming.InitialContext",
+         "ognl.",
+         "org.apache.commons.collections.functors.",
+         "org.apache.commons.collections4.functors.",
+         "org.apache.xalan.",
+         "org.codehaus.groovy.",
+         "org.hibernate.property.access.",
+         "org.mozilla.javascript.",
+         "org.springframework.core.",
+         "org.springframework.aop."
+   );
 
    static {
       // Classes always allowed
@@ -84,8 +103,7 @@ public class ClassAllowList {
       SYS_ALLOWED_CLASSES.add(Enum.class.getName());
       SYS_ALLOWED_CLASSES.add(Number.class.getName());
 
-      // Reference array regex, for array representations of allowed classes e.g '[Ljava.lang.Byte;'
-      SYS_ALLOWED_REGEXP.add("^\\[[\\[L].*\\;$");
+      // Array types are handled by stripping array prefixes in isSafeClass()
 
       // Infinispan classes
       // Used by client listeners
@@ -123,17 +141,42 @@ public class ClassAllowList {
    }
 
    public boolean isSafeClass(String className) {
-      // Test for classes first (faster)
-      boolean isClassAllowed = classes.contains(className);
-      if (isClassAllowed) return true;
-      boolean regexMatch = compiled.stream().anyMatch(p -> p.matcher(className).find());
+      String componentName = stripArrayPrefix(className);
+      if (componentName != null) {
+         return isSafeClass(componentName);
+      }
+      if (isDenied(className)) {
+         log.tracef("Class '%s' matches deserialization deny-list", className);
+         return false;
+      }
+      if (classes.contains(className)) return true;
+      boolean regexMatch = compiled.stream().anyMatch(p -> p.matcher(className).matches());
       if (regexMatch) {
-         // Add the class name to the classes set to avoid future regex checks
          classes.add(className);
          return true;
       }
       if (log.isTraceEnabled())
          log.tracef("Class '%s' not in allowlist", className);
+      return false;
+   }
+
+   private static String stripArrayPrefix(String className) {
+      if (className.startsWith("[")) {
+         String inner = className.substring(1);
+         if (inner.startsWith("[")) {
+            return inner;
+         }
+         if (inner.startsWith("L") && inner.endsWith(";")) {
+            return inner.substring(1, inner.length() - 1);
+         }
+      }
+      return null;
+   }
+
+   private static boolean isDenied(String className) {
+      for (String prefix : DENIED_PREFIXES) {
+         if (className.startsWith(prefix)) return true;
+      }
       return false;
    }
 
