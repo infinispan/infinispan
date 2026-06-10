@@ -1,0 +1,50 @@
+name: PMD CPD on PR changes
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE*'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.editorconfig'
+      - 'CODEOWNERS'
+      - 'documentation/**'
+
+jobs:
+  cpd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0    # Need full history to compare base vs head
+
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
+
+      - name: Detect Java changes
+        id: changed
+        run: |
+          chmod +x .github/scripts/changed-classes.sh
+          CLASSES=$(.github/scripts/changed-classes.sh origin/${{ github.event.pull_request.base.ref }} HEAD)
+          echo "classes=$CLASSES" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if no Java changes
+        if: steps.changed.outputs.classes == 'NO_CHANGES'
+        run: echo "No Java sources changed. Skipping CPD."
+
+      - name: Run PMD Copy/Paste Detector
+        if: steps.changed.outputs.classes != 'NO_CHANGES'
+        run: mvn -B -DskipTests=true org.apache.maven.plugins:maven-pmd-plugin:cpd
+
+      - name: Upload CPD reports
+        if: always() && steps.changed.outputs.classes != 'NO_CHANGES'
+        uses: actions/upload-artifact@v7
+        with:
+          name: cpd-reports
+          path: '**/target/cpd.xml'
+          if-no-files-found: ignore
+          retention-days: 14
