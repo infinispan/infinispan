@@ -7,7 +7,10 @@ You can find our guidelines here regarding our policy and security disclosure.
 
 Please report any security issues you find in Infinispan to:
 
-    security at infinispan.org
+- [security@infinispan.org](mailto:security@infinispan.org)
+- [Red Hat Product Security](https://access.redhat.com/security/team/contact/)
+
+You may encrypt your message using the [Red Hat Product Security PGP key](https://access.redhat.com/security/team/key/).
 
 ### Why follow this process
 
