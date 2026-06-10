@@ -31,7 +31,8 @@ public class MarshallExternalizersTest extends MultipleCacheManagersTest {
 
    public GlobalConfigurationBuilder globalConfigurationBuilder() {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalBuilder.serialization().marshaller(new JBossUserMarshaller());
+      globalBuilder.serialization().marshaller(new JBossUserMarshaller())
+            .allowList().addRegexps(".*");
       return globalBuilder;
    }
 

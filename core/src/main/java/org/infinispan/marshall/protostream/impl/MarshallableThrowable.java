@@ -16,6 +16,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.WriteSkewException;
 
 /**
@@ -84,7 +85,10 @@ public class MarshallableThrowable {
     private Throwable recreateGenericThrowable(String impl, String msg, MarshallableThrowable t) {
         Throwable cause = t == null ? null : t.get();
         try {
-            Class<?> clazz = Class.forName(impl);
+            Class<?> clazz = Class.forName(impl, false, Thread.currentThread().getContextClassLoader());
+            if (!Throwable.class.isAssignableFrom(clazz)) {
+                return new RemoteException(impl + ": " + msg, cause);
+            }
 
             Object retVal;
             if (cause == null && msg == null) {
@@ -101,7 +105,7 @@ public class MarshallableThrowable {
             }
             return (Throwable) retVal;
         } catch (ClassNotFoundException e) {
-            throw new MarshallingException(e);
+            return new RemoteException(impl + ": " + msg, cause);
         }
     }
 
