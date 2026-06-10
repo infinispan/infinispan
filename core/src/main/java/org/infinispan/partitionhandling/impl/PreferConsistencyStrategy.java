@@ -247,7 +247,16 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // confirmation status (yet).
       AvailabilityMode newAvailabilityMode = computeAvailabilityAfterMerge(context, maxStableTopology, actualMembers);
       if (mergedTopology != null) {
-         boolean resolveConflicts = context.resolveConflictsOnMerge() && actualMembers.size() > 1 && newAvailabilityMode == AvailabilityMode.AVAILABLE;
+         // We filter to only contain members that were actually participating in a topology.
+         // For example, we could have members leaving, and fresh new members without a topology joining simultaneously.
+         Set<Address> existingMembers = statusResponseMap.entrySet().stream()
+               .filter(e -> e.getValue().getCacheTopology() != null)
+               .map(Map.Entry::getKey)
+               .collect(Collectors.toSet());
+         boolean resolveConflicts = context.resolveConflictsOnMerge()
+               && actualMembers.size() > 1
+               && newAvailabilityMode == AvailabilityMode.AVAILABLE
+               && (maxActiveTopology == null || !maxActiveTopology.getMembers().containsAll(existingMembers));
          if (resolveConflicts) {
             // Record all distinct read owners and hashes
             Set<ConsistentHash> distinctHashes = new HashSet<>();
