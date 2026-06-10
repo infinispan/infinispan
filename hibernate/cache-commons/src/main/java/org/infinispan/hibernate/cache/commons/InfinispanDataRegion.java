@@ -10,5 +10,7 @@ public interface InfinispanDataRegion extends InfinispanBaseRegion {
 
    MetaParam.MetaLifespan getExpiringMetaParam();
 
+   MetaParam.Writable<?>[] getDataMetaParams();
+
    Comparator<Object> getComparator(String subclass);
 }

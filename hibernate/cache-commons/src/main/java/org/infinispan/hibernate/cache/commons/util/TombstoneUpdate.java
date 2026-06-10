@@ -10,7 +10,6 @@ import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
-import org.infinispan.functional.MetaParam;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 
 import java.io.IOException;
@@ -72,17 +71,17 @@ public class TombstoneUpdate<T> implements Function<EntryView.ReadWriteEntryView
 		} else if (storedValue instanceof Tombstone) {
 			Tombstone tombstone = (Tombstone) storedValue;
 			if (tombstone.getLastTimestamp() < timestamp) {
-				view.set(value);
+				view.set(value, region.getDataMetaParams());
 			}
 		} else if (storedValue == null) {
 			// async putFromLoads shouldn't cross the invalidation timestamp
 			if (region.getLastRegionInvalidation() < timestamp) {
-				view.set(value);
+				view.set(value, region.getDataMetaParams());
 			}
 		} else {
 			// Don't do anything locally. This could be the async remote write, though, when local
 			// value has been already updated: let it propagate to remote nodes, too
-			view.set(storedValue, view.findMetaParam(MetaParam.MetaLifespan.class).get());
+			view.set(storedValue, region.getDataMetaParams());
 		}
 		return null;
 	}

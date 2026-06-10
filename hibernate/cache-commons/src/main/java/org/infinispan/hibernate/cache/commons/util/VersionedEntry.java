@@ -101,7 +101,7 @@ public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Obj
 				// the invalid value
 				assert oldValue == null;
 			} else {
-				view.set(value instanceof CacheEntry ? value : this);
+				view.set(value instanceof CacheEntry ? value : this, region.getDataMetaParams());
 			}
 			return null;
 		} else {
@@ -123,7 +123,7 @@ public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Obj
 				if (value == null && compareResult >= 0) {
 					view.set(this, region.getExpiringMetaParam());
 				} else if (compareResult > 0) {
-					view.set(value instanceof CacheEntry ? value : this);
+					view.set(value instanceof CacheEntry ? value : this, region.getDataMetaParams());
 				}
 			}
 		}
