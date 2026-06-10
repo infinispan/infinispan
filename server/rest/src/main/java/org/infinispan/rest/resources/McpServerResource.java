@@ -1095,7 +1095,11 @@ public class McpServerResource implements ResourceHandler {
             }
 
             String fileName = getLogFileName(logType);
-            java.nio.file.Path logFile = java.nio.file.Paths.get(logPath, fileName);
+            java.nio.file.Path base = java.nio.file.Paths.get(logPath).toAbsolutePath().normalize();
+            java.nio.file.Path logFile = base.resolve(fileName).normalize();
+            if (!logFile.startsWith(base)) {
+               throw new SecurityException("Log file path escapes log directory");
+            }
 
             // Read last N lines
             String content = readLastLines(logFile, lines);
